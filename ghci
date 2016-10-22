@@ -1,0 +1,8 @@
+:set -XNoMonomorphismRestriction
+
+-- Custom Prompt --
+
+-- Examples:
+-- :set prompt "\ESC[0;37m%s\n\ESC[1;91mλ \ESC[m"
+-- :set prompt "   "
+:set prompt "\n\ESC[0;35m❯   \ESC[m"

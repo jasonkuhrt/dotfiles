@@ -1,4 +1,18 @@
-#!/bin/zsh
+#
+# Expose directories that contain executables
+#
+
+# NOTE Lower values take precedence since each value is appended.
+
+export PATH=/bin:$PATH # TODO Needed?
+export PATH=/sbin:$PATH  # TODO Needed?
+export PATH=/usr/bin:$PATH  # TODO Needed?
+export PATH=/usr/sbin:$PATH  # TODO Needed?
+export PATH=/usr/local/bin:$PATH
+export PATH=/usr/local/sbin:$PATH # TODO Needed?
+export PATH=~/bin:$PATH
+export PATH=~/.local/bin:$PATH
+export PATH=~/Library/Haskell/bin:$PATH # TODO Delete?
 
 
 
@@ -14,26 +28,30 @@ source $ZPLUG_HOME/init.zsh
 
 
 #
-# Select plugins
+# Use zplug to install plugins
 #
 
-# NOTE According to documentation for history-substring-search
-# syntax-highlighting must be loaded _first_.
-# Reference https://github.com/zsh-users/zsh-history-substring-search#usage
+# NOTE syntax-highlighting must preceed history-substring-search
+# Ref https://github.com/zsh-users/zsh-history-substring-search#usage
 
 zplug "supercrabtree/k"
+zplug "felixr/docker-zsh-completion"
 zplug "zsh-users/zsh-completions"
 zplug "tarrasch/zsh-mcd"
 zplug "lukechilds/zsh-better-npm-completion"
 zplug "lukechilds/zsh-nvm"
-zplug "mafredri/zsh-async"
-zplug "sindresorhus/pure", nice:10
+zplug "mafredri/zsh-async" # Required by sindresorhus/pure
+zplug "sindresorhus/pure"
 zplug "tarrasch/zsh-bd"
 zplug "zsh-users/zsh-completions"
 zplug "zsh-users/zsh-autosuggestions"
 zplug "plugins/git", from:oh-my-zsh
 zplug "zsh-users/zsh-syntax-highlighting"
 zplug "zsh-users/zsh-history-substring-search", nice:10
+# Other plugins under consideration:
+# zplug "the8/terminal-app.zsh"
+# zplug "tymm/zsh-directory-history"
+# zplug "walesmd/caniuse.plugin.zsh"
 zplug load
 
 
@@ -42,18 +60,21 @@ zplug load
 # Configure history-substring-search
 #
 
-# Map keyboard input up/down to commands
+# Bind "up" and "down" keys
+# Reference https://github.com/zsh-users/zsh-history-substring-search#usage
 
 zmodload zsh/terminfo
 bindkey '^[[A' history-substring-search-up
 bindkey '^[[B' history-substring-search-down
 
-# Remove contiguous dupes from search results
+# Avoid _contiguous_ duplicates in search results
+# NOTE There is a way to also avoid global duplicates as well.
+# Ref https://github.com/zsh-users/zsh-history-substring-search#configuration
+
 # E.g. `> which` with result set:
 #     which foo, which bar, which foo, which foo
 # Would just show:
 #     which foo, which bar, which foo
-# Ref https://github.com/zsh-users/zsh-history-substring-search#configuration
 
 setopt HIST_FIND_NO_DUPS
 
@@ -107,8 +128,8 @@ compinit
 # Configure hub
 #
 
-# Integrate hub commands into git
-# Reference https://github.com/github/hub#aliasing
+# Create an alias that integrates hub command into git
+# Ref https://github.com/github/hub#aliasing
 
 eval "$(hub alias -s)"
 
@@ -126,31 +147,14 @@ alias ..="cd .."
 # System & Misc
 #
 
-HISTFILE=$HOME/.zsh-history
+bindkey -e
+HISTFILE=~/.zsh-history
 HISTSIZE=10000
 SAVEHIST=10000
 setopt beep
-bindkey -e
+setopt autocd
 autoload -U promptinit && promptinit # TODO What is this?
 
 export EDITOR='atom --wait' # TODO remove this
 
 hash -d dir_homebrews=/usr/local/Cellar # TODO What is this?
-
-
-
-#
-# PATH
-#
-
-# NOTE Lower values take precedence since each value is appended.
-
-export PATH=/bin:$PATH
-export PATH=/sbin:$PATH
-export PATH=/usr/bin:$PATH
-export PATH=/usr/sbin:$PATH
-export PATH=/usr/local/bin:$PATH
-export PATH=/usr/local/sbin:$PATH
-export PATH=~/bin:$PATH
-export PATH=~/.local/bin:$PATH
-export PATH=~/Library/Haskell/bin:$PATH # TODO Delete?

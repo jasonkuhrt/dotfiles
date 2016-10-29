@@ -140,6 +140,7 @@ eval "$(hub alias -s)"
 #
 
 alias ..="cd .."
+alias k="k -A"
 
 
 

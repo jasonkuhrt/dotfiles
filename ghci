@@ -1,8 +1,11 @@
 :set -XNoMonomorphismRestriction
 
--- Custom Prompt --
+-- OverloadedStrings is often useful.
+-- :set -XOverloadedStrings
 
--- Examples:
--- :set prompt "\ESC[0;37m%s\n\ESC[1;91mλ \ESC[m"
--- :set prompt "   "
-:set prompt "\n\ESC[0;35m❯   \ESC[m"
+-- Custom Prompt
+-- Color reference: http://unix.stackexchange.com/questions/124407/what-color-codes-can-i-use-in-my-ps1-prompt
+-- NOTE For some reason \033 does not work here but \ESC does.
+
+:set prompt "\n\ESC[38;5;242m%s\n\ESC[1;35m𝝺 \ESC[m"
+

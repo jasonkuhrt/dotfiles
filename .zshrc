@@ -140,6 +140,7 @@ eval "$(hub alias -s)"
 #
 
 alias ..="cd .."
+alias k="k -A"
 
 
 
@@ -155,6 +156,6 @@ setopt beep
 setopt autocd
 autoload -U promptinit && promptinit # TODO What is this?
 
-export EDITOR='atom --wait' # TODO remove this
+export EDITOR="vim"
 
 hash -d dir_homebrews=/usr/local/Cellar # TODO What is this?

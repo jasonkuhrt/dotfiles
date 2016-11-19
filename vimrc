@@ -60,6 +60,8 @@ Plug 'dietsche/vim-lastplace'
 
 " Simplified clipboard functionality for Vim
 
+" TODO This causes m to do what d usually does. I'm not sure I actually want
+" this behaviour...
 Plug 'svermeulen/vim-easyclip'
 
 " Distraction-free writing in Vim

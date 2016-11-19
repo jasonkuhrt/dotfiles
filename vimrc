@@ -1,6 +1,13 @@
 " Environment
 " ===========
-" Put this at top, it affects all later mappings
+
+" Allow opening a new file into buffer while current file in buffer has
+" changes. Reference: http://usevim.com/2012/10/19/vim101-set-hidden
+
+set hidden
+
+" Set leader now because it affects all later mappings
+
 let mapleader =','
 
 " Enable backup files

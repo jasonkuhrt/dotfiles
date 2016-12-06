@@ -35,7 +35,9 @@ source $ZPLUG_HOME/init.zsh
 # Ref https://github.com/zsh-users/zsh-history-substring-search#usage
 
 zplug "supercrabtree/k"
-zplug "felixr/docker-zsh-completion"
+zplug "plugins/docker", from:oh-my-zsh
+zplug "plugins/yarn", from:oh-my-zsh
+zplug "plugins/docker-compose", from:oh-my-zsh
 zplug "zsh-users/zsh-completions"
 zplug "tarrasch/zsh-mcd"
 zplug "lukechilds/zsh-better-npm-completion"
@@ -141,6 +143,8 @@ eval "$(hub alias -s)"
 
 alias ..="cd .."
 alias k="k -A"
+alias d=docker
+alias dc=docker-compose
 
 
 

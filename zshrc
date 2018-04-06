@@ -25,7 +25,10 @@ export PATH=~/Library/Haskell/bin:$PATH # TODO Delete?
 export ZPLUG_HOME=/usr/local/opt/zplug
 source $ZPLUG_HOME/init.zsh
 
-
+# Turn on to avoid every termainl session opened takes an extra 2-3 seconds
+# https://github.com/lukechilds/zsh-nvm#lazy-loading
+# export NVM_LAZY_LOAD=true
+export NVM_AUTO_USE=true
 
 #
 # Use zplug to install plugins
@@ -49,7 +52,7 @@ zplug "zsh-users/zsh-completions"
 zplug "zsh-users/zsh-autosuggestions"
 zplug "plugins/git", from:oh-my-zsh
 zplug "zsh-users/zsh-syntax-highlighting"
-zplug "zsh-users/zsh-history-substring-search", nice:10
+zplug "zsh-users/zsh-history-substring-search", defer:2
 # Other plugins under consideration:
 # zplug "the8/terminal-app.zsh"
 # zplug "tymm/zsh-directory-history"
@@ -145,6 +148,11 @@ alias ..="cd .."
 alias k="k -A"
 alias d=docker
 alias dc=docker-compose
+alias kc=kubectl
+alias tf=terraform
+alias gpr="git pull-request --push"
+alias gci="git issue create"
+alias gi="git issue"
 
 
 

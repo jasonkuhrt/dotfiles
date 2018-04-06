@@ -474,7 +474,7 @@
 			<key>Ramda</key>
 			<dict>
 				<key>date</key>
-				<date>2016-11-27T01:32:32Z</date>
+				<date>2017-03-14T02:33:40Z</date>
 				<key>entry</key>
 				<dict>
 					<key>aliases</key>
@@ -494,7 +494,7 @@
 			<key>React_Native</key>
 			<dict>
 				<key>date</key>
-				<date>2016-11-27T01:37:58Z</date>
+				<date>2017-03-27T23:58:31Z</date>
 				<key>entry</key>
 				<dict>
 					<key>aliases</key>
@@ -523,7 +523,7 @@
 			<key>Redux</key>
 			<dict>
 				<key>date</key>
-				<date>2016-11-27T01:38:00Z</date>
+				<date>2017-03-27T23:58:30Z</date>
 				<key>entry</key>
 				<dict>
 					<key>aliases</key>
@@ -666,8 +666,41 @@
 					<string>Flow</string>
 				</dict>
 			</dict>
+			<key>Jest</key>
+			<dict>
+				<key>date</key>
+				<date>2017-03-14T02:42:01Z</date>
+				<key>entry</key>
+				<dict>
+					<key>aliases</key>
+					<array>
+						<string>Jest</string>
+						<string>React</string>
+						<string>Webpack</string>
+						<string>jQuery</string>
+						<string>CoffeeScript</string>
+						<string>Facebook</string>
+						<string>JavaScript</string>
+						<string>Reactjs</string>
+						<string>UI</string>
+						<string>Unit Test</string>
+					</array>
+					<key>authorLinkHref</key>
+					<string>https://github.com/Kapeli/Dash-User-Contributions/tree/master/docsets/Jest#readme</string>
+					<key>authorLinkText</key>
+					<string>Michael Sharer</string>
+					<key>name</key>
+					<string>Jest</string>
+					<key>platform</key>
+					<string>usercontribJest</string>
+					<key>uniqueIdentifier</key>
+					<string>Jest</string>
+				</dict>
+			</dict>
 		</dict>
 	</dict>
+	<key>DHWebViewIsDark</key>
+	<false/>
 	<key>annotationsAreShown</key>
 	<false/>
 	<key>docsets</key>
@@ -832,6 +865,7 @@
 				<string>~/Library/Application Support/Dash/User Contributed/Ramda/Ramda.docset</string>
 				<string>~/Library/Application Support/Dash/Cheat Sheets/Regular Expressions/Regular_Expressions.docset</string>
 				<string>~/Library/Application Support/Dash/User Contributed/React Native/React_Native.docset</string>
+				<string>~/Library/Application Support/Dash/User Contributed/Jest/Jest.docset</string>
 			</array>
 			<key>name</key>
 			<string>Web</string>

@@ -4,15 +4,15 @@
 
 # NOTE Lower values take precedence since each value is appended.
 
-export PATH=/bin:$PATH # TODO Needed?
-export PATH=/sbin:$PATH  # TODO Needed?
-export PATH=/usr/bin:$PATH  # TODO Needed?
-export PATH=/usr/sbin:$PATH  # TODO Needed?
+# bin directories that come default with the system:
+export PATH=/bin:$PATH
+export PATH=/sbin:$PATH
+export PATH=/usr/bin:$PATH
+export PATH=/usr/sbin:$PATH
+# bin directories for `brew`
 export PATH=/usr/local/bin:$PATH
-export PATH=/usr/local/sbin:$PATH # TODO Needed?
-export PATH=~/bin:$PATH
+export PATH=/usr/local/sbin:$PATH
 export PATH=~/.local/bin:$PATH
-export PATH=~/Library/Haskell/bin:$PATH # TODO Delete?
 
 
 

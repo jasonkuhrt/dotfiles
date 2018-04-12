@@ -45,6 +45,15 @@ noremap <C-t> :NERDTreeToggle<CR>
 " plugins
 " =======
 
+" Automatically install vim-plug itself
+" https://github.com/junegunn/vim-plug/wiki/tips#automatic-installation
+
+if empty(glob('~/.vim/autoload/plug.vim'))
+  silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
+    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+endif
+
 call plug#begin('~/.vim/plugged')
 
 Plug 'tpope/vim-sensible'
@@ -58,12 +67,6 @@ Plug 'tpope/vim-sleuth'
 
 Plug 'dietsche/vim-lastplace'
 
-" Simplified clipboard functionality for Vim
-
-" TODO This causes m to do what d usually does. I'm not sure I actually want
-" this behaviour...
-Plug 'svermeulen/vim-easyclip'
-
 " Distraction-free writing in Vim
 
 Plug 'junegunn/goyo.vim'
@@ -71,6 +74,8 @@ Plug 'junegunn/goyo.vim'
 " Git integration
 
 Plug 'tpope/vim-fugitive'
+
+" Other nice things
 
 Plug 'scrooloose/nerdcommenter'
 Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
@@ -105,8 +110,9 @@ Plug 'fisadev/vim-ctrlp-cmdpalette'
 "Plug 'jonathanfilip/vim-lucius'
 "Plug 'w0ng/vim-hybrid'
 "Plug 'chriskempson/base16-vim'
-Plug 'chriskempson/vim-tomorrow-theme'
-Plug 'vim-scripts/BusyBee'
+" Plug 'chriskempson/vim-tomorrow-theme'
+" Plug 'vim-scripts/BusyBee'
+Plug 'challenger-deep-theme/vim', { 'as': 'challenger-deep' }
 
 
 
@@ -162,6 +168,7 @@ call plug#end()
 " etc.
 
 let g:instant_markdown_autostart = 0
+let g:challenger_deep_termcolors = 16
 
 "Start an external command with a single bang
 
@@ -293,9 +300,7 @@ set wildmode=list:longest
 " - https://github.com/powerline/fonts
 "
 " set guifont=Source\ Code\ Pro:h16
-" set guifont=Menlo:h16
-set guifont=Meslo\ LG\ S\ DZ\ Regular\ for\ Powerline:h16
-"set guifont=Fira\ Mono\ Medium\ for\ Powerline:h16
+set guifont=Menlo:h14
 
 
 " the cursor padding at top/bot of window, prevents cursor from touching window edges
@@ -412,12 +417,19 @@ autocmd! BufWritePost .vimrc source %
 "colorscheme base16-ocean
 "colorscheme hybrid
 "colorscheme busybee
-colorscheme tomorrow-night-blue
+" colorscheme tomorrow-night-blue
+colorscheme challenger_deep
 "colorscheme lucius
 "LuciusDarkHighContrast
 
-" Tweak busybee theme to not have a vsplit at all
-"hi VertSplit 	   guibg=#202020 gui=none ctermfg=238 ctermbg=238
+" Theme Tweaks
+" busybee theme to not have a vsplit at all
+" hi VertSplit 	   guibg=#202020 gui=none ctermfg=238 ctermbg=238
+" Challenger Deep has ugly gutter colours combined with my iterm color
+" settings. So just make things transparent/simple. Reference:
+" https://github.com/challenger-deep-theme/vim
+hi LineNr ctermbg=NONE ctermfg=darkgrey
+hi clear CursorLineNr
 
 " Hide tilde characters on empty screen regions
 
@@ -442,7 +454,9 @@ augroup pencil
   autocmd FileType text            call pencil#init()
 augroup END
 
-
-
 " http://blog.unixphilosopher.com/2015/02/a-more-betterer-autosave-in-vim.html
 autocmd InsertLeave,TextChanged * if expand('%') != '' | update | endif
+
+
+
+

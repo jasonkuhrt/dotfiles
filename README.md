@@ -23,13 +23,19 @@ Use a tiny script to automate linking all configs to their expected locations
 #### Bootstrapping:
 
 * Install `brew` https://brew.sh
+* [Fix `brew` setup on macOS High Sierra](https://stackoverflow.com/a/49060529/499537)
 * Install/Use `zsh` https://rick.cogley.info/post/use-homebrew-zsh-instead-of-the-osx-default
-* `brew install yarn zsh go shellcheck cmake`
+* `brew install yarn zsh go shellcheck cmake ag pre-commit jq watchman mdcat wget`
 * `brew install hub --devel`
 * https://github.com/Valloric/YouCompleteMe#installation
+* http://osxdaily.com/2010/02/26/use-the-tab-key-to-switch-between-dialog-buttons-in-mac-os-x/
+
+## Other goodies to get
+* https://github.com/JohnCoates/Aerial
 
 #### Misc
 
+* [Enable Touch ID for sudo](https://www.imore.com/how-use-sudo-your-mac-touch-id)
 * Do not ask for password every time interacting with remote git repos via
   ssh
 

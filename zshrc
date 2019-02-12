@@ -4,17 +4,21 @@
 
 # NOTE Lower values take precedence since each value is appended.
 
-# bin directories that come default with the system:
+# system defaults
 export PATH=/bin:$PATH
 export PATH=/sbin:$PATH
 export PATH=/usr/bin:$PATH
 export PATH=/usr/sbin:$PATH
-# bin directories for `brew`
+# for various languages
+export PATH=$HOME/go/bin:$PATH
+# for various tools
+export PATH=$HOME/.poetry/bin:$PATH
+# for brew
 export PATH=/usr/local/bin:$PATH
 export PATH=/usr/local/sbin:$PATH
-export PATH=~/.local/bin:$PATH
-
-
+export PATH=$HOME/.local/bin:$PATH
+# for convenience
+export PATH=$HOME/bin:$PATH
 
 #
 # Initialize zplug
@@ -24,11 +28,6 @@ export PATH=~/.local/bin:$PATH
 
 export ZPLUG_HOME=/usr/local/opt/zplug
 source $ZPLUG_HOME/init.zsh
-
-# Turn on to avoid every termainl session opened takes an extra 2-3 seconds
-# https://github.com/lukechilds/zsh-nvm#lazy-loading
-# export NVM_LAZY_LOAD=true
-export NVM_AUTO_USE=true
 
 #
 # Use zplug to install plugins
@@ -44,7 +43,6 @@ zplug "plugins/docker-compose", from:oh-my-zsh
 zplug "zsh-users/zsh-completions"
 zplug "tarrasch/zsh-mcd"
 zplug "lukechilds/zsh-better-npm-completion"
-zplug "lukechilds/zsh-nvm"
 zplug "mafredri/zsh-async" # Required by sindresorhus/pure
 zplug "sindresorhus/pure"
 zplug "tarrasch/zsh-bd"
@@ -53,6 +51,7 @@ zplug "zsh-users/zsh-autosuggestions"
 zplug "plugins/git", from:oh-my-zsh
 zplug "zsh-users/zsh-syntax-highlighting"
 zplug "zsh-users/zsh-history-substring-search", defer:2
+zplug "plugins/z", from:oh-my-zsh
 # Other plugins under consideration:
 # zplug "the8/terminal-app.zsh"
 # zplug "tymm/zsh-directory-history"
@@ -153,6 +152,7 @@ alias tf=terraform
 alias gpr="git pull-request --push"
 alias gci="git issue create"
 alias gi="git issue"
+alias cci="circleci"
 
 
 
@@ -171,3 +171,11 @@ autoload -U promptinit && promptinit # TODO What is this?
 export EDITOR="vim"
 
 hash -d dir_homebrews=/usr/local/Cellar # TODO What is this?
+
+source zshrc.secrets
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/jasonkuhrt/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/jasonkuhrt/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/jasonkuhrt/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/jasonkuhrt/Downloads/google-cloud-sdk/completion.zsh.inc'; fi

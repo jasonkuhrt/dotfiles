@@ -25,7 +25,7 @@ Use a tiny script to automate linking all configs to their expected locations
 * Install `brew` https://brew.sh
 * [Fix `brew` setup on macOS High Sierra](https://stackoverflow.com/a/49060529/499537)
 * Install/Use `zsh` https://rick.cogley.info/post/use-homebrew-zsh-instead-of-the-osx-default
-* `brew install yarn zsh go shellcheck cmake ag pre-commit jq watchman mdcat wget`
+* `brew install yarn zsh go shellcheck cmake ag pre-commit jq watchman mdcat wget fx up`
 * `brew install hub --devel`
 * https://github.com/Valloric/YouCompleteMe#installation
 * http://osxdaily.com/2010/02/26/use-the-tab-key-to-switch-between-dialog-buttons-in-mac-os-x/

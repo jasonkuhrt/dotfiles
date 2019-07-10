@@ -7,6 +7,9 @@
 # -f ...without asking
 # $PWD because a relative source is relative to the _target_.
 
+touch zshrc.secrets
+
+ln -shFf $PWD/zshrc.secrets ~/.zshrc.secrets
 ln -shFf $PWD/zshrc ~/.zshrc
 ln -shFf $PWD/ghci ~/.ghci
 ln -shFf $PWD/vimrc ~/.vimrc

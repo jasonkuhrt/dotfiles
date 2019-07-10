@@ -172,7 +172,7 @@ export EDITOR="vim"
 
 hash -d dir_homebrews=/usr/local/Cellar # TODO What is this?
 
-source zshrc.secrets
+source .zshrc.secrets
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/jasonkuhrt/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/jasonkuhrt/Downloads/google-cloud-sdk/path.zsh.inc'; fi

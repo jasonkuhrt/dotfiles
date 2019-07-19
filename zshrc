@@ -5,20 +5,23 @@
 # NOTE Lower values take precedence since each value is appended.
 
 # system defaults
-export PATH=/bin:$PATH
-export PATH=/sbin:$PATH
-export PATH=/usr/bin:$PATH
-export PATH=/usr/sbin:$PATH
+export PATH="/bin:$PATH"
+export PATH="/sbin:$PATH"
+export PATH="/usr/bin:$PATH"
+export PATH="/usr/sbin:$PATH"
 # for various languages
-export PATH=$HOME/go/bin:$PATH
+export PATH="$HOME/go/bin:$PATH"
+# for brew-installed python3
+export PATH="/usr/local/opt/python/libexec/bin:$PATH"
 # for various tools
-export PATH=$HOME/.poetry/bin:$PATH
+export PATH="$HOME/.poetry/bin:$PATH"
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 # for brew
-export PATH=/usr/local/bin:$PATH
-export PATH=/usr/local/sbin:$PATH
-export PATH=$HOME/.local/bin:$PATH
+export PATH="/usr/local/bin:$PATH"
+export PATH="/usr/local/sbin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 # for convenience
-export PATH=$HOME/bin:$PATH
+export PATH="$HOME/.local/bin:$PATH"
 
 #
 # Initialize zplug
@@ -52,6 +55,8 @@ zplug "plugins/git", from:oh-my-zsh
 zplug "zsh-users/zsh-syntax-highlighting"
 zplug "zsh-users/zsh-history-substring-search", defer:2
 zplug "plugins/z", from:oh-my-zsh
+# tools
+zplug "plugins/kubectl", from:oh-my-zsh
 # Other plugins under consideration:
 # zplug "the8/terminal-app.zsh"
 # zplug "tymm/zsh-directory-history"
@@ -144,15 +149,20 @@ eval "$(hub alias -s)"
 #
 
 alias ..="cd .."
-alias k="k -A"
+alias lsk="k -A"
 alias d=docker
 alias dc=docker-compose
-alias kc=kubectl
+alias k=kubectl
 alias tf=terraform
 alias gpr="git pull-request --push"
 alias gci="git issue create"
 alias gi="git issue"
 alias cci="circleci"
+# kubernetes
+alias kcx="kubectx"
+alias kns="kubens"
+alias kk="kubectl krew"
+alias kla="kubectl logs -l component=app --all-containers --tail 500"
 
 
 
@@ -172,10 +182,39 @@ export EDITOR="vim"
 
 hash -d dir_homebrews=/usr/local/Cellar # TODO What is this?
 
-source .zshrc.secrets
+source ~/.zshrc.secrets
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/jasonkuhrt/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/jasonkuhrt/Downloads/google-cloud-sdk/path.zsh.inc'; fi
 
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/jasonkuhrt/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/jasonkuhrt/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+
+
+#
+# aws-vault
+#
+
+export AWS_VAULT_KEYCHAIN_NAME=login
+
+function av() {
+  # Running aws-vault command starts a subshell, and thus losing
+  # the history of the current shell (because new shells
+  # start from history last saved to disk). See related issue:
+  # https://github.com/99designs/aws-vault/issues/396.
+  # The solution is to flush shell history to file right before.
+  # The solution is zsh specific, and hence the || true guard.
+  fc -W || true
+  unset AWS_VAULT
+  aws-vault exec --assume-role-ttl=60m --session-ttl=12h $@
+}
+
+function avl() {
+  aws-vault login $@
+}
+
+
+#
+# direnv
+#
+eval "$(direnv hook zsh)"

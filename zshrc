@@ -2,7 +2,7 @@
 # Expose directories that contain executables
 #
 
-# NOTE Lower values take precedence since each value is appended.
+# NOTE Lower values take precedence since each value is prepended.
 
 # system defaults
 export PATH="/bin:$PATH"
@@ -11,6 +11,7 @@ export PATH="/usr/bin:$PATH"
 export PATH="/usr/sbin:$PATH"
 # for various languages
 export PATH="$HOME/go/bin:$PATH"
+export PATH="$HOME/.cargo/bin:$PATH"
 # for brew-installed python3
 export PATH="/usr/local/opt/python/libexec/bin:$PATH"
 # for various tools
@@ -22,7 +23,6 @@ export PATH="/usr/local/sbin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 # for convenience
 export PATH="$HOME/.local/bin:$PATH"
-
 #
 # Initialize zplug
 #
@@ -43,6 +43,7 @@ zplug "supercrabtree/k"
 zplug "plugins/docker", from:oh-my-zsh
 zplug "plugins/yarn", from:oh-my-zsh
 zplug "plugins/docker-compose", from:oh-my-zsh
+zplug "plugins/kubectl", from:oh-my-zsh
 zplug "zsh-users/zsh-completions"
 zplug "tarrasch/zsh-mcd"
 zplug "lukechilds/zsh-better-npm-completion"
@@ -149,7 +150,7 @@ eval "$(hub alias -s)"
 #
 
 alias ..="cd .."
-alias lsk="k -A"
+alias lsk="\k -A"
 alias d=docker
 alias dc=docker-compose
 alias k=kubectl
@@ -158,11 +159,14 @@ alias gpr="git pull-request --push"
 alias gci="git issue create"
 alias gi="git issue"
 alias cci="circleci"
+alias grepp="pcregrep"
 # kubernetes
 alias kcx="kubectx"
 alias kns="kubens"
 alias kk="kubectl krew"
+alias kl="kubectl logs --pod-running-timeout=20s --tail=100"
 alias kla="kubectl logs -l component=app --all-containers --tail 500"
+alias kge="kubectl get events --sort-by=.metadata.creationTimestamp"
 
 
 
@@ -217,4 +221,5 @@ function avl() {
 #
 # direnv
 #
+
 eval "$(direnv hook zsh)"

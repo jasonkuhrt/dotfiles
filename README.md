@@ -32,7 +32,7 @@ Use a tiny script to automate linking all configs to their expected locations
 * * `brew tap homebrew/cask-fonts`
 * * `brew cask install font-fira-code`
 * * `brew install zsh hub`
-* * `brew install yarn go shellcheck cmake ag pre-commit jq watchman tree bash mdcat wget fx up direnv macvim`
+* * `brew install yarn go shellcheck cmake ag pre-commit jq watchman tree bash mdcat wget fx up direnv macvim watch gnu-getopt`
 * Setup macOS
 * * [Install Alfred](https://www.alfredapp.com/)
 * * http://osxdaily.com/2010/02/26/use-the-tab-key-to-switch-between-dialog-buttons-in-mac-os-x/

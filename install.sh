@@ -16,3 +16,9 @@ ln -shFf $PWD/vimrc ~/.vimrc
 
 # https://stackoverflow.com/questions/15769615/remove-last-login-message-for-new-tabs-in-terminal
 touch ~/.hushlogin
+
+#
+# Install tools not yet available on brew
+#
+
+wget -qO ~/bin/yj https://github.com/sclevine/yj/releases/download/v4.0.0/yj-macos && chmod +x ~/bin/yj

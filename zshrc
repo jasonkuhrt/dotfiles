@@ -9,6 +9,9 @@ export PATH="/bin:$PATH"
 export PATH="/sbin:$PATH"
 export PATH="/usr/bin:$PATH"
 export PATH="/usr/sbin:$PATH"
+# for brew
+export PATH="/usr/local/bin:$PATH"
+export PATH="/usr/local/sbin:$PATH"
 # for various languages
 export PATH="$HOME/go/bin:$PATH"
 export PATH="$HOME/.cargo/bin:$PATH"
@@ -17,12 +20,9 @@ export PATH="/usr/local/opt/python/libexec/bin:$PATH"
 # for various tools
 export PATH="$HOME/.poetry/bin:$PATH"
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-# for brew
-export PATH="/usr/local/bin:$PATH"
-export PATH="/usr/local/sbin:$PATH"
-export PATH="$HOME/.local/bin:$PATH"
 # for convenience
 export PATH="$HOME/.local/bin:$PATH"
+
 #
 # Initialize zplug
 #

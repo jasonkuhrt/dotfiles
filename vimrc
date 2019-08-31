@@ -84,7 +84,6 @@ Plug 'airblade/vim-gitgutter'
 Plug 'haya14busa/incsearch.vim'
 Plug 'szw/vim-ctrlspace'
 Plug 'reedes/vim-pencil'
-Plug 'Valloric/YouCompleteMe', { 'do': './install.sh' }
 Plug 'Raimondi/delimitMate'
 Plug 'mhinz/vim-startify'
 Plug 'henrik/vim-reveal-in-finder'
@@ -456,7 +455,3 @@ augroup END
 
 " http://blog.unixphilosopher.com/2015/02/a-more-betterer-autosave-in-vim.html
 autocmd InsertLeave,TextChanged * if expand('%') != '' | update | endif
-
-
-
-

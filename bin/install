@@ -1,24 +1,35 @@
 #!/bin/sh
 
-# -s makes symbolic links so that changes to configs in .dotfiles
-#    reflect in wherever else they are linked too.
-# -h prevents following links
-# -F Overwrites...
-# -f ...without asking
-# $PWD because a relative source is relative to the _target_.
+# -s makes symbolic links so that changes to origin propagate
+# -f Overwrite (file only, not folder)
+
+HERE="${BASH_SOURCE%/*}"
 
 touch zshrc.secrets
+mkdir -p "$HOME/.local/bin"
 
-ln -shFf $PWD/zshrc.secrets ~/.zshrc.secrets
-ln -shFf $PWD/zshrc ~/.zshrc
-ln -shFf $PWD/ghci ~/.ghci
-ln -shFf $PWD/vimrc ~/.vimrc
+echo "==> symlinking rc etc. files to home directory"
 
-# https://stackoverflow.com/questions/15769615/remove-last-login-message-for-new-tabs-in-terminal
-touch ~/.hushlogin
+# TODO should be symlinks but that is not working on my machine right now...
+ln -f "$HERE/../zshrc.secrets" "$HOME/.zshrc.secrets"
+ln -f "$HERE/../zshrc" "$HOME/.zshrc"
+ln -f "$HERE/../ghci" "$HOME/.ghci"
+ln -f "$HERE/../vimrc" "$HOME/.vimrc"
 
-#
-# Install tools not yet available on brew
-#
 
-wget -qO ~/bin/yj https://github.com/sclevine/yj/releases/download/v4.0.0/yj-macos && chmod +x ~/bin/yj
+echo "==> Setup hush loginb"
+echo "--> https://stackoverflow.com/questions/15769615/remove-last-login-message-for-new-tabs-in-terminal"
+
+touch "$HOME/.hushlogin"
+
+
+echo "==> Install tools not yet available on brew"
+
+echo "--> yj"
+wget -qO "$HOME/.local/bin/yj" https://github.com/sclevine/yj/releases/download/v4.0.0/yj-macos && chmod +x "$HOME/.local/bin/yj"
+
+echo "==> install rest of tools via brew"
+
+brew tap homebrew/cask-fonts
+brew cask install font-fira-code
+brew install shfmt zsh hub yarn go shellcheck cmake ag pre-commit jq watchman tree bash mdcat wget fx up direnv macvim watch gnu-getopt lsd

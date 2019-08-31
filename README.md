@@ -22,23 +22,20 @@ Use a tiny script to automate linking all configs to their expected locations
 
 #### Bootstrapping:
 
-* [install vscode](https://code.visualstudio.com/download)
+* [Install vscode](https://code.visualstudio.com/download)
 * * [install vscode cli](https://code.visualstudio.com/docs/setup/mac#_launching-from-the-command-line)
 * * [Setup Code Settings Synchronization and download settings](http://shanalikhan.github.io/2015/12/15/Visual-Studio-Code-Sync-Settings.html)
 * [Install `iterm`](https://www.iterm2.com/downloads.html)
 * [Fix `brew` setup on macOS High Sierra](https://stackoverflow.com/a/49060529/499537)
 * [Install/Use `zsh`](https://rick.cogley.info/post/use-homebrew-zsh-instead-of-the-osx-default)
-* [Install `brew`](https://brew.sh) and tools via brew
-* * `brew tap homebrew/cask-fonts`
-* * `brew cask install font-fira-code`
-* * `brew install zsh hub`
-* * `brew install yarn go shellcheck cmake ag pre-commit jq watchman tree bash mdcat wget fx up direnv macvim watch gnu-getopt lsd`
+* [Install `brew`](https://brew.sh)
 * Setup macOS
 * * [Install Alfred](https://www.alfredapp.com/)
 * * http://osxdaily.com/2010/02/26/use-the-tab-key-to-switch-between-dialog-buttons-in-mac-os-x/
 * * [enable key repeat](https://www.howtogeek.com/267463/how-to-enable-key-repeating-in-macos)
 * * https://github.com/JohnCoates/Aerial
 * * [Enable Touch ID for sudo](https://www.imore.com/how-use-sudo-your-mac-touch-id)
+* Run `bin/install`
 
 #### Misc
 * Do not ask for password every time interacting with remote git repos via

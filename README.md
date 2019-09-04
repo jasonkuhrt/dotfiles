@@ -25,6 +25,7 @@ Use a tiny script to automate linking all configs to their expected locations
 * [Install vscode](https://code.visualstudio.com/download)
 * * [install vscode cli](https://code.visualstudio.com/docs/setup/mac#_launching-from-the-command-line)
 * * [Setup Code Settings Synchronization and download settings](http://shanalikhan.github.io/2015/12/15/Visual-Studio-Code-Sync-Settings.html)
+* * [Make the UI more minimal](https://github.com/Microsoft/vscode/issues/46403#issuecomment-523286973)
 * [Install `iterm`](https://www.iterm2.com/downloads.html)
 * [Fix `brew` setup on macOS High Sierra](https://stackoverflow.com/a/49060529/499537)
 * [Install/Use `zsh`](https://rick.cogley.info/post/use-homebrew-zsh-instead-of-the-osx-default)

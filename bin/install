@@ -23,13 +23,13 @@ echo "--> https://stackoverflow.com/questions/15769615/remove-last-login-message
 touch "$HOME/.hushlogin"
 
 
-echo "==> Install tools not yet available on brew"
 
-echo "--> yj"
-wget -qO "$HOME/.local/bin/yj" https://github.com/sclevine/yj/releases/download/v4.0.0/yj-macos && chmod +x "$HOME/.local/bin/yj"
 
-echo "==> install rest of tools via brew"
-
+echo "==> install tools via brew"
 brew tap homebrew/cask-fonts
 brew cask install font-fira-code
-brew install shfmt zsh hub yarn go shellcheck cmake ag pre-commit jq watchman tree bash mdcat wget fx up direnv macvim watch gnu-getopt lsd
+brew install shfmt zsh hub yarn go shellcheck cmake ag pre-commit jq watchman tree bash mdcat wget fx up direnv macvim watch gnu-getopt lsd zplug z
+
+echo "==> Install other tools not yet available on brew"
+echo "--> yj"
+wget -qO "$HOME/.local/bin/yj" https://github.com/sclevine/yj/releases/download/v4.0.0/yj-macos && chmod +x "$HOME/.local/bin/yj"

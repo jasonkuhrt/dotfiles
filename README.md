@@ -12,6 +12,7 @@ My personal system setup script and configuration files
 - [Install & Use `zsh`](https://rick.cogley.info/post/use-homebrew-zsh-instead-of-the-osx-default)
 - [Install `brew`](https://brew.sh)
 - Setup macOS
+
   - [Enable key repeat](https://stackoverflow.com/questions/39972335/how-do-i-press-and-hold-a-key-and-have-it-repeat-in-vscode)
   - [Install Alfred](https://www.alfredapp.com/)
   - http://osxdaily.com/2010/02/26/use-the-tab-key-to-switch-between-dialog-buttons-in-mac-os-x/
@@ -36,3 +37,4 @@ My personal system setup script and configuration files
 - [PragmataPro](https://www.fsd.it/shop/fonts/pragmatapro/) (\$)
 - [Monoid](https://github.com/larsenwork/monoid)
 - [Source Code Pro](https://github.com/adobe-fonts/source-code-pro)
+- [Cascadia Code](https://github.com/microsoft/cascadia-code)

@@ -9,11 +9,13 @@ My personal system setup script and configuration files
   - [Setup Code Settings Synchronization and download settings](http://shanalikhan.github.io/2015/12/15/Visual-Studio-Code-Sync-Settings.html)
   - [Make the UI more minimal](https://github.com/Microsoft/vscode/issues/46403#issuecomment-523286973)
 - [Install `iterm`](https://www.iterm2.com/downloads.html)
+- [Install runjs](https://runjs.dev)
 - [Install & Use `zsh`](https://rick.cogley.info/post/use-homebrew-zsh-instead-of-the-osx-default)
 - [Install `brew`](https://brew.sh)
 - Setup macOS
 
   - [Enable key repeat](https://stackoverflow.com/questions/39972335/how-do-i-press-and-hold-a-key-and-have-it-repeat-in-vscode)
+  - [Disable double space period](http://osxdaily.com/2019/03/27/disable-period-typing-shortcut-mac/)
   - [Install Alfred](https://www.alfredapp.com/)
   - http://osxdaily.com/2010/02/26/use-the-tab-key-to-switch-between-dialog-buttons-in-mac-os-x/
   - [enable key repeat](https://www.howtogeek.com/267463/how-to-enable-key-repeating-in-macos)

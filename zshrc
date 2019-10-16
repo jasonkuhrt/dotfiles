@@ -221,3 +221,18 @@ function avl() {
 #
 
 eval "$(direnv hook zsh)"
+
+
+#
+# misc
+#
+
+# resolve mtools not found error when using mcd
+# https://unix.stackexchange.com/questions/496379/treat-command-like-another-for-completion-purposes
+#
+compdefas () {
+  if (($+_comps[$1])); then
+    compdef $_comps[$1] ${^@[2,-1]}=$1
+  fi
+}
+compdefas mkdir mcd

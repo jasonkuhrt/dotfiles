@@ -2,28 +2,24 @@
 
 # -f Overwrite (file only, not folder)
 
-HERE="${BASH_SOURCE%/*}"
+HERE=$(pwd)
 
 mkdir -p "$HOME/.local/bin"
 
 echo "==> symlinking rc etc. files to home directory"
 
-ln -f "$HERE/../ghci" "$HOME/.ghci"
+ln -f "$HERE/ghci" "$HOME/.ghci"
 
 echo "==> Setup hush loginb"
 echo "--> https://stackoverflow.com/questions/15769615/remove-last-login-message-for-new-tabs-in-terminal"
 touch "$HOME/.hushlogin"
 
 
-source "$HERE/install_fish"
-source "$HERE/install_vim"
+source "$HERE/bin/install_fish"
+source "$HERE/bin/install_vim"
 
 
 echo "==> install tools via brew"
 brew tap homebrew/cask-fonts
 brew cask install font-fira-code
-brew install shfmt fish gh yarn go shellcheck cmake ag pre-commit jq watchman tree bash mdcat wget fx up direnv watch gnu-getopt lsd fd bat
-
-echo "==> Install other tools not yet available on brew"
-echo "--> yj"
-wget -qO "$HOME/.local/bin/yj" https://github.com/sclevine/yj/releases/download/v4.0.0/yj-macos && chmod +x "$HOME/.local/bin/yj"
+brew install shfmt fish gh go shellcheck cmake ag pre-commit jq watchman tree bash mdcat wget fx up direnv watch gnu-getopt lsd fd bat yj

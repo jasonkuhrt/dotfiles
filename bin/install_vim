@@ -1,8 +1,8 @@
 #!/bin/sh
 
-HERE="${BASH_SOURCE%/*}"
+HERE=$(pwd)
 
 echo "==> Installing vim stuff"
 
 # -f Overwrite (file only, not folder)
-ln -f "$HERE/../vim/vimrc" "$HOME/.vimrc"
+ln -f "$HERE/vim/vimrc" "$HOME/.vimrc"

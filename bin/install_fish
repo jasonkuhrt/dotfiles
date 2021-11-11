@@ -1,0 +1,13 @@
+#!/bin/sh
+
+HERE="${BASH_SOURCE%/*}"
+
+touch "fish/config.secrets.fish"
+mkdir -p "$HOME/.local/bin"
+
+echo "==> installing fish stuff"
+
+# -f Overwrite (file only, not folder)
+ln -f "$HERE/../fish/config.fish" "$HOME/.config/fish/config.fish"
+ln -f "$HERE/../fish/fish_plugins" "$HOME/.config/fish/fish_plugins"
+ln -f "$HERE/../fish/config.secrets.fish" "$HOME/.config/fish/config.secrets.fish"

@@ -12,6 +12,8 @@ direnv hook fish | source
 
 ## Git
 
+
+
 alias ga='git add'
 alias gaa='git add -A'
 alias gs='git status'
@@ -61,4 +63,19 @@ if test -d /home/debian
 
     # Lang Setup (for man)
     set LC_CTYPE "en_US.UTF-8"
+end
+
+
+# Helpers
+
+function mcd --description "Create a directory and set CWD"
+    command mkdir $argv
+    if test $status = 0
+        switch $argv[(count $argv)]
+            case '-*'
+            case '*'
+                cd $argv[(count $argv)]
+                return
+        end
+    end
 end

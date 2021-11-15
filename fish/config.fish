@@ -14,6 +14,7 @@ direnv hook fish | source
 
 alias g='git'
 alias ga='git add'
+alias gb='git branch --format=\'%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(contents:subject) %(color:green)(%(committerdate:relative)) [%(authorname)]\' --sort=-committerdate'
 alias gaa='git add -A'
 alias gs='git status'
 alias gst='git status'

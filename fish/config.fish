@@ -12,8 +12,7 @@ direnv hook fish | source
 
 ## Git
 
-
-
+alias g='git'
 alias ga='git add'
 alias gaa='git add -A'
 alias gs='git status'

@@ -22,4 +22,4 @@ source "$HERE/bin/install_vim"
 echo "==> install tools via brew"
 brew tap homebrew/cask-fonts
 brew cask install font-fira-code
-brew install shfmt fish gh go shellcheck cmake ag pre-commit jq watchman tree bash mdcat wget fx up direnv watch gnu-getopt lsd fd bat yj bottom xh
+brew install shfmt fish gh go shellcheck cmake ag pre-commit jq watchman tree bash mdcat wget fx up direnv watch gnu-getopt lsd fd bat yj bottom xh git

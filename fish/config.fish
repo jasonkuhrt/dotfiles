@@ -79,3 +79,6 @@ function mcd --description "Create a directory and set CWD"
         end
     end
 end
+
+# https://fishshell.com/docs/current/faq.html#how-do-i-change-the-greeting-message
+set -U fish_greeting ""

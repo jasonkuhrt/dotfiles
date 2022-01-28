@@ -30,6 +30,8 @@ set EDITOR vim
 
 direnv hook fish | source
 
+fnm env --use-on-cd | source
+
 # Use ag to filter out git ignored files from fzf results
 
 set FZF_DEFAULT_COMMAND 'ag -g ""'
@@ -98,4 +100,3 @@ function mcd --description "Create a directory and set CWD"
         end
     end
 end
-

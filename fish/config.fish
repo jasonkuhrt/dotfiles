@@ -30,6 +30,7 @@ set EDITOR vim
 
 direnv hook fish | source
 
+# TODO Bring this back, it does not seem to work.
 fnm env --use-on-cd | source
 
 # Use ag to filter out git ignored files from fzf results
@@ -83,6 +84,7 @@ alias dc="docker-compose"
 alias k="kubectl"
 alias tf="terraform"
 alias grepp="pcregrep"
+alias p="pulumi"
 
 
 

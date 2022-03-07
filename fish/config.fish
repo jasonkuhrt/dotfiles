@@ -9,13 +9,13 @@ end
 ## --------------
 
 if test -d /home/debian
-    set PATH "$PATH:/home/debian/.linuxbrew/bin"
+    set --export PATH "$PATH:/home/debian/.linuxbrew/bin"
 
     # set NIX_LINK $HOME/.nix-profile
     # set PATH "$PATH:$NIX_LINK/bin"
 
     # Lang Setup (for man)
-    set LC_CTYPE "en_US.UTF-8"
+    set --export LC_CTYPE "en_US.UTF-8"
 end
 
 # Secrets
@@ -26,7 +26,7 @@ source ~/.config/fish/config.secrets.fish
 # Misc
 # ====
 
-set EDITOR vim
+set --export EDITOR vim
 
 direnv hook fish | source
 
@@ -35,10 +35,10 @@ fnm env --use-on-cd | source
 
 # Use ag to filter out git ignored files from fzf results
 
-set FZF_DEFAULT_COMMAND 'ag -g ""'
+set --export FZF_DEFAULT_COMMAND 'ag -g ""'
 
 # https://fishshell.com/docs/current/faq.html#how-do-i-change-the-greeting-message
-set -U fish_greeting ""
+set --universal fish_greeting ""
 
 # Aliases
 # =======

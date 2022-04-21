@@ -18,6 +18,7 @@ touch "$HOME/.hushlogin"
 source "$HERE/bin/install_fish"
 source "$HERE/bin/install_vim"
 source "$HERE/bin/install_fonts"
+source "$HERE/bin/install_misc"
 
 echo "==> install tools via brew"
 brew install shfmt fish gh go shellcheck cmake ag pre-commit jq watchman tree bash mdcat wget fx up direnv watch gnu-getopt lsd fd bat yj bottom xh git fnm

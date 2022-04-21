@@ -1,0 +1,3 @@
+echo "==> Config gh cli"
+
+gh config set git_protocol ssh

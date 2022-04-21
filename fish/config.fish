@@ -8,14 +8,11 @@ end
 ## Debian Machine
 ## --------------
 
-if test -d /home/debian
-    set --export PATH "$PATH:/home/debian/.linuxbrew/bin"
-
-    # set NIX_LINK $HOME/.nix-profile
-    # set PATH "$PATH:$NIX_LINK/bin"
-
-    # Lang Setup (for man)
-    set --export LC_CTYPE "en_US.UTF-8"
+switch (uname)
+    case Linux
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        # Lang Setup (for man)
+        set --export LC_CTYPE "en_US.UTF-8"
 end
 
 # Secrets

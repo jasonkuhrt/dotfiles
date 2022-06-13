@@ -27,8 +27,15 @@ set --export EDITOR vim
 
 direnv hook fish | source
 
-# TODO Bring this back, it does not seem to work.
-fnm env --use-on-cd | source
+# The official suggestion doesn't work inFish for some reason
+# More info here about the problem and workaround: https://github.com/Schniz/fnm/issues/356#issuecomment-1010816655
+# fnm env --use-on-cd | source
+# if type fnm -q
+#  fnm env --shell fish --use-on-cd | source
+#  fnm completions --shell fish | source
+# end
+
+
 
 # Use ag to filter out git ignored files from fzf results
 
@@ -81,7 +88,9 @@ alias dc="docker-compose"
 alias k="kubectl"
 alias tf="terraform"
 alias grepp="pcregrep"
-alias p="pulumi"
+alias p="pnpm"
+alias ps="pnpm --silent"
+alias f="flyctl"
 
 
 
@@ -99,3 +108,10 @@ function mcd --description "Create a directory and set CWD"
         end
     end
 end
+
+set --export GITHUB_HANDLE jasonkuhrt
+
+fish_add_path /home/linuxbrew/.linuxbrew/opt/node@16/bin
+
+set -gx LDFLAGS "-L/home/linuxbrew/.linuxbrew/opt/node@16/lib"
+set -gx CPPFLAGS "-I/home/linuxbrew/.linuxbrew/opt/node@16/include"

@@ -5,12 +5,12 @@ end
 # PATH
 # ====
 
-## Debian Machine
-## --------------
+## Remote Dev Machine
+## ------------------
 
 switch (uname)
     case Linux
-        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        eval "(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
         # Lang Setup (for man)
         set --export LC_CTYPE "en_US.UTF-8"
 end

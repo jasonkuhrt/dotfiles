@@ -2,7 +2,7 @@
 
 # HERE="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # HERE="$(${BASH_SOURCE[0]})"
-HERE=$(pwd)
+set HERE $(pwd)
 
 echo "==> Install Fisher"
 curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher
@@ -23,4 +23,3 @@ ln -f "$HERE/fish/config.fish" "$HOME/.config/fish/config.fish"
 ln -f "$HERE/fish/fish_plugins" "$HOME/.config/fish/fish_plugins"
 ln -f "$HERE/fish/config.secrets.fish" "$HOME/.config/fish/config.secrets.fish"
 # ln -f "$HERE/fish/conf.d/fnm.fish" "$HOME/.config/fish/conf.d/fnm.fish"
-

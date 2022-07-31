@@ -13,6 +13,7 @@ My personal system setup script and configuration files
 - [Install `fish`](https://fishshell.com)
 - [Install `fisher`](https://github.com/jorgebucaran/fisher)
 - [Install `brew`](https://brew.sh)
+- [Make Fish the default shell](https://gist.github.com/gagarine/cf3f65f9be6aa0e105b184376f765262?permalink_comment_id=3960962#gistcomment-3960962)
 - [life-commit](https://github.com/ByronHsu/life-commit) for journaling ish
 - Node development
   - [emma-cli](https://github.com/maticzav/emma-cli) for better npm package discovery

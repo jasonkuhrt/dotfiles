@@ -27,9 +27,10 @@ set --export EDITOR vim
 
 direnv hook fish | source
 
-# The official suggestion doesn't work inFish for some reason
+# The official suggestion doesn't work in Fish for some reason
 # More info here about the problem and workaround: https://github.com/Schniz/fnm/issues/356#issuecomment-1010816655
 # fnm env --use-on-cd | source
+fnm env | source
 # if type fnm -q
 #  fnm env --shell fish --use-on-cd | source
 #  fnm completions --shell fish | source

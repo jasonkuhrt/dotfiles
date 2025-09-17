@@ -40,7 +40,7 @@ autocmd BufWinLeave * silent! mkview
 autocmd BufWinEnter * silent! loadview
 
 
-noremap <C-t> :NERDTreeToggle<CR>
+" noremap <C-t> :NERDTreeToggle<CR>
 
 " plugins
 " =======
@@ -48,45 +48,45 @@ noremap <C-t> :NERDTreeToggle<CR>
 " Automatically install vim-plug itself
 " https://github.com/junegunn/vim-plug/wiki/tips#automatic-installation
 
-if empty(glob('~/.vim/autoload/plug.vim'))
-  silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
-    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
-endif
+" if empty(glob('~/.vim/autoload/plug.vim'))
+"   silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
+"     \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+"   autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+" endif
 
-call plug#begin('~/.vim/plugged')
+" call plug#begin('~/.vim/plugged')
 
-Plug 'tpope/vim-sensible'
-Plug 'tpope/vim-repeat'
+" Plug 'tpope/vim-sensible'
+" Plug 'tpope/vim-repeat'
 
 " Heuristically set buffer options
 
-Plug 'tpope/vim-sleuth'
+" Plug 'tpope/vim-sleuth'
 
 " Intelligently reopen files where you left off
 
-Plug 'dietsche/vim-lastplace'
+" Plug 'dietsche/vim-lastplace'
 
 " Distraction-free writing in Vim
 
-Plug 'junegunn/goyo.vim'
+" Plug 'junegunn/goyo.vim'
 
 " Git integration
 
-Plug 'tpope/vim-fugitive'
+" Plug 'tpope/vim-fugitive'
 
 " Other nice things
 
-Plug 'scrooloose/nerdcommenter'
-Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
-Plug 'suan/vim-instant-markdown'
-Plug 'airblade/vim-gitgutter'
-Plug 'haya14busa/incsearch.vim'
-Plug 'szw/vim-ctrlspace'
-Plug 'reedes/vim-pencil'
-Plug 'Raimondi/delimitMate'
-Plug 'mhinz/vim-startify'
-Plug 'henrik/vim-reveal-in-finder'
+" Plug 'scrooloose/nerdcommenter'
+" Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
+" Plug 'suan/vim-instant-markdown'
+" Plug 'airblade/vim-gitgutter'
+" Plug 'haya14busa/incsearch.vim'
+" Plug 'szw/vim-ctrlspace'
+" Plug 'reedes/vim-pencil'
+" Plug 'Raimondi/delimitMate'
+" Plug 'mhinz/vim-startify'
+" Plug 'henrik/vim-reveal-in-finder'
 "Plug 'EinfachToll/DidYouMean'
 
 " Improve fuzzy completion for commands. There was a discussion about this
@@ -94,8 +94,8 @@ Plug 'henrik/vim-reveal-in-finder'
 " Another option mentioned was paradigm/SkyBison. A UX that was referenced was
 " how emacs handles command input.
 
-Plug 'ctrlpvim/ctrlp.vim'
-Plug 'fisadev/vim-ctrlp-cmdpalette'
+" Plug 'ctrlpvim/ctrlp.vim'
+" Plug 'fisadev/vim-ctrlp-cmdpalette'
 
 
 
@@ -111,7 +111,7 @@ Plug 'fisadev/vim-ctrlp-cmdpalette'
 "Plug 'chriskempson/base16-vim'
 " Plug 'chriskempson/vim-tomorrow-theme'
 " Plug 'vim-scripts/BusyBee'
-Plug 'challenger-deep-theme/vim', { 'as': 'challenger-deep' }
+" Plug 'challenger-deep-theme/vim', { 'as': 'challenger-deep' }
 
 
 
@@ -119,11 +119,11 @@ Plug 'challenger-deep-theme/vim', { 'as': 'challenger-deep' }
 " plugins / language
 " ------------------
 
-Plug 'gabrielelana/vim-markdown'
-Plug 'pangloss/vim-javascript'
-Plug 'digitaltoad/vim-jade'
-Plug 'scrooloose/syntastic'
-Plug 'sheerun/vim-polyglot'
+" Plug 'gabrielelana/vim-markdown'
+" Plug 'pangloss/vim-javascript'
+" Plug 'digitaltoad/vim-jade'
+" Plug 'scrooloose/syntastic'
+" Plug 'sheerun/vim-polyglot'
 
 " plugins / to-consider
 " ---------------------
@@ -156,7 +156,7 @@ Plug 'sheerun/vim-polyglot'
 " haya14busa/vim-asterisk
 " gabesoft/vim-ags
 
-call plug#end()
+" all plug#end()
 
 "
 " Plugin settings suan/vim-instant-markdown
@@ -166,8 +166,8 @@ call plug#end()
 " it has its own workflow of tracking file changes and updating the live site
 " etc.
 
-let g:instant_markdown_autostart = 0
-let g:challenger_deep_termcolors = 16
+" let g:instant_markdown_autostart = 0
+" let g:challenger_deep_termcolors = 16
 
 "Start an external command with a single bang
 
@@ -177,9 +177,9 @@ nnoremap ! :!
 " =========
 
 " https://github.com/svermeulen/vim-easyclip#options
-let g:EasyClipAutoFormat=1
-let g:EasyClipShareYanks=1
-let g:EasyClipShareYanksDirectory='$HOME/.vim'
+" let g:EasyClipAutoFormat=1
+" let g:EasyClipShareYanks=1
+" let g:EasyClipShareYanksDirectory='$HOME/.vim'
 
 
 " https://github.com/svermeulen/vim-easyclip#persistent-yank-history-and-sharing-clipboard-between-concurrent-vim-instances
@@ -194,11 +194,11 @@ set clipboard=unnamed
 " key-bindings
 " ============
 
-" Bracket match using tab
+" Bracket match using w
 
-map <tab> %
+map w %
 
-" Easier and Faster <Esc>
+" Easier <Esc>
 
 inoremap kj <Esc>
 cnoremap kj <Esc>
@@ -208,8 +208,8 @@ cnoremap kj <Esc>
 "
 " It is suboptimal but the best option right now seemingly. E.g. see my GH Issue #6.
 
-map ; :
-map ;; :CtrlPCmdPalette<CR>
+" map ; :
+" map ;; :CtrlPCmdPalette<CR>
 
 " Enable this if we choose to automatically execute the command. The problem
 " with it right now is that it cannot work with any command that accepts
@@ -224,8 +224,8 @@ nnoremap U <C-r>
 
 
 
-" movement / basic
-" ================
+" movement:basic
+" ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 " Move to line start
 
@@ -250,8 +250,8 @@ vnoremap K gg
 
 
 
-" moveent / window
-" ====================================================================================
+" movement:window
+" ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 nnoremap <C-h> <C-w>h
 nnoremap <C-j> <C-w>j
@@ -259,29 +259,9 @@ nnoremap <C-k> <C-w>k
 nnoremap <C-l> <C-w>l
 
 " When moving to last line, center screen on that last line
-
 nnoremap G G zz
 
 
-
-" movement / cursor
-" =================
-
-" move current line to top
-
-nnoremap zk zt
-
-" move current line to bottom
-
-nnoremap zj zb
-
-
-
-" neovim-defaults
-" ===============
-" TODO Delete these once https://github.com/neovim/neovim/issues/276 resolved
-
-set wildmode=list:longest
 
 
 
@@ -329,12 +309,13 @@ if has("gui_macvim")
   augroup cursorline
 endif
 
+" TODO: remove? we probably don't need this anymore
 " Disable scrollbars in graphical environments
 
-set guioptions-=r
-set guioptions-=R
-set guioptions-=l
-set guioptions-=L
+" set guioptions-=r
+" set guioptions-=R
+" set guioptions-=l
+" set guioptions-=L
 
 
 
@@ -397,11 +378,6 @@ nnoremap R :Replace
 set gdefault
 
 
-" Ensure Makefiles are indented with tabs
-
-autocmd FileType makefile setlocal noexpandtab
-autocmd FileType make setlocal noexpandtab
-
 
 
 
@@ -417,7 +393,7 @@ autocmd! BufWritePost .vimrc source %
 "colorscheme hybrid
 "colorscheme busybee
 " colorscheme tomorrow-night-blue
-colorscheme challenger_deep
+" colorscheme challenger_deep
 "colorscheme lucius
 "LuciusDarkHighContrast
 
@@ -427,31 +403,31 @@ colorscheme challenger_deep
 " Challenger Deep has ugly gutter colours combined with my iterm color
 " settings. So just make things transparent/simple. Reference:
 " https://github.com/challenger-deep-theme/vim
-hi LineNr ctermbg=NONE ctermfg=darkgrey
-hi clear CursorLineNr
+" hi LineNr ctermbg=NONE ctermfg=darkgrey
+" hi clear CursorLineNr
 
 " Hide tilde characters on empty screen regions
 
 hi NonText guifg=bg ctermfg=black
 
 
-if executable("ag")
-  let g:ctrlspace_glob_command = 'ag -l --nocolor -g ""'
-endif
+"if executable("ag")
+" let g:ctrlspace_glob_command = 'ag -l --nocolor -g ""'
+"endif
 
-let g:syntastic_javascript_checkers = ['eslint']
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
+"let g:syntastic_javascript_checkers = ['eslint']
+"let g:syntastic_check_on_open = 1
+"let g:syntastic_check_on_wq = 0
 
-nnoremap <space> :Goyo<CR>
-let g:goyo_margin_top=2
-let g:goyo_margin_bottom=0
+"nnoremap <space> :Goyo<CR>
+"let g:goyo_margin_top=2
+"let g:goyo_margin_bottom=0
 
-augroup pencil
-  autocmd!
-  autocmd FileType markdown,mkd,md call pencil#init()
-  autocmd FileType text            call pencil#init()
-augroup END
+"augroup pencil
+" autocmd!
+" autocmd FileType markdown,mkd,md call pencil#init()
+" autocmd FileType text            call pencil#init()
+"augroup END
 
 " http://blog.unixphilosopher.com/2015/02/a-more-betterer-autosave-in-vim.html
-autocmd InsertLeave,TextChanged * if expand('%') != '' | update | endif
+" autocmd InsertLeave,TextChanged * if expand('%') != '' | update | endif

@@ -44,3 +44,4 @@ My personal system setup script and configuration files
 - [Source Code Pro](https://github.com/adobe-fonts/source-code-pro)
 - [Cascadia Code](https://github.com/microsoft/cascadia-code)
 - [MesloLGS NF](https://github.com/IlanCosman/tide#meslo-nerd-font)
+- [Monaspace](https://github.com/githubnext/monaspace)

@@ -57,7 +57,6 @@ alias gla='git log --oneline --decorate --graph --all'
 alias pnx='pnpm nx'
 alias gw='git worktree'
 alias serena 'uv run --directory /Users/jasonkuhrt/projects/oraios/serena serena'
-alias claudia '/Users/jasonkuhrt/projects/getAsterisk/claudia/src-tauri/target/release/claudia'
 alias ccusage 'npx ccusage@latest'
 alias ccmonitor 'claude-monitor --plan max20'
 

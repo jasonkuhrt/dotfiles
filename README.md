@@ -1,6 +1,7 @@
 # dotfiles
 
 ```sh
+mkdir -p ~/projects/jasonkuhrt
 git clone https://github.com/jasonkuhrt/dotfiles.git ~/projects/jasonkuhrt/dotfiles
 ~/projects/jasonkuhrt/dotfiles/bin/sync
 ```

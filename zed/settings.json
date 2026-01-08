@@ -27,7 +27,6 @@
   "show_signature_help_after_edits": false,
   "context_servers": {
     // Requires GITHUB_PERSONAL_ACCESS_TOKEN in environment (set in fish secrets)
-    // Launch Zed from terminal for env vars to be inherited
     "github": {
       "command": "docker",
       "args": [

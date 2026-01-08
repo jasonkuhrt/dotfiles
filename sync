@@ -219,7 +219,6 @@ ensure_real_dir "$HOME/.config/zed" "$HERE/zed"
 link_file "$HERE/zed/settings.json" "$HOME/.config/zed/settings.json" "zed/settings.json"
 link_file "$HERE/zed/keymap.json" "$HOME/.config/zed/keymap.json" "zed/keymap.json"
 link_file "$HERE/zed/tasks.json" "$HOME/.config/zed/tasks.json" "zed/tasks.json"
-link_file "$HERE/zed/dprint-wrapper.sh" "$HOME/.config/zed/dprint-wrapper.sh" "zed/dprint-wrapper.sh"
 link_file "$HERE/zed/toggle-chore-files.sh" "$HOME/.config/zed/toggle-chore-files.sh" "zed/toggle-chore-files.sh"
 link_subdir "$HERE/zed/snippets" "$HOME/.config/zed/snippets" "zed/snippets"
 

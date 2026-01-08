@@ -550,8 +550,8 @@
       "prettier": { "allowed": false },
       "formatter": {
         "external": {
-          "command": "/Users/jasonkuhrt/.config/zed/dprint-wrapper.sh",
-          "arguments": ["{buffer_path}"]
+          "command": "npx",
+          "arguments": ["dprint", "fmt", "--stdin", "json"]
         }
       }
     },

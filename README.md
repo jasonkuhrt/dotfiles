@@ -30,7 +30,6 @@ cd ~/projects/jasonkuhrt/dotfiles && ./sync
 ~/.config/zed/keymap.json          →  ./zed/keymap.json
 ~/.config/zed/tasks.json           →  ./zed/tasks.json
 ~/.config/zed/snippets/            →  ./zed/snippets/
-~/.config/zed/dprint-wrapper.sh    →  ./zed/dprint-wrapper.sh
 ~/.config/zed/toggle-chore-files.sh →  ./zed/toggle-chore-files.sh
 
 # Ghostty

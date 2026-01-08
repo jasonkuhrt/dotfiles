@@ -40,6 +40,7 @@ brew "watchman"     # File watcher
 brew "wget"
 brew "xh"           # Better curl/httpie
 brew "yj"           # YAML/JSON/TOML converter
+brew "pnpm"         # Fast package manager
 
 # System Tools
 brew "dockutil"     # Manage Dock items

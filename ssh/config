@@ -9,3 +9,12 @@ Host *
   AddKeysToAgent yes
   UseKeychain yes
   IdentityFile ~/.ssh/id_ed25519
+
+  # Connection multiplexing (faster repeated connections)
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%r@%h-%p
+  ControlPersist 600
+
+  # Keep connections alive
+  ServerAliveInterval 60
+  ServerAliveCountMax 3

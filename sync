@@ -238,6 +238,7 @@ link_file "$HERE/nvim/init.vim" "$HOME/.config/nvim/init.vim" "nvim/init.vim"
 header "Config Files"
 
 link_file "$HERE/ssh/config" "$HOME/.ssh/config" "ssh/config"
+mkdir -p "$HOME/.ssh/sockets"  # for ControlMaster multiplexing
 
 # Add GitHub's SSH host keys (avoid authenticity prompt)
 ensure_in_file "github.com" "$HOME/.ssh/known_hosts" \

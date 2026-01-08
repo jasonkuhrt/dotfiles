@@ -72,6 +72,17 @@ Re-run `./sync` when:
 
 - Use `./sync` not `sync` — there's a system `/bin/sync` command that shadows it
 
+## Notes
+
+### Why dprint is installed via pnpm instead of Homebrew
+
+dprint is installed as a pnpm global package rather than via Homebrew so that Zed can use `pnpm exec dprint` which:
+
+1. **Prefers local**: Uses project-local dprint if installed (`node_modules/.bin/dprint`)
+2. **Falls back to global**: Uses pnpm global dprint if no local version exists
+
+This means projects can pin their own dprint version while still having a global fallback. The Homebrew and npm versions are identical (same Rust binary), so there's no difference in functionality.
+
 ## Manual Setup (after sync)
 
 Things that can't be fully automated:

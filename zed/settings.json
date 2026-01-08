@@ -539,7 +539,7 @@
       "soft_wrap": "none",
       "formatter": {
         "external": {
-          "command": "dprint",
+          "command": "/Users/jasonkuhrt/.config/zed/dprint-wrapper.sh",
           "arguments": ["fmt", "--stdin", "markdown"]
         }
       }
@@ -584,12 +584,8 @@
       "formatter": [
         {
           "external": {
-            "command": "dprint",
-            "arguments": [
-              "fmt",
-              "--stdin",
-              "{buffer_path}"
-            ]
+            "command": "pnpm",
+            "arguments": ["exec", "dprint", "fmt", "--stdin", "{buffer_path}"]
           }
         },
         {
@@ -613,12 +609,8 @@
       "formatter": [
         {
           "external": {
-            "command": "dprint",
-            "arguments": [
-              "fmt",
-              "--stdin",
-              "{buffer_path}"
-            ]
+            "command": "pnpm",
+            "arguments": ["exec", "dprint", "fmt", "--stdin", "{buffer_path}"]
           }
         },
         {

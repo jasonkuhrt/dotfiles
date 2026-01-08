@@ -4,7 +4,6 @@ tap "planetscale/tap"
 # CLI Tools
 brew "ag"           # The Silver Searcher - fast code search
 brew "deno"         # Deno runtime
-brew "dprint"       # Code formatter
 brew "fzf"          # Fuzzy finder
 brew "git-delta"    # Better git diff
 brew "glow"         # Markdown renderer

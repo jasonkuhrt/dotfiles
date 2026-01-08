@@ -26,8 +26,16 @@
   "disable_ai": false,
   "show_signature_help_after_edits": false,
   "context_servers": {
-    // NOTE: GitHub token must be set locally in ~/.config/zed/settings.local.json
-    // "mcp-server-github": { "settings": { "github_personal_access_token": "..." } }
+    // Requires GITHUB_PERSONAL_ACCESS_TOKEN in environment (set in fish secrets)
+    // Launch Zed from terminal for env vars to be inherited
+    "github": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-e", "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "ghcr.io/github/github-mcp-server"
+      ]
+    }
   },
   "agent": {
     // "inline_assistant_model": {

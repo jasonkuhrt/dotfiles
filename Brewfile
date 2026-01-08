@@ -42,6 +42,9 @@ brew "wget"
 brew "xh"           # Better curl/httpie
 brew "yj"           # YAML/JSON/TOML converter
 brew "pnpm"         # Fast package manager
+brew "tldr"         # Simplified man pages with examples
+brew "lazygit"      # Terminal UI for git
+brew "hyperfine"    # CLI benchmarking tool
 
 # System Tools
 brew "dockutil"     # Manage Dock items

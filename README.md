@@ -161,6 +161,7 @@ Quick reference for all the tools installed via Brewfile. Forget what something 
 | `fzf` | Fuzzy finder for anything | `ctrl+r` (history), `vim $(fzf)` |
 | `z` | Jump to frecent directories | `z proj` → `~/projects` |
 | `tree` | Directory tree view | `tree -L 2` |
+| `tldr` | Simplified man pages with examples | `tldr tar`, `tldr git rebase` |
 
 ### JSON/YAML/Data
 
@@ -186,6 +187,7 @@ Quick reference for all the tools installed via Brewfile. Forget what something 
 | Tool | What it does | Example |
 |------|--------------|---------|
 | `gh` | GitHub CLI (PRs, issues, repos) | `gh pr create`, `gh issue list` |
+| `lazygit` | Terminal UI for git (visual staging, commits) | `lazygit` |
 | `git-delta` | Better git diffs | (auto via gitconfig) |
 | `git-crypt` | Encrypt files in git transparently | `git-crypt init && git-crypt add-gpg-user` |
 | `pre-commit` | Git hooks framework | `pre-commit install` |
@@ -208,6 +210,7 @@ Quick reference for all the tools installed via Brewfile. Forget what something 
 | `uv` | Fast Python package manager | `uv pip install pkg`, `uvx ruff` |
 | `dprint` | Fast code formatter | `dprint fmt` |
 | `neovim` | Editor | `nvim file.ts` |
+| `hyperfine` | Benchmark CLI commands | `hyperfine 'fd . -e ts' 'find . -name "*.ts"'` |
 
 ### System & macOS
 

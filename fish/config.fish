@@ -14,7 +14,15 @@ set --export EDITOR nvim
 
 
 
-direnv hook fish | source
+# Direnv: lazy-load only when needed (saves ~130ms startup)
+# Auto-activates if .envrc exists in current dir, otherwise run `direnv-init`
+function direnv-init --description "Enable direnv for this shell session"
+    direnv hook fish | source
+    direnv reload 2>/dev/null
+end
+if test -f .envrc
+    direnv-init
+end
 
 # The official suggestion doesn't work in Fish for some reason
 # More info here about the problem and workaround: https://github.com/Schniz/fnm/issues/356#issuecomment-1010816655
@@ -51,6 +59,7 @@ set --universal fish_greeting ""
 ## -------------
 
 abbr -a g git
+abbr -a lg lazygit
 abbr -a d docker
 abbr -a dc docker-compose
 abbr -a k kubectl

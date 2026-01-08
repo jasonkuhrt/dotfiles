@@ -539,8 +539,8 @@
       "soft_wrap": "none",
       "formatter": {
         "external": {
-          "command": "pnpm",
-          "arguments": ["dprint", "fmt", "--stdin", "markdown"]
+          "command": "dprint",
+          "arguments": ["fmt", "--stdin", "markdown"]
         }
       }
     },

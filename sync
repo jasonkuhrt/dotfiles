@@ -307,6 +307,9 @@ link_file "$HERE/gh/config.yml" "$HOME/.config/gh/config.yml" "gh/config.yml"
 mkdir -p "$HOME/.config/libra"
 link_file "$HERE/libra/config.json" "$HOME/.config/libra/config.json" "libra/config.json"
 
+mkdir -p "$HOME/.config/direnv"
+link_file "$HERE/direnv/direnv.toml" "$HOME/.config/direnv/direnv.toml" "direnv/direnv.toml"
+
 # ─────────────────────────────────────────────────────────────
 header "Email"
 

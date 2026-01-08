@@ -122,7 +122,7 @@ ensure_real_dir() {
 
 printf "\n"
 printf "${BOLD}${CYAN}╔══════════════════════════════════════╗${RESET}\n"
-printf "${BOLD}${CYAN}║${RESET}         ${BOLD}Dotfiles Sync${RESET}              ${BOLD}${CYAN}║${RESET}\n"
+printf "${BOLD}${CYAN}║${RESET}            ${BOLD}Dotfiles Sync${RESET}             ${BOLD}${CYAN}║${RESET}\n"
 printf "${BOLD}${CYAN}╚══════════════════════════════════════╝${RESET}\n"
 printf "${DIM}%s${RESET}\n" "$HERE"
 
@@ -421,10 +421,13 @@ if [ "$(uname)" = "Darwin" ]; then
     set_default "com.apple.dock" "tilesize" "-int" "36" "Dock icon size (smaller)"
 
     info "Configuring power management..."
-    if sudo -n true 2>/dev/null; then
+    current_sleep=$(pmset -g | grep displaysleep | awk '{print $2}')
+    if [ "$current_sleep" = "10" ]; then
+        skip "Display sleep: 10 min (AC power)"
+    elif sudo -n true 2>/dev/null; then
         sudo pmset -c displaysleep 10 2>/dev/null && task "Display sleep: 10 min (AC power)"
     else
-        warn "Power settings require sudo - run manually: sudo pmset -c displaysleep 10"
+        warn "Power settings require sudo - run: sudo pmset -c displaysleep 10"
     fi
 
     info "Configuring trackpad..."
@@ -505,7 +508,7 @@ fi
 
 printf "\n"
 printf "${BOLD}${GREEN}╔══════════════════════════════════════╗${RESET}\n"
-printf "${BOLD}${GREEN}║${RESET}        ${BOLD}${GREEN}✓ Sync Complete${RESET}            ${BOLD}${GREEN}║${RESET}\n"
+printf "${BOLD}${GREEN}║${RESET}           ${BOLD}${GREEN}✓ Sync Complete${RESET}           ${BOLD}${GREEN}║${RESET}\n"
 printf "${BOLD}${GREEN}╚══════════════════════════════════════╝${RESET}\n"
 
 # Set Fish as default shell

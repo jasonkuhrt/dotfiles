@@ -68,7 +68,9 @@ Re-run `./sync` when:
 - New packages added to `Brewfile`
 - New features added to `sync`
 
-**Note:** Use `./sync` not `sync` — there's a system `/bin/sync` command that shadows it.
+## Tips
+
+- Use `./sync` not `sync` — there's a system `/bin/sync` command that shadows it
 
 ## Manual Setup (after sync)
 

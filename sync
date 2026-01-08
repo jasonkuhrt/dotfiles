@@ -382,9 +382,9 @@ if has_cmd fish; then
         skip "Fisher"
     fi
 
-    # Install all plugins from fish_plugins (fisher install is idempotent)
-    info "Installing Fisher plugins..."
-    install_from_list "$HERE/fish/fish_plugins" "" 'fish -c "fisher install $item"'
+    # Sync plugins from fish_plugins file
+    info "Syncing Fisher plugins..."
+    fish -c "fisher update" 2>/dev/null && task "Fisher plugins synced" || warn "Fisher update failed"
 
     # Configure tide prompt (uses preset from config.fish)
     info "Configuring Tide prompt..."

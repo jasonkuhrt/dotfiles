@@ -496,8 +496,8 @@ if [ "$(uname)" = "Darwin" ]; then
 
     info "Configuring keyboard..."
     set_default "NSGlobalDomain" "ApplePressAndHoldEnabled" "-bool" "false" "Key repeat enabled"
-    set_default "NSGlobalDomain" "KeyRepeat" "-int" "2" "Fast key repeat rate"
-    set_default "NSGlobalDomain" "InitialKeyRepeat" "-int" "15" "Short initial key repeat delay"
+    set_default "NSGlobalDomain" "KeyRepeat" "-int" "1" "Fast key repeat rate"
+    set_default "NSGlobalDomain" "InitialKeyRepeat" "-int" "10" "Short initial key repeat delay"
     set_default "NSGlobalDomain" "NSAutomaticPeriodSubstitutionEnabled" "-bool" "false" "Disabled double-space period"
     set_default "NSGlobalDomain" "NSAutomaticQuoteSubstitutionEnabled" "-bool" "false" "Disabled smart quotes"
     set_default "NSGlobalDomain" "NSAutomaticDashSubstitutionEnabled" "-bool" "false" "Disabled smart dashes"

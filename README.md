@@ -1,6 +1,9 @@
 # dotfiles
 
 ```sh
+# First run triggers Xcode CLI tools install - wait for it to complete, then re-run
+xcode-select --install
+
 mkdir -p ~/projects/jasonkuhrt
 git clone https://github.com/jasonkuhrt/dotfiles.git ~/projects/jasonkuhrt/dotfiles
 ~/projects/jasonkuhrt/dotfiles/bin/sync

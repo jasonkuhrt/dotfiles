@@ -248,7 +248,8 @@ ensure_in_file "github.com" "$HOME/.ssh/known_hosts" \
 mkdir -p "$HOME/.config/vim"
 link_file "$HERE/vim/vimrc" "$HOME/.config/vim/.vimrc" "vim/.vimrc"
 link_file "$HERE/npmrc" "$HOME/.npmrc" ".npmrc"
-link_file "$HERE/dprint/dprint.json" "$HOME/.config/dprint.json" "dprint.json"
+mkdir -p "$HOME/.config/dprint"
+link_file "$HERE/dprint/dprint.json" "$HOME/.config/dprint/dprint.json" "dprint/dprint.json"
 
 mkdir -p "$HOME/.config/gh"
 link_file "$HERE/gh/config.yml" "$HOME/.config/gh/config.yml" "gh/config.yml"
@@ -383,9 +384,9 @@ if has_cmd fish; then
     info "Installing Fisher plugins..."
     install_from_list "$HERE/fish/fish_plugins" "" 'fish -c "fisher install $item"'
 
-    # Configure tide prompt (non-interactive)
+    # Configure tide prompt (uses preset from config.fish)
     info "Configuring Tide prompt..."
-    fish -c "tide configure --auto --style=Lean --prompt_colors='True color' --show_time='12-hour format' --lean_prompt_height='Two lines' --prompt_connection=Solid --prompt_connection_andor_frame_color=Darkest --prompt_spacing=Sparse --icons='Few icons' --transient=Yes" 2>/dev/null && task "Tide configured" || warn "Tide configure failed"
+    fish -c "tide-daily" 2>/dev/null && task "Tide configured (daily)" || warn "Tide configure failed"
 else
     warn "Fish not installed, skipping Fisher setup"
 fi

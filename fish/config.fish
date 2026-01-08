@@ -2,8 +2,15 @@ if status is-interactive
     # Commands to run in interactive sessions can go here
 end
 
-# Tide prompt: run `tide configure` on new machines
-# Settings are stored in local fish_variables (not synced)
+# Tide prompt presets
+# Usage: tide-daily (default) or tide-zen (minimal)
+function tide-daily --description "Daily prompt: 2-line, time, git, full info"
+    tide configure --auto --style=Lean --prompt_colors='True color' --show_time='12-hour format' --lean_prompt_height='Two lines' --prompt_connection=Solid --prompt_connection_andor_frame_color=Darkest --prompt_spacing=Sparse --icons='Few icons' --transient=Yes
+end
+
+function tide-zen --description "Zen prompt: minimal, 1-line, no distractions"
+    tide configure --auto --style=Lean --prompt_colors='True color' --show_time=No --lean_prompt_height='One line' --prompt_connection=Disconnected --prompt_spacing=Compact --icons='Few icons' --transient=Yes
+end
 
 # Secrets
 # =======
@@ -14,6 +21,7 @@ test -f ~/.config/fish/config.secrets.fish && source ~/.config/fish/config.secre
 # ====
 
 set --export EDITOR nvim
+set --export DPRINT_CONFIG_DISCOVERY global  # use ~/.config/dprint/dprint.json
 
 
 

@@ -97,7 +97,7 @@
     co = checkout
     br = branch
     ci = commit
-    st = status -sb
+    st = status
     sw = switch
 
     # ── Staging ──

@@ -129,7 +129,7 @@
     # Graph view (the default log you'll use most)
     l = log --oneline --decorate --graph
     # Graph view with all branches
-    la = log --oneline --decorate --graph --all
+    lg = log --oneline --decorate --graph --all
     # Detailed one-liner with author and relative date
     ll = log --pretty=format:'%C(yellow)%h%C(reset) %s %C(dim)%an %C(cyan)%ar%C(reset)%C(auto)%d' -20
 

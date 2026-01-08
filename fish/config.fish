@@ -124,10 +124,12 @@ fish_add_path /home/linuxbrew/.linuxbrew/opt/node@16/bin
 set -gx LDFLAGS "-L/home/linuxbrew/.linuxbrew/opt/node@16/lib"
 set -gx CPPFLAGS "-I/home/linuxbrew/.linuxbrew/opt/node@16/include"
 
-# pnpm
+# Node package managers
+# pnpm manages Node versions; npm manages global packages (for npx fallback semantics)
+# npm globals: ~/Library/pnpm/nodejs_current/bin (follows active node version)
+# pnpm binaries: ~/Library/pnpm (node, npm, npx, pnpm, pnpx)
 set -gx PNPM_HOME "/Users/jasonkuhrt/Library/pnpm"
-set -gx PATH "$PNPM_HOME" $PATH
-# pnpm end
+set -gx PATH "$PNPM_HOME/nodejs_current/bin" "$PNPM_HOME" $PATH
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/jasonkuhrt/google-cloud-sdk/path.fish.inc' ]; . '/Users/jasonkuhrt/google-cloud-sdk/path.fish.inc'; end
@@ -161,8 +163,6 @@ fish_default_key_bindings
 
 # bind -M default H beginning-of-line
 # bind -M default L end-of-line
-set -gx PATH /Users/jasonkuhrt/Library/pnpm $PATH
-
 
 # bun
 set --export BUN_INSTALL "$HOME/.bun"

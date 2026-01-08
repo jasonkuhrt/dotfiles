@@ -75,7 +75,7 @@ Re-run `./sync` when:
 
 ### Why global Node packages use npm instead of pnpm
 
-Global packages use npm so `npx` fallback works (local → npm global → download). pnpm is still used for project dependencies. See `node-packages` plugin skill for details.
+Global packages use npm so `npx` fallback works (local → npm global → download). pnpm is still used for project dependencies. PATH order: npm globals → pnpm binaries (node, npm, npx, pnpm).
 
 ## Manual Setup (after sync)
 

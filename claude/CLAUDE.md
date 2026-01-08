@@ -33,6 +33,12 @@
   - Use ref MCP to search documentation
   - Read the actual types and implementation
 
+## Dotfiles Sync
+
+- **Sync script requires sudo** for full success (casks, Touch ID, shell change)
+- Running `./sync` without sudo will complete but skip password-protected operations
+- Don't attempt to run sync in Claude Code sessions (no sudo access)
+
 ## Commits
 
 Format: Conventional Commits

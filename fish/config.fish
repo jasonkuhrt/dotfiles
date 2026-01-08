@@ -137,6 +137,14 @@ function mcd --description "Create a directory and set CWD"
     end
 end
 
+function git --wraps git --description "git with no args shows status"
+    if test (count $argv) -eq 0
+        command git status
+    else
+        command git $argv
+    end
+end
+
 set --export GITHUB_HANDLE jasonkuhrt
 
 fish_add_path /home/linuxbrew/.linuxbrew/opt/node@16/bin

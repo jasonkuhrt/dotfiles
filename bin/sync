@@ -355,7 +355,7 @@ if [ "$(uname)" = "Darwin" ]; then
         local desc="$5"
 
         local current
-        current=$(defaults read "$domain" "$key" 2>/dev/null)
+        current=$(defaults read "$domain" "$key" 2>/dev/null || echo "")
 
         if [ "$current" = "$value" ]; then
             skip "$desc"

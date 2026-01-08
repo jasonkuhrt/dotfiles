@@ -72,29 +72,38 @@ Re-run `bin/sync` when:
 
 Things that can't be fully automated:
 
-1. **Fish secrets**: Add API keys/tokens to `~/.config/fish/config.secrets.fish` (gitignored):
-   ```fish
-   set -gx GITHUB_PERSONAL_ACCESS_TOKEN 'ghp_...'
-   ```
-2. **Caps Lock → Ctrl**: System Settings > Keyboard > Keyboard Shortcuts > Modifier Keys
-3. **GitHub CLI**: Authenticate with GitHub
-   ```sh
-   gh auth login
-   ```
-4. **SSH key**: Generate if missing, add to GitHub
-   ```sh
-   ssh-keygen -t ed25519 -C "jasonkuhrt@me.com"
-   gh ssh-key add ~/.ssh/id_ed25519.pub
-   ```
-5. **Raycast hotkey**: Set Cmd+Space in Raycast preferences (after disabling Spotlight's shortcut)
-6. **Spotlight shortcut**: System Settings > Keyboard > Keyboard Shortcuts > Spotlight > uncheck "Show Spotlight search"
-7. **Wispr Flow**: Download from [wispr.com](https://www.wispr.com/) (not in Homebrew)
-8. **Browser sync**: Chrome syncs via Google login, Safari syncs via iCloud
-9. **Auto-login** (optional, less secure): System Settings > Users & Groups > Login Options > Automatic login
-10. **Email password**: Add iCloud app-specific password to keychain:
+1. **Fish secrets**: Edit [fish/config.secrets.fish](fish/config.secrets.fish) (created from template by sync, gitignored) with your tokens
+2. **macOS Settings**:
+   - **Caps Lock → Ctrl**: Keyboard Shortcuts > Modifier Keys
+     ```sh
+     open "x-apple.systempreferences:com.apple.Keyboard-Settings.extension"
+     ```
+   - **Spotlight shortcut**: Keyboard Shortcuts > Spotlight > uncheck "Show Spotlight search"
+     ```sh
+     open "x-apple.systempreferences:com.apple.Keyboard-Settings.extension"
+     ```
+   - **Auto-login** (optional, less secure): Login Options > Automatic login
+     ```sh
+     open "x-apple.systempreferences:com.apple.Users-Groups-Settings.extension"
+     ```
+3. **GitHub**:
+   - **CLI auth**: Authenticate with GitHub
+     ```sh
+     gh auth login
+     ```
+   - **SSH key**: Generate if missing, add to GitHub
+     ```sh
+     ssh-keygen -t ed25519 -C "jasonkuhrt@me.com"
+     gh ssh-key add ~/.ssh/id_ed25519.pub
+     ```
+4. **Raycast hotkey**: Set Cmd+Space in Raycast preferences (after disabling Spotlight's shortcut)
+5. **Wispr Flow**: Download from [wispr.com](https://www.wispr.com/) (not in Homebrew)
+6. **Email password**: Add iCloud app-specific password to keychain:
    ```sh
    security add-generic-password -s 'mbsync-icloud' -a 'jasonkuhrt@me.com' -w 'YOUR_APP_PASSWORD'
    ```
+
+**Note:** Browser sync happens automatically — Chrome via Google login, Safari via iCloud.
 
 ## Claude Code Resources
 

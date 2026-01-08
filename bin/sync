@@ -210,10 +210,11 @@ header "Fish Shell"
 
 mkdir -p "$HOME/.config/fish"
 
-# Create secrets file if missing
+# Create secrets file from template if missing
 if [ ! -f "$HERE/fish/config.secrets.fish" ]; then
-    touch "$HERE/fish/config.secrets.fish"
-    task "Created config.secrets.fish template"
+    cp "$HERE/fish/config.secrets.fish.example" "$HERE/fish/config.secrets.fish"
+    task "Created config.secrets.fish from template"
+    warn "Edit fish/config.secrets.fish to add your tokens"
 fi
 
 link_file "$HERE/fish/config.fish" "$HOME/.config/fish/config.fish" "config.fish"

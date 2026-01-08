@@ -1,4 +1,5 @@
 *.secrets.*
+!*.secrets.*.example
 
 # macOS
 .DS_Store

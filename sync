@@ -382,6 +382,10 @@ if has_cmd fish; then
     # Install all plugins from fish_plugins (fisher install is idempotent)
     info "Installing Fisher plugins..."
     install_from_list "$HERE/fish/fish_plugins" "" 'fish -c "fisher install $item"'
+
+    # Configure tide prompt (non-interactive)
+    info "Configuring Tide prompt..."
+    fish -c "tide configure --auto --style=Lean --prompt_colors='True color' --show_time='12-hour format' --lean_prompt_height='Two lines' --prompt_connection=Solid --prompt_connection_andor_frame_color=Darkest --prompt_spacing=Sparse --icons='Few icons' --transient=Yes" 2>/dev/null && task "Tide configured" || warn "Tide configure failed"
 else
     warn "Fish not installed, skipping Fisher setup"
 fi

@@ -10,6 +10,8 @@ set -U tide_prompt_add_newline_before true
 set -U tide_character_icon '❯'
 set -U tide_character_color 5FD700
 set -U tide_character_color_failure FF0000
+set -U tide_cmd_duration_threshold 3000
+set -U tide_cmd_duration_decimals 0
 
 # Secrets
 # =======

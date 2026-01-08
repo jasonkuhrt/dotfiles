@@ -31,6 +31,7 @@ Before creating any library, read the appropriate convention documents:
 Use when library has one implementation file.
 
 **Structure:**
+
 ```
 src/lib/<name>/
 ├── _.ts           # export * as Name from './<name>.js'
@@ -39,6 +40,7 @@ src/lib/<name>/
 ```
 
 **Steps:**
+
 1. Create directory at `src/lib/<name>/` (kebab-case)
 2. Create `<name>.ts` with implementation
 3. Create `_.ts` with: `export * as <PascalName> from './<name>.js'`
@@ -51,6 +53,7 @@ src/lib/<name>/
 Use when library has multiple implementation files.
 
 **Structure:**
+
 ```
 src/lib/<name>/
 ├── _.ts           # export * as Name from './__.js'
@@ -61,6 +64,7 @@ src/lib/<name>/
 ```
 
 **Steps:**
+
 1. Create directory at `src/lib/<name>/` (kebab-case)
 2. Create implementation files
 3. Create `__.ts` with re-exports from all implementation files
@@ -107,11 +111,11 @@ export * as Parser from './__.js'
 
 ### Naming Conventions
 
-| Element | Case | Example |
-|---------|------|---------|
-| Directory | kebab-case | `my-lib/` |
-| Files | kebab-case | `my-lib.ts` |
-| Namespace | PascalCase | `MyLib` |
+| Element   | Case       | Example     |
+| --------- | ---------- | ----------- |
+| Directory | kebab-case | `my-lib/`   |
+| Files     | kebab-case | `my-lib.ts` |
+| Namespace | PascalCase | `MyLib`     |
 
 ### Package.json Imports Entry
 

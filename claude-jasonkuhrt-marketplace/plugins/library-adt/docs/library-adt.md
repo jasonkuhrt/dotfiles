@@ -206,6 +206,7 @@ export type MediaType = S.Schema.Type<typeof MediaType>
 ```
 
 **Rules:**
+
 - **Non-class schemas** (Literal, Struct, Union, Array): `typeof SchemaName.Type`
 - **Class schemas** (S.Class, S.TaggedClass): No type declaration needed, class IS the type
 - **Transformations**: `typeof Schema.Type` (decoded), `typeof Schema.Encoded` (input), `typeof Schema.Context` (deps)
@@ -247,11 +248,13 @@ export const VersionCoverage = S.Union(One, Set, Unversioned)
 ```
 
 This pattern is appropriate when:
+
 - The ADT is relatively simple with few members
 - You don't need the additional namespace organization
 - Members are Effect Schema classes (S.Class or S.TaggedClass)
 
 Key rules for simple ADT pattern:
+
 - Use direct class exports (`export { ClassName }`)
 - No `$$.ts` file needed
 - `$.ts` exports namespace from main union file
@@ -282,6 +285,7 @@ export const decodeSync = S.decodeSync(Version)
 ### When Traditional Namespace Pattern Still Applies
 
 The original namespace export pattern (`export * as Name`) remains valid for:
+
 - ADT unions with multiple member classes that need grouping
 - Transformation schemas that aren't classes themselves
 - Complex modules with multiple related exports

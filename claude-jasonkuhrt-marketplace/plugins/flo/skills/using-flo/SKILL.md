@@ -9,12 +9,12 @@ Flo creates git worktrees from GitHub issues with automatic Claude context setup
 
 ## Commands
 
-| Command | Purpose |
-| ------- | ------- |
+| Command       | Purpose                                           |
+| ------------- | ------------------------------------------------- |
 | `flo [issue]` | Start work - create worktree from issue or branch |
-| `flo end` | End work - merge PR, delete worktree, sync main |
-| `flo list` | List all worktrees |
-| `flo prune` | Clean up metadata for manually deleted worktrees |
+| `flo end`     | End work - merge PR, delete worktree, sync main   |
+| `flo list`    | List all worktrees                                |
+| `flo prune`   | Clean up metadata for manually deleted worktrees  |
 
 ## Starting Work
 
@@ -30,6 +30,7 @@ flo
 ```
 
 **Issue mode auto:**
+
 - Assigns issue to you
 - Creates branch: `feat/123-title`, `fix/123-title`, etc.
 - Generates `.claude/issue.md` with issue context

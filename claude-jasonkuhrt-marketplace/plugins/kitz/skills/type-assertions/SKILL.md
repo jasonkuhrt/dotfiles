@@ -17,11 +17,11 @@ Assertions use a fluent builder: `Assert.<relator>.<matcher>(expected).<setting>
 
 ### Relators (Required First)
 
-| Relator   | Meaning                              |
-|-----------|--------------------------------------|
-| `.exact`  | Types must be identical              |
-| `.equiv`  | Bidirectional assignability          |
-| `.sub`    | Actual extends expected              |
+| Relator  | Meaning                     |
+| -------- | --------------------------- |
+| `.exact` | Types must be identical     |
+| `.equiv` | Bidirectional assignability |
+| `.sub`   | Actual extends expected     |
 
 ### Unary Matchers (No Expected Type)
 

@@ -107,11 +107,13 @@ src/lib/parser/
 ### File Contents
 
 **_.ts**:
+
 ```typescript
 export * as Parser from './__.js'
 ```
 
 **__.ts**:
+
 ```typescript
 export { tokenize, type Token } from './tokenizer.js'
 export { lex, type Lexeme } from './lexer.js'
@@ -119,6 +121,7 @@ export { buildAST, type AST, type Node } from './ast.js'
 ```
 
 **package.json** (partial):
+
 ```json
 {
   "imports": {
@@ -129,6 +132,7 @@ export { buildAST, type AST, type Node } from './ast.js'
 ```
 
 **tsconfig.json** (partial):
+
 ```json
 {
   "compilerOptions": {

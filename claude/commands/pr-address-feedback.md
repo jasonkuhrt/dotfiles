@@ -193,7 +193,7 @@ If `isOutdated: true`, add a warning:
 ⚠️  OUTDATED: This thread may reference code that has changed.
 ```
 
-**Suggestion blocks**: If the comment body contains a GitHub suggestion block (` ```suggestion ... ``` `), highlight this:
+**Suggestion blocks**: If the comment body contains a GitHub suggestion block (`` ```suggestion ... ``` ``), highlight this:
 
 ```
 📝 Contains code suggestion - can be applied directly if approved.

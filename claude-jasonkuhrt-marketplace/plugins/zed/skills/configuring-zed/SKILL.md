@@ -7,11 +7,11 @@ description: Provides guidance for configuring and customizing the Zed editor. U
 
 ## Configuration Paths
 
-| File | Purpose |
-| ---- | ------- |
-| `~/.config/zed/settings.json` | Global settings |
-| `~/.config/zed/keymap.json` | Custom keybindings |
-| `.zed/settings.json` | Project-local settings |
+| File                          | Purpose                |
+| ----------------------------- | ---------------------- |
+| `~/.config/zed/settings.json` | Global settings        |
+| `~/.config/zed/keymap.json`   | Custom keybindings     |
+| `.zed/settings.json`          | Project-local settings |
 
 ## Rules
 

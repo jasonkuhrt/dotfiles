@@ -36,11 +36,11 @@ This keeps globals at `~/.npm-global/bin/` regardless of which node version pnpm
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-| Tool | Manages | Location |
-|------|---------|----------|
-| Homebrew | Initial bootstrap (node + pnpm) | `/opt/homebrew/bin` |
-| pnpm | Node versions (`pnpm env use`) | `~/Library/pnpm/nodejs/<ver>` |
-| npm | Global CLI tools | `~/.npm-global` (fixed, version-agnostic) |
+| Tool     | Manages                         | Location                                  |
+| -------- | ------------------------------- | ----------------------------------------- |
+| Homebrew | Initial bootstrap (node + pnpm) | `/opt/homebrew/bin`                       |
+| pnpm     | Node versions (`pnpm env use`)  | `~/Library/pnpm/nodejs/<ver>`             |
+| npm      | Global CLI tools                | `~/.npm-global` (fixed, version-agnostic) |
 
 ### Bootstrap flow (fresh machine)
 
@@ -54,12 +54,12 @@ After bootstrap, brew's node is effectively unused (pnpm's comes first in PATH).
 
 ### Running binaries (exec commands)
 
-| Command | In project (has package.json) | Outside project |
-|---------|-------------------------------|-----------------|
-| `npx <pkg>` | local node_modules → npm global → downloads | npm global → downloads |
-| `pnpm exec <pkg>` | local node_modules → pnpm global | **FAILS** with `ERR_PNPM_RECURSIVE_EXEC_NO_PACKAGE` |
-| `pnpm dlx <pkg>` | downloads to temp (ignores local) | downloads to temp |
-| Direct `<pkg>` | uses PATH | uses PATH |
+| Command           | In project (has package.json)               | Outside project                                     |
+| ----------------- | ------------------------------------------- | --------------------------------------------------- |
+| `npx <pkg>`       | local node_modules → npm global → downloads | npm global → downloads                              |
+| `pnpm exec <pkg>` | local node_modules → pnpm global            | **FAILS** with `ERR_PNPM_RECURSIVE_EXEC_NO_PACKAGE` |
+| `pnpm dlx <pkg>`  | downloads to temp (ignores local)           | downloads to temp                                   |
+| Direct `<pkg>`    | uses PATH                                   | uses PATH                                           |
 
 ### Key insight: npx finds pnpm-installed LOCAL packages
 
@@ -93,21 +93,25 @@ dprint --version        # finds via PATH
 ### For editor/tool integration (Zed, VSCode, etc.)
 
 **Option A: npx (recommended)**
+
 ```json
 {
   "command": "npx",
   "arguments": ["dprint", "fmt", "--stdin", "markdown"]
 }
 ```
+
 Uses local version if in project, falls back to npm global, downloads if needed.
 
 **Option B: Direct PATH call**
+
 ```json
 {
   "command": "dprint",
   "arguments": ["fmt", "--stdin", "markdown"]
 }
 ```
+
 Works if package is in PATH.
 
 ## Common mistakes
@@ -146,12 +150,12 @@ pnpx dprint --version  # → always downloads (ignores local/global)
 
 ## Summary table
 
-| Goal | Solution |
-|------|----------|
-| Run local package in project | `npx <pkg>` or `pnpm exec <pkg>` |
-| Run global package anywhere | Install with `npm -g`, run with `npx` or directly |
-| Globals survive node version changes | Set `prefix=~/.npm-global` in .npmrc |
-| Editor formatter | `npx <pkg>` (works everywhere) |
+| Goal                                 | Solution                                          |
+| ------------------------------------ | ------------------------------------------------- |
+| Run local package in project         | `npx <pkg>` or `pnpm exec <pkg>`                  |
+| Run global package anywhere          | Install with `npm -g`, run with `npx` or directly |
+| Globals survive node version changes | Set `prefix=~/.npm-global` in .npmrc              |
+| Editor formatter                     | `npx <pkg>` (works everywhere)                    |
 
 ## References
 

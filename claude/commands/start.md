@@ -39,11 +39,11 @@ description: Initialize Claude session with project awareness
    - DO NOT attempt to Read optional files that don't exist
    - Note: Serena MCP now has built-in instructions (no separate file needed)
 
-4. **Confirm awareness of loaded configurations**:
+3. **Confirm awareness of loaded configurations**:
    - For Serena: "✓ Serena MCP tools instructions loaded - will use symbolic tools for intelligent code reading"
    - If project ./.claude/serena-prompt.md was found: "✓ Project-specific Serena overrides loaded"
 
-5. **Confirm personal configuration awareness**:
+4. **Confirm personal configuration awareness**:
    - Explicitly state: "✓ Personal configuration from ~/.claude/CLAUDE.md is active"
    - List 2-3 key principles from the user's personal CLAUDE.md to prove awareness, such as:
      - Core work style preferences (e.g., ADHD considerations, no flattery)
@@ -51,12 +51,12 @@ description: Initialize Claude session with project awareness
      - Important rules (e.g., never guess APIs, verify everything)
    - Confirm: "✓ Personal commands from ~/.claude/commands/ are available"
 
-6. **Acknowledge project configuration**:
+5. **Acknowledge project configuration**:
    - If ./CLAUDE.md exists: Confirm project-specific standards are loaded
    - Note any available MCP servers (ref, serena, effect-docs, etc.)
    - Reference the current project name from the working directory
 
-7. **Focus area handling**:
+6. **Focus area handling**:
    If argument is provided: "$ARGUMENTS"
 
    **Check if argument is an integer (GitHub issue number)**:
@@ -82,6 +82,7 @@ description: Initialize Claude session with project awareness
 ## Example Output
 
 **General start** (`/start`):
+
 ```
 ✓ Serena project activated
 ✓ Serena MCP tools instructions loaded
@@ -97,6 +98,7 @@ Ready to assist with [current project name] development.
 ```
 
 **Issue-focused start** (`/start 37`):
+
 ```
 ✓ Serena project activated
 ✓ Serena MCP tools instructions loaded

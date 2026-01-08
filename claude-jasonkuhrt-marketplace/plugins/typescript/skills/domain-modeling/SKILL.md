@@ -46,28 +46,29 @@ ASCII boxes with relationship cardinality.
 ```
 
 **Conventions:**
+
 - `1:n` = one-to-many
 - `1:1` = one-to-one
 - Arrow direction = ownership/containment
 
 ### Entities Table
 
-| Name | Description |
-|------|-------------|
+| Name           | Description                                 |
+| -------------- | ------------------------------------------- |
 | **EntityName** | One-line description of what it represents. |
 
 ### Operations Table
 
-| Name | Description |
-|------|-------------|
+| Name            | Description                           |
+| --------------- | ------------------------------------- |
 | `operationName` | One-line description of what it does. |
 
 ### Other Terms (optional)
 
 For identifiers, enums, types that don't warrant full entity treatment:
 
-| Name | Description |
-|------|-------------|
+| Name         | Description       |
+| ------------ | ----------------- |
 | **TermName** | Brief definition. |
 
 ## Entities Section

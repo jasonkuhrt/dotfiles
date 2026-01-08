@@ -39,17 +39,20 @@ The entire package exposes one namespace.
 ### Namespace Naming
 
 The namespace name is the PascalCase version of the package name:
+
 - `@scope/my-lib` → `MyLib`
 - `@kouka/parser` → `Parser`
 
 ### Example
 
 **_.ts**:
+
 ```typescript
 export * as MyLib from './__.js'
 ```
 
 **Consumer**:
+
 ```typescript
 import { MyLib } from '@scope/my-lib'
 
@@ -102,15 +105,16 @@ When a package has multiple distinct exports.
 
 ### Export File Rules
 
-| File | Maps To | Notes |
-|------|---------|-------|
-| `_.ts` | Parent path | Namespace module |
-| `__.ts` | (internal) | Barrel for `_.ts` |
-| `index.ts` | Parent path | Plain export (not namespace) |
-| `<name>.ts` | `./<name>` | Plain export |
-| `<name>__.ts` | (internal) | Barrel for `<name>.ts` |
+| File          | Maps To     | Notes                        |
+| ------------- | ----------- | ---------------------------- |
+| `_.ts`        | Parent path | Namespace module             |
+| `__.ts`       | (internal)  | Barrel for `_.ts`            |
+| `index.ts`    | Parent path | Plain export (not namespace) |
+| `<name>.ts`   | `./<name>`  | Plain export                 |
+| `<name>__.ts` | (internal)  | Barrel for `<name>.ts`       |
 
 **Invalid states**:
+
 - Both `index.ts` and `_.ts` in same directory
 - Both `<name>.ts` and `<name>_.ts` in same directory
 
@@ -197,17 +201,20 @@ import { Arr } from '@kouka/core/arr'
 ## Checklist
 
 ### Single Export
+
 - [ ] `_.ts` at `src/_.ts`
 - [ ] Package exports `.` pointing to `./build/_.js`
 - [ ] Namespace matches PascalCase package name
 
 ### Multi Export
+
 - [ ] Export files in `src/exports/`
 - [ ] Each namespace export has `_.ts`
 - [ ] Package exports match file structure
 - [ ] No conflicting `index.ts` + `_.ts`
 
 ### Monorepo Module
+
 - [ ] Each module in `src/<module>/`
 - [ ] Package.json has `#<module>` imports
 - [ ] TSConfig has matching paths

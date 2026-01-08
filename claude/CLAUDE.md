@@ -48,6 +48,7 @@ Types: `feat`, `fix`, `refactor`, `docs`, `chore`
 Scopes (top-level dirs): `claude`, `dock`, `dprint`, `email`, `fish`, `gh`, `ghostty`, `git`, `libra`, `nvim`, `pnpm`, `ssh`, `vim`, `zed`, `brew`, `sync`
 
 Examples:
+
 - `feat(zed): add settings`
 - `fix(fish): correct path ordering`
 - `chore(brew): update dependencies`

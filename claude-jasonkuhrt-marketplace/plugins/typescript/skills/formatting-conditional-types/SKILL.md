@@ -14,6 +14,7 @@ Enable commenting out individual cases without breaking syntax (useful for debug
 ### FLAT PATTERN (prefer when possible)
 
 Use for mutually exclusive top-level cases:
+
 - All top-level conditions start at **same indentation**
 - Place `:` at **end of line** for each case
 - Next condition returns to **base indentation**
@@ -22,6 +23,7 @@ Use for mutually exclusive top-level cases:
 ### NESTED PATTERN (only when logic requires it)
 
 Use when conditions are inherently nested (one inside another):
+
 - Each nesting level increases indentation
 - Align `?` and `:` symbols at each level
 

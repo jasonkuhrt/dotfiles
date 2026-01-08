@@ -5,20 +5,22 @@ The `_.ts`/`__.ts` pattern for organizing TypeScript modules with clean namespac
 ## Overview
 
 This pattern provides:
+
 - **Clean imports**: Consumers import a single namespace, not individual exports
 - **Encapsulation**: Implementation details hidden behind namespace
 - **Flexibility**: Works with single or multiple implementation files
 
 ## File Naming
 
-| File | Name | Purpose |
-|------|------|---------|
-| Namespace Module | `_.ts` | Exports the public namespace |
-| Barrel Module | `__.ts` | Aggregates exports from code modules (optional) |
-| Test Module | `_.test.ts` | Tests the public API |
-| Test Fixtures | `_.test.fixture.ts` | Shared test data |
+| File             | Name                | Purpose                                         |
+| ---------------- | ------------------- | ----------------------------------------------- |
+| Namespace Module | `_.ts`              | Exports the public namespace                    |
+| Barrel Module    | `__.ts`             | Aggregates exports from code modules (optional) |
+| Test Module      | `_.test.ts`         | Tests the public API                            |
+| Test Fixtures    | `_.test.fixture.ts` | Shared test data                                |
 
 **Why `_`/`__` instead of `$`/`$$`:**
+
 1. **Terminal/Shell Issues**: `$` requires quoting in shell commands (`git add '$.ts'`)
 2. **TypeScript Bug**: `$$` files have module resolution issues causing circular dependencies
 
@@ -36,6 +38,7 @@ When you have one implementation file:
 ```
 
 **`_.ts`**:
+
 ```typescript
 export * as Mask from './mask.js'
 ```
@@ -54,11 +57,13 @@ When you have multiple implementation files, add a barrel:
 ```
 
 **`_.ts`**:
+
 ```typescript
 export * as Parser from './__.js'
 ```
 
 **`__.ts`**:
+
 ```typescript
 export { tokenize, type Token } from './tokenizer.js'
 export { lex, type Lexeme } from './lexer.js'
@@ -88,14 +93,14 @@ export { buildAST, type AST } from './ast.js'
 3. **No self-reference**: Cannot import from own `_.ts` or `__.ts`
 4. **Cross-library**: Use configured import method (subpaths, package names)
 
-| Import From | Allowed | Method |
-|-------------|---------|--------|
-| Sibling code modules | ✅ | `./sibling.js` |
-| Subdirectory modules | ✅ | `./subdir/module.js` |
-| Other libraries | ✅ | Context-dependent |
-| Own `_.ts` | ❌ | - |
-| Own `__.ts` | ❌ | - |
-| Test modules | ❌ | - |
+| Import From          | Allowed | Method               |
+| -------------------- | ------- | -------------------- |
+| Sibling code modules | ✅      | `./sibling.js`       |
+| Subdirectory modules | ✅      | `./subdir/module.js` |
+| Other libraries      | ✅      | Context-dependent    |
+| Own `_.ts`           | ❌      | -                    |
+| Own `__.ts`          | ❌      | -                    |
+| Test modules         | ❌      | -                    |
 
 ### Test Module (`_.test.ts`)
 
@@ -168,18 +173,18 @@ export { AST, tokenize } from '#parser'
 
 ## Naming Conventions
 
-| Element | Case | Example |
-|---------|------|---------|
-| Directory | kebab-case | `my-parser/` |
-| Files | kebab-case | `token-stream.ts` |
-| Namespace | PascalCase | `MyParser` |
+| Element   | Case       | Example           |
+| --------- | ---------- | ----------------- |
+| Directory | kebab-case | `my-parser/`      |
+| Files     | kebab-case | `token-stream.ts` |
+| Namespace | PascalCase | `MyParser`        |
 
 ## Glossary
 
-| Term | Definition |
-|------|------------|
-| Namespace Module | `_.ts` - Exports the library namespace |
-| Barrel Module | `__.ts` - Aggregates exports from code modules |
-| Code Module | Implementation file (not `_.ts`, `__.ts`, or test files) |
-| Test Module | `_.test.ts` - Public API tests |
-| Test Fixture | `_.test.fixture.ts` - Shared test data |
+| Term             | Definition                                               |
+| ---------------- | -------------------------------------------------------- |
+| Namespace Module | `_.ts` - Exports the library namespace                   |
+| Barrel Module    | `__.ts` - Aggregates exports from code modules           |
+| Code Module      | Implementation file (not `_.ts`, `__.ts`, or test files) |
+| Test Module      | `_.test.ts` - Public API tests                           |
+| Test Fixture     | `_.test.fixture.ts` - Shared test data                   |

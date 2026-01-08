@@ -15,6 +15,15 @@ function tide-zen --description "Zen prompt: minimal, 1-line, no distractions"
     tide reload
 end
 
+function tide-toggle --description "Toggle between daily and zen prompts"
+    if test "$tide_left_prompt_items" = "character"
+        tide-daily
+    else
+        tide-zen
+    end
+end
+alias tt='tide-toggle'
+
 # Secrets
 # =======
 

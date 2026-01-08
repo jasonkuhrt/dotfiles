@@ -26,6 +26,7 @@ Read these before auditing to understand the full rules.
 Check a specific library for violations.
 
 **Steps:**
+
 1. Identify library type (local lib, package lib)
 2. Check file structure matches expected pattern
 3. Validate `_.ts` content
@@ -39,6 +40,7 @@ Check a specific library for violations.
 Scan project for all libraries and check each.
 
 **Steps:**
+
 1. Find all directories containing `_.ts` files
 2. Categorize each (local lib at `src/lib/*`, package lib at `src/*`)
 3. Audit each library individually
@@ -49,6 +51,7 @@ Scan project for all libraries and check each.
 After auditing, fix identified issues.
 
 **Steps:**
+
 1. Present violations to user
 2. Propose fixes for each
 3. Apply fixes with user approval
@@ -58,46 +61,46 @@ After auditing, fix identified issues.
 
 ### Structure Violations
 
-| Violation | Description | Fix |
-|-----------|-------------|-----|
-| Missing `_.ts` | Library has no namespace module | Create `_.ts` with correct export |
-| Missing `__.ts` | Multiple impl files but no barrel | Create `__.ts` with re-exports |
-| Extra `__.ts` | Single impl file with barrel | Remove `__.ts`, update `_.ts` |
-| Wrong location | Library not in `src/lib/` | Move to correct location |
+| Violation       | Description                       | Fix                               |
+| --------------- | --------------------------------- | --------------------------------- |
+| Missing `_.ts`  | Library has no namespace module   | Create `_.ts` with correct export |
+| Missing `__.ts` | Multiple impl files but no barrel | Create `__.ts` with re-exports    |
+| Extra `__.ts`   | Single impl file with barrel      | Remove `__.ts`, update `_.ts`     |
+| Wrong location  | Library not in `src/lib/`         | Move to correct location          |
 
 ### Namespace Module (`_.ts`) Violations
 
-| Violation | Description | Fix |
-|-----------|-------------|-----|
-| Wrong export target | Points to wrong file | Fix export path |
-| Has imports | Contains import statements | Remove imports |
-| Wrong namespace name | Doesn't match directory | Fix namespace name |
+| Violation                | Description                       | Fix                        |
+| ------------------------ | --------------------------------- | -------------------------- |
+| Wrong export target      | Points to wrong file              | Fix export path            |
+| Has imports              | Contains import statements        | Remove imports             |
+| Wrong namespace name     | Doesn't match directory           | Fix namespace name         |
 | Missing barrel reference | Has `__.ts` but exports from impl | Change to `from './__.js'` |
 
 ### Barrel Module (`__.ts`) Violations
 
-| Violation | Description | Fix |
-|-----------|-------------|-----|
-| Imports from `_.ts` | Circular dependency | Remove import |
-| Value imports | Has `import { x }` not re-export | Convert to `export { x } from` |
-| External imports | Imports from outside library | Move to code module |
-| Parent imports | Imports from `../` | Remove or restructure |
+| Violation           | Description                      | Fix                            |
+| ------------------- | -------------------------------- | ------------------------------ |
+| Imports from `_.ts` | Circular dependency              | Remove import                  |
+| Value imports       | Has `import { x }` not re-export | Convert to `export { x } from` |
+| External imports    | Imports from outside library     | Move to code module            |
+| Parent imports      | Imports from `../`               | Remove or restructure          |
 
 ### Import Pattern Violations
 
-| Violation | Description | Fix |
-|-----------|-------------|-----|
+| Violation              | Description                  | Fix                                             |
+| ---------------------- | ---------------------------- | ----------------------------------------------- |
 | Destructured namespace | `import { Foo } from '#lib'` | Use `import { Lib } from '#lib'` then `Lib.Foo` |
-| Self namespace import | Code imports own `_.ts` | Use relative imports |
-| Self barrel import | Code imports own `__.ts` | Use relative imports |
-| Relative cross-lib | `import from '../other-lib'` | Use `#other-lib` |
+| Self namespace import  | Code imports own `_.ts`      | Use relative imports                            |
+| Self barrel import     | Code imports own `__.ts`     | Use relative imports                            |
+| Relative cross-lib     | `import from '../other-lib'` | Use `#other-lib`                                |
 
 ### Test Violations
 
-| Violation | Description | Fix |
-|-----------|-------------|-----|
-| Wrong import | Test imports from impl file | Import from `./_.js` |
-| Destructured | Test destructures namespace | Use namespace directly |
+| Violation                 | Description                 | Fix                       |
+| ------------------------- | --------------------------- | ------------------------- |
+| Wrong import              | Test imports from impl file | Import from `./_.js`      |
+| Destructured              | Test destructures namespace | Use namespace directly    |
 | Missing fixture namespace | Fixture doesn't export `Fx` | Add `export namespace Fx` |
 
 ## Audit Checklist
@@ -106,35 +109,41 @@ After auditing, fix identified issues.
 ## Library: <name>
 
 ### Structure
+
 - [ ] Located at correct path (src/lib/<name>/ or src/<name>/)
 - [ ] Has _.ts namespace module
 - [ ] Has __.ts barrel (if multiple impl files)
 - [ ] No __.ts (if single impl file)
 
 ### Namespace Module (_.ts)
+
 - [ ] Correct export pattern
 - [ ] Namespace name matches directory (PascalCase)
 - [ ] No import statements
 - [ ] Points to __.ts (if exists) or impl file
 
 ### Barrel Module (__.ts) - if exists
+
 - [ ] Only contains re-exports
 - [ ] No imports from _.ts
 - [ ] No external package imports
 - [ ] All exports from local files
 
 ### Code Modules
+
 - [ ] No imports from own _.ts
 - [ ] No imports from own __.ts
 - [ ] Cross-lib imports use #<name>
 - [ ] Sibling imports use relative paths
 
 ### Tests (_.test.ts)
+
 - [ ] Imports from ./_.js only
 - [ ] Uses namespace, no destructuring
 - [ ] No top-level describe wrapping all tests
 
 ### Config
+
 - [ ] package.json has imports entry
 - [ ] tsconfig.json has paths entry
 ```

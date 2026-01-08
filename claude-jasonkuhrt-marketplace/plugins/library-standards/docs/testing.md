@@ -102,6 +102,7 @@ Test.describe('email validation')
 **Case Format Convention**:
 
 **Tuple Format** (for function mode):
+
 ```typescript
 [[arg1, arg2], expected]              // Basic case
 ['name', [arg1, arg2], expected]      // Named case
@@ -109,6 +110,7 @@ Test.describe('email validation')
 ```
 
 **Object Format** (for generic mode):
+
 ```typescript
 { n: 'name', i: input, o: expected }
 { n: 'name', i: input, o: expected, skip: true }
@@ -117,7 +119,7 @@ Test.describe('email validation')
 
 ### Nested Describe Syntax with ' > '
 
-Use the ` > ` separator in describe names to automatically create nested describe blocks:
+Use the `>` separator in describe names to automatically create nested describe blocks:
 
 ```typescript
 // Creates nested describe blocks: describe('Transform', () => describe('String', ...))
@@ -153,6 +155,7 @@ Test.describe('API > Users > Create')
 ```
 
 **Benefits**:
+
 - Organize tests hierarchically without deeply nested builder calls
 - Multiple test blocks with the same prefix automatically share outer describe blocks
 - Clean test output with proper nesting
@@ -211,6 +214,7 @@ Test.describe('Transform > String')
 ```
 
 **When to use matrix**:
+
 - Testing behavior across multiple configuration combinations
 - Avoiding repetitive test case declarations
 - Ensuring all parameter combinations are tested
@@ -218,6 +222,7 @@ Test.describe('Transform > String')
 - Any scenario where you need cartesian product of parameters
 
 **Matrix features**:
+
 - Generates cartesian product of all value arrays
 - Matrix values available in test context as `matrix` property
 - Test names include matrix values for clarity
@@ -352,11 +357,13 @@ expect(result).toEqualLocLoose(expected.loc)  // Use toBeEquivalent instead!
 #### When to Create Domain-Specific Matchers
 
 ✅ **DO create matchers for**:
+
 - Property checks (e.g., `toBeAbs()`, `toBeFile()`)
 - State assertions (e.g., `toBeRoot()`, `toBeWithin()`)
 - Transformation checks (e.g., `toEncodeTo()`)
 
 ❌ **DON'T create matchers for**:
+
 - Equivalence checks (use `toBeEquivalent` instead)
 - Equality comparisons (use `toBeEquivalent` with schemas)
 
@@ -549,7 +556,7 @@ When updating existing tests to follow these conventions:
 - **READ THE JSDOC** on `Test.describe()` and `Test.on()` for full API details
 - Use `// dprint-ignore` ABOVE `Test.on()` or `Test.describe()` for aligned test data
 - Use `.casesIn('name')` to create nested describe blocks within a single test builder
-- Use ` > ` separator in describe names to create multi-level nested describe blocks across test builders
+- Use `>` separator in describe names to create multi-level nested describe blocks across test builders
 - Use `.matrix()` to run test cases across all combinations of parameter values
 - Chain `.test()` at the end to execute tests
 - Default assertion uses Effect's `Equal.equals` for structural equality

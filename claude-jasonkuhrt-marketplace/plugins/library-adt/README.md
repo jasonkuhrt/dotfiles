@@ -11,6 +11,7 @@ Plugin for creating and working with ADT (Algebraic Data Type) patterns - discri
 ## Convention Reference
 
 See `~/.claude/docs/conventions/` for documentation:
+
 - `namespace-module.md` - Core `_.ts`/`__.ts` pattern
 - `library-adt.md` - ADT-specific patterns
 

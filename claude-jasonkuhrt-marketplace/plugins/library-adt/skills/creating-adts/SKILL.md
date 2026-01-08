@@ -21,6 +21,7 @@ Before creating any ADT, read the convention documents:
 ### Create ADT Union
 
 **Structure:**
+
 ```
 src/lib/<adt-name>/
 ├── _.ts              # export * as AdtName from './__.js'
@@ -31,6 +32,7 @@ src/lib/<adt-name>/
 ```
 
 **Steps:**
+
 1. Create directory at `src/lib/<adt-name>/` (kebab-case matching ADT name)
 2. Create member files with tagged structs
 3. Create union file importing members directly (NOT from `__.ts`)
@@ -52,6 +54,7 @@ export class MemberName extends S.TaggedClass<MemberName>()('AdtNameMemberName',
 ```
 
 **Naming Rules:**
+
 - Class name = member name (short, local): `Versioned`
 - Tag name = fully qualified: `DocumentVersioned`
 

@@ -22,6 +22,7 @@ ls ~/.claude/package-sources/<package-name>/ 2>/dev/null
 ```
 
 If exists, check if update needed:
+
 ```bash
 cd ~/.claude/package-sources/<package-name> && npm outdated 2>/dev/null
 ```
@@ -37,6 +38,7 @@ npm pack <package-name> && tar -xzf *.tgz --strip-components=1 && rm *.tgz
 ```
 
 This gives you:
+
 - Built/transpiled code (what projects actually import)
 - Published types (.d.ts files)
 - package.json with exports map
@@ -56,6 +58,7 @@ git clone --depth 1 <repo-url> ~/.claude/package-sources/<package-name>-src
 ### 4. Read the code
 
 Start with:
+
 - `package.json` - exports map, main entry
 - Type definitions (.d.ts files)
 - Actual implementation files
@@ -78,6 +81,7 @@ npm pack <package-name>@<version>
 ```
 
 Check project's version:
+
 ```bash
 cat package.json | grep '"<package-name>"'
 # or

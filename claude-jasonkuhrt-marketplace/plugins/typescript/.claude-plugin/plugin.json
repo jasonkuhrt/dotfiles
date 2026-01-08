@@ -1,0 +1,5 @@
+{
+  "name": "typescript",
+  "version": "1.0.0",
+  "description": "TypeScript conventions including JSDoc documentation and type parameter patterns"
+}

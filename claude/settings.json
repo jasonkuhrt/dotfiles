@@ -1,0 +1,87 @@
+{
+  "extraKnownMarketplaces": {
+    "jasonkuhrt": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/claude-jasonkuhrt-marketplace"
+      }
+    }
+  },
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "Skill(superpowers:*)",
+      "Skill(superpowers-developing-for-claude-code:*)",
+      "Skill(plugin-dev:*)",
+      "Read(~/.claude/**)",
+      "Write(~/.claude/**)",
+      "Read(~/projects/**)",
+      "Read(~/email/**)",
+      "Read(/tmp/**)",
+      "Bash",
+      "Edit",
+      "MultiEdit",
+      "WebFetch",
+      "WebSearch",
+      "Write",
+      "mcp__ref__*",
+            "mcp__effect-docs__*",
+      "mcp__serena__*",
+      "mcp__linear-server__*",
+      "mcp__notion__*",
+      "Bash(rm:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm check:types:*)",
+      "Read(//Users/jasonkuhrt/.claude/**)",
+      "Read(//Users/jasonkuhrt/.config/fish/completions/**)",
+      "Read(//Users/jasonkuhrt/.config/zed/**)",
+      "Read(//Users/jasonkuhrt/projects/the-guild-org/polen-copy/**)",
+      "Read(//Users/jasonkuhrt/.serena/**)",
+      "Read(//Users/jasonkuhrt/projects/jasonkuhrt/experiment-ts-chain/**)",
+      "Read(//tmp/chaindown-analysis/**)",
+      "Read(//Users/jasonkuhrt/projects/**)",
+      "Read(//Users/jasonkuhrt/email/**)",
+      "Read(maildir/**)"
+    ],
+    "deny": [
+      "mcp__claude-in-chrome__*"
+    ],
+    "defaultMode": "default",
+    "additionalDirectories": [
+      "/Users/jasonkuhrt/email/",
+      "/Users/jasonkuhrt/projects/the-guild-org/polen/",
+      "/Users/jasonkuhrt/projects/jasonkuhrt/graffle/",
+      "/Users/jasonkuhrt/projects/jasonkuhrt/graphql-kit/",
+      "/Users/jasonkuhrt/projects/jasonkuhrt/molt/",
+      "/Users/jasonkuhrt/projects/jasonkuhrt/floggy/",
+      "/Users/jasonkuhrt/projects/jasonkuhrt/flo"
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y ccstatusline@latest",
+    "padding": 0
+  },
+  "enabledPlugins": {
+    "commit-commands@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": false,
+    "plugin-dev@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "superpowers-developing-for-claude-code@superpowers-marketplace": true,
+    "superpowers@superpowers-marketplace": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "effect@jasonkuhrt": true,
+    "kitz@jasonkuhrt": true,
+    "library-adt@jasonkuhrt": true,
+    "library-standards@jasonkuhrt": true,
+    "react@jasonkuhrt": true,
+    "typescript@jasonkuhrt": true,
+    "zed@jasonkuhrt": true,
+    "flo@jasonkuhrt": true,
+    "panda-css@jasonkuhrt": true
+  },
+  "alwaysThinkingEnabled": true
+}

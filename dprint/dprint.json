@@ -1,0 +1,22 @@
+{
+  "$schema": "https://dprint.dev/schemas/v0.json",
+  "incremental": true,
+  "json": {
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "useTabs": false,
+    "trailingCommas": "never",
+    "commentLine.forceSpaceAfterSlashes": true,
+    "ignoreNodeCommentText": "dprint-ignore"
+  },
+  "excludes": [
+    "**/node_modules",
+    "**/*-lock.json",
+    "**/dist",
+    "**/build",
+    "**/coverage"
+  ],
+  "plugins": [
+    "https://plugins.dprint.dev/json-0.19.4.wasm"
+  ]
+}

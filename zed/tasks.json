@@ -1,0 +1,125 @@
+//
+//
+//
+//
+// Static Tasks Configuration
+//
+// ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+// @see https://zed.dev/docs/tasks
+// @see https://zed.dev/docs/tasks?highlight=runnable#variables
+//
+//
+//
+/* Copy-Past Variables Docs (May 30 2025)
+
+ZED_COLUMN: current line column
+ZED_ROW: current line row
+ZED_FILE: absolute path of the currently opened file (e.g. /Users/my-user/path/to/project/src/main.rs)
+ZED_FILENAME: filename of the currently opened file (e.g. main.rs)
+ZED_DIRNAME: absolute path of the currently opened file with file name stripped (e.g. /Users/my-user/path/to/project/src)
+ZED_RELATIVE_FILE: path of the currently opened file, relative to ZED_WORKTREE_ROOT (e.g. src/main.rs)
+ZED_RELATIVE_DIR: path of the currently opened file's directory, relative to ZED_WORKTREE_ROOT (e.g. src)
+ZED_STEM: stem (filename without extension) of the currently opened file (e.g. main)
+ZED_SYMBOL: currently selected symbol; should match the last symbol shown in a symbol breadcrumb (e.g. mod tests > fn test_task_contexts)
+ZED_SELECTED_TEXT: currently selected text
+ZED_WORKTREE_ROOT: absolute path to the root of the current worktree. (e.g. /Users/my-user/path/to/project)
+ZED_CUSTOM_RUST_PACKAGE: (Rust-specific) name of the parent package of $ZED_FILE source file.
+
+*/
+[
+  //
+  //
+  //
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Override JS Builtins
+  //
+  //
+  //
+  {
+    "label": "vitest line",
+    "command": "npx vitest run",
+    "args": ["$ZED_FILE:$ZED_ROW"],
+    "allow_concurrent_runs": true,
+    "use_new_terminal": true,
+    "reveal": "never",
+    "tags": ["ts-test", "js-test"],
+    "show_command": false,
+    "show_summary": false
+  },
+  // In practice does not work well currently.
+  // See https://github.com/vitest-dev/vitest/issues/8075
+  // {
+  //   "label": "vitest line (watch)",
+  //   "command": "npx vitest",
+  //   "args": ["$ZED_FILE:$ZED_ROW"],
+  //   "allow_concurrent_runs": true,
+  //   "use_new_terminal": true,
+  //   "reveal": "never",
+  //   "tags": ["ts-test", "js-test"]
+  // },
+  {
+    "label": "vitest file",
+    "command": "npx vitest run",
+    "args": ["$ZED_FILE"],
+    "allow_concurrent_runs": true,
+    "use_new_terminal": true,
+    "reveal": "never",
+    "show_command": false,
+    "show_summary": false
+  },
+  {
+    "label": "vitest file (watch)",
+    "command": "npx vitest",
+    "args": ["$ZED_FILE"],
+    "allow_concurrent_runs": true,
+    "use_new_terminal": true,
+    "reveal": "always",
+    "show_command": false,
+    "show_summary": false
+  },
+  //
+  //
+  //
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Jason's Common Project Scripts
+  //
+  //
+  //
+  {
+    "label": "dev",
+    "command": "pnpm dev",
+    "reveal": "never",
+    "show_command": false,
+    "show_summary": false
+  },
+  {
+    "label": "check:types --watch",
+    "command": "pnpm check:types --watch",
+    "reveal": "never",
+    "show_command": false,
+    "show_summary": false
+  },
+  {
+    "label": "check",
+    "command": "pnpm check",
+    "reveal": "no_focus",
+    "show_summary": false,
+    "show_command": false,
+    "hide": "on_success"
+  },
+  //
+  //
+  //
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Zed Toggles
+  //
+  //
+  //
+  {
+    "label": "toggle: chore files",
+    "command": "~/.config/zed/toggle-chore-files.sh",
+    "reveal": "no_focus",
+    "show_command": false,
+    "hide": "on_success"
+  }
+]

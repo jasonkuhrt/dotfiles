@@ -1,0 +1,40 @@
+#
+#
+#
+# Ghostty Config
+#
+# Reference:
+# https://ghostty.org/docs/config/reference
+#
+#
+
+theme = tokyonight
+
+#
+# Typography
+#
+
+font-family    = "Monaspace Neon"
+font-size      = 16
+
+#
+# Window
+#
+
+macos-titlebar-proxy-icon = hidden
+
+#
+# Cursor
+#
+
+adjust-cursor-thickness = 9
+cursor-style-blink      = false
+cursor-opacity          = 0.3
+
+
+#
+# Keybindings
+#
+
+keybind = ctrl+'=clear_screen
+keybind = shift+enter=text:\n

@@ -1,0 +1,620 @@
+//
+//
+//
+//
+// Jaons's Zed Settings
+//
+// ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+//
+//
+// Top Issues
+// - https://github.com/zed-industries/zed/issues/10910
+//
+// Reminder to self to try the following things when I have some time:
+//
+// - use dprint to format jsonc
+//
+{
+  //
+  //
+  //
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • AI
+  //
+  //
+  //
+  "disable_ai": false,
+  "show_signature_help_after_edits": false,
+  "context_servers": {
+    // NOTE: GitHub token must be set locally in ~/.config/zed/settings.local.json
+    // "mcp-server-github": { "settings": { "github_personal_access_token": "..." } }
+  },
+  "agent": {
+    // "inline_assistant_model": {
+    // "provider": "zed.dev",
+    // "model": "zed-dev-2.0"
+    // },
+    "default_model": {
+      "provider": "zed.dev",
+      "model": "claude-opus-4-thinking"
+    },
+    "default_profile": "write",
+    // "default_model": {
+    //   "provider": "zed.dev"
+    // },
+    "model_parameters": [],
+    "always_allow_tool_actions": true,
+    // -- UI
+    "enable_feedback": false,
+    "button": false
+  },
+  //
+  // ─ UI
+  //
+  "features": {
+    "edit_prediction_provider": "copilot"
+  },
+  "show_completions_on_input": true,
+  "edit_predictions": {
+    "enabled_in_text_threads": true,
+    "mode": "eager"
+  },
+  "tasks": {
+    "enabled": true
+  },
+  //
+  //
+  //
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Vim
+  //
+  //
+  //
+  "vim_mode": true,
+  "vim": {
+    "toggle_relative_line_numbers": true,
+    "use_smartcase_find": true
+  },
+  //
+  //
+  //
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • UI
+  //
+  //
+  "unnecessary_code_fade": 0.7,
+  "centered_layout": {
+    "left_padding": 0,
+    "right_padding": 0
+  },
+  "active_pane_modifiers": {
+    // "inactive_opacity": 0.6
+  },
+  // TODO: change fish prompt to not duplicate breadcrumbs (when in zed context)
+  "terminal": {
+    "button": false,
+    "copy_on_select": true,
+    "cursor_shape": "bar", // keep this in sync with editor, e.g. don't confuse what "insert" mode (only mode in terminal) looks like.
+    // ━ UI
+    "toolbar": {
+      // "breadcrumbs": false // We keep them, and instead opt to have our shell remove this indicator info from its prompt _inside Zed context_.
+    },
+    "dock": "right",
+    "scrollbar": {
+      "show": "system"
+    }
+  },
+  "search": {
+    "button": false
+  },
+  "notification_panel": {
+    "button": false
+  },
+  "diagnostics": {
+    "button": false,
+    "include_warnings": true
+  },
+  "toolbar": {
+    "breadcrumbs": true,
+    "quick_actions": false,
+    "agent_review": false
+  },
+  "tab_bar": {
+    "show_nav_history_buttons": false,
+    "show_tab_bar_buttons": false
+  },
+  "title_bar": {},
+  "indent_guides": {
+    // Want to customize colours, can't: https://github.com/zed-industries/zed/discussions/32308
+    "coloring": "indent_aware"
+  },
+  "theme": {
+    "mode": "system",
+    "light": "Tokyo Night",
+    "dark": "Tokyo Night"
+  },
+  //
+  // Key completion missing, for reference, refer to:
+  // @see https://github.com/zed-industries/zed/blob/main/assets/themes/one/one.json
+  "experimental.theme_overrides": {
+    "hint": "#333547", // Make inlay hints dimmer
+    // Indent guide color palettes (uncomment one to use):
+    // "accents": ["#1e3a5f", "#2a5f7f", "#3a7fa0", "#4a9fc0", "#5abfe0", "#7ad0f0"], // 1. Ocean tones, mixed colours
+    // "accents": ["#1a2b36", "#1a3b56", "#1a4b76", "#1a5b96", "#1a6bb6", "#1a7bd6"], // 2a. Ocean blue progression (increasing opacity)
+    // "accents": ["#1a2e2e", "#1a3e3e", "#1a4e4e", "#1a5e5e", "#1a6e6e", "#1a7e7e"], // 2b. Ocean teal progression (increasing opacity)
+    // "accents": ["#1a2d33", "#1a3d43", "#1a4d53", "#1a5d63", "#1a6d73", "#1a7d83"], // 2c. Ocean aqua progression (increasing opacity)
+    // "accents": ["#2a2a4a", "#3a3a5a", "#4a4a6a", "#5a5a7a", "#6a6a8a", "#7a7a9a"], // 3. Dim purple-blue palette
+    // "accents": ["#2a1a3a", "#3a1a4a", "#4a2a4a", "#5a3a4a", "#6a4a4a", "#7a5a4a"], // 4. Sunset gradient (purple to orange)
+    // "accents": ["#1a2a1a", "#1a3a2a", "#1a4a3a", "#1a5a4a", "#1a6a5a", "#1a7a6a"], // 5. Forest depths (dark green to emerald)
+    // "accents": ["#1e1e1e", "#242424", "#2a2a2a", "#303030", "#363636", "#3c3c3c"], // 6. Monochrome subtle (barely visible grays)
+    // "accents": ["#2a1a2a", "#3a1a3a", "#4a2a4a", "#4a3a5a", "#4a4a6a", "#4a5a7a"], // 7. Neon cyberpunk (pink to cyan)
+    // "accents": ["#1a1a2e", "#1a1a3e", "#1a1a4e", "#1a1a5e", "#1a1a6e", "#1a1a7e"], // 8. Deep space (ultra dark blues)
+
+    // MEDIUM VARIANTS (starting ~10% brightness)
+    // "accents": ["#2a4a6f", "#3a6a8f", "#4a8aaf", "#5aaacf", "#6abaef", "#7acaff"], // 9. Ocean tones MEDIUM
+    // "accents": ["#2a3b46", "#3a4b66", "#4a5b86", "#5a6ba6", "#6a7bc6", "#7a8be6"], // 10. Ocean blue MEDIUM
+    // "accents": ["#2a3e3e", "#3a4e4e", "#4a5e5e", "#5a6e6e", "#6a7e7e", "#7a8e8e"], // 11. Ocean teal MEDIUM
+    // "accents": ["#3a3a5a", "#4a4a6a", "#5a5a7a", "#6a6a8a", "#7a7a9a", "#8a8aaa"], // 12. Purple-blue MEDIUM
+    "accents": [
+      "#3a2a4a",
+      "#4a2a5a",
+      "#5a3a5a",
+      "#6a4a5a",
+      "#7a5a5a",
+      "#8a6a5a"
+    ], // 13. Sunset MEDIUM
+    // "accents": ["#2a3a2a", "#3a4a3a", "#4a5a4a", "#5a6a5a", "#6a7a6a", "#7a8a7a"], // 14. Forest MEDIUM
+    // "accents": ["#2a2a2a", "#3a3a3a", "#4a4a4a", "#5a5a5a", "#6a6a6a", "#7a7a7a"], // 15. Monochrome MEDIUM
+    // "accents": ["#3a2a3a", "#4a2a4a", "#5a3a5a", "#5a4a6a", "#5a5a7a", "#5a6a8a"], // 16. Cyberpunk MEDIUM
+    // "accents": ["#2a2a3e", "#3a3a4e", "#4a4a5e", "#5a5a6e", "#6a6a7e", "#7a7a8e"], // 17. Deep space MEDIUM
+
+    // BRIGHTER VARIANTS (starting ~20% brightness)
+    // "accents": ["#4a668f", "#5a86af", "#6aa6cf", "#7ac6ef", "#8ad6ff", "#9ae6ff"], // 18. Ocean tones BRIGHT
+    // "accents": ["#3a4b56", "#4a5b76", "#5a6b96", "#6a7bb6", "#7a8bd6", "#8a9bf6"], // 19. Ocean blue BRIGHT
+    // "accents": ["#3a4e4e", "#4a5e5e", "#5a6e6e", "#6a7e7e", "#7a8e8e", "#8a9e9e"], // 20. Ocean teal BRIGHT
+    // "accents": ["#4a4a6a", "#5a5a7a", "#6a6a8a", "#7a7a9a", "#8a8aaa", "#9a9aba"], // 21. Purple-blue BRIGHT
+    // "accents": ["#4a3a5a", "#5a3a6a", "#6a4a6a", "#7a5a6a", "#8a6a6a", "#9a7a6a"], // 22. Sunset BRIGHT
+    // "accents": ["#3a4a3a", "#4a5a4a", "#5a6a5a", "#6a7a6a", "#7a8a7a", "#8a9a8a"], // 23. Forest BRIGHT
+    // "accents": ["#3a3a3a", "#4a4a4a", "#5a5a5a", "#6a6a6a", "#7a7a7a", "#8a8a8a"], // 24. Monochrome BRIGHT
+    // "accents": ["#4a3a4a", "#5a3a5a", "#6a4a6a", "#6a5a7a", "#6a6a8a", "#6a7a9a"], // 25. Cyberpunk BRIGHT
+    // "accents": ["#3a3a4e", "#4a4a5e", "#5a5a6e", "#6a6a7e", "#7a7a8e", "#8a8a9e"], // 26. Deep space BRIGHT
+
+    //
+    // Key completion missing, reference:
+    // @see https://zed.dev/docs/extensions/languages#syntax-highlighting
+    //
+    "syntax": {
+      // Limited control, see:
+      // @see https://github.com/zed-industries/zed/issues/9461#issuecomment-2925427869
+      // @see https://github.com/zed-industries/zed/issues/9461#issuecomment-2925433922
+      "keyword": {
+        // Playing with making them dimmer, unsure.
+        // "color": "#6E6A91"
+        // "color": "#383B5C"
+      },
+      "string": {
+        // reduce saturation (from: 9ECD6A)
+        "color": "#A4C97A",
+        "font_style": "italic",
+        "font_weight": 300
+      },
+      "comment": {
+        "font_style": "italic",
+        "font_weight": 400
+      }
+    }
+  },
+  "inlay_hints": {
+    "toggle_on_modifiers_press": {
+      "shift": true,
+      "control": true
+    }
+  },
+  "outline_panel": {
+    "button": false
+  },
+  "git_panel": {
+    "button": false,
+    "sort_by_path": true,
+    "status_style": "label_color" // What does this do?
+  },
+  "project_panel": {
+    "folder_icons": false,
+    "auto_fold_dirs": false,
+    "hide_gitignore": false,
+    "entry_spacing": "standard",
+    "button": false
+  },
+  "collaboration_panel": {
+    "button": false
+  },
+  "auto_signature_help": false,
+  "go_to_definition_fallback": "none", // It is confusing to be presented with references when I was interetsed in the definition.
+  "snippet_sort_order": "top",
+  "use_smartcase_search": true,
+  "soft_wrap": "none",
+  "vertical_scroll_margin": 10,
+  "scroll_beyond_last_line": "vertical_scroll_margin", // Ideally: 50% of buffer height. TODO: make GH issue.
+  "cursor_blink": false,
+  "completions": {
+    "words": "disabled" // Rarely useful, usually adding noise to  autocomplete list.
+  },
+
+  //
+  //
+  //
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Automation
+  //
+  //
+
+  "autosave": "on_focus_change",
+  "format_on_save": "on",
+  // "close_on_file_delete": true,
+
+  //
+  //
+  //
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Typography
+  //
+  //
+
+  // "ui_font_family": "Menlo",
+  // "ui_font_family": "Fira Code",
+  // "ui_font_family": "Monaspace Xenon Var",
+  // "buffer_font_family": "Iosevka Aile",
+
+  "ui_font_family": "Monaspace Neon",
+  "ui_font_size": 12,
+  "ui_font_weight": 300,
+  "ui_font_features": {},
+
+  "buffer_font_family": "Monaspace Neon",
+  "buffer_font_size": 14,
+  "buffer_font_weight": 300,
+
+  //
+  //
+  //
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Git
+  //
+  //
+  "git": {
+    "inline_blame": {
+      "enabled": false
+    }
+  },
+  //
+  //
+  //
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Command Aliases
+  //
+  //
+  "command_aliases": {
+    "T": "toggle",
+    "O": "open",
+
+    "f": "file",
+    "fp": "copy path",
+
+    // Pattern would have this be D but I use often
+    "d": "diagnostic",
+    "dn": "go to diagnostic",
+    "dp": "previous diagnostic",
+
+    // d taken (diagnostic)
+    "de": "dev: ",
+
+    "z": "zed: ",
+    "zs": "zed: settings",
+    "zo": "zed: open",
+    "zt": "zed: task",
+    "zk": "zed: open keymap",
+    "zc": "zed: copy",
+
+    "k": "keymap", // no zed: here because there is also vim: keymap
+    "kd": "default keymap",
+    "kc": "key context",
+
+    "w": "workspace: ",
+    "ws": "workspace: save",
+    "wo": "workspace: open",
+
+    "a": "agent: ",
+    "ar": "agent: reject",
+    "an": "agent: new",
+    "ak": "agent: keep",
+    "ao": "agent: open",
+
+    "e": "editor: ",
+    "er": "editor: restart",
+    "ef": "editor: format",
+    "eg": "editor: go to",
+
+    "v": "vim: ",
+    "vp": "vim: push ",
+    "vk": "vim: keymap",
+
+    "t": "task: ",
+    "ts": "task: spawn",
+
+    "r": "repl: ",
+
+    "s": "search: ",
+    "sr": "search: replace",
+    "sp": "project search: ",
+    "st": "search: toggle",
+    "sb": "buffer search: ",
+
+    // s taken (search)
+    "sn": "snippets: configure", // Strict pattern here would be snc but 99% of the time what I want this so sn it is
+    "sno": "snippets: open",
+    "c": "snippets: configure", // I use this a lot so trying out one untaken letter, c for code
+
+    "p": "prediction",
+
+    "pa": "pane: ",
+    "pap": "pane: pin",
+
+    "pr": "project panel: ",
+
+    "g": "git: ",
+    "ga": "git: amend ",
+    "gd": "git: diff ",
+    "gb": "git: branch ",
+    "gc": "git: commit ",
+    "gs": "git: stage ",
+    "gu": "git: unstage ",
+    "gp": "git: push",
+
+    "n": "go to",
+    "nd": "go to definition",
+    "nds": "go to definition split"
+  },
+  //
+  //
+  //
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Languages
+  //
+  //
+  "lsp": {
+    "vscode-css-language-server": {
+      "settings": {
+        "css": {
+          "lint": {
+            "unknownAtRules": "ignore"
+          }
+        }
+      }
+    },
+    "json-language-server": {
+      "settings": {
+        "json": {
+          "schemas": [
+            {
+              "fileMatch": ["package.json"],
+              "url": "./node_modules/libra/schema/package-json-libra.json"
+            }
+          ]
+        }
+      }
+    },
+    "eslint": {
+      // "enabled": false,
+      "initialization_options": {
+        "typescript": {}
+      }
+    },
+        // Also possible to try: https://github.com/typescript-language-server/typescript-language-server
+    // @see https://github.com/yioneko/vtsls
+    "vtsls": {
+      // @see https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json
+      "settings": {
+        "typescript": {
+          "preferences": {
+            //
+            //
+            //
+            // ━━━━━━━━━━━━━━ • The Wacky Wild World Of TypeScript Auto Imports Tooling
+            //
+            //
+            "importModuleSpecifier": "non-relative", // Use non-relative imports
+            //
+            "importModuleSpecifierEnding": "minimal", // Use minimal import paths (without extensions)
+            //
+            "useAliasesForRenames": false,
+            //
+            // > Include the `type` keyword in auto-imports whenever possible. Requires using TypeScript 5.3+ in the workspace.
+            "preferTypeOnlyAutoImports": true,
+            //
+            "includePackageJsonAutoImports": "on" // Disable package.json auto-imports
+            //
+            // ━ Remove noise from auto-imports
+            //
+            // @see https://stackoverflow.com/questions/73505774/option-to-exclude-patterns-from-auto-import-not-working
+            // @see https://stackoverflow.com/questions/71491519/prevent-certain-files-from-being-imported-in-vs-code/74331320#74331320
+            // @see https://github.com/microsoft/TypeScript/pull/49578
+            // @see https://devblogs.microsoft.com/typescript/announcing-typescript-4-8-rc/#exclude-globs-auto-import
+            // > This can be useful in cases where you can’t avoid having certain modules or libraries in your compilation
+            //   but you rarely want to import from them. These modules might have lots of exports that can pollute
+            //   the auto-imports list and make it harder to navigate, and this option can help in those situations.
+            //
+            // "autoImportFileExcludePatterns": [],
+            //
+            // @see https://github.com/microsoft/TypeScript/issues/56415
+            // @see https://stackoverflow.com/questions/76788709/how-can-i-exclude-an-ambient-module-declaration-like-nodetest-from-vs-codes-au
+            // "autoImportSpecifierExcludeRegexes": [],
+            //
+            // Threads n' Stuff:
+            // - https://stackoverflow.com/questions/63251182/vs-code-typescript-auto-import-suggestion-priority
+            // - https://stackoverflow.com/questions/68686383/typescript-react-props-priority-when-using-intellisense-in-vs-code/76938845#76938845
+            // - https://github.com/microsoft/TypeScript/issues/51418
+            // - https://github.com/microsoft/TypeScript/issues/55092
+            // - (open) https://github.com/microsoft/TypeScript/issues/51155
+            // - (open) https://github.com/microsoft/TypeScript/issues/52080
+            //
+            // Tools n' Stuff:
+            // - https://github.com/tidalhq/ts-plugin-sort-import-suggestions
+            // - https://github.com/zardoy/typescript-vscode-plugins
+          },
+          "tsserver": {
+            "experimental": {
+              "enableProjectDiagnostics": true,
+              "completion": {
+                // https://github.com/yioneko/vtsls?tab=readme-ov-file#bad-performance-of-completion
+                //
+                // > before returning all the completion candidates from tsserver, the server will do
+                //   fuzzy matching and filter out entries with no match. This can reduce the number of invalid entries in the response.
+                "enableServerSideFuzzyMatch": true,
+                "entriesLimit": 50
+              }
+            }
+          },
+          "updateImportsOnFileMove": {
+            "enabled": "always"
+          }
+        }
+      }
+    }
+  },
+  "file_types": {
+    //
+    // Force *.tsx files to keep our TypeScript configuration DRY:
+    //
+    // - Settings
+    // - Snippets
+    //
+    // If Zed gains support for snippet inheritance we might want to reconsider this
+    // so that we only see TSX syntax snippets in TSX files.
+    //
+    // "TSX": ["*.tsx"],
+    "JSONC": ["tsconfig.*.json"],
+    "Git Config": [
+      "**/ghostty/config" // Hack, but better than plain text
+    ],
+    // Snapshot files should never be auto-formatted (they are generated)
+    "Plain Text": ["*.snap"]
+  },
+  "languages": {
+    // Snapshot files should never be auto-formatted
+    "Plain Text": {
+      "format_on_save": "off",
+      "remove_trailing_whitespace_on_save": false
+    },
+    // https://zed.dev/docs/languages/markdown
+    "Markdown": {
+      "soft_wrap": "none",
+      "formatter": {
+        "external": {
+          "command": "pnpm",
+          "arguments": ["dprint", "fmt", "--stdin", "markdown"]
+        }
+      }
+    },
+
+    // JSONC configuration (JSON with Comments)
+    "JSONC": {
+      "prettier": { "allowed": false },
+      "formatter": {
+        "external": {
+          "command": "/Users/jasonkuhrt/.config/zed/dprint-wrapper.sh",
+          "arguments": ["{buffer_path}"]
+        }
+      }
+    },
+    // @see https://zed.dev/docs/languages/typescript
+    "TypeScript": {
+      // ━━━ tsgo: native Go-based TypeScript compiler (TS 7.0) ━━━
+      // CLI: pnpm add -D @typescript/native-preview && npx tsgo
+      // NOTE: Type-heavy codebases (recursive conditional types) may OOM - see github.com/microsoft/typescript-go/issues/2125
+      // NOTE: Zed extension downloads its own binary from npm, ignores global install
+      //
+      // ━━━ tsgo rename issues (all open as of 2025-12-30) ━━━
+      // Rename refactor crashes tsgo ("server shut down"). Related issues:
+      // - https://github.com/microsoft/typescript-go/issues/2244 (rename LSP not implemented)
+      // - https://github.com/microsoft/typescript-go/issues/2387 (diagnostics don't refresh after rename)
+      // - https://github.com/microsoft/typescript-go/issues/2133 (rename breaks tsconfig detection)
+      // - https://github.com/microsoft/typescript-go/issues/1882 (rename/move breaks imports)
+      // - https://github.com/microsoft/typescript-go/issues/2230 (should block renaming stdlib)
+      //
+      // Swap these lines to toggle:
+      "language_servers": ["vtsls", "!tsgo", "!eslint", "oxc", "..."],
+      // "language_servers": ["tsgo", "!vtsls", "!eslint", "oxc", "..."],
+      "prettier": { "allowed": false },
+      // "completions": {
+      //   "lsp_fetch_timeout_ms": 5000
+      // },
+      // "jsx_tag_auto_close": {
+      //   "enabled": true
+      // },
+      // "tab_size": 2,
+      "formatter": [
+        {
+          "external": {
+            "command": "dprint",
+            "arguments": [
+              "fmt",
+              "--stdin",
+              "{buffer_path}"
+            ]
+          }
+        },
+        {
+          "code_action": "source.addMissingImports.ts"
+        }
+      ]
+    },
+    // Considered apart from TypeScript
+    // @see https://zed.dev/docs/languages/typescript?highlight=tsx#language-servers
+    "TSX": {
+      // ━━━ tsgo: native Go-based TypeScript compiler (TS 7.0) ━━━
+      // CLI: pnpm add -D @typescript/native-preview && npx tsgo
+      // NOTE: Type-heavy codebases (recursive conditional types) may OOM - see github.com/microsoft/typescript-go/issues/2125
+      // NOTE: Zed extension downloads its own binary from npm, ignores global install
+      // NOTE: Rename issues - see TypeScript section above for links
+      //
+      // Swap these lines to toggle:
+      "language_servers": ["vtsls", "!tsgo", "!eslint", "oxc", "..."],
+      // "language_servers": ["tsgo", "!vtsls", "!eslint", "oxc", "..."],
+      "prettier": { "allowed": false },
+      "formatter": [
+        {
+          "external": {
+            "command": "dprint",
+            "arguments": [
+              "fmt",
+              "--stdin",
+              "{buffer_path}"
+            ]
+          }
+        },
+        {
+          "code_action": "source.addMissingImports.ts"
+        }
+      ]
+    }
+  }
+  // @see https://zed.dev/docs/languages/javascript
+  // "JavaScript": {
+  //   "language_servers": ["vtsls", "!eslint", "oxc"],
+  //   "prettier": { "allowed": false },
+  //   "formatter": [
+  //     {
+  //       "external": {
+  //         "command": "dprint",
+  //         "arguments": ["fmt", "--stdin", "{buffer_path}"]
+  //       }
+  //     },
+  //     {
+  //       "code_actions": {
+  //         "source.fixAll.eslint": false,
+  //         "source.addMissingImports.ts": true
+  //       }
+  //     }
+  //   ]
+  // }
+}

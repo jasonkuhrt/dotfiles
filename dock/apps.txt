@@ -1,0 +1,5 @@
+# Dock applications (one per line)
+# Use app name (e.g., "Ghostty", "Discord")
+# Order matters - first app is leftmost in dock
+# Leave empty for a clean dock (Finder and Trash only)
+

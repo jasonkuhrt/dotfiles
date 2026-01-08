@@ -1,0 +1,39 @@
+{
+  "name": "jasonkuhrt",
+  "owner": {
+    "name": "Jason Kuhrt",
+    "email": "jasonkuhrt@me.com"
+  },
+  "plugins": [
+    {
+      "name": "effect",
+      "source": "./plugins/effect",
+      "description": "Effect framework conventions and patterns"
+    },
+    {
+      "name": "kitz",
+      "source": "./plugins/kitz",
+      "description": "Kitz library conventions"
+    },
+    {
+      "name": "library-adt",
+      "source": "./plugins/library-adt",
+      "description": "ADT library conventions"
+    },
+    {
+      "name": "library-standards",
+      "source": "./plugins/library-standards",
+      "description": "Library standards and conventions"
+    },
+    {
+      "name": "react",
+      "source": "./plugins/react",
+      "description": "React conventions and patterns"
+    },
+    {
+      "name": "typescript",
+      "source": "./plugins/typescript",
+      "description": "TypeScript conventions and patterns"
+    }
+  ]
+}

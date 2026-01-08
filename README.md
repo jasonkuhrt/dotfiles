@@ -1,38 +1,115 @@
 # dotfiles
 
-My personal system setup script and configuration files
+```sh
+git clone https://github.com/jasonkuhrt/dotfiles.git ~/projects/jasonkuhrt/dotfiles
+~/projects/jasonkuhrt/dotfiles/bin/sync
+```
 
-## Checklist
+## How it works
 
-- [Install Zed](https://zed.dev/download)
-- [Install Ghostty](https://ghostty.org)
-- [Install `fish`](https://fishshell.com)
-- [Install `fisher`](https://github.com/jorgebucaran/fisher)
-- [Install `brew`](https://brew.sh)
-- [Make Fish the default shell](https://gist.github.com/gagarine/cf3f65f9be6aa0e105b184376f765262?permalink_comment_id=3960962#gistcomment-3960962)
-- Development
-  - [Refined GitHub](https://chrome.google.com/webstore/detail/refined-github/hlepfoohegkhhmjieoechaddaejaokhf) for better GitHub UI
-- Setup macOS
-  - [Enable key repeat](https://stackoverflow.com/questions/39972335/how-do-i-press-and-hold-a-key-and-have-it-repeat-in-vscode) (also applies to Zed)
-  - [Disable double space period](http://osxdaily.com/2019/03/27/disable-period-typing-shortcut-mac/)
-  - [Install Alfred](https://www.alfredapp.com/)
-  - http://osxdaily.com/2010/02/26/use-the-tab-key-to-switch-between-dialog-buttons-in-mac-os-x/
-  - [Enable Touch ID for sudo](https://www.imore.com/how-use-sudo-your-mac-touch-id)
-  - update bash on macOS
-    macOS ships with an old version of bash (3.x). Bash is up to 5.x at the time of this writing. Being able to invoke a modern bash via `$ bash` can be useful.
-    Instructions from [here](https://apple.stackexchange.com/questions/55989/change-my-shell-to-a-different-bash-version-at-usr-local-bin-bash/55998). Add `/usr/local/bin/bash` to `/etc/shells`. Then test via `bash --version`.
-- Run `bin/install`
+`bin/sync` creates symlinks from your home directory to this repo (selective files, not whole directories):
 
-## Programming fonts
+```
+# Claude Code
+~/.claude/CLAUDE.md           →  ./claude/CLAUDE.md
+~/.claude/settings.json       →  ./claude/settings.json
+~/.claude/commands/           →  ./claude/commands/
+~/.claude/rules/              →  ./claude/rules/
 
-- [FiraCode](https://github.com/tonsky/FiraCode)
-- [Operator Mono](https://www.typography.com/fonts/operator/styles/) (\$) ([intro](https://www.typography.com/blog/introducing-operator)) ([hype](https://twitter.com/dan_abramov/status/700439594337222657/photo/1)) ([w/ ligatures](https://github.com/kiliman/operator-mono-lig))
-- [Hasklig](https://github.com/i-tu/Hasklig)
-- [Iosevka](https://github.com/be5invis/Iosevka)
-- [Hack](https://github.com/source-foundry/Hack)
-- [PragmataPro](https://www.fsd.it/shop/fonts/pragmatapro/) (\$)
-- [Monoid](https://github.com/larsenwork/monoid)
-- [Source Code Pro](https://github.com/adobe-fonts/source-code-pro)
-- [Cascadia Code](https://github.com/microsoft/cascadia-code)
-- [MesloLGS NF](https://github.com/IlanCosman/tide#meslo-nerd-font)
-- [Monaspace](https://github.com/githubnext/monaspace)
+# Zed
+~/.config/zed/settings.json        →  ./zed/settings.json
+~/.config/zed/keymap.json          →  ./zed/keymap.json
+~/.config/zed/tasks.json           →  ./zed/tasks.json
+~/.config/zed/snippets/            →  ./zed/snippets/
+~/.config/zed/dprint-wrapper.sh    →  ./zed/dprint-wrapper.sh
+~/.config/zed/toggle-chore-files.sh →  ./zed/toggle-chore-files.sh
+
+# Ghostty
+~/.config/ghostty/config      →  ./ghostty/config
+
+# Neovim
+~/.config/nvim/init.vim       →  ./nvim/init.vim
+
+# Fish
+~/.config/fish/config.fish    →  ./fish/config.fish
+~/.config/fish/fish_plugins   →  ./fish/fish_plugins
+
+# Email
+~/.mbsyncrc                        →  ./email/mbsyncrc
+~/.imapfilter/config.lua           →  ./email/imapfilter.lua
+~/.config/himalaya/config.toml     →  ./email/himalaya.toml
+~/.config/notmuch/default/config   →  ./email/notmuch.config
+
+# Dock
+# ./dock/apps.txt defines apps to add (empty = clean dock)
+
+# Other
+~/.config/dprint.json         →  ./dprint/dprint.json
+~/.config/gh/config.yml       →  ./gh/config.yml
+~/.config/git/ignore          →  ./git/ignore
+~/.config/libra/config.json   →  ./libra/config.json
+~/.config/vim/.vimrc          →  ./vim/vimrc
+~/.ssh/config                 →  ./ssh/config
+~/.gitconfig                  →  ./git/.gitconfig
+~/.npmrc                      →  ./npmrc
+```
+
+**Edits are live.** Since these are symlinks, editing any file here immediately affects your system.
+
+Re-run `bin/sync` when:
+- New packages added to `Brewfile`
+- New features added to `bin/sync`
+
+## Manual Setup (after sync)
+
+Things that can't be fully automated:
+
+1. **Fish secrets**: Add API keys/tokens to `~/.config/fish/config.secrets.fish` (gitignored)
+2. **Caps Lock → Ctrl**: System Settings > Keyboard > Keyboard Shortcuts > Modifier Keys
+3. **GitHub CLI**: Authenticate with GitHub
+   ```sh
+   gh auth login
+   ```
+4. **SSH key**: Generate if missing, add to GitHub
+   ```sh
+   ssh-keygen -t ed25519 -C "jasonkuhrt@me.com"
+   gh ssh-key add ~/.ssh/id_ed25519.pub
+   ```
+5. **Raycast hotkey**: Set Cmd+Space in Raycast preferences (after disabling Spotlight's shortcut)
+6. **Spotlight shortcut**: System Settings > Keyboard > Keyboard Shortcuts > Spotlight > uncheck "Show Spotlight search"
+7. **Wispr Flow**: Download from [wispr.com](https://www.wispr.com/) (not in Homebrew)
+8. **Browser sync**: Chrome syncs via Google login, Safari syncs via iCloud
+9. **Auto-login** (optional, less secure): System Settings > Users & Groups > Login Options > Automatic login
+10. **Email password**: Add iCloud app-specific password to keychain:
+   ```sh
+   security add-generic-password -s 'mbsync-icloud' -a 'jasonkuhrt@me.com' -w 'YOUR_APP_PASSWORD'
+   ```
+
+## Claude Code Resources
+
+**Docs & Guides**
+- https://docs.claude.com/en/docs/claude-code/overview
+- https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview
+- https://agents.md/
+
+**Curated Lists**
+- https://github.com/hesreallyhim/awesome-claude-code
+- https://claudecodecommands.directory/
+- https://github.com/ComposioHQ/awesome-claude-skills
+
+**MCPs**
+- https://modelcontextprotocol.io
+- https://glama.ai/mcp
+- https://ref.tools/
+- https://github.com/oraios/serena
+
+**Tools**
+- https://wisprflow.ai/
+- https://github.com/sirmalloc/ccstatusline
+- `npx ccusage@latest`
+
+**Examples & Workflows**
+- https://github.com/anthropics/skills/tree/main
+- https://github.com/anthropics/claude-code-action
+- https://github.com/OneRedOak/claude-code-workflows
+- https://github.com/scopecraft/command

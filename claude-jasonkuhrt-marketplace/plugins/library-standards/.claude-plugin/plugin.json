@@ -1,0 +1,7 @@
+{
+  "name": "library-standards",
+  "description": "Enforces library structure conventions (_.ts/__.ts patterns, namespace imports)",
+  "author": {
+    "name": "jasonkuhrt"
+  }
+}

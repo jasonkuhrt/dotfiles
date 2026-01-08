@@ -1,0 +1,496 @@
+#!/bin/bash
+set -e
+
+# ─────────────────────────────────────────────────────────────
+# Dotfiles installer
+# Works for both fresh installs and syncing existing machines
+# ─────────────────────────────────────────────────────────────
+
+HERE="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[0;36m'
+DIM='\033[2m'
+BOLD='\033[1m'
+RESET='\033[0m'
+
+# Symbols
+CHECK="${GREEN}✓${RESET}"
+ARROW="${CYAN}→${RESET}"
+SKIP="${DIM}○${RESET}"
+WARN="${YELLOW}!${RESET}"
+
+# ─────────────────────────────────────────────────────────────
+# Helper functions
+# ─────────────────────────────────────────────────────────────
+
+header() {
+    echo ""
+    echo "${BOLD}${MAGENTA}▸ $1${RESET}"
+    echo "${DIM}─────────────────────────────────────────${RESET}"
+}
+
+task() {
+    echo "  ${CHECK} $1"
+}
+
+skip() {
+    echo "  ${SKIP} ${DIM}$1 (already configured)${RESET}"
+}
+
+info() {
+    echo "  ${ARROW} $1"
+}
+
+warn() {
+    echo "  ${WARN} ${YELLOW}$1${RESET}"
+}
+
+# Symlink a file, skip if already correct
+link_file() {
+    local src="$1"
+    local dest="$2"
+    local name="${3:-$(basename "$dest")}"
+
+    if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src" ]; then
+        skip "$name"
+        return 0
+    fi
+
+    mkdir -p "$(dirname "$dest")"
+    ln -sf "$src" "$dest"
+    task "$name ${DIM}${ARROW} $dest${RESET}"
+}
+
+# Symlink a subdirectory within a parent (for selective dir syncing)
+link_subdir() {
+    local src="$1"
+    local dest="$2"
+    local name="${3:-$(basename "$dest")}"
+
+    if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src" ]; then
+        skip "$name"
+        return 0
+    fi
+
+    # Remove existing dir/file if not a correct symlink
+    if [ -e "$dest" ] || [ -L "$dest" ]; then
+        rm -rf "$dest"
+    fi
+
+    ln -s "$src" "$dest"
+    task "$name ${DIM}${ARROW} $dest${RESET}"
+}
+
+# Ensure a directory exists as a real directory (not a symlink)
+# Migrates from old directory-symlink approach if needed
+ensure_real_dir() {
+    local dest="$1"
+    local src_if_symlinked="$2"  # The dotfiles path it might be symlinked to
+
+    if [ -L "$dest" ]; then
+        local target
+        target="$(readlink "$dest")"
+        if [ "$target" = "$src_if_symlinked" ]; then
+            info "Migrating $dest from directory symlink..."
+            # It's symlinked to our dotfiles - migrate to real directory
+            rm "$dest"
+            mkdir -p "$dest"
+            # Copy non-config files back (runtime files that shouldn't be in dotfiles)
+            # These will be overwritten by symlinks for config files
+            if [ -d "$src_if_symlinked" ]; then
+                cp -a "$src_if_symlinked"/* "$dest"/ 2>/dev/null || true
+            fi
+        else
+            # Symlinked somewhere else - remove and create fresh
+            rm "$dest"
+            mkdir -p "$dest"
+        fi
+    elif [ ! -d "$dest" ]; then
+        mkdir -p "$dest"
+    fi
+}
+
+# ─────────────────────────────────────────────────────────────
+# Main
+# ─────────────────────────────────────────────────────────────
+
+echo ""
+echo "${BOLD}${CYAN}┌────────────────────────────────────────┐${RESET}"
+echo "${BOLD}${CYAN}│${RESET}          ${BOLD}Dotfiles Sync${RESET}           ${BOLD}${CYAN}│${RESET}"
+echo "${BOLD}${CYAN}└────────────────────────────────────────┘${RESET}"
+echo ""
+echo "${DIM}Repository: $HERE${RESET}"
+
+# ─────────────────────────────────────────────────────────────
+header "Claude Code"
+
+ensure_real_dir "$HOME/.claude" "$HERE/claude"
+link_file "$HERE/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md" "claude/CLAUDE.md"
+link_file "$HERE/claude/settings.json" "$HOME/.claude/settings.json" "claude/settings.json"
+link_subdir "$HERE/claude/commands" "$HOME/.claude/commands" "claude/commands"
+link_subdir "$HERE/claude/rules" "$HOME/.claude/rules" "claude/rules"
+
+# Register local marketplace and install plugins
+if command -v claude &> /dev/null; then
+    MARKETPLACE="$HERE/claude-jasonkuhrt-marketplace"
+    if [ -d "$MARKETPLACE" ]; then
+        info "Registering Claude Code marketplace..."
+        claude plugins marketplace add "$MARKETPLACE" 2>/dev/null || true
+        info "Installing marketplace plugins..."
+        claude plugins install effect@jasonkuhrt 2>/dev/null || true
+        claude plugins install kitz@jasonkuhrt 2>/dev/null || true
+        claude plugins install library-adt@jasonkuhrt 2>/dev/null || true
+        claude plugins install library-standards@jasonkuhrt 2>/dev/null || true
+        claude plugins install react@jasonkuhrt 2>/dev/null || true
+        claude plugins install typescript@jasonkuhrt 2>/dev/null || true
+        task "Claude Code plugins configured"
+    fi
+else
+    skip "Claude Code (not installed)"
+fi
+
+# ─────────────────────────────────────────────────────────────
+header "Zed"
+
+ensure_real_dir "$HOME/.config/zed" "$HERE/zed"
+link_file "$HERE/zed/settings.json" "$HOME/.config/zed/settings.json" "zed/settings.json"
+link_file "$HERE/zed/keymap.json" "$HOME/.config/zed/keymap.json" "zed/keymap.json"
+link_file "$HERE/zed/tasks.json" "$HOME/.config/zed/tasks.json" "zed/tasks.json"
+link_file "$HERE/zed/dprint-wrapper.sh" "$HOME/.config/zed/dprint-wrapper.sh" "zed/dprint-wrapper.sh"
+link_file "$HERE/zed/toggle-chore-files.sh" "$HOME/.config/zed/toggle-chore-files.sh" "zed/toggle-chore-files.sh"
+link_subdir "$HERE/zed/snippets" "$HOME/.config/zed/snippets" "zed/snippets"
+
+# ─────────────────────────────────────────────────────────────
+header "Ghostty"
+
+ensure_real_dir "$HOME/.config/ghostty" "$HERE/ghostty"
+link_file "$HERE/ghostty/config" "$HOME/.config/ghostty/config" "ghostty/config"
+
+# ─────────────────────────────────────────────────────────────
+header "Neovim"
+
+ensure_real_dir "$HOME/.config/nvim" "$HERE/nvim"
+link_file "$HERE/nvim/init.vim" "$HOME/.config/nvim/init.vim" "nvim/init.vim"
+
+# ─────────────────────────────────────────────────────────────
+header "Config Files"
+
+link_file "$HERE/ssh/config" "$HOME/.ssh/config" "ssh/config"
+link_file "$HERE/ghci" "$HOME/.ghci" ".ghci"
+mkdir -p "$HOME/.config/vim"
+link_file "$HERE/vim/vimrc" "$HOME/.config/vim/.vimrc" "vim/.vimrc"
+link_file "$HERE/npmrc" "$HOME/.npmrc" ".npmrc"
+link_file "$HERE/dprint/dprint.json" "$HOME/.config/dprint.json" "dprint.json"
+
+mkdir -p "$HOME/.config/gh"
+link_file "$HERE/gh/config.yml" "$HOME/.config/gh/config.yml" "gh/config.yml"
+
+mkdir -p "$HOME/.config/libra"
+link_file "$HERE/libra/config.json" "$HOME/.config/libra/config.json" "libra/config.json"
+
+# ─────────────────────────────────────────────────────────────
+header "Email"
+
+link_file "$HERE/email/mbsyncrc" "$HOME/.mbsyncrc" ".mbsyncrc"
+mkdir -p "$HOME/.imapfilter"
+link_file "$HERE/email/imapfilter.lua" "$HOME/.imapfilter/config.lua" "imapfilter/config.lua"
+mkdir -p "$HOME/.config/himalaya"
+link_file "$HERE/email/himalaya.toml" "$HOME/.config/himalaya/config.toml" "himalaya/config.toml"
+mkdir -p "$HOME/.config/notmuch/default"
+link_file "$HERE/email/notmuch.config" "$HOME/.config/notmuch/default/config" "notmuch/config"
+
+# ─────────────────────────────────────────────────────────────
+header "Fish Shell"
+
+mkdir -p "$HOME/.config/fish"
+
+# Create secrets file if missing
+if [ ! -f "$HERE/fish/config.secrets.fish" ]; then
+    touch "$HERE/fish/config.secrets.fish"
+    task "Created config.secrets.fish template"
+fi
+
+link_file "$HERE/fish/config.fish" "$HOME/.config/fish/config.fish" "config.fish"
+link_file "$HERE/fish/fish_plugins" "$HOME/.config/fish/fish_plugins" "fish_plugins"
+link_file "$HERE/fish/config.secrets.fish" "$HOME/.config/fish/config.secrets.fish" "config.secrets.fish"
+
+# Fisher plugins (only if fish is installed)
+if command -v fish &> /dev/null; then
+    if [ ! -f "$HOME/.config/fish/functions/fisher.fish" ]; then
+        info "Installing Fisher plugin manager..."
+        fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher' 2>/dev/null
+        task "Fisher installed"
+    else
+        skip "Fisher"
+    fi
+
+    info "Syncing Fisher plugins..."
+    fish -c 'fisher update' &>/dev/null && task "Fisher plugins synced" || warn "Fisher sync failed"
+else
+    warn "Fish not installed, skipping Fisher setup"
+fi
+
+# ─────────────────────────────────────────────────────────────
+header "Git"
+
+link_file "$HERE/git/.gitconfig" "$HOME/.gitconfig" ".gitconfig"
+
+mkdir -p "$HOME/.config/git"
+link_file "$HERE/git/ignore" "$HOME/.config/git/ignore" "git/ignore"
+
+# GitHub CLI protocol
+if command -v gh &> /dev/null; then
+    gh config set git_protocol ssh 2>/dev/null
+    task "GitHub CLI protocol set to SSH"
+else
+    skip "GitHub CLI (not installed)"
+fi
+
+# ─────────────────────────────────────────────────────────────
+header "Misc"
+
+mkdir -p "$HOME/.local/bin"
+
+# Hush login message
+if [ ! -f "$HOME/.hushlogin" ]; then
+    touch "$HOME/.hushlogin"
+    task "Created .hushlogin"
+else
+    skip ".hushlogin"
+fi
+
+# ─────────────────────────────────────────────────────────────
+header "Xcode CLI Tools"
+
+if xcode-select -p &>/dev/null; then
+    skip "Xcode CLI tools"
+else
+    info "Installing Xcode CLI tools..."
+    xcode-select --install
+    # Wait for installation to complete
+    until xcode-select -p &>/dev/null; do
+        sleep 5
+    done
+    task "Xcode CLI tools installed"
+fi
+
+# ─────────────────────────────────────────────────────────────
+header "Serena MCP"
+
+if command -v uvx &> /dev/null; then
+    info "Updating Serena (MCP server)..."
+    uv cache clean --force serena 2>/dev/null || true
+    task "Serena cache cleared (will fetch latest on next run)"
+else
+    skip "Serena (uv not installed)"
+fi
+
+# ─────────────────────────────────────────────────────────────
+header "Homebrew"
+
+if ! command -v brew &> /dev/null; then
+    info "Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    # Add brew to PATH for this session (Apple Silicon)
+    if [ -f "/opt/homebrew/bin/brew" ]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    fi
+    task "Homebrew installed"
+else
+    skip "Homebrew"
+fi
+
+info "Installing packages (this may take a while)..."
+if brew bundle --file="$HERE/Brewfile"; then
+    task "Packages installed"
+else
+    warn "Some packages may have failed"
+fi
+
+# ─────────────────────────────────────────────────────────────
+header "pnpm Global Packages"
+
+if command -v pnpm &> /dev/null; then
+    info "Installing global packages..."
+    # Read packages, skip comments and blank lines
+    while IFS= read -r pkg || [ -n "$pkg" ]; do
+        [[ "$pkg" =~ ^#.*$ || -z "$pkg" ]] && continue
+        if pnpm list -g "$pkg" &>/dev/null; then
+            skip "$pkg"
+        else
+            pnpm add -g "$pkg" &>/dev/null && task "$pkg" || warn "Failed to install $pkg"
+        fi
+    done < "$HERE/pnpm/global-packages.txt"
+else
+    warn "pnpm not installed, skipping global packages"
+fi
+
+# ─────────────────────────────────────────────────────────────
+# macOS-specific
+# ─────────────────────────────────────────────────────────────
+
+if [ "$(uname)" = "Darwin" ]; then
+    header "macOS Defaults"
+
+    # Helper to check and set defaults
+    set_default() {
+        local domain="$1"
+        local key="$2"
+        local type="$3"
+        local value="$4"
+        local desc="$5"
+
+        local current
+        current=$(defaults read "$domain" "$key" 2>/dev/null)
+
+        if [ "$current" = "$value" ]; then
+            skip "$desc"
+        else
+            defaults write "$domain" "$key" "$type" "$value"
+            task "$desc"
+        fi
+    }
+
+    info "Configuring keyboard..."
+    set_default "NSGlobalDomain" "ApplePressAndHoldEnabled" "-bool" "false" "Key repeat enabled"
+    set_default "NSGlobalDomain" "KeyRepeat" "-int" "2" "Fast key repeat rate"
+    set_default "NSGlobalDomain" "InitialKeyRepeat" "-int" "15" "Short initial key repeat delay"
+    set_default "NSGlobalDomain" "NSAutomaticPeriodSubstitutionEnabled" "-bool" "false" "Disabled double-space period"
+    set_default "NSGlobalDomain" "NSAutomaticQuoteSubstitutionEnabled" "-bool" "false" "Disabled smart quotes"
+    set_default "NSGlobalDomain" "NSAutomaticDashSubstitutionEnabled" "-bool" "false" "Disabled smart dashes"
+    set_default "NSGlobalDomain" "NSAutomaticSpellingCorrectionEnabled" "-bool" "false" "Disabled auto-correct"
+    set_default "NSGlobalDomain" "AppleKeyboardUIMode" "-int" "3" "Full keyboard access (Tab in dialogs)"
+
+    info "Configuring Finder..."
+    set_default "NSGlobalDomain" "AppleShowAllExtensions" "-bool" "true" "Show all file extensions"
+    set_default "com.apple.finder" "FXEnableExtensionChangeWarning" "-bool" "false" "No extension change warning"
+    set_default "com.apple.finder" "AppleShowAllFiles" "-bool" "true" "Show hidden files"
+    set_default "com.apple.finder" "ShowPathbar" "-bool" "true" "Show path bar"
+    set_default "com.apple.finder" "_FXSortFoldersFirst" "-bool" "true" "Folders on top when sorting"
+    set_default "com.apple.desktopservices" "DSDontWriteNetworkStores" "-bool" "true" "No .DS_Store on network volumes"
+    set_default "com.apple.desktopservices" "DSDontWriteUSBStores" "-bool" "true" "No .DS_Store on USB volumes"
+
+    info "Configuring system..."
+    set_default "com.apple.LaunchServices" "LSQuarantine" "-bool" "false" "Disabled app quarantine dialog"
+    set_default "com.apple.dock" "minimize-to-application" "-bool" "true" "Minimize to app icon"
+    set_default "com.apple.dock" "show-recents" "-bool" "false" "No recent apps in Dock"
+    set_default "com.apple.dock" "autohide" "-bool" "true" "Dock autohide"
+    set_default "com.apple.dock" "tilesize" "-int" "36" "Dock icon size (smaller)"
+
+    info "Configuring trackpad..."
+    set_default "com.apple.AppleMultitouchTrackpad" "Clicking" "-bool" "true" "Tap to click (trackpad)"
+    set_default "com.apple.driver.AppleBluetoothMultitouch.trackpad" "Clicking" "-bool" "true" "Tap to click (bluetooth)"
+
+    info "Configuring Mission Control..."
+    set_default "com.apple.dock" "mru-spaces" "-bool" "false" "Disable auto-rearrange Spaces"
+
+    info "Configuring Touch ID for sudo..."
+    # Use sudo_local which persists across macOS updates (unlike /etc/pam.d/sudo)
+    SUDO_LOCAL="/etc/pam.d/sudo_local"
+    if [ -f "$SUDO_LOCAL" ] && grep -q "pam_tid.so" "$SUDO_LOCAL" 2>/dev/null; then
+        skip "Touch ID for sudo"
+    else
+        if sudo -n true 2>/dev/null; then
+            echo "auth       sufficient     pam_tid.so" | sudo tee "$SUDO_LOCAL" >/dev/null
+            task "Touch ID for sudo enabled"
+        else
+            warn "Touch ID for sudo requires password - run manually:"
+            echo "      ${DIM}echo 'auth       sufficient     pam_tid.so' | sudo tee /etc/pam.d/sudo_local${RESET}"
+        fi
+    fi
+
+    # ─────────────────────────────────────────────────────────────
+    header "Dock Apps"
+
+    if command -v dockutil &> /dev/null; then
+        DOCK_CONFIG="$HERE/dock/apps.txt"
+        if [ -f "$DOCK_CONFIG" ]; then
+            info "Configuring Dock apps..."
+            # Clear existing dock (except Finder and Trash which are automatic)
+            dockutil --remove all --no-restart 2>/dev/null || true
+
+            # Add apps from config
+            while IFS= read -r app || [ -n "$app" ]; do
+                # Skip comments and blank lines
+                [[ "$app" =~ ^#.*$ || -z "$app" || "$app" =~ ^[[:space:]]*$ ]] && continue
+                app=$(echo "$app" | xargs)  # trim whitespace
+
+                # Try to find the app
+                app_path=""
+                for dir in "/Applications" "/System/Applications" "$HOME/Applications"; do
+                    if [ -d "$dir/$app.app" ]; then
+                        app_path="$dir/$app.app"
+                        break
+                    fi
+                done
+
+                if [ -n "$app_path" ]; then
+                    dockutil --add "$app_path" --no-restart 2>/dev/null && \
+                        task "Added $app to Dock" || \
+                        warn "Failed to add $app"
+                else
+                    warn "App not found: $app"
+                fi
+            done < "$DOCK_CONFIG"
+
+            # Restart dock to apply changes
+            killall Dock 2>/dev/null || true
+            task "Dock configured"
+        else
+            skip "Dock config (no dock/apps.txt)"
+        fi
+    else
+        warn "dockutil not installed, skipping Dock configuration"
+    fi
+
+    # ─────────────────────────────────────────────────────────────
+    # Restart affected apps
+    killall Finder 2>/dev/null || true
+    task "Restarted Finder"
+fi
+
+# ─────────────────────────────────────────────────────────────
+# Done
+# ─────────────────────────────────────────────────────────────
+
+echo ""
+echo "${BOLD}${GREEN}┌────────────────────────────────────────┐${RESET}"
+echo "${BOLD}${GREEN}│${RESET}        ${BOLD}${GREEN}✓ Sync Complete${RESET}        ${BOLD}${GREEN}│${RESET}"
+echo "${BOLD}${GREEN}└────────────────────────────────────────┘${RESET}"
+echo ""
+
+# Set Fish as default shell
+FISH_PATH="/opt/homebrew/bin/fish"
+if [ -x "$FISH_PATH" ]; then
+    if ! grep -q "$FISH_PATH" /etc/shells 2>/dev/null; then
+        info "Adding Fish to /etc/shells (requires password)..."
+        echo "$FISH_PATH" | sudo tee -a /etc/shells >/dev/null
+        task "Fish added to /etc/shells"
+    fi
+
+    if [ "$SHELL" != "$FISH_PATH" ]; then
+        info "Setting Fish as default shell..."
+        chsh -s "$FISH_PATH"
+        task "Fish set as default shell"
+    else
+        skip "Fish already default shell"
+    fi
+fi
+
+# Remind about SSH keys if missing
+if [ ! -f "$HOME/.ssh/id_ed25519" ] && [ ! -f "$HOME/.ssh/id_rsa" ]; then
+    echo ""
+    echo "${YELLOW}${BOLD}Note:${RESET} No SSH keys found. Generate with:"
+    echo "  ${CYAN}ssh-keygen -t ed25519 -C \"your_email@example.com\"${RESET}"
+fi
+
+echo ""
+echo "${DIM}Log out and back in for shell change to take effect.${RESET}"
+echo ""

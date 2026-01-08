@@ -1,0 +1,11 @@
+# GitHub - uses specific key
+Host github.com
+  AddKeysToAgent yes
+  UseKeychain yes
+  IdentityFile ~/.ssh/id_ed25519
+
+# Default for all other hosts
+Host *
+  AddKeysToAgent yes
+  UseKeychain yes
+  IdentityFile ~/.ssh/id_ed25519

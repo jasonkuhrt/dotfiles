@@ -1,0 +1,18 @@
+# Himalaya config for iCloud via notmuch (local maildir)
+
+[accounts.icloud]
+email = "jasonkuhrt@me.com"
+default = true
+
+# Use maildir backend (reads from local maildir)
+backend.type = "maildir"
+backend.root-dir = "/Users/jasonkuhrt/email/maildir"
+
+# For sending, use SMTP directly to iCloud
+message.send.backend.type = "smtp"
+message.send.backend.host = "smtp.mail.me.com"
+message.send.backend.port = 587
+message.send.backend.encryption.type = "start-tls"
+message.send.backend.login = "jasonkuhrt@me.com"
+message.send.backend.auth.type = "password"
+message.send.backend.auth.cmd = "security find-generic-password -s 'mbsync-icloud' -w"

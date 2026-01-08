@@ -1,0 +1,50 @@
+# mbsync config for iCloud Mail
+# Docs: https://isync.sourceforge.io/mbsync.html
+
+# ============================================================
+# ACCOUNT SETTINGS
+# ============================================================
+
+IMAPAccount icloud
+Host imap.mail.me.com
+Port 993
+User jasonkuhrt@me.com
+# TODO: Replace with your app-specific password from appleid.apple.com
+PassCmd "security find-generic-password -s 'mbsync-icloud' -w"
+SSLType IMAPS
+SSLVersions TLSv1.2
+AuthMechs LOGIN
+
+# ============================================================
+# REMOTE STORAGE (iCloud server)
+# ============================================================
+
+IMAPStore icloud-remote
+Account icloud
+
+# ============================================================
+# LOCAL STORAGE (Maildir on disk)
+# ============================================================
+
+MaildirStore icloud-local
+Path ~/email/maildir/
+Inbox ~/email/maildir/INBOX
+SubFolders Verbatim
+
+# ============================================================
+# CHANNEL CONFIG (what to sync)
+# ============================================================
+
+Channel icloud
+Far :icloud-remote:
+Near :icloud-local:
+Patterns *
+Create Both
+Expunge Both
+SyncState *
+# For limited sync: uncomment these
+# MaxMessages 200
+# ExpireUnread no
+
+# Full sync: mbsync -a
+# Just inbox: mbsync icloud:INBOX

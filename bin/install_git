@@ -1,8 +1,0 @@
-#!/bin/sh
-
-HERE=$(pwd)
-
-echo "==> Installing git stuff"
-
-# -f Overwrite (file only, not folder)
-ln -f "$HERE/git/.gitconfig" "$HOME/.gitconfig"

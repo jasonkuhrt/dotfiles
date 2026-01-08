@@ -1,0 +1,8 @@
+# Global pnpm packages to install
+@anthropic-ai/claude-code
+@mermaid-js/mermaid-cli
+@typescript/native-preview
+npm-name-cli
+nx
+typescript
+typescript-language-server

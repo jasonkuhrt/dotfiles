@@ -9,12 +9,12 @@ xcode-select --install
 ```sh
 mkdir -p ~/projects/jasonkuhrt
 git clone https://github.com/jasonkuhrt/dotfiles.git ~/projects/jasonkuhrt/dotfiles
-~/projects/jasonkuhrt/dotfiles/bin/sync
+~/projects/jasonkuhrt/dotfiles/sync
 ```
 
 ## How it works
 
-`bin/sync` creates symlinks from your home directory to this repo (selective files, not whole directories):
+`sync` creates symlinks from your home directory to this repo (selective files, not whole directories):
 
 ```
 # Claude Code
@@ -64,9 +64,9 @@ git clone https://github.com/jasonkuhrt/dotfiles.git ~/projects/jasonkuhrt/dotfi
 
 **Edits are live.** Since these are symlinks, editing any file here immediately affects your system.
 
-Re-run `bin/sync` when:
+Re-run `sync` when:
 - New packages added to `Brewfile`
-- New features added to `bin/sync`
+- New features added to `sync`
 
 ## Manual Setup (after sync)
 

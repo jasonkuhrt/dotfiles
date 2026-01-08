@@ -6,7 +6,7 @@ set -e
 # Works for both fresh installs and syncing existing machines
 # ─────────────────────────────────────────────────────────────
 
-HERE="$(cd "$(dirname "$0")/.." && pwd)"
+HERE="$(cd "$(dirname "$0")" && pwd)"
 
 # Colors
 RED='\033[0;31m'

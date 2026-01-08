@@ -73,14 +73,9 @@ Re-run `./sync` when:
 
 ## Notes
 
-### Why dprint is installed via pnpm instead of Homebrew
+### Why global Node packages use npm instead of pnpm
 
-dprint is installed as a pnpm global package rather than via Homebrew so that Zed can use `pnpm exec dprint` which:
-
-1. **Prefers local**: Uses project-local dprint if installed (`node_modules/.bin/dprint`)
-2. **Falls back to global**: Uses pnpm global dprint if no local version exists
-
-This means projects can pin their own dprint version while still having a global fallback. The Homebrew and npm versions are identical (same Rust binary), so there's no difference in functionality.
+Global packages use npm so `npx` fallback works (local → npm global → download). pnpm is still used for project dependencies. See `node-packages` plugin skill for details.
 
 ## Manual Setup (after sync)
 

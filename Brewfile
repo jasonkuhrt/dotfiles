@@ -26,6 +26,7 @@ brew "jq"           # JSON processor
 brew "lsd"          # Better ls
 brew "mdcat"        # Markdown renderer for terminal
 brew "neovim"       # Editor
+brew "node"         # Node.js runtime
 brew "pandoc"       # Document converter
 brew "planetscale/tap/pscale"  # PlanetScale CLI
 brew "pre-commit"

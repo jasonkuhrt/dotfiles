@@ -2,6 +2,15 @@ if status is-interactive
     # Commands to run in interactive sessions can go here
 end
 
+# Tide prompt config (lean theme)
+# Run `tide configure` to customize interactively, then copy settings here
+set -U tide_left_prompt_items pwd git newline character
+set -U tide_right_prompt_items status cmd_duration context jobs direnv node python go
+set -U tide_prompt_add_newline_before true
+set -U tide_character_icon '❯'
+set -U tide_character_color 5FD700
+set -U tide_character_color_failure FF0000
+
 # Secrets
 # =======
 

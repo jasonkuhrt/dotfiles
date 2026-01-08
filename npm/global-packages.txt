@@ -1,0 +1,4 @@
+# Global npm packages
+# Use npm (not pnpm) for packages that need npx fallback semantics
+# (local → npm global → download)
+dprint

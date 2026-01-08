@@ -40,7 +40,6 @@ cd ~/projects/jasonkuhrt/dotfiles && ./sync
 # Fish
 ~/.config/fish/config.fish    →  ./fish/config.fish
 ~/.config/fish/fish_plugins   →  ./fish/fish_plugins
-~/.config/fish/fish_variables →  ./fish/fish_variables
 
 # Email
 ~/.mbsyncrc                        →  ./email/mbsyncrc
@@ -147,6 +146,9 @@ Things that can't be fully automated:
 - https://github.com/anthropics/skills/tree/main
 - https://github.com/anthropics/claude-code-action
 - https://github.com/OneRedOak/claude-code-workflows
+
+**Community**
+- https://github.com/obra/superpowers - active hub for bleeding-edge AI coding tool techniques (not just Claude Code)
 - https://github.com/scopecraft/command
 
 ## CLI Tools Reference

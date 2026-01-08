@@ -297,7 +297,6 @@ fi
 
 link_file "$HERE/fish/config.fish" "$HOME/.config/fish/config.fish" "config.fish"
 link_file "$HERE/fish/fish_plugins" "$HOME/.config/fish/fish_plugins" "fish_plugins"
-link_file "$HERE/fish/fish_variables" "$HOME/.config/fish/fish_variables" "fish_variables"
 link_file "$HERE/fish/config.secrets.fish" "$HOME/.config/fish/config.secrets.fish" "config.secrets.fish"
 
 # Fisher plugins installed after Homebrew (which installs fish)
@@ -420,6 +419,20 @@ if has_cmd pnpm; then
         'pnpm add -g "$item"'
 else
     warn "pnpm not installed, skipping global packages"
+fi
+
+# ─────────────────────────────────────────────────────────────
+header "npm Global Packages"
+
+# Use npm for packages that need npx fallback semantics
+# (local → npm global → download). See node-packages skill.
+if has_cmd npm; then
+    info "Installing global packages..."
+    install_from_list "$HERE/npm/global-packages.txt" \
+        'npm list -g "$item" 2>/dev/null' \
+        'npm install -g "$item"'
+else
+    warn "npm not installed, skipping global packages"
 fi
 
 # ─────────────────────────────────────────────────────────────

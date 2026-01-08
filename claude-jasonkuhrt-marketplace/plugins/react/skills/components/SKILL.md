@@ -7,29 +7,29 @@ description: React component structure and export conventions for personal proje
 
 ## Structure
 
-- One component per module
-- Component name matches module name
-- Props interface named `Props`
-- Use design tokens when available
+* One component per module
+* Component name matches module name
+* Props interface named `Props`
+* Use design tokens when available
 
 ## Definition Pattern
 
 ```typescript
-import React from 'react';
+import React from 'react'
 
 interface Props {
-  value: string;
-  onChange?: (value: string) => void;
+  value: string
+  onChange?: (value: string) => void
 }
 
 export const MyComponent: React.FC<Props> = ({ value, onChange }) => {
-  return <div>{value}</div>;
-};
+  return <div>{value}</div>
+}
 ```
 
 ## Key Points
 
-- **Named export** with `export const`
-- **`React.FC<Props>`** for type annotation
-- **Arrow function** expression
-- **Destructure props** in parameter
+* __Named export__ with `export const`
+* __`React.FC<Props>`__ for type annotation
+* __Arrow function__ expression
+* __Destructure props__ in parameter

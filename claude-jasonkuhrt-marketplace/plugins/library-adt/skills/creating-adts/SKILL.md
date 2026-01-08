@@ -13,14 +13,14 @@ Scaffold ADT (Algebraic Data Type) unions with discriminated member types.
 
 Before creating any ADT, read the convention documents:
 
-- `~/.claude/docs/conventions/namespace-module.md` — Core `_.ts`/`__.ts` pattern
-- `~/.claude/docs/conventions/library-adt.md` — ADT-specific patterns
+* `~/.claude/docs/conventions/namespace-module.md` — Core `_.ts`/`__.ts` pattern
+* `~/.claude/docs/conventions/library-adt.md` — ADT-specific patterns
 
 ## Operations
 
 ### Create ADT Union
 
-**Structure:**
+__Structure:__
 
 ```
 src/lib/<adt-name>/
@@ -31,7 +31,7 @@ src/lib/<adt-name>/
 └── <member-b>.ts     # Member type
 ```
 
-**Steps:**
+__Steps:__
 
 1. Create directory at `src/lib/<adt-name>/` (kebab-case matching ADT name)
 2. Create member files with tagged structs
@@ -53,17 +53,17 @@ export class MemberName extends S.TaggedClass<MemberName>()('AdtNameMemberName',
 }
 ```
 
-**Naming Rules:**
+__Naming Rules:__
 
-- Class name = member name (short, local): `Versioned`
-- Tag name = fully qualified: `DocumentVersioned`
+* Class name = member name (short, local): `Versioned`
+* Tag name = fully qualified: `DocumentVersioned`
 
 ### Union File Pattern
 
 ```typescript
 // <adt-name>.ts
 import * as S from 'effect/Schema'
-import { MemberA } from './member-a.js'  // Direct import, NOT from __.ts
+import { MemberA } from './member-a.js' // Direct import, NOT from __.ts
 import { MemberB } from './member-b.js'
 
 export const AdtName = S.Union(MemberA, MemberB)
@@ -74,9 +74,9 @@ export type AdtName = typeof AdtName.Type
 
 ```typescript
 // __.ts
+export * from './<adt-name>.js'
 export * as MemberA from './member-a.js'
 export * as MemberB from './member-b.js'
-export * from './<adt-name>.js'
 ```
 
 ## Examples
@@ -87,7 +87,7 @@ export * from './<adt-name>.js'
 // added.ts
 export class Added extends S.TaggedClass<Added>()('LifecycleEventAdded', {
   schema: SchemaRef,
-  revision: Revision
+  revision: Revision,
 }) {
   static is = S.is(Added)
 }
@@ -95,7 +95,7 @@ export class Added extends S.TaggedClass<Added>()('LifecycleEventAdded', {
 // removed.ts
 export class Removed extends S.TaggedClass<Removed>()('LifecycleEventRemoved', {
   schema: SchemaRef,
-  revision: Revision
+  revision: Revision,
 }) {
   static is = S.is(Removed)
 }
@@ -108,8 +108,8 @@ export type LifecycleEvent = typeof LifecycleEvent.Type
 
 // __.ts
 export * as Added from './added.js'
-export * as Removed from './removed.js'
 export * from './lifecycle-event.js'
+export * as Removed from './removed.js'
 
 // _.ts
 export * as LifecycleEvent from './__.js'
@@ -133,8 +133,8 @@ if (LifecycleEvent.Added.is(event)) {
 
 ## Notes
 
-- Union file imports members directly to avoid circular dependencies
-- Consumer code imports ONLY from `_.js`, never from `__.js`
-- Use `.make()` constructor from tagged classes, never manual object construction
-- Tag names should be fully qualified (`AdtNameMemberName`) for global uniqueness
-- See convention doc for Simple ADT Pattern (alternative when full structure is overkill)
+* Union file imports members directly to avoid circular dependencies
+* Consumer code imports ONLY from `_.js`, never from `__.js`
+* Use `.make()` constructor from tagged classes, never manual object construction
+* Tag names should be fully qualified (`AdtNameMemberName`) for global uniqueness
+* See convention doc for Simple ADT Pattern (alternative when full structure is overkill)

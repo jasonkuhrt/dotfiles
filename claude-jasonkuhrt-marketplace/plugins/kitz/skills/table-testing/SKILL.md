@@ -59,12 +59,12 @@ Use for nested groupings:
 Test.describe('String > uppercase', [
   ['hello', 'HELLO'],
 ])
-.describe('String > lowercase', [
-  ['HELLO', 'hello'],
-])
-.test(({ input, output }) => {
-  // runs for each describe block
-})
+  .describe('String > lowercase', [
+    ['HELLO', 'hello'],
+  ])
+  .test(({ input, output }) => {
+    // runs for each describe block
+  })
 ```
 
 ## Matrix Testing
@@ -90,7 +90,7 @@ Test.on(serialize)
   .cases(
     [{ a: 1 }, '{"a":1}'],
   )
-  .onOutput(JSON.parse)  // parse expected before comparing
+  .onOutput(JSON.parse) // parse expected before comparing
   .test()
 ```
 
@@ -111,7 +111,7 @@ Test.on(approximateCalc)
 
 ## Key Rules
 
-- **NEVER wrap `Test.on()` or `Test.describe()` in Vitest `describe` blocks** - they create their own
-- Use `>` separator for nested describes: `'Parent > Child'`
-- Function mode infers types automatically - prefer it when testing a single function
-- Snapshot mode (no expected output) uses Vitest's snapshot system
+* __NEVER wrap `Test.on()` or `Test.describe()` in Vitest `describe` blocks__ - they create their own
+* Use `>` separator for nested describes: `'Parent > Child'`
+* Function mode infers types automatically - prefer it when testing a single function
+* Snapshot mode (no expected output) uses Vitest's snapshot system

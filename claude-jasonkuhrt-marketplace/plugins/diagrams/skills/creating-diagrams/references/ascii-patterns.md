@@ -244,8 +244,8 @@ Corners:      └─▶  ┌─▶  ──┐  ──┘
 
 ## Tips
 
-- Use single-line box characters (`┌─┐`) for most diagrams
-- Reserve double-line (`╔═╗`) for emphasis or outer boundaries
-- Keep consistent spacing inside boxes (2 spaces padding)
-- Align vertical lines across the diagram
-- Use `▶` for directional arrows, `─` for connections
+* Use single-line box characters (`┌─┐`) for most diagrams
+* Reserve double-line (`╔═╗`) for emphasis or outer boundaries
+* Keep consistent spacing inside boxes (2 spaces padding)
+* Align vertical lines across the diagram
+* Use `▶` for directional arrows, `─` for connections

@@ -15,9 +15,9 @@ description: Provides guidance for configuring and customizing the Zed editor. U
 
 ## Rules
 
-- Modify global config (`~/.config/zed/`) unless project-specific override is requested
-- Zed uses JSONC (JSON with comments) for config files
-- Settings are merged: project settings override global settings
+* Modify global config (`~/.config/zed/`) unless project-specific override is requested
+* Zed uses JSONC (JSON with comments) for config files
+* Settings are merged: project settings override global settings
 
 ## Common Tasks
 

@@ -40,18 +40,18 @@ The entire package exposes one namespace.
 
 The namespace name is the PascalCase version of the package name:
 
-- `@scope/my-lib` → `MyLib`
-- `@kouka/parser` → `Parser`
+* `@scope/my-lib` → `MyLib`
+* `@kouka/parser` → `Parser`
 
 ### Example
 
-**_.ts**:
+___.ts__:
 
 ```typescript
 export * as MyLib from './__.js'
 ```
 
-**Consumer**:
+__Consumer__:
 
 ```typescript
 import { MyLib } from '@scope/my-lib'
@@ -113,10 +113,10 @@ When a package has multiple distinct exports.
 | `<name>.ts`   | `./<name>`  | Plain export                 |
 | `<name>__.ts` | (internal)  | Barrel for `<name>.ts`       |
 
-**Invalid states**:
+__Invalid states__:
 
-- Both `index.ts` and `_.ts` in same directory
-- Both `<name>.ts` and `<name>_.ts` in same directory
+* Both `index.ts` and `_.ts` in same directory
+* Both `<name>.ts` and `<name>_.ts` in same directory
 
 ### Consumer Usage
 
@@ -125,9 +125,9 @@ When a package has multiple distinct exports.
 import { MyLib } from '@scope/my-lib'
 
 // Additional exports
-import { foo } from '@scope/my-lib/foo'
 import { Bar } from '@scope/my-lib/bar'
 import { qux } from '@scope/my-lib/bar/qux'
+import { foo } from '@scope/my-lib/foo'
 ```
 
 ## Monorepo Module Pattern
@@ -193,7 +193,7 @@ import { Str } from '#str'
 Import via package exports:
 
 ```typescript
-import { Arr, Str, Fn } from '@kouka/core'
+import { Arr, Fn, Str } from '@kouka/core'
 // or individual modules
 import { Arr } from '@kouka/core/arr'
 ```
@@ -202,20 +202,20 @@ import { Arr } from '@kouka/core/arr'
 
 ### Single Export
 
-- [ ] `_.ts` at `src/_.ts`
-- [ ] Package exports `.` pointing to `./build/_.js`
-- [ ] Namespace matches PascalCase package name
+* [ ] `_.ts` at `src/_.ts`
+* [ ] Package exports `.` pointing to `./build/_.js`
+* [ ] Namespace matches PascalCase package name
 
 ### Multi Export
 
-- [ ] Export files in `src/exports/`
-- [ ] Each namespace export has `_.ts`
-- [ ] Package exports match file structure
-- [ ] No conflicting `index.ts` + `_.ts`
+* [ ] Export files in `src/exports/`
+* [ ] Each namespace export has `_.ts`
+* [ ] Package exports match file structure
+* [ ] No conflicting `index.ts` + `_.ts`
 
 ### Monorepo Module
 
-- [ ] Each module in `src/<module>/`
-- [ ] Package.json has `#<module>` imports
-- [ ] TSConfig has matching paths
-- [ ] Package exports individual modules
+* [ ] Each module in `src/<module>/`
+* [ ] Package.json has `#<module>` imports
+* [ ] TSConfig has matching paths
+* [ ] Package exports individual modules

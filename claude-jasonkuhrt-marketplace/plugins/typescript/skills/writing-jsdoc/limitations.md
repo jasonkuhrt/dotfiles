@@ -8,24 +8,24 @@ When hovering over a variable, IDEs show the type but NOT the JSDoc from the typ
 /** Player controls. */
 interface AudioPlayer {
   /** Whether playing. */
-  isPlaying: boolean;
+  isPlaying: boolean
 }
 
-const player: AudioPlayer = { isPlaying: false };
+const player: AudioPlayer = { isPlaying: false }
 
 // Hovering on `player` → shows type only, NO JSDoc
 // Hovering on `player.isPlaying` → shows "Whether playing." ✅
 // Hovering on `AudioPlayer` → shows "Player controls." ✅
 ```
 
-**What works:**
+__What works:__
 
-- Hover on type name → shows type's JSDoc
-- Hover on property access → shows property's JSDoc
-- Hover on function call → shows function's JSDoc
+* Hover on type name → shows type's JSDoc
+* Hover on property access → shows property's JSDoc
+* Hover on function call → shows function's JSDoc
 
-**What doesn't work:**
+__What doesn't work:__
 
-- Hover on variable → only shows type signature, never type's JSDoc
+* Hover on variable → only shows type signature, never type's JSDoc
 
-**No workaround** exists besides adding JSDoc directly to each variable declaration, which violates DRY.
+__No workaround__ exists besides adding JSDoc directly to each variable declaration, which violates DRY.

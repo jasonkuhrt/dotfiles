@@ -29,7 +29,7 @@ cd ~/.claude/package-sources/<package-name> && npm outdated 2>/dev/null
 
 ### 2. Get package (prefer npm pack over git clone)
 
-**CRITICAL**: Use `npm pack` + extract, NOT git clone. This gets the actual published package (post-build) matching what's installed in projects, not raw source that may need complex builds.
+__CRITICAL__: Use `npm pack` + extract, NOT git clone. This gets the actual published package (post-build) matching what's installed in projects, not raw source that may need complex builds.
 
 ```bash
 mkdir -p ~/.claude/package-sources/<package-name>
@@ -39,9 +39,9 @@ npm pack <package-name> && tar -xzf *.tgz --strip-components=1 && rm *.tgz
 
 This gives you:
 
-- Built/transpiled code (what projects actually import)
-- Published types (.d.ts files)
-- package.json with exports map
+* Built/transpiled code (what projects actually import)
+* Published types (.d.ts files)
+* package.json with exports map
 
 ### 3. For source code (when published package isn't enough)
 
@@ -59,9 +59,9 @@ git clone --depth 1 <repo-url> ~/.claude/package-sources/<package-name>-src
 
 Start with:
 
-- `package.json` - exports map, main entry
-- Type definitions (.d.ts files)
-- Actual implementation files
+* `package.json` - exports map, main entry
+* Type definitions (.d.ts files)
+* Actual implementation files
 
 Use Serena MCP's symbolic tools for efficient navigation.
 
@@ -90,7 +90,7 @@ pnpm list <package-name>
 
 ## Notes
 
-- Prefer `npm pack` over git clone - gets published output, not complex source
-- Global location (~/.claude/package-sources/) amortizes across all projects
-- Check existing before fetching - avoid re-downloading
-- Match project version when debugging specific issues
+* Prefer `npm pack` over git clone - gets published output, not complex source
+* Global location (~/.claude/package-sources/) amortizes across all projects
+* Check existing before fetching - avoid re-downloading
+* Match project version when debugging specific issues

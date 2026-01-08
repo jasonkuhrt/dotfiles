@@ -4,8 +4,8 @@ paths: "**/.claude/**, **/claude-*-marketplace/**"
 
 # Developing Claude Skills
 
-- Directory name = skill name (kebab-case): `.claude/skills/querying-dev-database/`
-- Opening title = titleized skill name: `# Querying Dev Database`
+* Directory name = skill name (kebab-case): `.claude/skills/querying-dev-database/`
+* Opening title = titleized skill name: `# Querying Dev Database`
 
 ## Heading purposes
 

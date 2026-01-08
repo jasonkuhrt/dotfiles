@@ -7,29 +7,29 @@ description: Type parameter naming conventions for personal TypeScript projects.
 
 ## Convention
 
-- **Type aliases and interfaces**: Use `$` prefix
-  - `type Transform<$Input> = $Input extends string ? number : boolean`
-  - `interface Container<$T> { value: $T }`
+* __Type aliases and interfaces__: Use `$` prefix
+  * `type Transform<$Input> = $Input extends string ? number : boolean`
+  * `interface Container<$T> { value: $T }`
 
-- **Functions and methods**: Use `$` prefix matching the value parameter name
-  - `function process<$value>(value: $value): $value`
-  - `function map<$item, $result>(item: $item, fn: ($item) => $result): $result`
+* __Functions and methods__: Use `$` prefix matching the value parameter name
+  * `function process<$value>(value: $value): $value`
+  * `function map<$item, $result>(item: $item, fn: ($item) => $result): $result`
 
-- **Type guard exception**: Add `_` suffix to avoid conflict with narrowed type
-  - `function isString<$value_>(value: unknown): value is $value_`
+* __Type guard exception__: Add `_` suffix to avoid conflict with narrowed type
+  * `function isString<$value_>(value: unknown): value is $value_`
 
-- **Generic returns exception**: When type param is NOT mapped to value parameter
-  - `function create<$T>(): $T`
+* __Generic returns exception__: When type param is NOT mapped to value parameter
+  * `function create<$T>(): $T`
 
-- **Utility internals**: Parameters with `___` prefix are implementation details
-  - `type Utility<$T, ___Internal = SomeDefault<$T>> = ...`
+* __Utility internals__: Parameters with `___` prefix are implementation details
+  * `type Utility<$T, ___Internal = SomeDefault<$T>> = ...`
 
-- **Mapped types**: Use specific single-letter iterators
-  - Objects: `k` (key) - `{ [k in keyof $T]: $T[k] }`
-  - Tuples/arrays: `i` (index) - `{ [i in keyof $T]: Transform<$T[i]> }`
+* __Mapped types__: Use specific single-letter iterators
+  * Objects: `k` (key) - `{ [k in keyof $T]: $T[k] }`
+  * Tuples/arrays: `i` (index) - `{ [i in keyof $T]: Transform<$T[i]> }`
 
-- **Infer clauses**: Use `__lowercase__` pattern
-  - `$T extends Array<infer __element__> ? __element__ : never`
+* __Infer clauses__: Use `__lowercase__` pattern
+  * `$T extends Array<infer __element__> ? __element__ : never`
 
 ## Type Parameter Defaults
 

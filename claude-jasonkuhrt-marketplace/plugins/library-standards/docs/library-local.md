@@ -34,8 +34,8 @@ Add subpath imports for each library:
 }
 ```
 
-- `#~/*` — Standard entry allowing imports from package root
-- `#<name>` — Per-library entry (kebab-case)
+* `#~/*` — Standard entry allowing imports from package root
+* `#<name>` — Per-library entry (kebab-case)
 
 ### TSConfig Paths
 
@@ -63,8 +63,8 @@ Import via subpath, never relative:
 import { Parser } from '#parser'
 
 // ❌ WRONG
-import { Parser } from '../lib/parser/_.js'
 import { Parser } from '../../parser/_.js'
+import { Parser } from '../lib/parser/_.js'
 ```
 
 ### Cross-Library Imports
@@ -73,8 +73,8 @@ Libraries import other libraries via subpaths:
 
 ```typescript
 // In src/lib/compiler/compiler.ts
-import { Parser } from '#parser'
 import { Optimizer } from '#optimizer'
+import { Parser } from '#parser'
 ```
 
 ### Sibling Imports Within Library
@@ -106,21 +106,21 @@ src/lib/parser/
 
 ### File Contents
 
-**_.ts**:
+___.ts__:
 
 ```typescript
 export * as Parser from './__.js'
 ```
 
-**__.ts**:
+____.ts__:
 
 ```typescript
-export { tokenize, type Token } from './tokenizer.js'
+export { type AST, buildAST, type Node } from './ast.js'
 export { lex, type Lexeme } from './lexer.js'
-export { buildAST, type AST, type Node } from './ast.js'
+export { type Token, tokenize } from './tokenizer.js'
 ```
 
-**package.json** (partial):
+__package.json__ (partial):
 
 ```json
 {
@@ -131,7 +131,7 @@ export { buildAST, type AST, type Node } from './ast.js'
 }
 ```
 
-**tsconfig.json** (partial):
+__tsconfig.json__ (partial):
 
 ```json
 {
@@ -156,10 +156,10 @@ const ast = Parser.buildAST(Parser.lex(tokens))
 
 ## Checklist
 
-- [ ] Library in `src/lib/<name>/`
-- [ ] Has `_.ts` namespace module
-- [ ] Has `__.ts` if multiple implementation files
-- [ ] Package.json has `#<name>` import entry
-- [ ] TSConfig has matching path entry
-- [ ] All consumers use subpath imports
-- [ ] Code modules use relative sibling imports
+* [ ] Library in `src/lib/<name>/`
+* [ ] Has `_.ts` namespace module
+* [ ] Has `__.ts` if multiple implementation files
+* [ ] Package.json has `#<name>` import entry
+* [ ] TSConfig has matching path entry
+* [ ] All consumers use subpath imports
+* [ ] Code modules use relative sibling imports

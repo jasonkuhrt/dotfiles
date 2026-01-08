@@ -29,7 +29,7 @@ function isValidUser(name: string, age: number): boolean { ... }
 function isValidUser(name: string, age: number): boolean { ... }
 ```
 
-**Forbidden in TS projects:**
+__Forbidden in TS projects:__
 
 | Tag               | Why Forbidden                |
 | ----------------- | ---------------------------- |
@@ -45,33 +45,33 @@ Document what TypeScript cannot express:
 
 | Document           | Example                                     |
 | ------------------ | ------------------------------------------- |
-| **Purpose/intent** | "Validates user meets minimum requirements" |
-| **Constraints**    | "Must be non-empty", "Range: 0-100"         |
-| **Side effects**   | "Writes to localStorage", "Mutates input"   |
-| **Exceptions**     | `@throws` - TS doesn't track thrown errors  |
-| **Defaults**       | `@default` - Runtime default values         |
-| **Examples**       | `@example` - Usage patterns                 |
-| **Deprecation**    | `@deprecated` - Migration guidance          |
-| **External refs**  | `@see` - Links to docs, specs               |
+| __Purpose/intent__ | "Validates user meets minimum requirements" |
+| __Constraints__    | "Must be non-empty", "Range: 0-100"         |
+| __Side effects__   | "Writes to localStorage", "Mutates input"   |
+| __Exceptions__     | `@throws` - TS doesn't track thrown errors  |
+| __Defaults__       | `@default` - Runtime default values         |
+| __Examples__       | `@example` - Usage patterns                 |
+| __Deprecation__    | `@deprecated` - Migration guidance          |
+| __External refs__  | `@see` - Links to docs, specs               |
 
 ## What NOT to Document
 
 Skip JSDoc entirely for:
 
-- **Self-evident code** - `getName()` returning a name needs no docs
-- **Internal helpers** - Private functions used in one place
-- **Type-only exports** - Types are self-documenting
-- **Trivial getters/setters** - `get id() { return this._id; }`
+* __Self-evident code__ - `getName()` returning a name needs no docs
+* __Internal helpers__ - Private functions used in one place
+* __Type-only exports__ - Types are self-documenting
+* __Trivial getters/setters__ - `get id() { return this._id; }`
 
 ## JSDoc Placement Rules
 
 ### DON'T Add JSDoc To
 
-- Namespace exports (`export * as Name`)
-- Barrel exports (`export * from './foo'`)
-- Re-exports
-- Implementations that inherit documentation from their interface/type
-- Multiple JSDoc blocks for the same declaration (only closest one is effective)
+* Namespace exports (`export * as Name`)
+* Barrel exports (`export * from './foo'`)
+* Re-exports
+* Implementations that inherit documentation from their interface/type
+* Multiple JSDoc blocks for the same declaration (only closest one is effective)
 
 ### Avoid Duplicate JSDoc
 
@@ -97,7 +97,7 @@ For `export * as Name`, use `@ts-expect-error` with duplicate namespace to add d
 
 ```typescript
 // @ts-expect-error Duplicate identifier
-export * as Utils from './utils';
+export * as Utils from './utils'
 /** Utility functions for string manipulation. */
 export namespace Utils {}
 ```
@@ -138,9 +138,9 @@ Document runtime defaults (complements TS default params):
 ```typescript
 interface Options {
   /** @default 3000 */
-  timeout?: number;
+  timeout?: number
   /** @default 'warn' */
-  logLevel?: "debug" | "info" | "warn" | "error";
+  logLevel?: 'debug' | 'info' | 'warn' | 'error'
 }
 ```
 
@@ -169,13 +169,13 @@ Only document type parameters users explicitly provide:
  */
 function createEmitter<
   Events extends Record<string, unknown>,
->(): Emitter<Events>;
+>(): Emitter<Events>
 
 // ❌ Don't document - type is inferred from arguments
 /**
  * Returns first element of array.
  */
-function first<T>(arr: T[]): T | undefined;
+function first<T>(arr: T[]): T | undefined
 ```
 
 ## The `{@link}` Tag
@@ -249,9 +249,9 @@ export const uploadVoiceNote = async (blob: Blob) => { ... };
 
 ## Notes
 
-- TypeScript provides types; JSDoc provides meaning and context
-- `{@link}` requires identifier in scope (imported or same file)
-- Underscore-prefixed imports avoid unused-vars lint errors
-- Links render as clickable in VSCode, Zed, and modern IDEs
-- Focus on what TS cannot express: intent, constraints, exceptions
-- See `limitations.md` for known TypeScript/IDE limitations
+* TypeScript provides types; JSDoc provides meaning and context
+* `{@link}` requires identifier in scope (imported or same file)
+* Underscore-prefixed imports avoid unused-vars lint errors
+* Links render as clickable in VSCode, Zed, and modern IDEs
+* Focus on what TS cannot express: intent, constraints, exceptions
+* See `limitations.md` for known TypeScript/IDE limitations

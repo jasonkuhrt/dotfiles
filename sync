@@ -377,7 +377,7 @@ header "Fisher Plugins"
 if has_cmd fish; then
     if [ ! -f "$HOME/.config/fish/functions/fisher.fish" ]; then
         info "Installing Fisher plugin manager..."
-        fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher' 2>/dev/null
+        fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
         task "Fisher installed"
     else
         skip "Fisher"
@@ -385,11 +385,11 @@ if has_cmd fish; then
 
     # Sync plugins from fish_plugins file
     info "Syncing Fisher plugins..."
-    fish -c "fisher update" 2>/dev/null && task "Fisher plugins synced" || warn "Fisher update failed"
+    fish -c "fisher update" && task "Fisher plugins synced" || warn "Fisher update failed"
 
     # Configure tide prompt (uses preset from config.fish)
     info "Configuring Tide prompt..."
-    fish -c "tide-daily" 2>/dev/null && task "Tide configured (daily)" || warn "Tide configure failed"
+    fish -c "tide-daily" && task "Tide configured (daily)" || warn "Tide configure failed"
 else
     warn "Fish not installed, skipping Fisher setup"
 fi

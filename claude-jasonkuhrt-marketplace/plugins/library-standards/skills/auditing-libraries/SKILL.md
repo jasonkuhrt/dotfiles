@@ -13,9 +13,9 @@ Analyze existing libraries for convention violations and report issues.
 
 The authoritative convention documents are:
 
-- `~/.claude/docs/conventions/namespace-module.md` — Core `_.ts`/`__.ts` pattern
-- `~/.claude/docs/conventions/library-local.md` — Local library context (`src/lib/`)
-- `~/.claude/docs/conventions/library-package.md` — Package-level context
+* `~/.claude/docs/conventions/namespace-module.md` — Core `_.ts`/`__.ts` pattern
+* `~/.claude/docs/conventions/library-local.md` — Local library context (`src/lib/`)
+* `~/.claude/docs/conventions/library-package.md` — Package-level context
 
 Read these before auditing to understand the full rules.
 
@@ -25,7 +25,7 @@ Read these before auditing to understand the full rules.
 
 Check a specific library for violations.
 
-**Steps:**
+__Steps:__
 
 1. Identify library type (local lib, package lib)
 2. Check file structure matches expected pattern
@@ -39,7 +39,7 @@ Check a specific library for violations.
 
 Scan project for all libraries and check each.
 
-**Steps:**
+__Steps:__
 
 1. Find all directories containing `_.ts` files
 2. Categorize each (local lib at `src/lib/*`, package lib at `src/*`)
@@ -50,7 +50,7 @@ Scan project for all libraries and check each.
 
 After auditing, fix identified issues.
 
-**Steps:**
+__Steps:__
 
 1. Present violations to user
 2. Propose fixes for each
@@ -110,42 +110,42 @@ After auditing, fix identified issues.
 
 ### Structure
 
-- [ ] Located at correct path (src/lib/<name>/ or src/<name>/)
-- [ ] Has _.ts namespace module
-- [ ] Has __.ts barrel (if multiple impl files)
-- [ ] No __.ts (if single impl file)
+* [ ] Located at correct path (src/lib/<name>/ or src/<name>/)
+* [ ] Has _.ts namespace module
+* [ ] Has __.ts barrel (if multiple impl files)
+* [ ] No __.ts (if single impl file)
 
 ### Namespace Module (_.ts)
 
-- [ ] Correct export pattern
-- [ ] Namespace name matches directory (PascalCase)
-- [ ] No import statements
-- [ ] Points to __.ts (if exists) or impl file
+* [ ] Correct export pattern
+* [ ] Namespace name matches directory (PascalCase)
+* [ ] No import statements
+* [ ] Points to __.ts (if exists) or impl file
 
 ### Barrel Module (__.ts) - if exists
 
-- [ ] Only contains re-exports
-- [ ] No imports from _.ts
-- [ ] No external package imports
-- [ ] All exports from local files
+* [ ] Only contains re-exports
+* [ ] No imports from _.ts
+* [ ] No external package imports
+* [ ] All exports from local files
 
 ### Code Modules
 
-- [ ] No imports from own _.ts
-- [ ] No imports from own __.ts
-- [ ] Cross-lib imports use #<name>
-- [ ] Sibling imports use relative paths
+* [ ] No imports from own _.ts
+* [ ] No imports from own __.ts
+* [ ] Cross-lib imports use #<name>
+* [ ] Sibling imports use relative paths
 
 ### Tests (_.test.ts)
 
-- [ ] Imports from ./_.js only
-- [ ] Uses namespace, no destructuring
-- [ ] No top-level describe wrapping all tests
+* [ ] Imports from ./_.js only
+* [ ] Uses namespace, no destructuring
+* [ ] No top-level describe wrapping all tests
 
 ### Config
 
-- [ ] package.json has imports entry
-- [ ] tsconfig.json has paths entry
+* [ ] package.json has imports entry
+* [ ] tsconfig.json has paths entry
 ```
 
 ## Examples
@@ -173,6 +173,6 @@ VIOLATIONS FOUND: 3
 
 ## Notes
 
-- Run `/fix-conventions` command for automated fixing
-- Some violations require architectural decisions (restructuring)
-- Package-level libraries have different path expectations
+* Run `/fix-conventions` command for automated fixing
+* Some violations require architectural decisions (restructuring)
+* Package-level libraries have different path expectations

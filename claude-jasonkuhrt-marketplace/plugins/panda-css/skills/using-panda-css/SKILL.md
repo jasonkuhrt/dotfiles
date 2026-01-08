@@ -7,7 +7,7 @@ description: Panda CSS type safety rules for token references. Use when styling 
 
 ## CRITICAL: Token Type Safety
 
-Panda CSS's `css()` and `cva()` functions are **NOT type-safe** for token references due to the `AnyString` escape hatch.
+Panda CSS's `css()` and `cva()` functions are __NOT type-safe__ for token references due to the `AnyString` escape hatch.
 
 ### The Problem
 
@@ -21,22 +21,22 @@ maxWidth?: ConditionalValue<... | AnyString>  // ❌ Accepts ANY string!
 
 ```typescript
 // These compile but are NOT type-safe:
-css({ maxWidth: "sizes.container.wide" }); // ❌ AnyString escape hatch
-css({ paddingInline: "4" }); // ❌ Would accept 'INVALID' too
+css({ maxWidth: 'sizes.container.wide' }) // ❌ AnyString escape hatch
+css({ paddingInline: '4' }) // ❌ Would accept 'INVALID' too
 ```
 
 ### REQUIRED - token() Function
 
 ```typescript
-import { token } from "../styled-system/tokens";
+import { token } from '../styled-system/tokens'
 
-css({ maxWidth: token("sizes.container.wide") }); // ✅ Type-safe
-css({ paddingInline: token("spacing.4") }); // ✅ Type-safe
+css({ maxWidth: token('sizes.container.wide') }) // ✅ Type-safe
+css({ paddingInline: token('spacing.4') }) // ✅ Type-safe
 // css({ color: token('colors.INVALID.500') })       // ❌ TypeScript error!
 ```
 
 ## Rule
 
-If a string looks like a token path (contains `.` and starts with a token category like `sizes`, `spacing`, `colors`, `fontSizes`), it **MUST** use `token()`.
+If a string looks like a token path (contains `.` and starts with a token category like `sizes`, `spacing`, `colors`, `fontSizes`), it __MUST__ use `token()`.
 
-**Only exceptions**: literal CSS values like `'100%'`, `'auto'`, `'bold'`, numeric values.
+__Only exceptions__: literal CSS values like `'100%'`, `'auto'`, `'bold'`, numeric values.

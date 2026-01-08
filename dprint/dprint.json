@@ -15,7 +15,9 @@
   },
   "markdown": {
     "lineWidth": 100,
-    "textWrap": "maintain"
+    "textWrap": "maintain",
+    "strongKind": "underscores",
+    "unorderedListKind": "asterisks"
   },
   "toml": {},
   "yaml": {},

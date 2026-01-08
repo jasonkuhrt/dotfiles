@@ -5,11 +5,11 @@ and discriminated unions.
 
 ## Library: Union ADT (Algebraic Data Type) Pattern
 
-- About
-  - Pattern for discriminated unions with multiple member types
-  - Provides type-safe access to union members and constructors
-  - Library name should match the ADT name (e.g., `lifecycle-event` lib for `LifecycleEvent` ADT)
-- Rules
+* About
+  * Pattern for discriminated unions with multiple member types
+  * Provides type-safe access to union members and constructors
+  * Library name should match the ADT name (e.g., `lifecycle-event` lib for `LifecycleEvent` ADT)
+* Rules
   1. Library directory name matches the ADT name in kebab-case
   2. Union definition imports members directly (not via Barrel Export)
   3. Barrel Export exports members as namespaces
@@ -22,7 +22,7 @@ and discriminated unions.
     ├── added.ts               // member
     └── removed.ts             // member
   ```
-  - Implementation (example with Effect Schema):
+  * Implementation (example with Effect Schema):
     ```typescript
     // lifecycle-event.ts
     import { Added } from './added.js' // direct import, not from $$.ts
@@ -45,23 +45,23 @@ Zod, etc.) for complex data modeling.
 
 ### Core Principles
 
-- **ADT Level**
-  - Choose a name using pascal case
-  - Create a module:
-    - named as `<self>.ts` using kebab case
-    - Each member should be a file (NOT a directory) in the same directory
-    - Each member should be re-exported as namespace from $$.ts using `export * as <MemberName> from './<member>.js'`
-    - The union schema itself is exported from the main module file
-    - Imports all members and exports a union schema of them
-    - example (with Effect Schema): `export const Catalog = Schema.Union(Versioned,Unversioned)` in `catalog.ts` under
+* __ADT Level__
+  * Choose a name using pascal case
+  * Create a module:
+    * named as `<self>.ts` using kebab case
+    * Each member should be a file (NOT a directory) in the same directory
+    * Each member should be re-exported as namespace from $$.ts using `export * as <MemberName> from './<member>.js'`
+    * The union schema itself is exported from the main module file
+    * Imports all members and exports a union schema of them
+    * example (with Effect Schema): `export const Catalog = Schema.Union(Versioned,Unversioned)` in `catalog.ts` under
       `catalog/` directory
 
-- **Member Level**
-  - Use tagged/discriminated structures to define members (e.g., `Schema.TaggedStruct` in Effect)
-  - Each member is a single file (e.g., `versioned.ts`, `unversioned.ts`)
-    - tag name: `<adt name><member name>` pascal case
-    - naming of export schema in module: `<member name>` pascal case
-    - example: `export const Versioned = TaggedStruct('CatalogVersioned', ...` in `versioned.ts` under `catalog/`
+* __Member Level__
+  * Use tagged/discriminated structures to define members (e.g., `Schema.TaggedStruct` in Effect)
+  * Each member is a single file (e.g., `versioned.ts`, `unversioned.ts`)
+    * tag name: `<adt name><member name>` pascal case
+    * naming of export schema in module: `<member name>` pascal case
+    * example: `export const Versioned = TaggedStruct('CatalogVersioned', ...` in `versioned.ts` under `catalog/`
       directory
 
 ### ADT Union Directory Structure
@@ -81,7 +81,7 @@ src/lib/catalog/
 
 ### ADT Import Patterns
 
-**CRITICAL RULE**: For ADT unions, ALWAYS import ONLY from $.js (namespace), NEVER from $$.js (barrel)
+__CRITICAL RULE__: For ADT unions, ALWAYS import ONLY from $.js (namespace), NEVER from $$.js (barrel)
 
 ```typescript
 // ✅ CORRECT: Import ONLY from namespace
@@ -120,21 +120,21 @@ For discriminated unions, use the factory pattern to create members:
 const MyUnion = Schema.Union(MemberA, MemberB)
 
 // Create factory using your library's union utilities
-const make = createUnionFactory(MyUnion)  // Library-specific implementation
+const make = createUnionFactory(MyUnion) // Library-specific implementation
 
 // Use with full type safety - tag determines fields and return type
 const instanceA = make('MemberATag', {/* fields specific to MemberA */})
 const instanceB = make('MemberBTag', {/* fields specific to MemberB */})
 ```
 
-**Benefits:**
+__Benefits:__
 
-- Type-safe tag selection with autocomplete
-- Automatic field inference based on tag
-- No manual conditionals needed
-- Single source of truth for union member creation
+* Type-safe tag selection with autocomplete
+* Automatic field inference based on tag
+* No manual conditionals needed
+* Single source of truth for union member creation
 
-**Example with LifecycleEvent:**
+__Example with LifecycleEvent:__
 
 ```typescript
 // Before: verbose manual approach
@@ -157,10 +157,10 @@ When using Effect Schema classes (S.Class, S.TaggedClass), follow these conventi
 
 ### Class Definition
 
-- Always include `static is = S.is(ClassName)` inside the class body
-- Never use empty `{}` body
-- **Class name** = member name (the short, local name you use when importing)
-- **Tag name** = fully qualified name for discriminated unions
+* Always include `static is = S.is(ClassName)` inside the class body
+* Never use empty `{}` body
+* __Class name__ = member name (the short, local name you use when importing)
+* __Tag name__ = fully qualified name for discriminated unions
 
 ```typescript
 // ✅ CORRECT - Class name matches member name, tag is fully qualified
@@ -171,16 +171,18 @@ export class Versioned extends S.TaggedClass<Versioned>('DocumentVersioned')('Do
 }
 
 // ❌ WRONG - Class name uses fully qualified name
-export class DocumentVersioned extends S.TaggedClass<DocumentVersioned>('DocumentVersioned')('DocumentVersioned', {
-  // ... fields
-}) {
+export class DocumentVersioned
+  extends S.TaggedClass<DocumentVersioned>('DocumentVersioned')('DocumentVersioned', {
+    // ... fields
+  })
+{
   static is = S.is(DocumentVersioned)
 }
 
 // ✅ CORRECT - Simple class
 export class Revision extends S.Class<Revision>('Revision')({
   date: S.String,
-  hash: S.String
+  hash: S.String,
 }) {
   static is = S.is(Revision)
 }
@@ -188,13 +190,13 @@ export class Revision extends S.Class<Revision>('Revision')({
 // ❌ WRONG - empty body
 export class Revision extends S.Class<Revision>('Revision')({
   date: S.String,
-  hash: S.String
+  hash: S.String,
 }) {}
 ```
 
 ### Type Derivation from Effect Schemas
 
-**Use `.Type` property, NOT `S.Schema.Type<typeof>` helper.**
+__Use `.Type` property, NOT `S.Schema.Type<typeof>` helper.__
 
 ```typescript
 // ✅ CORRECT
@@ -205,22 +207,22 @@ export type MediaType = typeof MediaType.Type
 export type MediaType = S.Schema.Type<typeof MediaType>
 ```
 
-**Rules:**
+__Rules:__
 
-- **Non-class schemas** (Literal, Struct, Union, Array): `typeof SchemaName.Type`
-- **Class schemas** (S.Class, S.TaggedClass): No type declaration needed, class IS the type
-- **Transformations**: `typeof Schema.Type` (decoded), `typeof Schema.Encoded` (input), `typeof Schema.Context` (deps)
+* __Non-class schemas__ (Literal, Struct, Union, Array): `typeof SchemaName.Type`
+* __Class schemas__ (S.Class, S.TaggedClass): No type declaration needed, class IS the type
+* __Transformations__: `typeof Schema.Type` (decoded), `typeof Schema.Encoded` (input), `typeof Schema.Context` (deps)
 
 ### Barrel Exports for Effect Schema Classes
 
-- Export classes directly, not as namespace exports
-- The class itself serves as the namespace
+* Export classes directly, not as namespace exports
+* The class itself serves as the namespace
 
 ```typescript
 // In $.ts
 // ✅ CORRECT - direct export for simple classes
-export { Revision } from './revision.js'
 export { Document } from './document.js'
+export { Revision } from './revision.js'
 
 // ❌ WRONG - namespace export for simple classes
 export * as Revision from './revision.js'
@@ -249,22 +251,22 @@ export const VersionCoverage = S.Union(One, Set, Unversioned)
 
 This pattern is appropriate when:
 
-- The ADT is relatively simple with few members
-- You don't need the additional namespace organization
-- Members are Effect Schema classes (S.Class or S.TaggedClass)
+* The ADT is relatively simple with few members
+* You don't need the additional namespace organization
+* Members are Effect Schema classes (S.Class or S.TaggedClass)
 
 Key rules for simple ADT pattern:
 
-- Use direct class exports (`export { ClassName }`)
-- No `$$.ts` file needed
-- `$.ts` exports namespace from main union file
-- Each member is still a separate file
+* Use direct class exports (`export { ClassName }`)
+* No `$$.ts` file needed
+* `$.ts` exports namespace from main union file
+* Each member is still a separate file
 
 ### Codec Conventions
 
-- Simple classes (S.Class, S.TaggedClass): Don't pre-define codec exports
-- Consumers should use `S.decode(ClassName)` directly
-- Transformation schemas (transformOrFail): Must export codecs since they're not classes
+* Simple classes (S.Class, S.TaggedClass): Don't pre-define codec exports
+* Consumers should use `S.decode(ClassName)` directly
+* Transformation schemas (transformOrFail): Must export codecs since they're not classes
 
 ```typescript
 // Simple class - no codec exports needed
@@ -286,9 +288,9 @@ export const decodeSync = S.decodeSync(Version)
 
 The original namespace export pattern (`export * as Name`) remains valid for:
 
-- ADT unions with multiple member classes that need grouping
-- Transformation schemas that aren't classes themselves
-- Complex modules with multiple related exports
+* ADT unions with multiple member classes that need grouping
+* Transformation schemas that aren't classes themselves
+* Complex modules with multiple related exports
 
 ```typescript
 // ADT Union - namespace pattern is appropriate
@@ -303,7 +305,7 @@ export * as LifecycleEvent from './$$.js'
 
 ### Critical: Schema Make Constructor
 
-**ALWAYS** use the schema's `make` constructor when manually constructing values:
+__ALWAYS__ use the schema's `make` constructor when manually constructing values:
 
 ```typescript
 // ✅ CORRECT - Use schema.make
@@ -319,16 +321,16 @@ const revision = { _tag: 'Revision', date: '2024-01-15', version: '1.0.0' }
 // - Transformations are executed
 ```
 
-**Note**: S.TaggedClass automatically provides the `.make()` method, no need to define it manually.
+__Note__: S.TaggedClass automatically provides the `.make()` method, no need to define it manually.
 
 ### ADT Library Rules Summary
 
-1. **Library directory name** matches the ADT name in kebab-case
-2. **Union definition** imports members directly (not via Barrel Export)
-3. **Barrel Export** exports members as namespaces
-4. **Namespace import pattern** for external consumers
-5. **Factory pattern** for type-safe member creation
-6. **Schema.make constructors** for all value creation
+1. __Library directory name__ matches the ADT name in kebab-case
+2. __Union definition__ imports members directly (not via Barrel Export)
+3. __Barrel Export__ exports members as namespaces
+4. __Namespace import pattern__ for external consumers
+5. __Factory pattern__ for type-safe member creation
+6. __Schema.make constructors__ for all value creation
 
 This comprehensive ADT pattern ensures type safety, maintainability, and consistent API design across complex
 discriminated union types.

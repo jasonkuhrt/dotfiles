@@ -9,11 +9,11 @@ Structured documentation for system design. TypeScript-first schemas.
 
 ## Process
 
-1. **Identify entities** - Nouns in the domain (things with identity/state)
-2. **Identify operations** - Verbs (actions that transform state)
-3. **Map relationships** - How entities connect (1:1, 1:n)
-4. **Define schemas** - TypeScript interfaces for each entity
-5. **Specify operations** - Params interface + step-by-step behavior
+1. __Identify entities__ - Nouns in the domain (things with identity/state)
+2. __Identify operations__ - Verbs (actions that transform state)
+3. __Map relationships__ - How entities connect (1:1, 1:n)
+4. __Define schemas__ - TypeScript interfaces for each entity
+5. __Specify operations__ - Params interface + step-by-step behavior
 
 ## Document Structure
 
@@ -45,17 +45,17 @@ ASCII boxes with relationship cardinality.
 └─────────┘      └─────────┘
 ```
 
-**Conventions:**
+__Conventions:__
 
-- `1:n` = one-to-many
-- `1:1` = one-to-one
-- Arrow direction = ownership/containment
+* `1:n` = one-to-many
+* `1:1` = one-to-one
+* Arrow direction = ownership/containment
 
 ### Entities Table
 
 | Name           | Description                                 |
 | -------------- | ------------------------------------------- |
-| **EntityName** | One-line description of what it represents. |
+| __EntityName__ | One-line description of what it represents. |
 
 ### Operations Table
 
@@ -69,7 +69,7 @@ For identifiers, enums, types that don't warrant full entity treatment:
 
 | Name         | Description       |
 | ------------ | ----------------- |
-| **TermName** | Brief definition. |
+| __TermName__ | Brief definition. |
 
 ## Entities Section
 
@@ -92,7 +92,7 @@ When entity has known/enumerable instances:
 
 ```ts
 const instances: EntityName[] = [
-  { /* ... */ },
+  {/* ... */},
 ]
 ```
 
@@ -111,7 +111,7 @@ interface Params {
 
 1. First step
 2. Second step
-   - Sub-detail if needed
+   * Sub-detail if needed
 3. Return result
 
 ## Discriminated Unions

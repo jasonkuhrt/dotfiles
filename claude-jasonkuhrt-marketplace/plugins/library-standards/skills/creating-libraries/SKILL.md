@@ -13,16 +13,16 @@ Scaffold new TypeScript libraries following the namespace module conventions.
 
 Before creating any library, read the appropriate convention documents:
 
-- **Core pattern**: `~/.claude/docs/conventions/namespace-module.md` — The abstract `_.ts`/`__.ts` pattern
-- **Local libraries** (`/src/lib/*`): `~/.claude/docs/conventions/library-local.md`
-- **Package libraries** (package IS the library): `~/.claude/docs/conventions/library-package.md`
+* __Core pattern__: `~/.claude/docs/conventions/namespace-module.md` — The abstract `_.ts`/`__.ts` pattern
+* __Local libraries__ (`/src/lib/*`): `~/.claude/docs/conventions/library-local.md`
+* __Package libraries__ (package IS the library): `~/.claude/docs/conventions/library-package.md`
 
 ### File Naming
 
-- `_.ts` — Namespace module (REQUIRED)
-- `__.ts` — Barrel module (only if multiple implementation files)
-- `_.test.ts` — Public API tests
-- `_.test.fixture.ts` — Shared test fixtures (exports `namespace Fx`)
+* `_.ts` — Namespace module (REQUIRED)
+* `__.ts` — Barrel module (only if multiple implementation files)
+* `_.test.ts` — Public API tests
+* `_.test.fixture.ts` — Shared test fixtures (exports `namespace Fx`)
 
 ## Operations
 
@@ -30,7 +30,7 @@ Before creating any library, read the appropriate convention documents:
 
 Use when library has one implementation file.
 
-**Structure:**
+__Structure:__
 
 ```
 src/lib/<name>/
@@ -39,7 +39,7 @@ src/lib/<name>/
 └── _.test.ts      # Tests
 ```
 
-**Steps:**
+__Steps:__
 
 1. Create directory at `src/lib/<name>/` (kebab-case)
 2. Create `<name>.ts` with implementation
@@ -52,7 +52,7 @@ src/lib/<name>/
 
 Use when library has multiple implementation files.
 
-**Structure:**
+__Structure:__
 
 ```
 src/lib/<name>/
@@ -63,7 +63,7 @@ src/lib/<name>/
 └── _.test.ts      # Tests
 ```
 
-**Steps:**
+__Steps:__
 
 1. Create directory at `src/lib/<name>/` (kebab-case)
 2. Create implementation files
@@ -80,14 +80,16 @@ src/lib/<name>/
 // src/lib/mask/mask.ts
 export const create = (pattern: string): Mask => ({ pattern })
 export const apply = (mask: Mask, value: string): string => value
-export interface Mask { pattern: string }
+export interface Mask {
+  pattern: string
+}
 
 // src/lib/mask/_.ts
 export * as Mask from './mask.js'
 
 // src/lib/mask/_.test.ts
 import { Mask } from './_.js'
-test('.create', () => { /* ... */ })
+test('.create', () => {/* ... */})
 ```
 
 ### Complex Library Example
@@ -100,8 +102,8 @@ export const tokenize = (input: string): Token[] => []
 export const lex = (tokens: Token[]): Lexeme[] => []
 
 // src/lib/parser/__.ts
-export { tokenize, type Token } from './tokenizer.js'
 export { lex, type Lexeme } from './lexer.js'
+export { type Token, tokenize } from './tokenizer.js'
 
 // src/lib/parser/_.ts
 export * as Parser from './__.js'
@@ -141,8 +143,8 @@ export * as Parser from './__.js'
 
 ## Notes
 
-- Always use `.js` extension in imports (ESM requirement)
-- Namespace name = PascalCase of directory name
-- Tests import ONLY from `_.ts`, never from implementation files
-- Code modules can import siblings via relative paths
-- Cross-library imports use `#<name>` subpath imports
+* Always use `.js` extension in imports (ESM requirement)
+* Namespace name = PascalCase of directory name
+* Tests import ONLY from `_.ts`, never from implementation files
+* Code modules can import siblings via relative paths
+* Cross-library imports use `#<name>` subpath imports

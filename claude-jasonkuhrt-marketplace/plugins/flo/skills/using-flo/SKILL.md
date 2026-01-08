@@ -29,13 +29,13 @@ flo feat/experiment
 flo
 ```
 
-**Issue mode auto:**
+__Issue mode auto:__
 
-- Assigns issue to you
-- Creates branch: `feat/123-title`, `fix/123-title`, etc.
-- Generates `.claude/issue.md` with issue context
-- Copies Serena cache if present
-- Runs `pnpm install`
+* Assigns issue to you
+* Creates branch: `feat/123-title`, `fix/123-title`, etc.
+* Generates `.claude/issue.md` with issue context
+* Copies Serena cache if present
+* Runs `pnpm install`
 
 ## Ending Work
 
@@ -66,6 +66,6 @@ flo end --dry
 
 ## Notes
 
-- Always use `flo end` (not `rm -rf`) to clean up worktrees
-- If you did `rm -rf`, run `flo prune` to clean git metadata
-- Run `flo -h` or `flo <command> -h` for detailed help
+* Always use `flo end` (not `rm -rf`) to clean up worktrees
+* If you did `rm -rf`, run `flo prune` to clean git metadata
+* Run `flo -h` or `flo <command> -h` for detailed help

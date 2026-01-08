@@ -7,22 +7,22 @@ description: TypeScript testing conventions and TDD practices. Use when writing 
 
 ## File Organization
 
-- 1:1 test file mapping: `foo.ts` → `foo.test.ts`
-- `describe` blocks for each export (unless single export)
-- No top-level describes repeating module name
-- **Avoid redundant top-level describe blocks** that repeat information already in the file path
-  - Example: In `src/arr/traits/eq.test.ts`, don't use `describe('Arr.Eq implementation')` - the file path already indicates this
-  - Focus describe blocks on behavior groupings, not restating what's being tested
+* 1:1 test file mapping: `foo.ts` → `foo.test.ts`
+* `describe` blocks for each export (unless single export)
+* No top-level describes repeating module name
+* __Avoid redundant top-level describe blocks__ that repeat information already in the file path
+  * Example: In `src/arr/traits/eq.test.ts`, don't use `describe('Arr.Eq implementation')` - the file path already indicates this
+  * Focus describe blocks on behavior groupings, not restating what's being tested
 
 ## Test Quality
 
-- Prefer property-based testing with fast-check
-- Few high-impact tests over exhaustive coverage
-- **Minimalist test fixtures** - absolute minimum test cases needed. Quality over quantity.
+* Prefer property-based testing with fast-check
+* Few high-impact tests over exhaustive coverage
+* __Minimalist test fixtures__ - absolute minimum test cases needed. Quality over quantity.
 
 ## Grouping
 
-**CRITICAL**: Use `Test.describe()` NOT comments for grouping:
+__CRITICAL__: Use `Test.describe()` NOT comments for grouping:
 
 ```typescript
 // ❌ BAD - inline comments for grouping
@@ -39,7 +39,7 @@ Test.describe('long flags', () => {
 
 ## TDD for Bug Fixes
 
-**CRITICAL**: Before implementing ANY bug fix:
+__CRITICAL__: Before implementing ANY bug fix:
 
 1. Create a failing unit test that reproduces the problem
 2. Confirm it fails
@@ -50,4 +50,4 @@ No exceptions - TDD is mandatory for bug fixes. Only skip for complex integratio
 
 ## Before Using Test APIs
 
-**READ THE JSDOC** - Before using ANY test API, read the actual JSDoc documentation in the source code. Never guess the API signature. Find usage examples in the codebase if needed.
+__READ THE JSDOC__ - Before using ANY test API, read the actual JSDoc documentation in the source code. Never guess the API signature. Find usage examples in the codebase if needed.

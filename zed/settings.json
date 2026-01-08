@@ -48,8 +48,11 @@
     "github": {
       "command": "docker",
       "args": [
-        "run", "-i", "--rm",
-        "-e", "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
         "ghcr.io/github/github-mcp-server"
       ]
     }
@@ -434,7 +437,7 @@
         "typescript": {}
       }
     },
-        // Also possible to try: https://github.com/typescript-language-server/typescript-language-server
+    // Also possible to try: https://github.com/typescript-language-server/typescript-language-server
     // @see https://github.com/yioneko/vtsls
     "vtsls": {
       // @see https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json

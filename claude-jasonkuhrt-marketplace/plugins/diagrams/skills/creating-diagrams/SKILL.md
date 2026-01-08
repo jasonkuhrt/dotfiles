@@ -15,14 +15,14 @@ Architecture docs, workflows, data flows, comparisons, file trees, sequence diag
 
 | Format      | Best For                                                 | Renders In         |
 | ----------- | -------------------------------------------------------- | ------------------ |
-| **ASCII**   | AI-maintained docs, terminals, code comments, git diffs  | Everywhere         |
-| **Mermaid** | Complex auto-layout, dependency trees, sequence diagrams | Markdown renderers |
-| **Tables**  | Comparisons, feature matrices                            | Markdown           |
+| __ASCII__   | AI-maintained docs, terminals, code comments, git diffs  | Everywhere         |
+| __Mermaid__ | Complex auto-layout, dependency trees, sequence diagrams | Markdown renderers |
+| __Tables__  | Comparisons, feature matrices                            | Markdown           |
 
-**Key tradeoffs:**
+__Key tradeoffs:__
 
-- ASCII: works everywhere, clear git diffs, but manual layout is tedious
-- Mermaid: auto-layout, parseable (`@mermaid-js/parser`), but requires renderer
+* ASCII: works everywhere, clear git diffs, but manual layout is tedious
+* Mermaid: auto-layout, parseable (`@mermaid-js/parser`), but requires renderer
 
 ### Creating ASCII Diagrams
 
@@ -36,9 +36,9 @@ Reference `references/mermaid-syntax.md` for: flowcharts, sequence diagrams, sta
 
 ### Right Edge Alignment
 
-**All lines in a boxed diagram must end at the same column.** Ragged right edges look broken.
+__All lines in a boxed diagram must end at the same column.__ Ragged right edges look broken.
 
-**Technique:**
+__Technique:__
 
 1. Decide width first (e.g., 60 chars)
 2. Pad with spaces to hit that width
@@ -66,10 +66,10 @@ RIGHT (all lines end at same column):
 
 ## Notes
 
-- Keep within 80-100 columns for terminal compatibility
-- Label every box and arrow
-- Prefer clarity over detail
-- Follow logical flow: left-to-right or top-to-bottom
+* Keep within 80-100 columns for terminal compatibility
+* Label every box and arrow
+* Prefer clarity over detail
+* Follow logical flow: left-to-right or top-to-bottom
 
 ## Appendix
 
@@ -77,5 +77,5 @@ RIGHT (all lines end at same column):
 
 Synthesized from:
 
-- [ascii-visualizer](https://github.com/ArieGoldkin/devPrepAi/tree/main/.claude/skills/ascii-visualizer) by ArieGoldkin
-- [Art](https://github.com/vdemeester/home/tree/main/dots/.config/claude/skills/Art) by vdemeester
+* [ascii-visualizer](https://github.com/ArieGoldkin/devPrepAi/tree/main/.claude/skills/ascii-visualizer) by ArieGoldkin
+* [Art](https://github.com/vdemeester/home/tree/main/dots/.config/claude/skills/Art) by vdemeester

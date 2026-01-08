@@ -7,7 +7,7 @@ description: How to run Node.js package binaries with npm/pnpm/npx. Use when ins
 
 ## CRITICAL
 
-**DO NOT assume pnpm and npm CLIs are equivalent for running binaries.**
+__DO NOT assume pnpm and npm CLIs are equivalent for running binaries.__
 
 The matrix is complex and getting it wrong causes subtle failures.
 
@@ -15,7 +15,7 @@ The matrix is complex and getting it wrong causes subtle failures.
 
 pnpm manages node versions via `pnpm env use`. If npm globals are installed to pnpm's node directory, switching node versions breaks your global tools (claude-code, dprint, etc. vanish).
 
-**Solution**: Set npm prefix to a fixed location:
+__Solution__: Set npm prefix to a fixed location:
 
 ```
 # .npmrc
@@ -57,7 +57,7 @@ After bootstrap, brew's node is effectively unused (pnpm's comes first in PATH).
 | Command           | In project (has package.json)               | Outside project                                     |
 | ----------------- | ------------------------------------------- | --------------------------------------------------- |
 | `npx <pkg>`       | local node_modules → npm global → downloads | npm global → downloads                              |
-| `pnpm exec <pkg>` | local node_modules → pnpm global            | **FAILS** with `ERR_PNPM_RECURSIVE_EXEC_NO_PACKAGE` |
+| `pnpm exec <pkg>` | local node_modules → pnpm global            | __FAILS__ with `ERR_PNPM_RECURSIVE_EXEC_NO_PACKAGE` |
 | `pnpm dlx <pkg>`  | downloads to temp (ignores local)           | downloads to temp                                   |
 | Direct `<pkg>`    | uses PATH                                   | uses PATH                                           |
 
@@ -79,7 +79,7 @@ This is why we use npm (not pnpm) for globals.
 
 ### For global packages
 
-**Use npm with a fixed prefix**:
+__Use npm with a fixed prefix__:
 
 ```bash
 # .npmrc sets prefix=~/.npm-global
@@ -92,7 +92,7 @@ dprint --version        # finds via PATH
 
 ### For editor/tool integration (Zed, VSCode, etc.)
 
-**Option A: npx (recommended)**
+__Option A: npx (recommended)__
 
 ```json
 {
@@ -103,7 +103,7 @@ dprint --version        # finds via PATH
 
 Uses local version if in project, falls back to npm global, downloads if needed.
 
-**Option B: Direct PATH call**
+__Option B: Direct PATH call__
 
 ```json
 {
@@ -126,7 +126,7 @@ pnpm env use 22        # switch node version
 dprint --version       # ERROR: not found (it's in 24.12.0 dir)
 ```
 
-**Fix**: Set `prefix=~/.npm-global` in .npmrc
+__Fix__: Set `prefix=~/.npm-global` in .npmrc
 
 ### Mistake: Assuming pnpm exec works everywhere
 
@@ -159,7 +159,7 @@ pnpx dprint --version  # → always downloads (ignores local/global)
 
 ## References
 
-- [pnpm exec docs](https://pnpm.io/cli/exec)
-- [pnpm dlx docs](https://pnpm.io/cli/dlx)
-- [pnpm issue #6030](https://github.com/pnpm/pnpm/issues/6030) - exec fails outside workspaces
-- [npm prefix config](https://docs.npmjs.com/cli/v10/using-npm/config#prefix)
+* [pnpm exec docs](https://pnpm.io/cli/exec)
+* [pnpm dlx docs](https://pnpm.io/cli/dlx)
+* [pnpm issue #6030](https://github.com/pnpm/pnpm/issues/6030) - exec fails outside workspaces
+* [npm prefix config](https://docs.npmjs.com/cli/v10/using-npm/config#prefix)

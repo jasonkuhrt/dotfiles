@@ -14,10 +14,10 @@ flowchart LR
 
 ### Directions
 
-- `LR` - Left to Right
-- `TD` or `TB` - Top Down / Top to Bottom
-- `RL` - Right to Left
-- `BT` - Bottom to Top
+* `LR` - Left to Right
+* `TD` or `TB` - Top Down / Top to Bottom
+* `RL` - Right to Left
+* `BT` - Bottom to Top
 
 ### Node Shapes
 
@@ -213,14 +213,14 @@ flowchart LR
     C ==> D
 ```
 
-- `-->` Solid arrow
-- `-.->` Dotted arrow
-- `==>` Thick arrow
+* `-->` Solid arrow
+* `-.->` Dotted arrow
+* `==>` Thick arrow
 
 ## Tips
 
-- Keep diagrams simple - split complex flows into multiple diagrams
-- Use clear, descriptive labels
-- Follow natural reading direction (LR or TD)
-- Group related items with subgraphs
-- Test rendering in target environment (GitHub, VS Code, etc.)
+* Keep diagrams simple - split complex flows into multiple diagrams
+* Use clear, descriptive labels
+* Follow natural reading direction (LR or TD)
+* Group related items with subgraphs
+* Test rendering in target environment (GitHub, VS Code, etc.)

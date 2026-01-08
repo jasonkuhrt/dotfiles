@@ -102,6 +102,7 @@
 
     # ── Staging ──
     a = add
+    A = add --all
     aa = add --all
     ap = add --patch
     # Unstage files (opposite of git add)

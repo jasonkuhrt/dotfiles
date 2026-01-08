@@ -45,7 +45,7 @@ brew "lazygit"       # terminal UI for git
 brew "pre-commit"    # git hooks framework
 
 # Development
-brew "node"          # Node.js runtime
+brew "node@24"       # Node.js LTS runtime
 brew "pnpm"          # fast package manager
 brew "deno"          # Deno runtime
 brew "go"

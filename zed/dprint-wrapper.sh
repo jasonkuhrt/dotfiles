@@ -7,12 +7,12 @@
 #
 # Priority for config:
 # 1. Project-local dprint.json (auto-discovered by dprint)
-# 2. Global config (~/.config/dprint.json)
+# 2. Global config (~/.config/dprint/dprint.json)
 #
 # Usage: dprint-wrapper.sh [dprint args...]
 # Example: dprint-wrapper.sh fmt --stdin markdown
 
-GLOBAL_CONFIG="$HOME/.config/dprint.json"
+GLOBAL_CONFIG="$HOME/.config/dprint/dprint.json"
 
 # Find project root (walk up looking for package.json)
 find_project_root() {

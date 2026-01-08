@@ -53,7 +53,7 @@ cd ~/projects/jasonkuhrt/dotfiles && ./sync
 # ./dock/apps.txt defines apps to add (empty = clean dock)
 
 # Other
-~/.config/dprint.json         →  ./dprint/dprint.json
+~/.config/dprint/dprint.json  →  ./dprint/dprint.json
 ~/.config/gh/config.yml       →  ./gh/config.yml
 ~/.config/git/ignore          →  ./git/ignore
 ~/.config/libra/config.json   →  ./libra/config.json

@@ -34,23 +34,39 @@ set --export FZF_DEFAULT_COMMAND 'ag -g ""'
 # https://fishshell.com/docs/current/faq.html#how-do-i-change-the-greeting-message
 set --universal fish_greeting ""
 
-# Aliases
-# =======
+# Abbreviations & Aliases
+# =======================
+#
+# Abbreviations (abbr) vs Aliases:
+# - abbr: Expands as you type, shows full command in history
+#         e.g., type "g st" → expands to "git st" → history shows "git st"
+# - alias: Runs command but history shows the alias
+#         e.g., type "px test" → runs "pnpm --silent test" → history shows "px test"
+#
+# Rule of thumb:
+# - Use abbr for simple command renames (g→git, p→pnpm, d→docker)
+# - Use alias for commands with flags/args baked in (px="pnpm --silent")
 
-## Git
-## ---
-# Single alias - use git aliases for the rest (g co, g st, g lg, etc.)
-# See: ~/.gitconfig [alias] section
+## Abbreviations
+## -------------
 
-alias g='git'
+abbr -a g git
+abbr -a d docker
+abbr -a dc docker-compose
+abbr -a k kubectl
+abbr -a tf terraform
+abbr -a p pnpm
+abbr -a c clear
+abbr -a l libra
+
+## Aliases (commands with flags/args)
+## ----------------------------------
+
 alias serena 'uv run --directory /Users/jasonkuhrt/projects/oraios/serena serena'
 alias ccusage 'npx ccusage@latest'
 alias ccmonitor 'claude-monitor --plan max20'
 
-
-## Github
-## ------
-
+# GitHub CLI
 alias ghil="gh issue list"
 alias gpr="gh pr"
 alias gprc="gh pr create"
@@ -60,21 +76,11 @@ alias grv="gh repo view --web"
 alias gi="gh issue"
 alias gic="gh issue create"
 
-## Other
-## -----
-
-# alias y="yarn"
+# Other
 alias ..="cd .."
-alias d="docker"
-alias dc="docker-compose"
-alias k="kubectl"
-alias tf="terraform"
 alias grepp="pcregrep"
-alias p="pnpm"
 alias pnx="pnpm nx"
 alias px="pnpm --silent"
-alias c="clear"
-alias l="libra"
 alias pt="pnpm --silent turbo"
 
 

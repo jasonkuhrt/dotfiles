@@ -137,3 +137,107 @@ Things that can't be fully automated:
 - https://github.com/anthropics/claude-code-action
 - https://github.com/OneRedOak/claude-code-workflows
 - https://github.com/scopecraft/command
+
+## CLI Tools Reference
+
+Quick reference for all the tools installed via Brewfile. Forget what something does? Check here.
+
+### Modern Unix Replacements
+
+| Tool | Replaces | What it does | Example |
+|------|----------|--------------|---------|
+| `bat` | `cat` | Syntax highlighting, line numbers, git integration | `bat file.ts` |
+| `fd` | `find` | Simpler syntax, respects .gitignore, faster | `fd "\.ts$"` |
+| `ag` | `grep` | Fast code search, respects .gitignore | `ag "TODO" --ts` |
+| `lsd` | `ls` | Icons, colors, tree view, git status | `lsd -la` or `lsd --tree` |
+| `xh` | `curl` | Colorized output, simpler syntax | `xh GET api.example.com/users` |
+| `btm` | `top`/`htop` | Modern system monitor with graphs | `btm` |
+| `git-delta` | `diff` | Side-by-side diffs, syntax highlighting | (auto via gitconfig) |
+
+### Search & Navigation
+
+| Tool | What it does | Example |
+|------|--------------|---------|
+| `fzf` | Fuzzy finder for anything | `ctrl+r` (history), `vim $(fzf)` |
+| `z` | Jump to frecent directories | `z proj` → `~/projects` |
+| `tree` | Directory tree view | `tree -L 2` |
+
+### JSON/YAML/Data
+
+| Tool | What it does | Example |
+|------|--------------|---------|
+| `jq` | JSON processor (query, transform) | `cat data.json \| jq '.users[0].name'` |
+| `fx` | Interactive JSON viewer | `cat data.json \| fx` |
+| `yj` | Convert between YAML/JSON/TOML | `yj < config.yaml > config.json` |
+
+### Shell & Scripts
+
+| Tool | What it does | Example |
+|------|--------------|---------|
+| `fish` | Modern shell with autosuggestions | (default shell) |
+| `direnv` | Auto-load .envrc per directory | `echo 'export API_KEY=xxx' > .envrc && direnv allow` |
+| `shellcheck` | Lint shell scripts | `shellcheck script.sh` |
+| `shfmt` | Format shell scripts | `shfmt -w script.sh` |
+| `gum` | Pretty shell script UI components | `gum choose "opt1" "opt2"` |
+| `up` | Interactive piping (Ultimate Plumber) | `cat file \| up` (build pipeline interactively) |
+
+### Git & GitHub
+
+| Tool | What it does | Example |
+|------|--------------|---------|
+| `gh` | GitHub CLI (PRs, issues, repos) | `gh pr create`, `gh issue list` |
+| `git-delta` | Better git diffs | (auto via gitconfig) |
+| `git-crypt` | Encrypt files in git transparently | `git-crypt init && git-crypt add-gpg-user` |
+| `pre-commit` | Git hooks framework | `pre-commit install` |
+
+### Document & Markdown
+
+| Tool | What it does | Example |
+|------|--------------|---------|
+| `glow` | Render markdown in terminal | `glow README.md` |
+| `mdcat` | Render markdown (alternative) | `mdcat README.md` |
+| `pandoc` | Convert between doc formats | `pandoc doc.md -o doc.pdf` |
+
+### Development
+
+| Tool | What it does | Example |
+|------|--------------|---------|
+| `node` | Node.js runtime | `node script.js` |
+| `pnpm` | Fast Node package manager | `pnpm install`, `pnpm add -D pkg` |
+| `deno` | Secure JS/TS runtime | `deno run script.ts` |
+| `uv` | Fast Python package manager | `uv pip install pkg`, `uvx ruff` |
+| `dprint` | Fast code formatter | `dprint fmt` |
+| `neovim` | Editor | `nvim file.ts` |
+
+### System & macOS
+
+| Tool | What it does | Example |
+|------|--------------|---------|
+| `mas` | Mac App Store CLI | `mas install 497799835` (Xcode) |
+| `dockutil` | Manage Dock programmatically | `dockutil --add /Applications/App.app` |
+| `watch` | Run command repeatedly | `watch -n 2 'kubectl get pods'` |
+| `watchman` | Watch files for changes | (used by tools like Jest) |
+
+### Email (CLI-based workflow)
+
+| Tool | What it does |
+|------|--------------|
+| `mbsync` (isync) | Sync IMAP to local Maildir |
+| `notmuch` | Index and search email |
+| `himalaya` | Read/send email from CLI |
+| `imapfilter` | Server-side email filtering |
+
+## Dotfiles Inspiration
+
+**Top Repositories** (by stars)
+- [mathiasbynens/dotfiles](https://github.com/mathiasbynens/dotfiles) - 31k stars, legendary `.macos` defaults script
+- [holman/dotfiles](https://github.com/holman/dotfiles) - 7.6k stars, topical organization pattern
+- [paulirish/dotfiles](https://github.com/paulirish/dotfiles) - 4.3k stars, fish shell focus
+
+**Curated Lists**
+- [awesome-dotfiles](https://github.com/webpro/awesome-dotfiles) - Comprehensive resource list
+- [dotfiles.github.io](https://dotfiles.github.io/) - Community tutorials and inspiration
+
+**Management Tools**
+- [chezmoi](https://github.com/twpayne/chezmoi) - 17k stars, multi-machine, templating, secrets
+- [yadm](https://github.com/yadm-dev/yadm) - 6k stars, git-based with encryption

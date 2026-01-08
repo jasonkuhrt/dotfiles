@@ -193,93 +193,50 @@ Things that can't be fully automated:
 
 Quick reference for all the tools installed via Brewfile. Forget what something does? Check here.
 
-### Modern Unix Replacements
-
-| Tool        | Replaces     | What it does                                       | Example                        |
-| ----------- | ------------ | -------------------------------------------------- | ------------------------------ |
-| `bat`       | `cat`        | Syntax highlighting, line numbers, git integration | `bat file.ts`                  |
-| `fd`        | `find`       | Simpler syntax, respects .gitignore, faster        | `fd "\.ts$"`                   |
-| `ag`        | `grep`       | Fast code search, respects .gitignore              | `ag "TODO" --ts`               |
-| `lsd`       | `ls`         | Icons, colors, tree view, git status               | `lsd -la` or `lsd --tree`      |
-| `xh`        | `curl`       | Colorized output, simpler syntax                   | `xh GET api.example.com/users` |
-| `btm`       | `top`/`htop` | Modern system monitor with graphs                  | `btm`                          |
-| `git-delta` | `diff`       | Side-by-side diffs, syntax highlighting            | (auto via gitconfig)           |
-
-### Search & Navigation
-
-| Tool   | What it does                       | Example                          |
-| ------ | ---------------------------------- | -------------------------------- |
-| `fzf`  | Fuzzy finder for anything          | `ctrl+r` (history), `vim $(fzf)` |
-| `z`    | Jump to frecent directories        | `z proj` → `~/projects`          |
-| `tree` | Directory tree view                | `tree -L 2`                      |
-| `tldr` | Simplified man pages with examples | `tldr tar`, `tldr git rebase`    |
-
-### JSON/YAML/Data
-
-| Tool | What it does                      | Example                                |
-| ---- | --------------------------------- | -------------------------------------- |
-| `jq` | JSON processor (query, transform) | `cat data.json \| jq '.users[0].name'` |
-| `fx` | Interactive JSON viewer           | `cat data.json \| fx`                  |
-| `yj` | Convert between YAML/JSON/TOML    | `yj < config.yaml > config.json`       |
-
-### Shell & Scripts
-
-| Tool         | What it does                          | Example                                              |
-| ------------ | ------------------------------------- | ---------------------------------------------------- |
-| `fish`       | Modern shell with autosuggestions     | (default shell)                                      |
-| `direnv`     | Auto-load .envrc per directory        | `echo 'export API_KEY=xxx' > .envrc && direnv allow` |
-| `shellcheck` | Lint shell scripts                    | `shellcheck script.sh`                               |
-| `shfmt`      | Format shell scripts                  | `shfmt -w script.sh`                                 |
-| `gum`        | Pretty shell script UI components     | `gum choose "opt1" "opt2"`                           |
-| `up`         | Interactive piping (Ultimate Plumber) | `cat file \| up` (build pipeline interactively)      |
-
-### Git & GitHub
-
-| Tool         | What it does                                  | Example                                    |
-| ------------ | --------------------------------------------- | ------------------------------------------ |
-| `gh`         | GitHub CLI (PRs, issues, repos)               | `gh pr create`, `gh issue list`            |
-| `lazygit`    | Terminal UI for git (visual staging, commits) | `lazygit`                                  |
-| `git-delta`  | Better git diffs                              | (auto via gitconfig)                       |
-| `git-crypt`  | Encrypt files in git transparently            | `git-crypt init && git-crypt add-gpg-user` |
-| `pre-commit` | Git hooks framework                           | `pre-commit install`                       |
-
-### Document & Markdown
-
-| Tool     | What it does                  | Example                    |
-| -------- | ----------------------------- | -------------------------- |
-| `glow`   | Render markdown in terminal   | `glow README.md`           |
-| `mdcat`  | Render markdown (alternative) | `mdcat README.md`          |
-| `pandoc` | Convert between doc formats   | `pandoc doc.md -o doc.pdf` |
-
-### Development
-
-| Tool        | What it does                | Example                                        |
-| ----------- | --------------------------- | ---------------------------------------------- |
-| `node`      | Node.js runtime             | `node script.js`                               |
-| `pnpm`      | Fast Node package manager   | `pnpm install`, `pnpm add -D pkg`              |
-| `deno`      | Secure JS/TS runtime        | `deno run script.ts`                           |
-| `uv`        | Fast Python package manager | `uv pip install pkg`, `uvx ruff`               |
-| `dprint`    | Fast code formatter         | `dprint fmt`                                   |
-| `neovim`    | Editor                      | `nvim file.ts`                                 |
-| `hyperfine` | Benchmark CLI commands      | `hyperfine 'fd . -e ts' 'find . -name "*.ts"'` |
-
-### System & macOS
-
-| Tool       | What it does                 | Example                                |
-| ---------- | ---------------------------- | -------------------------------------- |
-| `mas`      | Mac App Store CLI            | `mas install 497799835` (Xcode)        |
-| `dockutil` | Manage Dock programmatically | `dockutil --add /Applications/App.app` |
-| `watch`    | Run command repeatedly       | `watch -n 2 'kubectl get pods'`        |
-| `watchman` | Watch files for changes      | (used by tools like Jest)              |
-
-### Email (CLI-based workflow)
-
-| Tool             | What it does                |
-| ---------------- | --------------------------- |
-| `mbsync` (isync) | Sync IMAP to local Maildir  |
-| `notmuch`        | Index and search email      |
-| `himalaya`       | Read/send email from CLI    |
-| `imapfilter`     | Server-side email filtering |
+| Category | Tool         | What it does                          | Example                                        |
+| -------- | ------------ | ------------------------------------- | ---------------------------------------------- |
+| Data     | `fx`         | Interactive JSON viewer               | `cat data.json \| fx`                          |
+| Data     | `jq`         | JSON processor (query, transform)     | `cat data.json \| jq '.users[0].name'`         |
+| Data     | `yj`         | Convert between YAML/JSON/TOML        | `yj < config.yaml > config.json`               |
+| Dev      | `deno`       | Secure JS/TS runtime                  | `deno run script.ts`                           |
+| Dev      | `dprint`     | Fast code formatter                   | `dprint fmt`                                   |
+| Dev      | `hyperfine`  | Benchmark CLI commands                | `hyperfine 'fd . -e ts' 'find . -name "*.ts"'` |
+| Dev      | `neovim`     | Editor                                | `nvim file.ts`                                 |
+| Dev      | `node`       | Node.js runtime                       | `node script.js`                               |
+| Dev      | `pnpm`       | Fast Node package manager             | `pnpm install`, `pnpm add -D pkg`              |
+| Dev      | `uv`         | Fast Python package manager           | `uv pip install pkg`, `uvx ruff`               |
+| Docs     | `glow`       | Render markdown in terminal           | `glow README.md`                               |
+| Docs     | `mdcat`      | Render markdown (alternative)         | `mdcat README.md`                              |
+| Docs     | `pandoc`     | Convert between doc formats           | `pandoc doc.md -o doc.pdf`                     |
+| Email    | `himalaya`   | Read/send email from CLI              | `himalaya list`                                |
+| Email    | `imapfilter` | Server-side email filtering           | (see config)                                   |
+| Email    | `mbsync`     | Sync IMAP to local Maildir            | `mbsync -a`                                    |
+| Email    | `notmuch`    | Index and search email                | `notmuch search tag:inbox`                     |
+| Git      | `gh`         | GitHub CLI (PRs, issues, repos)       | `gh pr create`, `gh issue list`                |
+| Git      | `git-crypt`  | Encrypt files in git transparently    | `git-crypt init`                               |
+| Git      | `git-delta`  | Better git diffs                      | (auto via gitconfig)                           |
+| Git      | `lazygit`    | Terminal UI for git                   | `lazygit`                                      |
+| Git      | `pre-commit` | Git hooks framework                   | `pre-commit install`                           |
+| Nav      | `fzf`        | Fuzzy finder for anything             | `ctrl+r` (history), `vim $(fzf)`               |
+| Nav      | `tldr`       | Simplified man pages with examples    | `tldr tar`, `tldr git rebase`                  |
+| Nav      | `tree`       | Directory tree view                   | `tree -L 2`                                    |
+| Nav      | `z`          | Jump to frecent directories           | `z proj` → `~/projects`                        |
+| Shell    | `direnv`     | Auto-load .envrc per directory        | `echo 'export API_KEY=xxx' > .envrc`           |
+| Shell    | `fish`       | Modern shell with autosuggestions     | (default shell)                                |
+| Shell    | `gum`        | Pretty shell script UI components     | `gum choose "opt1" "opt2"`                     |
+| Shell    | `shellcheck` | Lint shell scripts                    | `shellcheck script.sh`                         |
+| Shell    | `shfmt`      | Format shell scripts                  | `shfmt -w script.sh`                           |
+| Shell    | `up`         | Interactive piping (Ultimate Plumber) | `cat file \| up`                               |
+| System   | `dockutil`   | Manage Dock programmatically          | `dockutil --add /Applications/App.app`         |
+| System   | `mas`        | Mac App Store CLI                     | `mas install 497799835` (Xcode)                |
+| System   | `watch`      | Run command repeatedly                | `watch -n 2 'kubectl get pods'`                |
+| System   | `watchman`   | Watch files for changes               | (used by tools like Jest)                      |
+| Unix     | `ag`         | Fast code search (replaces grep)      | `ag "TODO" --ts`                               |
+| Unix     | `bat`        | Cat with syntax highlighting          | `bat file.ts`                                  |
+| Unix     | `btm`        | Modern system monitor (replaces top)  | `btm`                                          |
+| Unix     | `fd`         | Simpler find, respects .gitignore     | `fd "\.ts$"`                                   |
+| Unix     | `lsd`        | Ls with icons, colors, tree view      | `lsd -la` or `lsd --tree`                      |
+| Unix     | `xh`         | Colorized curl alternative            | `xh GET api.example.com/users`                 |
 
 ## Dotfiles Inspiration
 

@@ -65,22 +65,32 @@ Re-run `bin/sync` when:
 Things that can't be fully automated:
 
 1. **Fish secrets**: Add API keys/tokens to `~/.config/fish/config.secrets.fish` (gitignored)
-2. **Caps Lock → Ctrl**: System Settings > Keyboard > Keyboard Shortcuts > Modifier Keys
-3. **GitHub CLI**: Authenticate with GitHub
+2. **Zed secrets**: Add tokens to `~/.config/zed/settings.local.json` (not synced):
+   ```json
+   {
+     "context_servers": {
+       "mcp-server-github": {
+         "settings": { "github_personal_access_token": "..." }
+       }
+     }
+   }
+   ```
+3. **Caps Lock → Ctrl**: System Settings > Keyboard > Keyboard Shortcuts > Modifier Keys
+4. **GitHub CLI**: Authenticate with GitHub
    ```sh
    gh auth login
    ```
-4. **SSH key**: Generate if missing, add to GitHub
+5. **SSH key**: Generate if missing, add to GitHub
    ```sh
    ssh-keygen -t ed25519 -C "jasonkuhrt@me.com"
    gh ssh-key add ~/.ssh/id_ed25519.pub
    ```
-5. **Raycast hotkey**: Set Cmd+Space in Raycast preferences (after disabling Spotlight's shortcut)
-6. **Spotlight shortcut**: System Settings > Keyboard > Keyboard Shortcuts > Spotlight > uncheck "Show Spotlight search"
-7. **Wispr Flow**: Download from [wispr.com](https://www.wispr.com/) (not in Homebrew)
-8. **Browser sync**: Chrome syncs via Google login, Safari syncs via iCloud
-9. **Auto-login** (optional, less secure): System Settings > Users & Groups > Login Options > Automatic login
-10. **Email password**: Add iCloud app-specific password to keychain:
+6. **Raycast hotkey**: Set Cmd+Space in Raycast preferences (after disabling Spotlight's shortcut)
+7. **Spotlight shortcut**: System Settings > Keyboard > Keyboard Shortcuts > Spotlight > uncheck "Show Spotlight search"
+8. **Wispr Flow**: Download from [wispr.com](https://www.wispr.com/) (not in Homebrew)
+9. **Browser sync**: Chrome syncs via Google login, Safari syncs via iCloud
+10. **Auto-login** (optional, less secure): System Settings > Users & Groups > Login Options > Automatic login
+11. **Email password**: Add iCloud app-specific password to keychain:
    ```sh
    security add-generic-password -s 'mbsync-icloud' -a 'jasonkuhrt@me.com' -w 'YOUR_APP_PASSWORD'
    ```

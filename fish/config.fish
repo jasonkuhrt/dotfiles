@@ -6,10 +6,13 @@ end
 # Usage: tide-daily (default) or tide-zen (minimal)
 function tide-daily --description "Daily prompt: 2-line, time, git, full info"
     tide configure --auto --style=Lean --prompt_colors='True color' --show_time='12-hour format' --lean_prompt_height='Two lines' --prompt_connection=Solid --prompt_connection_andor_frame_color=Darkest --prompt_spacing=Sparse --icons='Few icons' --transient=Yes
+    tide reload
 end
 
 function tide-zen --description "Zen prompt: minimal, 1-line, no distractions"
     tide configure --auto --style=Lean --prompt_colors='True color' --show_time=No --lean_prompt_height='One line' --prompt_connection=Disconnected --prompt_spacing=Compact --icons='Few icons' --transient=Yes
+    set -U tide_left_prompt_items character
+    tide reload
 end
 
 # Secrets

@@ -1,24 +1,4 @@
 {
-  "extraKnownMarketplaces": {
-    "jasonkuhrt": {
-      "source": {
-        "source": "directory",
-        "path": "/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/claude-jasonkuhrt-marketplace"
-      }
-    },
-    "claude-plugins-official": {
-      "source": {
-        "source": "git",
-        "url": "https://github.com/anthropics/claude-plugins-official.git"
-      }
-    },
-    "superpowers-marketplace": {
-      "source": {
-        "source": "git",
-        "url": "https://github.com/obra/superpowers-marketplace.git"
-      }
-    }
-  },
   "includeCoAuthoredBy": false,
   "permissions": {
     "allow": [

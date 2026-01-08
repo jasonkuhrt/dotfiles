@@ -1,0 +1,23 @@
+{
+  "jasonkuhrt": {
+    "source": {
+      "source": "directory",
+      "path": "/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/claude-jasonkuhrt-marketplace"
+    },
+    "installLocation": "/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/claude-jasonkuhrt-marketplace"
+  },
+  "claude-plugins-official": {
+    "source": {
+      "source": "git",
+      "url": "https://github.com/anthropics/claude-plugins-official.git"
+    },
+    "installLocation": "/Users/jasonkuhrt/.claude/plugins/marketplaces/claude-plugins-official"
+  },
+  "superpowers-marketplace": {
+    "source": {
+      "source": "git",
+      "url": "https://github.com/obra/superpowers-marketplace.git"
+    },
+    "installLocation": "/Users/jasonkuhrt/.claude/plugins/marketplaces/superpowers-marketplace"
+  }
+}

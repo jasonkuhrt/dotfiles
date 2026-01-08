@@ -255,8 +255,9 @@ link_file "$HERE/claude/settings.json" "$HOME/.claude/settings.json" "claude/set
 link_subdir "$HERE/claude/commands" "$HOME/.claude/commands" "claude/commands"
 link_subdir "$HERE/claude/rules" "$HOME/.claude/rules" "claude/rules"
 
-# Plugins are managed via settings.json (enabledPlugins + extraKnownMarketplaces)
-# No CLI commands needed - settings.json symlink handles it
+# Plugin marketplaces (known_marketplaces.json is the source of truth, not extraKnownMarketplaces in settings.json)
+mkdir -p "$HOME/.claude/plugins"
+link_file "$HERE/claude/plugins/known_marketplaces.json" "$HOME/.claude/plugins/known_marketplaces.json" "claude/plugins/known_marketplaces.json"
 
 # ─────────────────────────────────────────────────────────────
 header "Zed"

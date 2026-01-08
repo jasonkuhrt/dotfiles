@@ -87,6 +87,78 @@ link_subdir() {
     task "$name ${DIM}${ARROW} $dest${RESET}"
 }
 
+# Check if command exists
+has_cmd() {
+    command -v "$1" &> /dev/null
+}
+
+# Run command with sudo, checking state first
+# Usage: sudo_run "check_cmd" "expected" "sudo_cmd" "desc" "manual_cmd"
+sudo_run() {
+    local check_cmd="$1"
+    local expected="$2"
+    local sudo_cmd="$3"
+    local desc="$4"
+    local manual_cmd="$5"
+
+    local current
+    current=$(eval "$check_cmd" 2>/dev/null || echo "")
+
+    if [ "$current" = "$expected" ]; then
+        skip "$desc"
+    elif sudo -n true 2>/dev/null; then
+        eval "sudo $sudo_cmd" 2>/dev/null && task "$desc"
+    else
+        warn "$desc requires sudo - run: $manual_cmd"
+    fi
+}
+
+# Ensure file exists, create if missing
+ensure_file() {
+    local path="$1"
+    local desc="${2:-$(basename "$path")}"
+
+    if [ -f "$path" ]; then
+        skip "$desc"
+    else
+        touch "$path"
+        task "Created $desc"
+    fi
+}
+
+# Ensure line is in file (grep check, append if missing)
+ensure_in_file() {
+    local pattern="$1"
+    local file="$2"
+    local add_cmd="$3"
+    local desc="$4"
+
+    if grep -q "$pattern" "$file" 2>/dev/null; then
+        skip "$desc"
+    else
+        mkdir -p "$(dirname "$file")"
+        eval "$add_cmd"
+        task "$desc"
+    fi
+}
+
+# Install packages from a list file
+# Usage: install_from_list "file" "check_cmd" "install_cmd" "name_extractor"
+install_from_list() {
+    local file="$1"
+    local check_cmd="$2"
+    local install_cmd="$3"
+
+    while IFS= read -r item || [ -n "$item" ]; do
+        [[ "$item" =~ ^#.*$ || -z "$item" ]] && continue
+        if eval "$check_cmd" &>/dev/null; then
+            skip "$item"
+        else
+            eval "$install_cmd" &>/dev/null && task "$item" || warn "Failed to install $item"
+        fi
+    done < "$file"
+}
+
 # Ensure a directory exists as a real directory (not a symlink)
 # Migrates from old directory-symlink approach if needed
 ensure_real_dir() {
@@ -136,7 +208,7 @@ link_subdir "$HERE/claude/commands" "$HOME/.claude/commands" "claude/commands"
 link_subdir "$HERE/claude/rules" "$HOME/.claude/rules" "claude/rules"
 
 # Register local marketplace and install plugins
-if command -v claude &> /dev/null; then
+if has_cmd claude; then
     MARKETPLACE="$HERE/claude-jasonkuhrt-marketplace"
     if [ -d "$MARKETPLACE" ]; then
         info "Registering Claude Code marketplace..."
@@ -183,13 +255,9 @@ header "Config Files"
 link_file "$HERE/ssh/config" "$HOME/.ssh/config" "ssh/config"
 
 # Add GitHub's SSH host keys (avoid authenticity prompt)
-if ! grep -q "github.com" "$HOME/.ssh/known_hosts" 2>/dev/null; then
-    mkdir -p "$HOME/.ssh"
-    ssh-keyscan -t ed25519,rsa github.com >> "$HOME/.ssh/known_hosts" 2>/dev/null
-    task "Added GitHub to known_hosts"
-else
-    skip "GitHub known_hosts"
-fi
+ensure_in_file "github.com" "$HOME/.ssh/known_hosts" \
+    "ssh-keyscan -t ed25519,rsa github.com >> '$HOME/.ssh/known_hosts' 2>/dev/null" \
+    "GitHub known_hosts"
 
 link_file "$HERE/ghci" "$HOME/.ghci" ".ghci"
 mkdir -p "$HOME/.config/vim"
@@ -242,7 +310,7 @@ mkdir -p "$HOME/.config/git"
 link_file "$HERE/git/ignore" "$HOME/.config/git/ignore" "git/ignore"
 
 # GitHub CLI protocol
-if command -v gh &> /dev/null; then
+if has_cmd gh; then
     gh config set git_protocol ssh 2>/dev/null
     task "GitHub CLI protocol set to SSH"
     # Fix dotfiles repo remote (cloned via HTTPS before this ran)
@@ -258,12 +326,7 @@ header "Misc"
 mkdir -p "$HOME/.local/bin"
 
 # Hush login message
-if [ ! -f "$HOME/.hushlogin" ]; then
-    touch "$HOME/.hushlogin"
-    task "Created .hushlogin"
-else
-    skip ".hushlogin"
-fi
+ensure_file "$HOME/.hushlogin" ".hushlogin"
 
 # ─────────────────────────────────────────────────────────────
 header "Xcode CLI Tools"
@@ -283,7 +346,7 @@ fi
 # ─────────────────────────────────────────────────────────────
 header "Serena MCP"
 
-if command -v uvx &> /dev/null; then
+if has_cmd uvx; then
     info "Updating Serena (MCP server)..."
     uv cache clean --force serena 2>/dev/null || true
     task "Serena cache cleared (will fetch latest on next run)"
@@ -299,7 +362,7 @@ if [ -f "/opt/homebrew/bin/brew" ]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-if ! command -v brew &> /dev/null; then
+if ! has_cmd brew; then
     info "Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
@@ -323,7 +386,7 @@ fi
 header "Fisher Plugins"
 
 # Now fish is installed via Homebrew, set up Fisher
-if command -v fish &> /dev/null; then
+if has_cmd fish; then
     if [ ! -f "$HOME/.config/fish/functions/fisher.fish" ]; then
         info "Installing Fisher plugin manager..."
         fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher' 2>/dev/null
@@ -346,7 +409,7 @@ fi
 # ─────────────────────────────────────────────────────────────
 header "pnpm Global Packages"
 
-if command -v pnpm &> /dev/null; then
+if has_cmd pnpm; then
     # Ensure pnpm global bin is configured
     pnpm setup &>/dev/null || true
 
@@ -421,14 +484,10 @@ if [ "$(uname)" = "Darwin" ]; then
     set_default "com.apple.dock" "tilesize" "-int" "36" "Dock icon size (smaller)"
 
     info "Configuring power management..."
-    current_sleep=$(pmset -g | grep displaysleep | awk '{print $2}')
-    if [ "$current_sleep" = "10" ]; then
-        skip "Display sleep: 10 min (AC power)"
-    elif sudo -n true 2>/dev/null; then
-        sudo pmset -c displaysleep 10 2>/dev/null && task "Display sleep: 10 min (AC power)"
-    else
-        warn "Power settings require sudo - run: sudo pmset -c displaysleep 10"
-    fi
+    sudo_run "pmset -g | grep displaysleep | awk '{print \$2}'" "10" \
+        "pmset -c displaysleep 10" \
+        "Display sleep: 10 min (AC power)" \
+        "sudo pmset -c displaysleep 10"
 
     info "Configuring trackpad..."
     set_default "com.apple.AppleMultitouchTrackpad" "Clicking" "-bool" "true" "Tap to click (trackpad)"
@@ -455,7 +514,7 @@ if [ "$(uname)" = "Darwin" ]; then
     # ─────────────────────────────────────────────────────────────
     header "Dock Apps"
 
-    if command -v dockutil &> /dev/null; then
+    if has_cmd dockutil; then
         DOCK_CONFIG="$HERE/dock/apps.txt"
         if [ -f "$DOCK_CONFIG" ]; then
             info "Configuring Dock apps..."

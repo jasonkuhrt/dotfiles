@@ -39,23 +39,10 @@ set --universal fish_greeting ""
 
 ## Git
 ## ---
+# Single alias - use git aliases for the rest (g co, g st, g lg, etc.)
+# See: ~/.gitconfig [alias] section
 
 alias g='git'
-alias ga='git add'
-alias gb='git branch --format=\'%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(contents:subject) %(color:green)(%(committerdate:relative)) [%(authorname)]\' --sort=-committerdate'
-alias gaa='git add -A'
-alias gs='git status'
-alias gst='git status'
-alias gc='git commit -v'
-alias gd='git diff'
-alias gbd='git branch -d'
-alias gco='git checkout'
-alias glg='git log --stat'
-alias gp='git push'
-alias gl='git log --oneline --decorate --graph'
-alias gla='git log --oneline --decorate --graph --all'
-alias pnx='pnpm nx'
-alias gw='git worktree'
 alias serena 'uv run --directory /Users/jasonkuhrt/projects/oraios/serena serena'
 alias ccusage 'npx ccusage@latest'
 alias ccmonitor 'claude-monitor --plan max20'
@@ -84,6 +71,7 @@ alias k="kubectl"
 alias tf="terraform"
 alias grepp="pcregrep"
 alias p="pnpm"
+alias pnx="pnpm nx"
 alias px="pnpm --silent"
 alias c="clear"
 alias l="libra"

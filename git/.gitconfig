@@ -1,3 +1,193 @@
 [user]
-	name  = Jason Kuhrt
-	email = jasonkuhrt@me.com
+    name = Jason Kuhrt
+    email = jasonkuhrt@me.com
+
+# ─────────────────────────────────────────────────────────────
+# Core
+# ─────────────────────────────────────────────────────────────
+
+[init]
+    # Default branch name for new repos
+    defaultBranch = main
+
+[core]
+    # Use delta for all paged output (diff, log, show, blame)
+    pager = delta
+    # Global gitignore location
+    excludesfile = ~/.config/git/ignore
+    # Cache untracked files - speeds up `git status` in large repos
+    untrackedCache = true
+    # Don't trust inode change time (safer on macOS, avoids false positives)
+    trustctime = false
+
+[pull]
+    # Rebase local commits on top of fetched commits instead of merge
+    # Keeps history linear, avoids "Merge branch 'main'" noise
+    rebase = true
+
+[push]
+    # First push auto-creates upstream tracking branch (no more -u origin branch)
+    autoSetupRemote = true
+    # Only push current branch, not all branches
+    default = current
+    # Push annotated tags along with commits that reference them
+    followTags = true
+
+[fetch]
+    # Delete local refs to branches that were deleted on remote
+    prune = true
+    # Same for tags
+    pruneTags = true
+
+[rebase]
+    # Auto-stash dirty working directory before rebase, restore after
+    # No more "Cannot rebase: You have unstaged changes"
+    autoStash = true
+    # Auto-squash commits prefixed with "fixup!" or "squash!" during interactive rebase
+    # Workflow: `git commit --fixup <sha>` then `git rebase -i` auto-arranges them
+    autoSquash = true
+
+[merge]
+    # zdiff3: Shows (1) ours, (2) base (original), (3) theirs in conflicts
+    # Having the base version makes conflicts MUCH easier to resolve
+    conflictStyle = zdiff3
+
+[diff]
+    # histogram: Better diff algorithm, especially for moved code blocks
+    algorithm = histogram
+    # Highlight lines that moved (not just added/removed) in different color
+    colorMoved = default
+    # Detect copies as well as renames
+    renames = copies
+
+[help]
+    # When you typo a command, prompt "Did you mean X?" with option to run it
+    autocorrect = prompt
+
+[branch]
+    # `git branch` lists most recently committed branches first
+    sort = -committerdate
+
+# ─────────────────────────────────────────────────────────────
+# Delta - Better diffs with syntax highlighting
+# https://github.com/dandavison/delta
+# ─────────────────────────────────────────────────────────────
+
+[interactive]
+    # Use delta for `git add -p` and other interactive commands
+    diffFilter = delta --color-only
+
+[delta]
+    # Use n/N to jump between diff sections
+    navigate = true
+    # Two-column diff view (left=old, right=new)
+    side-by-side = true
+    # Show line numbers
+    line-numbers = true
+    # Make file paths clickable in supported terminals (e.g., iTerm2, Ghostty)
+    hyperlinks = true
+
+# ─────────────────────────────────────────────────────────────
+# Aliases
+# Use with `g <alias>` (where g is shell alias for git)
+# ─────────────────────────────────────────────────────────────
+
+[alias]
+    # ── Basics ──
+    co = checkout
+    br = branch
+    ci = commit
+    st = status -sb
+    sw = switch
+
+    # ── Staging ──
+    a = add
+    aa = add --all
+    ap = add --patch
+    # Unstage files (opposite of git add)
+    unstage = reset HEAD --
+
+    # ── Commits ──
+    c = commit
+    cm = commit -m
+    # Amend last commit without changing message
+    amend = commit --amend --no-edit
+    # Amend last commit and edit message
+    reword = commit --amend
+    # Quick work-in-progress commit (stage all + commit)
+    wip = !git add -A && git commit -m 'wip'
+    # Undo wip commit (keeps changes staged)
+    unwip = reset HEAD~1
+
+    # ── Viewing ──
+    d = diff
+    ds = diff --staged
+    # Show last commit with stats
+    last = log -1 HEAD --stat
+
+    # ── Logs ──
+    # Graph view (the default log you'll use most)
+    l = log --oneline --decorate --graph
+    # Graph view with all branches
+    la = log --oneline --decorate --graph --all
+    # Detailed one-liner with author and relative date
+    ll = log --pretty=format:'%C(yellow)%h%C(reset) %s %C(dim)%an %C(cyan)%ar%C(reset)%C(auto)%d' -20
+
+    # ── Branches ──
+    # List branches with last commit date and message
+    branches = branch -a --sort=-committerdate --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) %(color:dim)%(committerdate:relative)%(color:reset) %(contents:subject)'
+    # Just branch names, most recent first (for scripting/fzf)
+    recent = branch --sort=-committerdate --format='%(refname:short)' -n 10
+    # Delete branches already merged into current branch (except main/master)
+    dm = !git branch --merged | grep -v '\\*\\|main\\|master' | xargs -n 1 git branch -d
+
+    # ── Remote ──
+    p = push
+    # Force push safely (fails if remote has commits you don't have)
+    pf = push --force-with-lease
+    pl = pull
+    f = fetch --all
+
+    # ── Stash ──
+    ss = stash
+    sp = stash pop
+    sl = stash list
+
+    # ── Undo ──
+    # Undo last commit, keep changes staged
+    undo = reset --soft HEAD~1
+    # Discard all uncommitted changes (dangerous!)
+    nuke = reset --hard HEAD
+
+    # ── Search ──
+    # Search commit messages
+    find = log --all --oneline --grep
+    # Search code changes (finds commits that added/removed string)
+    findcode = log --all -S
+
+    # ── Info ──
+    whoami = config user.email
+    # List all aliases
+    aliases = config --get-regexp ^alias\\.
+    # Print repo root directory
+    root = rev-parse --show-toplevel
+
+    # ── Worktrees ──
+    wt = worktree
+    wta = worktree add
+    wtl = worktree list
+    wtr = worktree remove
+
+# ─────────────────────────────────────────────────────────────
+# URL Shortcuts
+# `git clone gh:user/repo` → git@github.com:user/repo
+# `git clone me:repo` → git@github.com:jasonkuhrt/repo
+# ─────────────────────────────────────────────────────────────
+
+[url "git@github.com:"]
+    insteadOf = gh:
+    # Also rewrite HTTPS to SSH (always use SSH for GitHub)
+    insteadOf = https://github.com/
+
+[url "git@github.com:jasonkuhrt/"]
+    insteadOf = me:

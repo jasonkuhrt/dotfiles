@@ -58,7 +58,7 @@ cask "chatgpt"        # ChatGPT desktop
 cask "claude"         # Claude desktop
 cask "cleanshot"      # Screenshot tool
 cask "discord"
-cask "docker"
+cask "docker-desktop"
 cask "dropbox"
 cask "figma"
 cask "ghostty"

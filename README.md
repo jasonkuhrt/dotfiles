@@ -71,11 +71,45 @@ Re-run `./sync` when:
 
 - Use `./sync` not `sync` — there's a system `/bin/sync` command that shadows it
 
-## Notes
+## Node Package Management
 
-### Why global Node packages use npm instead of pnpm
+### Architecture
 
-Global packages use npm so `npx` fallback works (local → npm global → download). pnpm is still used for project dependencies. PATH order: npm globals → pnpm binaries (node, npm, npx, pnpm).
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ PATH order (first wins)                                         │
+├─────────────────────────────────────────────────────────────────┤
+│ ~/.npm-global/bin      ← npm globals (claude, dprint, nx, etc) │
+│ ~/Library/pnpm         ← pnpm binaries (node, npm, pnpm)       │
+│ /opt/homebrew/bin      ← brew (fallback node, initial pnpm)    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Why this setup?
+
+| Tool | Manages | Location |
+|------|---------|----------|
+| Homebrew | Initial bootstrap (node + pnpm) | `/opt/homebrew/bin` |
+| pnpm | Node versions (`pnpm env use`) | `~/Library/pnpm/nodejs/<ver>` |
+| npm | Global CLI tools | `~/.npm-global` (fixed, version-agnostic) |
+
+**Key insight**: npm globals are installed to a fixed location (`~/.npm-global`) independent of which node version pnpm is using. This means `pnpm env use 22` won't break your global tools.
+
+### Bootstrap flow (fresh machine)
+
+1. `brew install node pnpm` — initial node + pnpm
+2. `pnpm env use --global lts` — pnpm installs its own node, shadows brew's
+3. `./sync` — installs npm globals to `~/.npm-global`
+
+After bootstrap, brew's node is effectively unused (pnpm's comes first in PATH).
+
+### npx fallback chain
+
+```
+npx <cmd>  →  local node_modules  →  ~/.npm-global  →  downloads
+```
+
+This is why we use npm (not pnpm) for globals — `npx` checks npm's global dir.
 
 ## Manual Setup (after sync)
 

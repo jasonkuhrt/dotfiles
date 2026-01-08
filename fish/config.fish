@@ -125,11 +125,11 @@ set -gx LDFLAGS "-L/home/linuxbrew/.linuxbrew/opt/node@16/lib"
 set -gx CPPFLAGS "-I/home/linuxbrew/.linuxbrew/opt/node@16/include"
 
 # Node package managers
-# pnpm manages Node versions; npm manages global packages (for npx fallback semantics)
-# npm globals: ~/Library/pnpm/nodejs_current/bin (follows active node version)
-# pnpm binaries: ~/Library/pnpm (node, npm, npx, pnpm, pnpx)
-set -gx PNPM_HOME "/Users/jasonkuhrt/Library/pnpm"
-set -gx PATH "$PNPM_HOME/nodejs_current/bin" "$PNPM_HOME" $PATH
+# pnpm manages node versions; npm globals go to fixed location (survives node version changes)
+# See README "Node Package Management" for details
+set -gx NPM_GLOBAL "$HOME/.npm-global"
+set -gx PNPM_HOME "$HOME/Library/pnpm"
+set -gx PATH "$NPM_GLOBAL/bin" "$PNPM_HOME" $PATH
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/jasonkuhrt/google-cloud-sdk/path.fish.inc' ]; . '/Users/jasonkuhrt/google-cloud-sdk/path.fish.inc'; end

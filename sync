@@ -389,11 +389,12 @@ fi
 # ─────────────────────────────────────────────────────────────
 header "npm Global Packages"
 
-# Using npm (not pnpm) for globals enables npx fallback semantics:
-# local node_modules → npm global → download from registry
-# See node-packages plugin skill for details.
+# npm globals go to ~/.npm-global (configured via .npmrc prefix)
+# This location is independent of pnpm's node version management
+# See README "Node Package Management" for details
 if has_cmd npm; then
-    info "Installing global packages..."
+    mkdir -p "$HOME/.npm-global/bin"
+    info "Installing global packages to ~/.npm-global..."
     install_from_list "$HERE/npm/global-packages.txt" \
         'npm list -g "$item" 2>/dev/null' \
         'npm install -g "$item"'

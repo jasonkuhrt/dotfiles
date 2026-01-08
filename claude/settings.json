@@ -2,57 +2,25 @@
   "includeCoAuthoredBy": false,
   "permissions": {
     "allow": [
-      "Skill(superpowers:*)",
-      "Skill(superpowers-developing-for-claude-code:*)",
-      "Skill(plugin-dev:*)",
-      "Read(~/.claude/**)",
-      "Write(~/.claude/**)",
-      "Read(~/projects/**)",
-      "Read(~/email/**)",
-      "Read(/tmp/**)",
       "Bash",
       "Edit",
       "MultiEdit",
+      "Write",
+      "Read(~/**)",
+      "Read(/tmp/**)",
       "WebFetch",
       "WebSearch",
-      "Write",
-      "mcp__ref__*",
-      "mcp__effect-docs__*",
-      "mcp__serena__*",
-      "mcp__linear-server__*",
-      "mcp__notion__*",
-      "Bash(rm:*)",
-      "Bash(pnpm test:*)",
-      "Bash(pnpm check:types:*)",
-      "Read(//Users/jasonkuhrt/.claude/**)",
-      "Read(//Users/jasonkuhrt/.config/fish/completions/**)",
-      "Read(//Users/jasonkuhrt/.config/zed/**)",
-      "Read(//Users/jasonkuhrt/projects/the-guild-org/polen-copy/**)",
-      "Read(//Users/jasonkuhrt/.serena/**)",
-      "Read(//Users/jasonkuhrt/projects/jasonkuhrt/experiment-ts-chain/**)",
-      "Read(//tmp/chaindown-analysis/**)",
-      "Read(//Users/jasonkuhrt/projects/**)",
-      "Read(//Users/jasonkuhrt/email/**)",
-      "Read(maildir/**)"
+      "Skill(superpowers:*)",
+      "Skill(superpowers-developing-for-claude-code:*)",
+      "Skill(plugin-dev:*)",
+      "Skill(jasonkuhrt:*)",
+      "mcp__*"
     ],
-    "deny": [
-      "mcp__claude-in-chrome__*"
-    ],
+    "deny": [],
     "defaultMode": "default",
     "additionalDirectories": [
-      "/Users/jasonkuhrt/email/",
-      "/Users/jasonkuhrt/projects/the-guild-org/polen/",
-      "/Users/jasonkuhrt/projects/jasonkuhrt/graffle/",
-      "/Users/jasonkuhrt/projects/jasonkuhrt/graphql-kit/",
-      "/Users/jasonkuhrt/projects/jasonkuhrt/molt/",
-      "/Users/jasonkuhrt/projects/jasonkuhrt/floggy/",
-      "/Users/jasonkuhrt/projects/jasonkuhrt/flo"
+      "/Users/jasonkuhrt"
     ]
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "npx -y ccstatusline@latest",
-    "padding": 0
   },
   "enabledPlugins": {
     "code-review@claude-plugins-official": true,

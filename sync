@@ -250,6 +250,9 @@ link_file "$HERE/vim/vimrc" "$HOME/.config/vim/.vimrc" "vim/.vimrc"
 link_file "$HERE/npmrc" "$HOME/.npmrc" ".npmrc"
 mkdir -p "$HOME/.config/dprint"
 link_file "$HERE/dprint/dprint.json" "$HOME/.config/dprint/dprint.json" "dprint/dprint.json"
+if has_cmd dprint; then
+    dprint config update --config "$HOME/.config/dprint/dprint.json" 2>/dev/null && task "dprint plugins updated"
+fi
 
 mkdir -p "$HOME/.config/gh"
 link_file "$HERE/gh/config.yml" "$HOME/.config/gh/config.yml" "gh/config.yml"

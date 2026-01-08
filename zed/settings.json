@@ -23,6 +23,9 @@
   //
   //
   //
+  "session": {
+    "trust_all_worktrees": true
+  },
   "auto_install_extensions": {
     "astro": true,
     "catppuccin": true,

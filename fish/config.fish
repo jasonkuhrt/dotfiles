@@ -5,7 +5,7 @@ end
 # Secrets
 # =======
 
-source ~/.config/fish/config.secrets.fish
+test -f ~/.config/fish/config.secrets.fish && source ~/.config/fish/config.secrets.fish
 
 # Misc
 # ====

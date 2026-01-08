@@ -318,6 +318,13 @@ fi
 header "pnpm Global Packages"
 
 if command -v pnpm &> /dev/null; then
+    # Ensure pnpm global bin is configured
+    pnpm setup &>/dev/null || true
+
+    # Source the updated shell config to get PNPM_HOME in PATH
+    export PNPM_HOME="$HOME/Library/pnpm"
+    export PATH="$PNPM_HOME:$PATH"
+
     info "Installing global packages..."
     # Read packages, skip comments and blank lines
     while IFS= read -r pkg || [ -n "$pkg" ]; do

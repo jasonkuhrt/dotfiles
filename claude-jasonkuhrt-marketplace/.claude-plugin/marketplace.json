@@ -6,9 +6,19 @@
   },
   "plugins": [
     {
+      "name": "diagrams",
+      "source": "./plugins/diagrams",
+      "description": "Diagram generation conventions"
+    },
+    {
       "name": "effect",
       "source": "./plugins/effect",
       "description": "Effect framework conventions and patterns"
+    },
+    {
+      "name": "flo",
+      "source": "./plugins/flo",
+      "description": "Flo project conventions"
     },
     {
       "name": "kitz",
@@ -26,6 +36,21 @@
       "description": "Library standards and conventions"
     },
     {
+      "name": "markdown",
+      "source": "./plugins/markdown",
+      "description": "Markdown conventions"
+    },
+    {
+      "name": "node-packages",
+      "source": "./plugins/node-packages",
+      "description": "Node.js package conventions"
+    },
+    {
+      "name": "panda-css",
+      "source": "./plugins/panda-css",
+      "description": "Panda CSS conventions and patterns"
+    },
+    {
       "name": "react",
       "source": "./plugins/react",
       "description": "React conventions and patterns"
@@ -34,6 +59,11 @@
       "name": "typescript",
       "source": "./plugins/typescript",
       "description": "TypeScript conventions and patterns"
+    },
+    {
+      "name": "zed",
+      "source": "./plugins/zed",
+      "description": "Zed editor conventions"
     }
   ]
 }

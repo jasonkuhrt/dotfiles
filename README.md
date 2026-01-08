@@ -9,7 +9,7 @@ xcode-select --install
 ```sh
 mkdir -p ~/projects/jasonkuhrt
 git clone https://github.com/jasonkuhrt/dotfiles.git ~/projects/jasonkuhrt/dotfiles
-~/projects/jasonkuhrt/dotfiles/sync
+cd ~/projects/jasonkuhrt/dotfiles && ./sync
 ```
 
 ## How it works
@@ -64,9 +64,11 @@ git clone https://github.com/jasonkuhrt/dotfiles.git ~/projects/jasonkuhrt/dotfi
 
 **Edits are live.** Since these are symlinks, editing any file here immediately affects your system.
 
-Re-run `sync` when:
+Re-run `./sync` when:
 - New packages added to `Brewfile`
 - New features added to `sync`
+
+**Note:** Use `./sync` not `sync` — there's a system `/bin/sync` command that shadows it.
 
 ## Manual Setup (after sync)
 

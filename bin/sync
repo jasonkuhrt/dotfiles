@@ -30,25 +30,25 @@ WARN="${YELLOW}!${RESET}"
 # ─────────────────────────────────────────────────────────────
 
 header() {
-    echo ""
-    echo "${BOLD}${MAGENTA}▸ $1${RESET}"
-    echo "${DIM}─────────────────────────────────────────${RESET}"
+    printf "\n"
+    printf "${BOLD}${MAGENTA}▸ %s${RESET}\n" "$1"
+    printf "${DIM}─────────────────────────────────────────${RESET}\n"
 }
 
 task() {
-    echo "  ${CHECK} $1"
+    printf "  ${CHECK} %s\n" "$1"
 }
 
 skip() {
-    echo "  ${SKIP} ${DIM}$1 (already configured)${RESET}"
+    printf "  ${SKIP} ${DIM}%s (already configured)${RESET}\n" "$1"
 }
 
 info() {
-    echo "  ${ARROW} $1"
+    printf "  ${ARROW} %s\n" "$1"
 }
 
 warn() {
-    echo "  ${WARN} ${YELLOW}$1${RESET}"
+    printf "  ${WARN} ${YELLOW}%s${RESET}\n" "$1"
 }
 
 # Symlink a file, skip if already correct
@@ -120,12 +120,12 @@ ensure_real_dir() {
 # Main
 # ─────────────────────────────────────────────────────────────
 
-echo ""
-echo "${BOLD}${CYAN}┌────────────────────────────────────────┐${RESET}"
-echo "${BOLD}${CYAN}│${RESET}          ${BOLD}Dotfiles Sync${RESET}           ${BOLD}${CYAN}│${RESET}"
-echo "${BOLD}${CYAN}└────────────────────────────────────────┘${RESET}"
-echo ""
-echo "${DIM}Repository: $HERE${RESET}"
+printf "\n"
+printf "${BOLD}${CYAN}┌────────────────────────────────────────┐${RESET}\n"
+printf "${BOLD}${CYAN}│${RESET}          ${BOLD}Dotfiles Sync${RESET}           ${BOLD}${CYAN}│${RESET}\n"
+printf "${BOLD}${CYAN}└────────────────────────────────────────┘${RESET}\n"
+printf "\n"
+printf "${DIM}Repository: %s${RESET}\n" "$HERE"
 
 # ─────────────────────────────────────────────────────────────
 header "Claude Code"
@@ -402,7 +402,7 @@ if [ "$(uname)" = "Darwin" ]; then
             task "Touch ID for sudo enabled"
         else
             warn "Touch ID for sudo requires password - run manually:"
-            echo "      ${DIM}echo 'auth       sufficient     pam_tid.so' | sudo tee /etc/pam.d/sudo_local${RESET}"
+            printf "      ${DIM}echo 'auth       sufficient     pam_tid.so' | sudo tee /etc/pam.d/sudo_local${RESET}\n"
         fi
     fi
 
@@ -460,11 +460,11 @@ fi
 # Done
 # ─────────────────────────────────────────────────────────────
 
-echo ""
-echo "${BOLD}${GREEN}┌────────────────────────────────────────┐${RESET}"
-echo "${BOLD}${GREEN}│${RESET}        ${BOLD}${GREEN}✓ Sync Complete${RESET}        ${BOLD}${GREEN}│${RESET}"
-echo "${BOLD}${GREEN}└────────────────────────────────────────┘${RESET}"
-echo ""
+printf "\n"
+printf "${BOLD}${GREEN}┌────────────────────────────────────────┐${RESET}\n"
+printf "${BOLD}${GREEN}│${RESET}        ${BOLD}${GREEN}✓ Sync Complete${RESET}        ${BOLD}${GREEN}│${RESET}\n"
+printf "${BOLD}${GREEN}└────────────────────────────────────────┘${RESET}\n"
+printf "\n"
 
 # Set Fish as default shell
 FISH_PATH="/opt/homebrew/bin/fish"
@@ -486,11 +486,11 @@ fi
 
 # Remind about SSH keys if missing
 if [ ! -f "$HOME/.ssh/id_ed25519" ] && [ ! -f "$HOME/.ssh/id_rsa" ]; then
-    echo ""
-    echo "${YELLOW}${BOLD}Note:${RESET} No SSH keys found. Generate with:"
-    echo "  ${CYAN}ssh-keygen -t ed25519 -C \"your_email@example.com\"${RESET}"
+    printf "\n"
+    printf "${YELLOW}${BOLD}Note:${RESET} No SSH keys found. Generate with:\n"
+    printf "  ${CYAN}ssh-keygen -t ed25519 -C \"your_email@example.com\"${RESET}\n"
 fi
 
-echo ""
-echo "${DIM}Log out and back in for shell change to take effect.${RESET}"
-echo ""
+printf "\n"
+printf "${DIM}Log out and back in for shell change to take effect.${RESET}\n"
+printf "\n"

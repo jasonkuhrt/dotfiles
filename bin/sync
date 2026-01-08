@@ -220,23 +220,7 @@ link_file "$HERE/fish/config.fish" "$HOME/.config/fish/config.fish" "config.fish
 link_file "$HERE/fish/fish_plugins" "$HOME/.config/fish/fish_plugins" "fish_plugins"
 link_file "$HERE/fish/config.secrets.fish" "$HOME/.config/fish/config.secrets.fish" "config.secrets.fish"
 
-# Fisher plugins (only if fish is installed)
-if command -v fish &> /dev/null; then
-    if [ ! -f "$HOME/.config/fish/functions/fisher.fish" ]; then
-        info "Installing Fisher plugin manager..."
-        fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher' 2>/dev/null
-        task "Fisher installed"
-    else
-        skip "Fisher"
-    fi
-
-    # Install all plugins from fish_plugins (fisher install is idempotent)
-    info "Installing Fisher plugins..."
-    FISH_PLUGINS=$(grep -v '^#' "$HERE/fish/fish_plugins" | grep -v '^$' | tr '\n' ' ')
-    fish -c "fisher install $FISH_PLUGINS" 2>/dev/null && task "Fisher plugins installed" || warn "Fisher plugin install failed"
-else
-    warn "Fish not installed, skipping Fisher setup"
-fi
+# Fisher plugins installed after Homebrew (which installs fish)
 
 # ─────────────────────────────────────────────────────────────
 header "Git"
@@ -319,6 +303,27 @@ if brew bundle --file="$HERE/Brewfile"; then
     task "Packages installed"
 else
     warn "Some packages may have failed"
+fi
+
+# ─────────────────────────────────────────────────────────────
+header "Fisher Plugins"
+
+# Now fish is installed via Homebrew, set up Fisher
+if command -v fish &> /dev/null; then
+    if [ ! -f "$HOME/.config/fish/functions/fisher.fish" ]; then
+        info "Installing Fisher plugin manager..."
+        fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher' 2>/dev/null
+        task "Fisher installed"
+    else
+        skip "Fisher"
+    fi
+
+    # Install all plugins from fish_plugins (fisher install is idempotent)
+    info "Installing Fisher plugins..."
+    FISH_PLUGINS=$(grep -v '^#' "$HERE/fish/fish_plugins" | grep -v '^$' | tr '\n' ' ')
+    fish -c "fisher install $FISH_PLUGINS" 2>/dev/null && task "Fisher plugins installed" || warn "Fisher plugin install failed"
+else
+    warn "Fish not installed, skipping Fisher setup"
 fi
 
 # ─────────────────────────────────────────────────────────────

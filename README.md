@@ -228,6 +228,7 @@ Quick reference for all the tools installed via Brewfile. Forget what something 
 | Shell    | `up`         | Interactive piping (Ultimate Plumber) | `cat file \| up`                               |
 | System   | `dockutil`   | Manage Dock programmatically          | `dockutil --add /Applications/App.app`         |
 | System   | `mas`        | Mac App Store CLI                     | `mas install 497799835` (Xcode)                |
+| System   | `unar`       | Universal archive extractor           | `unar file.zip`, `unar file.tar.gz`            |
 | System   | `watch`      | Run command repeatedly                | `watch -n 2 'kubectl get pods'`                |
 | System   | `watchman`   | Watch files for changes               | (used by tools like Jest)                      |
 | Unix     | `ag`         | Fast code search (replaces grep)      | `ag "TODO" --ts`                               |

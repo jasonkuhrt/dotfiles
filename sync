@@ -8,6 +8,18 @@ set -e
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 
+# Parse arguments
+VERBOSE=false
+for arg in "$@"; do
+    case $arg in
+        -v|--verbose) VERBOSE=true ;;
+    esac
+done
+
+# Log file for full output
+LOG_FILE="/tmp/dotfiles-sync-$(date +%Y%m%d-%H%M%S).log"
+touch "$LOG_FILE"
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -90,6 +102,36 @@ link_subdir() {
 # Check if command exists
 has_cmd() {
     command -v "$1" &> /dev/null
+}
+
+# Run a command, log output, show only on verbose or error
+# Usage: run_logged "description" command args...
+run_logged() {
+    local desc="$1"
+    shift
+    local output
+    local exit_code
+
+    echo "=== $desc ===" >> "$LOG_FILE"
+    echo "Command: $*" >> "$LOG_FILE"
+    echo "" >> "$LOG_FILE"
+
+    if $VERBOSE; then
+        # Verbose: show output live, also log it
+        "$@" 2>&1 | tee -a "$LOG_FILE"
+        exit_code=${PIPESTATUS[0]}
+    else
+        # Quiet: capture output, only show on error
+        output=$("$@" 2>&1) || exit_code=$?
+        exit_code=${exit_code:-0}
+        echo "$output" >> "$LOG_FILE"
+        if [ $exit_code -ne 0 ]; then
+            printf "%s\n" "$output"
+        fi
+    fi
+
+    echo "" >> "$LOG_FILE"
+    return $exit_code
 }
 
 # Run command with sudo, checking state first
@@ -199,6 +241,10 @@ printf "${BOLD}${CYAN}╔══════════════════�
 printf "${BOLD}${CYAN}║${RESET}            ${BOLD}Dotfiles Sync${RESET}             ${BOLD}${CYAN}║${RESET}\n"
 printf "${BOLD}${CYAN}╚══════════════════════════════════════╝${RESET}\n"
 printf "${DIM}%s${RESET}\n" "$HERE"
+if $VERBOSE; then
+    printf "${DIM}Verbose mode enabled${RESET}\n"
+fi
+printf "${DIM}Log: %s${RESET}\n" "$LOG_FILE"
 
 # ─────────────────────────────────────────────────────────────
 header "Claude Code"
@@ -364,10 +410,10 @@ else
 fi
 
 info "Installing packages (this may take a while)..."
-if brew bundle --file="$HERE/Brewfile"; then
+if run_logged "Homebrew bundle" brew bundle --file="$HERE/Brewfile"; then
     task "Packages installed"
 else
-    warn "Some packages may have failed"
+    warn "Some packages may have failed (see $LOG_FILE)"
 fi
 
 # ─────────────────────────────────────────────────────────────
@@ -377,19 +423,30 @@ header "Fisher Plugins"
 if has_cmd fish; then
     if [ ! -f "$HOME/.config/fish/functions/fisher.fish" ]; then
         info "Installing Fisher plugin manager..."
-        fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
-        task "Fisher installed"
+        if run_logged "Fisher install" fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'; then
+            task "Fisher installed"
+        else
+            warn "Fisher install failed (see $LOG_FILE)"
+        fi
     else
         skip "Fisher"
     fi
 
     # Sync plugins from fish_plugins file
     info "Syncing Fisher plugins..."
-    fish -c "fisher update" && task "Fisher plugins synced" || warn "Fisher update failed"
+    if run_logged "Fisher update" fish -c "fisher update"; then
+        task "Fisher plugins synced"
+    else
+        warn "Fisher update failed (see $LOG_FILE)"
+    fi
 
     # Configure tide prompt (uses preset from config.fish)
     info "Configuring Tide prompt..."
-    fish -c "tide-daily" && task "Tide configured (daily)" || warn "Tide configure failed"
+    if run_logged "Tide configure" fish -c "tide-daily"; then
+        task "Tide configured (daily)"
+    else
+        warn "Tide configure failed (see $LOG_FILE)"
+    fi
 else
     warn "Fish not installed, skipping Fisher setup"
 fi

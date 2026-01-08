@@ -40,6 +40,7 @@ git clone https://github.com/jasonkuhrt/dotfiles.git ~/projects/jasonkuhrt/dotfi
 # Fish
 ~/.config/fish/config.fish    →  ./fish/config.fish
 ~/.config/fish/fish_plugins   →  ./fish/fish_plugins
+~/.config/fish/fish_variables →  ./fish/fish_variables
 
 # Email
 ~/.mbsyncrc                        →  ./email/mbsyncrc

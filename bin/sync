@@ -218,6 +218,7 @@ fi
 
 link_file "$HERE/fish/config.fish" "$HOME/.config/fish/config.fish" "config.fish"
 link_file "$HERE/fish/fish_plugins" "$HOME/.config/fish/fish_plugins" "fish_plugins"
+link_file "$HERE/fish/fish_variables" "$HOME/.config/fish/fish_variables" "fish_variables"
 link_file "$HERE/fish/config.secrets.fish" "$HOME/.config/fish/config.secrets.fish" "config.secrets.fish"
 
 # Fisher plugins installed after Homebrew (which installs fish)

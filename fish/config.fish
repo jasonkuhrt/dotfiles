@@ -11,7 +11,7 @@ function tide-daily --description "Daily prompt: 2-line, time, git, full info"
     set -U tide_right_prompt_items status cmd_duration context jobs direnv node time
     set -U tide_prompt_add_newline_before true
     set -U tide_prompt_transient_enabled false
-    echo "Switched to daily prompt (restart shell or run: exec fish)"
+    exec fish
 end
 
 function tide-zen --description "Zen prompt: minimal, 1-line, no distractions"
@@ -19,7 +19,7 @@ function tide-zen --description "Zen prompt: minimal, 1-line, no distractions"
     set -U tide_right_prompt_items status cmd_duration jobs
     set -U tide_prompt_add_newline_before false
     set -U tide_prompt_transient_enabled false
-    echo "Switched to zen prompt (restart shell or run: exec fish)"
+    exec fish
 end
 
 function tide-toggle --description "Toggle between daily and zen prompts"

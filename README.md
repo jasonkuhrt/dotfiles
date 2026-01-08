@@ -18,42 +18,42 @@ cd ~/projects/jasonkuhrt/dotfiles && ./sync
 
 `sync` creates symlinks from your home directory to this repo (selective files, not whole directories):
 
-| System Location | Dotfiles Source |
-| --- | --- |
-| **Claude Code** | |
-| `~/.claude/CLAUDE.md` | `./claude/CLAUDE.md` |
-| `~/.claude/settings.json` | `./claude/settings.json` |
-| `~/.claude/commands/` | `./claude/commands/` |
-| `~/.claude/rules/` | `./claude/rules/` |
-| **Zed** | |
-| `~/.config/zed/settings.json` | `./zed/settings.json` |
-| `~/.config/zed/keymap.json` | `./zed/keymap.json` |
-| `~/.config/zed/tasks.json` | `./zed/tasks.json` |
-| `~/.config/zed/snippets/` | `./zed/snippets/` |
+| System Location                       | Dotfiles Source               |
+| ------------------------------------- | ----------------------------- |
+| **Claude Code**                       |                               |
+| `~/.claude/CLAUDE.md`                 | `./claude/CLAUDE.md`          |
+| `~/.claude/settings.json`             | `./claude/settings.json`      |
+| `~/.claude/commands/`                 | `./claude/commands/`          |
+| `~/.claude/rules/`                    | `./claude/rules/`             |
+| **Zed**                               |                               |
+| `~/.config/zed/settings.json`         | `./zed/settings.json`         |
+| `~/.config/zed/keymap.json`           | `./zed/keymap.json`           |
+| `~/.config/zed/tasks.json`            | `./zed/tasks.json`            |
+| `~/.config/zed/snippets/`             | `./zed/snippets/`             |
 | `~/.config/zed/toggle-chore-files.sh` | `./zed/toggle-chore-files.sh` |
-| **Ghostty** | |
-| `~/.config/ghostty/config` | `./ghostty/config` |
-| **Neovim** | |
-| `~/.config/nvim/init.vim` | `./nvim/init.vim` |
-| **Fish** | |
-| `~/.config/fish/config.fish` | `./fish/config.fish` |
-| `~/.config/fish/fish_plugins` | `./fish/fish_plugins` |
-| **Email** | |
-| `~/.mbsyncrc` | `./email/mbsyncrc` |
-| `~/.imapfilter/config.lua` | `./email/imapfilter.lua` |
-| `~/.config/himalaya/config.toml` | `./email/himalaya.toml` |
-| `~/.config/notmuch/default/config` | `./email/notmuch.config` |
-| **Dock** | |
-| _(configured via `./dock/apps.txt`)_ | |
-| **Other** | |
-| `~/.config/dprint/dprint.json` | `./dprint/dprint.json` |
-| `~/.config/gh/config.yml` | `./gh/config.yml` |
-| `~/.config/git/ignore` | `./git/ignore` |
-| `~/.config/libra/config.json` | `./libra/config.json` |
-| `~/.config/vim/.vimrc` | `./vim/vimrc` |
-| `~/.ssh/config` | `./ssh/config` |
-| `~/.gitconfig` | `./git/.gitconfig` |
-| `~/.npmrc` | `./npmrc` |
+| **Ghostty**                           |                               |
+| `~/.config/ghostty/config`            | `./ghostty/config`            |
+| **Neovim**                            |                               |
+| `~/.config/nvim/init.vim`             | `./nvim/init.vim`             |
+| **Fish**                              |                               |
+| `~/.config/fish/config.fish`          | `./fish/config.fish`          |
+| `~/.config/fish/fish_plugins`         | `./fish/fish_plugins`         |
+| **Email**                             |                               |
+| `~/.mbsyncrc`                         | `./email/mbsyncrc`            |
+| `~/.imapfilter/config.lua`            | `./email/imapfilter.lua`      |
+| `~/.config/himalaya/config.toml`      | `./email/himalaya.toml`       |
+| `~/.config/notmuch/default/config`    | `./email/notmuch.config`      |
+| **Dock**                              |                               |
+| _(configured via `./dock/apps.txt`)_  |                               |
+| **Other**                             |                               |
+| `~/.config/dprint/dprint.json`        | `./dprint/dprint.json`        |
+| `~/.config/gh/config.yml`             | `./gh/config.yml`             |
+| `~/.config/git/ignore`                | `./git/ignore`                |
+| `~/.config/libra/config.json`         | `./libra/config.json`         |
+| `~/.config/vim/.vimrc`                | `./vim/vimrc`                 |
+| `~/.ssh/config`                       | `./ssh/config`                |
+| `~/.gitconfig`                        | `./git/.gitconfig`            |
+| `~/.npmrc`                            | `./npmrc`                     |
 
 **Edits are live.** Since these are symlinks, editing any file here immediately affects your system.
 
@@ -110,36 +110,76 @@ This is why we use npm (not pnpm) for globals — `npx` checks npm's global dir.
 
 Things that can't be fully automated:
 
-1. **Fish secrets**: Edit [fish/config.secrets.fish](fish/config.secrets.fish) (created from template by sync, gitignored) with your tokens
-2. **macOS Settings**:
-   - **Caps Lock → Ctrl**: Keyboard Shortcuts > Modifier Keys
-     ```sh
-     open "x-apple.systempreferences:com.apple.Keyboard-Settings.extension"
-     ```
-   - **Spotlight shortcut**: Keyboard Shortcuts > Spotlight > uncheck "Show Spotlight search"
-     ```sh
-     open "x-apple.systempreferences:com.apple.Keyboard-Settings.extension"
-     ```
-   - **Auto-login** (optional, less secure): Login Options > Automatic login
-     ```sh
-     open "x-apple.systempreferences:com.apple.Users-Groups-Settings.extension"
-     ```
-3. **GitHub**:
-   - **CLI auth**: Authenticate with GitHub
-     ```sh
-     gh auth login
-     ```
-   - **SSH key**: Generate if missing, add to GitHub
-     ```sh
-     ssh-keygen -t ed25519 -C "jasonkuhrt@me.com"
-     gh ssh-key add ~/.ssh/id_ed25519.pub
-     ```
-4. **Raycast hotkey**: Set Cmd+Space in Raycast preferences (after disabling Spotlight's shortcut)
-5. **Wispr Flow**: Download from [wispr.com](https://www.wispr.com/) (not in Homebrew)
-6. **Email password**: Add iCloud app-specific password to keychain:
-   ```sh
-   security add-generic-password -s 'mbsync-icloud' -a 'jasonkuhrt@me.com' -w 'YOUR_APP_PASSWORD'
-   ```
+### 1. Fish secrets
+
+Edit [fish/config.secrets.fish](fish/config.secrets.fish) (created from template by sync, gitignored) with your tokens.
+
+### 2. macOS Settings
+
+**Caps Lock → Ctrl**
+
+```sh
+open "x-apple.systempreferences:com.apple.Keyboard-Settings.extension"
+```
+
+- Click **Keyboard Shortcuts...** button (right side)
+- Select **Modifier Keys** in left sidebar
+- Change **Caps Lock** dropdown to **Control**
+- Click **Done**
+
+**Spotlight shortcut** (disable to free Cmd+Space for Raycast)
+
+```sh
+open "x-apple.systempreferences:com.apple.Keyboard-Settings.extension"
+```
+
+- Click **Keyboard Shortcuts...** button (right side)
+- Select **Spotlight** in left sidebar
+- Uncheck **Show Spotlight search**
+
+**Auto-login** (optional, less secure)
+
+```sh
+open "x-apple.systempreferences:com.apple.Users-Groups-Settings.extension"
+```
+
+- Click **Login Options** (bottom of user list)
+- Set **Automatic login** to your user
+
+### 3. GitHub
+
+```sh
+# Authenticate CLI
+gh auth login
+
+# Generate SSH key (if missing) and add to GitHub
+ssh-keygen -t ed25519 -C "jasonkuhrt@me.com"
+gh ssh-key add ~/.ssh/id_ed25519.pub
+```
+
+### 4. Raycast hotkey
+
+```sh
+open -a Raycast
+```
+
+- Press **Cmd+,** to open preferences
+- Go to **Extensions** tab (left sidebar)
+- Set **Raycast Hotkey** to **Cmd+Space**
+
+### 5. Wispr Flow
+
+Download from [wispr.com](https://www.wispr.com/) (not in Homebrew).
+
+### 6. Email password
+
+Generate an [iCloud app-specific password](https://appleid.apple.com/account/manage), then:
+
+```sh
+security add-generic-password -s 'mbsync-icloud' -a 'jasonkuhrt@me.com' -w 'YOUR_APP_PASSWORD'
+```
+
+---
 
 **Note:** Browser sync happens automatically — Chrome via Google login, Safari via iCloud.
 
@@ -220,6 +260,7 @@ Quick reference for all the tools installed via Brewfile. Forget what something 
 | Shell    | `shfmt`      | Format shell scripts                  | `shfmt -w script.sh`                           |
 | Shell    | `up`         | Interactive piping (Ultimate Plumber) | `cat file \| up`                               |
 | System   | `dockutil`   | Manage Dock programmatically          | `dockutil --add /Applications/App.app`         |
+| System   | `kilar`      | Interactive port/process manager      | `kilar` (TUI), `kilar -p 3000`                 |
 | System   | `mas`        | Mac App Store CLI                     | `mas install 497799835` (Xcode)                |
 | System   | `unar`       | Universal archive extractor           | `unar file.zip`, `unar file.tar.gz`            |
 | System   | `watch`      | Run command repeatedly                | `watch -n 2 'kubectl get pods'`                |

@@ -2,6 +2,7 @@
 # Taps
 # ═══════════════════════════════════════════════════════════
 tap "planetscale/tap"
+tap "polidog/kilar"
 
 # ═══════════════════════════════════════════════════════════
 # CLI Tools
@@ -65,6 +66,7 @@ brew "watch"         # run command repeatedly
 brew "watchman"      # file watcher
 brew "wget"
 brew "unar"          # universal archive extractor
+brew "polidog/kilar/kilar"  # interactive port/process manager
 
 # Database
 brew "planetscale/tap/pscale"

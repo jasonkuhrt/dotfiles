@@ -4,20 +4,23 @@
       "source": "directory",
       "path": "/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/claude-jasonkuhrt-marketplace"
     },
-    "installLocation": "/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/claude-jasonkuhrt-marketplace"
+    "installLocation": "/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/claude-jasonkuhrt-marketplace",
+    "lastUpdated": "2026-01-08T00:00:00.000Z"
   },
   "claude-plugins-official": {
     "source": {
       "source": "git",
       "url": "https://github.com/anthropics/claude-plugins-official.git"
     },
-    "installLocation": "/Users/jasonkuhrt/.claude/plugins/marketplaces/claude-plugins-official"
+    "installLocation": "/Users/jasonkuhrt/.claude/plugins/marketplaces/claude-plugins-official",
+    "lastUpdated": "2026-01-08T00:00:00.000Z"
   },
   "superpowers-marketplace": {
     "source": {
       "source": "git",
       "url": "https://github.com/obra/superpowers-marketplace.git"
     },
-    "installLocation": "/Users/jasonkuhrt/.claude/plugins/marketplaces/superpowers-marketplace"
+    "installLocation": "/Users/jasonkuhrt/.claude/plugins/marketplaces/superpowers-marketplace",
+    "lastUpdated": "2026-01-08T00:00:00.000Z"
   }
 }

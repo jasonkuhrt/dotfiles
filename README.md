@@ -127,6 +127,13 @@
    ```sh
    security add-generic-password -s 'mbsync-icloud' -a 'jasonkuhrt@me.com' -w 'YOUR_APP_PASSWORD'
    ```
+7. __Claude in Chrome__
+   * install [Claude extension](https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn) from Chrome Web Store
+   * sign in with your Claude account
+   * pin extension (puzzle icon → thumbtack)
+   * run `claude --chrome` or use `/chrome` in existing session
+   * requires extension ≥1.0.36, Claude Code ≥2.0.73
+   * Google Chrome only (not Brave, Arc, etc.)
 
 ## Notes
 

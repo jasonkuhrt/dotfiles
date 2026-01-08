@@ -23,6 +23,25 @@
   //
   //
   //
+  "auto_install_extensions": {
+    "astro": true,
+    "catppuccin": true,
+    "cucumber": true,
+    "fish": true,
+    "git-firefly": true,
+    "graphql": true,
+    "html": true,
+    "make": true,
+    "mcp-server-github": true,
+    "mermaid": true,
+    "nuisance": true,
+    "oxc": true,
+    "postgres-context-server": true,
+    "prisma": true,
+    "svelte": true,
+    "tokyo-night": true,
+    "tsgo": true
+  },
   "disable_ai": false,
   "show_signature_help_after_edits": false,
   "context_servers": {

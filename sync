@@ -121,11 +121,10 @@ ensure_real_dir() {
 # ─────────────────────────────────────────────────────────────
 
 printf "\n"
-printf "${BOLD}${CYAN}┌────────────────────────────────────────┐${RESET}\n"
-printf "${BOLD}${CYAN}│${RESET}          ${BOLD}Dotfiles Sync${RESET}           ${BOLD}${CYAN}│${RESET}\n"
-printf "${BOLD}${CYAN}└────────────────────────────────────────┘${RESET}\n"
-printf "\n"
-printf "${DIM}Repository: %s${RESET}\n" "$HERE"
+printf "${BOLD}${CYAN}╔══════════════════════════════════════╗${RESET}\n"
+printf "${BOLD}${CYAN}║${RESET}         ${BOLD}Dotfiles Sync${RESET}              ${BOLD}${CYAN}║${RESET}\n"
+printf "${BOLD}${CYAN}╚══════════════════════════════════════╝${RESET}\n"
+printf "${DIM}%s${RESET}\n" "$HERE"
 
 # ─────────────────────────────────────────────────────────────
 header "Claude Code"
@@ -408,6 +407,13 @@ if [ "$(uname)" = "Darwin" ]; then
     set_default "com.apple.dock" "autohide" "-bool" "true" "Dock autohide"
     set_default "com.apple.dock" "tilesize" "-int" "36" "Dock icon size (smaller)"
 
+    info "Configuring power management..."
+    if sudo -n true 2>/dev/null; then
+        sudo pmset -c displaysleep 10 2>/dev/null && task "Display sleep: 10 min (AC power)"
+    else
+        warn "Power settings require sudo - run manually: sudo pmset -c displaysleep 10"
+    fi
+
     info "Configuring trackpad..."
     set_default "com.apple.AppleMultitouchTrackpad" "Clicking" "-bool" "true" "Tap to click (trackpad)"
     set_default "com.apple.driver.AppleBluetoothMultitouch.trackpad" "Clicking" "-bool" "true" "Tap to click (bluetooth)"
@@ -485,10 +491,9 @@ fi
 # ─────────────────────────────────────────────────────────────
 
 printf "\n"
-printf "${BOLD}${GREEN}┌────────────────────────────────────────┐${RESET}\n"
-printf "${BOLD}${GREEN}│${RESET}        ${BOLD}${GREEN}✓ Sync Complete${RESET}        ${BOLD}${GREEN}│${RESET}\n"
-printf "${BOLD}${GREEN}└────────────────────────────────────────┘${RESET}\n"
-printf "\n"
+printf "${BOLD}${GREEN}╔══════════════════════════════════════╗${RESET}\n"
+printf "${BOLD}${GREEN}║${RESET}        ${BOLD}${GREEN}✓ Sync Complete${RESET}            ${BOLD}${GREEN}║${RESET}\n"
+printf "${BOLD}${GREEN}╚══════════════════════════════════════╝${RESET}\n"
 
 # Set Fish as default shell
 FISH_PATH="/opt/homebrew/bin/fish"

@@ -226,14 +226,14 @@ if command -v fish &> /dev/null; then
         info "Installing Fisher plugin manager..."
         fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher' 2>/dev/null
         task "Fisher installed"
-
-        info "Installing Fisher plugins from fish_plugins..."
-        fish -c 'fisher install < ~/.config/fish/fish_plugins' 2>/dev/null && task "Fisher plugins installed" || warn "Fisher plugin install failed"
     else
         skip "Fisher"
-        info "Syncing Fisher plugins..."
-        fish -c 'fisher update' &>/dev/null && task "Fisher plugins synced" || warn "Fisher sync failed"
     fi
+
+    # Install all plugins from fish_plugins (fisher install is idempotent)
+    info "Installing Fisher plugins..."
+    FISH_PLUGINS=$(grep -v '^#' "$HERE/fish/fish_plugins" | grep -v '^$' | tr '\n' ' ')
+    fish -c "fisher install $FISH_PLUGINS" 2>/dev/null && task "Fisher plugins installed" || warn "Fisher plugin install failed"
 else
     warn "Fish not installed, skipping Fisher setup"
 fi

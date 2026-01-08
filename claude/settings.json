@@ -31,13 +31,13 @@
     "diagrams@jasonkuhrt": true,
     "effect@jasonkuhrt": true,
     "kitz@jasonkuhrt": true,
-    "library-adt@jasonkuhrt": true,
-    "library-standards@jasonkuhrt": true,
+    "library-adt@jasonkuhrt": false,
+    "library-standards@jasonkuhrt": false,
     "react@jasonkuhrt": true,
     "typescript@jasonkuhrt": true,
     "zed@jasonkuhrt": true,
-    "flo@jasonkuhrt": true,
-    "panda-css@jasonkuhrt": true
+    "flo@jasonkuhrt": false,
+    "panda-css@jasonkuhrt": false
   },
   "alwaysThinkingEnabled": true
 }

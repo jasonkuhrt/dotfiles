@@ -148,7 +148,7 @@ Things that can't be fully automated:
 - https://github.com/OneRedOak/claude-code-workflows
 
 **Community**
-- https://github.com/obra/superpowers - active hub for bleeding-edge AI coding tool techniques (not just Claude Code)
+- https://github.com/obra/superpowers - worth watching (issues, PRs, discussions) as it's become a hub attracting users of various AI coding tools sharing bleeding-edge techniques
 - https://github.com/scopecraft/command
 
 ## CLI Tools Reference

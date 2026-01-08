@@ -609,8 +609,8 @@
       "formatter": [
         {
           "external": {
-            "command": "pnpm",
-            "arguments": ["exec", "dprint", "fmt", "--stdin", "{buffer_path}"]
+            "command": "npx",
+            "arguments": ["dprint", "fmt", "--stdin", "{buffer_path}"]
           }
         },
         {

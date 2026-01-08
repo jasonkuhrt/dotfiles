@@ -1,4 +1,13 @@
 # Global npm packages
-# Use npm (not pnpm) for packages that need npx fallback semantics
-# (local → npm global → download)
+# Using npm (not pnpm) for globals enables npx fallback semantics:
+# local node_modules → npm global → download from registry
+# See node-packages plugin skill for details.
+
+@anthropic-ai/claude-code
+@mermaid-js/mermaid-cli
+@typescript/native-preview
 dprint
+npm-name-cli
+nx
+typescript
+typescript-language-server

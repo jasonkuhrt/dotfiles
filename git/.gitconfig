@@ -128,8 +128,8 @@
     # ── Logs ──
     # Graph view (the default log you'll use most)
     l = log --oneline --decorate --graph
-    # Graph view with all branches + author/date
-    lg = log --graph --all --pretty=format:'%C(yellow)%h%C(reset) %s %C(dim)%an %C(cyan)%ar%C(reset)%C(auto)%d'
+    # Graph view with all branches + author/date + body
+    lg = log --graph --all --pretty=format:'%C(yellow)%h%C(reset)%C(auto)%d %C(dim)%an %C(cyan)%ar%C(reset)%n%s%n%b'
     # Detailed one-liner with author and relative date
     ll = log --pretty=format:'%C(yellow)%h%C(reset) %s %C(dim)%an %C(cyan)%ar%C(reset)%C(auto)%d' -20
 

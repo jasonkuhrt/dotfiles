@@ -320,8 +320,11 @@ if command -v fish &> /dev/null; then
 
     # Install all plugins from fish_plugins (fisher install is idempotent)
     info "Installing Fisher plugins..."
-    FISH_PLUGINS=$(grep -v '^#' "$HERE/fish/fish_plugins" | grep -v '^$' | tr '\n' ' ')
-    fish -c "fisher install $FISH_PLUGINS" 2>/dev/null && task "Fisher plugins installed" || warn "Fisher plugin install failed"
+    while IFS= read -r plugin || [ -n "$plugin" ]; do
+        # Skip comments and blank lines
+        [[ "$plugin" =~ ^#.*$ || -z "$plugin" ]] && continue
+        fish -c "fisher install $plugin" 2>/dev/null && task "$plugin" || warn "Failed to install $plugin"
+    done < "$HERE/fish/fish_plugins"
 else
     warn "Fish not installed, skipping Fisher setup"
 fi

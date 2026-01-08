@@ -440,10 +440,15 @@ if has_cmd fish; then
         warn "Fisher update failed (see $LOG_FILE)"
     fi
 
-    # Configure tide prompt (uses preset from config.fish)
+    # Configure tide prompt (set variables directly, don't call tide-daily which has exec fish)
     info "Configuring Tide prompt..."
-    if run_logged "Tide configure" fish -c "tide-daily"; then
-        task "Tide configured (daily)"
+    if run_logged "Tide configure" fish -c '
+        set -U tide_left_prompt_items pwd git newline character
+        set -U tide_right_prompt_items status cmd_duration context jobs direnv node time
+        set -U tide_prompt_add_newline_before true
+        set -U tide_prompt_transient_enabled false
+    '; then
+        task "Tide configured (daily preset)"
     else
         warn "Tide configure failed (see $LOG_FILE)"
     fi

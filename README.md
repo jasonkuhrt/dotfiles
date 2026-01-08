@@ -18,49 +18,42 @@ cd ~/projects/jasonkuhrt/dotfiles && ./sync
 
 `sync` creates symlinks from your home directory to this repo (selective files, not whole directories):
 
-```
-# Claude Code
-~/.claude/CLAUDE.md           →  ./claude/CLAUDE.md
-~/.claude/settings.json       →  ./claude/settings.json
-~/.claude/commands/           →  ./claude/commands/
-~/.claude/rules/              →  ./claude/rules/
-
-# Zed
-~/.config/zed/settings.json        →  ./zed/settings.json
-~/.config/zed/keymap.json          →  ./zed/keymap.json
-~/.config/zed/tasks.json           →  ./zed/tasks.json
-~/.config/zed/snippets/            →  ./zed/snippets/
-~/.config/zed/toggle-chore-files.sh →  ./zed/toggle-chore-files.sh
-
-# Ghostty
-~/.config/ghostty/config      →  ./ghostty/config
-
-# Neovim
-~/.config/nvim/init.vim       →  ./nvim/init.vim
-
-# Fish
-~/.config/fish/config.fish    →  ./fish/config.fish
-~/.config/fish/fish_plugins   →  ./fish/fish_plugins
-
-# Email
-~/.mbsyncrc                        →  ./email/mbsyncrc
-~/.imapfilter/config.lua           →  ./email/imapfilter.lua
-~/.config/himalaya/config.toml     →  ./email/himalaya.toml
-~/.config/notmuch/default/config   →  ./email/notmuch.config
-
-# Dock
-# ./dock/apps.txt defines apps to add (empty = clean dock)
-
-# Other
-~/.config/dprint/dprint.json  →  ./dprint/dprint.json
-~/.config/gh/config.yml       →  ./gh/config.yml
-~/.config/git/ignore          →  ./git/ignore
-~/.config/libra/config.json   →  ./libra/config.json
-~/.config/vim/.vimrc          →  ./vim/vimrc
-~/.ssh/config                 →  ./ssh/config
-~/.gitconfig                  →  ./git/.gitconfig
-~/.npmrc                      →  ./npmrc
-```
+| System Location | Dotfiles Source |
+| --- | --- |
+| **Claude Code** | |
+| `~/.claude/CLAUDE.md` | `./claude/CLAUDE.md` |
+| `~/.claude/settings.json` | `./claude/settings.json` |
+| `~/.claude/commands/` | `./claude/commands/` |
+| `~/.claude/rules/` | `./claude/rules/` |
+| **Zed** | |
+| `~/.config/zed/settings.json` | `./zed/settings.json` |
+| `~/.config/zed/keymap.json` | `./zed/keymap.json` |
+| `~/.config/zed/tasks.json` | `./zed/tasks.json` |
+| `~/.config/zed/snippets/` | `./zed/snippets/` |
+| `~/.config/zed/toggle-chore-files.sh` | `./zed/toggle-chore-files.sh` |
+| **Ghostty** | |
+| `~/.config/ghostty/config` | `./ghostty/config` |
+| **Neovim** | |
+| `~/.config/nvim/init.vim` | `./nvim/init.vim` |
+| **Fish** | |
+| `~/.config/fish/config.fish` | `./fish/config.fish` |
+| `~/.config/fish/fish_plugins` | `./fish/fish_plugins` |
+| **Email** | |
+| `~/.mbsyncrc` | `./email/mbsyncrc` |
+| `~/.imapfilter/config.lua` | `./email/imapfilter.lua` |
+| `~/.config/himalaya/config.toml` | `./email/himalaya.toml` |
+| `~/.config/notmuch/default/config` | `./email/notmuch.config` |
+| **Dock** | |
+| _(configured via `./dock/apps.txt`)_ | |
+| **Other** | |
+| `~/.config/dprint/dprint.json` | `./dprint/dprint.json` |
+| `~/.config/gh/config.yml` | `./gh/config.yml` |
+| `~/.config/git/ignore` | `./git/ignore` |
+| `~/.config/libra/config.json` | `./libra/config.json` |
+| `~/.config/vim/.vimrc` | `./vim/vimrc` |
+| `~/.ssh/config` | `./ssh/config` |
+| `~/.gitconfig` | `./git/.gitconfig` |
+| `~/.npmrc` | `./npmrc` |
 
 **Edits are live.** Since these are symlinks, editing any file here immediately affects your system.
 

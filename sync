@@ -181,6 +181,16 @@ link_file "$HERE/nvim/init.vim" "$HOME/.config/nvim/init.vim" "nvim/init.vim"
 header "Config Files"
 
 link_file "$HERE/ssh/config" "$HOME/.ssh/config" "ssh/config"
+
+# Add GitHub's SSH host keys (avoid authenticity prompt)
+if ! grep -q "github.com" "$HOME/.ssh/known_hosts" 2>/dev/null; then
+    mkdir -p "$HOME/.ssh"
+    ssh-keyscan -t ed25519,rsa github.com >> "$HOME/.ssh/known_hosts" 2>/dev/null
+    task "Added GitHub to known_hosts"
+else
+    skip "GitHub known_hosts"
+fi
+
 link_file "$HERE/ghci" "$HOME/.ghci" ".ghci"
 mkdir -p "$HOME/.config/vim"
 link_file "$HERE/vim/vimrc" "$HOME/.config/vim/.vimrc" "vim/.vimrc"
@@ -235,6 +245,9 @@ link_file "$HERE/git/ignore" "$HOME/.config/git/ignore" "git/ignore"
 if command -v gh &> /dev/null; then
     gh config set git_protocol ssh 2>/dev/null
     task "GitHub CLI protocol set to SSH"
+    # Fix dotfiles repo remote (cloned via HTTPS before this ran)
+    git -C "$HERE" remote set-url origin git@github.com:jasonkuhrt/dotfiles.git 2>/dev/null
+    task "Dotfiles remote set to SSH"
 else
     skip "GitHub CLI (not installed)"
 fi

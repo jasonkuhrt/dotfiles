@@ -32,3 +32,17 @@
   - Clone the repo into a gitignored local dir (e.g., `tmp/libname`) to explore its source
   - Use ref MCP to search documentation
   - Read the actual types and implementation
+
+## Commits
+
+Format: Conventional Commits
+
+Types: `feat`, `fix`, `refactor`, `docs`, `chore`
+
+Scopes (top-level dirs): `claude`, `dock`, `dprint`, `email`, `fish`, `gh`, `ghostty`, `git`, `libra`, `nvim`, `pnpm`, `ssh`, `vim`, `zed`, `brew`, `sync`
+
+Examples:
+- `feat(zed): add settings`
+- `fix(fish): correct path ordering`
+- `chore(brew): update dependencies`
+- `refactor(claude): reorganize rules`

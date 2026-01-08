@@ -514,10 +514,13 @@ printf "${BOLD}${GREEN}╚══════════════════
 # Set Fish as default shell
 FISH_PATH="/opt/homebrew/bin/fish"
 if [ -x "$FISH_PATH" ]; then
-    if ! grep -q "$FISH_PATH" /etc/shells 2>/dev/null; then
-        info "Adding Fish to /etc/shells (requires password)..."
+    if grep -q "$FISH_PATH" /etc/shells 2>/dev/null; then
+        skip "Fish in /etc/shells"
+    elif sudo -n true 2>/dev/null; then
         echo "$FISH_PATH" | sudo tee -a /etc/shells >/dev/null
         task "Fish added to /etc/shells"
+    else
+        warn "Adding fish to /etc/shells requires sudo - run: echo '$FISH_PATH' | sudo tee -a /etc/shells"
     fi
 
     if [ "$SHELL" != "$FISH_PATH" ]; then

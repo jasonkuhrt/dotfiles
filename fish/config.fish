@@ -40,7 +40,6 @@ test -f ~/.config/fish/config.secrets.fish && source ~/.config/fish/config.secre
 # ====
 
 set --export EDITOR nvim
-set --export DPRINT_CONFIG_DISCOVERY global  # use ~/.config/dprint/dprint.json
 
 
 

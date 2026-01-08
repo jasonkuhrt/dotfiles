@@ -1,5 +1,4 @@
 # Taps
-tap "homebrew/cask-fonts"
 tap "planetscale/tap"
 
 # CLI Tools

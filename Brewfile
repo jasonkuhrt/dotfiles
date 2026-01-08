@@ -1,90 +1,138 @@
+# ═══════════════════════════════════════════════════════════
 # Taps
+# ═══════════════════════════════════════════════════════════
 tap "planetscale/tap"
 
+# ═══════════════════════════════════════════════════════════
 # CLI Tools
-brew "ag"           # The Silver Searcher - fast code search
-brew "deno"         # Deno runtime
-brew "fzf"          # Fuzzy finder
-brew "git-delta"    # Better git diff
-brew "glow"         # Markdown renderer
-brew "gum"          # Shell script UI components
-brew "bash"         # Modern bash (macOS ships old version)
-brew "bat"          # Better cat with syntax highlighting
-brew "bottom"       # System monitor (btm)
-brew "cmake"
-brew "direnv"       # Per-directory environment variables
-brew "fd"           # Better find
-brew "fish"         # Fish shell
-brew "fx"           # JSON viewer
-brew "gh"           # GitHub CLI
+# ═══════════════════════════════════════════════════════════
+
+# Modern Unix replacements
+brew "bat"           # cat with syntax highlighting
+brew "bottom"        # top/htop replacement (btm)
+brew "fd"            # find replacement
+brew "ag"            # grep replacement (Silver Searcher)
+brew "lsd"           # ls with icons/colors
+brew "xh"            # curl/httpie replacement
+brew "git-delta"     # diff with syntax highlighting
+
+# Search & navigation
+brew "fzf"           # fuzzy finder
+brew "tree"          # directory tree view
+brew "tldr"          # simplified man pages
+
+# Data processing
+brew "jq"            # JSON processor
+brew "fx"            # interactive JSON viewer
+brew "yj"            # YAML/JSON/TOML converter
+
+# Shell & scripting
+brew "fish"          # modern shell
+brew "bash"          # modern bash (macOS ships old version)
+brew "direnv"        # per-directory env vars
+brew "shellcheck"    # shell script linter
+brew "shfmt"         # shell formatter
+brew "gum"           # shell script UI components
+brew "up"            # interactive piping (Ultimate Plumber)
+
+# Git & GitHub
 brew "git"
-brew "git-crypt"    # Transparent file encryption in git
+brew "gh"            # GitHub CLI
+brew "git-delta"     # better diffs (also in gitconfig)
+brew "git-crypt"     # transparent file encryption
+brew "lazygit"       # terminal UI for git
+brew "pre-commit"    # git hooks framework
+
+# Development
+brew "node"          # Node.js runtime
+brew "pnpm"          # fast package manager
+brew "deno"          # Deno runtime
 brew "go"
+brew "rust"
+brew "uv"            # fast Python package manager
+brew "neovim"        # editor
+brew "cmake"
 brew "gnu-getopt"
-brew "jq"           # JSON processor
-brew "lsd"          # Better ls
-brew "mdcat"        # Markdown renderer for terminal
-brew "neovim"       # Editor
-brew "node"         # Node.js runtime
-brew "pandoc"       # Document converter
-brew "planetscale/tap/pscale"  # PlanetScale CLI
-brew "pre-commit"
-brew "rust"         # Rust toolchain
-brew "shellcheck"   # Shell script linter
-brew "shfmt"        # Shell formatter
-brew "tree"
-brew "up"           # Ultimate Plumber - interactive piping
-brew "uv"           # Fast Python package manager
-brew "watch"
-brew "watchman"     # File watcher
+brew "hyperfine"     # CLI benchmarking
+
+# Documents & text
+brew "glow"          # render markdown in terminal
+brew "mdcat"         # render markdown (alternative)
+brew "pandoc"        # document converter
+
+# System utilities
+brew "watch"         # run command repeatedly
+brew "watchman"      # file watcher
 brew "wget"
-brew "xh"           # Better curl/httpie
-brew "yj"           # YAML/JSON/TOML converter
-brew "pnpm"         # Fast package manager
-brew "tldr"         # Simplified man pages with examples
-brew "lazygit"      # Terminal UI for git
-brew "hyperfine"    # CLI benchmarking tool
+brew "unar"          # universal archive extractor
 
-# System Tools
-brew "dockutil"     # Manage Dock items
-brew "mas"          # Mac App Store CLI
+# Database
+brew "planetscale/tap/pscale"
 
-# Email
-brew "himalaya"     # Email CLI
-brew "imapfilter"   # IMAP filtering
-brew "isync"        # IMAP sync (mbsync)
-brew "notmuch"      # Email indexer/search
+# ═══════════════════════════════════════════════════════════
+# System Tools (macOS)
+# ═══════════════════════════════════════════════════════════
+brew "dockutil"      # manage Dock items
+brew "mas"           # Mac App Store CLI
 
-# Applications
-cask "caffeine"       # Prevent sleep
-cask "chatgpt"        # ChatGPT desktop
-cask "claude"         # Claude desktop
-cask "cleanshot"      # Screenshot tool
-cask "discord"
-cask "docker-desktop"
-cask "dropbox"
-cask "figma"
-cask "ghostty"
-cask "linear-linear"  # Linear app
-cask "loom"           # Screen recording
-cask "meetingbar"     # Calendar in menubar
-cask "ngrok"
+# ═══════════════════════════════════════════════════════════
+# Email (CLI workflow)
+# ═══════════════════════════════════════════════════════════
+brew "isync"         # IMAP sync (mbsync)
+brew "notmuch"       # email indexer/search
+brew "himalaya"      # email CLI
+brew "imapfilter"    # server-side filtering
+
+# ═══════════════════════════════════════════════════════════
+# Applications (Casks)
+# ═══════════════════════════════════════════════════════════
+
+# Productivity
+cask "raycast"        # launcher (Spotlight replacement)
+cask "meetingbar"     # calendar in menubar
+cask "cleanshot"      # screenshot tool
+cask "loom"           # screen recording
 cask "notion"
-cask "raycast"
-cask "steam"
-cask "transmission"   # Torrent client
-cask "vlc"
-cask "zed"
+cask "linear-linear"
+cask "figma"
+
+# Development
+cask "zed"            # editor
+cask "ghostty"        # terminal
+cask "docker-desktop"
+cask "ngrok"
+
+# AI
+cask "claude"
+cask "chatgpt"
+
+# Communication
+cask "discord"
 cask "zoom"
 
-# Screensavers
-cask "aerial"         # Apple TV aerial screensavers
+# Media
+cask "vlc"
+cask "steam"
+cask "transmission"   # torrent client
 
+# Utilities
+cask "caffeine"       # prevent sleep
+cask "dropbox"
+
+# ═══════════════════════════════════════════════════════════
+# Screensavers
+# ═══════════════════════════════════════════════════════════
+cask "aerial"         # Apple TV aerials
+
+# ═══════════════════════════════════════════════════════════
 # Fonts
+# ═══════════════════════════════════════════════════════════
 cask "font-fira-code"
 cask "font-monaspace"
 
+# ═══════════════════════════════════════════════════════════
 # Mac App Store
+# ═══════════════════════════════════════════════════════════
 mas "DaisyDisk", id: 411643860
 mas "Pixelmator Pro", id: 1289583905
 mas "Refined GitHub", id: 1519867270

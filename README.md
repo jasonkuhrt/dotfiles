@@ -1,18 +1,16 @@
 # dotfiles
 
-**Step 1:** Install Xcode CLI tools (click "Install" in popup, wait for completion)
-
-```sh
-xcode-select --install
-```
-
-**Step 2:** Clone and sync
-
-```sh
-mkdir -p ~/projects/jasonkuhrt
-git clone https://github.com/jasonkuhrt/dotfiles.git ~/projects/jasonkuhrt/dotfiles
-cd ~/projects/jasonkuhrt/dotfiles && ./sync
-```
+1. __Install Xcode CLI tools__
+   ```sh
+   xcode-select --install
+   ```
+   * click "Install" in popup, wait for completion
+2. __Clone and sync__
+   ```sh
+   mkdir -p ~/projects/jasonkuhrt
+   git clone https://github.com/jasonkuhrt/dotfiles.git ~/projects/jasonkuhrt/dotfiles
+   cd ~/projects/jasonkuhrt/dotfiles && ./sync
+   ```
 
 ## How it works
 
@@ -20,32 +18,32 @@ cd ~/projects/jasonkuhrt/dotfiles && ./sync
 
 | System Location                       | Dotfiles Source               |
 | ------------------------------------- | ----------------------------- |
-| **Claude Code**                       |                               |
+| __Claude Code__                       |                               |
 | `~/.claude/CLAUDE.md`                 | `./claude/CLAUDE.md`          |
 | `~/.claude/settings.json`             | `./claude/settings.json`      |
 | `~/.claude/commands/`                 | `./claude/commands/`          |
 | `~/.claude/rules/`                    | `./claude/rules/`             |
-| **Zed**                               |                               |
+| __Zed__                               |                               |
 | `~/.config/zed/settings.json`         | `./zed/settings.json`         |
 | `~/.config/zed/keymap.json`           | `./zed/keymap.json`           |
 | `~/.config/zed/tasks.json`            | `./zed/tasks.json`            |
 | `~/.config/zed/snippets/`             | `./zed/snippets/`             |
 | `~/.config/zed/toggle-chore-files.sh` | `./zed/toggle-chore-files.sh` |
-| **Ghostty**                           |                               |
+| __Ghostty__                           |                               |
 | `~/.config/ghostty/config`            | `./ghostty/config`            |
-| **Neovim**                            |                               |
+| __Neovim__                            |                               |
 | `~/.config/nvim/init.vim`             | `./nvim/init.vim`             |
-| **Fish**                              |                               |
+| __Fish__                              |                               |
 | `~/.config/fish/config.fish`          | `./fish/config.fish`          |
 | `~/.config/fish/fish_plugins`         | `./fish/fish_plugins`         |
-| **Email**                             |                               |
+| __Email__                             |                               |
 | `~/.mbsyncrc`                         | `./email/mbsyncrc`            |
 | `~/.imapfilter/config.lua`            | `./email/imapfilter.lua`      |
 | `~/.config/himalaya/config.toml`      | `./email/himalaya.toml`       |
 | `~/.config/notmuch/default/config`    | `./email/notmuch.config`      |
-| **Dock**                              |                               |
+| __Dock__                              |                               |
 | _(configured via `./dock/apps.txt`)_  |                               |
-| **Other**                             |                               |
+| __Other__                             |                               |
 | `~/.config/dprint/dprint.json`        | `./dprint/dprint.json`        |
 | `~/.config/gh/config.yml`             | `./gh/config.yml`             |
 | `~/.config/git/ignore`                | `./git/ignore`                |
@@ -55,171 +53,111 @@ cd ~/projects/jasonkuhrt/dotfiles && ./sync
 | `~/.gitconfig`                        | `./git/.gitconfig`            |
 | `~/.npmrc`                            | `./npmrc`                     |
 
-**Edits are live.** Since these are symlinks, editing any file here immediately affects your system.
-
-Re-run `./sync` when:
-
-- New packages added to `Brewfile`
-- New features added to `sync`
-
 ## Tips
 
-- Use `./sync` not `sync` — there's a system `/bin/sync` command that shadows it
+* Use `./sync` not `sync` — there's a system `/bin/sync` command that shadows it
+* __Edits are live__ — since these are symlinks, editing any file here immediately affects your system
+* __Re-run `./sync` when:__
+  * new packages added to `Brewfile`
+  * new features added to `sync`
 
 ## Node Package Management
 
-### Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ PATH order (first wins)                                         │
-├─────────────────────────────────────────────────────────────────┤
-│ ~/.npm-global/bin      ← npm globals (claude, dprint, nx, etc) │
-│ ~/Library/pnpm         ← pnpm binaries (node, npm, pnpm)       │
-│ /opt/homebrew/bin      ← brew (fallback node, initial pnpm)    │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Why this setup?
-
-| Tool     | Manages                         | Location                                  |
-| -------- | ------------------------------- | ----------------------------------------- |
-| Homebrew | Initial bootstrap (node + pnpm) | `/opt/homebrew/bin`                       |
-| pnpm     | Node versions (`pnpm env use`)  | `~/Library/pnpm/nodejs/<ver>`             |
-| npm      | Global CLI tools                | `~/.npm-global` (fixed, version-agnostic) |
-
-**Key insight**: npm globals are installed to a fixed location (`~/.npm-global`) independent of which node version pnpm is using. This means `pnpm env use 22` won't break your global tools.
-
-### Bootstrap flow (fresh machine)
-
-1. `brew install node pnpm` — initial node + pnpm
-2. `pnpm env use --global lts` — pnpm installs its own node, shadows brew's
-3. `./sync` — installs npm globals to `~/.npm-global`
-
-After bootstrap, brew's node is effectively unused (pnpm's comes first in PATH).
-
-### npx fallback chain
-
-```
-npx <cmd>  →  local node_modules  →  ~/.npm-global  →  downloads
-```
-
-This is why we use npm (not pnpm) for globals — `npx` checks npm's global dir.
+* __PATH & tool layout__
+  ```
+  Priority   Tool       Manages               Location
+  ────────────────────────────────────────────────────────────────────
+  1st        npm        global CLI tools      ~/.npm-global/bin
+  2nd        pnpm       node versions         ~/Library/pnpm
+  3rd        Homebrew   initial bootstrap     /opt/homebrew/bin
+  ```
+* __Bootstrap flow__ (fresh machine)
+  ```
+  ↓   brew install node pnpm       initial node + pnpm
+  ↓   pnpm env use --global lts    pnpm installs its own node, shadows brew's
+  ↓   ./sync                       installs npm globals to ~/.npm-global
+  ```
+  * after bootstrap, brew's node is unused (pnpm's comes first in PATH)
+* __npx fallback chain__
+  ```
+  ↓   local node_modules
+  ↓   ~/.npm-global
+  ↓   downloads (npx fetches)
+  ```
+  * this is why we use npm (not pnpm) for globals — npx checks npm's global dir
+* __Key insight__
+  * npm globals install to `~/.npm-global` independent of node version
+  * `pnpm env use 22` won't break your global tools
 
 ## Manual Setup (after sync)
 
-Things that can't be fully automated:
+1. __Fish secrets__
+   * edit `fish/config.secrets.fish` (created by sync, gitignored) with your tokens
+2. __macOS Settings__
+   1. __Caps Lock → Ctrl__
+      ```sh
+      open "x-apple.systempreferences:com.apple.Keyboard-Settings.extension"
+      ```
+      * Keyboard Shortcuts → Modifier Keys → change Caps Lock to Control
+   2. __Spotlight shortcut__ (free Cmd+Space for Raycast)
+      * same pref pane → Keyboard Shortcuts → Spotlight → uncheck "Show Spotlight search"
+3. __GitHub__
+   1. __Authenticate CLI__
+      ```sh
+      gh auth login
+      ```
+   2. __SSH key__ (if needed)
+      ```sh
+      ssh-keygen -t ed25519 -C "jasonkuhrt@me.com"
+      gh ssh-key add ~/.ssh/id_ed25519.pub
+      ```
+4. __Raycast hotkey__
+   ```sh
+   open -a Raycast
+   ```
+   * Cmd+, → Extensions → set hotkey to Cmd+Space
+5. __Wispr Flow__
+   * download from [wisprflow.ai/downloads](https://wisprflow.ai/downloads) (not in Homebrew)
+   * open dmg and drag to Applications
+   * launch and sign in (settings sync automatically)
+   * grant Accessibility permission when prompted
+   * grant Microphone permission when prompted
+6. __Email password__
+   * generate iCloud app-specific password at appleid.apple.com/account/manage
+   ```sh
+   security add-generic-password -s 'mbsync-icloud' -a 'jasonkuhrt@me.com' -w 'YOUR_APP_PASSWORD'
+   ```
 
-### 1. Fish secrets
+## Notes
 
-Edit [fish/config.secrets.fish](fish/config.secrets.fish) (created from template by sync, gitignored) with your tokens.
-
-### 2. macOS Settings
-
-**Caps Lock → Ctrl**
-
-```sh
-open "x-apple.systempreferences:com.apple.Keyboard-Settings.extension"
-```
-
-- Click **Keyboard Shortcuts...** button (right side)
-- Select **Modifier Keys** in left sidebar
-- Change **Caps Lock** dropdown to **Control**
-- Click **Done**
-
-**Spotlight shortcut** (disable to free Cmd+Space for Raycast)
-
-```sh
-open "x-apple.systempreferences:com.apple.Keyboard-Settings.extension"
-```
-
-- Click **Keyboard Shortcuts...** button (right side)
-- Select **Spotlight** in left sidebar
-- Uncheck **Show Spotlight search**
-
-**Auto-login** (optional, less secure)
-
-```sh
-open "x-apple.systempreferences:com.apple.Users-Groups-Settings.extension"
-```
-
-- Click **Login Options** (bottom of user list)
-- Set **Automatic login** to your user
-
-### 3. GitHub
-
-```sh
-# Authenticate CLI
-gh auth login
-
-# Generate SSH key (if missing) and add to GitHub
-ssh-keygen -t ed25519 -C "jasonkuhrt@me.com"
-gh ssh-key add ~/.ssh/id_ed25519.pub
-```
-
-### 4. Raycast hotkey
-
-```sh
-open -a Raycast
-```
-
-- Press **Cmd+,** to open preferences
-- Go to **Extensions** tab (left sidebar)
-- Set **Raycast Hotkey** to **Cmd+Space**
-
-### 5. Wispr Flow
-
-Download from [wispr.com](https://www.wispr.com/) (not in Homebrew).
-
-### 6. Email password
-
-Generate an [iCloud app-specific password](https://appleid.apple.com/account/manage), then:
-
-```sh
-security add-generic-password -s 'mbsync-icloud' -a 'jasonkuhrt@me.com' -w 'YOUR_APP_PASSWORD'
-```
-
----
-
-**Note:** Browser sync happens automatically — Chrome via Google login, Safari via iCloud.
+* __Browser sync__ — automatic via Google login (Chrome) and iCloud (Safari)
 
 ## Claude Code Resources
 
-**Docs & Guides**
-
-- https://docs.claude.com/en/docs/claude-code/overview
-- https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview
-- https://agents.md/
-
-**Curated Lists**
-
-- https://github.com/hesreallyhim/awesome-claude-code
-- https://claudecodecommands.directory/
-- https://github.com/ComposioHQ/awesome-claude-skills
-
-**MCPs**
-
-- https://modelcontextprotocol.io
-- https://glama.ai/mcp
-- https://ref.tools/
-- https://github.com/oraios/serena
-
-**Tools**
-
-- https://wisprflow.ai/
-- https://github.com/sirmalloc/ccstatusline
-- `npx ccusage@latest`
-
-**Examples & Workflows**
-
-- https://github.com/anthropics/skills/tree/main
-- https://github.com/anthropics/claude-code-action
-- https://github.com/OneRedOak/claude-code-workflows
-
-**Community**
-
-- https://github.com/obra/superpowers - worth watching (issues, PRs, discussions) as it's become a hub attracting users of various AI coding tools sharing bleeding-edge techniques
-- https://github.com/scopecraft/command
+* __Docs & Guides__
+  * https://docs.claude.com/en/docs/claude-code/overview
+  * https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview
+  * https://agents.md/
+* __Curated Lists__
+  * https://github.com/hesreallyhim/awesome-claude-code
+  * https://claudecodecommands.directory/
+  * https://github.com/ComposioHQ/awesome-claude-skills
+* __MCPs__
+  * https://modelcontextprotocol.io
+  * https://glama.ai/mcp
+  * https://ref.tools/
+  * https://github.com/oraios/serena
+* __Tools__
+  * https://wisprflow.ai/
+  * https://github.com/sirmalloc/ccstatusline
+  * `npx ccusage@latest`
+* __Examples & Workflows__
+  * https://github.com/anthropics/skills/tree/main
+  * https://github.com/anthropics/claude-code-action
+  * https://github.com/OneRedOak/claude-code-workflows
+* __Community__
+  * https://github.com/obra/superpowers — worth watching (issues, PRs, discussions) as it's become a hub attracting users of various AI coding tools sharing bleeding-edge techniques
+  * https://github.com/scopecraft/command
 
 ## CLI Tools Reference
 
@@ -274,18 +212,13 @@ Quick reference for all the tools installed via Brewfile. Forget what something 
 
 ## Dotfiles Inspiration
 
-**Top Repositories** (by stars)
-
-- [mathiasbynens/dotfiles](https://github.com/mathiasbynens/dotfiles) - 31k stars, legendary `.macos` defaults script
-- [holman/dotfiles](https://github.com/holman/dotfiles) - 7.6k stars, topical organization pattern
-- [paulirish/dotfiles](https://github.com/paulirish/dotfiles) - 4.3k stars, fish shell focus
-
-**Curated Lists**
-
-- [awesome-dotfiles](https://github.com/webpro/awesome-dotfiles) - Comprehensive resource list
-- [dotfiles.github.io](https://dotfiles.github.io/) - Community tutorials and inspiration
-
-**Management Tools**
-
-- [chezmoi](https://github.com/twpayne/chezmoi) - 17k stars, multi-machine, templating, secrets
-- [yadm](https://github.com/yadm-dev/yadm) - 6k stars, git-based with encryption
+* __Top Repositories__
+  * [mathiasbynens/dotfiles](https://github.com/mathiasbynens/dotfiles) — 31k stars, legendary `.macos` defaults script
+  * [holman/dotfiles](https://github.com/holman/dotfiles) — 7.6k stars, topical organization pattern
+  * [paulirish/dotfiles](https://github.com/paulirish/dotfiles) — 4.3k stars, fish shell focus
+* __Curated Lists__
+  * [awesome-dotfiles](https://github.com/webpro/awesome-dotfiles) — comprehensive resource list
+  * [dotfiles.github.io](https://dotfiles.github.io/) — community tutorials and inspiration
+* __Management Tools__
+  * [chezmoi](https://github.com/twpayne/chezmoi) — 17k stars, multi-machine, templating, secrets
+  * [yadm](https://github.com/yadm-dev/yadm) — 6k stars, git-based with encryption

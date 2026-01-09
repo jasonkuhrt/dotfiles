@@ -101,6 +101,11 @@ abbr -a diff difft
 abbr -a vim nvim
 abbr -a vi nvim
 
+# Utilities
+function weather --description 'Terminal weather forecast'
+    curl -s "wttr.in/$argv[1]"
+end
+
 ## Aliases (commands with flags/args)
 ## ----------------------------------
 

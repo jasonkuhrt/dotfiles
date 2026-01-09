@@ -66,7 +66,6 @@
   * new features added to `sync`
 * __Fisher plugin removals__ — `fisher update` handles removals, but some plugins (e.g. tide) leave behind universal variables in `~/.config/fish/fish_variables` that need manual cleanup
 * __Modern Unix abbreviations__ — typing `ls`, `cat`, `grep`, etc. expands to modern replacements (`lsd`, `bat`, `rg`). Only in interactive mode, scripts unaffected. See `fish/config.fish` for full list
-* __Weather__ — `curl wttr.in` or `curl wttr.in/YourCity` (no install needed)
 
 ## Node Package Management
 
@@ -290,6 +289,7 @@ Quick reference for all the tools installed via Brewfile. Forget what something 
 | Unix     | `procs`      | Modern ps with colors/tree            | `procs`, `procs --tree`                        |
 | Unix     | `rg`         | Fast grep (ripgrep)                   | `rg "TODO"`, `rg -t ts "import"`               |
 | Unix     | `sd`         | Simpler sed                           | `sd 'foo' 'bar' file.txt`                      |
+| Unix     | `weather`    | Terminal weather forecast             | `weather` or `weather Tokyo`                   |
 | Unix     | `xh`         | Colorized curl alternative            | `xh GET api.example.com/users`                 |
 
 ## Dotfiles Inspiration

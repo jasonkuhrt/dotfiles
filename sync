@@ -311,6 +311,21 @@ mkdir -p "$HOME/.config/direnv"
 link_file "$HERE/direnv/direnv.toml" "$HOME/.config/direnv/direnv.toml" "direnv/direnv.toml"
 
 # ─────────────────────────────────────────────────────────────
+header "AWS"
+
+mkdir -p "$HOME/.aws"
+
+# Create credentials file from template if missing
+if [ ! -f "$HERE/aws/credentials" ]; then
+    cp "$HERE/aws/credentials.example" "$HERE/aws/credentials"
+    task "Created aws/credentials from template"
+    warn "Edit aws/credentials to add your access keys"
+fi
+
+link_file "$HERE/aws/config" "$HOME/.aws/config" "aws/config"
+link_file "$HERE/aws/credentials" "$HOME/.aws/credentials" "aws/credentials"
+
+# ─────────────────────────────────────────────────────────────
 header "Email"
 
 link_file "$HERE/email/mbsyncrc" "$HOME/.mbsyncrc" ".mbsyncrc"

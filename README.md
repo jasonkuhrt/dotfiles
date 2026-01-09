@@ -36,6 +36,9 @@
 | __Fish__                              |                               |
 | `~/.config/fish/config.fish`          | `./fish/config.fish`          |
 | `~/.config/fish/fish_plugins`         | `./fish/fish_plugins`         |
+| __AWS__                               |                               |
+| `~/.aws/config`                       | `./aws/config`                |
+| `~/.aws/credentials`                  | `./aws/credentials` (secret)  |
 | __Email__                             |                               |
 | `~/.mbsyncrc`                         | `./email/mbsyncrc`            |
 | `~/.imapfilter/config.lua`            | `./email/imapfilter.lua`      |

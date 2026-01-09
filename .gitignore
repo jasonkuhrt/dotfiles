@@ -1,5 +1,6 @@
 *.secrets.*
 !*.secrets.*.example
+aws/credentials
 
 # macOS
 .DS_Store

@@ -54,6 +54,7 @@ set --export EDITOR nvim
 
 # Direnv: lazy-load only when needed (saves ~130ms startup)
 # Auto-activates if .envrc exists in current dir, otherwise run `direnv-init`
+set -gx DIRENV_LOG_FORMAT ""  # Silence "loading" messages
 function direnv-init --description "Enable direnv for this shell session"
     direnv hook fish | source
     direnv reload 2>/dev/null
@@ -357,12 +358,20 @@ function _git_railway
             set last_msg (string sub -l 37 "$last_msg")"..."
         end
 
-        # If synced with remote, simple one-liner
+        # If synced with remote, show simple viz
         if test $ahead -eq 0 -a $behind -eq 0
+            set -l base_len (string length "$branch ──")
+            set -l main_line "$branch ──●"
+            set -l commit_line (string repeat -n $base_len " ")"└─ \"$last_msg\""
+            set -l meta_line (string repeat -n (math $base_len + 3) " ")"$last_hash $last_time"
+            set -l remote_line (string repeat -n $base_len " ")"remote"
+
             set_color cyan
-            printf "%s" "$branch"
+            echo $main_line
             set_color brblack
-            printf " ── %s \"%s\" %s\n" $last_hash $last_msg $last_time
+            echo $commit_line
+            echo $meta_line
+            echo $remote_line
             set_color normal
             return
         end

@@ -305,7 +305,8 @@ link_file "$HERE/npmrc" "$HOME/.npmrc" ".npmrc"
 mkdir -p "$HOME/.config/dprint"
 link_file "$HERE/dprint/dprint.json" "$HOME/.config/dprint/dprint.json" "dprint/dprint.json"
 if has_cmd dprint; then
-    dprint config update --config "$HOME/.config/dprint/dprint.json" 2>/dev/null && task "dprint plugins updated"
+    dprint config update --config "$HOME/.config/dprint/dprint.json" 2>/dev/null
+    info "dprint plugins checked"
 fi
 
 mkdir -p "$HOME/.config/gh"
@@ -419,9 +420,8 @@ fi
 header "Serena MCP"
 
 if has_cmd uvx; then
-    info "Updating Serena (MCP server)..."
-    uv cache clean --force serena 2>/dev/null || true
-    task "Serena cache cleared (will fetch latest on next run)"
+    uv cache clean serena 2>/dev/null || true
+    info "Serena cache cleared (will fetch latest on next run)"
 else
     skip "Serena (uv not installed)"
 fi
@@ -502,11 +502,17 @@ if has_cmd fish; then
     fi
 
     # Configure tide prompt (use core function without exec fish)
-    info "Configuring Tide prompt..."
-    if run_logged "Tide configure" fish -c "_tide-daily-vars"; then
-        task "Tide configured (daily preset)"
+    # Check if already configured with daily preset
+    current_left=$(fish -c 'echo $tide_left_prompt_items' 2>/dev/null || echo "")
+    expected_left="pwd git newline character"
+    if [ "$current_left" = "$expected_left" ]; then
+        skip "Tide prompt (daily preset)"
     else
-        warn "Tide configure failed (see $LOG_FILE)"
+        if run_logged "Tide configure" fish -c "_tide-daily-vars"; then
+            task "Tide configured (daily preset)"
+        else
+            warn "Tide configure failed (see $LOG_FILE)"
+        fi
     fi
 else
     warn "Fish not installed, skipping Fisher setup"
@@ -528,13 +534,16 @@ else
 fi
 
 # Enable corepack for per-project pnpm/yarn version management
-# Idempotent - safe to run multiple times
 if has_cmd corepack; then
-    info "Enabling corepack..."
-    if run_logged "corepack enable" corepack enable; then
-        task "Corepack enabled"
+    # Check if corepack shims already exist
+    if [ -L "$PNPM_HOME/pnpm" ] || [ -L "$(dirname "$(which node)")/pnpm" ] 2>/dev/null; then
+        skip "Corepack"
     else
-        warn "corepack enable failed (see $LOG_FILE)"
+        if run_logged "corepack enable" corepack enable; then
+            task "Corepack enabled"
+        else
+            warn "corepack enable failed (see $LOG_FILE)"
+        fi
     fi
 fi
 
@@ -544,6 +553,9 @@ fi
 
 if [ "$(uname)" = "Darwin" ]; then
     header "macOS Defaults"
+
+    # Track if any defaults changed (for Finder restart)
+    DEFAULTS_CHANGED=false
 
     # Helper to check and set defaults
     set_default() {
@@ -561,6 +573,7 @@ if [ "$(uname)" = "Darwin" ]; then
         else
             defaults write "$domain" "$key" "$type" "$value"
             task "$desc"
+            DEFAULTS_CHANGED=true
         fi
     }
 
@@ -635,37 +648,54 @@ if [ "$(uname)" = "Darwin" ]; then
     if has_cmd dockutil; then
         DOCK_CONFIG="$HERE/dock/apps.txt"
         if [ -f "$DOCK_CONFIG" ]; then
-            info "Configuring Dock apps..."
-            # Clear existing dock (except Finder and Trash which are automatic)
-            dockutil --remove all --no-restart 2>/dev/null || true
+            # Get current dock apps
+            current_dock=$(dockutil --list 2>/dev/null | awk -F$'\t' '{print $1}' | tr '\n' '|' | sed 's/|$//')
 
-            # Add apps from config
+            # Build expected dock apps list
+            expected_dock=""
             while IFS= read -r app || [ -n "$app" ]; do
-                # Skip comments and blank lines
                 [[ "$app" =~ ^#.*$ || -z "$app" || "$app" =~ ^[[:space:]]*$ ]] && continue
-                app=$(echo "$app" | xargs)  # trim whitespace
-
-                # Try to find the app
-                app_path=""
-                for dir in "/Applications" "/System/Applications" "$HOME/Applications"; do
-                    if [ -d "$dir/$app.app" ]; then
-                        app_path="$dir/$app.app"
-                        break
-                    fi
-                done
-
-                if [ -n "$app_path" ]; then
-                    dockutil --add "$app_path" --no-restart 2>/dev/null && \
-                        task "Added $app to Dock" || \
-                        warn "Failed to add $app"
-                else
-                    warn "App not found: $app"
-                fi
+                app=$(echo "$app" | xargs)
+                [ -n "$expected_dock" ] && expected_dock="$expected_dock|"
+                expected_dock="$expected_dock$app"
             done < "$DOCK_CONFIG"
 
-            # Restart dock to apply changes
-            killall Dock 2>/dev/null || true
-            task "Dock configured"
+            if [ "$current_dock" = "$expected_dock" ]; then
+                skip "Dock apps"
+            else
+                info "Configuring Dock apps..."
+                DOCK_CHANGED=false
+
+                # Clear existing dock (except Finder and Trash which are automatic)
+                dockutil --remove all --no-restart 2>/dev/null || true
+
+                # Add apps from config
+                while IFS= read -r app || [ -n "$app" ]; do
+                    [[ "$app" =~ ^#.*$ || -z "$app" || "$app" =~ ^[[:space:]]*$ ]] && continue
+                    app=$(echo "$app" | xargs)
+
+                    # Try to find the app
+                    app_path=""
+                    for dir in "/Applications" "/System/Applications" "$HOME/Applications"; do
+                        if [ -d "$dir/$app.app" ]; then
+                            app_path="$dir/$app.app"
+                            break
+                        fi
+                    done
+
+                    if [ -n "$app_path" ]; then
+                        dockutil --add "$app_path" --no-restart 2>/dev/null && DOCK_CHANGED=true || warn "Failed to add $app"
+                    else
+                        warn "App not found: $app"
+                    fi
+                done < "$DOCK_CONFIG"
+
+                # Restart dock to apply changes
+                if $DOCK_CHANGED; then
+                    killall Dock 2>/dev/null || true
+                    task "Dock configured"
+                fi
+            fi
         else
             skip "Dock config (no dock/apps.txt)"
         fi
@@ -674,9 +704,11 @@ if [ "$(uname)" = "Darwin" ]; then
     fi
 
     # ─────────────────────────────────────────────────────────────
-    # Restart affected apps
-    killall Finder 2>/dev/null || true
-    task "Restarted Finder"
+    # Restart affected apps only if changes were made
+    if $DEFAULTS_CHANGED; then
+        killall Finder 2>/dev/null || true
+        task "Restarted Finder"
+    fi
 fi
 
 # ─────────────────────────────────────────────────────────────

@@ -374,87 +374,98 @@ function _git_railway
         set -l ahead_truncated (test $ahead -gt $max_dots && echo 1 || echo 0)
         set -l behind_truncated (test $behind -gt $max_dots && echo 1 || echo 0)
 
-        # Build status string
-        set -l status_str ""
-        if test $ahead -gt 0
-            set status_str "↑$ahead"
-        end
-        if test $behind -gt 0
-            set status_str "$status_str↓$behind"
-        end
-
         # Case 1: Only behind (need to pull, no local commits)
         if test $ahead -eq 0
-            set -l origin_line "origin ──●"
+            # main ──●──●──● remote
+            #        ↑
+            #        └─ -2 228b3e5 "feat..." 4m
+            set -l main_line "$branch ──●"
             if test $behind_truncated -eq 1
-                set origin_line $origin_line"──⋮"
+                set main_line $main_line"──⋮"
             end
-            for i in (seq 1 $show_behind)
-                set origin_line $origin_line"──●"
+            if test $show_behind -gt 0
+                for i in (seq 1 $show_behind)
+                    set main_line $main_line"──●"
+                end
             end
+            set main_line $main_line" remote"
 
-            set -l base_pos 9  # Position after "origin ──"
-            set -l connector (string repeat -n $base_pos " ")"│"
-            set -l commit_line (string repeat -n $base_pos " ")"└─ $last_hash \"$last_msg\" $last_time"
+            set -l base_len (string length "$branch ──")
+            set -l pointer_line (string repeat -n $base_len " ")"↑"
+            set -l commit_line (string repeat -n $base_len " ")"└─ -$behind $last_hash \"$last_msg\" $last_time"
 
-            set_color brblack
-            echo $origin_line
-            echo $connector
-            echo $commit_line
             set_color cyan
-            printf "%s" $branch
-            set_color yellow
-            printf " %s\n" $status_str
+            echo $main_line
+            set_color brblack
+            echo $pointer_line
+            echo $commit_line
             set_color normal
             return
         end
 
-        # Case 2: Ahead (with or without being behind)
-        # Line 1: origin line
-        set -l origin_line "origin ──●"
-        if test $behind -gt 0
-            if test $behind_truncated -eq 1
-                set origin_line $origin_line"──⋮"
+        # Case 2: Only ahead (remote hasn't moved)
+        if test $behind -eq 0
+            # main ──●──●──●──●──●
+            #        ↑           └─ +5 228b3e5 "feat..." 4m
+            #        remote
+            set -l main_line "$branch ──●"
+            if test $ahead_truncated -eq 1
+                set main_line $main_line"──⋮"
             end
+            if test $show_ahead -gt 0
+                for i in (seq 1 $show_ahead)
+                    set main_line $main_line"──●"
+                end
+            end
+
+            set -l base_len (string length "$branch ──")
+            set -l main_len (string length "$main_line")
+            set -l pointer_line (string repeat -n $base_len " ")"↑"(string repeat -n (math $main_len - $base_len - 1) " ")"└─ +$ahead $last_hash \"$last_msg\" $last_time"
+            set -l remote_line (string repeat -n $base_len " ")"remote"
+
+            set_color cyan
+            echo $main_line
+            set_color brblack
+            echo $pointer_line
+            echo $remote_line
+            set_color normal
+            return
+        end
+
+        # Case 3: Diverged (both ahead and behind)
+        # main ──●──┬──● -1 remote
+        #           └──●──●──●──●──●
+        #                         └─ +5 228b3e5 "feat..." 4m
+        set -l main_line "$branch ──●──┬"
+        if test $behind_truncated -eq 1
+            set main_line $main_line"──⋮"
+        end
+        if test $show_behind -gt 0
             for i in (seq 1 $show_behind)
-                set origin_line $origin_line"──●"
+                set main_line $main_line"──●"
             end
         end
-        set origin_line $origin_line"──┐"
+        set main_line $main_line" -$behind remote"
 
-        # Line 2: local branch commits
-        set -l origin_len (string length "$origin_line")
-        set -l local_line (string repeat -n (math $origin_len - 1) " ")"└"
+        set -l fork_pos (string length "$branch ──●──")
+        set -l local_line (string repeat -n $fork_pos " ")"└"
         if test $ahead_truncated -eq 1
             set local_line $local_line"──⋮"
         end
-        for i in (seq 1 $show_ahead)
-            set local_line $local_line"──●"
+        if test $show_ahead -gt 0
+            for i in (seq 1 $show_ahead)
+                set local_line $local_line"──●"
+            end
         end
 
-        # Calculate positions for connectors
         set -l local_len (string length "$local_line")
-        set -l branch_point (math $origin_len - 1)
+        set -l commit_line (string repeat -n (math $local_len - 1) " ")"└─ +$ahead $last_hash \"$last_msg\" $last_time"
 
-        # Line 3: dual connector
-        set -l connector_line (string repeat -n $branch_point " ")"│"(string repeat -n (math $local_len - $branch_point - 2) " ")"│"
-
-        # Line 4: commit info with connector
-        set -l commit_line (string repeat -n $branch_point " ")"│"(string repeat -n (math $local_len - $branch_point - 2) " ")"└─ $last_hash \"$last_msg\" $last_time"
-
-        # Line 5: branch name line
-        set -l branch_line (string repeat -n $branch_point " ")"└"(string repeat -n (math $local_len - $branch_point - 1) "─")"── "
-
-        # Print
-        set_color brblack
-        echo $origin_line
-        echo $local_line
-        echo $connector_line
-        echo $commit_line
         set_color cyan
-        printf "%s%s" $branch_line $branch
-        set_color yellow
-        printf " %s\n" $status_str
+        echo $main_line
+        set_color brblack
+        echo $local_line
+        echo $commit_line
         set_color normal
         return
     end

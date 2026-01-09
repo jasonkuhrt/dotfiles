@@ -65,6 +65,8 @@
   * new packages added to `Brewfile`
   * new features added to `sync`
 * __Fisher plugin removals__ — `fisher update` handles removals, but some plugins (e.g. tide) leave behind universal variables in `~/.config/fish/fish_variables` that need manual cleanup
+* __Modern Unix abbreviations__ — typing `ls`, `cat`, `grep`, etc. expands to modern replacements (`lsd`, `bat`, `rg`). Only in interactive mode, scripts unaffected. See `fish/config.fish` for full list
+* __Weather__ — `curl wttr.in` or `curl wttr.in/YourCity` (no install needed)
 
 ## Node Package Management
 
@@ -276,11 +278,18 @@ Quick reference for all the tools installed via Brewfile. Forget what something 
 | System   | `unar`       | Universal archive extractor           | `unar file.zip`, `unar file.tar.gz`            |
 | System   | `watch`      | Run command repeatedly                | `watch -n 2 'kubectl get pods'`                |
 | System   | `watchman`   | Watch files for changes               | (used by tools like Jest)                      |
-| Unix     | `ag`         | Fast code search (replaces grep)      | `ag "TODO" --ts`                               |
 | Unix     | `bat`        | Cat with syntax highlighting          | `bat file.ts`                                  |
 | Unix     | `btm`        | Modern system monitor (replaces top)  | `btm`                                          |
+| Unix     | `difft`      | Syntax-aware diff (understands code)  | `difft old.ts new.ts`                          |
+| Unix     | `dog`        | Colorized dig/DNS lookup              | `dog example.com`, `dog MX gmail.com`          |
+| Unix     | `duf`        | Modern df with colors                 | `duf`                                          |
+| Unix     | `dust`       | Visual du with bars                   | `dust`, `dust -d 2`                            |
 | Unix     | `fd`         | Simpler find, respects .gitignore     | `fd "\.ts$"`                                   |
+| Unix     | `gping`      | Ping with live graph                  | `gping google.com cloudflare.com`              |
 | Unix     | `lsd`        | Ls with icons, colors, tree view      | `lsd -la` or `lsd --tree`                      |
+| Unix     | `procs`      | Modern ps with colors/tree            | `procs`, `procs --tree`                        |
+| Unix     | `rg`         | Fast grep (ripgrep)                   | `rg "TODO"`, `rg -t ts "import"`               |
+| Unix     | `sd`         | Simpler sed                           | `sd 'foo' 'bar' file.txt`                      |
 | Unix     | `xh`         | Colorized curl alternative            | `xh GET api.example.com/users`                 |
 
 ## Dotfiles Inspiration

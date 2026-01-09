@@ -84,6 +84,23 @@ abbr -a p pnpm
 abbr -a c clear
 abbr -a l libra
 
+# Modern Unix replacements (only expand in interactive mode, not scripts)
+abbr -a ls lsd
+abbr -a cat bat
+abbr -a top btm
+abbr -a htop btm
+abbr -a find fd
+abbr -a grep rg
+abbr -a du dust
+abbr -a df duf
+abbr -a ps procs
+abbr -a sed sd
+abbr -a dig dog
+abbr -a ping gping
+abbr -a diff difft
+abbr -a vim nvim
+abbr -a vi nvim
+
 ## Aliases (commands with flags/args)
 ## ----------------------------------
 

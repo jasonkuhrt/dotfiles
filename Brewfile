@@ -12,9 +12,17 @@ tap "polidog/kilar"
 brew "bat"           # cat with syntax highlighting
 brew "bottom"        # top/htop replacement (btm)
 brew "fd"            # find replacement
-brew "ag"            # grep replacement (Silver Searcher)
+brew "ripgrep"       # grep replacement (rg, faster than ag)
+brew "ag"            # grep alternative (Silver Searcher)
 brew "lsd"           # ls with icons/colors
 brew "xh"            # curl/httpie replacement
+brew "dust"          # du replacement, visual bars
+brew "duf"           # df replacement, colorized table
+brew "procs"         # ps replacement, colorized/tree
+brew "sd"            # sed replacement, intuitive regex
+brew "dog"           # dig replacement, colorized DNS
+brew "gping"         # ping with live graph
+brew "difftastic"    # syntax-aware diff (code-aware)
 brew "git-delta"     # diff with syntax highlighting
 
 # Search & navigation

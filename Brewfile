@@ -123,6 +123,7 @@ cask "transmission"   # torrent client
 # Utilities
 cask "caffeine"       # prevent sleep
 cask "dropbox"
+cask "keyboardcleantool"  # disable keyboard for cleaning
 
 # ═══════════════════════════════════════════════════════════
 # Screensavers

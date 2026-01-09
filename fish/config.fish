@@ -368,11 +368,15 @@ function _git_railway
         end
 
         # Diverged from remote - show railway
+        # Only truncate if hiding 2+ commits (otherwise just show all)
         set -l max_dots 5
-        set -l show_ahead (math "min($ahead, $max_dots)")
-        set -l show_behind (math "min($behind, $max_dots)")
-        set -l ahead_truncated (test $ahead -gt $max_dots && echo 1 || echo 0)
-        set -l behind_truncated (test $behind -gt $max_dots && echo 1 || echo 0)
+        set -l ahead_hidden (math "$ahead - $max_dots")
+        set -l behind_hidden (math "$behind - $max_dots")
+        set -l ahead_truncated (test $ahead_hidden -ge 2 && echo 1 || echo 0)
+        set -l behind_truncated (test $behind_hidden -ge 2 && echo 1 || echo 0)
+        # If truncating, show max_dots; otherwise show all
+        set -l show_ahead (test $ahead_truncated -eq 1 && echo $max_dots || echo $ahead)
+        set -l show_behind (test $behind_truncated -eq 1 && echo $max_dots || echo $behind)
 
         # Case 1: Only behind (need to pull, no local commits)
         if test $ahead -eq 0
@@ -381,7 +385,7 @@ function _git_railway
             #        └─ -2 228b3e5 "feat..." 4m
             set -l main_line "$branch ──●"
             if test $behind_truncated -eq 1
-                set main_line $main_line"──⋮"
+                set main_line $main_line"──⋮$behind_hidden"
             end
             if test $show_behind -gt 0
                 for i in (seq 1 $show_behind)
@@ -410,7 +414,7 @@ function _git_railway
             #        remote
             set -l main_line "$branch ──●"
             if test $ahead_truncated -eq 1
-                set main_line $main_line"──⋮"
+                set main_line $main_line"──⋮$ahead_hidden"
             end
             if test $show_ahead -gt 0
                 for i in (seq 1 $show_ahead)
@@ -438,7 +442,7 @@ function _git_railway
         #                         └─ +5 228b3e5 "feat..." 4m
         set -l main_line "$branch ──●──┬"
         if test $behind_truncated -eq 1
-            set main_line $main_line"──⋮"
+            set main_line $main_line"──⋮$behind_hidden"
         end
         if test $show_behind -gt 0
             for i in (seq 1 $show_behind)
@@ -450,7 +454,7 @@ function _git_railway
         set -l fork_pos (string length "$branch ──●──")
         set -l local_line (string repeat -n $fork_pos " ")"└"
         if test $ahead_truncated -eq 1
-            set local_line $local_line"──⋮"
+            set local_line $local_line"──⋮$ahead_hidden"
         end
         if test $show_ahead -gt 0
             for i in (seq 1 $show_ahead)

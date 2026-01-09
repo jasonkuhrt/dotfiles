@@ -71,6 +71,9 @@ brew "polidog/kilar/kilar"  # interactive port/process manager
 # Database
 brew "planetscale/tap/pscale"
 
+# Cloud
+brew "awscli"        # AWS command line interface
+
 # ═══════════════════════════════════════════════════════════
 # System Tools (macOS)
 # ═══════════════════════════════════════════════════════════

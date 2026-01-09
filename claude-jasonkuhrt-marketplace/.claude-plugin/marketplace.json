@@ -21,6 +21,11 @@
       "description": "Flo project conventions"
     },
     {
+      "name": "github-workflows",
+      "source": "./plugins/github-workflows",
+      "description": "GitHub workflow automation - PR feedback processing"
+    },
+    {
       "name": "kitz",
       "source": "./plugins/kitz",
       "description": "Kitz library conventions"

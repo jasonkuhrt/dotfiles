@@ -39,7 +39,8 @@
     "typescript@jasonkuhrt": true,
     "zed@jasonkuhrt": true,
     "flo@jasonkuhrt": false,
-    "panda-css@jasonkuhrt": false
+    "panda-css@jasonkuhrt": false,
+    "github-workflows@jasonkuhrt": true
   },
   "alwaysThinkingEnabled": true
 }

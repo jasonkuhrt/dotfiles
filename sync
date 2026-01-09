@@ -447,11 +447,50 @@ else
     skip "Homebrew"
 fi
 
-info "Installing packages (this may take a while)..."
-if run_logged "Homebrew bundle" brew bundle --file="$HERE/Brewfile"; then
-    task "Packages installed"
+# Check what needs to be installed
+if brew bundle check --file="$HERE/Brewfile" &>/dev/null; then
+    skip "Homebrew packages"
 else
-    warn "Some packages may have failed (see $LOG_FILE)"
+    # Show what will be installed
+    info "Checking what needs to be installed..."
+    missing=$(brew bundle check --file="$HERE/Brewfile" 2>&1 | grep -E "^(brew|cask|mas)" || true)
+    if [ -n "$missing" ]; then
+        echo "$missing" | while read -r line; do
+            printf "    ${DIM}%s${RESET}\n" "$line"
+        done
+    fi
+
+    # Install formulae first (no sudo needed)
+    info "Installing formulae..."
+    if run_logged "Homebrew formulae" brew bundle --file="$HERE/Brewfile" --no-lock --formula; then
+        task "Formulae installed"
+    else
+        warn "Some formulae may have failed (see $LOG_FILE)"
+    fi
+
+    # Install casks separately with context (these may need sudo)
+    info "Installing casks (may prompt for password)..."
+    # Install each cask individually so user knows which one is asking
+    grep -E "^cask " "$HERE/Brewfile" | sed 's/cask "//;s/"$//' | while read -r cask; do
+        if ! brew list --cask "$cask" &>/dev/null; then
+            printf "    ${DIM}Installing %s...${RESET}\n" "$cask"
+            if brew install --cask "$cask" >> "$LOG_FILE" 2>&1; then
+                task "$cask"
+            else
+                warn "Failed to install $cask (see $LOG_FILE)"
+            fi
+        fi
+    done
+
+    # Install Mac App Store apps
+    if grep -qE "^mas " "$HERE/Brewfile"; then
+        info "Installing Mac App Store apps..."
+        if run_logged "Mac App Store" brew bundle --file="$HERE/Brewfile" --no-lock --mas; then
+            task "Mac App Store apps installed"
+        else
+            warn "Some MAS apps may have failed (see $LOG_FILE)"
+        fi
+    fi
 fi
 
 # ─────────────────────────────────────────────────────────────

@@ -276,6 +276,8 @@ function _git_recent_branches
         if test "$name" != "$current"
             # Shorten relative time
             set time (string replace ' ago' '' "$time")
+            set time (string replace 'seconds' 's' "$time")
+            set time (string replace 'second' 's' "$time")
             set time (string replace 'minutes' 'm' "$time")
             set time (string replace 'minute' 'm' "$time")
             set time (string replace 'hours' 'h' "$time")
@@ -284,6 +286,8 @@ function _git_recent_branches
             set time (string replace 'day' 'd' "$time")
             set time (string replace 'weeks' 'w' "$time")
             set time (string replace 'week' 'w' "$time")
+            set time (string replace 'months' 'mo' "$time")
+            set time (string replace 'month' 'mo' "$time")
             set time (string replace ' ' '' "$time")
             set -a branches "$name ($time)"
         end
@@ -346,6 +350,8 @@ function _git_railway
             set -l c_msg $parts[2]
             set -l c_time (string replace ' ago' '' $parts[3])
             # Shorten time units
+            set c_time (string replace 'seconds' 's' $c_time)
+            set c_time (string replace 'second' 's' $c_time)
             set c_time (string replace 'minutes' 'm' $c_time)
             set c_time (string replace 'minute' 'm' $c_time)
             set c_time (string replace 'hours' 'h' $c_time)
@@ -383,16 +389,17 @@ function _git_railway
                 set -l c_scope $cc_match[4]
                 set -l c_title $cc_match[5]
 
-                # Pad type to 5 chars, scope to 5 chars
-                set -l type_pad (string pad -r -w 5 $c_type)
-                set -l scope_pad (string pad -r -w 5 $c_scope)
+                # Pad type to 8 chars (longest: refactor), scope to 6 chars
+                set -l type_pad (string pad -r -w 8 $c_type)
+                set -l scope_pad (string pad -r -w 6 $c_scope)
 
-                # Truncate title
+                # Truncate and pad title to 25 chars
                 if test (string length "$c_title") -gt 25
                     set c_title (string sub -l 22 "$c_title")"..."
                 end
+                set -l title_pad (string pad -r -w 25 $c_title)
 
-                printf "%s %s %s  %s %s" $type_pad $scope_pad $c_title $c_hash $c_time
+                printf "%s %s %s  %s %s" $type_pad $scope_pad $title_pad $c_hash $c_time
                 # Add remote label on same line if this is remote position
                 if test $is_remote -eq 1
                     set_color brblack

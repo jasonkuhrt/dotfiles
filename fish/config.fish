@@ -357,6 +357,57 @@ function _git_railway
         # If synced with remote, show simple viz (no remote label needed)
         if test $ahead -eq 0 -a $behind -eq 0
             set -l base_len (string length "$branch ──")
+
+            # Check for zen history mode (env var + clean working directory)
+            set -l dirty_files (command git status --porcelain 2>/dev/null)
+            set -l is_clean (test -z "$dirty_files" && echo 1 || echo 0)
+            if test -n "$GIT_DASHBOARD_ZEN_HISTORY" -a $is_clean -eq 1
+                # Show recent commit history
+                set -l recent_count 5
+                set -l commits (command git log -$recent_count --format='%h|%s|%cr' 2>/dev/null)
+
+                set -l main_line "$branch ──●"
+                for i in (seq 2 $recent_count)
+                    set main_line $main_line"──●"
+                end
+
+                echo
+                set_color cyan
+                echo $main_line
+                set_color brblack
+
+                set -l idx 0
+                for commit in $commits
+                    set idx (math $idx + 1)
+                    set -l parts (string split '|' $commit)
+                    set -l c_hash $parts[1]
+                    set -l c_msg $parts[2]
+                    set -l c_time (string replace ' ago' '' $parts[3])
+
+                    # Truncate message
+                    if test (string length "$c_msg") -gt 40
+                        set c_msg (string sub -l 37 "$c_msg")"..."
+                    end
+
+                    # Calculate indent based on position
+                    set -l indent (math $base_len + "($idx - 1) * 3")
+                    if test $idx -eq 1
+                        set -l commit_line (string repeat -n $base_len " ")"└─ $c_msg"
+                        set -l meta_line (string repeat -n (math $base_len + 3) " ")"$c_hash $c_time"
+                        echo $commit_line
+                        echo $meta_line
+                    else
+                        set -l commit_line (string repeat -n $indent " ")"└─ $c_msg"
+                        set -l meta_line (string repeat -n (math $indent + 3) " ")"$c_hash $c_time"
+                        echo $commit_line
+                        echo $meta_line
+                    end
+                end
+                set_color normal
+                return
+            end
+
+            # Default: show just the latest commit
             set -l main_line "$branch ──●"
             set -l commit_line (string repeat -n $base_len " ")"└─ $last_msg"
             set -l meta_line (string repeat -n (math $base_len + 3) " ")"$last_hash $last_time"
@@ -630,11 +681,8 @@ end
 
 set --export GITHUB_HANDLE jasonkuhrt
 
-# Node (keg-only, needs explicit PATH)
-fish_add_path /opt/homebrew/opt/node@24/bin
-
 # Node package managers
-# npm globals go to fixed location (survives node version changes)
+# pnpm manages node versions; npm globals go to fixed location
 # See README "Node Package Management" for details
 set -gx NPM_GLOBAL "$HOME/.npm-global"
 set -gx PNPM_HOME "$HOME/Library/pnpm"

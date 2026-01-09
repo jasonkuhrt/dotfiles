@@ -227,9 +227,9 @@ function _git_file_status
                 case M
                     set -a staged_files "M $file"
                 case A
-                    set -a staged_files "+ $file"
+                    set -a staged_files "A $file"
                 case D
-                    set -a staged_files "- $file"
+                    set -a staged_files "D $file"
                 case R
                     set -a staged_files "R $file"
                 case C
@@ -243,7 +243,7 @@ function _git_file_status
                 case M
                     set -a unstaged_files "M $file"
                 case D
-                    set -a unstaged_files "- $file"
+                    set -a unstaged_files "D $file"
             end
         end
 
@@ -381,6 +381,25 @@ function _git_railway
                     set -l c_hash $parts[1]
                     set -l c_msg $parts[2]
                     set -l c_time (string replace ' ago' '' $parts[3])
+                    # Shorten time units
+                    set c_time (string replace 'minutes' 'm' $c_time)
+                    set c_time (string replace 'minute' 'm' $c_time)
+                    set c_time (string replace 'hours' 'h' $c_time)
+                    set c_time (string replace 'hour' 'h' $c_time)
+                    set c_time (string replace 'days' 'd' $c_time)
+                    set c_time (string replace 'day' 'd' $c_time)
+                    set c_time (string replace 'weeks' 'w' $c_time)
+                    set c_time (string replace 'week' 'w' $c_time)
+                    set c_time (string replace 'months' 'mo' $c_time)
+                    set c_time (string replace 'month' 'mo' $c_time)
+                    set c_time (string replace ' ' '' $c_time)
+
+                    # First commit is current (not dim), rest are dim
+                    if test $idx -eq 1
+                        set_color normal
+                    else
+                        set_color brblack
+                    end
 
                     # Railway connector
                     set -l connector (test $idx -lt $total && echo "├─●" || echo "└─●")
@@ -392,17 +411,16 @@ function _git_railway
                         set -l c_scope $cc_match[4]
                         set -l c_title $cc_match[5]
 
-                        # Pad type to 8 chars, scope to 8 chars
-                        set -l type_pad (string pad -r -w 8 $c_type)
-                        set -l scope_pad (string pad -r -w 8 $c_scope)
+                        # Pad type to 5 chars, scope to 5 chars
+                        set -l type_pad (string pad -r -w 5 $c_type)
+                        set -l scope_pad (string pad -r -w 5 $c_scope)
 
                         # Truncate title
-                        if test (string length "$c_title") -gt 25
-                            set c_title (string sub -l 22 "$c_title")"..."
+                        if test (string length "$c_title") -gt 28
+                            set c_title (string sub -l 25 "$c_title")"..."
                         end
-                        set -l title_pad (string pad -r -w 25 $c_title)
 
-                        printf "  %s %s %s %s  %s %s\n" $connector $type_pad $scope_pad $title_pad $c_hash $c_time
+                        printf "  %s %s %s %s  %s %s\n" $connector $type_pad $scope_pad $c_title $c_hash $c_time
                     else
                         # Non-conventional commit, show as-is
                         if test (string length "$c_msg") -gt 35

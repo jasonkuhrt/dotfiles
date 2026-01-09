@@ -413,17 +413,18 @@ function _git_railway
     end
 
     # Line 2: branch commits
-    set -l branch_line "          └──"
-    if test $truncated -eq 1
-        set branch_line $branch_line"●──⋮"
-    end
+    # Pattern: └──●──●──● (dots are commits, dashes connect them)
+    set -l branch_line "          └"
     if test $show_branch_commits -gt 0
+        if test $truncated -eq 1
+            set branch_line $branch_line"──●──⋮"
+        end
         for i in (seq 1 $show_branch_commits)
             set branch_line $branch_line"──●"
         end
     else
-        # No commits yet, just show a connector
-        set branch_line $branch_line"●"
+        # No commits yet on branch, show the branch point only
+        set branch_line $branch_line"──●"
     end
 
     # Calculate positions

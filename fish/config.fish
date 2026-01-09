@@ -392,16 +392,21 @@ function _git_railway
                     set main_line $main_line"──●"
                 end
             end
-            set main_line $main_line" remote"
+            set -l main_line_no_remote $main_line
+            set main_line $main_line" "
 
             set -l base_len (string length "$branch ──")
+            set -l count_len (string length "$behind")
             set -l pointer_line (string repeat -n $base_len " ")"↑"
             set -l commit_line (string repeat -n $base_len " ")"└─ $behind \"$last_msg\""
-            set -l meta_line (string repeat -n (math $base_len + 3) " ")"$last_hash $last_time"
+            # Align meta with start of message (after count)
+            set -l meta_indent (math $base_len + 4 + $count_len)
+            set -l meta_line (string repeat -n $meta_indent " ")"$last_hash $last_time"
 
             set_color cyan
-            echo $main_line
+            printf "%s" $main_line
             set_color brblack
+            printf "remote\n"
             echo $pointer_line
             echo $commit_line
             echo $meta_line
@@ -426,8 +431,11 @@ function _git_railway
 
             set -l base_len (string length "$branch ──")
             set -l main_len (string length "$main_line")
+            set -l count_len (string length "$ahead")
             set -l commit_line (string repeat -n $base_len " ")"↑"(string repeat -n (math $main_len - $base_len - 1) " ")"└─ $ahead \"$last_msg\""
-            set -l meta_line (string repeat -n $base_len " ")"│"(string repeat -n (math $main_len - $base_len + 2) " ")"$last_hash $last_time"
+            # Align meta with start of message (after count)
+            set -l meta_indent (math $main_len + 4 + $count_len)
+            set -l meta_line (string repeat -n $meta_indent " ")"$last_hash $last_time"
             set -l remote_line (string repeat -n $base_len " ")"remote"
 
             set_color cyan
@@ -435,6 +443,7 @@ function _git_railway
             set_color brblack
             echo $commit_line
             echo $meta_line
+            set_color brblack
             echo $remote_line
             set_color normal
             return
@@ -453,7 +462,7 @@ function _git_railway
                 set main_line $main_line"──●"
             end
         end
-        set main_line $main_line" $behind remote"
+        set main_line $main_line" $behind "
 
         set -l fork_pos (string length "$branch ──●──")
         set -l local_line (string repeat -n $fork_pos " ")"└"
@@ -467,12 +476,16 @@ function _git_railway
         end
 
         set -l local_len (string length "$local_line")
+        set -l count_len (string length "$ahead")
         set -l commit_line (string repeat -n (math $local_len - 1) " ")"└─ $ahead \"$last_msg\""
-        set -l meta_line (string repeat -n (math $local_len + 2) " ")"$last_hash $last_time"
+        # Align meta with start of message (after count)
+        set -l meta_indent (math $local_len + 3 + $count_len)
+        set -l meta_line (string repeat -n $meta_indent " ")"$last_hash $last_time"
 
         set_color cyan
-        echo $main_line
+        printf "%s" $main_line
         set_color brblack
+        printf "remote\n"
         echo $local_line
         echo $commit_line
         echo $meta_line

@@ -153,11 +153,339 @@ function mcd --description "Create a directory and set CWD"
     end
 end
 
-function git --wraps git --description "git with no args shows status"
+function git --wraps git --description "git with no args shows dashboard"
     if test (count $argv) -eq 0
-        command git status
+        _git_dashboard
     else
         command git $argv
+    end
+end
+
+# Git Dashboard
+# =============
+# Context-aware git status with railway graph visualization
+
+function _git_is_repo
+    command git rev-parse --git-dir >/dev/null 2>&1
+end
+
+function _git_is_trunk
+    set -l branch (command git branch --show-current 2>/dev/null)
+    test "$branch" = "main" -o "$branch" = "master"
+end
+
+function _git_is_dirty
+    test -n "(command git status --porcelain 2>/dev/null)"
+end
+
+function _git_branch_info
+    # Returns: branch upstream ahead behind
+    set -l branch (command git branch --show-current 2>/dev/null)
+    if test -z "$branch"
+        # Detached HEAD
+        set branch (command git rev-parse --short HEAD 2>/dev/null)
+        echo "$branch" "" "0" "0"
+        return
+    end
+
+    set -l upstream (command git rev-parse --abbrev-ref '@{upstream}' 2>/dev/null)
+    if test -z "$upstream"
+        echo "$branch" "" "0" "0"
+        return
+    end
+
+    # Get ahead/behind counts
+    set -l counts (command git rev-list --left-right --count HEAD...'@{upstream}' 2>/dev/null)
+    set -l ahead (echo $counts | awk '{print $1}')
+    set -l behind (echo $counts | awk '{print $2}')
+
+    # Extract just the remote branch name (origin/main -> main)
+    set -l upstream_short (string replace -r '^[^/]+/' '' "$upstream")
+
+    echo "$branch" "$upstream_short" "$ahead" "$behind"
+end
+
+function _git_file_status
+    # Parse git status --porcelain and group by status
+    set -l staged_files
+    set -l unstaged_files
+    set -l untracked_files
+
+    for line in (command git status --porcelain 2>/dev/null)
+        set -l index_status (string sub -s 1 -l 1 "$line")
+        set -l work_status (string sub -s 2 -l 1 "$line")
+        set -l file (string sub -s 4 "$line")
+
+        # Staged changes (index has changes)
+        if test "$index_status" != " " -a "$index_status" != "?"
+            switch $index_status
+                case M
+                    set -a staged_files "M $file"
+                case A
+                    set -a staged_files "+ $file"
+                case D
+                    set -a staged_files "- $file"
+                case R
+                    set -a staged_files "R $file"
+                case C
+                    set -a staged_files "C $file"
+            end
+        end
+
+        # Unstaged changes (working tree has changes)
+        if test "$work_status" != " " -a "$index_status" != "?"
+            switch $work_status
+                case M
+                    set -a unstaged_files "M $file"
+                case D
+                    set -a unstaged_files "- $file"
+            end
+        end
+
+        # Untracked
+        if test "$index_status" = "?"
+            set -a untracked_files "+ $file"
+        end
+    end
+
+    # Output grouped files
+    if test (count $staged_files) -gt 0
+        set_color green
+        echo "Staged ("(count $staged_files)"):"
+        set_color normal
+        for f in $staged_files
+            echo "  $f"
+        end
+        echo
+    end
+
+    if test (count $unstaged_files) -gt 0
+        set_color yellow
+        echo "Unstaged ("(count $unstaged_files)"):"
+        set_color normal
+        for f in $unstaged_files
+            echo "  $f"
+        end
+        echo
+    end
+
+    if test (count $untracked_files) -gt 0
+        set_color brblack
+        echo "Untracked ("(count $untracked_files)"):"
+        set_color normal
+        for f in $untracked_files
+            echo "  $f"
+        end
+        echo
+    end
+
+    # Summary line
+    set -l total (math (count $staged_files) + (count $unstaged_files) + (count $untracked_files))
+    if test $total -gt 0
+        set -l parts
+        if test (count $staged_files) -gt 0
+            set -a parts (count $staged_files)" staged"
+        end
+        if test (count $unstaged_files) -gt 0
+            set -a parts (count $unstaged_files)" modified"
+        end
+        if test (count $untracked_files) -gt 0
+            set -a parts (count $untracked_files)" new"
+        end
+        echo (string join ", " $parts)
+    end
+end
+
+function _git_recent_branches
+    # Get branches sorted by recent commit activity (excluding current)
+    set -l current (command git branch --show-current 2>/dev/null)
+    set -l branches
+
+    for ref in (command git for-each-ref --sort=-committerdate --format='%(refname:short) %(committerdate:relative)' refs/heads/ 2>/dev/null | head -5)
+        set -l parts (string split ' ' "$ref")
+        set -l name $parts[1]
+        set -l time (string join ' ' $parts[2..-1])
+
+        if test "$name" != "$current"
+            # Shorten relative time
+            set time (string replace ' ago' '' "$time")
+            set time (string replace 'minutes' 'm' "$time")
+            set time (string replace 'minute' 'm' "$time")
+            set time (string replace 'hours' 'h' "$time")
+            set time (string replace 'hour' 'h' "$time")
+            set time (string replace 'days' 'd' "$time")
+            set time (string replace 'day' 'd' "$time")
+            set time (string replace 'weeks' 'w' "$time")
+            set time (string replace 'week' 'w' "$time")
+            set time (string replace ' ' '' "$time")
+            set -a branches "$name ($time)"
+        end
+    end
+
+    if test (count $branches) -gt 0
+        set_color brblack
+        echo "Recent: "(string join " | " $branches[1..3])
+        set_color normal
+        echo
+    end
+end
+
+function _git_railway
+    # Render horizontal railway graph
+    set -l branch (command git branch --show-current 2>/dev/null)
+    set -l upstream (command git rev-parse --abbrev-ref '@{upstream}' 2>/dev/null)
+    set -l ahead 0
+    set -l behind 0
+
+    if test -n "$upstream"
+        set -l counts (command git rev-list --left-right --count HEAD...'@{upstream}' 2>/dev/null | string split \t)
+        if test (count $counts) -ge 2
+            set ahead $counts[1]
+            set behind $counts[2]
+        end
+        set upstream (string replace -r '^[^/]+/' '' "$upstream")
+    end
+
+    # Skip railway if on trunk - just show branch + last commit
+    if _git_is_trunk
+        set -l last_hash (command git log -1 --format='%h' 2>/dev/null)
+        set -l last_msg (command git log -1 --format='%s' 2>/dev/null)
+        set -l last_time (command git log -1 --format='%cr' 2>/dev/null | string replace ' ago' '')
+
+        # Truncate message
+        if test (string length "$last_msg") -gt 40
+            set last_msg (string sub -l 37 "$last_msg")"..."
+        end
+
+        set_color cyan
+        printf "%s" "$branch"
+        set_color brblack
+        printf " ── %s \"%s\" %s\n" $last_hash $last_msg $last_time
+        set_color normal
+        return
+    end
+
+    # Find merge base with main/master
+    set -l trunk "main"
+    if not command git rev-parse --verify main >/dev/null 2>&1
+        set trunk "master"
+    end
+
+    set -l merge_base (command git merge-base HEAD $trunk 2>/dev/null)
+    if test -z "$merge_base"
+        # No merge base found, just show simple status
+        return
+    end
+
+    # Count commits on current branch since merge base
+    set -l branch_commits (command git rev-list --count $merge_base..HEAD 2>/dev/null)
+    # Count commits on trunk since merge base
+    set -l trunk_commits (command git rev-list --count $merge_base..$trunk 2>/dev/null)
+
+    # Get last commit info
+    set -l last_hash (command git log -1 --format='%h' 2>/dev/null)
+    set -l last_msg (command git log -1 --format='%s' 2>/dev/null)
+    set -l last_time (command git log -1 --format='%cr' 2>/dev/null | string replace ' ago' '')
+
+    # Truncate message
+    if test (string length "$last_msg") -gt 30
+        set last_msg (string sub -l 27 "$last_msg")"..."
+    end
+
+    # Calculate display widths
+    set -l max_commits 8
+    set -l show_branch_commits (math "min($branch_commits, $max_commits)")
+    set -l show_trunk_commits (math "min($trunk_commits, 3)")
+    set -l truncated (test $branch_commits -gt $max_commits && echo 1 || echo 0)
+
+    # Build the railway lines
+    # Line 1: trunk
+    set -l trunk_line "$trunk ──●──"
+    if test $trunk_commits -gt 0
+        set trunk_line $trunk_line"┬"
+        if test $show_trunk_commits -gt 0
+            for i in (seq 1 $show_trunk_commits)
+                set trunk_line $trunk_line"──●"
+            end
+        end
+    else
+        set trunk_line $trunk_line"┐"
+    end
+
+    # Line 2: branch commits
+    set -l branch_line "          └──"
+    if test $truncated -eq 1
+        set branch_line $branch_line"●──⋮"
+    end
+    if test $show_branch_commits -gt 0
+        for i in (seq 1 $show_branch_commits)
+            set branch_line $branch_line"──●"
+        end
+    else
+        # No commits yet, just show a connector
+        set branch_line $branch_line"●"
+    end
+
+    # Calculate positions
+    set -l branch_len (string length "$branch_line")
+    set -l branch_point 10  # Position of └ in branch line
+
+    # Line 3: dual connector - from branch point and to last commit
+    set -l connector_line (string repeat -n $branch_point " ")"│"(string repeat -n (math $branch_len - $branch_point - 2) " ")"│"
+
+    # Line 4: commit info with connector back to branch point
+    set -l commit_line (string repeat -n $branch_point " ")"│"(string repeat -n (math $branch_len - $branch_point - 2) " ")"└─ $last_hash \"$last_msg\" $last_time"
+
+    # Line 5: branch name line from branch point
+    set -l branch_display (string repeat -n $branch_point " ")"└"
+    set -l dashes (string repeat -n (math $branch_len - $branch_point - 1) "─")
+    set branch_display $branch_display$dashes"── "
+
+    # Add upstream status
+    set -l status_parts
+    if test $ahead -gt 0
+        set -a status_parts "↑$ahead"
+    end
+    if test $behind -gt 0
+        set -a status_parts "↓$behind"
+    end
+
+    set -l upstream_display ""
+    if test -n "$upstream"
+        set upstream_display " "(string join " " $status_parts)" $upstream"
+    end
+
+    # Print the railway
+    set_color brblack
+    echo $trunk_line
+    echo $branch_line
+    echo $connector_line
+    echo $commit_line
+    set_color cyan
+    printf "%s%s" $branch_display $branch
+    set_color yellow
+    printf "%s\n" $upstream_display
+    set_color normal
+end
+
+function _git_dashboard
+    if not _git_is_repo
+        echo "Not a git repository"
+        return 1
+    end
+
+    echo
+
+    set -l status_output (command git status --porcelain 2>/dev/null)
+
+    if test -n "$status_output"
+        # Dirty mode: files first, then railway
+        _git_file_status
+        _git_railway
+    else
+        # Clean mode: recent branches, then railway
+        _git_recent_branches
+        _git_railway
     end
 end
 

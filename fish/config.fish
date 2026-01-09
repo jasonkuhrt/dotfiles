@@ -346,7 +346,7 @@ function _git_railway
         set upstream (string replace -r '^[^/]+/' '' "$upstream")
     end
 
-    # Skip railway if on trunk - just show branch + last commit
+    # Trunk handling
     if _git_is_trunk
         set -l last_hash (command git log -1 --format='%h' 2>/dev/null)
         set -l last_msg (command git log -1 --format='%s' 2>/dev/null)
@@ -357,10 +357,104 @@ function _git_railway
             set last_msg (string sub -l 37 "$last_msg")"..."
         end
 
-        set_color cyan
-        printf "%s" "$branch"
+        # If synced with remote, simple one-liner
+        if test $ahead -eq 0 -a $behind -eq 0
+            set_color cyan
+            printf "%s" "$branch"
+            set_color brblack
+            printf " ── %s \"%s\" %s\n" $last_hash $last_msg $last_time
+            set_color normal
+            return
+        end
+
+        # Diverged from remote - show railway
+        set -l max_dots 5
+        set -l show_ahead (math "min($ahead, $max_dots)")
+        set -l show_behind (math "min($behind, $max_dots)")
+        set -l ahead_truncated (test $ahead -gt $max_dots && echo 1 || echo 0)
+        set -l behind_truncated (test $behind -gt $max_dots && echo 1 || echo 0)
+
+        # Build status string
+        set -l status_str ""
+        if test $ahead -gt 0
+            set status_str "↑$ahead"
+        end
+        if test $behind -gt 0
+            set status_str "$status_str↓$behind"
+        end
+
+        # Case 1: Only behind (need to pull, no local commits)
+        if test $ahead -eq 0
+            set -l origin_line "origin ──●"
+            if test $behind_truncated -eq 1
+                set origin_line $origin_line"──⋮"
+            end
+            for i in (seq 1 $show_behind)
+                set origin_line $origin_line"──●"
+            end
+
+            set -l base_pos 9  # Position after "origin ──"
+            set -l connector (string repeat -n $base_pos " ")"│"
+            set -l commit_line (string repeat -n $base_pos " ")"└─ $last_hash \"$last_msg\" $last_time"
+
+            set_color brblack
+            echo $origin_line
+            echo $connector
+            echo $commit_line
+            set_color cyan
+            printf "%s" $branch
+            set_color yellow
+            printf " %s\n" $status_str
+            set_color normal
+            return
+        end
+
+        # Case 2: Ahead (with or without being behind)
+        # Line 1: origin line
+        set -l origin_line "origin ──●"
+        if test $behind -gt 0
+            if test $behind_truncated -eq 1
+                set origin_line $origin_line"──⋮"
+            end
+            for i in (seq 1 $show_behind)
+                set origin_line $origin_line"──●"
+            end
+        end
+        set origin_line $origin_line"──┐"
+
+        # Line 2: local branch commits
+        set -l origin_len (string length "$origin_line")
+        set -l local_line (string repeat -n (math $origin_len - 1) " ")"└"
+        if test $ahead_truncated -eq 1
+            set local_line $local_line"──⋮"
+        end
+        for i in (seq 1 $show_ahead)
+            set local_line $local_line"──●"
+        end
+
+        # Calculate positions for connectors
+        set -l local_len (string length "$local_line")
+        set -l branch_point (math $origin_len - 1)
+
+        # Line 3: dual connector
+        set -l connector_line (string repeat -n $branch_point " ")"│"(string repeat -n (math $local_len - $branch_point - 2) " ")"│"
+
+        # Line 4: commit info with connector
+        set -l commit_line (string repeat -n $branch_point " ")"│"(string repeat -n (math $local_len - $branch_point - 2) " ")"└─ $last_hash \"$last_msg\" $last_time"
+
+        # Line 5: branch name line
+        set -l branch_line (string repeat -n $branch_point " ")"└"(string repeat -n (math $local_len - $branch_point - 1) "─")"── "
+
+        # Print
         set_color brblack
-        printf " ── %s \"%s\" %s\n" $last_hash $last_msg $last_time
+        echo $origin_line
+        echo $local_line
+        echo $connector_line
+        echo $commit_line
+        set_color cyan
+        printf "%s%s" $branch_line $branch
+        set_color yellow
+        printf " %s\n" $status_str
         set_color normal
         return
     end

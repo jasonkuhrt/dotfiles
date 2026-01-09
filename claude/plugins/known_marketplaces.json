@@ -1,10 +1,10 @@
 {
   "jasonkuhrt": {
     "source": {
-      "source": "directory",
-      "path": "/Users/jasonkuhrt/projects/jasonkuhrt/claude-marketplace"
+      "source": "github",
+      "repo": "jasonkuhrt/claude-marketplace"
     },
-    "installLocation": "/Users/jasonkuhrt/projects/jasonkuhrt/claude-marketplace",
+    "installLocation": "/Users/jasonkuhrt/.claude/plugins/marketplaces/jasonkuhrt",
     "lastUpdated": "2026-01-09T00:00:00.000Z",
     "autoUpdate": true
   },
@@ -14,7 +14,7 @@
       "url": "https://github.com/anthropics/claude-plugins-official.git"
     },
     "installLocation": "/Users/jasonkuhrt/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-01-09T17:41:07.925Z",
+    "lastUpdated": "2026-01-09T21:00:23.824Z",
     "autoUpdate": true
   },
   "superpowers-marketplace": {

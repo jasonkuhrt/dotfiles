@@ -461,9 +461,10 @@ function _git_railway
 
         # Case 1: Only behind (need to pull, no local commits)
         if test $ahead -eq 0
-            # main ──●──●──● remote
-            #        ↑
-            #        └─ -2 228b3e5 "feat..." 4m
+            #                    remote
+            #                    ↓
+            # main ──●──●──●──●──●
+            #        └─ 2 228b3e5 "feat..." 4m
             set -l main_line "$branch ──●"
             if test $behind_truncated -eq 1
                 set main_line $main_line"──⋮$behind_hidden"
@@ -473,23 +474,26 @@ function _git_railway
                     set main_line $main_line"──●"
                 end
             end
-            set -l main_line_no_remote $main_line
-            set main_line $main_line" "
 
             set -l base_len (string length "$branch ──")
+            set -l main_len (string length "$main_line")
             set -l count_len (string length "$behind")
-            set -l pointer_line (string repeat -n $base_len " ")"↑"
+            # Remote and arrow above the line, pointing to last ● (remote position)
+            set -l remote_line (string repeat -n (math $main_len - 1) " ")"remote"
+            set -l arrow_line (string repeat -n (math $main_len - 1) " ")"↓"
+            # Commit drops from first ● (our position)
             set -l commit_line (string repeat -n $base_len " ")"└─ $behind $last_msg"
             # Align meta with start of message (after count)
             set -l meta_indent (math $base_len + 4 + $count_len)
             set -l meta_line (string repeat -n $meta_indent " ")"$last_hash $last_time"
 
             echo
-            set_color cyan
-            printf "%s" $main_line
             set_color brblack
-            printf "remote\n"
-            echo $pointer_line
+            echo $remote_line
+            echo $arrow_line
+            set_color cyan
+            echo $main_line
+            set_color brblack
             echo $commit_line
             echo $meta_line
             set_color normal
@@ -498,9 +502,10 @@ function _git_railway
 
         # Case 2: Only ahead (remote hasn't moved)
         if test $behind -eq 0
-            # main ──●──●──●──●──●
-            #        ↑           └─ +5 228b3e5 "feat..." 4m
             #        remote
+            #        ↓
+            # main ──●──●──●──●──●
+            #                    └─ 5 feat... e8895f7 2m
             set -l main_line "$branch ──●"
             if test $ahead_truncated -eq 1
                 set main_line $main_line"──⋮$ahead_hidden"
@@ -514,28 +519,34 @@ function _git_railway
             set -l base_len (string length "$branch ──")
             set -l main_len (string length "$main_line")
             set -l count_len (string length "$ahead")
-            set -l commit_line (string repeat -n $base_len " ")"↑"(string repeat -n (math $main_len - $base_len - 1) " ")"└─ $ahead $last_msg"
-            # Align meta with start of message (after count)
-            set -l meta_indent (math $main_len + 4 + $count_len)
-            set -l meta_line (string repeat -n $meta_indent " ")"$last_hash $last_time"
+            # Remote and arrow above the line, pointing to first ●
             set -l remote_line (string repeat -n $base_len " ")"remote"
+            set -l arrow_line (string repeat -n $base_len " ")"↓"
+            # Commit drops from last ●
+            set -l commit_line (string repeat -n (math $main_len - 1) " ")"└─ $ahead $last_msg"
+            # Align meta with start of message (after count)
+            set -l meta_indent (math $main_len + 3 + $count_len)
+            set -l meta_line (string repeat -n $meta_indent " ")"$last_hash $last_time"
 
             echo
+            set_color brblack
+            echo $remote_line
+            echo $arrow_line
             set_color cyan
             echo $main_line
             set_color brblack
             echo $commit_line
             echo $meta_line
-            set_color brblack
-            echo $remote_line
             set_color normal
             return
         end
 
         # Case 3: Diverged (both ahead and behind)
-        # main ──●──┬──● -1 remote
-        #           └──●──●──●──●──●
-        #                         └─ +5 228b3e5 "feat..." 4m
+        #                remote
+        #                ↓
+        # main ──●──┬──●──● 2
+        #           └──●──●
+        #                 └─ 2 feat... sha 4m
         set -l main_line "$branch ──●──┬"
         if test $behind_truncated -eq 1
             set main_line $main_line"──⋮$behind_hidden"
@@ -545,7 +556,8 @@ function _git_railway
                 set main_line $main_line"──●"
             end
         end
-        set main_line $main_line" $behind "
+        set -l main_len_no_count (string length "$main_line")
+        set main_line $main_line" $behind"
 
         set -l fork_pos (string length "$branch ──●──")
         set -l local_line (string repeat -n $fork_pos " ")"└"
@@ -560,16 +572,21 @@ function _git_railway
 
         set -l local_len (string length "$local_line")
         set -l count_len (string length "$ahead")
+        # Remote and arrow above, pointing to end of upper branch
+        set -l remote_line (string repeat -n (math $main_len_no_count - 1) " ")"remote"
+        set -l arrow_line (string repeat -n (math $main_len_no_count - 1) " ")"↓"
         set -l commit_line (string repeat -n (math $local_len - 1) " ")"└─ $ahead $last_msg"
         # Align meta with start of message (after count)
         set -l meta_indent (math $local_len + 3 + $count_len)
         set -l meta_line (string repeat -n $meta_indent " ")"$last_hash $last_time"
 
         echo
-        set_color cyan
-        printf "%s" $main_line
         set_color brblack
-        printf "remote\n"
+        echo $remote_line
+        echo $arrow_line
+        set_color cyan
+        echo $main_line
+        set_color brblack
         echo $local_line
         echo $commit_line
         echo $meta_line

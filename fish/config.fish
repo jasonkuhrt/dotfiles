@@ -249,13 +249,17 @@ function _git_file_status
         end
     end
 
-    # Output grouped files
+    # Output grouped files with orange status indicators
     if test (count $staged_files) -gt 0
         set_color green
         echo "Staged ("(count $staged_files)"):"
-        set_color normal
         for f in $staged_files
-            echo "  $f"
+            set -l file_status (string sub -l 1 "$f")
+            set -l file (string sub -s 3 "$f")
+            set_color yellow
+            printf "  %s" $file_status
+            set_color normal
+            printf " %s\n" $file
         end
         echo
     end
@@ -263,9 +267,13 @@ function _git_file_status
     if test (count $unstaged_files) -gt 0
         set_color yellow
         echo "Unstaged ("(count $unstaged_files)"):"
-        set_color normal
         for f in $unstaged_files
-            echo "  $f"
+            set -l file_status (string sub -l 1 "$f")
+            set -l file (string sub -s 3 "$f")
+            set_color yellow
+            printf "  %s" $file_status
+            set_color normal
+            printf " %s\n" $file
         end
         echo
     end
@@ -273,27 +281,15 @@ function _git_file_status
     if test (count $untracked_files) -gt 0
         set_color brblack
         echo "Untracked ("(count $untracked_files)"):"
-        set_color normal
         for f in $untracked_files
-            echo "  $f"
+            set -l file_status (string sub -l 1 "$f")
+            set -l file (string sub -s 3 "$f")
+            set_color yellow
+            printf "  %s" $file_status
+            set_color normal
+            printf " %s\n" $file
         end
         echo
-    end
-
-    # Summary line
-    set -l total (math (count $staged_files) + (count $unstaged_files) + (count $untracked_files))
-    if test $total -gt 0
-        set -l parts
-        if test (count $staged_files) -gt 0
-            set -a parts (count $staged_files)" staged"
-        end
-        if test (count $unstaged_files) -gt 0
-            set -a parts (count $unstaged_files)" modified"
-        end
-        if test (count $untracked_files) -gt 0
-            set -a parts (count $untracked_files)" new"
-        end
-        echo (string join ", " $parts)
     end
 end
 
@@ -358,20 +354,19 @@ function _git_railway
             set last_msg (string sub -l 37 "$last_msg")"..."
         end
 
-        # If synced with remote, show simple viz
+        # If synced with remote, show simple viz (no remote label needed)
         if test $ahead -eq 0 -a $behind -eq 0
             set -l base_len (string length "$branch ──")
             set -l main_line "$branch ──●"
-            set -l commit_line (string repeat -n $base_len " ")"└─ \"$last_msg\""
+            set -l commit_line (string repeat -n $base_len " ")"└─ $last_msg"
             set -l meta_line (string repeat -n (math $base_len + 3) " ")"$last_hash $last_time"
-            set -l remote_line (string repeat -n $base_len " ")"remote"
 
+            echo
             set_color cyan
             echo $main_line
             set_color brblack
             echo $commit_line
             echo $meta_line
-            echo $remote_line
             set_color normal
             return
         end
@@ -407,11 +402,12 @@ function _git_railway
             set -l base_len (string length "$branch ──")
             set -l count_len (string length "$behind")
             set -l pointer_line (string repeat -n $base_len " ")"↑"
-            set -l commit_line (string repeat -n $base_len " ")"└─ $behind \"$last_msg\""
+            set -l commit_line (string repeat -n $base_len " ")"└─ $behind $last_msg"
             # Align meta with start of message (after count)
             set -l meta_indent (math $base_len + 4 + $count_len)
             set -l meta_line (string repeat -n $meta_indent " ")"$last_hash $last_time"
 
+            echo
             set_color cyan
             printf "%s" $main_line
             set_color brblack
@@ -441,12 +437,13 @@ function _git_railway
             set -l base_len (string length "$branch ──")
             set -l main_len (string length "$main_line")
             set -l count_len (string length "$ahead")
-            set -l commit_line (string repeat -n $base_len " ")"↑"(string repeat -n (math $main_len - $base_len - 1) " ")"└─ $ahead \"$last_msg\""
+            set -l commit_line (string repeat -n $base_len " ")"↑"(string repeat -n (math $main_len - $base_len - 1) " ")"└─ $ahead $last_msg"
             # Align meta with start of message (after count)
             set -l meta_indent (math $main_len + 4 + $count_len)
             set -l meta_line (string repeat -n $meta_indent " ")"$last_hash $last_time"
             set -l remote_line (string repeat -n $base_len " ")"remote"
 
+            echo
             set_color cyan
             echo $main_line
             set_color brblack
@@ -486,11 +483,12 @@ function _git_railway
 
         set -l local_len (string length "$local_line")
         set -l count_len (string length "$ahead")
-        set -l commit_line (string repeat -n (math $local_len - 1) " ")"└─ $ahead \"$last_msg\""
+        set -l commit_line (string repeat -n (math $local_len - 1) " ")"└─ $ahead $last_msg"
         # Align meta with start of message (after count)
         set -l meta_indent (math $local_len + 3 + $count_len)
         set -l meta_line (string repeat -n $meta_indent " ")"$last_hash $last_time"
 
+        echo
         set_color cyan
         printf "%s" $main_line
         set_color brblack
@@ -572,7 +570,8 @@ function _git_railway
     set -l connector_line (string repeat -n $branch_point " ")"│"(string repeat -n (math $branch_len - $branch_point - 2) " ")"│"
 
     # Line 4: commit info with connector back to branch point
-    set -l commit_line (string repeat -n $branch_point " ")"│"(string repeat -n (math $branch_len - $branch_point - 2) " ")"└─ $last_hash \"$last_msg\" $last_time"
+    set -l commit_line (string repeat -n $branch_point " ")"│"(string repeat -n (math $branch_len - $branch_point - 2) " ")"└─ $last_msg"
+    set -l meta_line (string repeat -n $branch_point " ")"│"(string repeat -n (math $branch_len - $branch_point + 1) " ")"$last_hash $last_time"
 
     # Line 5: branch name line from branch point
     set -l branch_display (string repeat -n $branch_point " ")"└"
@@ -594,11 +593,13 @@ function _git_railway
     end
 
     # Print the railway
+    echo
     set_color brblack
     echo $trunk_line
     echo $branch_line
     echo $connector_line
     echo $commit_line
+    echo $meta_line
     set_color cyan
     printf "%s%s" $branch_display $branch
     set_color yellow
@@ -629,13 +630,11 @@ end
 
 set --export GITHUB_HANDLE jasonkuhrt
 
-fish_add_path /home/linuxbrew/.linuxbrew/opt/node@16/bin
-
-set -gx LDFLAGS "-L/home/linuxbrew/.linuxbrew/opt/node@16/lib"
-set -gx CPPFLAGS "-I/home/linuxbrew/.linuxbrew/opt/node@16/include"
+# Node (keg-only, needs explicit PATH)
+fish_add_path /opt/homebrew/opt/node@24/bin
 
 # Node package managers
-# pnpm manages node versions; npm globals go to fixed location (survives node version changes)
+# npm globals go to fixed location (survives node version changes)
 # See README "Node Package Management" for details
 set -gx NPM_GLOBAL "$HOME/.npm-global"
 set -gx PNPM_HOME "$HOME/Library/pnpm"

@@ -30,6 +30,7 @@ brew "yj"            # YAML/JSON/TOML converter
 # Shell & scripting
 brew "fish"          # modern shell
 brew "bash"          # modern bash (macOS ships old version)
+brew "starship"      # cross-shell prompt
 brew "direnv"        # per-directory env vars
 brew "shellcheck"    # shell script linter
 brew "shfmt"         # shell formatter

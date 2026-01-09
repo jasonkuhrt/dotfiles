@@ -48,6 +48,7 @@
 | _(configured via `./dock/apps.txt`)_  |                               |
 | __Other__                             |                               |
 | `~/.config/dprint/dprint.json`        | `./dprint/dprint.json`        |
+| `~/.config/starship.toml`             | `./starship/starship.toml`    |
 | `~/.config/gh/config.yml`             | `./gh/config.yml`             |
 | `~/.config/git/ignore`                | `./git/ignore`                |
 | `~/.config/libra/config.json`         | `./libra/config.json`         |
@@ -263,6 +264,7 @@ Quick reference for all the tools installed via Brewfile. Forget what something 
 | Nav      | `z`          | Jump to frecent directories           | `z proj` → `~/projects`                        |
 | Shell    | `direnv`     | Auto-load .envrc per directory        | `echo 'export API_KEY=xxx' > .envrc`           |
 | Shell    | `fish`       | Modern shell with autosuggestions     | (default shell)                                |
+| Shell    | `starship`   | Cross-shell prompt                    | config: `~/.config/starship.toml`              |
 | Shell    | `gum`        | Pretty shell script UI components     | `gum choose "opt1" "opt2"`                     |
 | Shell    | `shellcheck` | Lint shell scripts                    | `shellcheck script.sh`                         |
 | Shell    | `shfmt`      | Format shell scripts                  | `shfmt -w script.sh`                           |

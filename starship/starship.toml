@@ -1,0 +1,74 @@
+# Starship prompt configuration
+# https://starship.rs/config/
+
+# Minimal prompt - git details handled by `git` dashboard command
+format = """
+$directory\
+$git_branch\
+$git_status\
+$character"""
+
+# No blank line between prompts
+add_newline = false
+
+[character]
+success_symbol = '[❯](bold green)'
+error_symbol = '[❯](bold red)'
+
+[directory]
+truncation_length = 3
+truncate_to_repo = true
+style = 'bold cyan'
+
+[git_branch]
+format = '[$branch]($style) '
+style = 'bold yellow'
+
+[git_status]
+# Hide file status indicators - use `git` dashboard for details
+stashed = ''
+modified = ''
+untracked = ''
+staged = ''
+deleted = ''
+renamed = ''
+conflicted = ''
+
+# Show only ahead/behind with counts
+format = '([$ahead_behind]($style) )'
+ahead = '[⇡${count}](green)'
+behind = '[⇣${count}](red)'
+diverged = '[⇡${ahead_count}](green)[⇣${behind_count}](red)'
+up_to_date = ''
+style = 'bold'
+
+# Disable modules we don't need in prompt
+[package]
+disabled = true
+
+[nodejs]
+disabled = true
+
+[python]
+disabled = true
+
+[rust]
+disabled = true
+
+[golang]
+disabled = true
+
+[aws]
+disabled = true
+
+[gcloud]
+disabled = true
+
+[azure]
+disabled = true
+
+[docker_context]
+disabled = true
+
+[kubernetes]
+disabled = true

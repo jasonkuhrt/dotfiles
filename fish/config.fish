@@ -5,43 +5,9 @@ if status is-interactive
     # Commands to run in interactive sessions can go here
 end
 
-# Tide prompt presets
-# Usage: tide-daily (default) or tide-zen (minimal)
-# Core functions (_tide-*-vars) set variables only, for use in scripts
-# Interactive functions (tide-*) set vars then restart shell
-
-function _tide-daily-vars --description "Set daily prompt variables (no shell restart)"
-    set -U tide_left_prompt_items pwd git newline character
-    set -U tide_right_prompt_items status cmd_duration context jobs direnv node time
-    set -U tide_prompt_add_newline_before true
-    set -U tide_prompt_transient_enabled false
-end
-
-function _tide-zen-vars --description "Set zen prompt variables (no shell restart)"
-    set -U tide_left_prompt_items character
-    set -U tide_right_prompt_items status cmd_duration jobs
-    set -U tide_prompt_add_newline_before false
-    set -U tide_prompt_transient_enabled false
-end
-
-function tide-daily --description "Daily prompt: 2-line, time, git, full info"
-    _tide-daily-vars
-    exec fish
-end
-
-function tide-zen --description "Zen prompt: minimal, 1-line, no distractions"
-    _tide-zen-vars
-    exec fish
-end
-
-function tide-toggle --description "Toggle between daily and zen prompts"
-    if test "$tide_left_prompt_items" = "character"
-        tide-daily
-    else
-        tide-zen
-    end
-end
-alias tt='tide-toggle'
+# Prompt (Starship)
+# Config: ~/.config/starship/starship.toml
+starship init fish | source
 
 # Secrets
 # =======

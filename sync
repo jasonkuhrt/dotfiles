@@ -309,6 +309,8 @@ if has_cmd dprint; then
     info "dprint plugins checked"
 fi
 
+link_file "$HERE/starship/starship.toml" "$HOME/.config/starship.toml" "starship.toml"
+
 mkdir -p "$HOME/.config/gh"
 link_file "$HERE/gh/config.yml" "$HOME/.config/gh/config.yml" "gh/config.yml"
 

@@ -64,6 +64,7 @@
 * __Re-run `./sync` when:__
   * new packages added to `Brewfile`
   * new features added to `sync`
+* __Fisher plugin removals__ — `fisher update` handles removals, but some plugins (e.g. tide) leave behind universal variables in `~/.config/fish/fish_variables` that need manual cleanup
 
 ## Node Package Management
 

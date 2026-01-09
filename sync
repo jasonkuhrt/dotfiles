@@ -359,8 +359,8 @@ if [ ! -f "$HERE/fish/config.secrets.fish" ]; then
 fi
 
 link_file "$HERE/fish/config.fish" "$HOME/.config/fish/config.fish" "config.fish"
-link_file "$HERE/fish/fish_plugins" "$HOME/.config/fish/fish_plugins" "fish_plugins"
 link_file "$HERE/fish/config.secrets.fish" "$HOME/.config/fish/config.secrets.fish" "config.secrets.fish"
+# fish_plugins handled separately in Fisher section (copy, not symlink)
 
 # Fisher plugins installed after Homebrew (which installs fish)
 
@@ -419,16 +419,6 @@ else
 fi
 
 # ─────────────────────────────────────────────────────────────
-header "Serena MCP"
-
-if has_cmd uvx; then
-    uv cache clean serena 2>/dev/null || true
-    info "Serena cache cleared (will fetch latest on next run)"
-else
-    skip "Serena (uv not installed)"
-fi
-
-# ─────────────────────────────────────────────────────────────
 header "Homebrew"
 
 # Ensure Homebrew is in PATH for this session (Apple Silicon)
@@ -463,8 +453,9 @@ else
     fi
 
     # Install formulae first (no sudo needed)
+    # Skip casks and MAS apps - they're handled separately below
     info "Installing formulae..."
-    if run_logged "Homebrew formulae" brew bundle --file="$HERE/Brewfile" --no-lock --formula; then
+    if HOMEBREW_BUNDLE_CASK_SKIP=1 HOMEBREW_BUNDLE_MAS_SKIP=1 run_logged "Homebrew formulae" brew bundle --file="$HERE/Brewfile"; then
         task "Formulae installed"
     else
         warn "Some formulae may have failed (see $LOG_FILE)"
@@ -473,7 +464,7 @@ else
     # Install casks separately with context (these may need sudo)
     info "Installing casks (may prompt for password)..."
     # Install each cask individually so user knows which one is asking
-    grep -E "^cask " "$HERE/Brewfile" | sed 's/cask "//;s/"$//' | while read -r cask; do
+    grep -E "^cask " "$HERE/Brewfile" | sed 's/cask "//;s/".*//' | while read -r cask; do
         if ! brew list --cask "$cask" &>/dev/null; then
             printf "    ${DIM}Installing %s...${RESET}\n" "$cask"
             if brew install --cask "$cask" >> "$LOG_FILE" 2>&1; then
@@ -487,7 +478,7 @@ else
     # Install Mac App Store apps
     if grep -qE "^mas " "$HERE/Brewfile"; then
         info "Installing Mac App Store apps..."
-        if run_logged "Mac App Store" brew bundle --file="$HERE/Brewfile" --no-lock --mas; then
+        if HOMEBREW_BUNDLE_BREW_SKIP=1 HOMEBREW_BUNDLE_CASK_SKIP=1 run_logged "Mac App Store" brew bundle --file="$HERE/Brewfile"; then
             task "Mac App Store apps installed"
         else
             warn "Some MAS apps may have failed (see $LOG_FILE)"
@@ -534,26 +525,31 @@ if has_cmd fish; then
         skip "Fisher"
     fi
 
-    # Sync plugins from fish_plugins file
+    # Sync fish_plugins (copy, not symlink - protects dotfiles from fisher corruption)
+    FISH_PLUGINS_SRC="$HERE/fish/fish_plugins"
+    FISH_PLUGINS_DST="$HOME/.config/fish/fish_plugins"
+
+    if [ -f "$FISH_PLUGINS_DST" ] && [ ! -L "$FISH_PLUGINS_DST" ]; then
+        # Local file exists and is not a symlink - check for drift
+        if ! diff -q "$FISH_PLUGINS_SRC" "$FISH_PLUGINS_DST" >/dev/null 2>&1; then
+            warn "Local fish_plugins differs from dotfiles:"
+            diff "$FISH_PLUGINS_SRC" "$FISH_PLUGINS_DST" || true
+            printf "      ${DIM}If you added plugins locally, update dotfiles/fish/fish_plugins${RESET}\n"
+        fi
+    fi
+
+    # Remove symlink if exists (migration from old approach)
+    [ -L "$FISH_PLUGINS_DST" ] && rm "$FISH_PLUGINS_DST"
+
+    # Copy dotfiles version (authoritative)
+    cp "$FISH_PLUGINS_SRC" "$FISH_PLUGINS_DST"
+
+    # Sync plugins
     info "Syncing Fisher plugins..."
     if run_logged "Fisher update" fish -c "fisher update"; then
         task "Fisher plugins synced"
     else
         warn "Fisher update failed (see $LOG_FILE)"
-    fi
-
-    # Configure tide prompt (use core function without exec fish)
-    # Check if already configured with daily preset
-    current_left=$(fish -c 'echo $tide_left_prompt_items' 2>/dev/null || echo "")
-    expected_left="pwd git newline character"
-    if [ "$current_left" = "$expected_left" ]; then
-        skip "Tide prompt (daily preset)"
-    else
-        if run_logged "Tide configure" fish -c "_tide-daily-vars"; then
-            task "Tide configured (daily preset)"
-        else
-            warn "Tide configure failed (see $LOG_FILE)"
-        fi
     fi
 else
     warn "Fish not installed, skipping Fisher setup"
@@ -620,8 +616,8 @@ if [ "$(uname)" = "Darwin" ]; then
 
     info "Configuring keyboard..."
     set_default "NSGlobalDomain" "ApplePressAndHoldEnabled" "-bool" "false" "Key repeat enabled"
-    set_default "NSGlobalDomain" "KeyRepeat" "-int" "1" "Fast key repeat rate"
-    set_default "NSGlobalDomain" "InitialKeyRepeat" "-int" "10" "Short initial key repeat delay"
+    set_default "NSGlobalDomain" "KeyRepeat" "-int" "2" "Fast key repeat rate"
+    set_default "NSGlobalDomain" "InitialKeyRepeat" "-int" "15" "Short initial key repeat delay"
     set_default "NSGlobalDomain" "NSAutomaticPeriodSubstitutionEnabled" "-bool" "false" "Disabled double-space period"
     set_default "NSGlobalDomain" "NSAutomaticQuoteSubstitutionEnabled" "-bool" "false" "Disabled smart quotes"
     set_default "NSGlobalDomain" "NSAutomaticDashSubstitutionEnabled" "-bool" "false" "Disabled smart dashes"

@@ -371,11 +371,23 @@ link_file "$HERE/git/ignore" "$HOME/.config/git/ignore" "git/ignore"
 
 # GitHub CLI protocol
 if has_cmd gh; then
-    gh config set git_protocol ssh 2>/dev/null
-    task "GitHub CLI protocol set to SSH"
+    current_protocol=$(gh config get git_protocol 2>/dev/null || echo "")
+    if [ "$current_protocol" = "ssh" ]; then
+        skip "GitHub CLI protocol"
+    else
+        gh config set git_protocol ssh 2>/dev/null
+        task "GitHub CLI protocol set to SSH"
+    fi
+
     # Fix dotfiles repo remote (cloned via HTTPS before this ran)
-    git -C "$HERE" remote set-url origin git@github.com:jasonkuhrt/dotfiles.git 2>/dev/null
-    task "Dotfiles remote set to SSH"
+    current_remote=$(git -C "$HERE" remote get-url origin 2>/dev/null || echo "")
+    expected_remote="git@github.com:jasonkuhrt/dotfiles.git"
+    if [ "$current_remote" = "$expected_remote" ]; then
+        skip "Dotfiles remote"
+    else
+        git -C "$HERE" remote set-url origin "$expected_remote" 2>/dev/null
+        task "Dotfiles remote set to SSH"
+    fi
 else
     skip "GitHub CLI (not installed)"
 fi

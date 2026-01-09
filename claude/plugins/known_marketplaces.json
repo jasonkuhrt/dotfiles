@@ -2,10 +2,10 @@
   "jasonkuhrt": {
     "source": {
       "source": "directory",
-      "path": "/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/claude-jasonkuhrt-marketplace"
+      "path": "/Users/jasonkuhrt/projects/jasonkuhrt/claude-marketplace"
     },
-    "installLocation": "/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/claude-jasonkuhrt-marketplace",
-    "lastUpdated": "2026-01-08T00:00:00.000Z",
+    "installLocation": "/Users/jasonkuhrt/projects/jasonkuhrt/claude-marketplace",
+    "lastUpdated": "2026-01-09T00:00:00.000Z",
     "autoUpdate": true
   },
   "claude-plugins-official": {

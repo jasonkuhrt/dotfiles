@@ -1,5 +1,0 @@
-{
-  "name": "node-packages",
-  "version": "1.0.0",
-  "description": "Node.js package management patterns: npm, pnpm, npx, and when to use each"
-}

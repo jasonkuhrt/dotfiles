@@ -99,6 +99,7 @@ set --universal fish_greeting ""
 
 abbr -a g git
 abbr -a gst 'git status'
+abbr -a gd 'git diff'
 abbr -a gb 'git branch'
 abbr -a gp 'git push'
 abbr -a ga 'git add'
@@ -245,14 +246,14 @@ function _git_file_status
 
         # Untracked
         if test "$index_status" = "?"
-            set -a untracked_files "+ $file"
+            set -a untracked_files "U $file"
         end
     end
 
     # Output grouped files with orange status indicators
     if test (count $staged_files) -gt 0
         set_color green
-        echo "Staged ("(count $staged_files)"):"
+        echo "Staged ("(count $staged_files)")"
         for f in $staged_files
             set -l file_status (string sub -l 1 "$f")
             set -l file (string sub -s 3 "$f")
@@ -266,7 +267,7 @@ function _git_file_status
 
     if test (count $unstaged_files) -gt 0
         set_color yellow
-        echo "Unstaged ("(count $unstaged_files)"):"
+        echo "Unstaged ("(count $unstaged_files)")"
         for f in $unstaged_files
             set -l file_status (string sub -l 1 "$f")
             set -l file (string sub -s 3 "$f")
@@ -280,7 +281,7 @@ function _git_file_status
 
     if test (count $untracked_files) -gt 0
         set_color brblack
-        echo "Untracked ("(count $untracked_files)"):"
+        echo "Untracked ("(count $untracked_files)")"
         for f in $untracked_files
             set -l file_status (string sub -l 1 "$f")
             set -l file (string sub -s 3 "$f")
@@ -358,24 +359,18 @@ function _git_railway
         if test $ahead -eq 0 -a $behind -eq 0
             set -l base_len (string length "$branch ──")
 
-            # Check for zen history mode (env var + clean working directory)
-            set -l dirty_files (command git status --porcelain 2>/dev/null)
-            set -l is_clean (test -z "$dirty_files" && echo 1 || echo 0)
-            if test -n "$GIT_DASHBOARD_ZEN_HISTORY" -a $is_clean -eq 1
-                # Show recent commit history
+            # Zen history mode: show recent commits when synced (default, env var to disable)
+            if test -z "$GIT_DASHBOARD_NO_HISTORY"
+                # Show recent commit history as compact vertical list
                 set -l recent_count 5
                 set -l commits (command git log -$recent_count --format='%h|%s|%cr' 2>/dev/null)
 
-                set -l main_line "$branch ──●"
-                for i in (seq 2 $recent_count)
-                    set main_line $main_line"──●"
-                end
-
                 echo
                 set_color cyan
-                echo $main_line
+                echo $branch
                 set_color brblack
 
+                set -l total (count $commits)
                 set -l idx 0
                 for commit in $commits
                     set idx (math $idx + 1)
@@ -384,23 +379,33 @@ function _git_railway
                     set -l c_msg $parts[2]
                     set -l c_time (string replace ' ago' '' $parts[3])
 
-                    # Truncate message
-                    if test (string length "$c_msg") -gt 40
-                        set c_msg (string sub -l 37 "$c_msg")"..."
-                    end
+                    # Railway connector
+                    set -l connector (test $idx -lt $total && echo "├─●" || echo "└─●")
 
-                    # Calculate indent based on position
-                    set -l indent (math $base_len + "($idx - 1) * 3")
-                    if test $idx -eq 1
-                        set -l commit_line (string repeat -n $base_len " ")"└─ $c_msg"
-                        set -l meta_line (string repeat -n (math $base_len + 3) " ")"$c_hash $c_time"
-                        echo $commit_line
-                        echo $meta_line
+                    # Parse conventional commit: type(scope): message
+                    set -l cc_match (string match -r '^([a-z]+)(\(([^)]+)\))?:\s*(.*)$' $c_msg)
+                    if test (count $cc_match) -ge 2
+                        set -l c_type $cc_match[2]
+                        set -l c_scope $cc_match[4]
+                        set -l c_title $cc_match[5]
+
+                        # Pad type to 8 chars, scope to 8 chars
+                        set -l type_pad (string pad -r -w 8 $c_type)
+                        set -l scope_pad (string pad -r -w 8 $c_scope)
+
+                        # Truncate title
+                        if test (string length "$c_title") -gt 25
+                            set c_title (string sub -l 22 "$c_title")"..."
+                        end
+                        set -l title_pad (string pad -r -w 25 $c_title)
+
+                        printf "  %s %s %s %s  %s %s\n" $connector $type_pad $scope_pad $title_pad $c_hash $c_time
                     else
-                        set -l commit_line (string repeat -n $indent " ")"└─ $c_msg"
-                        set -l meta_line (string repeat -n (math $indent + 3) " ")"$c_hash $c_time"
-                        echo $commit_line
-                        echo $meta_line
+                        # Non-conventional commit, show as-is
+                        if test (string length "$c_msg") -gt 35
+                            set c_msg (string sub -l 32 "$c_msg")"..."
+                        end
+                        echo "  $connector $c_msg  $c_hash $c_time"
                     end
                 end
                 set_color normal

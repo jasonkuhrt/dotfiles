@@ -66,6 +66,40 @@
 
 ## Node Package Management
 
+```
+┌───────────────────────────────────────────────────────────────┐
+│  BOOTSTRAP (./sync)                                           │
+├───────────────────────────────────────────────────────────────┤
+│                                                               │
+│  Homebrew ───▶ pnpm ───▶ npm ───▶ corepack                    │
+│     │           │         │          │                        │
+│     ▼           ▼         ▼          ▼                        │
+│  pnpm +      LTS node   global    per-project                 │
+│  bootstrap   (runtime)  CLI tools pnpm/yarn                   │
+│  node                                                         │
+│                                                               │
+├───────────────────────────────────────────────────────────────┤
+│  RUNTIME PATH                                                 │
+├───────────────────────────────────────────────────────────────┤
+│                                                               │
+│  1st  npm globals ────▶ CLI tools (including corepack)        │
+│            │                                                  │
+│            ▼                                                  │
+│  2nd  pnpm ───────────▶ node + npm (shadows brew)             │
+│            │                                                  │
+│            ▼                                                  │
+│  3rd  Homebrew ───────▶ pnpm (bootstrap only)                 │
+│                                                               │
+├───────────────────────────────────────────────────────────────┤
+│  PROJECT-LEVEL                                                │
+├───────────────────────────────────────────────────────────────┤
+│                                                               │
+│  pnpm/yarn ───▶ corepack ───▶ uses version from               │
+│                               packageManager field            │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+```
+
 * __PATH & tool layout__
   ```
   Priority   Tool       Manages               Location
@@ -74,13 +108,13 @@
   2nd        pnpm       node versions         ~/Library/pnpm
   3rd        Homebrew   initial bootstrap     /opt/homebrew/bin
   ```
-* __Bootstrap flow__ (fresh machine)
+* __Bootstrap flow__ (handled by `./sync`)
   ```
   ↓   brew install node pnpm       initial node + pnpm
-  ↓   pnpm env use --global lts    pnpm installs its own node, shadows brew's
-  ↓   ./sync                       installs npm globals to ~/.npm-global
+  ↓   pnpm env use --global lts    pnpm installs LTS node, shadows brew's
+  ↓   npm install -g ...           globals installed to ~/.npm-global
   ```
-  * after bootstrap, brew's node is unused (pnpm's comes first in PATH)
+  * after sync, brew's node is unused (pnpm's comes first in PATH)
 * __npx fallback chain__
   ```
   ↓   local node_modules
@@ -91,6 +125,19 @@
 * __Key insight__
   * npm globals install to `~/.npm-global` independent of node version
   * `pnpm env use 22` won't break your global tools
+* __Updating tools__
+  | Tool | Command | Why |
+  |------|---------|-----|
+  | pnpm | `brew upgrade pnpm` | pnpm is installed via Homebrew, not self-managed |
+  | node | `pnpm env use --global lts` | pnpm manages node versions |
+  * don't use `pnpm self-update` — it conflicts with Homebrew's version tracking
+* __Project-specific pnpm/yarn versions__
+  * projects may specify `"packageManager": "pnpm@9.x.x"` in package.json
+  * corepack handles this automatically (installed and enabled by sync)
+  * corepack manages pnpm and yarn; npm is bundled with node separately
+* __Pitfall: don't `brew install corepack`__
+  * brew's corepack conflicts with brew's pnpm (both install `pnpm` and `pnpx` binaries)
+  * use npm global install instead (handled by sync)
 
 ## Manual Setup (after sync)
 
@@ -153,6 +200,7 @@
 ## Notes
 
 * __Browser sync__ — automatic via Google login (Chrome) and iCloud (Safari)
+* __Keyboard settings__ — sync sets fast key repeat via `defaults`, but requires logout/login to take effect
 
 ## Claude Code Resources
 

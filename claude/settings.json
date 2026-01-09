@@ -14,6 +14,7 @@
       "Skill(superpowers-developing-for-claude-code:*)",
       "Skill(plugin-dev:*)",
       "Skill(jasonkuhrt:*)",
+      "Skill(diagrams:*)",
       "mcp__*"
     ],
     "deny": [],
@@ -28,6 +29,7 @@
     "typescript-lsp@claude-plugins-official": true,
     "superpowers@superpowers-marketplace": true,
     "superpowers-developing-for-claude-code@superpowers-marketplace": true,
+    "claude-code@jasonkuhrt": true,
     "diagrams@jasonkuhrt": true,
     "effect@jasonkuhrt": true,
     "kitz@jasonkuhrt": true,

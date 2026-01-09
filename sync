@@ -64,6 +64,7 @@ warn() {
 }
 
 # Symlink a file, skip if already correct
+# Safety: warns and skips if dest is a real file with content (prevents data loss)
 link_file() {
     local src="$1"
     local dest="$2"
@@ -72,6 +73,12 @@ link_file() {
     if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src" ]; then
         skip "$name"
         return 0
+    fi
+
+    # Safety check: don't overwrite real files with content
+    if [ -f "$dest" ] && [ ! -L "$dest" ] && [ -s "$dest" ]; then
+        warn "$name: $dest exists with content, skipping (backup and remove to sync)"
+        return 1
     fi
 
     mkdir -p "$(dirname "$dest")"
@@ -436,6 +443,29 @@ else
 fi
 
 # ─────────────────────────────────────────────────────────────
+header "Node.js"
+
+# pnpm manages node versions; brew's node is just for bootstrapping pnpm
+# See README "Node Package Management" for details
+PNPM_HOME="$HOME/Library/pnpm"
+if has_cmd pnpm; then
+    if [ ! -d "$PNPM_HOME/nodejs" ]; then
+        info "Installing Node.js LTS via pnpm..."
+        if run_logged "pnpm env" pnpm env use --global lts; then
+            task "Node.js LTS installed"
+        else
+            warn "pnpm env failed (see $LOG_FILE)"
+        fi
+    else
+        skip "Node.js LTS (already managed by pnpm)"
+    fi
+    # Add pnpm's node to PATH for rest of this script
+    export PATH="$PNPM_HOME:$PATH"
+else
+    warn "pnpm not installed, skipping Node.js setup"
+fi
+
+# ─────────────────────────────────────────────────────────────
 header "Fisher Plugins"
 
 # Now fish is installed via Homebrew, set up Fisher
@@ -474,8 +504,7 @@ fi
 header "npm Global Packages"
 
 # npm globals go to ~/.npm-global (configured via .npmrc prefix)
-# This location is independent of pnpm's node version management
-# See README "Node Package Management" for details
+# Uses node from pnpm (set up in Node.js section above)
 if has_cmd npm; then
     mkdir -p "$HOME/.npm-global/bin"
     info "Installing global packages to ~/.npm-global..."
@@ -484,6 +513,17 @@ if has_cmd npm; then
         'npm install -g "$item"'
 else
     warn "npm not installed, skipping global packages"
+fi
+
+# Enable corepack for per-project pnpm/yarn version management
+# Idempotent - safe to run multiple times
+if has_cmd corepack; then
+    info "Enabling corepack..."
+    if run_logged "corepack enable" corepack enable; then
+        task "Corepack enabled"
+    else
+        warn "corepack enable failed (see $LOG_FILE)"
+    fi
 fi
 
 # ─────────────────────────────────────────────────────────────

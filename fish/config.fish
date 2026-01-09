@@ -347,249 +347,105 @@ function _git_railway
         set upstream (string replace -r '^[^/]+/' '' "$upstream")
     end
 
-    # Trunk handling
+    # Trunk handling - unified vertical history with remote marker
     if _git_is_trunk
-        set -l last_hash (command git log -1 --format='%h' 2>/dev/null)
-        set -l last_msg (command git log -1 --format='%s' 2>/dev/null)
-        set -l last_time (command git log -1 --format='%cr' 2>/dev/null | string replace ' ago' '')
-
-        # Truncate message
-        if test (string length "$last_msg") -gt 40
-            set last_msg (string sub -l 37 "$last_msg")"..."
+        # Remote position: if ahead > 0, remote is at commit index (ahead + 1)
+        # This marks the fork point; if also behind, remote has moved further
+        set -l remote_at 0
+        if test $ahead -gt 0
+            set remote_at (math $ahead + 1)
         end
 
-        # If synced with remote, show simple viz (no remote label needed)
-        if test $ahead -eq 0 -a $behind -eq 0
-            set -l base_len (string length "$branch ──")
-
-            # Zen history mode: show recent commits when synced (default, env var to disable)
-            if test -z "$GIT_DASHBOARD_NO_HISTORY"
-                # Show recent commit history as compact vertical list
-                set -l recent_count 5
-                set -l commits (command git log -$recent_count --format='%h|%s|%cr' 2>/dev/null)
-
-                echo
-                set_color cyan
-                echo $branch
-                set_color brblack
-
-                set -l total (count $commits)
-                set -l idx 0
-                for commit in $commits
-                    set idx (math $idx + 1)
-                    set -l parts (string split '|' $commit)
-                    set -l c_hash $parts[1]
-                    set -l c_msg $parts[2]
-                    set -l c_time (string replace ' ago' '' $parts[3])
-                    # Shorten time units
-                    set c_time (string replace 'minutes' 'm' $c_time)
-                    set c_time (string replace 'minute' 'm' $c_time)
-                    set c_time (string replace 'hours' 'h' $c_time)
-                    set c_time (string replace 'hour' 'h' $c_time)
-                    set c_time (string replace 'days' 'd' $c_time)
-                    set c_time (string replace 'day' 'd' $c_time)
-                    set c_time (string replace 'weeks' 'w' $c_time)
-                    set c_time (string replace 'week' 'w' $c_time)
-                    set c_time (string replace 'months' 'mo' $c_time)
-                    set c_time (string replace 'month' 'mo' $c_time)
-                    set c_time (string replace ' ' '' $c_time)
-
-                    # First commit is current (not dim), rest are dim
-                    if test $idx -eq 1
-                        set_color normal
-                    else
-                        set_color brblack
-                    end
-
-                    # Railway connector
-                    set -l connector (test $idx -lt $total && echo "├─●" || echo "└─●")
-
-                    # Parse conventional commit: type(scope): message
-                    set -l cc_match (string match -r '^([a-z]+)(\(([^)]+)\))?:\s*(.*)$' $c_msg)
-                    if test (count $cc_match) -ge 2
-                        set -l c_type $cc_match[2]
-                        set -l c_scope $cc_match[4]
-                        set -l c_title $cc_match[5]
-
-                        # Pad type to 5 chars, scope to 5 chars
-                        set -l type_pad (string pad -r -w 5 $c_type)
-                        set -l scope_pad (string pad -r -w 5 $c_scope)
-
-                        # Truncate title
-                        if test (string length "$c_title") -gt 28
-                            set c_title (string sub -l 25 "$c_title")"..."
-                        end
-
-                        printf "  %s %s %s %s  %s %s\n" $connector $type_pad $scope_pad $c_title $c_hash $c_time
-                    else
-                        # Non-conventional commit, show as-is
-                        if test (string length "$c_msg") -gt 35
-                            set c_msg (string sub -l 32 "$c_msg")"..."
-                        end
-                        echo "  $connector $c_msg  $c_hash $c_time"
-                    end
-                end
-                set_color normal
-                return
-            end
-
-            # Default: show just the latest commit
-            set -l main_line "$branch ──●"
-            set -l commit_line (string repeat -n $base_len " ")"└─ $last_msg"
-            set -l meta_line (string repeat -n (math $base_len + 3) " ")"$last_hash $last_time"
-
-            echo
-            set_color cyan
-            echo $main_line
-            set_color brblack
-            echo $commit_line
-            echo $meta_line
-            set_color normal
-            return
-        end
-
-        # Diverged from remote - show railway
-        # Only truncate if hiding 2+ commits (otherwise just show all)
-        set -l max_dots 5
-        set -l ahead_hidden (math "$ahead - $max_dots")
-        set -l behind_hidden (math "$behind - $max_dots")
-        set -l ahead_truncated (test $ahead_hidden -ge 2 && echo 1 || echo 0)
-        set -l behind_truncated (test $behind_hidden -ge 2 && echo 1 || echo 0)
-        # If truncating, show max_dots; otherwise show all
-        set -l show_ahead (test $ahead_truncated -eq 1 && echo $max_dots || echo $ahead)
-        set -l show_behind (test $behind_truncated -eq 1 && echo $max_dots || echo $behind)
-
-        # Case 1: Only behind (need to pull, no local commits)
-        if test $ahead -eq 0
-            #                    remote
-            #                    ↓
-            # main ──●──●──●──●──●
-            #        └─ 2 228b3e5 "feat..." 4m
-            set -l main_line "$branch ──●"
-            if test $behind_truncated -eq 1
-                set main_line $main_line"──⋮$behind_hidden"
-            end
-            if test $show_behind -gt 0
-                for i in (seq 1 $show_behind)
-                    set main_line $main_line"──●"
-                end
-            end
-
-            set -l base_len (string length "$branch ──")
-            set -l main_len (string length "$main_line")
-            set -l count_len (string length "$behind")
-            # Remote and arrow above the line, pointing to last ● (remote position)
-            set -l remote_line (string repeat -n (math $main_len - 1) " ")"remote"
-            set -l arrow_line (string repeat -n (math $main_len - 1) " ")"↓"
-            # Commit drops from first ● (our position)
-            set -l commit_line (string repeat -n $base_len " ")"└─ $behind $last_msg"
-            # Align meta with start of message (after count)
-            set -l meta_indent (math $base_len + 4 + $count_len)
-            set -l meta_line (string repeat -n $meta_indent " ")"$last_hash $last_time"
-
-            echo
-            set_color brblack
-            echo $remote_line
-            echo $arrow_line
-            set_color cyan
-            echo $main_line
-            set_color brblack
-            echo $commit_line
-            echo $meta_line
-            set_color normal
-            return
-        end
-
-        # Case 2: Only ahead (remote hasn't moved)
-        if test $behind -eq 0
-            #        remote
-            #        ↓
-            # main ──●──●──●──●──●
-            #                    └─ 5 feat... e8895f7 2m
-            set -l main_line "$branch ──●"
-            if test $ahead_truncated -eq 1
-                set main_line $main_line"──⋮$ahead_hidden"
-            end
-            if test $show_ahead -gt 0
-                for i in (seq 1 $show_ahead)
-                    set main_line $main_line"──●"
-                end
-            end
-
-            set -l base_len (string length "$branch ──")
-            set -l main_len (string length "$main_line")
-            set -l count_len (string length "$ahead")
-            # Remote and arrow above the line, pointing to first ●
-            set -l remote_line (string repeat -n $base_len " ")"remote"
-            set -l arrow_line (string repeat -n $base_len " ")"↓"
-            # Commit drops from last ●
-            set -l commit_line (string repeat -n (math $main_len - 1) " ")"└─ $ahead $last_msg"
-            # Align meta with start of message (after count)
-            set -l meta_indent (math $main_len + 3 + $count_len)
-            set -l meta_line (string repeat -n $meta_indent " ")"$last_hash $last_time"
-
-            echo
-            set_color brblack
-            echo $remote_line
-            echo $arrow_line
-            set_color cyan
-            echo $main_line
-            set_color brblack
-            echo $commit_line
-            echo $meta_line
-            set_color normal
-            return
-        end
-
-        # Case 3: Diverged (both ahead and behind)
-        #                remote
-        #                ↓
-        # main ──●──┬──●──● 2
-        #           └──●──●
-        #                 └─ 2 feat... sha 4m
-        set -l main_line "$branch ──●──┬"
-        if test $behind_truncated -eq 1
-            set main_line $main_line"──⋮$behind_hidden"
-        end
-        if test $show_behind -gt 0
-            for i in (seq 1 $show_behind)
-                set main_line $main_line"──●"
-            end
-        end
-        set -l main_len_no_count (string length "$main_line")
-        set main_line $main_line" $behind"
-
-        set -l fork_pos (string length "$branch ──●──")
-        set -l local_line (string repeat -n $fork_pos " ")"└"
-        if test $ahead_truncated -eq 1
-            set local_line $local_line"──⋮$ahead_hidden"
-        end
-        if test $show_ahead -gt 0
-            for i in (seq 1 $show_ahead)
-                set local_line $local_line"──●"
-            end
-        end
-
-        set -l local_len (string length "$local_line")
-        set -l count_len (string length "$ahead")
-        # Remote and arrow above, pointing to end of upper branch
-        set -l remote_line (string repeat -n (math $main_len_no_count - 1) " ")"remote"
-        set -l arrow_line (string repeat -n (math $main_len_no_count - 1) " ")"↓"
-        set -l commit_line (string repeat -n (math $local_len - 1) " ")"└─ $ahead $last_msg"
-        # Align meta with start of message (after count)
-        set -l meta_indent (math $local_len + 3 + $count_len)
-        set -l meta_line (string repeat -n $meta_indent " ")"$last_hash $last_time"
+        set -l recent_count 5
+        set -l commits (command git log -$recent_count --format='%h|%s|%cr' 2>/dev/null)
+        set -l total (count $commits)
 
         echo
-        set_color brblack
-        echo $remote_line
-        echo $arrow_line
         set_color cyan
-        echo $main_line
-        set_color brblack
-        echo $local_line
-        echo $commit_line
-        echo $meta_line
+        # Show branch name with behind indicator if needed
+        if test $behind -gt 0
+            printf "%s " $branch
+            set_color red
+            printf "↓%d" $behind
+            set_color normal
+        else
+            echo $branch
+        end
+
+        set -l idx 0
+        for commit in $commits
+            set idx (math $idx + 1)
+            set -l parts (string split '|' $commit)
+            set -l c_hash $parts[1]
+            set -l c_msg $parts[2]
+            set -l c_time (string replace ' ago' '' $parts[3])
+            # Shorten time units
+            set c_time (string replace 'minutes' 'm' $c_time)
+            set c_time (string replace 'minute' 'm' $c_time)
+            set c_time (string replace 'hours' 'h' $c_time)
+            set c_time (string replace 'hour' 'h' $c_time)
+            set c_time (string replace 'days' 'd' $c_time)
+            set c_time (string replace 'day' 'd' $c_time)
+            set c_time (string replace 'weeks' 'w' $c_time)
+            set c_time (string replace 'week' 'w' $c_time)
+            set c_time (string replace 'months' 'mo' $c_time)
+            set c_time (string replace 'month' 'mo' $c_time)
+            set c_time (string replace ' ' '' $c_time)
+
+            # Determine node style and color
+            set -l is_remote (test $idx -eq $remote_at && echo 1 || echo 0)
+            set -l is_last (test $idx -eq $total && echo 1 || echo 0)
+            set -l connector_char (test $is_last -eq 1 && echo "└─" || echo "├─")
+
+            # First commit is current (not dim), remote marker is red, rest are dim
+            if test $is_remote -eq 1
+                set_color red
+                set -l node "◉"
+                printf "  %s%s " $connector_char $node
+            else if test $idx -eq 1
+                set_color normal
+                printf "  %s● " $connector_char
+            else
+                set_color brblack
+                printf "  %s● " $connector_char
+            end
+
+            # Parse conventional commit: type(scope): message
+            set -l cc_match (string match -r '^([a-z]+)(\(([^)]+)\))?:\s*(.*)$' $c_msg)
+            if test (count $cc_match) -ge 2
+                set -l c_type $cc_match[2]
+                set -l c_scope $cc_match[4]
+                set -l c_title $cc_match[5]
+
+                # Pad type to 5 chars, scope to 5 chars
+                set -l type_pad (string pad -r -w 5 $c_type)
+                set -l scope_pad (string pad -r -w 5 $c_scope)
+
+                # Truncate title
+                if test (string length "$c_title") -gt 25
+                    set c_title (string sub -l 22 "$c_title")"..."
+                end
+
+                printf "%s %s %s  %s %s" $type_pad $scope_pad $c_title $c_hash $c_time
+                # Add remote label on same line if this is remote position
+                if test $is_remote -eq 1
+                    set_color brblack
+                    printf " ← remote"
+                end
+                printf "\n"
+            else
+                # Non-conventional commit, show as-is
+                if test (string length "$c_msg") -gt 35
+                    set c_msg (string sub -l 32 "$c_msg")"..."
+                end
+                printf "%s  %s %s" $c_msg $c_hash $c_time
+                if test $is_remote -eq 1
+                    set_color brblack
+                    printf " ← remote"
+                end
+                printf "\n"
+            end
+        end
         set_color normal
         return
     end

@@ -134,6 +134,18 @@
    * run `claude --chrome` or use `/chrome` in existing session
    * requires extension ≥1.0.36, Claude Code ≥2.0.73
    * Google Chrome only (not Brave, Arc, etc.)
+8. __Serena MCP__ (semantic code analysis)
+   ```sh
+   claude mcp add --scope user serena -- uvx --from git+https://github.com/oraios/serena serena start-mcp-server --context claude-code --project-from-cwd
+   ```
+   * requires `uv` (installed via Brewfile)
+   * `--context claude-code` disables tools that duplicate Claude Code's built-in ones
+   * `--project-from-cwd` auto-activates project based on working directory
+9. __iCloud Desktop & Documents__
+   ```sh
+   open "x-apple.systempreferences:com.apple.preferences.AppleIDPrefPane"
+   ```
+   * iCloud → iCloud Drive → Options → check "Desktop & Documents Folders"
 
 ## Notes
 

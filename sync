@@ -551,6 +551,17 @@ if [ "$(uname)" = "Darwin" ]; then
         fi
     fi
 
+    info "Checking iCloud Desktop & Documents..."
+    icloud_desktop=$(defaults read com.apple.finder FXICloudDriveDesktop 2>/dev/null || echo "0")
+    icloud_docs=$(defaults read com.apple.finder FXICloudDriveDocuments 2>/dev/null || echo "0")
+    if [ "$icloud_desktop" = "1" ] && [ "$icloud_docs" = "1" ]; then
+        skip "iCloud Desktop & Documents"
+    else
+        warn "iCloud Desktop & Documents not enabled - enable manually:"
+        printf "      ${DIM}open \"x-apple.systempreferences:com.apple.preferences.AppleIDPrefPane\"${RESET}\n"
+        printf "      ${DIM}iCloud → iCloud Drive → Options → check \"Desktop & Documents Folders\"${RESET}\n"
+    fi
+
     # ─────────────────────────────────────────────────────────────
     header "Dock Apps"
 

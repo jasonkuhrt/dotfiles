@@ -396,13 +396,15 @@ function _git_railway
 
             set -l base_len (string length "$branch ──")
             set -l pointer_line (string repeat -n $base_len " ")"↑"
-            set -l commit_line (string repeat -n $base_len " ")"└─ -$behind $last_hash \"$last_msg\" $last_time"
+            set -l commit_line (string repeat -n $base_len " ")"└─ $behind \"$last_msg\""
+            set -l meta_line (string repeat -n (math $base_len + 3) " ")"$last_hash $last_time"
 
             set_color cyan
             echo $main_line
             set_color brblack
             echo $pointer_line
             echo $commit_line
+            echo $meta_line
             set_color normal
             return
         end
@@ -424,13 +426,15 @@ function _git_railway
 
             set -l base_len (string length "$branch ──")
             set -l main_len (string length "$main_line")
-            set -l pointer_line (string repeat -n $base_len " ")"↑"(string repeat -n (math $main_len - $base_len - 1) " ")"└─ +$ahead $last_hash \"$last_msg\" $last_time"
+            set -l commit_line (string repeat -n $base_len " ")"↑"(string repeat -n (math $main_len - $base_len - 1) " ")"└─ $ahead \"$last_msg\""
+            set -l meta_line (string repeat -n $base_len " ")"│"(string repeat -n (math $main_len - $base_len + 2) " ")"$last_hash $last_time"
             set -l remote_line (string repeat -n $base_len " ")"remote"
 
             set_color cyan
             echo $main_line
             set_color brblack
-            echo $pointer_line
+            echo $commit_line
+            echo $meta_line
             echo $remote_line
             set_color normal
             return
@@ -449,7 +453,7 @@ function _git_railway
                 set main_line $main_line"──●"
             end
         end
-        set main_line $main_line" -$behind remote"
+        set main_line $main_line" $behind remote"
 
         set -l fork_pos (string length "$branch ──●──")
         set -l local_line (string repeat -n $fork_pos " ")"└"
@@ -463,13 +467,15 @@ function _git_railway
         end
 
         set -l local_len (string length "$local_line")
-        set -l commit_line (string repeat -n (math $local_len - 1) " ")"└─ +$ahead $last_hash \"$last_msg\" $last_time"
+        set -l commit_line (string repeat -n (math $local_len - 1) " ")"└─ $ahead \"$last_msg\""
+        set -l meta_line (string repeat -n (math $local_len + 2) " ")"$last_hash $last_time"
 
         set_color cyan
         echo $main_line
         set_color brblack
         echo $local_line
         echo $commit_line
+        echo $meta_line
         set_color normal
         return
     end

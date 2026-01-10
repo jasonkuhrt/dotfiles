@@ -1,6 +1,6 @@
 ---
 name: marketplace-workflow
-description: Workflow for moving commands/skills/rules to jasonkuhrt's Claude marketplace. Use when user mentions "move to marketplace", "publish to marketplace", or when migrating user-level Claude Code content to a plugin.
+description: Use when user explicitly says "marketplace", "move to marketplace", "publish to marketplace", or "add to my marketplace". Never use for creating skills/rules in dotfiles or project-level locations.
 ---
 
 # Marketplace Workflow

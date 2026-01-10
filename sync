@@ -10,9 +10,13 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 
 # Parse arguments
 VERBOSE=false
+RUN_MIGRATE=false
+MIGRATE_ONLY=false
 for arg in "$@"; do
     case $arg in
         -v|--verbose) VERBOSE=true ;;
+        --migrate) RUN_MIGRATE=true ;;
+        --migrate-only) RUN_MIGRATE=true; MIGRATE_ONLY=true ;;
     esac
 done
 
@@ -251,7 +255,16 @@ printf "${DIM}%s${RESET}\n" "$HERE"
 if $VERBOSE; then
     printf "${DIM}Verbose mode enabled${RESET}\n"
 fi
+if $MIGRATE_ONLY; then
+    printf "${DIM}Migration only mode${RESET}\n"
+fi
 printf "${DIM}Log: %s${RESET}\n" "$LOG_FILE"
+
+# Skip to migrations section if --migrate-only
+if $MIGRATE_ONLY; then
+    # Jump to migrations (uses labeled section at end of script)
+    :
+else
 
 # ─────────────────────────────────────────────────────────────
 header "Claude Code"
@@ -750,11 +763,75 @@ if [ "$(uname)" = "Darwin" ]; then
     fi
 fi
 
+fi  # End of: if ! $MIGRATE_ONLY
+
+# ─────────────────────────────────────────────────────────────
+# Migrations (only with --migrate flag)
+# ─────────────────────────────────────────────────────────────
+
+if $RUN_MIGRATE; then
+    header "Migrations"
+
+    MIGRATIONS_DIR="$HERE/migrations"
+    MARKER_FILE="$HOME/.dotfiles-migration-marker"
+    LAST_RUN=$(cat "$MARKER_FILE" 2>/dev/null || echo "0000-00-00")
+
+    if [ ! -d "$MIGRATIONS_DIR" ] || [ -z "$(ls -A "$MIGRATIONS_DIR"/*.sh 2>/dev/null)" ]; then
+        skip "No migrations found"
+    else
+        # Find pending migrations
+        PENDING=()
+        for script in "$MIGRATIONS_DIR"/*.sh; do
+            [ -f "$script" ] || continue
+            TIMESTAMP=$(basename "$script" | grep -oE '^[0-9]{4}-[0-9]{2}-[0-9]{2}' || echo "")
+            if [ -n "$TIMESTAMP" ] && [[ "$TIMESTAMP" > "$LAST_RUN" ]]; then
+                PENDING+=("$script")
+            fi
+        done
+
+        if [ ${#PENDING[@]} -eq 0 ]; then
+            skip "No pending migrations (last run: $LAST_RUN)"
+        else
+            info "Found ${#PENDING[@]} pending migration(s):"
+            for script in "${PENDING[@]}"; do
+                printf "    ${DIM}%s${RESET}\n" "$(basename "$script")"
+            done
+            printf "\n"
+            printf "  ${YELLOW}Run these migrations?${RESET} [y/N] "
+            read -r confirm
+            if [[ "$confirm" =~ ^[Yy]$ ]]; then
+                for script in "${PENDING[@]}"; do
+                    info "Running $(basename "$script")..."
+                    if bash "$script" >> "$LOG_FILE" 2>&1; then
+                        task "$(basename "$script")"
+                        # Update marker after each successful migration
+                        TIMESTAMP=$(basename "$script" | grep -oE '^[0-9]{4}-[0-9]{2}-[0-9]{2}')
+                        echo "$TIMESTAMP" > "$MARKER_FILE"
+                    else
+                        warn "Migration failed: $(basename "$script") (see $LOG_FILE)"
+                        break
+                    fi
+                done
+            else
+                info "Migrations skipped"
+            fi
+        fi
+    fi
+fi
+
 # ─────────────────────────────────────────────────────────────
 # Done
 # ─────────────────────────────────────────────────────────────
 
 printf "\n"
+if $MIGRATE_ONLY; then
+    printf "${BOLD}${GREEN}╔══════════════════════════════════════╗${RESET}\n"
+    printf "${BOLD}${GREEN}║${RESET}        ${BOLD}${GREEN}✓ Migrations Complete${RESET}        ${BOLD}${GREEN}║${RESET}\n"
+    printf "${BOLD}${GREEN}╚══════════════════════════════════════╝${RESET}\n"
+    printf "\n"
+    exit 0
+fi
+
 printf "${BOLD}${GREEN}╔══════════════════════════════════════╗${RESET}\n"
 printf "${BOLD}${GREEN}║${RESET}           ${BOLD}${GREEN}✓ Sync Complete${RESET}           ${BOLD}${GREEN}║${RESET}\n"
 printf "${BOLD}${GREEN}╚══════════════════════════════════════╝${RESET}\n"

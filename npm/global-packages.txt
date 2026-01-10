@@ -3,7 +3,6 @@
 # local node_modules → npm global → download from registry
 # See node-packages plugin skill for details.
 
-@anthropic-ai/claude-code
 ajv-cli
 corepack
 @mermaid-js/mermaid-cli

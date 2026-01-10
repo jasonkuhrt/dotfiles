@@ -168,9 +168,44 @@ function _git_is_repo
     command git rev-parse --git-dir >/dev/null 2>&1
 end
 
+function _git_trunk_branch
+    # Get trunk from remote HEAD, fall back to main/master
+    set -l remote_head (command git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | string replace 'refs/remotes/origin/' '')
+    if test -n "$remote_head"
+        echo $remote_head
+        return
+    end
+    # Fallback
+    if command git rev-parse --verify main >/dev/null 2>&1
+        echo "main"
+    else if command git rev-parse --verify master >/dev/null 2>&1
+        echo "master"
+    end
+end
+
 function _git_is_trunk
     set -l branch (command git branch --show-current 2>/dev/null)
-    test "$branch" = "main" -o "$branch" = "master"
+    set -l trunk (_git_trunk_branch)
+    test "$branch" = "$trunk"
+end
+
+function _git_shorten_time -a time_str
+    # Shorten relative time string (e.g., "2 hours ago" -> "2h")
+    set time_str (string replace ' ago' '' "$time_str")
+    set time_str (string replace 'seconds' 's' "$time_str")
+    set time_str (string replace 'second' 's' "$time_str")
+    set time_str (string replace 'minutes' 'm' "$time_str")
+    set time_str (string replace 'minute' 'm' "$time_str")
+    set time_str (string replace 'hours' 'h' "$time_str")
+    set time_str (string replace 'hour' 'h' "$time_str")
+    set time_str (string replace 'days' 'd' "$time_str")
+    set time_str (string replace 'day' 'd' "$time_str")
+    set time_str (string replace 'weeks' 'w' "$time_str")
+    set time_str (string replace 'week' 'w' "$time_str")
+    set time_str (string replace 'months' 'mo' "$time_str")
+    set time_str (string replace 'month' 'mo' "$time_str")
+    set time_str (string replace ' ' '' "$time_str")
+    echo $time_str
 end
 
 function _git_is_dirty
@@ -291,43 +326,6 @@ function _git_file_status
     end
 end
 
-function _git_recent_branches
-    # Get branches sorted by recent commit activity (excluding current)
-    set -l current (command git branch --show-current 2>/dev/null)
-    set -l branches
-
-    for ref in (command git for-each-ref --sort=-committerdate --format='%(refname:short) %(committerdate:relative)' refs/heads/ 2>/dev/null | head -5)
-        set -l parts (string split ' ' "$ref")
-        set -l name $parts[1]
-        set -l time (string join ' ' $parts[2..-1])
-
-        if test "$name" != "$current"
-            # Shorten relative time
-            set time (string replace ' ago' '' "$time")
-            set time (string replace 'seconds' 's' "$time")
-            set time (string replace 'second' 's' "$time")
-            set time (string replace 'minutes' 'm' "$time")
-            set time (string replace 'minute' 'm' "$time")
-            set time (string replace 'hours' 'h' "$time")
-            set time (string replace 'hour' 'h' "$time")
-            set time (string replace 'days' 'd' "$time")
-            set time (string replace 'day' 'd' "$time")
-            set time (string replace 'weeks' 'w' "$time")
-            set time (string replace 'week' 'w' "$time")
-            set time (string replace 'months' 'mo' "$time")
-            set time (string replace 'month' 'mo' "$time")
-            set time (string replace ' ' '' "$time")
-            set -a branches "$name ($time)"
-        end
-    end
-
-    if test (count $branches) -gt 0
-        set_color brblack
-        echo "Recent: "(string join " | " $branches[1..3])
-        set_color normal
-        echo
-    end
-end
 
 function _git_railway
     # Render horizontal railway graph
@@ -358,7 +356,6 @@ function _git_railway
         set -l commits (command git log -$recent_count --format='%h|%s|%cr' 2>/dev/null)
         set -l total (count $commits)
 
-        echo
         set_color cyan
         # Show branch name with behind indicator if needed
         if test $behind -gt 0
@@ -376,21 +373,7 @@ function _git_railway
             set -l parts (string split '|' $commit)
             set -l c_hash $parts[1]
             set -l c_msg $parts[2]
-            set -l c_time (string replace ' ago' '' $parts[3])
-            # Shorten time units
-            set c_time (string replace 'seconds' 's' $c_time)
-            set c_time (string replace 'second' 's' $c_time)
-            set c_time (string replace 'minutes' 'm' $c_time)
-            set c_time (string replace 'minute' 'm' $c_time)
-            set c_time (string replace 'hours' 'h' $c_time)
-            set c_time (string replace 'hour' 'h' $c_time)
-            set c_time (string replace 'days' 'd' $c_time)
-            set c_time (string replace 'day' 'd' $c_time)
-            set c_time (string replace 'weeks' 'w' $c_time)
-            set c_time (string replace 'week' 'w' $c_time)
-            set c_time (string replace 'months' 'mo' $c_time)
-            set c_time (string replace 'month' 'mo' $c_time)
-            set c_time (string replace ' ' '' $c_time)
+            set -l c_time (_git_shorten_time $parts[3])
 
             # Determine node style and color
             set -l is_remote (test $idx -eq $remote_at && echo 1 || echo 0)
@@ -448,114 +431,154 @@ function _git_railway
             end
         end
         set_color normal
+        echo
         return
     end
 
-    # Find merge base with main/master
-    set -l trunk "main"
-    if not command git rev-parse --verify main >/dev/null 2>&1
-        set trunk "master"
-    end
+    # Feature branch mode - vertical layout with fork visualization
+    set -l trunk (_git_trunk_branch)
 
     set -l merge_base (command git merge-base HEAD $trunk 2>/dev/null)
-    if test -z "$merge_base"
-        # No merge base found, just show simple status
-        return
-    end
 
-    # Count commits on current branch since merge base
-    set -l branch_commits (command git rev-list --count $merge_base..HEAD 2>/dev/null)
-    # Count commits on trunk since merge base
-    set -l trunk_commits (command git rev-list --count $merge_base..$trunk 2>/dev/null)
-
-    # Get last commit info
-    set -l last_hash (command git log -1 --format='%h' 2>/dev/null)
-    set -l last_msg (command git log -1 --format='%s' 2>/dev/null)
-    set -l last_time (command git log -1 --format='%cr' 2>/dev/null | string replace ' ago' '')
-
-    # Truncate message
-    if test (string length "$last_msg") -gt 30
-        set last_msg (string sub -l 27 "$last_msg")"..."
-    end
-
-    # Calculate display widths
-    set -l max_commits 8
-    set -l show_branch_commits (math "min($branch_commits, $max_commits)")
-    set -l show_trunk_commits (math "min($trunk_commits, 3)")
-    set -l truncated (test $branch_commits -gt $max_commits && echo 1 || echo 0)
-
-    # Build the railway lines
-    # Line 1: trunk
-    set -l trunk_line "$trunk ──●──"
-    if test $trunk_commits -gt 0
-        set trunk_line $trunk_line"┬"
-        if test $show_trunk_commits -gt 0
-            for i in (seq 1 $show_trunk_commits)
-                set trunk_line $trunk_line"──●"
-            end
-        end
+    # Get branch commits since fork (or all if no merge base)
+    set -l branch_commit_list
+    if test -n "$merge_base"
+        set branch_commit_list (command git log $merge_base..HEAD --format='%h|%s|%cr' 2>/dev/null)
     else
-        set trunk_line $trunk_line"┐"
+        # No merge base - just show recent commits
+        set branch_commit_list (command git log -5 --format='%h|%s|%cr' 2>/dev/null)
     end
 
-    # Line 2: branch commits
-    # Pattern: └──●──●──● (dots are commits, dashes connect them)
-    set -l branch_line "          └"
-    if test $show_branch_commits -gt 0
-        if test $truncated -eq 1
-            set branch_line $branch_line"──●──⋮"
-        end
-        for i in (seq 1 $show_branch_commits)
-            set branch_line $branch_line"──●"
-        end
-    else
-        # No commits yet on branch, show the branch point only
-        set branch_line $branch_line"──●"
+    # Get trunk commits since fork (for divergence detection)
+    set -l trunk_commits_since_fork 0
+    if test -n "$merge_base"
+        set trunk_commits_since_fork (command git rev-list --count $merge_base..$trunk 2>/dev/null)
     end
 
-    # Calculate positions
-    set -l branch_len (string length "$branch_line")
-    set -l branch_point 10  # Position of └ in branch line
+    # Get stem commits (history before fork, max 3)
+    set -l stem_commits
+    if test -n "$merge_base"
+        set stem_commits (command git log $merge_base~3..$merge_base --format='%h' 2>/dev/null | head -3)
+    end
 
-    # Line 3: dual connector - from branch point and to last commit
-    set -l connector_line (string repeat -n $branch_point " ")"│"(string repeat -n (math $branch_len - $branch_point - 2) " ")"│"
+    # Get fork time
+    set -l fork_time ""
+    if test -n "$merge_base"
+        set fork_time (_git_shorten_time (command git log -1 --format='%cr' $merge_base 2>/dev/null))
+    end
 
-    # Line 4: commit info with connector back to branch point
-    set -l commit_line (string repeat -n $branch_point " ")"│"(string repeat -n (math $branch_len - $branch_point - 2) " ")"└─ $last_msg"
-    set -l meta_line (string repeat -n $branch_point " ")"│"(string repeat -n (math $branch_len - $branch_point + 1) " ")"$last_hash $last_time"
-
-    # Line 5: branch name line from branch point
-    set -l branch_display (string repeat -n $branch_point " ")"└"
-    set -l dashes (string repeat -n (math $branch_len - $branch_point - 1) "─")
-    set branch_display $branch_display$dashes"── "
-
-    # Add upstream status
-    set -l status_parts
+    # Build upstream status string
+    set -l upstream_status ""
     if test $ahead -gt 0
-        set -a status_parts "↑$ahead"
+        set upstream_status "↑$ahead"
     end
     if test $behind -gt 0
-        set -a status_parts "↓$behind"
+        set upstream_status "$upstream_status↓$behind"
     end
 
-    set -l upstream_display ""
-    if test -n "$upstream"
-        set upstream_display " "(string join " " $status_parts)" $upstream"
+    set -l diverged (test $trunk_commits_since_fork -gt 0 && echo 1 || echo 0)
+    set -l branch_count (count $branch_commit_list)
+
+    # Header line
+    if test $diverged -eq 1
+        # Case B: trunk has diverged - show both labels
+        set_color brblack
+        printf "trunk  "
+        set_color cyan
+        printf "%s" $branch
+        if test -n "$upstream_status"
+            set_color yellow
+            printf " %s" $upstream_status
+        end
+        printf "\n"
+    else
+        # Case A: no divergence - just branch label (indented to align with commits)
+        printf "       "
+        set_color cyan
+        printf "%s" $branch
+        if test -n "$upstream_status"
+            set_color yellow
+            printf " %s" $upstream_status
+        end
+        printf "\n"
     end
 
-    # Print the railway
-    echo
-    set_color brblack
-    echo $trunk_line
-    echo $branch_line
-    echo $connector_line
-    echo $commit_line
-    echo $meta_line
-    set_color cyan
-    printf "%s%s" $branch_display $branch
-    set_color yellow
-    printf "%s\n" $upstream_display
+    # Branch commits (newest first, growing up from fork)
+    set -l commit_idx 0
+    for commit in $branch_commit_list
+        set commit_idx (math $commit_idx + 1)
+        set -l parts (string split '|' $commit)
+        set -l c_hash $parts[1]
+        set -l c_msg $parts[2]
+        set -l c_time (_git_shorten_time $parts[3])
+
+        # Parse conventional commit
+        set -l cc_match (string match -r '^([a-z]+)(\(([^)]+)\))?:\s*(.*)$' $c_msg)
+
+        # Trunk column (left side)
+        if test $diverged -eq 1
+            # Show trunk nodes for diverged commits
+            if test $commit_idx -le $trunk_commits_since_fork
+                set_color brblack
+                printf "  ├●   "
+            else
+                printf "  │    "
+            end
+        else
+            # No divergence - just show stem line
+            printf "  │    "
+        end
+
+        # Branch commit (right side)
+        set_color normal
+        printf "├─● "
+
+        if test (count $cc_match) -ge 2
+            set -l c_type $cc_match[2]
+            set -l c_scope $cc_match[4]
+            set -l c_title $cc_match[5]
+
+            set -l type_pad (string pad -r -w 8 $c_type)
+            set -l scope_pad (string pad -r -w 6 $c_scope)
+
+            if test (string length "$c_title") -gt 25
+                set c_title (string sub -l 22 "$c_title")"..."
+            end
+            set -l title_pad (string pad -r -w 25 $c_title)
+
+            printf "%s %s %s  %s %s\n" $type_pad $scope_pad $title_pad $c_hash $c_time
+        else
+            if test (string length "$c_msg") -gt 40
+                set c_msg (string sub -l 37 "$c_msg")"..."
+            end
+            printf "%s  %s %s\n" $c_msg $c_hash $c_time
+        end
+    end
+
+    # Fork point connector
+    if test $diverged -eq 1
+        set_color brblack
+        printf "  ├●───┘\n"
+    else
+        set_color brblack
+        printf "  ┌─●─┘\n"
+    end
+
+    # Stem (history commits below fork)
+    for stem_commit in $stem_commits
+        set_color brblack
+        printf "  │─●\n"
+    end
+
+    # Fork marker
+    if test -n "$merge_base"
+        echo
+        set_color magenta
+        printf "  ◆ forked %s\n" $fork_time
+    end
+
     set_color normal
+    echo
 end
 
 function _git_dashboard
@@ -571,12 +594,8 @@ function _git_dashboard
     if test -n "$status_output"
         # Dirty mode: files first, then railway
         _git_file_status
-        _git_railway
-    else
-        # Clean mode: recent branches, then railway
-        _git_recent_branches
-        _git_railway
     end
+    _git_railway
 end
 
 set --export GITHUB_HANDLE jasonkuhrt

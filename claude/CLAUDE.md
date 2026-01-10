@@ -40,6 +40,7 @@ If these skills are not available to You, immediately tell me. Their absence wil
   - Multiple ideas = multiple sparks (never combine)
   - If split is ambiguous, ask before capturing
 * After several failed solutions, stop guessing - research using the skills, or ask me clarifying questions
+* __Session resume:__ When suggesting CC restart, use the session ID from SessionStart hook context (look for "Resume this session: claude -r <uuid>")
 
 ## Decision Making
 

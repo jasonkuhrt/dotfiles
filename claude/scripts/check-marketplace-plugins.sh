@@ -3,6 +3,15 @@
 # Only warns about plugins completely missing from settings.json
 # Used by SessionStart hook
 
+# Read hook input from stdin (contains session_id)
+HOOK_INPUT=$(cat)
+SESSION_ID=$(echo "$HOOK_INPUT" | jq --raw-output '.session_id // empty')
+
+# Always output resume command for context
+if [[ -n "$SESSION_ID" ]]; then
+  echo "Resume this session: claude --resume $SESSION_ID"
+fi
+
 MARKETPLACE_DIR="$HOME/.claude/plugins/marketplaces/jasonkuhrt/plugins"
 SETTINGS_FILE="$HOME/.claude/settings.json"
 EXCLUDES_FILE="$HOME/.claude/marketplace-excludes.txt"
@@ -11,7 +20,7 @@ EXCLUDES_FILE="$HOME/.claude/marketplace-excludes.txt"
 available=$(ls -d "$MARKETPLACE_DIR"/*/ 2>/dev/null | xargs -I{} basename {} | sort)
 
 # Get all plugins in settings (both true and false - user has made a choice)
-in_settings=$(jq -r '.enabledPlugins | keys[]' "$SETTINGS_FILE" 2>/dev/null | grep '@jasonkuhrt$' | sed 's/@jasonkuhrt$//' | sort)
+in_settings=$(jq --raw-output '.enabledPlugins | keys[]' "$SETTINGS_FILE" 2>/dev/null | grep '@jasonkuhrt$' | sed 's/@jasonkuhrt$//' | sort)
 
 # Get excludes (if file exists)
 excludes=""

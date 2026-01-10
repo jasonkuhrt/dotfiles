@@ -262,6 +262,7 @@ link_file "$HERE/claude/settings.json" "$HOME/.claude/settings.json" "claude/set
 link_subdir "$HERE/claude/commands" "$HOME/.claude/commands" "claude/commands"
 link_subdir "$HERE/claude/rules" "$HOME/.claude/rules" "claude/rules"
 link_subdir "$HERE/claude/skills" "$HOME/.claude/skills" "claude/skills"
+link_subdir "$HERE/claude/scripts" "$HOME/.claude/scripts" "claude/scripts"
 
 # Plugin marketplaces (known_marketplaces.json is the source of truth, not extraKnownMarketplaces in settings.json)
 mkdir -p "$HOME/.claude/plugins"

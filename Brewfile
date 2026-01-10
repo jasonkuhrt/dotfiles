@@ -36,6 +36,7 @@ brew "tldr"          # simplified man pages
 # Data processing
 brew "jq"            # JSON processor
 brew "fx"            # interactive JSON viewer
+brew "gron"          # make JSON greppable (flatten to path=value)
 brew "yj"            # YAML/JSON/TOML converter
 brew "yq"            # YAML processor (jq for YAML)
 

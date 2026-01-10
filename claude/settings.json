@@ -25,6 +25,18 @@
       "/Users/jasonkuhrt"
     ]
   },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/check-marketplace-plugins.sh"
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {
     "code-review@claude-plugins-official": true,
     "hookify@claude-plugins-official": true,
@@ -43,7 +55,10 @@
     "flo@jasonkuhrt": false,
     "panda-css@jasonkuhrt": false,
     "github-workflows@jasonkuhrt": true,
-    "macos@jasonkuhrt": true
+    "macos@jasonkuhrt": true,
+    "focus@jasonkuhrt": true,
+    "markdown@jasonkuhrt": true,
+    "node-packages@jasonkuhrt": true
   },
   "alwaysThinkingEnabled": true
 }

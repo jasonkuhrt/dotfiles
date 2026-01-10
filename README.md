@@ -229,6 +229,18 @@ Starship cannot conditionally hide the `directory` module based on worktree dete
 - [#6604](https://github.com/starship/starship/issues/6604) — `truncate_to_repo` with worktrees
 - [#4439](https://github.com/starship/starship/pull/4439) — PR for env-based config overrides (open since 2022)
 
+## TODO
+
+### CleanShot X Preferences Sync
+
+Explore syncing CleanShot settings across machines. Known locations:
+- `~/Library/Preferences/pl.maketheweb.cleanshotx.plist` (defaults)
+- `~/Library/Application Support/CleanShot X/` (possibly)
+
+Options to investigate:
+1. Export plist and restore via `defaults import` in sync script
+2. Symlink the plist (may cause issues if app is running)
+
 ## Claude Code Resources
 
 * __Docs & Guides__

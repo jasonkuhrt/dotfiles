@@ -4,6 +4,7 @@
 # See node-packages plugin skill for details.
 
 @anthropic-ai/claude-code
+ajv-cli
 corepack
 @mermaid-js/mermaid-cli
 @typescript/native-preview

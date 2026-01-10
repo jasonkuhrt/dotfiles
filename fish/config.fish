@@ -67,7 +67,7 @@ set --universal fish_greeting ""
 ## -------------
 
 abbr -a g git
-abbr -a gst 'git status'
+abbr -a gst 'git'
 abbr -a gd 'git diff'
 abbr -a gb 'git branch'
 abbr -a gp 'git push'

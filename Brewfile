@@ -20,7 +20,7 @@ brew "dust"          # du replacement, visual bars
 brew "duf"           # df replacement, colorized table
 brew "procs"         # ps replacement, colorized/tree
 brew "sd"            # sed replacement, intuitive regex
-brew "dog"           # dig replacement, colorized DNS
+brew "doggo"         # dig replacement, colorized DNS (dog successor)
 brew "gping"         # ping with live graph
 brew "difftastic"    # syntax-aware diff (code-aware)
 brew "git-delta"     # diff with syntax highlighting
@@ -37,6 +37,7 @@ brew "tldr"          # simplified man pages
 brew "jq"            # JSON processor
 brew "fx"            # interactive JSON viewer
 brew "yj"            # YAML/JSON/TOML converter
+brew "yq"            # YAML processor (jq for YAML)
 
 # Shell & scripting
 brew "fish"          # modern shell

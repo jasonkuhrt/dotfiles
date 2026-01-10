@@ -24,6 +24,9 @@ brew "dog"           # dig replacement, colorized DNS
 brew "gping"         # ping with live graph
 brew "difftastic"    # syntax-aware diff (code-aware)
 brew "git-delta"     # diff with syntax highlighting
+brew "onefetch"      # git repo info (neofetch for repos)
+brew "speedtest-cli" # internet speed test
+brew "neofetch"      # system info with ASCII art
 
 # Search & navigation
 brew "fzf"           # fuzzy finder

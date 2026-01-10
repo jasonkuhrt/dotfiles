@@ -105,6 +105,7 @@ abbr -a vi nvim
 function weather --description 'Terminal weather forecast'
     curl -s "wttr.in/$argv[1]"
 end
+alias cal='cal -3'  # show 3 months by default
 
 ## Aliases (commands with flags/args)
 ## ----------------------------------

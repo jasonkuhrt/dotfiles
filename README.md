@@ -291,6 +291,10 @@ Quick reference for all the tools installed via Brewfile. Forget what something 
 | Unix     | `sd`         | Simpler sed                           | `sd 'foo' 'bar' file.txt`                      |
 | Unix     | `weather`    | Terminal weather forecast             | `weather` or `weather Tokyo`                   |
 | Unix     | `xh`         | Colorized curl alternative            | `xh GET api.example.com/users`                 |
+| Info     | `cal`        | 3-month calendar view                 | `cal`                                          |
+| Info     | `neofetch`   | System info with ASCII art            | `neofetch`                                     |
+| Info     | `onefetch`   | Git repo stats (neofetch for repos)   | `onefetch` (run in any repo)                   |
+| Info     | `speedtest`  | Internet speed test                   | `speedtest`                                    |
 
 ## Dotfiles Inspiration
 

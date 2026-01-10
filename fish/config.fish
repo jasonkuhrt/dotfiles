@@ -356,7 +356,7 @@ function _git_railway
         set -l commits (command git log -$recent_count --format='%h|%s|%cr' 2>/dev/null)
         set -l total (count $commits)
 
-        set_color cyan
+        set_color normal
         # Show branch name with behind indicator if needed
         if test $behind -gt 0
             printf "%s " $branch
@@ -395,10 +395,19 @@ function _git_railway
 
             # Parse conventional commit: type(scope): message
             set -l cc_match (string match -r '^([a-z]+)(\(([^)]+)\))?:\s*(.*)$' $c_msg)
-            if test (count $cc_match) -ge 2
+            if test (count $cc_match) -ge 3
                 set -l c_type $cc_match[2]
-                set -l c_scope $cc_match[4]
-                set -l c_title $cc_match[5]
+                set -l c_scope ""
+                set -l c_title ""
+                # Fish skips missing optional groups, so count varies
+                if test (count $cc_match) -eq 5
+                    # With scope: type, (scope), scope, title
+                    set c_scope $cc_match[4]
+                    set c_title $cc_match[5]
+                else if test (count $cc_match) -eq 3
+                    # Without scope: type, title
+                    set c_title $cc_match[3]
+                end
 
                 # Pad type to 8 chars (longest: refactor), scope to 6 chars
                 set -l type_pad (string pad -r -w 8 $c_type)
@@ -484,7 +493,7 @@ function _git_railway
         # Case B: trunk has diverged - show both labels
         set_color brblack
         printf "trunk  "
-        set_color cyan
+        set_color normal
         printf "%s" $branch
         if test -n "$upstream_status"
             set_color yellow
@@ -494,7 +503,7 @@ function _git_railway
     else
         # Case A: no divergence - just branch label (indented to align with commits)
         printf "       "
-        set_color cyan
+        set_color normal
         printf "%s" $branch
         if test -n "$upstream_status"
             set_color yellow
@@ -533,10 +542,17 @@ function _git_railway
         set_color normal
         printf "├─● "
 
-        if test (count $cc_match) -ge 2
+        if test (count $cc_match) -ge 3
             set -l c_type $cc_match[2]
-            set -l c_scope $cc_match[4]
-            set -l c_title $cc_match[5]
+            set -l c_scope ""
+            set -l c_title ""
+            # Fish skips missing optional groups, so count varies
+            if test (count $cc_match) -eq 5
+                set c_scope $cc_match[4]
+                set c_title $cc_match[5]
+            else if test (count $cc_match) -eq 3
+                set c_title $cc_match[3]
+            end
 
             set -l type_pad (string pad -r -w 8 $c_type)
             set -l scope_pad (string pad -r -w 6 $c_scope)

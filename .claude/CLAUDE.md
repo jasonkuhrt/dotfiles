@@ -1,4 +1,4 @@
-# Fish Shell Rules
+# Dotfiles Project Rules
 
 ## Git Dashboard
 

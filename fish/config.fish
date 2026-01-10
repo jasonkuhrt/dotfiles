@@ -131,6 +131,11 @@ alias pnx="pnpm nx"
 alias px="pnpm --silent"
 alias pt="pnpm --silent turbo"
 
+# npm script runner with silent mode and automatic -- for args
+function npmx --description "Run npm scripts silently with args"
+    npm run -s $argv[1] -- $argv[2..-1]
+end
+
 
 # Helpers
 # -------

@@ -261,6 +261,7 @@ link_file "$HERE/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md" "claude/CLAUDE.md"
 link_file "$HERE/claude/settings.json" "$HOME/.claude/settings.json" "claude/settings.json"
 link_subdir "$HERE/claude/commands" "$HOME/.claude/commands" "claude/commands"
 link_subdir "$HERE/claude/rules" "$HOME/.claude/rules" "claude/rules"
+link_subdir "$HERE/claude/skills" "$HOME/.claude/skills" "claude/skills"
 
 # Plugin marketplaces (known_marketplaces.json is the source of truth, not extraKnownMarketplaces in settings.json)
 mkdir -p "$HOME/.claude/plugins"

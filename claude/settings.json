@@ -15,6 +15,7 @@
       "Skill(plugin-dev:*)",
       "Skill(jasonkuhrt:*)",
       "Skill(diagrams:*)",
+      "Skill(macos:*)",
       "mcp__*"
     ],
     "deny": [],
@@ -40,7 +41,8 @@
     "zed@jasonkuhrt": true,
     "flo@jasonkuhrt": false,
     "panda-css@jasonkuhrt": false,
-    "github-workflows@jasonkuhrt": true
+    "github-workflows@jasonkuhrt": true,
+    "macos@jasonkuhrt": true
   },
   "alwaysThinkingEnabled": true
 }

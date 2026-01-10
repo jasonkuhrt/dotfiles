@@ -205,6 +205,30 @@
 * __Browser sync__ — automatic via Google login (Chrome) and iCloud (Safari)
 * __Keyboard settings__ — sync sets fast key repeat via `defaults`, but requires logout/login to take effect
 
+## Known Limitations
+
+### Starship: Redundant Prompt in Git Worktrees
+
+When using git worktrees where the directory name matches the branch name, the prompt shows both redundantly:
+
+```
+feat-HEA-3173-unreads-filter-dms feat/HEA-3173-unreads-filter-dms ❯
+```
+
+Starship cannot conditionally hide the `directory` module based on worktree detection. The `when` clause only works on custom modules, not built-ins.
+
+**Workarounds (all have tradeoffs):**
+- `repo_root_format = ''` — hides directory at all repo roots (loses repo name everywhere)
+- `substitutions` — fragile pattern matching
+- Multiple config files with `STARSHIP_CONFIG` env var per session
+
+**Tracking:** [starship/starship#7219](https://github.com/starship/starship/issues/7219)
+
+**Related issues:**
+- [#5533](https://github.com/starship/starship/issues/5533) — Conditionally disable modules via env
+- [#6604](https://github.com/starship/starship/issues/6604) — `truncate_to_repo` with worktrees
+- [#4439](https://github.com/starship/starship/pull/4439) — PR for env-based config overrides (open since 2022)
+
 ## Claude Code Resources
 
 * __Docs & Guides__

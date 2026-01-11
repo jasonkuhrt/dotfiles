@@ -774,7 +774,7 @@ if $RUN_MIGRATE; then
     header "Migrations"
 
     MIGRATIONS_DIR="$HERE/migrations"
-    MARKER_FILE="$HOME/.dotfiles-migration-marker"
+    MARKER_FILE="$MIGRATIONS_DIR/.marker"
     LAST_RUN=$(cat "$MARKER_FILE" 2>/dev/null || echo "0000-00-00")
 
     if [ ! -d "$MIGRATIONS_DIR" ] || [ -z "$(ls -A "$MIGRATIONS_DIR"/*.sh 2>/dev/null)" ]; then

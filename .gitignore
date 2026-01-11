@@ -1,6 +1,7 @@
 *.secrets.*
 !*.secrets.*.example
 aws/credentials
+migrations/.marker
 
 # macOS
 .DS_Store

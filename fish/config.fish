@@ -152,8 +152,10 @@ function mcd --description "Create a directory and set CWD"
     end
 end
 
-# Git Dashboard (see fish/git-dashboard.fish)
-source ~/.config/fish/git-dashboard.fish
+# Dotfiles modules (fish/modules/*.fish)
+for f in ~/.config/fish/modules/*.fish
+    source $f
+end
 
 set --export GITHUB_HANDLE jasonkuhrt
 

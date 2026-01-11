@@ -375,7 +375,7 @@ fi
 
 link_file "$HERE/fish/config.fish" "$HOME/.config/fish/config.fish" "config.fish"
 link_file "$HERE/fish/config.secrets.fish" "$HOME/.config/fish/config.secrets.fish" "config.secrets.fish"
-link_file "$HERE/fish/git-dashboard.fish" "$HOME/.config/fish/git-dashboard.fish" "git-dashboard.fish"
+link_file "$HERE/fish/modules" "$HOME/.config/fish/modules" "fish/modules"
 # fish_plugins handled separately in Fisher section (copy, not symlink)
 
 # Fisher plugins installed after Homebrew (which installs fish)

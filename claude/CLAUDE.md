@@ -73,7 +73,29 @@ Format: Conventional Commits
 
 Types: `feat`, `fix`, `refactor`, `docs`, `chore`
 
-Scopes (top-level dirs): `claude`, `dock`, `dprint`, `email`, `fish`, `gh`, `ghostty`, `git`, `libra`, `nvim`, `pnpm`, `ssh`, `vim`, `zed`, `brew`, `sync`
+Scopes (1:1 with top-level dirs/files):
+
+| Scope | Target |
+|-------|--------|
+| `aws` | aws/ |
+| `brew` | Brewfile |
+| `claude` | claude/ |
+| `direnv` | direnv/ |
+| `dock` | dock/ |
+| `dprint` | dprint/ |
+| `email` | email/ |
+| `fish` | fish/ |
+| `gh` | gh/ |
+| `ghostty` | ghostty/ |
+| `git` | git/ |
+| `libra` | libra/ |
+| `npm` | npm/, npmrc |
+| `nvim` | nvim/ |
+| `ssh` | ssh/ |
+| `starship` | starship/ |
+| `sync` | sync |
+| `vim` | vim/ |
+| `zed` | zed/ |
 
 Examples:
 

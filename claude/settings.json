@@ -45,6 +45,8 @@
     "superpowers-developing-for-claude-code@superpowers-marketplace": true,
     "claude-code@jasonkuhrt": true,
     "diagrams@jasonkuhrt": true,
+    "dprint@jasonkuhrt": true,
+    "markdown@jasonkuhrt": true,
     "effect@jasonkuhrt": true,
     "kitz@jasonkuhrt": true,
     "library-adt@jasonkuhrt": false,

@@ -101,14 +101,14 @@ For consistent formatting across all projects:
 
 ```bash
 # 1. Create config in dotfiles
-~/dotfiles/dprint/dprint.json
+~/<dotfiles>/dprint/dprint.json
 
 # 2. Set global config location (in shell rc)
-export DPRINT_CONFIG_DIR="$HOME/dotfiles/dprint"
+export DPRINT_CONFIG_DIR="$HOME/<dotfiles>/dprint"
 
 # Alternative: symlink to default location
 mkdir -p ~/.config/dprint
-ln -s ~/dotfiles/dprint/dprint.json ~/.config/dprint/dprint.json
+ln -s ~/<dotfiles>/dprint/dprint.json ~/.config/dprint/dprint.json
 ```
 
 Projects with local `dprint.json` override global. Projects without use global.

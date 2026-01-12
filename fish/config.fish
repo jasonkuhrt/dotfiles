@@ -81,7 +81,8 @@ abbr -a dc docker-compose
 abbr -a k kubectl
 abbr -a tf terraform
 abbr -a p pnpm
-abbr -a c clear
+abbr -a c claude
+abbr -a cx 'claude --print'
 abbr -a l libra
 
 # Modern Unix replacements (only expand in interactive mode, not scripts)

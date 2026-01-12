@@ -22,6 +22,15 @@ If these skills are not available to You, immediately tell me. Their absence wil
 * `superpowers-developing-for-claude-code:working-with-claude-code` - Official CC documentation mirror
 * `superpowers:writing-skills` - Skill authoring workflows
 
+### Phrase → Skill Mappings
+
+When I say these phrases, **immediately invoke the corresponding skill** before responding:
+
+| Phrase | Skill to Invoke |
+|--------|-----------------|
+| "review skill" | `superpowers:writing-skills` |
+| "create skill", "write skill" | `superpowers:writing-skills` |
+
 ---
 
 ## Communication
@@ -83,7 +92,6 @@ Scopes (1:1 with top-level dirs/files):
 | `direnv` | direnv/ |
 | `dock` | dock/ |
 | `dprint` | dprint/ |
-| `email` | email/ |
 | `fish` | fish/ |
 | `gh` | gh/ |
 | `ghostty` | ghostty/ |

@@ -1,17 +1,15 @@
 ---
-name: configuring-dprint
+name: dprint
 description: dprint formatter config resolution. Use when working with dprint configuration, discussing where dprint looks for config, or setting up global dprint config.
 ---
 
 # dprint Config Resolution
 
-## Common Misconception
+## CC Misconception to Correct
 
-CC often incorrectly states that dprint is "project-local only" with no global config support. **This is wrong.**
+CC often claims dprint is "project-local only" with no global config. **Wrong.** dprint supports both ancestor lookup AND global config.
 
-## Actual Behavior
-
-dprint has robust config discovery:
+## Config Discovery (Precedence Order)
 
 ### 1. Ancestor Directory Lookup (Default)
 
@@ -25,20 +23,27 @@ dprint walks UP the directory tree looking for `dprint.json` or `.dprint.json`:
 ~/                       <- would check here if not found above
 ```
 
-### 2. Global Config Support
+### 2. Global Config Fallback
 
-**Environment variable:**
+If no config found in ancestors, dprint checks global location:
+
+**Default global location:** `~/.config/dprint/dprint.json` (macOS/Linux)
+
+**Override via env:**
 ```bash
-DPRINT_CONFIG_DIR    # Global config directory for dprint.json
-                     # Defaults to system config dir (e.g., ~/.config/dprint/)
+DPRINT_CONFIG_DIR="$HOME/dotfiles/dprint"  # Directory containing dprint.json
 ```
 
-**CLI flag:**
+**Force global only:**
 ```bash
-dprint fmt --config-discovery=global  # Use ONLY global config
+dprint fmt --config-discovery=global  # Skip ancestor lookup, use only global
 ```
 
-### 3. Config Discovery Modes
+### 3. No Config Found
+
+If no config anywhere: dprint errors (won't run without config).
+
+### 4. Config Discovery Modes
 
 ```bash
 --config-discovery=true              # Default: ancestor lookup
@@ -47,7 +52,7 @@ dprint fmt --config-discovery=global  # Use ONLY global config
 --config-discovery=global            # Only use global config
 ```
 
-### 4. Explicit Config Path
+### 5. Explicit Config Path
 
 ```bash
 dprint fmt -c /path/to/dprint.json   # Use specific config

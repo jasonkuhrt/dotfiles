@@ -49,6 +49,13 @@ If these skills are not available to You, immediately tell me. Their absence wil
 * Ask before making architectural changes
 * __Never add backwards compatibility__ - no shims, re-exports, or deprecation layers unless explicitly asked
 
+## Permissions
+
+* __Minimize permission prompts__ - Use allowed tools proactively without unnecessary confirmation
+* When reviewing my CC config, also check these projects:
+  - `~/projects/heartbeat-chat/heartbeat` (heartbeat)
+* Use `claude-code:configuring-permissions` skill when troubleshooting permission issues
+
 ## CRITICAL RULES
 
 * __NEVER GUESS APIs__ - Always look up the actual API in the source code

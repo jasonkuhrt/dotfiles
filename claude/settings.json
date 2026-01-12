@@ -48,7 +48,6 @@
     "superpowers-developing-for-claude-code@superpowers-marketplace": true,
     "claude-code@jasonkuhrt": true,
     "diagrams@jasonkuhrt": true,
-    "dprint@jasonkuhrt": true,
     "markdown@jasonkuhrt": true,
     "effect@jasonkuhrt": true,
     "kitz@jasonkuhrt": true,
@@ -62,7 +61,6 @@
     "github-workflows@jasonkuhrt": true,
     "macos@jasonkuhrt": true,
     "focus@jasonkuhrt": true,
-    "markdown@jasonkuhrt": true,
     "node-packages@jasonkuhrt": true
   },
   "alwaysThinkingEnabled": true

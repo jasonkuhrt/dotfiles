@@ -17,7 +17,10 @@
       "Skill(diagrams:*)",
       "Skill(macos:*)",
       "Skill(hookify:*)",
-      "mcp__*"
+      "mcp__serena",
+      "mcp__claude-in-chrome",
+      "mcp__effect-docs",
+      "mcp__ref"
     ],
     "deny": [],
     "defaultMode": "default",

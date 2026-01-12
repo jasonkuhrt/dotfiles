@@ -14,7 +14,15 @@ fi
 
 MARKETPLACE_DIR="$HOME/.claude/plugins/marketplaces/jasonkuhrt/plugins"
 SETTINGS_FILE="$HOME/.claude/settings.json"
+KNOWN_MARKETPLACES="$HOME/.claude/plugins/known_marketplaces.json"
 EXCLUDES_FILE="$HOME/.claude/marketplace-excludes.txt"
+
+# Check autoUpdate is enabled for jasonkuhrt marketplace
+AUTO_UPDATE=$(jq --raw-output '.jasonkuhrt.autoUpdate // false' "$KNOWN_MARKETPLACES" 2>/dev/null)
+if [[ "$AUTO_UPDATE" != "true" ]]; then
+  echo "Warning: jasonkuhrt marketplace autoUpdate is disabled"
+  echo "Enable with: jq '.jasonkuhrt.autoUpdate = true' $KNOWN_MARKETPLACES > tmp && mv tmp $KNOWN_MARKETPLACES"
+fi
 
 # Get available plugins
 available=$(ls -d "$MARKETPLACE_DIR"/*/ 2>/dev/null | xargs -I{} basename {} | sort)

@@ -1,6 +1,6 @@
 ---
 name: sync-migrations
-description: Use when creating dotfiles migrations for one-time cleanup on existing machines (removing old tools, uninstalling replaced packages, cleaning deprecated files)
+description: Use when creating dotfiles migrations for one-time cleanup on existing machines (removing old tools, uninstalling replaced packages, cleaning deprecated files). Also use when a migration fails and user needs help diagnosing or recovering.
 ---
 
 # Sync Migrations
@@ -24,7 +24,14 @@ One-time scripts that run on existing machines when dotfiles changes require cle
 |------|-------|
 | Location | `migrations/YYYY-MM-DD-description.sh` |
 | Marker | `~/.dotfiles-migration-marker` |
-| Run | `./sync --migrate` or `./sync --migrate-only` |
+
+## CLI Flags
+
+| Flag | Description |
+|------|-------------|
+| `./sync` | Full sync, no migrations |
+| `./sync --migrate` | Full sync + run pending migrations at the end |
+| `./sync --migrate-only` | Skip sync, run pending migrations only |
 
 ## Creating a Migration
 
@@ -56,3 +63,30 @@ fi
 4. Marker updates after each success
 
 **New machines:** No marker = all pending. User decides to run or skip (fresh setup doesn't need cleanup).
+
+## Troubleshooting Failures
+
+When a migration fails, help the user recover:
+
+1. **Read the failed migration script** to understand intent
+2. **Check the sync log** at `/tmp/dotfiles-sync-*.log` for error details
+3. **Diagnose the issue** - missing dependency, permission error, path doesn't exist, etc.
+4. **Options:**
+   - Fix the issue and re-run: `./sync --migrate-only`
+   - Run commands manually, then update marker: `echo "YYYY-MM-DD" > ~/.dotfiles-migration-marker`
+   - Skip the migration entirely by advancing the marker past it
+
+**Common failure patterns:**
+- `command not found` → tool not installed, check Brewfile ran first
+- `permission denied` → may need sudo (sync doesn't have it)
+- `No such file` → path changed or doesn't exist on this machine (make script idempotent)
+
+**Recovery example:**
+```bash
+# Migration 2025-01-10-foo.sh failed
+# Fix: run the commands manually
+brew uninstall old-thing  # or whatever failed
+
+# Then advance marker so it won't retry
+echo "2025-01-10" > ~/.dotfiles-migration-marker
+```

@@ -241,33 +241,6 @@ Options to investigate:
 1. Export plist and restore via `defaults import` in sync script
 2. Symlink the plist (may cause issues if app is running)
 
-## Claude Code Resources
-
-* __Docs & Guides__
-  * https://docs.claude.com/en/docs/claude-code/overview
-  * https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview
-  * https://agents.md/
-* __Curated Lists__
-  * https://github.com/hesreallyhim/awesome-claude-code
-  * https://claudecodecommands.directory/
-  * https://github.com/ComposioHQ/awesome-claude-skills
-* __MCPs__
-  * https://modelcontextprotocol.io
-  * https://glama.ai/mcp
-  * https://ref.tools/
-  * https://github.com/oraios/serena
-* __Tools__
-  * https://wisprflow.ai/
-  * https://github.com/sirmalloc/ccstatusline
-  * `npx ccusage@latest`
-* __Examples & Workflows__
-  * https://github.com/anthropics/skills/tree/main
-  * https://github.com/anthropics/claude-code-action
-  * https://github.com/OneRedOak/claude-code-workflows
-* __Community__
-  * https://github.com/obra/superpowers — worth watching (issues, PRs, discussions) as it's become a hub attracting users of various AI coding tools sharing bleeding-edge techniques
-  * https://github.com/scopecraft/command
-
 ## CLI Tools Reference
 
 Quick reference for all the tools installed via Brewfile. Forget what something does? Check here.

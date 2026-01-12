@@ -351,17 +351,6 @@ link_file "$HERE/aws/config" "$HOME/.aws/config" "aws/config"
 link_file "$HERE/aws/credentials" "$HOME/.aws/credentials" "aws/credentials"
 
 # ─────────────────────────────────────────────────────────────
-header "Email"
-
-link_file "$HERE/email/mbsyncrc" "$HOME/.mbsyncrc" ".mbsyncrc"
-mkdir -p "$HOME/.imapfilter"
-link_file "$HERE/email/imapfilter.lua" "$HOME/.imapfilter/config.lua" "imapfilter/config.lua"
-mkdir -p "$HOME/.config/himalaya"
-link_file "$HERE/email/himalaya.toml" "$HOME/.config/himalaya/config.toml" "himalaya/config.toml"
-mkdir -p "$HOME/.config/notmuch/default"
-link_file "$HERE/email/notmuch.config" "$HOME/.config/notmuch/default/config" "notmuch/config"
-
-# ─────────────────────────────────────────────────────────────
 header "Fish Shell"
 
 mkdir -p "$HOME/.config/fish"

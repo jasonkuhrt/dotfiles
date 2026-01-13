@@ -577,6 +577,12 @@ if has_cmd npm; then
     install_from_list "$HERE/npm/global-packages.txt" \
         'npm list -g "$item" 2>/dev/null' \
         'npm install -g "$item"'
+    info "Upgrading global packages to latest..."
+    if run_logged "npm update -g" npm update -g; then
+        task "Global packages upgraded"
+    else
+        warn "npm update -g failed (see $LOG_FILE)"
+    fi
 else
     warn "npm not installed, skipping global packages"
 fi
@@ -650,6 +656,7 @@ if [ "$(uname)" = "Darwin" ]; then
     set_default "com.apple.dock" "show-recents" "-bool" "false" "No recent apps in Dock"
     set_default "com.apple.dock" "autohide" "-bool" "true" "Dock autohide"
     set_default "com.apple.dock" "tilesize" "-int" "36" "Dock icon size (smaller)"
+    set_default "com.apple.dock" "mineffect" "-string" "scale" "Scale effect (not genie)"
 
     info "Configuring power management..."
     sudo_run "pmset -g | grep displaysleep | awk '{print \$2}'" "10" \
@@ -746,6 +753,14 @@ if [ "$(uname)" = "Darwin" ]; then
             fi
         else
             skip "Dock config (no dock/apps.txt)"
+        fi
+        # Add Downloads folder to "others" section (right side, next to Trash)
+        if dockutil --list | grep -q "Downloads"; then
+            skip "Downloads in Dock"
+        else
+            dockutil --add "$HOME/Downloads" --section others --view fan --display folder --no-restart 2>/dev/null
+            killall Dock 2>/dev/null || true
+            task "Downloads added to Dock"
         fi
     else
         warn "dockutil not installed, skipping Dock configuration"

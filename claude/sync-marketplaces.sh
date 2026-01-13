@@ -3,6 +3,11 @@
 
 set -e
 
+# Bootstrap JSON if missing (CLI expects it to exist)
+JSON="$HOME/.claude/plugins/known_marketplaces.json"
+mkdir -p "$(dirname "$JSON")"
+[ -f "$JSON" ] || echo '{}' > "$JSON"
+
 installed=$(claude plugin marketplace list 2>&1)
 
 add_if_missing() {
@@ -17,7 +22,6 @@ add_if_missing anthropics/claude-plugins-official
 add_if_missing obra/superpowers-marketplace
 
 # Force autoUpdate on all
-JSON="$HOME/.claude/plugins/known_marketplaces.json"
-if [ -f "$JSON" ] && command -v jq &>/dev/null; then
+if command -v jq &>/dev/null; then
     jq 'to_entries | map(.value.autoUpdate = true) | from_entries' "$JSON" > "$JSON.tmp" && mv "$JSON.tmp" "$JSON"
 fi

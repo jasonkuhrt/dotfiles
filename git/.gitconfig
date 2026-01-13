@@ -147,6 +147,10 @@
     # Force push safely (fails if remote has commits you don't have)
     pf = push --force-with-lease
     pl = pull
+    # Pull (rebase) then push - quick sync with remote
+    # https://www.strichnet.com/using-git-sync-to-automate-common-git-commands/
+    # https://github.com/simonthum/git-sync
+    sync = !git pull --rebase && git push
     f = fetch --all
 
     # ── Stash ──

@@ -73,6 +73,7 @@ abbr -a gb 'git branch'
 abbr -a gp 'git push'
 abbr -a ga 'git add'
 abbr -a gaa 'git add --all'
+abbr -a gc 'git commit'
 abbr -a gl 'git log --oneline'
 abbr -a gll 'git log'
 abbr -a lg lazygit

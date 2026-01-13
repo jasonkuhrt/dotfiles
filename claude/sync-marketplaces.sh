@@ -1,13 +1,11 @@
 #!/bin/bash
 # Sync Claude Code plugin marketplaces
-# Note: Run `./sync --migrate` first if upgrading from symlinked config
 
 set -e
 
 # Bootstrap JSON if missing (CLI expects it to exist)
 JSON="$HOME/.claude/plugins/known_marketplaces.json"
 mkdir -p "$HOME/.claude/plugins"
-[ -L "$JSON" ] && rm "$JSON"  # Remove symlink if present (migrating from old approach)
 [ -f "$JSON" ] || echo '{}' > "$JSON"
 
 installed=$(claude plugin marketplace list 2>&1)

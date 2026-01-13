@@ -94,6 +94,7 @@ Scopes (1:1 with top-level dirs/files):
 | `gh` | gh/ |
 | `ghostty` | ghostty/ |
 | `git` | git/ |
+| `lazygit` | lazygit/ |
 | `libra` | libra/ |
 | `npm` | npm/, npmrc |
 | `nvim` | nvim/ |

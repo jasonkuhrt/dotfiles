@@ -1,0 +1,11 @@
+os:
+  editCommand: zed
+  editCommandTemplate: "{{editor}} {{filename}}:{{line}}"
+
+gui:
+  scrollHeight: 10
+
+keybinding:
+  universal:
+    scrollUpMain: K
+    scrollDownMain: J

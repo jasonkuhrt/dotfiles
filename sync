@@ -298,6 +298,12 @@ ensure_real_dir "$HOME/.config/ghostty" "$HERE/ghostty"
 link_file "$HERE/ghostty/config" "$HOME/.config/ghostty/config" "ghostty/config"
 
 # ─────────────────────────────────────────────────────────────
+header "Lazygit"
+
+ensure_real_dir "$HOME/.config/lazygit" "$HERE/lazygit"
+link_file "$HERE/lazygit/config.yml" "$HOME/.config/lazygit/config.yml" "lazygit/config.yml"
+
+# ─────────────────────────────────────────────────────────────
 header "Neovim"
 
 ensure_real_dir "$HOME/.config/nvim" "$HERE/nvim"

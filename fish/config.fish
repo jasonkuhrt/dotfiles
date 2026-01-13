@@ -68,7 +68,7 @@ set --universal fish_greeting ""
 
 abbr -a g git
 abbr -a gst 'git'
-abbr -a gd 'git diff'
+abbr -a gd lazygit
 abbr -a gb 'git branch'
 abbr -a gp 'git push'
 abbr -a ga 'git add'
@@ -203,6 +203,9 @@ fish_default_key_bindings
 # bun
 set --export BUN_INSTALL "$HOME/.bun"
 set --export PATH $BUN_INSTALL/bin $PATH
+
+# cargo (rust)
+fish_add_path "$HOME/.cargo/bin"
 
 # uv
 fish_add_path "/Users/jasonkuhrt/.local/bin"

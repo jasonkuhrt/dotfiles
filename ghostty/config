@@ -36,5 +36,5 @@ cursor-opacity          = 0.3
 # Keybindings
 #
 
-keybind = ctrl+'=clear_screen
+keybind = ctrl+apostrophe=clear_screen
 keybind = shift+enter=text:\n

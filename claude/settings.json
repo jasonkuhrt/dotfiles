@@ -10,7 +10,21 @@
       "Read(//tmp/**)",
       "WebFetch",
       "WebSearch",
-      "Skill(*)",
+      "Skill(code-review:*)",
+      "Skill(hookify:*)",
+      "Skill(superpowers:*)",
+      "Skill(superpowers-developing-for-claude-code:*)",
+      "Skill(claude-code:*)",
+      "Skill(diagrams:*)",
+      "Skill(effect:*)",
+      "Skill(kitz:*)",
+      "Skill(react:*)",
+      "Skill(typescript:*)",
+      "Skill(zed:*)",
+      "Skill(github-workflows:*)",
+      "Skill(macos:*)",
+      "Skill(focus:*)",
+      "Skill(node-packages:*)",
       "mcp__serena",
       "mcp__claude-in-chrome",
       "mcp__effect-docs",
@@ -55,7 +69,9 @@
     "github-workflows@jasonkuhrt": true,
     "macos@jasonkuhrt": true,
     "focus@jasonkuhrt": true,
-    "node-packages@jasonkuhrt": true
+    "node-packages@jasonkuhrt": true,
+    "hello-world@test-mp-symlink": false
   },
+  "extraKnownMarketplaces": {},
   "alwaysThinkingEnabled": true
 }

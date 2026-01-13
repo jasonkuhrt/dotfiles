@@ -5,7 +5,9 @@ set -e
 
 # Bootstrap JSON if missing (CLI expects it to exist)
 JSON="$HOME/.claude/plugins/known_marketplaces.json"
-mkdir -p "$(dirname "$JSON")"
+# Remove broken symlink if present
+[ -L "$JSON" ] && [ ! -e "$JSON" ] && rm "$JSON"
+mkdir -p "$HOME/.claude/plugins"
 [ -f "$JSON" ] || echo '{}' > "$JSON"
 
 installed=$(claude plugin marketplace list 2>&1)

@@ -696,6 +696,7 @@ if [ "$(uname)" = "Darwin" ]; then
     # ─────────────────────────────────────────────────────────────
     header "Dock Apps"
 
+    DOCK_CHANGED=false
     if has_cmd dockutil; then
         DOCK_CONFIG="$HERE/dock/apps.txt"
         if [ -f "$DOCK_CONFIG" ]; then
@@ -715,7 +716,6 @@ if [ "$(uname)" = "Darwin" ]; then
                 skip "Dock apps"
             else
                 info "Configuring Dock apps..."
-                DOCK_CHANGED=false
 
                 # Clear existing dock (except Finder and Trash which are automatic)
                 dockutil --remove all --no-restart 2>/dev/null || true
@@ -741,10 +741,8 @@ if [ "$(uname)" = "Darwin" ]; then
                     fi
                 done < "$DOCK_CONFIG"
 
-                # Restart dock to apply changes
                 if $DOCK_CHANGED; then
-                    killall Dock 2>/dev/null || true
-                    task "Dock configured"
+                    task "Dock apps configured (restart Dock to apply)"
                 fi
             fi
         else
@@ -755,18 +753,22 @@ if [ "$(uname)" = "Darwin" ]; then
             skip "Downloads in Dock"
         else
             dockutil --add "$HOME/Downloads" --section others --view fan --display folder --no-restart 2>/dev/null
-            killall Dock 2>/dev/null || true
+            DOCK_CHANGED=true
             task "Downloads added to Dock"
         fi
     else
         warn "dockutil not installed, skipping Dock configuration"
     fi
 
+    # Show manual restart hint if dock was modified
+    if $DOCK_CHANGED; then
+        info "Dock changes apply on login, or run: killall Dock"
+    fi
+
     # ─────────────────────────────────────────────────────────────
-    # Restart affected apps only if changes were made
+    # Hint about Finder restart if settings changed
     if $DEFAULTS_CHANGED; then
-        killall Finder 2>/dev/null || true
-        task "Restarted Finder"
+        info "Finder settings apply on login, or run: killall Finder"
     fi
 fi
 

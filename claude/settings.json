@@ -61,6 +61,5 @@
   },
   "extraKnownMarketplaces": {},
   "alwaysThinkingEnabled": true,
-  "autoUpdatesChannel": "stable",
-  "minimumVersion": "2.1.6"
+  "autoUpdatesChannel": "latest"
 }

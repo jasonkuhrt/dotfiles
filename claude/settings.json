@@ -46,5 +46,7 @@
     "pr@jasonkuhrt": false
   },
   "extraKnownMarketplaces": {},
-  "alwaysThinkingEnabled": true
+  "alwaysThinkingEnabled": true,
+  "autoUpdatesChannel": "stable",
+  "minimumVersion": "2.1.6"
 }

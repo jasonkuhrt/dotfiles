@@ -5,24 +5,34 @@ description: Use when creating, improving, or reviewing Claude Code skills. Cove
 
 # Writing Skills
 
+## Facts
+
+* The frontmatter `name` is what appears in autocomplete list when typing `/` in session. So `name: foo` would allow user to submit `/foo` to trigger that skill.
+* The skill directory name appears printed in session when skill is activated by the agent. E.g. dir `/foobar` would yield e.g.
+  ```
+  ⏺ Skill(foobar)
+  ⎿  Initializing…
+  ```
+* `Skill(foobar)` is also the syntax for granting permission to the skill in config
+
 ## Overview
 
-This skill covers **Claude Code platform specifics**. For skill design methodology (CSO, TDD, testing), also invoke `superpowers:writing-skills`.
+This skill covers __Claude Code platform specifics__. For skill design methodology (CSO, TDD, testing), also invoke `superpowers:writing-skills`.
 
 ## Key Rules (from [Anthropic guide](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices))
 
-**Frontmatter:**
+__Frontmatter:__
 
-- `name`: Max 64 chars, lowercase letters/numbers/hyphens only, no reserved words ("anthropic", "claude")
-- `description`: Max 1024 chars, non-empty, third person, critical for discovery
-  - Good: "Processes Excel files and generates reports"
-  - Avoid: "I can help you process Excel files"
-- Use gerund form (verb + -ing) for names: `processing-pdfs`, `analyzing-spreadsheets`
+* `name`: Max 64 chars, lowercase letters/numbers/hyphens only, no reserved words ("anthropic", "claude")
+* `description`: Max 1024 chars, non-empty, third person, critical for discovery
+  * Good: "Processes Excel files and generates reports"
+  * Avoid: "I can help you process Excel files"
+* Use gerund form (verb + -ing) for names: `processing-pdfs`, `analyzing-spreadsheets`
 
-**Body:**
+__Body:__
 
-- Keep SKILL.md under 500 lines
-- "Claude is already very smart. Only add context Claude doesn't already have."
+* Keep SKILL.md under 500 lines
+* "Claude is already very smart. Only add context Claude doesn't already have."
 
 ## File Structure
 
@@ -56,38 +66,38 @@ my-skill/
 
 ## Platform Limitations
 
-**Cannot control:**
+__Cannot control:__
 
-- Collapsed/expanded state of tool output - see [limitation-output-collapse.md](reference/limitation-output-collapse.md)
-- Terminal theme/colors
-- Streaming behavior
-- Custom UI widgets
-- Status line refresh from skills - see [feature-status-line.md](reference/feature-status-line.md)
+* Collapsed/expanded state of tool output - see [limitation-output-collapse.md](reference/limitation-output-collapse.md)
+* Terminal theme/colors
+* Streaming behavior
+* Custom UI widgets
+* Status line refresh from skills - see [feature-status-line.md](reference/feature-status-line.md)
 
 ## Patterns
 
-| Pattern               | Reference                                                                        |
-| --------------------- | -------------------------------------------------------------------------------- |
-| Code examples         | [pattern-code-examples.md](reference/pattern-code-examples.md)                   |
-| Progressive disclosure| [pattern-progressive-disclosure.md](reference/pattern-progressive-disclosure.md) |
-| Script bundling       | [pattern-script-bundling.md](reference/pattern-script-bundling.md)               |
+| Pattern                | Reference                                                                        |
+| ---------------------- | -------------------------------------------------------------------------------- |
+| Code examples          | [pattern-code-examples.md](reference/pattern-code-examples.md)                   |
+| Progressive disclosure | [pattern-progressive-disclosure.md](reference/pattern-progressive-disclosure.md) |
+| Script bundling        | [pattern-script-bundling.md](reference/pattern-script-bundling.md)               |
 
 ## When Reviewing Skills
 
 Apply criteria from both this skill (CC platform) and `superpowers:writing-skills` (methodology).
 
-**Platform checklist:**
+__Platform checklist:__
 
-- [ ] Frontmatter valid? (name format, description length, third person)
-- [ ] SKILL.md under 500 lines?
-- [ ] Reference files used for detailed content?
-- [ ] Code examples have language tags?
-- [ ] Known limitations acknowledged? (output collapse, status line)
-- [ ] Hooks correctly structured if used?
-- [ ] `allowed-tools` syntax correct if used?
+* [ ] Frontmatter valid? (name format, description length, third person)
+* [ ] SKILL.md under 500 lines?
+* [ ] Reference files used for detailed content?
+* [ ] Code examples have language tags?
+* [ ] Known limitations acknowledged? (output collapse, status line)
+* [ ] Hooks correctly structured if used?
+* [ ] `allowed-tools` syntax correct if used?
 
-**Methodology checklist** (from `superpowers:writing-skills`):
+__Methodology checklist__ (from `superpowers:writing-skills`):
 
-- [ ] CSO applied? (Claude-Specific Optimization)
-- [ ] Token-efficient structure?
-- [ ] Clear trigger conditions in description?
+* [ ] CSO applied? (Claude-Specific Optimization)
+* [ ] Token-efficient structure?
+* [ ] Clear trigger conditions in description?

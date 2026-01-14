@@ -16,9 +16,10 @@ Full dotfiles sync: commit, git sync, resolve conflicts, run sync script.
    ```
 
 2. **Commit if changes exist**
-   - Stage all changes
-   - Commit with conventional commit message
-   - Use appropriate scope from CLAUDE.md
+   - Analyze diff for distinct semantic changes
+   - Make multiple commits if changes span different scopes/concerns
+   - Use conventional commit format with scope from CLAUDE.md
+   - Example: fish config change + claude settings change = 2 commits
 
 3. **Git sync**
    ```bash

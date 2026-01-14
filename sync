@@ -277,17 +277,6 @@ link_subdir "$HERE/claude/rules" "$HOME/.claude/rules" "claude/rules"
 link_subdir "$HERE/claude/skills" "$HOME/.claude/skills" "claude/skills"
 link_subdir "$HERE/claude/scripts" "$HOME/.claude/scripts" "claude/scripts"
 
-# Plugin marketplaces
-if has_cmd claude; then
-    if bash "$HERE/claude/sync-marketplaces.sh"; then
-        task "Plugin marketplaces"
-    else
-        warn "Plugin marketplaces sync failed"
-    fi
-else
-    skip "Claude CLI (not installed)"
-fi
-
 # ─────────────────────────────────────────────────────────────
 header "Zed"
 

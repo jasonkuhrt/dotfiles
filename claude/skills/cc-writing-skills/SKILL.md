@@ -14,6 +14,8 @@ description: Use when creating, improving, or reviewing Claude Code skills. Cove
   ⎿  Initializing…
   ```
 * `Skill(foobar)` is also the syntax for granting permission to the skill in config
+* Development Related
+  * Skills created or modified in ~/.claude/skills or .claude/skills are immediately available without restarting the session (added in v2.1.0)
 
 ## Overview
 

@@ -34,10 +34,10 @@ No arguments required - analyzes entire project structure
    * If no `exports`: This is not a library package (likely an application)
      * Only has local libraries at `/src/lib/*`
 
-2. __Read the appropriate convention document__ (from jasonkuhrt marketplace plugins):
-   * If has `exports`: Review library-standards plugin `docs/library-package.md` for main library
-   * For any local libraries at `/src/lib/*`: Review library-standards plugin `docs/library-local.md`
-   * For ADT patterns: Review library-adt plugin `docs/library-adt.md`
+2. __Read the appropriate convention document__ (from `~/.claude/todo/`):
+   * If has `exports`: Review `todo/library-standards/docs/library-package.md` for main library
+   * For any local libraries at `/src/lib/*`: Review `todo/library-standards/docs/library-local.md`
+   * For ADT patterns: Review `todo/library-adt/docs/library-adt.md`
 
 3. __Analyze the current project structure__:
    * If has `exports`: Check `/src/*` structure for main library

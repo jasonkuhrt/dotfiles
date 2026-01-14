@@ -1,5 +1,5 @@
 ---
-paths: "**/.claude/**, **/claude-*-marketplace/**"
+paths: "**/.claude/**"
 ---
 
 # Developing Claude Skills

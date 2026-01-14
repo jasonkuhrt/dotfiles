@@ -123,7 +123,6 @@ cask "ngrok"
 
 # AI
 cask "claude"
-cask "claude-code"    # CLI (auto-updates)
 cask "chatgpt"
 
 # Communication

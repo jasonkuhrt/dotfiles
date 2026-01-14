@@ -21,9 +21,7 @@
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
-    "additionalDirectories": [
-      "/Users/jasonkuhrt"
-    ]
+    "additionalDirectories": ["/Users/jasonkuhrt"]
   },
   "hooks": {
     "SessionStart": [
@@ -43,6 +41,22 @@
     "typescript-lsp@claude-plugins-official": true,
     "superpowers@superpowers-marketplace": true,
     "superpowers-developing-for-claude-code@superpowers-marketplace": true,
+    "claude-code@jasonkuhrt": true,
+    "diagrams@jasonkuhrt": true,
+    "markdown@jasonkuhrt": true,
+    "effect@jasonkuhrt": true,
+    "kitz@jasonkuhrt": true,
+    "library-adt@jasonkuhrt": false,
+    "library-standards@jasonkuhrt": false,
+    "react@jasonkuhrt": true,
+    "typescript@jasonkuhrt": true,
+    "zed@jasonkuhrt": true,
+    "flo@jasonkuhrt": false,
+    "panda-css@jasonkuhrt": false,
+    "github-workflows@jasonkuhrt": true,
+    "macos@jasonkuhrt": true,
+    "focus@jasonkuhrt": true,
+    "node-packages@jasonkuhrt": true,
     "pr@jasonkuhrt": false
   },
   "extraKnownMarketplaces": {},

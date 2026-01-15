@@ -1,6 +1,5 @@
 os:
-  editCommand: zed
-  editCommandTemplate: "{{editor}} {{filename}}:{{line}}"
+  editPreset: zed
 
 gui:
   scrollHeight: 10

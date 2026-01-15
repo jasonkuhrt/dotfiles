@@ -18,6 +18,7 @@ test -f ~/.config/fish/config.secrets.fish && source ~/.config/fish/config.secre
 # ====
 
 set --export EDITOR nvim
+set --export XDG_CONFIG_HOME ~/.config
 
 
 

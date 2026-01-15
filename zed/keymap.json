@@ -191,7 +191,8 @@
       // "escape": "terminal::ToggleViMode",
       // "k j": "terminal::ToggleViMode"
       // Support multi-line input for Claude Code in terminal
-      "shift-enter": ["terminal::SendText", "\n"]
+      "shift-enter": ["terminal::SendText", "\n"],
+      "cmd-t": "workspace::NewTerminal"
     }
   },
 

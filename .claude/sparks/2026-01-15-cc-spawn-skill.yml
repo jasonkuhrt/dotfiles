@@ -1,0 +1,54 @@
+title: CC skill to spawn new sessions in split view or fullscreen space
+captured: 2026-01-15
+context: Exploring terminal-based control of macOS Spaces and Split View for launching new Claude Code instances
+session: ~/.claude/projects/-Users-jasonkuhrt/fc29f3bb-bf77-4525-823c-7d271934f5dc.jsonl
+idea: |
+  Create a CC skill to spawn new CC sessions intelligently - either in a new
+  fullscreen space or split on the current space.
+
+  ## Research Findings
+
+  ### macOS Limitations
+  - No native terminal API for Split View (Apple private API)
+  - Spaces can be controlled via yabai but not native Split View
+  - Split View = special fullscreen space with two apps side-by-side (green button)
+
+  ### Solution: Hammerspoon + SplitView Spoon
+  - GitHub: https://github.com/jdtsmith/SplitView
+  - Works by simulating UI gestures (long green-button click → tile menu → second window click)
+  - Requirements: Hammerspoon v0.9.79+, `spaces` module (asmagill), macOS 14.1+
+  - Supports CLI invocation (not just hotkeys)
+  - Caveat: timing-dependent, can be flaky
+
+  ### Current Working Command (fullscreen)
+  ```bash
+  open --new --background -a Ghostty.app --args --fullscreen=true -e bash -c 'echo "hello world"; exec fish'
+  ```
+  - `--fullscreen=true` already creates a new fullscreen space (Ghostty handles this)
+
+  ## Proposed Skill Design
+
+  ```
+  /spawn [--split | --fullscreen] [--prompt "task description"]
+  ```
+
+  ### Fullscreen mode (easy, no deps)
+  ```bash
+  open --new --background -a Ghostty.app --args --fullscreen=true -e bash -c 'claude --resume ... ; exec fish'
+  ```
+
+  ### Split mode (requires Hammerspoon)
+  1. Launch Ghostty normally (not fullscreen)
+  2. Call Hammerspoon CLI to trigger SplitView with current window + new Ghostty
+
+  ## Open Questions
+  1. Hammerspoon as dependency - acceptable?
+  2. Split with current Ghostty window or some other app?
+  3. Context passing to new CC: resume ID? prompt/task? project path?
+  4. Focus behavior: --split should focus new? --fullscreen shouldn't?
+
+  ## Dependencies to Install
+  - `brew install hammerspoon`
+  - Hammerspoon `spaces` module
+  - SplitView spoon
+revisit: "near-term: when I have time to set up Hammerspoon and experiment"

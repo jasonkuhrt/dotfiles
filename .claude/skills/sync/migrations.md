@@ -1,13 +1,8 @@
----
-name: sync-migrations
-description: Use when creating dotfiles migrations for one-time cleanup on existing machines (removing old tools, uninstalling replaced packages, cleaning deprecated files). Also use when a migration fails and user needs help diagnosing or recovering.
----
-
 # Sync Migrations
 
 One-time scripts that run on existing machines when dotfiles changes require cleanup.
 
-## When to Use
+## When to Create
 
 **Create migration for:**
 - Removing/uninstalling replaced tools (npm → brew)
@@ -66,11 +61,11 @@ fi
 
 ## Troubleshooting Failures
 
-When a migration fails, help the user recover:
+When a migration fails:
 
 1. **Read the failed migration script** to understand intent
 2. **Check the sync log** at `/tmp/dotfiles-sync-*.log` for error details
-3. **Diagnose the issue** - missing dependency, permission error, path doesn't exist, etc.
+3. **Diagnose the issue** - missing dependency, permission error, path doesn't exist
 4. **Options:**
    - Fix the issue and re-run: `./sync --migrate-only`
    - Run commands manually, then update marker: `echo "YYYY-MM-DD" > ~/.dotfiles-migration-marker`

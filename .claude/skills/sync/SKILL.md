@@ -1,11 +1,13 @@
 ---
 name: sync
-description: Use when user says "sync" or wants to commit, push, pull, and run the dotfiles sync script
+description: Use when user says "sync" or wants to commit, push, pull, and run the dotfiles sync script. Also use when creating migrations for one-time cleanup on existing machines, or when a migration fails.
 ---
 
 # Sync
 
 Full dotfiles sync: commit, git sync, resolve conflicts, run sync script.
+
+For migrations (one-time cleanup scripts), see @migrations.md.
 
 ## Steps
 
@@ -37,11 +39,18 @@ Full dotfiles sync: commit, git sync, resolve conflicts, run sync script.
 
 5. **Run sync script**
    ```bash
-   ./sync
+   ./sync           # or ./sync -v for verbose
    ```
+
+## What Sync Does
+
+- Symlinks config files (fish, git, zed, nvim, ssh, etc.)
+- Installs Homebrew packages from Brewfile
+- Sets up Node.js via pnpm
+- Configures macOS defaults (keyboard, Finder, Dock)
+- Installs Fisher plugins and npm global packages
 
 ## Notes
 
-- Sync script without sudo skips password-protected operations (casks, Touch ID, shell change)
-- This is expected in Claude Code sessions - no sudo access
-- User can run `sudo ./sync` manually later for full sync
+- **Claude Code cannot run sync directly** - requires sudo for casks, Touch ID, shell change, power settings
+- Instruct user to run manually: `sudo ./sync`

@@ -6,31 +6,10 @@ set -e
 # Run after ./sync completes: sudo ./sync-sudo
 # ─────────────────────────────────────────────────────────────
 
-# Colors
-RED=$'\033[0;31m'
-GREEN=$'\033[0;32m'
-YELLOW=$'\033[0;33m'
-CYAN=$'\033[0;36m'
-DIM=$'\033[2m'
-BOLD=$'\033[1m'
-RESET=$'\033[0m'
+HERE="$(cd "$(dirname "$0")" && pwd)"
 
-# Symbols
-CHECK="${GREEN}✓${RESET}"
-SKIP="${DIM}○${RESET}"
-WARN="${YELLOW}!${RESET}"
-
-task() {
-    printf "  ${CHECK} %s\n" "$1"
-}
-
-skip() {
-    printf "  ${SKIP} ${DIM}%s (already configured)${RESET}\n" "$1"
-}
-
-warn() {
-    printf "  ${WARN} ${YELLOW}%s${RESET}\n" "$1"
-}
+# Load shared utilities
+source "$HERE/sync-lib.sh"
 
 # ─────────────────────────────────────────────────────────────
 # Check if running as root

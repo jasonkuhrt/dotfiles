@@ -1,0 +1,167 @@
+#!/bin/bash
+set -e
+
+# ─────────────────────────────────────────────────────────────
+# Dotfiles sudo operations
+# Run after ./sync completes: sudo ./sync-sudo
+# ─────────────────────────────────────────────────────────────
+
+# Colors
+RED=$'\033[0;31m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[0;33m'
+CYAN=$'\033[0;36m'
+DIM=$'\033[2m'
+BOLD=$'\033[1m'
+RESET=$'\033[0m'
+
+# Symbols
+CHECK="${GREEN}✓${RESET}"
+SKIP="${DIM}○${RESET}"
+WARN="${YELLOW}!${RESET}"
+
+task() {
+    printf "  ${CHECK} %s\n" "$1"
+}
+
+skip() {
+    printf "  ${SKIP} ${DIM}%s (already configured)${RESET}\n" "$1"
+}
+
+warn() {
+    printf "  ${WARN} ${YELLOW}%s${RESET}\n" "$1"
+}
+
+# ─────────────────────────────────────────────────────────────
+# Check if running as root
+# ─────────────────────────────────────────────────────────────
+
+if [ "$(id -u)" -ne 0 ]; then
+    printf "\n"
+    printf "${BOLD}${CYAN}Dotfiles Sudo Setup${RESET}\n"
+    printf "${DIM}─────────────────────────────────────────${RESET}\n"
+    printf "\n"
+    printf "Run with sudo to apply these settings:\n"
+    printf "\n"
+    printf "  ${CYAN}sudo ./sync-sudo${RESET}\n"
+    printf "\n"
+    printf "Or run these commands manually:\n"
+    printf "\n"
+
+    # Power management
+    current_sleep=$(pmset -g 2>/dev/null | grep displaysleep | awk '{print $2}')
+    if [ "$current_sleep" = "10" ]; then
+        printf "  ${SKIP} ${DIM}Display sleep already 10 min${RESET}\n"
+    else
+        printf "  ${CYAN}sudo pmset -c displaysleep 10${RESET}\n"
+    fi
+
+    # Touch ID for sudo
+    SUDO_LOCAL="/etc/pam.d/sudo_local"
+    if [ -f "$SUDO_LOCAL" ] && grep -q "pam_tid.so" "$SUDO_LOCAL" 2>/dev/null; then
+        printf "  ${SKIP} ${DIM}Touch ID for sudo already enabled${RESET}\n"
+    else
+        printf "  ${CYAN}echo 'auth       sufficient     pam_tid.so' | sudo tee /etc/pam.d/sudo_local${RESET}\n"
+    fi
+
+    # Fish shell setup
+    FISH_PATH="/opt/homebrew/bin/fish"
+    if [ -x "$FISH_PATH" ]; then
+        if grep -q "$FISH_PATH" /etc/shells 2>/dev/null; then
+            printf "  ${SKIP} ${DIM}Fish already in /etc/shells${RESET}\n"
+        else
+            printf "  ${CYAN}echo '$FISH_PATH' | sudo tee -a /etc/shells${RESET}\n"
+        fi
+
+        if [ "$SHELL" = "$FISH_PATH" ]; then
+            printf "  ${SKIP} ${DIM}Fish already default shell${RESET}\n"
+        else
+            printf "  ${CYAN}chsh -s $FISH_PATH${RESET}\n"
+        fi
+    fi
+
+    printf "\n"
+    exit 0
+fi
+
+# ─────────────────────────────────────────────────────────────
+# Running as root - apply settings
+# ─────────────────────────────────────────────────────────────
+
+printf "\n"
+printf "${BOLD}${CYAN}╔══════════════════════════════════════╗${RESET}\n"
+printf "${BOLD}${CYAN}║${RESET}        ${BOLD}Dotfiles Sudo Setup${RESET}          ${BOLD}${CYAN}║${RESET}\n"
+printf "${BOLD}${CYAN}╚══════════════════════════════════════╝${RESET}\n"
+printf "\n"
+
+# Get the actual user (not root)
+ACTUAL_USER="${SUDO_USER:-$USER}"
+ACTUAL_HOME=$(eval echo "~$ACTUAL_USER")
+
+# ─────────────────────────────────────────────────────────────
+# Power Management
+# ─────────────────────────────────────────────────────────────
+
+printf "${BOLD}Power Management${RESET}\n"
+
+current_sleep=$(pmset -g 2>/dev/null | grep displaysleep | awk '{print $2}')
+if [ "$current_sleep" = "10" ]; then
+    skip "Display sleep: 10 min (AC power)"
+else
+    pmset -c displaysleep 10
+    task "Display sleep: 10 min (AC power)"
+fi
+
+# ─────────────────────────────────────────────────────────────
+# Touch ID for sudo
+# ─────────────────────────────────────────────────────────────
+
+printf "\n${BOLD}Touch ID${RESET}\n"
+
+SUDO_LOCAL="/etc/pam.d/sudo_local"
+if [ -f "$SUDO_LOCAL" ] && grep -q "pam_tid.so" "$SUDO_LOCAL" 2>/dev/null; then
+    skip "Touch ID for sudo"
+else
+    echo "auth       sufficient     pam_tid.so" > "$SUDO_LOCAL"
+    task "Touch ID for sudo enabled"
+fi
+
+# ─────────────────────────────────────────────────────────────
+# Fish Shell
+# ─────────────────────────────────────────────────────────────
+
+printf "\n${BOLD}Fish Shell${RESET}\n"
+
+FISH_PATH="/opt/homebrew/bin/fish"
+if [ -x "$FISH_PATH" ]; then
+    # Add to /etc/shells
+    if grep -q "$FISH_PATH" /etc/shells 2>/dev/null; then
+        skip "Fish in /etc/shells"
+    else
+        echo "$FISH_PATH" >> /etc/shells
+        task "Fish added to /etc/shells"
+    fi
+
+    # Set as default shell for the actual user
+    CURRENT_SHELL=$(dscl . -read "/Users/$ACTUAL_USER" UserShell 2>/dev/null | awk '{print $2}')
+    if [ "$CURRENT_SHELL" = "$FISH_PATH" ]; then
+        skip "Fish as default shell for $ACTUAL_USER"
+    else
+        chsh -s "$FISH_PATH" "$ACTUAL_USER"
+        task "Fish set as default shell for $ACTUAL_USER"
+    fi
+else
+    warn "Fish not installed at $FISH_PATH"
+fi
+
+# ─────────────────────────────────────────────────────────────
+# Done
+# ─────────────────────────────────────────────────────────────
+
+printf "\n"
+printf "${BOLD}${GREEN}╔══════════════════════════════════════╗${RESET}\n"
+printf "${BOLD}${GREEN}║${RESET}      ${BOLD}${GREEN}✓ Sudo Setup Complete${RESET}         ${BOLD}${GREEN}║${RESET}\n"
+printf "${BOLD}${GREEN}╚══════════════════════════════════════╝${RESET}\n"
+printf "\n"
+printf "${DIM}Log out and back in for shell change to take effect.${RESET}\n"
+printf "\n"

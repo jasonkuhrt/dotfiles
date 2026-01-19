@@ -145,27 +145,6 @@ run_logged() {
     return $exit_code
 }
 
-# Run command with sudo, checking state first
-# Usage: sudo_run "check_cmd" "expected" "sudo_cmd" "desc" "manual_cmd"
-sudo_run() {
-    local check_cmd="$1"
-    local expected="$2"
-    local sudo_cmd="$3"
-    local desc="$4"
-    local manual_cmd="$5"
-
-    local current
-    current=$(eval "$check_cmd" 2>/dev/null || echo "")
-
-    if [ "$current" = "$expected" ]; then
-        skip "$desc"
-    elif sudo -n true 2>/dev/null; then
-        eval "sudo $sudo_cmd" 2>/dev/null && task "$desc"
-    else
-        warn "$desc requires sudo - run: $manual_cmd"
-    fi
-}
-
 # Ensure file exists, create if missing
 ensure_file() {
     local path="$1"
@@ -654,33 +633,12 @@ if [ "$(uname)" = "Darwin" ]; then
     set_default "com.apple.dock" "tilesize" "-int" "36" "Dock icon size (smaller)"
     set_default "com.apple.dock" "mineffect" "-string" "scale" "Scale effect (not genie)"
 
-    info "Configuring power management..."
-    sudo_run "pmset -g | grep displaysleep | awk '{print \$2}'" "10" \
-        "pmset -c displaysleep 10" \
-        "Display sleep: 10 min (AC power)" \
-        "sudo pmset -c displaysleep 10"
-
     info "Configuring trackpad..."
     set_default "com.apple.AppleMultitouchTrackpad" "Clicking" "-bool" "true" "Tap to click (trackpad)"
     set_default "com.apple.driver.AppleBluetoothMultitouch.trackpad" "Clicking" "-bool" "true" "Tap to click (bluetooth)"
 
     info "Configuring Mission Control..."
     set_default "com.apple.dock" "mru-spaces" "-bool" "false" "Disable auto-rearrange Spaces"
-
-    info "Configuring Touch ID for sudo..."
-    # Use sudo_local which persists across macOS updates (unlike /etc/pam.d/sudo)
-    SUDO_LOCAL="/etc/pam.d/sudo_local"
-    if [ -f "$SUDO_LOCAL" ] && grep -q "pam_tid.so" "$SUDO_LOCAL" 2>/dev/null; then
-        skip "Touch ID for sudo"
-    else
-        if sudo -n true 2>/dev/null; then
-            echo "auth       sufficient     pam_tid.so" | sudo tee "$SUDO_LOCAL" >/dev/null
-            task "Touch ID for sudo enabled"
-        else
-            warn "Touch ID for sudo requires password - run manually:"
-            printf "      ${DIM}echo 'auth       sufficient     pam_tid.so' | sudo tee /etc/pam.d/sudo_local${RESET}\n"
-        fi
-    fi
 
     info "Checking iCloud Desktop & Documents..."
     icloud_desktop=$(defaults read com.apple.finder FXICloudDriveDesktop 2>/dev/null || echo "0")
@@ -845,30 +803,6 @@ printf "${BOLD}${GREEN}╔══════════════════
 printf "${BOLD}${GREEN}║${RESET}           ${BOLD}${GREEN}✓ Sync Complete${RESET}           ${BOLD}${GREEN}║${RESET}\n"
 printf "${BOLD}${GREEN}╚══════════════════════════════════════╝${RESET}\n"
 
-# Set Fish as default shell
-FISH_PATH="/opt/homebrew/bin/fish"
-if [ -x "$FISH_PATH" ]; then
-    if grep -q "$FISH_PATH" /etc/shells 2>/dev/null; then
-        skip "Fish in /etc/shells"
-    elif sudo -n true 2>/dev/null; then
-        echo "$FISH_PATH" | sudo tee -a /etc/shells >/dev/null
-        task "Fish added to /etc/shells"
-    else
-        warn "Adding fish to /etc/shells requires sudo - run: echo '$FISH_PATH' | sudo tee -a /etc/shells"
-    fi
-
-    if [ "$SHELL" = "$FISH_PATH" ]; then
-        skip "Fish already default shell"
-    else
-        # chsh requires password - check if we can do it non-interactively
-        if echo "" | chsh -s "$FISH_PATH" 2>/dev/null; then
-            task "Fish set as default shell"
-        else
-            warn "Setting default shell requires password - run: chsh -s $FISH_PATH"
-        fi
-    fi
-fi
-
 # Remind about SSH keys if missing
 if [ ! -f "$HOME/.ssh/id_ed25519" ] && [ ! -f "$HOME/.ssh/id_rsa" ]; then
     printf "\n"
@@ -877,6 +811,10 @@ if [ ! -f "$HOME/.ssh/id_ed25519" ] && [ ! -f "$HOME/.ssh/id_rsa" ]; then
     printf "  ${CYAN}gh ssh-key add ~/.ssh/id_ed25519.pub${RESET}\n"
 fi
 
+# Remind about sudo setup
 printf "\n"
-printf "${DIM}Log out and back in for shell change to take effect.${RESET}\n"
+printf "${BOLD}Next:${RESET} Run ${CYAN}sudo ./sync-sudo${RESET} for:\n"
+printf "  ${DIM}• Power management (display sleep)${RESET}\n"
+printf "  ${DIM}• Touch ID for sudo${RESET}\n"
+printf "  ${DIM}• Fish as default shell${RESET}\n"
 printf "\n"

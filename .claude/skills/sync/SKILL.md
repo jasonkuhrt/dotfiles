@@ -42,15 +42,19 @@ For migrations (one-time cleanup scripts), see @migrations.md.
    ./sync           # or ./sync -v for verbose
    ```
 
+6. **Instruct user to run sudo operations**
+   - After ./sync completes, tell user: "Run `sudo ./sync-sudo` for power management, Touch ID, and shell setup"
+
 ## What Sync Does
 
+**`./sync`** (Claude Code can run):
 - Symlinks config files (fish, git, zed, nvim, ssh, etc.)
 - Installs Homebrew packages from Brewfile
 - Sets up Node.js via pnpm
 - Configures macOS defaults (keyboard, Finder, Dock)
 - Installs Fisher plugins and npm global packages
 
-## Notes
-
-- **Claude Code cannot run sync directly** - requires sudo for casks, Touch ID, shell change, power settings
-- Instruct user to run manually: `sudo ./sync`
+**`./sync-sudo`** (user runs manually):
+- Power management (display sleep)
+- Touch ID for sudo
+- Fish as default shell (/etc/shells + chsh)

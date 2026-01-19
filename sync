@@ -596,10 +596,12 @@ if [ ! -f "$HOME/.ssh/id_ed25519" ] && [ ! -f "$HOME/.ssh/id_rsa" ]; then
     printf "  ${CYAN}gh ssh-key add ~/.ssh/id_ed25519.pub${RESET}\n"
 fi
 
-# Remind about sudo setup
-printf "\n"
-printf "${BOLD}Next:${RESET} Run ${CYAN}sudo ./sync-sudo${RESET} for:\n"
-printf "  ${DIM}• Power management (display sleep)${RESET}\n"
-printf "  ${DIM}• Touch ID for sudo${RESET}\n"
-printf "  ${DIM}• Fish as default shell${RESET}\n"
-printf "\n"
+# Remind about sudo setup (only if needed)
+if sync_sudo_needed; then
+    printf "\n"
+    printf "${BOLD}Next:${RESET} Run ${CYAN}sudo ./sync-sudo${RESET} for:\n"
+    $SUDO_NEEDED_PMSET && printf "  ${DIM}• Power management (display sleep)${RESET}\n"
+    $SUDO_NEEDED_TOUCHID && printf "  ${DIM}• Touch ID for sudo${RESET}\n"
+    ($SUDO_NEEDED_SHELLS || $SUDO_NEEDED_CHSH) && printf "  ${DIM}• Fish as default shell${RESET}\n"
+    printf "\n"
+fi

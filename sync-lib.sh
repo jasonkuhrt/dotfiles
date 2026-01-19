@@ -211,6 +211,50 @@ run_logged() {
     return $exit_code
 }
 
+# Check if sync-sudo operations are needed
+# Returns 0 (true) if any sudo operation is needed, 1 (false) if all configured
+# Sets SUDO_NEEDED_* variables for each operation
+sync_sudo_needed() {
+    local needed=false
+    SUDO_NEEDED_PMSET=false
+    SUDO_NEEDED_TOUCHID=false
+    SUDO_NEEDED_SHELLS=false
+    SUDO_NEEDED_CHSH=false
+
+    # Power management
+    local current_sleep
+    current_sleep=$(pmset -g 2>/dev/null | grep displaysleep | awk '{print $2}')
+    if [ "$current_sleep" != "10" ]; then
+        SUDO_NEEDED_PMSET=true
+        needed=true
+    fi
+
+    # Touch ID for sudo
+    if ! grep -q "pam_tid.so" /etc/pam.d/sudo_local 2>/dev/null; then
+        SUDO_NEEDED_TOUCHID=true
+        needed=true
+    fi
+
+    # Fish in /etc/shells
+    local fish_path="/opt/homebrew/bin/fish"
+    if [ -x "$fish_path" ]; then
+        if ! grep -q "$fish_path" /etc/shells 2>/dev/null; then
+            SUDO_NEEDED_SHELLS=true
+            needed=true
+        fi
+
+        # Default shell (check dscl, not $SHELL which updates on login)
+        local configured_shell
+        configured_shell=$(dscl . -read "/Users/$USER" UserShell 2>/dev/null | awk '{print $2}')
+        if [ "$configured_shell" != "$fish_path" ]; then
+            SUDO_NEEDED_CHSH=true
+            needed=true
+        fi
+    fi
+
+    $needed
+}
+
 # macOS defaults helper - check and set
 # Usage: set_default "domain" "key" "type" "value" "description"
 # Returns: sets DEFAULTS_CHANGED=true if value was changed

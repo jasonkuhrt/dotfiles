@@ -37,24 +37,27 @@ For migrations (one-time cleanup scripts), see @migrations.md.
      ```
    - Commit and push resolution
 
-5. **Run sync script**
+5. **Run sync script** (Claude Code runs this directly)
    ```bash
-   ./sync           # or ./sync -v for verbose
+   ./sync
    ```
+   - Use `./sync -v` for verbose output if debugging
 
-6. **Instruct user to run sudo operations**
-   - After ./sync completes, tell user: "Run `sudo ./sync-sudo` for power management, Touch ID, and shell setup"
+6. **Relay sudo reminder if shown**
+   - The script auto-detects if `sync-sudo` is needed
+   - If output shows "Next: Run sudo ./sync-sudo", relay that to user
+   - If no reminder shown, everything is configured - done!
 
 ## What Sync Does
 
-**`./sync`** (Claude Code can run):
+**`./sync`** (Claude Code runs directly):
 - Symlinks config files (fish, git, zed, nvim, ssh, etc.)
 - Installs Homebrew packages from Brewfile
 - Sets up Node.js via pnpm
 - Configures macOS defaults (keyboard, Finder, Dock)
 - Installs Fisher plugins and npm global packages
 
-**`./sync-sudo`** (user runs manually):
+**`./sync-sudo`** (user runs manually, only if needed):
 - Power management (display sleep)
 - Touch ID for sudo
 - Fish as default shell (/etc/shells + chsh)

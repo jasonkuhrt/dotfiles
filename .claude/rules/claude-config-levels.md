@@ -1,8 +1,3 @@
----
-name: claude-config-levels
-description: Use when asked to add rules, commands, skills, or config to Claude Code in this dotfiles repo. Two levels exist and scope may be ambiguous.
----
-
 # Claude Config Levels in Dotfiles
 
 This dotfiles repo has two Claude Code config locations with different purposes.
@@ -53,8 +48,6 @@ dotfiles/
     ├── CLAUDE.md             # Dotfiles-specific rules
     ├── commands/
     │   └── audit.md          # /audit command
-    ├── rules/
-    │   └── git-dashboard.md  # Scoped to fish/git-dashboard.fish
-    └── skills/
-        └── claude-config-levels/  # This skill
+    └── rules/
+        └── git-dashboard.md  # Scoped to fish/git-dashboard.fish
 ```

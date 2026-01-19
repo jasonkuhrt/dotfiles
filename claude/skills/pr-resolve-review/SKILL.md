@@ -7,7 +7,7 @@ description: Interactive PR review resolution - one thread at a time with plan-e
 
 ## Goal
 
-Interactively process PR review threads one at a time. Each thread gets full attention: discussion, planning, execution, and resolution before moving to the next.
+Interactively process PR review threads one at a time.
 
 ## Glossary
 

@@ -23,7 +23,7 @@
     "trust_all_worktrees": true
   },
   "auto_install_extensions": {
-    "astro": true,
+    "astro": false,
     "catppuccin": true,
     "cherri": true,
     "cucumber": true,
@@ -38,7 +38,7 @@
     "oxc": true,
     "postgres-context-server": true,
     "prisma": true,
-    "svelte": true,
+    "svelte": false,
     "tokyo-night": true,
     "tsgo": true
   },

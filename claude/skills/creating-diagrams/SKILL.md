@@ -32,6 +32,18 @@ Reference `references/ascii-patterns.md` for: box diagrams, flows, file trees, d
 
 Reference `references/mermaid-syntax.md` for: flowcharts, sequence diagrams, state diagrams, class diagrams, Gantt charts.
 
+### Adding Mermaid Live Links
+
+Add one-click preview URLs above mermaid code blocks.
+
+```bash
+# Pipe diagram to script (run from project with pako installed)
+echo 'sequenceDiagram
+    A->>B: Hello' | node scripts/mermaid-url.js
+```
+
+Add URL on line before code fence for one-click preview.
+
 ## CRITICAL
 
 ### Right Edge Alignment

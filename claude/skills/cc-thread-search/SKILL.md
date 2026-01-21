@@ -7,12 +7,13 @@ description: Search Claude Code conversation history. Use when user asks "where 
 
 Search and analyze Claude Code conversation history.
 
+**For storage internals** (sessions-index.json, /rename scope, path encoding): See `cc-internals` skill.
+
 ## Quick Reference
 
 | Fact | Value |
 |------|-------|
-| Threads location | `~/.claude/projects/` |
-| Path encoding | Slashes → dashes (e.g., `/Users/foo/bar` → `-Users-foo-bar`) |
+| Threads location | `~/.claude/projects/<encoded-path>/` |
 | Thread format | JSONL (one JSON object per line) |
 | Main threads | `<uuid>.jsonl` |
 | Subagent threads | `agent-<hash>.jsonl` |
@@ -115,7 +116,9 @@ jq -c 'select(.message.content[].text | test("pattern";"i"))' file.jsonl
 jq -rs '[.[].timestamp | select(.)] | sort | .[0], .[-1]' file.jsonl
 ```
 
-## Further Reference
+## Related Skills
 
-For deeper Claude Code internals (storage, configuration, settings):
-→ Use `superpowers-developing-for-claude-code:working-with-claude-code` skill
+| Topic | Skill |
+|-------|-------|
+| Storage internals, /rename | `cc-internals` |
+| Permission config | `cc-configuring-permissions` |

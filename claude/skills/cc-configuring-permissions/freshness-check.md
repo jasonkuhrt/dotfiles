@@ -28,10 +28,14 @@ site:github.com/anthropics/claude-code "plugin" "skill" permission allow setting
 ```json
 {
   "last_evaluated": "YYYY-MM-DD",
-  "cc_version_checked": "X.Y.Z",
-  "issues_reviewed": ["#6881", "#14956", "#13344", "#5140", "#9814", "#8581"]
+  "cc_version_checked": "X.Y.Z or 'latest'",
+  "issues_open": ["#6881", "#5140", "#10833", "#14956", "#13344"],
+  "issues_fixed": ["#9814", "#8581", "#3107"],
+  "issues_closed_other": ["#10093"]
 }
 ```
+
+**Refresh procedure:** Use `gh issue view <number> --repo anthropics/claude-code --json state,title,closedAt` to check each issue.
 
 ## Review User Settings
 

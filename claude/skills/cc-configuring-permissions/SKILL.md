@@ -196,24 +196,73 @@ digraph team_permissions {
 
 **Why commit:** Team members get permissions automatically; worktrees don't inherit uncommitted files.
 
-## Permission Patterns
+## Permission Patterns — Complete Reference
+
+### Tools Requiring Permissions
+
+| Tool | Default | Notes |
+|------|---------|-------|
+| Bash | Ask | Shell commands |
+| Edit | Ask | File modifications |
+| Write | Ask | File creation/overwrite |
+| MultiEdit | Ask | Batch file edits |
+| NotebookEdit | Ask | Jupyter cell modifications |
+| WebFetch | Ask | URL fetching |
+| WebSearch | Ask | Web searches |
+| Skill | Ask | Plugin/local skills |
+
+**No permission required:** Glob, Grep, Read, NotebookRead, Task, TodoWrite
+
+### Pattern Syntax
 
 ```
+# TOOLS (bare = all uses)
 Bash                           # All bash commands
-Bash(npm run build)            # Specific command
 Edit                           # All file edits
-Read(~/**)                     # Read files in home
-Skill(plugin-name:*)           # All skills from plugin
-Skill(plugin-name:skill-name)  # Specific skill
-mcp__server                    # All tools from MCP server
+Write                          # All file writes
+MultiEdit                      # All multi-edits
+WebFetch                       # All web fetches
+WebSearch                      # All web searches
+
+# BASH (prefix matching, NOT regex)
+Bash(npm run build)            # Exact command
+Bash(npm run test:*)           # Commands starting with "npm run test:"
+Bash(git *)                    # Commands starting with "git "
+
+# FILE PATHS (gitignore-style globs)
+Read(~/**)                     # Read files in home (recursive)
+Read(/src/**)                  # Relative to settings file location
+Read(//absolute/path/**)       # Absolute filesystem path (note: //)
+Edit(*.md)                     # Edit markdown files
+Write(.claude/**)              # Write to .claude directory
+
+# SKILLS
+Skill(plugin-name:*)           # All skills from a plugin
+Skill(plugin-name:skill-name)  # Specific skill from plugin
+Skill(local-skill-name)        # Local skill (no colon)
+
+# MCP SERVERS
+mcp__server                    # All tools from server
 mcp__server__*                 # All tools (wildcard, equivalent)
-mcp__server__tool              # Specific tool from MCP server
-WebFetch(domain:example.com)   # Specific domain
+mcp__server__tool              # Specific tool only
+
+# WEB
+WebFetch(domain:example.com)   # Specific domain only
 ```
+
+### Local vs Plugin Skills
+
+| Skill Location | Example | Permission Pattern |
+|----------------|---------|-------------------|
+| `~/.claude/skills/foo/` | User local skill "foo" | `Skill(foo)` |
+| `.claude/skills/bar/` | Project local skill "bar" | `Skill(bar)` |
+| Plugin `hookify@marketplace` | Plugin skill "list" | `Skill(hookify:list)` or `Skill(hookify:*)` |
+
+**Key distinction:** Local skills have NO colon. Plugin skills have `plugin-name:skill-name`.
 
 ## Known Issues (Jan 2026)
 
-### Path Prefix Gotcha ([#6881](https://github.com/anthropics/claude-code/issues/6881))
+### Path Prefix Gotcha ([#6881](https://github.com/anthropics/claude-code/issues/6881)) — OPEN
 
 | Prefix | Meaning | Example |
 |--------|---------|---------|
@@ -223,7 +272,7 @@ WebFetch(domain:example.com)   # Specific domain
 
 **Common mistake:** `/Users/me/...` is NOT absolute — use `//Users/me/...`
 
-### Skill Permissions Broken ([#5140](https://github.com/anthropics/claude-code/issues/5140), [#10833](https://github.com/anthropics/claude-code/issues/10833))
+### Skill Permissions Broken ([#5140](https://github.com/anthropics/claude-code/issues/5140), [#10833](https://github.com/anthropics/claude-code/issues/10833)) — OPEN
 
 `Skill(*)` doesn't work reliably anywhere:
 - User settings: sometimes ignored, worktree bug
@@ -232,35 +281,66 @@ WebFetch(domain:example.com)   # Specific domain
 
 **Team workaround:** Commit `settings.local.json` with explicit skill patterns. See [Skill Permissions](#skill-permissions) above.
 
-### Skill allowed-tools Broken ([#14956](https://github.com/anthropics/claude-code/issues/14956))
+### Skill allowed-tools Broken ([#14956](https://github.com/anthropics/claude-code/issues/14956)) — OPEN
 
 Skills with `allowed-tools` in frontmatter don't actually grant permissions. The skill loads, reports correct `allowedTools`, but Bash commands are still denied.
 
 **Workaround:** Add patterns to global allow list directly.
 
-### Plugin Enable/Disable Ignored ([#13344](https://github.com/anthropics/claude-code/issues/13344))
+### Plugin Enable/Disable Ignored ([#13344](https://github.com/anthropics/claude-code/issues/13344)) — OPEN
 
 When plugins share a source directory, disabling one loads all skills anyway. `enabledPlugins` settings have no effect.
 
 **Impact:** ~35-40k tokens wasted on unwanted skills.
 
-### User Settings Sometimes Ignored ([#5140](https://github.com/anthropics/claude-code/issues/5140))
+### User Settings Sometimes Ignored ([#5140](https://github.com/anthropics/claude-code/issues/5140)) — OPEN
 
 `~/.claude/settings.json` permissions may not apply. Same rules work in project `.claude/settings.local.json`.
 
-### UI Grant Overwrites List ([#9814](https://github.com/anthropics/claude-code/issues/9814))
+## Fixed Issues (Reference)
 
-Clicking "don't ask again" can overwrite entire permissions array with single new entry.
+| Issue | Fixed | Description |
+|-------|-------|-------------|
+| [#9814](https://github.com/anthropics/claude-code/issues/9814) | Oct 2025 | UI grant overwrites list |
+| [#8581](https://github.com/anthropics/claude-code/issues/8581) | Oct 2025 | Bash wildcards + env vars |
+| [#3107](https://github.com/anthropics/claude-code/issues/3107) | Jul 2025 | MCP wildcards not honored |
+| [#10093](https://github.com/anthropics/claude-code/issues/10093) | Jan 2026 | Plugin-scoped permissions (NOT_PLANNED) |
 
-**Workaround:** Backup settings before using UI grants, or prefer manual edits.
+## Programmatic Editing (Hooks/Scripts)
 
-### Bash Wildcards + Env Vars ([#8581](https://github.com/anthropics/claude-code/issues/8581))
+When scripts modify settings.json:
 
-`Bash(cmd:*)` fails to match commands with env var prefixes like `NODE_OPTIONS=...`.
+### Safe JSON Modification
 
-### Plugin-Scoped Permissions Not Planned ([#10093](https://github.com/anthropics/claude-code/issues/10093))
+```bash
+SETTINGS_FILE="$HOME/.claude/settings.json"
+PERMISSION="Skill(hookify:*)"
 
-Feature request for plugin-level permissions was closed as NOT_PLANNED (Jan 2026).
+# Check if already present (avoid duplicates)
+if ! jq -e --arg p "$PERMISSION" '.permissions.allow | index($p)' "$SETTINGS_FILE" >/dev/null 2>&1; then
+  # Atomic write: tmp file + mv
+  jq --arg p "$PERMISSION" '.permissions.allow += [$p]' "$SETTINGS_FILE" > "$SETTINGS_FILE.tmp" \
+    && mv "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
+fi
+```
+
+### Critical Rules
+
+1. **Always use jq** — Never sed/awk on JSON
+2. **Atomic writes** — Write to `.tmp`, then `mv`
+3. **Check before adding** — Use `jq -e ... | index($p)` to avoid duplicates
+4. **Validate result** — `jq empty "$SETTINGS_FILE"` to verify valid JSON
+5. **Remember restart requirement** — Script changes don't take effect until CC restarts
+
+### Lock File (Optional, for parallel safety)
+
+```bash
+LOCK_FILE="$HOME/.claude/settings.json.lock"
+exec 200>"$LOCK_FILE"
+flock -n 200 || { echo "Settings locked"; exit 1; }
+# ... do work ...
+flock -u 200
+```
 
 ## Notes
 

@@ -19,6 +19,10 @@ description: Provides guidance for configuring and customizing the Zed editor. U
 * Zed uses JSONC (JSON with comments) for config files
 * Settings are merged: project settings override global settings
 
+## Tips & Hidden Gems
+
+See [hidden-gems.md](./hidden-gems.md) for lesser-known features and productivity tips.
+
 ## Common Tasks
 
 ### Adding a keybinding

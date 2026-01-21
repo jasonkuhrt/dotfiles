@@ -37,7 +37,10 @@ Optimize toward agentic effectiveness. Be opinionated, not deferential - state w
 
 Never guess APIs. Always check actual exports, signatures, and JSDoc. If unknown: clone repo to `tmp/`, use ref MCP, or read the source.
 
-## Commits
+## Git
+
+Branches: `feat/description`, `fix/description`
+PRs: squash merge by default (`gh pr merge --squash`)
 
 Conventional commits: `feat|fix|refactor|docs|chore(scope): message`
 Scopes map 1:1 to top-level dirs/files (e.g., `fish`, `zed`, `sync`, `brew` for Brewfile).

@@ -80,9 +80,19 @@ When modifying `_git_*` functions:
 - Update `fish/GIT_DASHBOARD_DESIGN.md` after visible changes
 ```
 
+## Rules vs Skills
+
+Consider a **skill** instead of a rule when:
+- Content applies to **operations** (git push, running tests) not file edits
+- Guidance is **on-demand** rather than always needed
+- The glob pattern doesn't match when the rule would actually help
+
+**Gotcha:** A rule with `globs: ".github/**"` containing "never push to main" won't load during `git push` - it only loads when editing .github files. Use a skill or hook instead.
+
 ## Key Principles
 
 1. **Prefer globs over project-wide** - reduces token usage
 2. **Keep rules concise** - they consume context tokens
 3. **One concern per rule file** - easier to maintain
 4. **Multiple rules can match** - all matching rules apply
+5. **Match globs to trigger** - ensure glob fires when rule is needed

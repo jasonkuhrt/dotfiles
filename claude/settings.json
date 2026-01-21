@@ -21,7 +21,9 @@
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
-    "additionalDirectories": ["/Users/jasonkuhrt"]
+    "additionalDirectories": [
+      "/Users/jasonkuhrt"
+    ]
   },
   "hooks": {
     "SessionStart": [
@@ -33,6 +35,17 @@
           }
         ]
       }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/approve-user-skills.sh"
+          }
+        ]
+      }
     ]
   },
   "enabledPlugins": {
@@ -41,23 +54,24 @@
     "typescript-lsp@claude-plugins-official": true,
     "superpowers@superpowers-marketplace": true,
     "superpowers-developing-for-claude-code@superpowers-marketplace": true,
-    "claude-code@jasonkuhrt": true,
-    "diagrams@jasonkuhrt": true,
-    "markdown@jasonkuhrt": true,
-    "effect@jasonkuhrt": true,
-    "kitz@jasonkuhrt": true,
+    "claude-code@jasonkuhrt": false,
+    "diagrams@jasonkuhrt": false,
+    "markdown@jasonkuhrt": false,
+    "effect@jasonkuhrt": false,
+    "kitz@jasonkuhrt": false,
     "library-adt@jasonkuhrt": false,
     "library-standards@jasonkuhrt": false,
-    "react@jasonkuhrt": true,
-    "typescript@jasonkuhrt": true,
-    "zed@jasonkuhrt": true,
+    "react@jasonkuhrt": false,
+    "typescript@jasonkuhrt": false,
+    "zed@jasonkuhrt": false,
     "flo@jasonkuhrt": false,
     "panda-css@jasonkuhrt": false,
     "github-workflows@jasonkuhrt": true,
-    "macos@jasonkuhrt": true,
-    "focus@jasonkuhrt": true,
-    "node-packages@jasonkuhrt": true,
-    "pr@jasonkuhrt": false
+    "macos@jasonkuhrt": false,
+    "focus@jasonkuhrt": false,
+    "node-packages@jasonkuhrt": false,
+    "pr@jasonkuhrt": false,
+    "claude-md-management@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {},
   "alwaysThinkingEnabled": true,

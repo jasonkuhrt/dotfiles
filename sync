@@ -87,7 +87,31 @@ link_file "$HERE/lazygit/config.yml" "$HOME/.config/lazygit/config.yml" "lazygit
 # ─────────────────────────────────────────────────────────────
 header "tmux"
 
-link_file "$HERE/tmux/.tmux.conf" "$HOME/.tmux.conf" "tmux/.tmux.conf"
+ensure_real_dir "$HOME/.config/tmux" "$HERE/tmux"
+link_file "$HERE/tmux/.tmux.conf" "$HOME/.config/tmux/tmux.conf" "tmux/tmux.conf"
+
+# tpm-redux plugin manager
+TPM_DIR="$HOME/.config/tmux/plugins/tpm"
+if [ -d "$TPM_DIR" ]; then
+    skip "tpm-redux"
+else
+    info "Installing tpm-redux..."
+    if run_logged "tpm-redux clone" git clone https://github.com/RyanMacG/tpm-redux "$TPM_DIR"; then
+        task "tpm-redux installed"
+    else
+        warn "tpm-redux clone failed (see $LOG_FILE)"
+    fi
+fi
+
+# Install tmux plugins (headless)
+if [ -x "$TPM_DIR/bin/install" ]; then
+    info "Installing tmux plugins..."
+    if run_logged "tmux plugins" "$TPM_DIR/bin/install"; then
+        task "tmux plugins installed"
+    else
+        warn "tmux plugins install failed (see $LOG_FILE)"
+    fi
+fi
 
 # ─────────────────────────────────────────────────────────────
 header "Neovim"

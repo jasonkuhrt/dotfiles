@@ -155,6 +155,10 @@ function mcd --description "Create a directory and set CWD"
     end
 end
 
+function t --description "tmux: attach/create session named after current directory"
+    tmux new-session -A -s (basename $PWD)
+end
+
 # Dotfiles modules (fish/modules/*.fish)
 for f in ~/.config/fish/modules/*.fish
     source $f

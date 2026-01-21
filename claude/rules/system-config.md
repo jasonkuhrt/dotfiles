@@ -13,10 +13,3 @@ When making any system configuration changes, always consider:
    - New tools → appropriate subdirectory + `sync` script updates
 
 3. **Update sync script if needed** - New config directories need linking rules in `sync`
-
-Examples of changes that belong in dotfiles:
-- Installing CLI tools (Brewfile)
-- Shell aliases/functions (fish/config.fish)
-- Git configuration (git/.gitconfig)
-- Editor settings (zed/settings.json)
-- Environment variables (fish/config.fish or direnv)

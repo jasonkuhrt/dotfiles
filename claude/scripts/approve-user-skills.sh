@@ -16,7 +16,10 @@ APPROVE='{"hookSpecificOutput":{"hookEventName":"PermissionRequest","decision":{
 if [[ "$SKILL_NAME" == *":"* ]]; then
   PLUGIN_NAME="${SKILL_NAME%%:*}"
 
-  # Check if plugin is from claude-plugins-official
+  # Check if plugin name exists in claude-plugins-official
+  # CAVEAT: This checks if the plugin NAME is registered from official marketplace,
+  # not that THIS invocation is from there. A same-named plugin from another
+  # marketplace would also be approved. Acceptable tradeoff for simplicity.
   if grep -q "\"${PLUGIN_NAME}@claude-plugins-official\"" ~/.claude/settings.json 2>/dev/null; then
     echo "$APPROVE"
     exit 0

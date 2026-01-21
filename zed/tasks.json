@@ -111,6 +111,32 @@ ZED_CUSTOM_RUST_PACKAGE: (Rust-specific) name of the parent package of $ZED_FILE
   //
   //
   //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Git
+  //
+  //
+  //
+  {
+    "label": "lazygit",
+    "command": "lazygit",
+    "shell": { "program": "sh" },
+    "hide": "on_success",
+    "reveal_target": "center",
+    "show_summary": false,
+    "show_command": false,
+    "allow_concurrent_runs": true,
+    "use_new_terminal": true
+  },
+  {
+    "label": "television",
+    "command": "zed \"$(tv files)\"",
+    "hide": "always",
+    "allow_concurrent_runs": true,
+    "use_new_terminal": true
+  },
+  //
+  //
+  //
+  //
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Zed Toggles
   //
   //

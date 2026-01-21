@@ -30,6 +30,7 @@ brew "neofetch"      # system info with ASCII art
 
 # Search & navigation
 brew "fzf"           # fuzzy finder
+brew "television"    # fuzzy finder (Telescope-style, Rust)
 brew "tree"          # directory tree view
 brew "tldr"          # simplified man pages
 
@@ -56,6 +57,7 @@ brew "gh"            # GitHub CLI
 brew "git-delta"     # better diffs (also in gitconfig)
 brew "git-crypt"     # transparent file encryption
 brew "lazygit"       # terminal UI for git
+brew "tmux"          # terminal multiplexer
 brew "pre-commit"    # git hooks framework
 
 # Development
@@ -135,6 +137,7 @@ cask "steam"
 cask "transmission"   # torrent client
 
 # Utilities
+cask "betterdisplay"  # display management (brightness, HiDPI, DDC)
 cask "caffeine"       # prevent sleep
 cask "dropbox"
 cask "keyboardcleantool"  # disable keyboard for cleaning
@@ -158,3 +161,4 @@ mas "Pixelmator Pro", id: 1289583905
 mas "Refined GitHub", id: 1519867270
 mas "TripMode", id: 1513400665
 mas "Unsplash Wallpapers", id: 1284863847
+brew "imagemagick"

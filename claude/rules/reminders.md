@@ -1,3 +1,4 @@
 * Things the user should remember to do when working with me:
   * Use /clear aggressively, use /rename first to make returning easy
-  * Clear input text without interrupting: `Ctrl+U` (not `Ctrl+C` which stops Claude)
+  * Clear one line of input text: `Ctrl+U`
+  * Avoid clearing input with `Ctrl+C` b/c it interrupts Claude Code

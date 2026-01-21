@@ -47,6 +47,22 @@ my-skill/
 └── assets/           # Static files (banners, templates)
 ```
 
+**Naming:** Directory name = skill name (kebab-case). Opening `# Title` = titleized skill name.
+
+## Skill Body Headings
+
+| Heading | Purpose |
+|---------|---------|
+| `## CRITICAL` | Safety rules at top |
+| `## Use Cases` | Refine when skill applies |
+| `## Requirements` | Deps, env vars, how to handle absence |
+| `## Steps` | Sequential workflow |
+| `## Operations` | Menu of actions |
+| `## Examples` | User prompt → Claude action |
+| `## Reference` | Internal docs |
+| `## Notes` | Gotchas, tips |
+| `## Appendix` | Implementation details |
+
 ## Tools for Skills
 
 | Tool            | Purpose                              | Reference                                                                        |

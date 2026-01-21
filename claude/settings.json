@@ -31,7 +31,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/scripts/check-marketplace-plugins.sh"
+            "command": "~/.claude/scripts/session-start-resume-info.sh"
           }
         ]
       }

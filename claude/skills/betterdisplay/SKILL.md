@@ -79,12 +79,30 @@ fi
 ```
 BetterDisplay is open. Configure it:
 
-First-time only:
+REQUIRED (first-time):
   Settings → Displays → "Default display identification method" → "Match vendor, model"
 
-Add resolution favorites:
+RESOLUTION FAVORITES:
   Menu bar → Studio Display → resolution dropdown → right-click → "Add to Favorites"
   Suggested: 2880×1620, 3200×1800, 3840×2160
+
+UNLOCK MORE RESOLUTIONS (Pro feature, requires reboot):
+  1. Settings (gear) → Displays → click "Studio Display" row
+  2. Enable "Edit the default system configuration of this display model"
+  3. Enable "Enable flexible scaling"
+  4. Click Apply (admin password required)
+  5. Reboot
+  → After reboot: 3200×1800, 3840×2160, and slider available
+
+OTHER PRO FEATURES:
+  • Layout Protection: Settings → Displays → "Protect resolution"
+    (prevents macOS resetting your choice)
+  • XDR Brightness: Menu bar → Studio Display → XDR slider
+    (boost to 1600 nits)
+
+TROUBLESHOOTING:
+  • Safe mode: Hold SHIFT while launching
+  • Reset: Settings → Application → "Reset App Settings"
 ```
 
 ### 6. Prompt user (AskUserQuestion: "Done" / "Cancel")

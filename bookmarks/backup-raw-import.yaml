@@ -1,0 +1,223 @@
+# yaml-language-server: $schema=./bookmarks.schema.json
+#
+# RAW 1:1 BACKUP - Exact structure from browsers
+# Created: 2026-01-19T12:17:21.859423
+# DO NOT EDIT - This is a backup. Edit bookmarks.yaml instead.
+
+targets:
+  safari:
+    path: ~/Library/Safari/Bookmarks.plist
+  chrome:
+    personal:
+      path: ~/Library/Application Support/Google/Chrome/Default
+
+base:
+  favorites_bar:
+    # ─── SAFARI BookmarksBar ───
+    - name: "AI"
+      date_added: "2026-01-14T03:39:31.034342"
+      uuid: 75D47AA6-2F84-4ADF-9BBD-996B9190BE54
+      children:
+        - name: "Massively Parallel Procrastination"
+          url: https://blog.fsck.com/
+          date_added: "2026-01-14T03:39:59.325208"
+          uuid: F2DE3BEE-6E82-4327-99E7-53AAA9C9E917
+        - name: "Simon Willison’s Weblog"
+          url: https://simonwillison.net/
+          date_added: "2026-01-14T03:39:37.305009"
+          uuid: 9265A690-200F-4A00-AC74-73F011CFF8AE
+        - name: "Boris Cherny (@bcherny) / X"
+          url: https://x.com/bcherny
+          date_added: "2026-01-14T03:41:06.224992"
+          uuid: DBF93AD1-3117-4811-9FDD-5853DEF961A3
+        - name: "(21) Felix Rieseberg (@felixrieseberg) / X"
+          url: https://x.com/felixrieseberg
+          date_added: "2026-01-14T04:09:59.547275"
+          uuid: FE970C6E-3228-4881-AE8B-03C556883C32
+        - name: "Blog | Claude"
+          url: https://claude.com/blog
+          date_added: "2026-01-18T03:08:04.678139"
+          uuid: 162E1E22-DE30-44DB-B84F-8D6A2C7EE386
+        - name: "blog — matt shumer"
+          url: https://shumer.dev/blog
+          date_added: "2026-01-19T14:49:15.145038"
+          uuid: 094CC8C5-BA27-492C-B4C9-9C7D329FBCBD
+        - name: "List of posts - <antirez>"
+          url: https://antirez.com/latest/0
+          date_added: "2026-01-17T06:36:04.669501"
+          uuid: EB8697AE-C9F9-4CC9-B01C-4C3A0FC044F8
+        - name: "Every"
+          url: https://every.to/
+          date_added: "2026-01-14T03:40:02.120762"
+          uuid: D9C6C581-B30B-4F97-B3CD-3E5A0E7B00C7
+        - name: "Chronicle - Amp"
+          url: https://ampcode.com/chronicle
+          date_added: "2026-01-14T03:40:14.318092"
+          uuid: 587F6C75-AFB7-4EE0-BC62-B9FD32ECA7A5
+        - name: "Handoff, Please - Amp"
+          url: https://ampcode.com/news/ask-to-handoff
+          date_added: "2026-01-14T03:40:46.519536"
+          uuid: 4E83C0D9-6964-4282-B45C-D4614506F677
+        - name: "OpenRouter Announcements and Blog | OpenRouter"
+          url: https://openrouter.ai/announcements
+          date_added: "2026-01-14T03:40:48.491345"
+          uuid: B49DC59A-D00E-4D1D-93A0-2F8289D27ADB
+        - name: "AI"
+          url: https://blog.cloudflare.com/tag/ai/
+          date_added: "2026-01-14T03:40:57.052649"
+          uuid: 6C51DCBC-E0FA-4619-A071-2F7ECAF4ED20
+        - name: "Design Prompts - AI-Powered Design Style Explorer"
+          url: https://www.designprompts.dev/
+          date_added: "2026-01-14T03:41:22.955805"
+          uuid: BD9E544E-5565-48B4-A447-6734BDFFE42B
+        - name: "Conductor - Run a team of coding agents on your Mac"
+          url: https://www.conductor.build/
+          date_added: "2026-01-14T03:50:35.558053"
+          uuid: BA1D3084-DA15-4B9F-8C52-2ADEB224BDA4
+        - name: "Claude Code overview - Claude Code Docs"
+          url: https://code.claude.com/docs/en/overview
+          date_added: "2026-01-14T04:12:03.828394"
+          uuid: A6A7C532-ED95-40BC-96CD-141995CB1EDA
+        - name: "Commits · obra/superpowers"
+          url: https://github.com/obra/superpowers/commits/main/
+          date_added: "2026-01-14T04:13:27.793749"
+          uuid: A034521B-D6D2-45CD-9A9B-FE3D2F6CCF68
+        - name: "claude-code/CHANGELOG.md"
+          url: https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md
+          date_added: "2026-01-14T04:18:27.385157"
+          uuid: 38A7A10B-318A-427C-B08F-2C6A149566A2
+    - name: "Heartbeat"
+      date_added: "2026-01-12T14:27:10.182728"
+      uuid: 66F1A5D3-B113-4CB2-9B19-CBDAA42013E4
+      children: []
+    - name: "Accounting"
+      uuid: 0EB48F29-2D3D-477F-AFD0-CAAC0D52353F
+      children:
+        - name: "Accounts Overview"
+          url: https://easyweb.td.com/waw/ezw/webbanking
+          uuid: 5A641EFA-8185-41DD-B7F8-12B9016DB216
+        - name: "Revenu Québec"
+          url: https://revenuquebec.ca/myaccount
+          uuid: AD88BACA-F200-439E-AB5F-FCC26768043E
+        - name: "Québec Medical Appointment Scheduler"
+          url: https://rvsq.gouv.qc.ca/prendrerendezvous/Recherche.aspx#home
+          uuid: 8831362D-0B2C-46A9-B8C1-D2785B91E7AB
+        - name: "Communauto"
+          url: https://quebec.client.reservauto.net/
+          uuid: 02208F42-17E9-48ED-B955-D9CF5458F1C1
+        - name: "Fizz"
+          url: https://zone.fizz.ca/dce/customer-ui-prod/account/overview
+          uuid: 3E470061-2A0E-4EAB-95A8-37982C8C79F6
+    - name: "Kids"
+      uuid: 42F04928-B66D-414F-8483-63B3E3C000EF
+      children:
+        - name: "Pluriportail"
+          url: https://portail.ecolebuissonniere.ca/pluriportail/fr/MainExterne.srf?P=LoginReq
+          uuid: 3444AA73-C89D-4840-833D-B9FB54AA5B78
+        - name: "PGLO Parent Portal"
+          url: https://portailparents.ca/communications/27923633-dc01-4164-b9ec-0aa056e14e32
+          uuid: 2BFBE4D5-D30D-40C0-9763-44F410D5E1C8
+        - name: "Buissonnière | Collège Sainte-Anne"
+          url: https://primaire.outremont.sainteanne.ca/
+          uuid: 3DDF55C2-1D0C-4B4E-A224-C3DFF9067095
+    - name: "Montréal"
+      uuid: AC09CAD4-CD9E-4C97-9D2E-887582BDB3CC
+      children:
+        - name: "Cinéma Moderne"
+          url: https://www.cinemamoderne.com/en/
+          uuid: DEE41DE1-6E1D-4653-9B6E-2D8C887C56F4
+        - name: "City Portal"
+          url: https://montreal.ca/
+          uuid: 991E5DA1-5D83-4215-A4D9-9443A9BE8C37
+        - name: "URSA mtl - Home"
+          url: https://www.facebook.com/ursamtl/
+          uuid: 5E2A6969-9CE3-4631-A8B8-3E368130AB5B
+        - name: "Bibliothèques Montréal - OverDrive"
+          url: https://bibliomontreal.overdrive.com/
+          uuid: DC98E896-ED5D-4152-AA92-0249A89F854C
+        - name: "Encore"
+          url: https://nelligandecouverte.ville.montreal.qc.ca/iii/encore/?lang=frc&suite=cobalt
+          uuid: E0A295A4-8316-4748-8772-423FEA832079
+        - name: "Medical Appointment Scheduler"
+          url: https://www.rvsq.gouv.qc.ca/accueil/index-en.html
+          uuid: 2593B47B-F100-4B46-8A2C-FC486A87144F
+        - name: "Naada"
+          uuid: D9F3BF07-4BAA-4A82-AD42-F4DDC0117CB6
+          children:
+            - name: "Visual Effect - Interactive Effect Playground"
+              url: https://effect.kitlangton.com/
+              date_added: "2025-11-05T05:46:33.128605"
+              uuid: 0D085F61-7F59-44FF-892A-F914318170E2
+            - name: "Classes - Sign Up"
+              url: https://clients.mindbodyonline.com/classic/mainclass?fl=true&tabID=7
+              uuid: 424D5A51-D328-4E1A-9295-BCB58C3388C5
+            - name: "Classes - Descriptions"
+              url: https://www.naada.ca/schedule/class-descriptions/
+              uuid: EE95D25A-F815-42D9-9141-F0A7E0A32E56
+        - name: "Fizz Easy Connect"
+          url: http://192.168.0.1/index.html#test
+          uuid: F0A95698-1B0E-4797-A50A-A4D0A1C2437F
+    - name: "Dev"
+      date_added: "2026-01-19T14:27:09.194459"
+      uuid: 44B662F7-6F0C-4E3F-8E94-FA281410419A
+      children:
+        - name: "Node Modules Inspector"
+          url: https://node-modules.dev/
+          uuid: A89AC8FC-099F-4AB5-A27A-965CBBE9FD1B
+
+    # ─── CHROME bookmark_bar ───
+    - name: "Tools"
+      children:
+        - name: "Repo"
+          url: https://github.com/heartbeat-chat/Heartbeat
+        - name: "Heartbeat"
+          url: https://team.heartbeat.chat/users
+        - name: "The Hearth"
+          url: https://community.heartbeat.chat/t/ask%20the%20community
+        - name: "Dashboard - Rippling"
+          url: https://app.rippling.com/dashboard
+        - name: "1Password"
+          url: https://team-heartbeat.1password.com/home
+        - name: "Linear"
+          url: https://linear.app/heartbeat-chat/welcome
+        - name: "Notion"
+          url: https://www.notion.so/heartbeatchat/Getting-Started-2ca2f1ee512e807ebe77eb1fdd0337df
+        - name: "Figma"
+          url: https://www.figma.com/files/team/950882969481502924/all-projects?fuid=1582404575824636068
+        - name: "Brex"
+          url: https://dashboard.brex.com/onboarding
+        - name: "Interval"
+          url: https://interval-g00r.onrender.com/dashboard/heartbeat/actions
+        - name: "PostHog"
+          url: https://us.posthog.com/project/69418/dashboard/170931
+        - name: "Heartbeat Feedback"
+          url: https://feedback.heartbeat.chat/
+        - name: "Wallchart - Timetastic"
+          url: https://app.timetastic.co.uk/wallchart
+    - name: "Reminders"
+      children:
+        - name: "Flatfile Demo Showtime | Flatfile"
+          url: https://flatfile.com/demo/?utm_campaign=Brand-Search-Flatfile-LPTest&campaignid=15150464868&adgroupid=137855642828&network=g&creative=726221382841&keyword=flatfile&matchtype=e&placement=&targetid=kwd-315945064&target=&device=c&device_model=&GA_loc_physical_ms=9198595&adposition=&GA_loc_interest_ms=&feed_item_id=&random=11524577108657834793&utm_term=flatfile&utm_source=adwords&utm_medium=ppc&hsa_acc=3330093901&hsa_cam=15150464868&hsa_grp=137855642828&hsa_ad=726221382841&hsa_src=g&hsa_tgt=kwd-315945064&hsa_kw=flatfile&hsa_mt=e&hsa_net=adwords&hsa_ver=3&gad_source=1&gad_campaignid=15150464868&gbraid=0AAAAADGUpH1bCW_DpfXM6WoOUEDelq2IB&gclid=Cj0KCQiAgP_JBhD-ARIsANpEMxx-5HGUb2a9WCbo3KaMOnbawf7bDaM34yV9Sxw5OMOg8EJVUKk16TkaAteoEALw_wcB
+        - name: "beezee"
+          url: https://github.com/beezee
+        - name: "Hacking Prisma for better type safety •"
+          url: https://mayhul.com/posts/hacking-prisma/
+        - name: "Landscape"
+          children:
+            - name: "Product | Circle"
+              url: https://circle.so/brand?utm_medium=cpc&utm_source=google&utm_term=circle%20communities&utm_campaign=SG_CircleBrand_General&hsa_acc=2981749656&hsa_cam=15518457596&hsa_grp=138503098446&hsa_ad=690454904816&hsa_src=g&hsa_tgt=kwd-879983348628&hsa_kw=circle%20communities&hsa_mt=e&hsa_net=adwords&hsa_ver=3&gad_source=1&gad_campaignid=15518457596&gbraid=0AAAAAoO5ug9rvYok_PaiHxMYebZhc2Waa&gclid=Cj0KCQiAgP_JBhD-ARIsANpEMxw23fJgElve8ofAn14BQ2RQ_ta_YzZPbEHLflbdbVx68ISBs6CSVnQaAuMdEALw_wcB
+            - name: "Mighty Networks | Community Platform, Courses & Memberships"
+              url: https://www.mightynetworks.com/
+        - name: "Project kickoff: Self Service Payments Migration"
+          url: https://notes.granola.ai/d/8b2862a3-062c-454c-8847-526ef802c5a5
+
+  other:
+    # ─── SAFARI BookmarksMenu ───
+
+    # ─── CHROME other ───
+
+  reading_list: []
+  mobile: []
+
+overrides: {}
+

@@ -144,9 +144,15 @@
 
 ## Manual Setup (after sync)
 
-1. __Fish secrets__
+1. __Full Disk Access for terminal__
+   ```sh
+   open "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_AllFiles"
+   ```
+   * click + and add your terminal app (e.g., Ghostty)
+   * required for bookmark sync to read Safari bookmarks
+2. __Fish secrets__
    * edit `fish/config.secrets.fish` (created by sync, gitignored) with your tokens
-2. __macOS Settings__
+3. __macOS Settings__
    1. __Caps Lock → Ctrl__
       ```sh
       open "x-apple.systempreferences:com.apple.Keyboard-Settings.extension"
@@ -154,7 +160,7 @@
       * Keyboard Shortcuts → Modifier Keys → change Caps Lock to Control
    2. __Spotlight shortcut__ (free Cmd+Space for Raycast)
       * same pref pane → Keyboard Shortcuts → Spotlight → uncheck "Show Spotlight search"
-3. __GitHub__
+4. __GitHub__
    1. __Authenticate CLI__
       ```sh
       gh auth login
@@ -164,37 +170,37 @@
       ssh-keygen -t ed25519 -C "jasonkuhrt@me.com"
       gh ssh-key add ~/.ssh/id_ed25519.pub
       ```
-4. __Raycast hotkey__
+5. __Raycast hotkey__
    ```sh
    open -a Raycast
    ```
    * Cmd+, → Extensions → set hotkey to Cmd+Space
-5. __Wispr Flow__
+6. __Wispr Flow__
    * download from [wisprflow.ai/downloads](https://wisprflow.ai/downloads) (not in Homebrew)
    * open dmg and drag to Applications
    * launch and sign in (settings sync automatically)
    * grant Accessibility permission when prompted
    * grant Microphone permission when prompted
-6. __Email password__
+7. __Email password__
    * generate iCloud app-specific password at appleid.apple.com/account/manage
    ```sh
    security add-generic-password -s 'mbsync-icloud' -a 'jasonkuhrt@me.com' -w 'YOUR_APP_PASSWORD'
    ```
-7. __Claude in Chrome__
+8. __Claude in Chrome__
    * install [Claude extension](https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn) from Chrome Web Store
    * sign in with your Claude account
    * pin extension (puzzle icon → thumbtack)
    * run `claude --chrome` or use `/chrome` in existing session
    * requires extension ≥1.0.36, Claude Code ≥2.0.73
    * Google Chrome only (not Brave, Arc, etc.)
-8. __Serena MCP__ (semantic code analysis)
+9. __Serena MCP__ (semantic code analysis)
    ```sh
    claude mcp add --scope user serena -- uvx --from git+https://github.com/oraios/serena serena start-mcp-server --context claude-code --project-from-cwd
    ```
    * requires `uv` (installed via Brewfile)
    * `--context claude-code` disables tools that duplicate Claude Code's built-in ones
    * `--project-from-cwd` auto-activates project based on working directory
-9. __iCloud Desktop & Documents__
+10. __iCloud Desktop & Documents__
    ```sh
    open "x-apple.systempreferences:com.apple.preferences.AppleIDPrefPane"
    ```

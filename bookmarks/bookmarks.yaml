@@ -1,0 +1,225 @@
+# yaml-language-server: $schema=./bookmarks.schema.json
+
+# Browser targets with filesystem paths
+targets:
+  safari:
+    path: ~/Library/Safari/Bookmarks.plist
+
+  chrome:
+    personal:
+      path: ~/Library/Application Support/Google/Chrome/Default
+    work:
+      path: ~/Library/Application Support/Google/Chrome/Profile 1
+      enabled: false
+
+# ============================================================
+# IMPORTED FROM SAFARI + CHROME - REVIEW AND REORGANIZE
+# ============================================================
+
+base:
+  favorites_bar:
+    # ─────────────────────────────────────────────────────────
+    # AI / Dev - from Safari
+    # ─────────────────────────────────────────────────────────
+    - name: AI
+      children:
+        - name: Claude Blog
+          url: https://claude.com/blog
+        - name: Claude Code Docs
+          url: https://code.claude.com/docs/en/overview
+        - name: Claude Code Changelog
+          url: https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md
+        - name: Superpowers Commits
+          url: https://github.com/obra/superpowers/commits/main/
+        - name: Simon Willison
+          url: https://simonwillison.net/
+        - name: Antirez
+          url: https://antirez.com/latest/0
+        - name: Matt Shumer
+          url: https://shumer.dev/blog
+        - name: OpenRouter
+          url: https://openrouter.ai/announcements
+        - name: Amp Chronicle
+          url: https://ampcode.com/chronicle
+        - name: Conductor
+          url: https://www.conductor.build/
+
+    - name: Dev
+      children:
+        - name: Node Modules Inspector
+          url: https://node-modules.dev/
+        - name: Effect Playground
+          url: https://effect.kitlangton.com/
+        - name: Effect Institute
+          url: https://www.effect.institute/lessons
+        - name: Design Prompts
+          url: https://www.designprompts.dev/
+
+    # ─────────────────────────────────────────────────────────
+    # Work: Heartbeat - from Chrome
+    # ─────────────────────────────────────────────────────────
+    - name: Heartbeat
+      children:
+        - name: Repo
+          url: https://github.com/heartbeat-chat/Heartbeat
+        - name: App
+          url: https://team.heartbeat.chat/users
+        - name: Community
+          url: https://community.heartbeat.chat/t/ask%20the%20community
+        - name: Linear
+          url: https://linear.app/heartbeat-chat/welcome
+        - name: Notion
+          url: https://www.notion.so/heartbeatchat/Getting-Started-2ca2f1ee512e807ebe77eb1fdd0337df
+        - name: Figma
+          url: https://www.figma.com/files/team/950882969481502924/all-projects
+        - name: PostHog
+          url: https://us.posthog.com/project/69418/dashboard/170931
+        - name: Feedback
+          url: https://feedback.heartbeat.chat/
+        - name: Rippling
+          url: https://app.rippling.com/dashboard
+        - name: 1Password
+          url: https://team-heartbeat.1password.com/home
+        - name: Brex
+          url: https://dashboard.brex.com/onboarding
+        - name: Interval
+          url: https://interval-g00r.onrender.com/dashboard/heartbeat/actions
+        - name: Timetastic
+          url: https://app.timetastic.co.uk/wallchart
+
+    # ─────────────────────────────────────────────────────────
+    # Personal - from Safari
+    # ─────────────────────────────────────────────────────────
+    - name: Accounting
+      children:
+        - name: TD Bank
+          url: https://easyweb.td.com/waw/ezw/webbanking
+        - name: Revenu Québec
+          url: https://revenuquebec.ca/myaccount
+        - name: RVSQ (Medical)
+          url: https://rvsq.gouv.qc.ca/prendrerendezvous/Recherche.aspx#home
+        - name: Communauto
+          url: https://quebec.client.reservauto.net/
+        - name: Fizz
+          url: https://zone.fizz.ca/dce/customer-ui-prod/account/overview
+
+    - name: Kids
+      children:
+        - name: Pluriportail
+          url: https://portail.ecolebuissonniere.ca/pluriportail/fr/MainExterne.srf?P=LoginReq
+        - name: PGLO Parent Portal
+          url: https://portailparents.ca/communications/27923633-dc01-4164-b9ec-0aa056e14e32
+        - name: Collège Sainte-Anne
+          url: https://primaire.outremont.sainteanne.ca/
+
+    - name: Montréal
+      children:
+        - name: Cinéma Moderne
+          url: https://www.cinemamoderne.com/en/
+        - name: City Portal
+          url: https://montreal.ca/
+        - name: URSA mtl
+          url: https://www.facebook.com/ursamtl/
+        - name: Bibliothèques (OverDrive)
+          url: https://bibliomontreal.overdrive.com/
+        - name: Bibliothèques (Nelligan)
+          url: https://nelligandecouverte.ville.montreal.qc.ca/iii/encore/?lang=frc&suite=cobalt
+
+    - name: Naada
+      children:
+        - name: Classes
+          url: https://clients.mindbodyonline.com/classic/mainclass?fl=true&tabID=7
+        - name: Class Descriptions
+          url: https://www.naada.ca/schedule/class-descriptions/
+
+  # ─────────────────────────────────────────────────────────
+  # Other bookmarks (not in favorites bar)
+  # ─────────────────────────────────────────────────────────
+  other:
+    - name: Board Games
+      children:
+        - name: Stores
+          children:
+            - name: Imaginaire
+              url: https://imaginaire.com/en/
+            - name: Brique & Braque
+              url: https://briquebraque.ca/
+            - name: Noble Knight
+              url: https://ca.nobleknight.com/
+            - name: Board Game Bandit
+              url: https://www.boardgamebandit.ca/
+            - name: Great Boardgames
+              url: https://www.greatboardgames.ca/
+            - name: Board Game Bliss
+              url: https://www.boardgamebliss.com/
+            - name: Boardgames.ca
+              url: https://www.boardgames.ca/
+            - name: 401 Games
+              url: https://store.401games.ca/collections/board-games
+            - name: Hobbiesville
+              url: https://hobbiesville.com/collections/games
+            - name: Le Valet d'Coeur
+              url: https://levalet.com/en/
+        - name: Publishers
+          children:
+            - name: Rebel
+              url: https://www.rebelstudio.eu/games
+            - name: Awaken Realms
+              url: https://awakenrealms.com/
+            - name: Stonemaier Games
+              url: https://stonemaiergames.com/
+            - name: Mindclash Games
+              url: https://mindclashgames.com/introducing-ironwood/
+            - name: Restoration Games
+              url: https://restorationgames.com/
+        - name: Content
+          children:
+            - name: Drive Thru Games
+              url: https://www.youtube.com/@DriveThruReview
+            - name: Shelfside
+              url: https://www.youtube.com/@Shelfside
+            - name: Rahdo
+              url: https://www.youtube.com/@rahdo
+            - name: Dice Tower
+              url: https://www.youtube.com/@thedicetower
+            - name: BoardGameCo
+              url: https://www.youtube.com/@BoardGameCo
+            - name: Board Game Quest
+              url: https://www.boardgamequest.com/
+            - name: Dicebreaker
+              url: https://www.dicebreaker.com/
+            - name: What Board Game
+              url: https://www.whatboardgame.com/
+
+    - name: ADHD
+      children:
+        - name: CHADD
+          url: https://chadd.org/
+        - name: Gifted Kid Burnout
+          url: https://www.additudemag.com/gifted-kid-burnout-twice-exceptional-students/
+
+    - name: Research (Chrome)
+      children:
+        - name: Flatfile
+          url: https://flatfile.com/demo/
+        - name: beezee
+          url: https://github.com/beezee
+        - name: Prisma Hacking
+          url: https://mayhul.com/posts/hacking-prisma/
+        - name: Circle
+          url: https://circle.so/brand
+        - name: Mighty Networks
+          url: https://www.mightynetworks.com/
+
+# Per-target overrides
+overrides: {}
+  # Future: Move Heartbeat to work profile
+  # chrome/work:
+  #   favorites_bar:
+  #     "+":
+  #       - name: Heartbeat
+  #         children: [...]
+  # chrome/personal:
+  #   favorites_bar:
+  #     "-":
+  #       - Heartbeat

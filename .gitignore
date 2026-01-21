@@ -9,3 +9,7 @@ migrations/.marker
 # Homebrew
 Brewfile.lock.json
 .serena/
+
+# Bookmarks sync
+bookmarks/backups/
+bookmarks/.sync-state.json

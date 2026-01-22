@@ -22,9 +22,7 @@
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
-    "additionalDirectories": [
-      "/Users/jasonkuhrt"
-    ]
+    "additionalDirectories": ["/Users/jasonkuhrt"]
   },
   "hooks": {
     "SessionStart": [

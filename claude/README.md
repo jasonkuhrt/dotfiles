@@ -12,9 +12,9 @@ This directory contains Claude Code configuration managed via dotfiles.
 | `skills/` | ✅ Symlinked | Custom skills |
 | `scripts/` | ✅ Symlinked | Hook scripts |
 | `sparks/` | ✅ Symlinked | Idea captures |
-| `settings.json` | ❌ **Disabled** | See below |
+| `settings.json` | ⚠️ **Workaround** | See below |
 
-## settings.json Sync Disabled
+## settings.json Sync Disabled (Workaround)
 
 **Status:** Symlink sync disabled due to Claude Code bugs.
 
@@ -39,11 +39,16 @@ Claude Code has multiple issues with symlinked `settings.json`:
 
 `settings.json` is **not synced**. Claude Code owns `~/.claude/settings.json` at runtime.
 
-The file in this repo (`claude/settings.json`) serves as a **reference/template** for new machines:
-```bash
-# On new machine, manually copy if needed:
-cp dotfiles/claude/settings.json ~/.claude/settings.json
+#### Convenience Symlink
+
+To make editing easier, the sync script creates a **local convenience symlink** (gitignored):
+
 ```
+dotfiles/claude/settings.json  →  ~/.claude/settings.json
+        (gitignored)                 (CC owns this)
+```
+
+This lets you edit `claude/settings.json` from your dotfiles workspace without context-switching to `~/.claude/`. The symlink is gitignored, so each machine creates its own — no cross-machine path issues.
 
 ### Future
 

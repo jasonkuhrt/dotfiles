@@ -1,5 +1,7 @@
 # Using ref MCP for Documentation
 
+**When working with libraries, check the docs with Ref.** Don't guess APIs - verify with actual documentation.
+
 When you need to look up documentation for APIs, libraries, or services:
 
 1. **Search first** - Use `ref_search_documentation` with a full sentence query

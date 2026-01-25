@@ -119,6 +119,20 @@ header "Neovim"
 ensure_real_dir "$HOME/.config/nvim" "$HERE/nvim"
 link_file "$HERE/nvim/init.vim" "$HOME/.config/nvim/init.vim" "nvim/init.vim"
 
+# Install vim-plug plugins headlessly
+if has_cmd nvim; then
+    if [ ! -d "$HOME/.vim/plugged/tokyonight.nvim" ]; then
+        info "Installing Neovim plugins..."
+        if run_logged "nvim PlugInstall" nvim --headless +PlugInstall +qall 2>/dev/null; then
+            task "Neovim plugins installed"
+        else
+            warn "Neovim plugin install failed (see $LOG_FILE)"
+        fi
+    else
+        skip "Neovim plugins"
+    fi
+fi
+
 # ─────────────────────────────────────────────────────────────
 header "Config Files"
 
@@ -141,6 +155,9 @@ if has_cmd dprint; then
 fi
 
 link_file "$HERE/starship/starship.toml" "$HOME/.config/starship.toml" "starship.toml"
+
+mkdir -p "$HOME/.config/bat"
+link_file "$HERE/bat/config" "$HOME/.config/bat/config" "bat/config"
 
 mkdir -p "$HOME/.config/gh"
 link_file "$HERE/gh/config.yml" "$HOME/.config/gh/config.yml" "gh/config.yml"

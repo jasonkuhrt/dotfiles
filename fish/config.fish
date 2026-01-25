@@ -20,6 +20,12 @@ test -f ~/.config/fish/config.secrets.fish && source ~/.config/fish/config.secre
 set --export EDITOR nvim
 set --export XDG_CONFIG_HOME ~/.config
 
+# Claude Code: reduce buffer from 45k→35k for ~10k more effective context
+# Trade-off: max response length 22k (vs 32k default)
+# Formula: buffer = 13k + maxOutputTokens
+# Source: https://x.com/bcherny/status/2012670336362492296
+set --export CLAUDE_CODE_MAX_OUTPUT_TOKENS 22000
+
 
 
 # Direnv: lazy-load only when needed (saves ~130ms startup)
@@ -47,6 +53,14 @@ end
 # Use ag to filter out git ignored files from fzf results
 
 set --export FZF_DEFAULT_COMMAND 'ag -g ""'
+
+# fzf Tokyo Night theme
+# Source: https://github.com/folke/tokyonight.nvim/blob/main/extras/fzf/tokyonight_night.sh
+set --export FZF_DEFAULT_OPTS "\
+--color=bg+:#283457,bg:#1a1b26,spinner:#9ece6a,hl:#7aa2f7 \
+--color=fg:#c0caf5,header:#7aa2f7,info:#e0af68,pointer:#9ece6a \
+--color=marker:#9ece6a,fg+:#c0caf5,prompt:#e0af68,hl+:#7aa2f7 \
+--color=border:#565f89"
 
 # https://fishshell.com/docs/current/faq.html#how-do-i-change-the-greeting-message
 set --universal fish_greeting ""
@@ -155,8 +169,24 @@ function mcd --description "Create a directory and set CWD"
     end
 end
 
-function t --description "tmux: attach/create session named after current directory"
-    tmux new-session -A -s (basename $PWD)
+abbr --add t tmux
+
+function tt --description "tmux: toggle session (attach/create outside, detach inside)"
+    if set -q TMUX
+        tmux detach-client
+    else
+        tmux new-session -A -s (basename $PWD)
+    end
+end
+
+# Auto-tmux config (set to 0 to disable)
+set -q TMUX_AUTO_ON_GIT_CD; or set -gx TMUX_AUTO_ON_GIT_CD 1
+
+function __auto_tmux_on_cd --on-variable PWD --description "Auto-start tmux when entering git repo"
+    test "$TMUX_AUTO_ON_GIT_CD" = 1; or return
+    if not set -q TMUX; and test -d .git
+        tt
+    end
 end
 
 # Dotfiles modules (fish/modules/*.fish)

@@ -47,6 +47,7 @@
 | __Dock__                              |                               |
 | _(configured via `./dock/apps.txt`)_  |                               |
 | __Other__                             |                               |
+| `~/.config/bat/config`                | `./bat/config`                |
 | `~/.config/dprint/dprint.json`        | `./dprint/dprint.json`        |
 | `~/.config/starship.toml`             | `./starship/starship.toml`    |
 | `~/.config/gh/config.yml`             | `./gh/config.yml`             |

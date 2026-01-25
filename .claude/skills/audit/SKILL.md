@@ -1,3 +1,9 @@
+---
+name: audit
+description: Audit dotfiles setup for improvements, obsolete workarounds, and optimization opportunities. Use when user runs /audit or asks to audit their dotfiles configuration.
+arg: "[scope]"
+---
+
 # Audit Dotfiles
 
 Audit the dotfiles setup for improvements, obsolete workarounds, and optimization opportunities.
@@ -18,17 +24,19 @@ These are 1:1 with commit scopes:
 | `direnv`   | direnv/     | Directory environment loader |
 | `dock`     | dock/       | macOS Dock configuration     |
 | `dprint`   | dprint/     | Code formatter config        |
-| `email`    | email/      | Email client configuration   |
 | `fish`     | fish/       | Fish shell configuration     |
 | `gh`       | gh/         | GitHub CLI configuration     |
 | `ghostty`  | ghostty/    | Ghostty terminal config      |
 | `git`      | git/        | Git configuration            |
+| `gitmux`   | gitmux/     | Git info in tmux status      |
+| `lazygit`  | lazygit/    | Git TUI configuration        |
 | `libra`    | libra/      | Libra tool configuration     |
 | `npm`      | npm/, npmrc | npm configuration            |
 | `nvim`     | nvim/       | Neovim configuration         |
 | `ssh`      | ssh/        | SSH configuration            |
 | `starship` | starship/   | Starship prompt config       |
 | `sync`     | sync        | Sync script                  |
+| `tmux`     | tmux/       | tmux terminal multiplexer    |
 | `vim`      | vim/        | Vim configuration            |
 | `zed`      | zed/        | Zed editor configuration     |
 
@@ -116,6 +124,24 @@ After specific checks, discover something new:
 1. __Global packages__: Are packages in global-packages.txt still needed?
 2. __npmrc settings__: Are all settings still relevant?
 
+### tmux
+
+1. __Plugin audit__: Are all plugins (resurrect, continuum, sessionx, etc.) still used?
+2. __Keybinding conflicts__: Any keybindings that conflict with Zed, Ghostty, or system?
+3. __Performance__: Are plugins slowing down tmux startup?
+4. __Integration check__: Is gitmux displaying correctly in status bar?
+5. __Session management__: Are resurrect/continuum saving and restoring properly?
+
+### lazygit
+
+1. __Keybinding audit__: Any custom keybindings that conflict or are unused?
+2. __Theme consistency__: Does theme match terminal aesthetic?
+
+### gitmux
+
+1. __Format accuracy__: Is the status bar format still useful?
+2. __Integration__: Is it loading correctly in tmux.conf?
+
 ### (other scopes)
 
 For scopes without specific checks defined, run only general checks and "Surprise Me".
@@ -134,7 +160,3 @@ Description of the finding.
 
 **Recommendation**: What to do about it.
 ```
-
-## Argument
-
-$ARGUMENTS

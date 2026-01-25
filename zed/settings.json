@@ -25,6 +25,7 @@
   "auto_install_extensions": {
     "astro": true,
     "catppuccin": true,
+    "cherri": true,
     "cucumber": true,
     "fish": true,
     "git-firefly": true,
@@ -123,6 +124,14 @@
     "button": false,
     "copy_on_select": true,
     "cursor_shape": "bar", // keep this in sync with editor, e.g. don't confuse what "insert" mode (only mode in terminal) looks like.
+    // Auto-attach to project-specific tmux session
+    // DISABLED: Evaluating manual tmux workflow instead
+    // "shell": {
+    //   "with_arguments": {
+    //     "program": "/opt/homebrew/bin/fish",
+    //     "args": ["-c", "tmux new-session -A -s (basename $PWD)"]
+    //   }
+    // },
     // ━ UI
     "toolbar": {
       // "breadcrumbs": false // We keep them, and instead opt to have our shell remove this indicator info from its prompt _inside Zed context_.

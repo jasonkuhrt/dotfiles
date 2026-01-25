@@ -57,3 +57,9 @@ Re-enable symlink sync when CC fixes their symlink handling. Monitor the issues 
 Alternative approaches if issues persist:
 - [chezmoi](https://www.chezmoi.io/) — Generates files instead of symlinks
 - [claude-code-config-sync](https://www.npmjs.com/package/claude-code-config-sync) — NPM sync tool with conflict resolution
+
+## Other Tracked Issues
+
+| Issue | Status | Description |
+|-------|--------|-------------|
+| [#16157](https://github.com/anthropics/claude-code/issues/16157) | Open | Max subscription hitting limits unexpectedly fast |

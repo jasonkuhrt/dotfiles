@@ -123,7 +123,8 @@ abbr -a vi nvim
 
 # Utilities
 function weather --description 'Terminal weather forecast'
-    curl -s "wttr.in/$argv[1]"
+    set -l location (test (count $argv) -gt 0; and echo $argv[1]; or echo "Montreal")
+    curl -s "wttr.in/$location"
 end
 alias cal='cal -3'  # show 3 months by default
 

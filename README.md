@@ -272,6 +272,22 @@ Options to investigate:
 1. Export plist and restore via `defaults import` in sync script
 2. Symlink the plist (may cause issues if app is running)
 
+### Tools to Evaluate
+
+| Tool | What | Link |
+|------|------|------|
+| mpv | Minimalist video player (scriptable, CLI-friendly) | [mpv.io](https://mpv.io/) |
+| circumflex | Hacker News TUI | [github](https://github.com/bensadeh/circumflex) |
+| libcaca | ASCII art graphics library | [github](https://github.com/cacalabs/libcaca) |
+| chafa | Terminal image viewer (sixel, kitty, iterm2) | [hpjansson.org](https://hpjansson.org/chafa/) |
+| browsh | Text-based browser (renders real web pages) | [brow.sh](https://www.brow.sh/) |
+| newsboat | RSS/Atom feed reader for terminal | [newsboat.org](https://newsboat.org/) |
+| kew | Terminal music player | [github](https://github.com/ravachol/kew) |
+| fastfetch | Faster neofetch alternative | [github](https://github.com/fastfetch-cli/fastfetch) |
+| btop | Resource monitor (prettier than btm?) | [github](https://github.com/aristocratos/btop) |
+| helix | Modal editor (consider vs nvim) | [github](https://github.com/helix-editor/helix) |
+| yazi | Terminal file manager (blazing fast) | [github](https://github.com/sxyazi/yazi) |
+
 ## CLI Tools Reference
 
 Quick reference for all the tools installed via Brewfile. Forget what something does? Check here.
@@ -329,7 +345,7 @@ Quick reference for all the tools installed via Brewfile. Forget what something 
 | Unix     | `procs`      | Modern ps with colors/tree            | `procs`, `procs --tree`                        |
 | Unix     | `rg`         | Fast grep (ripgrep)                   | `rg "TODO"`, `rg -t ts "import"`               |
 | Unix     | `sd`         | Simpler sed                           | `sd 'foo' 'bar' file.txt`                      |
-| Unix     | `weather`    | Terminal weather forecast             | `weather` or `weather Tokyo`                   |
+| Unix     | `weather`    | Terminal weather forecast             | `weather` (Montreal) or `weather Tokyo`        |
 | Unix     | `xh`         | Colorized curl alternative            | `xh GET api.example.com/users`                 |
 | Info     | `cal`        | 3-month calendar view                 | `cal`                                          |
 | Info     | `neofetch`   | System info with ASCII art            | `neofetch`                                     |

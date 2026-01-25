@@ -55,7 +55,8 @@ header "Claude Code"
 
 ensure_real_dir "$HOME/.claude" "$HERE/claude"
 link_file "$HERE/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md" "claude/CLAUDE.md"
-link_file "$HERE/claude/settings.json" "$HOME/.claude/settings.json" "claude/settings.json"
+# DISABLED: CC has symlink bugs - see claude/README.md
+# link_file "$HERE/claude/settings.json" "$HOME/.claude/settings.json" "claude/settings.json"
 link_subdir "$HERE/claude/commands" "$HOME/.claude/commands" "claude/commands"
 link_subdir "$HERE/claude/rules" "$HOME/.claude/rules" "claude/rules"
 link_subdir "$HERE/claude/skills" "$HOME/.claude/skills" "claude/skills"

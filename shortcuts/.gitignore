@@ -1,0 +1,5 @@
+# Compiled shortcuts (regenerate with: cherri <file>.cherri)
+*.shortcut
+
+# Build artifacts
+*_processed.cherri

@@ -18,3 +18,12 @@
 * ALWAYS prioritize an end state that would be clean consistent and reflect first principals thinking.
 * NEVER maintain backwards compatibility UNLESS the user has explicitly asked for that.
 * Never guess APIs. Always check actual exports, signatures, and JSDoc. If unknown: clone repo to `tmp/`, use ref MCP, or read the source.
+
+## Information Quality
+
+* **HALT on incomplete information:** If documentation remains unavailable after attempting the remediation cascade—and this affects task quality—STOP and tell me immediately. Don't proceed with partial knowledge.
+* **Remediation cascade:** When WebFetch truncates or docs seem incomplete:
+  1. Try ref MCP first (handles most libraries without truncation)
+  2. If ref has nothing: check for existing local indexed docs (e.g., `man-pages/` directories)
+  3. If neither works: HALT and propose creating local docs (approach varies: man pages, repo clone, etc.)
+  4. Keep me in the loop for remediation decisions—context varies

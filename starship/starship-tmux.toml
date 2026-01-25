@@ -1,0 +1,62 @@
+# Starship prompt configuration (tmux variant)
+# https://starship.rs/config/
+#
+# Minimal prompt for tmux sessions - git info is in tmux status bar (gitmux)
+#
+# Theme: Tokyo Night
+# Palette:
+#   blue: #7aa2f7    cyan: #7dcfff    green: #9ece6a
+#   magenta: #bb9af7 red: #f7768e     yellow: #e0af68
+
+format = """
+$directory\
+$character"""
+
+add_newline = false
+
+[character]
+success_symbol = '[❯](#9ece6a)'
+error_symbol = '[❯](#f7768e)'
+
+[directory]
+truncation_length = 3
+truncate_to_repo = true
+style = 'bold #7aa2f7'
+
+# Disabled - handled by gitmux in status bar
+[git_branch]
+disabled = true
+
+[git_status]
+disabled = true
+
+# Keep these disabled (same as main config)
+[package]
+disabled = true
+
+[nodejs]
+disabled = true
+
+[python]
+disabled = true
+
+[rust]
+disabled = true
+
+[golang]
+disabled = true
+
+[aws]
+disabled = true
+
+[gcloud]
+disabled = true
+
+[azure]
+disabled = true
+
+[docker_context]
+disabled = true
+
+[kubernetes]
+disabled = true

@@ -6,7 +6,10 @@ if status is-interactive
 end
 
 # Prompt (Starship)
-# Config: ~/.config/starship/starship.toml
+# Use minimal config in tmux (git info is in status bar via gitmux)
+if set -q TMUX
+    set -gx STARSHIP_CONFIG ~/.config/starship-tmux.toml
+end
 starship init fish | source
 
 # Secrets
@@ -180,14 +183,15 @@ function tt --description "tmux: toggle session (attach/create outside, detach i
 end
 
 # Auto-tmux config (set to 0 to disable)
-set -q TMUX_AUTO_ON_GIT_CD; or set -gx TMUX_AUTO_ON_GIT_CD 1
-
-function __auto_tmux_on_cd --on-variable PWD --description "Auto-start tmux when entering git repo"
-    test "$TMUX_AUTO_ON_GIT_CD" = 1; or return
-    if not set -q TMUX; and test -d .git
-        tt
-    end
-end
+# DISABLED: Evaluating manual tmux workflow instead
+# set -q TMUX_AUTO_ON_GIT_CD; or set -gx TMUX_AUTO_ON_GIT_CD 1
+#
+# function __auto_tmux_on_cd --on-variable PWD --description "Auto-start tmux when entering git repo"
+#     test "$TMUX_AUTO_ON_GIT_CD" = 1; or return
+#     if not set -q TMUX; and test -d .git
+#         tt
+#     end
+# end
 
 # Dotfiles modules (fish/modules/*.fish)
 for f in ~/.config/fish/modules/*.fish

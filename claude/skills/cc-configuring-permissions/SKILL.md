@@ -262,6 +262,28 @@ WebFetch(domain:example.com)   # Specific domain only
 
 ## Known Issues (Jan 2026)
 
+### Symlinked settings.json Broken ([#3575](https://github.com/anthropics/claude-code/issues/3575), [#764](https://github.com/anthropics/claude-code/issues/764), [#18160](https://github.com/anthropics/claude-code/issues/18160)) — OPEN
+
+**Problem:** CC doesn't properly handle symlinked `~/.claude/settings.json`:
+1. **Read failures** — permissions not recognized from symlinked files
+2. **Write breakage** — CC's atomic writes replace symlinks with regular files
+3. **Performance degradation** — symlinked settings cause multi-second command delays
+
+**Impact:** Dotfiles users (stow, chezmoi symlinks, custom scripts) can't sync settings.json normally.
+
+**Workaround:** Don't symlink settings.json. Let CC own `~/.claude/settings.json` at runtime.
+
+For dotfiles ergonomics, create a **reverse convenience symlink** (gitignored) from your dotfiles repo to the runtime file:
+```bash
+# In dotfiles repo (gitignored):
+ln -s ~/.claude/settings.json dotfiles/claude/settings.json
+```
+This lets you edit from your dotfiles workspace while CC owns the actual file.
+
+**Alternative tools:**
+- [chezmoi](https://www.chezmoi.io/) — generates files instead of symlinks
+- [claude-code-config-sync](https://www.npmjs.com/package/claude-code-config-sync) — NPM sync with conflict resolution
+
 ### Path Prefix Gotcha ([#6881](https://github.com/anthropics/claude-code/issues/6881)) — OPEN
 
 | Prefix | Meaning | Example |

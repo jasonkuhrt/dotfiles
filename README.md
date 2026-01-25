@@ -20,7 +20,7 @@
 | ------------------------------------- | ----------------------------- |
 | __Claude Code__                       |                               |
 | `~/.claude/CLAUDE.md`                 | `./claude/CLAUDE.md`          |
-| `~/.claude/settings.json`             | `./claude/settings.json`      |
+| `~/.claude/settings.json`             | _(not synced, see below)_     |
 | `~/.claude/commands/`                 | `./claude/commands/`          |
 | `~/.claude/rules/`                    | `./claude/rules/`             |
 | __Zed__                               |                               |
@@ -235,6 +235,30 @@ Starship cannot conditionally hide the `directory` module based on worktree dete
 - [#5533](https://github.com/starship/starship/issues/5533) — Conditionally disable modules via env
 - [#6604](https://github.com/starship/starship/issues/6604) — `truncate_to_repo` with worktrees
 - [#4439](https://github.com/starship/starship/pull/4439) — PR for env-based config overrides (open since 2022)
+
+### Claude Code: settings.json Can't Be Symlinked
+
+Claude Code has multiple bugs that prevent symlinked `settings.json` from working properly:
+- Permissions not recognized from symlinked files
+- Atomic writes replace symlinks with regular files
+- Performance degradation with symlinked settings
+
+**Workaround:** `settings.json` is not synced. CC owns `~/.claude/settings.json` at runtime. The sync script creates a local convenience symlink (gitignored) from `./claude/settings.json → ~/.claude/settings.json` for easy editing from the dotfiles workspace.
+
+See [claude/README.md](./claude/README.md) for details.
+
+**Tracking:**
+- [anthropics/claude-code#3575](https://github.com/anthropics/claude-code/issues/3575) — Symlinked settings.json permission failures
+- [anthropics/claude-code#764](https://github.com/anthropics/claude-code/issues/764) — Stow-symlinked ~/.claude dir not detected
+- [anthropics/claude-code#18160](https://github.com/anthropics/claude-code/issues/18160) — Symlinked settings.json permissions ignored
+
+### Beads: export-state/ Not in Default .gitignore
+
+The `export-state/` directory created by beads hooks contains machine-specific paths and timestamps but isn't included in the default `.gitignore` template from `bd init`.
+
+**Workaround:** Manually added `export-state/` to `.beads/.gitignore`.
+
+**Tracking:** [steveyegge/beads#1319](https://github.com/steveyegge/beads/issues/1319)
 
 ## TODO
 

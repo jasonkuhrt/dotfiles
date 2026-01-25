@@ -1,0 +1,814 @@
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║  Declarative Keymap - Single Source of Truth                               ║
+# ║  Tools: zed, nvim, tmux, vscode, cc (claude code), ghostty                 ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+#
+# Legend:
+#   C-x    = ctrl+x
+#   M-x    = alt/meta+x
+#   S-x    = shift+x
+#   D-x    = cmd+x (macOS)
+#   <spc>  = space (leader)
+#   <cr>   = enter
+#   -      = not applicable / use default
+#   ?      = TBD / needs mapping
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# MODE SWITCHING
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+mode:
+  normal_from_insert:
+    desc: Exit insert mode
+    zed: "k j"
+    nvim: "jk"        # common convention
+    cc: "jk"          # if vim mode
+
+  normal_from_visual:
+    desc: Exit visual mode
+    zed: "q"
+    nvim: "<esc>"
+    cc: "<esc>"
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PANE/WINDOW NAVIGATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+pane:
+  focus_up:
+    desc: Focus pane above
+    zed: "C-k"
+    nvim: "C-k"
+    tmux: "C-k"
+    vscode: "C-k"
+
+  focus_down:
+    desc: Focus pane below
+    zed: "C-j"
+    nvim: "C-j"
+    tmux: "C-j"
+    vscode: "C-j"
+
+  focus_left:
+    desc: Focus pane left
+    zed: "C-h"
+    nvim: "C-h"
+    tmux: "C-h"
+    vscode: "C-h"
+
+  focus_right:
+    desc: Focus pane right
+    zed: "C-l"
+    nvim: "C-l"
+    tmux: "C-l"
+    vscode: "C-l"
+
+  split_vertical:
+    desc: Split pane vertically
+    zed: "<spc> w s"
+    nvim: "<spc> w s"
+    tmux: 'prefix "'
+    vscode: ?
+
+  split_horizontal:
+    desc: Split pane horizontally
+    zed: "<spc> w a"
+    nvim: "<spc> w a"
+    tmux: "prefix %"
+    vscode: ?
+
+  close_all:
+    desc: Close all items in pane
+    zed: "<spc> w '"
+    nvim: ?
+    tmux: -
+    vscode: ?
+
+  pin_tab:
+    desc: Pin current tab
+    zed: "<spc> w p"
+    nvim: -
+    vscode: ?
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# DOCK/PANEL TOGGLES
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+dock:
+  toggle_left:
+    desc: Toggle left dock/sidebar
+    zed: "D-h"
+    nvim: ?
+    vscode: "D-b"
+
+  toggle_right:
+    desc: Toggle right dock/sidebar
+    zed: "D-l"
+    nvim: ?
+    vscode: ?
+
+  toggle_bottom:
+    desc: Toggle bottom dock/panel
+    zed: "D-j"
+    nvim: ?
+    vscode: "D-j"
+
+  close_all_docks:
+    desc: Close all docks
+    zed: "<spc> p P"
+    nvim: ?
+    vscode: ?
+
+panel:
+  project:
+    desc: Toggle project/file panel
+    zed: "<spc> p p"
+    nvim: "<spc> p p"
+    vscode: ?
+
+  git:
+    desc: Toggle git panel
+    zed: "<spc> p g"
+    nvim: ?
+    vscode: ?
+
+  terminal:
+    desc: Toggle terminal panel
+    zed: "<spc> p t"
+    nvim: ?
+    vscode: "C-`"
+
+  outline:
+    desc: Toggle outline panel
+    zed: "<spc> p o"
+    nvim: ?
+    vscode: ?
+
+  diagnostics:
+    desc: Toggle diagnostics panel
+    zed: "<spc> p e"
+    nvim: ?
+    vscode: ?
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PALETTES & FINDERS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+palette:
+  commands:
+    desc: Command palette
+    zed: ";"
+    nvim: ":"
+    vscode: "D-S-p"
+    cc: "/"
+
+  files:
+    desc: File finder / quick open
+    zed: "<spc> k"
+    nvim: "<spc> k"
+    vscode: "D-p"
+    cc: -
+
+  symbols_buffer:
+    desc: Symbols in current buffer
+    zed: "<spc> l"
+    nvim: ?
+    vscode: "D-S-o"
+
+  symbols_project:
+    desc: Symbols across project
+    zed: "<spc> L"
+    nvim: ?
+    vscode: "D-t"
+
+  tasks:
+    desc: Task runner
+    zed: "<spc> j"
+    nvim: ?
+    vscode: ?
+
+  recent_projects:
+    desc: Open recent project
+    zed: "<spc> o"
+    nvim: ?
+    vscode: ?
+
+menu:
+  next:
+    desc: Select next item in menu/picker
+    zed: "C-j"
+    nvim: "C-j"
+    vscode: ?
+
+  prev:
+    desc: Select previous item in menu/picker
+    zed: "C-k"
+    nvim: "C-k"
+    vscode: ?
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# MOTION (VIM-STYLE)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+motion:
+  scroll_up:
+    desc: Scroll up (half page)
+    zed: "K"
+    nvim: "C-u"
+    cc: ?
+
+  scroll_down:
+    desc: Scroll down (half page)
+    zed: "J"
+    nvim: "C-d"
+    cc: ?
+
+  doc_start:
+    desc: Go to start of document
+    zed: "D-K"
+    nvim: "gg"
+    cc: "gg"
+
+  doc_end:
+    desc: Go to end of document
+    zed: "D-J"
+    nvim: "G"
+    cc: "G"
+
+  line_start:
+    desc: Go to start of line (first non-blank)
+    zed: "H"
+    nvim: "^"
+    cc: "^"
+
+  line_end:
+    desc: Go to end of line
+    zed: "L"
+    nvim: "$"
+    cc: "$"
+
+  sneak_forward:
+    desc: Sneak/leap forward
+    zed: "f"
+    nvim: "s"          # with leap.nvim
+    cc: ?
+
+  sneak_backward:
+    desc: Sneak/leap backward
+    zed: "F"
+    nvim: "S"          # with leap.nvim
+    cc: ?
+
+  matching:
+    desc: Go to matching bracket
+    zed: "w"
+    nvim: "%"
+    cc: "%"
+
+  history_back:
+    desc: Go back in jump history
+    zed: "["
+    nvim: "C-o"
+    cc: ?
+
+  history_forward:
+    desc: Go forward in jump history
+    zed: "]"
+    nvim: "C-i"
+    cc: ?
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# CODE NAVIGATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+code:
+  goto_definition_split:
+    desc: Go to definition (split)
+    zed: "q"
+    nvim: ?
+    vscode: ?
+
+  goto_definition:
+    desc: Go to definition (in place)
+    zed: "m D"
+    nvim: "gd"
+    vscode: "F12"
+
+  goto_type_definition_split:
+    desc: Go to type definition (split)
+    zed: "m t"
+    nvim: ?
+    vscode: ?
+
+  goto_type_definition:
+    desc: Go to type definition (in place)
+    zed: "m T"
+    nvim: ?
+    vscode: ?
+
+  find_references:
+    desc: Find all references
+    zed: "m r"
+    nvim: "gr"
+    vscode: "S-F12"
+
+  diagnostic_next:
+    desc: Go to next diagnostic
+    zed: "m j"
+    nvim: "]d"
+    vscode: "F8"
+
+  diagnostic_prev:
+    desc: Go to previous diagnostic
+    zed: "m K"
+    nvim: "[d"
+    vscode: "S-F8"
+
+  code_actions:
+    desc: Show code actions
+    zed: "<spc> ."
+    nvim: "<spc> ."
+    vscode: "D-."
+
+  rename:
+    desc: Rename symbol
+    zed: "r"
+    nvim: "<spc> rn"
+    vscode: "F2"
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# EDITING
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+edit:
+  undo:
+    desc: Undo
+    zed: "u"
+    nvim: "u"
+    cc: "u"
+
+  redo:
+    desc: Redo
+    zed: "U"
+    nvim: "C-r"
+    cc: "C-r"
+
+  duplicate_up:
+    desc: Duplicate line/selection up
+    zed: "D-k"         # visual mode
+    nvim: ?
+    vscode: ?
+
+  duplicate_down:
+    desc: Duplicate line/selection down
+    zed: "D-j"         # visual mode
+    nvim: ?
+    vscode: ?
+
+  select_expand:
+    desc: Expand selection to larger syntax node
+    zed: "v"           # visual mode, also }
+    nvim: ?
+    vscode: ?
+
+  select_shrink:
+    desc: Shrink selection to smaller syntax node
+    zed: "{"           # visual mode
+    nvim: ?
+    vscode: ?
+
+  select_enclosing:
+    desc: Select enclosing symbol
+    zed: "V"
+    nvim: ?
+    vscode: ?
+
+  fold_toggle:
+    desc: Toggle fold
+    zed: "z o"
+    nvim: "za"
+    vscode: ?
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# SEARCH
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+search:
+  buffer_replace:
+    desc: Search & replace in buffer
+    zed: "?"
+    nvim: ":%s/"
+    vscode: "D-h"
+
+  project:
+    desc: Search in project (new tab)
+    zed: "D-?"
+    nvim: ?
+    vscode: "D-S-f"
+
+  next:
+    desc: Go to next match (centered)
+    zed: "n"           # auto centers
+    nvim: "nzz"
+    cc: "n"
+
+  prev:
+    desc: Go to previous match (centered)
+    zed: "N"           # auto centers
+    nvim: "Nzz"
+    cc: "N"
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# GIT
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+git:
+  hunk_next:
+    desc: Go to next hunk
+    zed: "g j"
+    nvim: "]c"
+    vscode: ?
+
+  hunk_prev:
+    desc: Go to previous hunk
+    zed: "g k"
+    nvim: "[c"
+    vscode: ?
+
+  branch:
+    desc: Switch branch
+    zed: "g b"
+    nvim: ?
+    vscode: ?
+
+  diff:
+    desc: Show diff panel
+    zed: "g d"
+    nvim: ?
+    vscode: ?
+
+  hunk_toggle:
+    desc: Toggle hunk visibility
+    zed: "g o"
+    nvim: ?
+    vscode: ?
+
+  hunk_expand_all:
+    desc: Expand all hunks
+    zed: "g O"
+    nvim: ?
+    vscode: ?
+
+  stage_toggle:
+    desc: Toggle staged
+    zed: "g a"
+    nvim: ?
+    vscode: ?
+
+  stage_all:
+    desc: Stage all
+    zed: "g A"
+    nvim: ?
+    vscode: ?
+
+  restore:
+    desc: Restore hunk
+    zed: "g u"
+    nvim: ?
+    vscode: ?
+
+  restore_file:
+    desc: Restore file
+    zed: "g U"
+    nvim: ?
+    vscode: ?
+
+  commit:
+    desc: Commit
+    zed: "g c"
+    nvim: ?
+    vscode: ?
+
+  push:
+    desc: Push
+    zed: "g p"
+    nvim: ?
+    vscode: ?
+
+  push_force:
+    desc: Force push
+    zed: "g P"
+    nvim: ?
+    vscode: ?
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# CONFIGURATION (LEADER: ,)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+config:
+  settings:
+    desc: Open settings
+    zed: ", ,"
+    nvim: ?
+    vscode: "D-,"
+
+  keymap:
+    desc: Open keymap
+    zed: ", k"
+    nvim: ?
+    vscode: ?
+
+  keymap_default:
+    desc: Open default keymap
+    zed: ", K"
+    nvim: ?
+    vscode: ?
+
+  snippets:
+    desc: Configure snippets
+    zed: ", s"
+    nvim: ?
+    vscode: ?
+
+  tasks:
+    desc: Open tasks config
+    zed: ", t"
+    nvim: ?
+    vscode: ?
+
+  toggle_inline_diagnostics:
+    desc: Toggle inline diagnostics
+    zed: ", e"
+    nvim: ?
+    vscode: ?
+
+  toggle_inline_values:
+    desc: Toggle inline values
+    zed: ", v"
+    nvim: ?
+    vscode: ?
+
+  toggle_warnings:
+    desc: Toggle warnings visibility
+    zed: ", w"
+    nvim: ?
+    vscode: ?
+
+  toggle_soft_wrap:
+    desc: Toggle soft wrap
+    zed: ", <spc>"
+    nvim: ?
+    vscode: ?
+
+  toggle_gitignore:
+    desc: Toggle gitignore visibility
+    zed: ", g"
+    nvim: ?
+    vscode: ?
+
+  reload:
+    desc: Reload workspace
+    zed: ", R"
+    nvim: ?
+    vscode: ?
+
+  restart_lsp:
+    desc: Restart language server
+    zed: ", r"
+    nvim: ?
+    vscode: ?
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# TOGGLES (LEADER: <spc> t)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+toggle:
+  inlay_hints:
+    desc: Toggle inlay hints
+    zed: "<spc> t h"
+    nvim: ?
+    vscode: ?
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# VIEW
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+view:
+  centered_layout:
+    desc: Toggle centered/focus layout
+    zed: "<spc> f"
+    nvim: ?
+    vscode: ?
+
+  zoom:
+    desc: Toggle zoom on current pane
+    zed: "<spc> z"
+    nvim: ?
+    vscode: ?
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# AI ASSIST
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ai:
+  toggle_panel:
+    desc: Toggle AI panel
+    zed: "D-L"
+    nvim: ?
+    vscode: ?
+    cc: -
+
+  accept_prediction:
+    desc: Accept edit prediction
+    zed: "S-<cr>"
+    nvim: ?
+    vscode: "tab"
+    cc: -
+
+  inline_switch:
+    desc: Inline assist - convert to switch
+    zed: "<spc> r s"
+    nvim: -
+    vscode: -
+    cc: -
+
+  inline_ternary:
+    desc: Inline assist - convert to ternary
+    zed: "<spc> r t"
+    nvim: -
+    vscode: -
+    cc: -
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PROJECT PANEL
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+project_panel:
+  nav_prev_dir:
+    desc: Select previous directory
+    zed: "C-k"
+    nvim: ?
+    vscode: ?
+
+  nav_next_dir:
+    desc: Select next directory
+    zed: "C-j"
+    nvim: ?
+    vscode: ?
+
+  first:
+    desc: Select first item
+    zed: "K"
+    nvim: ?
+    vscode: ?
+
+  last:
+    desc: Select last item
+    zed: "J"
+    nvim: ?
+    vscode: ?
+
+  collapse_all:
+    desc: Collapse all entries
+    zed: "H"
+    nvim: ?
+    vscode: ?
+
+  new_file:
+    desc: Create new file
+    zed: "n"
+    nvim: ?
+    vscode: ?
+
+  new_dir:
+    desc: Create new directory
+    zed: "N"
+    nvim: ?
+    vscode: ?
+
+  rename:
+    desc: Rename item
+    zed: "r"
+    nvim: ?
+    vscode: ?
+
+  delete:
+    desc: Delete item (trash)
+    zed: "d"
+    nvim: ?
+    vscode: ?
+
+  copy:
+    desc: Copy item
+    zed: "c"
+    nvim: ?
+    vscode: ?
+
+  paste:
+    desc: Paste item
+    zed: "p"
+    nvim: ?
+    vscode: ?
+
+  search_in_dir:
+    desc: Search in directory
+    zed: "/"
+    nvim: ?
+    vscode: ?
+
+  open_system:
+    desc: Open with system app
+    zed: "D-<cr>"
+    nvim: ?
+    vscode: ?
+
+  reveal_finder:
+    desc: Reveal in Finder
+    zed: "S-<cr>"
+    nvim: ?
+    vscode: ?
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# GIT PANEL
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+git_panel:
+  first:
+    desc: Select first item
+    zed: "K"
+    nvim: ?
+    vscode: ?
+
+  last:
+    desc: Select last item
+    zed: "J"
+    nvim: ?
+    vscode: ?
+
+  stage:
+    desc: Stage file
+    zed: "l"
+    nvim: ?
+    vscode: ?
+
+  unstage:
+    desc: Unstage file
+    zed: "h"
+    nvim: ?
+    vscode: ?
+
+  toggle_staged:
+    desc: Toggle staged
+    zed: "a"
+    nvim: ?
+    vscode: ?
+
+  open_file:
+    desc: Open file
+    zed: "o"
+    nvim: ?
+    vscode: ?
+
+  open_diff:
+    desc: Open in diff panel
+    zed: "O"
+    nvim: ?
+    vscode: ?
+
+  restore:
+    desc: Restore file (with prompt)
+    zed: "d"
+    nvim: ?
+    vscode: ?
+
+  restore_force:
+    desc: Restore file (no prompt)
+    zed: "D"
+    nvim: ?
+    vscode: ?
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# TERMINAL
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+terminal:
+  new:
+    desc: New terminal
+    zed: "D-t"
+    nvim: ?
+    tmux: "prefix c"
+    vscode: ?
+
+  multiline_input:
+    desc: Insert newline in input
+    zed: "S-<cr>"
+    nvim: -
+    tmux: -
+    cc: "S-<cr>"
+
+  exit_to_editor:
+    desc: Return focus to editor
+    zed: "C-'"
+    nvim: ?
+    tmux: -
+    vscode: ?

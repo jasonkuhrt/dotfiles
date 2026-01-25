@@ -1,6 +1,7 @@
 # ═══════════════════════════════════════════════════════════
 # Taps
 # ═══════════════════════════════════════════════════════════
+tap "electrikmilk/cherri"
 tap "planetscale/tap"
 tap "polidog/kilar"
 
@@ -51,12 +52,16 @@ brew "shfmt"         # shell formatter
 brew "gum"           # shell script UI components
 brew "up"            # interactive piping (Ultimate Plumber)
 
+# Apple Shortcuts
+brew "electrikmilk/cherri/cherri"  # compile .cherri to .shortcut files
+
 # Git & GitHub
 brew "git"
 brew "gh"            # GitHub CLI
 brew "git-delta"     # better diffs (also in gitconfig)
 brew "git-crypt"     # transparent file encryption
 brew "lazygit"       # terminal UI for git
+brew "gitmux"        # git status in tmux status bar
 brew "tmux"          # terminal multiplexer
 brew "pre-commit"    # git hooks framework
 
@@ -161,4 +166,16 @@ mas "Pixelmator Pro", id: 1289583905
 mas "Refined GitHub", id: 1519867270
 mas "TripMode", id: 1513400665
 mas "Unsplash Wallpapers", id: 1284863847
+
+# Shortcuts Extensions (for Cherri/automation workflows)
+mas "Actions", id: 1586435171          # 180+ utility actions (Sindre Sorhus)
+
+# Manual App Store installs:
+# - Toolbox Pro: https://apps.apple.com/app/id1476029992 (wrapped iOS)
+# - Logger: https://apps.apple.com/app/id1611554653 ($9.99 - paid)
+# - Scriptable: https://apps.apple.com/app/id1405459188 (iOS only)
+
+# ═══════════════════════════════════════════════════════════
+# CLI Tools (overflow)
+# ═══════════════════════════════════════════════════════════
 brew "imagemagick"

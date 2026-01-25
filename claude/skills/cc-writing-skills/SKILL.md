@@ -1,9 +1,17 @@
 ---
 name: writing-skills
-description: Use when creating, improving, or reviewing Claude Code skills. Covers frontmatter, tool use patterns, file structure, hooks, and CC platform limitations. Also invoke superpowers:writing-skills for CSO and testing workflow.
+description: Use when troubleshooting skill issues, understanding CC platform limitations, or reviewing skills for CC-specific gotchas. For skill creation tutorials, use plugin-dev:skill-development.
 ---
 
 # Writing Skills
+
+## Scope
+
+This skill covers **Claude Code platform gotchas and limitations**. For different purposes, use:
+
+- **Comprehensive tutorials:** `plugin-dev:skill-development`
+- **TDD methodology:** `superpowers:writing-skills`
+- **This skill:** Bug workarounds, version-specific behavior, issue tracking
 
 ## Facts
 
@@ -17,9 +25,6 @@ description: Use when creating, improving, or reviewing Claude Code skills. Cove
 - Development Related
   - Skills created or modified in ~/.claude/skills or .claude/skills are immediately available without restarting the session (added in v2.1.0)
 
-## Overview
-
-This skill covers **Claude Code platform specifics**. For skill design methodology (CSO, TDD, testing), also invoke `superpowers:writing-skills`.
 
 ## Key Rules (from [Anthropic guide](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices))
 

@@ -1,13 +1,47 @@
 ---
 name: cc-writing-hooks
-description: Use when creating or modifying Claude Code hooks in settings.json. Triggers on "add hook", "create hook", "PostToolUse", "PreToolUse", "hook not working", "hook not firing".
+description: Use when debugging hook issues, working around known bugs (PreToolUse+AskUserQuestion), or configuring user hooks in settings.json. For plugin hook development, use plugin-dev:hook-development.
 ---
 
 # Writing Claude Code Hooks
 
+## Scope
+
+This skill covers **user hooks in settings.json** and **known bugs**. For different purposes, use:
+
+- **Plugin hooks.json format:** `plugin-dev:hook-development`
+- **This skill:** User settings.json hooks, bug workarounds, matcher gotchas
+
 Create and configure hooks in `.claude/settings.json`.
 
 ## CRITICAL
+
+### PreToolUse Hooks Break AskUserQuestion
+
+**Known bug:** When PreToolUse hooks are active, AskUserQuestion returns **empty responses** without showing UI to the user.
+
+**Root cause:** Stdin/stdout conflict between hook JSON processing and AskUserQuestion's interactive terminal input.
+
+**Workaround:** Use `PermissionRequest` hook instead of `PreToolUse` for AskUserQuestion logic.
+
+Both hooks fire for permission-required tools, but `PermissionRequest` is semantically correct for user-input scenarios. Match on `tool_name` within `PermissionRequest` handler.
+
+```json
+{
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [{ "type": "command", "command": "your-script.sh" }]
+      }
+    ]
+  }
+}
+```
+
+**Tracked issue:** [#15872](https://github.com/anthropics/claude-code/issues/15872) - Feature request: Add hook support for AskUserQuestion
+
+Source: [#15872 comment](https://github.com/anthropics/claude-code/issues/15872#issuecomment-3701824730)
 
 ### Matcher Syntax
 
@@ -61,13 +95,13 @@ fi
 
 ## Hook Events
 
-| Event | When | Common Use |
-|-------|------|------------|
-| `PreToolUse` | Before tool runs | Validate, block |
-| `PostToolUse` | After tool succeeds | Format, lint |
-| `UserPromptSubmit` | User sends prompt | Add context |
-| `SessionStart` | Session begins | Load context |
-| `Stop` | Agent finishes | Cleanup |
+| Event              | When                | Common Use      |
+| ------------------ | ------------------- | --------------- |
+| `PreToolUse`       | Before tool runs    | Validate, block |
+| `PostToolUse`      | After tool succeeds | Format, lint    |
+| `UserPromptSubmit` | User sends prompt   | Add context     |
+| `SessionStart`     | Session begins      | Load context    |
+| `Stop`             | Agent finishes      | Cleanup         |
 
 ## Hook Input (stdin JSON)
 
@@ -88,11 +122,11 @@ fi
 
 ## Exit Codes
 
-| Code | Meaning | Behavior |
-|------|---------|----------|
-| 0 | Success | Continue, stdout shown in transcript (Ctrl-R) |
-| 2 | Block | Stop tool, stderr shown to Claude |
-| Other | Error | Continue, stderr shown to user |
+| Code  | Meaning | Behavior                                      |
+| ----- | ------- | --------------------------------------------- |
+| 0     | Success | Continue, stdout shown in transcript (Ctrl-R) |
+| 2     | Block   | Stop tool, stderr shown to Claude             |
+| Other | Error   | Continue, stderr shown to user                |
 
 ## Script Template
 
@@ -121,3 +155,9 @@ exit 0
 - **Parallel execution** — Multiple matching hooks run in parallel
 - **60s default timeout** — Override with `"timeout": <seconds>`
 - **Debug mode** — `claude --debug` shows hook execution details
+
+## References
+
+- [Hooks reference - Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code/hooks)
+- [Hook control flow explained](https://stevekinney.com/courses/ai-development/claude-code-hook-control-flow)
+- [#15872](https://github.com/anthropics/claude-code/issues/15872) - Feature request: hook support for AskUserQuestion

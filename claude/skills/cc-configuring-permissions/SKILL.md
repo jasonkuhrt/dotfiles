@@ -46,7 +46,7 @@ When manually editing settings.json, tell user:
 
 | Plugin Identifier | Correct Pattern | Wrong Pattern |
 |-------------------|-----------------|---------------|
-| `claude-code@jasonkuhrt` | `Skill(claude-code:*)` | `Skill(jasonkuhrt:*)` |
+| `superpowers@superpowers-marketplace` | `Skill(superpowers:*)` | `Skill(superpowers-marketplace:*)` |
 | `hookify@claude-plugins-official` | `Skill(hookify:*)` | `Skill(claude-plugins-official:*)` |
 
 The format is `Skill(plugin-name:skill-name)`, NOT `Skill(marketplace-name:skill-name)`.

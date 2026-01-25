@@ -1,9 +1,16 @@
 ---
 name: cc-configuring-mcp
-description: Use when configuring MCP servers in Claude Code, optimizing MCP token usage, troubleshooting MCP connections, understanding Tool Search thresholds, or deciding between MCP tools vs skills for token efficiency
+description: Use when optimizing MCP token usage, understanding Tool Search thresholds, or deciding MCP vs skills for token efficiency. For plugin MCP bundling, use plugin-dev:mcp-integration.
 ---
 
 # Configuring MCP
+
+## Scope
+
+This skill covers **MCP token optimization and Tool Search**. For different purposes, use:
+
+- **Bundling MCP in plugins:** `plugin-dev:mcp-integration`
+- **This skill:** Token efficiency, Tool Search thresholds, skill wrappers for infrequent MCP
 
 ## Overview
 

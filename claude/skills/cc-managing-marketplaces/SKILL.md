@@ -48,9 +48,9 @@ Plugins ARE versioned via the `version` field in plugin.json:
 ├── superpowers-marketplace/
 │   └── superpowers/
 │       └── 4.0.3/           ← version from plugin.json
-└── jasonkuhrt/
-    └── diagrams/
-        └── 1.0.0/           ← version from plugin.json
+└── claude-plugins-official/
+    └── hookify/
+        └── e30768372b41/    ← commit hash for official plugins
 ```
 
 ### Update Flow
@@ -127,7 +127,7 @@ Run `pnpm ccd --help` for full documentation including path resolution diagrams.
 
 ### Manual Symlink Method
 
-For marketplaces without the CLI, manually replace cache with symlinks. [Validated experiment](https://github.com/jasonkuhrt/experiment-symlink-claude-marketplace).
+For marketplaces without the CLI, manually replace cache with symlinks.
 
 **Key insight:** Cache path uses marketplace's `name` field from marketplace.json, not the source (GitHub vs local). So `~/.claude/plugins/cache/<name>/...` is the same whether you installed from GitHub or local path.
 

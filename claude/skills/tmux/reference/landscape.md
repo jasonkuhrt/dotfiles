@@ -1,96 +1,93 @@
 # tmux Ecosystem Landscape
 
-Guide for evaluating and extending tmux setup based on user context.
+Decision guide for evaluating and extending tmux setup.
 
 ## Evaluating User Context
 
 Before recommending plugins, understand the user's situation:
 
-**Project type:**
-| Context | Likely Needs |
-|---------|--------------|
-| Full-stack app (server, db, builds) | Session persistence, process restoration, multi-pane layouts |
-| Monorepo with worktrees | Fast session switching, session-per-worktree patterns |
-| Static files / journaling | Minimal - basics likely sufficient |
-| Multiple active projects | Session management, fuzzy switching |
+| Context                             | Likely Needs                                 |
+| ----------------------------------- | -------------------------------------------- |
+| Full-stack app (server, db, builds) | Session persistence, process restoration     |
+| Monorepo with worktrees             | Fast session switching, session-per-worktree |
+| Static files / journaling           | Minimal - basics likely sufficient           |
+| Multiple active projects            | Session management, fuzzy switching          |
 
-**Questions to clarify:**
-- How many projects do you actively switch between?
-- Do you use git worktrees?
-- Do you run dev servers / databases locally?
-- Do you reboot often? Care about restoring state?
-- How terminal-centric is your workflow?
+__Questions to clarify:__
+
+* How many projects do you actively switch between?
+* Do you use git worktrees?
+* Do you run dev servers / databases locally?
+* Do you reboot often? Care about restoring state?
 
 ## Plugin Manager
 
-| Tool | Status | Recommendation |
-|------|--------|----------------|
-| [tpm](https://github.com/tmux-plugins/tpm) | Abandoned (last merge Feb 2023) | Avoid |
-| [tpm-redux](https://github.com/RyanMacG/tpm-redux) | Maintained fork | **Use this** |
-| Manual management | Works | Fine for few plugins |
+| Tool                                               | Status                          | Recommendation       |
+| -------------------------------------------------- | ------------------------------- | -------------------- |
+| [tpm](https://github.com/tmux-plugins/tpm)         | Abandoned (last merge Feb 2023) | Avoid                |
+| [tpm-redux](https://github.com/RyanMacG/tpm-redux) | Maintained fork                 | __Use this__         |
+| Manual management                                  | Works                           | Fine for few plugins |
 
-## Session Persistence
+## Plugin Categories
 
-| Plugin | What | When to Use |
-|--------|------|-------------|
-| [tmux-resurrect](https://github.com/tmux-plugins/tmux-resurrect) | Save/restore sessions manually | Want to survive reboots |
-| [tmux-continuum](https://github.com/tmux-plugins/tmux-continuum) | Auto-save + auto-restore | Pairs with resurrect, "just works" persistence |
+### Session Persistence
 
-**How continuum works:**
-1. Every 15 min (configurable), saves tmux state to `~/.config/tmux/resurrect/`
-2. On tmux server start, automatically restores last saved state
-3. Sessions, windows, panes, working directories restored
-4. Processes NOT restored by default - configure resurrect for that
+| Plugin         | When to Use                        | Reference                                    |
+| -------------- | ---------------------------------- | -------------------------------------------- |
+| tmux-resurrect | Want manual save/restore           | [plugin-resurrect.md](./plugin-resurrect.md) |
+| tmux-continuum | Want "just works" auto-persistence | [plugin-continuum.md](./plugin-continuum.md) |
 
-**Process restoration (optional):**
-```bash
-# In .tmux.conf - resurrect will restart these on restore
-set -g @resurrect-processes 'vim nvim "npm run dev" postgres'
-```
+### Session Management
 
-## Session Management
+| Plugin                  | When to Use                                   | Reference                                  |
+| ----------------------- | --------------------------------------------- | ------------------------------------------ |
+| tmux-sessionx           | Multiple projects, worktrees, fuzzy switching | [plugin-sessionx.md](./plugin-sessionx.md) |
+| tmux-fzf-session-switch | Lighter alternative to sessionx               | —                                          |
 
-| Plugin | What | When to Use |
-|--------|------|-------------|
-| [tmux-sessionx](https://github.com/omerxx/tmux-sessionx) | Fuzzy session picker (fzf + zoxide) | Multiple projects, worktrees |
-| [tmux-fzf-session-switch](https://github.com/thuanOwa/tmux-fzf-session-switch) | Simpler fzf switcher | Lighter alternative |
+### fzf Integration
 
-**sessionx features:**
-- Fuzzy search across sessions
-- zoxide integration (frecency-based)
-- Preview pane layout before switching
-- Create new sessions from picker
+| Plugin       | When to Use                                  | Reference                                |
+| ------------ | -------------------------------------------- | ---------------------------------------- |
+| tmux-fzf     | Fuzzy management of sessions/windows/panes   | [plugin-tmux-fzf.md](./plugin-tmux-fzf.md) |
+| tmux-fzf-url | Open URLs from scrollback with fzf           | [plugin-fzf-url.md](./plugin-fzf-url.md)  |
 
-## Clipboard
+### Status Bar
 
-| Plugin | What | When to Use |
-|--------|------|-------------|
-| [tmux-yank](https://github.com/tmux-plugins/tmux-yank) | Copy to system clipboard | Cross-platform, reliable clipboard |
+| Plugin | When to Use                    | Reference                              |
+| ------ | ------------------------------ | -------------------------------------- |
+| gitmux | Git branch/status in status bar | [plugin-gitmux.md](./plugin-gitmux.md) |
 
-**macOS note:** Modern tmux + macOS may handle clipboard natively. Test first:
-1. Enter copy mode (`prefix + [`)
-2. Select text, yank (`y`)
-3. Paste outside tmux (`cmd + v`)
+## Recommended Setups
 
-If it works, yank may be unnecessary. If not, install yank.
+### Minimal (new to tmux)
 
-## Recommended Setups by Context
+No plugins. Learn basics first, add when pain emerges.
 
-### Minimal (new to tmux, simple projects)
-- No plugins needed
-- Learn basics first, add when pain emerges
+### Terminal-centric dev (full-stack)
 
-### Terminal-centric dev (full-stack, multiple services)
-- tpm-redux (manager)
-- tmux-resurrect + tmux-continuum (persistence)
-- tmux-sessionx (switching)
+* tpm-redux (manager)
+* resurrect + continuum (persistence)
+* sessionx (switching)
 
 ### Worktree-heavy workflow
-- tpm-redux (manager)
-- tmux-sessionx (fast switching between worktree sessions)
-- Consider: resurrect + continuum if reboots are frequent
+
+* tpm-redux (manager)
+* sessionx (fast switching)
+* Consider: resurrect + continuum if reboots frequent
+
+## Plugins to Revisit
+
+Tracked for potential future adoption.
+
+| Plugin                                                             | What it does                          |
+| ------------------------------------------------------------------ | ------------------------------------- |
+| [tmux-lazygit](https://github.com/Nybkox/tmux-lazygit)             | Lazygit popup integration             |
+| [tmux-thumbs](https://github.com/fcsonline/tmux-thumbs)            | Vimium-style text selection           |
+| [extrakto](https://github.com/laktak/extrakto)                     | Fuzzy find/copy from scrollback       |
+| [tmux-smooth-scroll](https://github.com/azorng/tmux-smooth-scroll) | Animated scrolling (revisit mid-2026) |
 
 ## Sources
 
-- [tmux-plugins/list](https://github.com/tmux-plugins/list) - Full plugin list
-- [tpm-redux](https://github.com/RyanMacG/tpm-redux) - Maintained plugin manager
+* [awesome-tmux](https://github.com/rothgar/awesome-tmux) - Curated list of tools, themes, plugins
+* [tmux-plugins/list](https://github.com/tmux-plugins/list) - Plugin list (less maintained)
+* [tpm-redux](https://github.com/RyanMacG/tpm-redux) - Maintained plugin manager

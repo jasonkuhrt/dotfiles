@@ -1,7 +1,0 @@
-{
-  "name": "library-adt",
-  "description": "ADT (Algebraic Data Type) patterns for discriminated unions with Effect Schema or similar libraries",
-  "author": {
-    "name": "jasonkuhrt"
-  }
-}

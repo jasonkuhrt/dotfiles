@@ -1,0 +1,56 @@
+// Project Context Manager
+// Uses Toolbox Pro Global Variables to store/retrieve project context
+//
+// USAGE: Run this shortcut to set or get your current project context
+// The context persists across shortcuts and devices via iCloud
+
+#define name Project Context
+#define color blue
+#define glyph folder
+
+menu "Project Context" {
+    item "Set Project":
+        @projectName = prompt("Project name:")
+        @projectPath = prompt("Project path (e.g., ~/projects/dotfiles):")
+
+        // Store in Toolbox Pro Global Variable (verified parameter keys)
+        rawAction("com.alexhay.ToolboxProForShortcuts.GlobalVariablesIntent", {
+            "mode": "set",
+            "setVariableKey": "currentProject",
+            "setVariableValue": "{projectName}"
+        })
+
+        rawAction("com.alexhay.ToolboxProForShortcuts.GlobalVariablesIntent", {
+            "mode": "set",
+            "setVariableKey": "currentProjectPath",
+            "setVariableValue": "{projectPath}"
+        })
+
+        alert("Project set: {projectName}\nPath: {projectPath}", "Project Context")
+
+    item "Get Current Project":
+        rawAction("com.alexhay.ToolboxProForShortcuts.GlobalVariablesIntent", {
+            "mode": "get",
+            "getVariableKey": "currentProject"
+        })
+        @project = ShortcutInput
+
+        rawAction("com.alexhay.ToolboxProForShortcuts.GlobalVariablesIntent", {
+            "mode": "get",
+            "getVariableKey": "currentProjectPath"
+        })
+        @path = ShortcutInput
+
+        alert("Current Project: {project}\nPath: {path}", "Project Context")
+
+    item "Open in Terminal":
+        rawAction("com.alexhay.ToolboxProForShortcuts.GlobalVariablesIntent", {
+            "mode": "get",
+            "getVariableKey": "currentProjectPath"
+        })
+        @path = ShortcutInput
+
+        // Open Terminal and cd to project
+        // This may need adjustment for your terminal app
+        alert("Opening: {path}", "Terminal")
+}

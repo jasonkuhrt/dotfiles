@@ -1,0 +1,40 @@
+// Menu-Driven Shortcut Template
+// Uses Menu Box for beautiful menus with SF Symbols
+
+#define name Menu Example
+#define color blue
+#define glyph list.bullet
+
+// Create menu items with SF Symbols
+rawAction("dev.alexhay.MenuBox.CreateSymbolItemIntent", {
+    "title": "Settings",
+    "subtitle": "Configure options",
+    "symbol": "gear",
+    "symbolColourHex": "#FFFFFF",
+    "bgColourHex": "#007AFF"
+})
+@item1 = ShortcutInput
+
+rawAction("dev.alexhay.MenuBox.CreateSymbolItemIntent", {
+    "title": "Profile",
+    "subtitle": "View your profile",
+    "symbol": "person.circle",
+    "symbolColourHex": "#FFFFFF",
+    "bgColourHex": "#34C759"
+})
+@item2 = ShortcutInput
+
+rawAction("dev.alexhay.MenuBox.CreateSymbolItemIntent", {
+    "title": "Help",
+    "subtitle": "Get assistance",
+    "symbol": "questionmark.circle",
+    "symbolColourHex": "#FFFFFF",
+    "bgColourHex": "#FF9500"
+})
+@item3 = ShortcutInput
+
+// Show menu and handle selection
+// Note: You'll need to use Choose from List in Shortcuts GUI
+// to display the menu items and capture selection
+
+alert("Menu created! Add 'Choose from List' action to display.", "Done")

@@ -1,0 +1,13 @@
+// Test Toolbox Pro Integration
+// Testing raw action syntax
+
+#define name Test Toolbox Pro
+#define color purple
+#define glyph wrench
+
+// Try with explicit empty params
+rawAction("com.alexhay.ToolboxProForShortcuts.IsDarkModeOnIntent", {
+    "placeholder": "test"
+})
+
+alert("Test complete", "Toolbox Pro")

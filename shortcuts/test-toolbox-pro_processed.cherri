@@ -1,0 +1,125 @@
+/*
+Basic Actions and Global Types
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// [Doc]: Stop Shortcut: Stops the shortcut.
+
+
+// [Doc]: Nothing: Clear the current output.
+
+
+// [Doc]: Comment: Add an explicit comment.
+
+
+// [Doc]: Get Type: Get the type of input.
+
+
+// [Doc]: Get Object of Class: Get the object of `class` from a variable.
+
+
+// [Doc]: [Output] Show Result: Show `input`.
+
+
+// [Doc]: [Output] Quick Look: Preview `input` in Quick Look.
+
+
+// [Doc]: [Output] Stop and Output: Stop and output `output`. Do nothing if there is nowhere to output.
+
+
+// [Doc]: [Output] Output or Copy to Clipboard: Stop and output `output`. Copy to the clipboard if there is nowhere to output.
+
+
+
+
+// [Doc]: [Output] Must Output: Stop and output `output`. Respond with response if there is nowhere to output.
+
+
+
+
+// [Doc]: [Output] Content Graph: Display input as a content graph.
+
+
+
+
+
+
+
+
+
+
+// [Doc]: Count: Returns a count of `type` of items in `input`.
+
+
+// [Doc]: [Notifications] Alert: Shows an alert with text and optional title and an OK button to proceed.
+
+
+
+
+// [Doc]: [Notifications] Confirm: Shows an alert with text and optional title. It displays an OK button to proceed, and a cancel button that stops the Shortcut.
+
+
+
+
+// [Doc]: [Notifications] Show Notification: Shows a custom notification message.
+
+
+
+
+
+
+
+// [Doc]: Number: Create a number value.
+
+
+
+
+// [Doc]: [Control Flow] Wait: Wait a specified number of seconds.
+
+
+// [Doc]: [Control Flow] Wait to Return: Wait for the user to return to Shortcuts.
+
+
+// [Doc]: [Search] Search/Spotlight: Get results from search on iOS or iPadOS, and Spotlight on macOS.
+
+
+
+// Test Toolbox Pro Integration
+// Testing raw action syntax
+
+#define name Test Toolbox Pro
+#define color purple
+#define glyph wrench
+
+// Try with explicit empty params
+rawAction("com.alexhay.ToolboxProForShortcuts.IsDarkModeOnIntent", {
+    "placeholder": "test"
+})
+
+alert("Test complete", "Toolbox Pro")

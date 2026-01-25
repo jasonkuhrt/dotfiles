@@ -1,0 +1,33 @@
+// Focus-Aware Shortcut Template
+// Behaves differently based on current Focus Mode
+
+#define name Focus Aware
+#define color purple
+#define glyph moon.fill
+
+// Get current Focus Mode
+rawAction("dev.snailedit.FocusCuts.GetCurrentFocusModeIntent", {
+    "ShowWhenRun": false
+})
+@focusMode = ShortcutInput
+
+// Log what we found
+rawAction("com.alexhay.Console.LogMessageIntent", {
+    "title": "Focus Mode",
+    "messages": "Current: {focusMode}",
+    "category": "info",
+    "tag": "focus"
+})
+
+// Branch based on Focus Mode
+if focusMode == "Work" {
+    alert("Loading work context...", "Work Mode")
+    // Add work-specific actions here
+} else if focusMode == "Personal" {
+    alert("Loading personal context...", "Personal Mode")
+    // Add personal-specific actions here
+} else if focusMode == "Do Not Disturb" {
+    alert("Minimal mode active", "DND")
+} else {
+    alert("No Focus Mode active - showing all options", "Default")
+}

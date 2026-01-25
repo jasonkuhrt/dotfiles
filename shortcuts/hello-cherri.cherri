@@ -1,0 +1,9 @@
+// Hello Cherri - test shortcut
+// Compiles to: hello-cherri.shortcut
+
+#define name Hello Cherri
+#define color red
+#define glyph heart
+
+@name = prompt("What's your name?")
+alert("Hello, {name}! 🍒", "Cherri Works!")

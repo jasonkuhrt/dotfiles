@@ -1,0 +1,58 @@
+// Shortcut with Logging Template
+// Demonstrates proper debugging workflow with Logger
+
+#define name Debug Example
+#define color orange
+#define glyph ant.fill
+
+// Start logging session
+rawAction("com.alexhay.Console.StartLoggingIntent", {
+    "mode": "start"
+})
+
+// Log shortcut start
+rawAction("com.alexhay.Console.LogMessageIntent", {
+    "title": "Shortcut Started",
+    "messages": "Debug Example running",
+    "category": "info",
+    "tag": "lifecycle"
+})
+
+// Log device details for context
+rawAction("com.alexhay.Console.LogDeviceDetailsIntent", {
+    "tag": "system"
+})
+
+// Your shortcut logic here...
+@userInput = prompt("Enter something:")
+
+// Log user input
+rawAction("com.alexhay.Console.LogMessageIntent", {
+    "title": "User Input",
+    "messages": "{userInput}",
+    "category": "info",
+    "tag": "input"
+})
+
+// Conditional logging based on input
+rawAction("com.alexhay.Console.LogConditionalMessageIntent", {
+    "condition": "isEmpty",
+    "sourceValue": userInput,
+    "trueTitle": "Warning",
+    "trueMessage": "User provided empty input",
+    "trueCategory": "warning",
+    "falseTitle": "Success",
+    "falseMessage": "Got valid input",
+    "falseCategory": "success",
+    "tag": "validation"
+})
+
+// Log completion
+rawAction("com.alexhay.Console.LogMessageIntent", {
+    "title": "Shortcut Complete",
+    "messages": "Finished successfully",
+    "category": "success",
+    "tag": "lifecycle"
+})
+
+alert("Done! Check Logger app for logs.", "Complete")

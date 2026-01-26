@@ -15,7 +15,7 @@ const SYMBOLS = {
   type: {
     user: "◦",
     assistant: "●",
-    other: " ",
+    other: "·", // progress, system, etc.
   },
   skill: {
     initial: "◆",
@@ -141,6 +141,21 @@ const DIMENSIONS: Dimension[] = [
 ]
 
 // -----------------------------------------------------------------------------
+// Label width calculator
+// -----------------------------------------------------------------------------
+
+/**
+ * Calculate the max label width needed for dimension track labels.
+ */
+export const getDimensionLabelWidth = (): number => {
+  let maxWidth = 0
+  for (const dim of DIMENSIONS) {
+    maxWidth = Math.max(maxWidth, dim.name.length)
+  }
+  return maxWidth
+}
+
+// -----------------------------------------------------------------------------
 // Rendering
 // -----------------------------------------------------------------------------
 
@@ -148,7 +163,8 @@ export const renderDimensions = (entries: AnalyzedEntry[], labelWidth: number = 
   const lines: string[] = []
 
   for (const dim of DIMENSIONS) {
-    const label = dim.name.padStart(labelWidth)
+    // Use labelWidth-1 for text, leaving 1 char for gutter space
+    const label = dim.name.padStart(labelWidth - 1) + " "
     let chars = ""
     for (const entry of entries) {
       chars += dim.mapper(entry)

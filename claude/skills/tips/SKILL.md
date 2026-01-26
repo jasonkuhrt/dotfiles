@@ -27,6 +27,23 @@ Quick reference for effective Claude Code usage.
 - `/clear` aggressively - long contexts slow responses
 - `/rename` before clearing to make sessions findable
 
+## Quota Management (Max Subscription)
+
+**Key insight:** Context size counts toward your quota. Each turn re-sends the entire conversation history.
+
+| Context size | Per-turn cost |
+|--------------|---------------|
+| 20k (fresh)  | 1x            |
+| 100k         | 5x            |
+| 180k         | 9x            |
+
+**The rule:** If your next question doesn't need previous context, `/clear` first.
+
+**Mid-work one-off questions:**
+- Option A: Ask parent to spawn subagent → still costs 1 parent turn
+- Option B: New Ghostty tab → cheaper IF you use the knowledge implicitly without pasting back
+- Best: New tab, absorb answer yourself, continue in parent with informed instructions
+
 ## Auto-Compact Buffer ([source][3], [docs][4])
 
 **Formula:** `buffer = 13k + maxOutputTokens`

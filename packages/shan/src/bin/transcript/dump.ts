@@ -3,17 +3,16 @@
  */
 
 import { Console, Effect, Option, Schema } from "effect"
-import { homedir } from "node:os"
-import { basename, join } from "node:path"
-import { createHash } from "node:crypto"
+import { join } from "node:path"
 import { mkdir } from "node:fs/promises"
-import { Glob } from "bun"
 import {
   TranscriptEntry,
   type ToolUseBlock,
   type UserEntry,
   type AssistantEntry,
 } from "../../lib/transcript-schema.js"
+import { resolveSessionPath, extractSessionId } from "../../lib/session-resolver.js"
+import { pickSession, type PickSessionOptions } from "../../lib/session-picker.js"
 
 // -----------------------------------------------------------------------------
 // Config
@@ -116,60 +115,6 @@ const getSummary = (entry: TranscriptEntry): string => {
 }
 
 // -----------------------------------------------------------------------------
-// Session resolution
-// -----------------------------------------------------------------------------
-
-const findSessionFile = async (input: string): Promise<string | null> => {
-  const claudeDir = join(homedir(), ".claude", "projects")
-  const glob = new Glob("**/*.jsonl")
-
-  for await (const file of glob.scan({ cwd: claudeDir, absolute: true })) {
-    if (basename(file).startsWith(input)) {
-      return file
-    }
-  }
-  return null
-}
-
-const getCurrentSessionId = async (): Promise<string | null> => {
-  const cwd = process.cwd()
-  const cwdHash = createHash("md5").update(cwd).digest("hex").slice(0, 8)
-
-  // Try cwd-specific file first, then fallback
-  const paths = [
-    `/tmp/claude-session-id-${cwdHash}`,
-    "/tmp/claude-session-id",
-  ]
-
-  for (const path of paths) {
-    const file = Bun.file(path)
-    if (await file.exists()) {
-      const content = await file.text()
-      const sessionId = content.trim()
-      if (sessionId) return sessionId
-    }
-  }
-  return null
-}
-
-const resolveSessionPath = (input: string) =>
-  Effect.gen(function* () {
-    if (input.startsWith("/")) {
-      return input
-    }
-
-    const found = yield* Effect.promise(() => findSessionFile(input))
-    if (found) {
-      return found
-    }
-
-    return yield* Effect.fail(new Error(`No session found matching: ${input}`))
-  })
-
-const extractSessionId = (path: string): string =>
-  basename(path).replace(/\.jsonl$/, "")
-
-// -----------------------------------------------------------------------------
 // Line parsing
 // -----------------------------------------------------------------------------
 
@@ -199,32 +144,39 @@ const parseLine = (line: string, lineNum: number) =>
 // Export
 // -----------------------------------------------------------------------------
 
-export const transcriptDump = (input: string | undefined) =>
+export interface DumpOptions extends PickSessionOptions {
+  raw?: boolean
+}
+
+export const transcriptDump = (input: string | undefined, options: DumpOptions = {}) =>
   Effect.gen(function* () {
-    let sessionInput = input
-
-    // Default to current session if no input provided
-    if (!sessionInput) {
-      const currentSessionId = yield* Effect.promise(() => getCurrentSessionId())
-      if (currentSessionId) {
-        sessionInput = currentSessionId
-        yield* Console.log(`Using current session: ${currentSessionId}`)
-      } else {
-        return yield* Effect.fail(new Error("No session ID provided and couldn't detect current session.\nUsage: shan transcript dump [session-id]"))
-      }
-    }
-
-    const sessionPath = yield* resolveSessionPath(sessionInput)
+    // If no input, use interactive picker (requires TTY)
+    const sessionPath = input
+      ? yield* resolveSessionPath(input)
+      : yield* pickSession(options)
     const sessionId = extractSessionId(sessionPath)
 
     // Output to project's .claude/transcripts/ directory
     const outputDir = join(process.cwd(), ".claude", "transcripts")
     yield* Effect.promise(() => mkdir(outputDir, { recursive: true }))
+
+    const file = Bun.file(sessionPath)
+
+    if (options.raw) {
+      // Raw mode: copy JSONL as-is
+      const outputPath = join(outputDir, `${sessionId}.jsonl`)
+      yield* Console.log(`Copying: ${sessionPath}`)
+      const text = yield* Effect.promise(() => file.text())
+      yield* Effect.promise(() => Bun.write(outputPath, text))
+      yield* Console.log(`Wrote: ${outputPath}`)
+      return
+    }
+
+    // Formatted mode: convert to navigable Markdown
     const outputPath = join(outputDir, `${sessionId}.transcript.md`)
 
     yield* Console.log(`Reading: ${sessionPath}`)
 
-    const file = Bun.file(sessionPath)
     const text = yield* Effect.promise(() => file.text())
     const lines = text.trim().split("\n")
 

@@ -9,19 +9,36 @@ Decide whether Claude Code config belongs in global (`claude/`) or project-local
 
 ## The Two Levels
 
-| Path | Symlinked To | Scope |
-|------|--------------|-------|
-| `claude/` | `~/.claude/` | All projects |
-| `.claude/` | (not symlinked) | Dotfiles repo only |
+| Path | Symlink Direction | Scope |
+|------|-------------------|-------|
+| `dotfiles/claude/` | `~/.claude/*` symlinks point here | All projects (global) |
+| `dotfiles/.claude/` | Not symlinked | Dotfiles repo only |
+
+## Symlink Structure
+
+`~/.claude/` contains symlinks pointing **into** `dotfiles/claude/`:
+
+```
+~/.claude/
+├── CLAUDE.md      → dotfiles/claude/CLAUDE.md
+├── commands/      → dotfiles/claude/commands/
+├── rules/         → dotfiles/claude/rules/
+├── scripts/       → dotfiles/claude/scripts/
+├── skills/        → dotfiles/claude/skills/
+└── settings.json  (real file, NOT symlinked)
+```
+
+**Exception:** `settings.json` - the real file lives at `~/.claude/settings.json`. For version control visibility, `dotfiles/claude/settings.json` symlinks TO it (reverse direction).
 
 ## Decision Guide
 
-**Global (`claude/`):**
+**Global (`dotfiles/claude/`):**
 - Communication preferences, work style
 - Commit format, API rules
 - Skills/commands useful across all projects
+- Settings changes → edit `~/.claude/settings.json` directly
 
-**Project-local (`.claude/`):**
+**Project-local (`dotfiles/.claude/`):**
 - Dotfiles-specific conventions
 - Commands like `/audit`
 - Rules scoped to specific dotfiles
@@ -39,14 +56,18 @@ Ambiguous examples:
 
 ```
 dotfiles/
-├── claude/           → ~/.claude/ (GLOBAL)
+├── claude/                    ← ~/.claude/* symlinks point here (GLOBAL)
 │   ├── CLAUDE.md
+│   ├── commands/
+│   ├── rules/
+│   ├── scripts/
 │   ├── skills/
-│   └── rules/
+│   └── settings.json          → ~/.claude/settings.json (reverse symlink)
 │
-└── .claude/          PROJECT-LOCAL
+└── .claude/                   ← PROJECT-LOCAL (dotfiles repo only)
     ├── CLAUDE.md
+    ├── settings.json
+    ├── settings.local.json
     ├── skills/
-    ├── commands/
     └── rules/
 ```

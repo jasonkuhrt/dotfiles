@@ -9,67 +9,15 @@
  */
 
 import { Console, Effect, Option, Schema } from "effect"
-import { homedir } from "node:os"
-import { basename, join } from "node:path"
-import { createHash } from "node:crypto"
+import { join } from "node:path"
 import { mkdir } from "node:fs/promises"
-import { Glob } from "bun"
 import { TranscriptEntry } from "../../lib/transcript-schema.js"
 import { analyzeTranscript } from "../../lib/transcript-analyzer.js"
-import { renderTimeChart, renderTokenChart } from "../../lib/viz/chart.js"
-import { renderDimensions } from "../../lib/viz/dimensions.js"
+import { renderTimeChart, renderTokenChart, getTimeChartLabelWidth, getTokenChartLabelWidth } from "../../lib/viz/chart.js"
+import { renderDimensions, getDimensionLabelWidth } from "../../lib/viz/dimensions.js"
 import { renderTopConsumers, renderSummary, renderLegend } from "../../lib/viz/legend.js"
-
-// -----------------------------------------------------------------------------
-// Session resolution (shared with dump.ts)
-// -----------------------------------------------------------------------------
-
-const findSessionFile = async (input: string): Promise<string | null> => {
-  const claudeDir = join(homedir(), ".claude", "projects")
-  const glob = new Glob("**/*.jsonl")
-
-  for await (const file of glob.scan({ cwd: claudeDir, absolute: true })) {
-    if (basename(file).startsWith(input)) {
-      return file
-    }
-  }
-  return null
-}
-
-const getCurrentSessionId = async (): Promise<string | null> => {
-  const cwd = process.cwd()
-  const cwdHash = createHash("md5").update(cwd).digest("hex").slice(0, 8)
-
-  const paths = [
-    `/tmp/claude-session-id-${cwdHash}`,
-    "/tmp/claude-session-id",
-  ]
-
-  for (const path of paths) {
-    const file = Bun.file(path)
-    if (await file.exists()) {
-      const content = await file.text()
-      const sessionId = content.trim()
-      if (sessionId) return sessionId
-    }
-  }
-  return null
-}
-
-const resolveSessionPath = (input: string) =>
-  Effect.gen(function* () {
-    if (input.startsWith("/") || input.startsWith("~")) {
-      const resolved = input.startsWith("~") ? input.replace("~", homedir()) : input
-      return resolved
-    }
-
-    const found = yield* Effect.promise(() => findSessionFile(input))
-    if (found) {
-      return found
-    }
-
-    return yield* Effect.fail(new Error(`No session found matching: ${input}`))
-  })
+import { resolveSessionPath, extractSessionId } from "../../lib/session-resolver.js"
+import { pickSession, type PickSessionOptions } from "../../lib/session-picker.js"
 
 // -----------------------------------------------------------------------------
 // JSONL parsing
@@ -102,27 +50,15 @@ const parseTranscript = (text: string) =>
 // Main command
 // -----------------------------------------------------------------------------
 
-export const transcriptAnalyze = (input: string | undefined) =>
+export interface AnalyzeOptions extends PickSessionOptions {}
+
+export const transcriptAnalyze = (input: string | undefined, options: AnalyzeOptions = {}) =>
   Effect.gen(function* () {
-    let sessionInput = input
-
-    // Default to current session if no input provided
-    if (!sessionInput) {
-      const currentSessionId = yield* Effect.promise(() => getCurrentSessionId())
-      if (currentSessionId) {
-        sessionInput = currentSessionId
-        yield* Console.log(`Using current session: ${currentSessionId}`)
-      } else {
-        return yield* Effect.fail(
-          new Error(
-            "No session ID provided and couldn't detect current session.\nUsage: shan transcript analyze [session-id]"
-          )
-        )
-      }
-    }
-
-    const sessionPath = yield* resolveSessionPath(sessionInput)
-    const sessionId = basename(sessionPath).replace(/\.jsonl$/, "")
+    // If no input, use interactive picker (requires TTY)
+    const sessionPath = input
+      ? yield* resolveSessionPath(input)
+      : yield* pickSession(options)
+    const sessionId = extractSessionId(sessionPath)
 
     yield* Console.log(`Analyzing: ${sessionPath}`)
 
@@ -137,8 +73,12 @@ export const transcriptAnalyze = (input: string | undefined) =>
     // Analyze
     const analysis = analyzeTranscript(entries)
 
-    // Render
-    const labelWidth = 8
+    // Calculate shared label width (max across all sections + 1 for gutter)
+    const timeWidth = getTimeChartLabelWidth(analysis.entries)
+    const tokenWidth = getTokenChartLabelWidth(analysis.entries)
+    const dimWidth = getDimensionLabelWidth()
+    const labelWidth = Math.max(timeWidth, tokenWidth, dimWidth) + 1 // +1 for gutter space
+
     const output: string[] = []
 
     // Time chart
@@ -152,10 +92,9 @@ export const transcriptAnalyze = (input: string | undefined) =>
     // Dimension tracks
     output.push(...renderDimensions(analysis.entries, labelWidth))
 
-    // Top consumers
-    const topWithAlerts = analysis.topConsumers.filter((tc) => tc.deltaTokens > 5000)
-    if (topWithAlerts.length > 0) {
-      output.push(...renderTopConsumers(topWithAlerts))
+    // Top consumers (show all top 9)
+    if (analysis.topConsumers.length > 0) {
+      output.push(...renderTopConsumers(analysis.topConsumers))
     }
 
     // Summary

@@ -1,0 +1,19 @@
+{
+  "name": "@jasonkuhrt/shan",
+  "version": "0.0.0",
+  "type": "module",
+  "sideEffects": false,
+  "bin": {
+    "shan": "./src/bin/shan.ts"
+  },
+  "exports": {
+    "./transcript-schema": "./src/lib/transcript-schema.ts"
+  },
+  "dependencies": {
+    "effect": "^3.12.0"
+  },
+  "devDependencies": {
+    "@tsconfig/strictest": "^2.0.8",
+    "@types/bun": "^1.2.0"
+  }
+}

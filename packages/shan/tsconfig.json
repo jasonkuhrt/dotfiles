@@ -1,0 +1,19 @@
+{
+  "extends": ["@tsconfig/strictest/tsconfig.json"],
+  "compilerOptions": {
+    // Bun runtime
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+
+    // DX
+    "noErrorTruncation": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+
+    // Strictness
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true
+  },
+  "include": ["src", "*.d.ts"]
+}

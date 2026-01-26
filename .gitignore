@@ -19,3 +19,6 @@ bookmarks/.sync-state.json
 
 # Claude transcripts (generated output)
 **/.claude/transcripts/
+
+# Node.js
+node_modules/

@@ -16,3 +16,6 @@ Brewfile.lock.json
 # Bookmarks sync
 bookmarks/backups/
 bookmarks/.sync-state.json
+
+# Claude transcripts (generated output)
+**/.claude/transcripts/

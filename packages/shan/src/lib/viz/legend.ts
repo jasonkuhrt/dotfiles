@@ -14,12 +14,6 @@ const SEPARATOR = "━".repeat(80)
 // Helpers
 // -----------------------------------------------------------------------------
 
-const formatDelta = (tokens: number): string => {
-  if (tokens >= 1000) {
-    return `+${(tokens / 1000).toFixed(1)}k`
-  }
-  return `+${tokens}`
-}
 
 const formatTools = (tools: string[]): string => {
   if (tools.length === 0) return ""
@@ -40,6 +34,13 @@ const formatTools = (tools: string[]): string => {
 // -----------------------------------------------------------------------------
 // TOP CONSUMERS
 // -----------------------------------------------------------------------------
+
+const formatDelta = (tokens: number): string => {
+  if (tokens >= 1000) {
+    return `+${(tokens / 1000).toFixed(1)}k`
+  }
+  return `+${tokens}`
+}
 
 const renderTopConsumer = (tc: TopConsumer): string => {
   const rank = String(tc.rank).padStart(4)
@@ -99,21 +100,232 @@ export const renderSummary = (summary: AnalyzedTranscript["summary"]): string[] 
 // LEGEND
 // -----------------------------------------------------------------------------
 
+interface LegendSymbol {
+  symbol: string
+  label: string
+}
+
+interface LegendEntry {
+  name: string
+  description: string
+  symbols: LegendSymbol[]
+}
+
+const LEGEND_ENTRIES: LegendEntry[] = [
+  {
+    name: "type",
+    description: "Message origin in the conversation flow.",
+    symbols: [
+      { symbol: "·", label: "progress/system" },
+      { symbol: "◦", label: "user" },
+      { symbol: "●", label: "assistant" },
+    ],
+  },
+  {
+    name: "skill",
+    description: "Whether a skill was activated during this turn.",
+    symbols: [
+      { symbol: "◆", label: "initial activation" },
+      { symbol: "╰", label: "progressive" },
+      { symbol: "◇", label: "other" },
+    ],
+  },
+  {
+    name: "tool",
+    description: "Which tools Claude invoked.",
+    symbols: [
+      { symbol: "▢", label: "Bash" },
+      { symbol: "▤", label: "Read" },
+      { symbol: "▣", label: "WebFetch" },
+      { symbol: "▥", label: "Grep" },
+      { symbol: "▦", label: "Edit" },
+      { symbol: "▧", label: "Glob" },
+      { symbol: "▨", label: "Task" },
+      { symbol: "▩", label: "Write" },
+    ],
+  },
+  {
+    name: "cache",
+    description: "Whether Claude reused a cached response.",
+    symbols: [
+      { symbol: "●", label: "hit" },
+      { symbol: "○", label: "miss" },
+    ],
+  },
+  {
+    name: "model",
+    description: "Which Claude model generated the response.",
+    symbols: [
+      { symbol: "◈", label: "opus" },
+      { symbol: "◇", label: "sonnet" },
+      { symbol: "◦", label: "haiku" },
+    ],
+  },
+  {
+    name: "files",
+    description: "Count of files touched this turn.",
+    symbols: [
+      { symbol: "1-9", label: "count" },
+      { symbol: "+", label: "10+" },
+    ],
+  },
+  {
+    name: "trunc",
+    description: "Response exceeded length limit and was cut short.",
+    symbols: [{ symbol: "†", label: "truncated" }],
+  },
+  {
+    name: "error",
+    description: "A tool returned an error in its result.",
+    symbols: [{ symbol: "×", label: "error" }],
+  },
+  {
+    name: "tokens",
+    description: "Token consumption flags and ranking.",
+    symbols: [
+      { symbol: "‼", label: "5k+ alert" },
+      { symbol: "1-9", label: "top consumer rank" },
+    ],
+  },
+]
+
+// -----------------------------------------------------------------------------
+// Text Wrapping
+// -----------------------------------------------------------------------------
+
+const wrapText = (text: string, maxWidth: number): string[] => {
+  const words = text.split(" ")
+  const lines: string[] = []
+  let currentLine = ""
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word
+    if (testLine.length <= maxWidth) {
+      currentLine = testLine
+    } else {
+      if (currentLine) lines.push(currentLine)
+      currentLine = word
+    }
+  }
+  if (currentLine) lines.push(currentLine)
+
+  return lines
+}
+
+// -----------------------------------------------------------------------------
+// Entry Block Rendering
+// -----------------------------------------------------------------------------
+
+interface RenderedBlock {
+  lines: string[]
+  height: number
+}
+
+const renderEntryBlock = (entry: LegendEntry, columnWidth: number): RenderedBlock => {
+  const lines: string[] = []
+  const contentWidth = columnWidth - 2 // Account for indent
+
+  // Category name (uppercase for visibility)
+  lines.push(entry.name.toUpperCase())
+
+  // Wrapped description
+  const descLines = wrapText(entry.description, contentWidth)
+  for (const line of descLines) {
+    lines.push(line)
+  }
+
+  // Blank line before symbols
+  lines.push("")
+
+  // Symbols - one per line with indent
+  for (const sym of entry.symbols) {
+    lines.push(`  ${sym.symbol} ${sym.label}`)
+  }
+
+  return { lines, height: lines.length }
+}
+
+// -----------------------------------------------------------------------------
+// Column Balancing Algorithm
+// -----------------------------------------------------------------------------
+
+interface Column {
+  entries: LegendEntry[]
+  totalHeight: number
+}
+
+const balanceColumns = (entries: LegendEntry[], numColumns: number, columnWidth: number): Column[] => {
+  // Calculate heights for all entries
+  const entryHeights = entries.map((entry) => ({
+    entry,
+    height: renderEntryBlock(entry, columnWidth).height + 1, // +1 for spacing between blocks
+  }))
+
+  // Initialize columns
+  const columns: Column[] = Array.from({ length: numColumns }, () => ({
+    entries: [],
+    totalHeight: 0,
+  }))
+
+  // Greedy assignment: add each entry to the shortest column
+  for (const { entry, height } of entryHeights) {
+    // columns is guaranteed non-empty since numColumns >= 1
+    const shortestColumn = columns.reduce((min, col) => (col.totalHeight < min.totalHeight ? col : min))!
+    shortestColumn.entries.push(entry)
+    shortestColumn.totalHeight += height
+  }
+
+  return columns
+}
+
+// -----------------------------------------------------------------------------
+// Multi-Column Rendering
+// -----------------------------------------------------------------------------
+
+const renderColumnsToLines = (columns: Column[], columnWidth: number, gap: number): string[] => {
+  // Render each column's blocks
+  const renderedColumns: string[][] = columns.map((col) => {
+    const lines: string[] = []
+    for (const entry of col.entries) {
+      const block = renderEntryBlock(entry, columnWidth)
+      lines.push(...block.lines)
+      lines.push("") // Spacing between blocks
+    }
+    return lines
+  })
+
+  // Find max height across all columns
+  const maxHeight = Math.max(...renderedColumns.map((col) => col.length))
+
+  // Pad columns to equal height
+  for (const col of renderedColumns) {
+    while (col.length < maxHeight) {
+      col.push("")
+    }
+  }
+
+  // Merge columns side by side
+  const result: string[] = []
+  for (let i = 0; i < maxHeight; i++) {
+    const row = renderedColumns.map((col) => (col[i] ?? "").padEnd(columnWidth)).join(" ".repeat(gap))
+    result.push(row)
+  }
+
+  return result
+}
+
+// -----------------------------------------------------------------------------
+// Public API
+// -----------------------------------------------------------------------------
+
 export const renderLegend = (): string[] => {
-  return [
-    "",
-    SEPARATOR,
-    "  LEGEND",
-    SEPARATOR,
-    "    type   (empty) progress/system/snapshot   ◦ user   ● assistant",
-    "   skill   ◆ initial load   ╰ progressive @ref   ◇ other",
-    "    tool   ▢ Bash   ▤ Read   ▣ WebFetch   ▥ Grep   ▦ Edit   ▧ Glob",
-    "   cache   ● hit   ○ miss",
-    "   model   ◈ opus   ◇ sonnet   ◦ haiku",
-    "   files   1-9 count   + 10+",
-    "   trunc   † truncated",
-    "   error   × failed",
-    "   alert   ‼ 5k+ tokens",
-    "     top   1-9 rank in top consumers",
-  ]
+  const totalWidth = 80
+  const numColumns = 3
+  const gap = 2
+  const columnWidth = Math.floor((totalWidth - gap * (numColumns - 1)) / numColumns)
+
+  const columns = balanceColumns(LEGEND_ENTRIES, numColumns, columnWidth)
+  const contentLines = renderColumnsToLines(columns, columnWidth, gap)
+
+  return ["", SEPARATOR, "  LEGEND", SEPARATOR, ...contentLines]
 }

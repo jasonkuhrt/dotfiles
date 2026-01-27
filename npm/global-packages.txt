@@ -12,4 +12,3 @@ npm-name-cli
 nx
 typescript
 typescript-language-server
-@anthropic-ai/claude-code

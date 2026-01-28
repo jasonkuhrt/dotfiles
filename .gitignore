@@ -6,6 +6,7 @@ migrations/.marker
 # Claude Code runtime (convenience symlinks created by sync)
 claude/settings.json
 claude/tasks
+claude/.claude.json
 
 # macOS
 .DS_Store

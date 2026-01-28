@@ -21,7 +21,7 @@ This skill covers **Claude Code platform gotchas and limitations**. For differen
   ⏺ Skill(foobar)
   ⎿  Initializing…
   ```
-- `Skill(foobar)` is also the syntax for granting permission to the skill in config
+- `Skill(dir-name)` is also the syntax for granting permission to the skill in config (uses the directory name, including any underscore namespace delimiters)
 - Development Related
   - Skills created or modified in ~/.claude/skills or .claude/skills are immediately available without restarting the session (added in v2.1.0)
 
@@ -52,7 +52,36 @@ my-skill/
 └── assets/           # Static files (banners, templates)
 ```
 
-**Naming:** Directory name = skill name (kebab-case). Opening `# Title` = titleized skill name.
+**Naming:** Directory name = skill name (kebab-case, or namespaced — see [Namespacing](#namespacing)). Opening `# Title` = titleized skill name.
+
+## Namespacing
+
+Use namespaces to group related skills that shouldn't be crammed into one giant multi-operation skill.
+
+**Convention:**
+
+| Context | Delimiter | Example |
+|---------|-----------|---------|
+| Directory name | Underscore `_` | `cc_internals/`, `gh_pr-checks/` |
+| Frontmatter `name` | Colon `:` | `name: cc:internals`, `name: gh:pr-checks` |
+
+- Hyphens remain as word separators within segments: `cc_managing-plugins` not `cc_managing_plugins`
+- The underscore/colon split is necessary because colons aren't valid in directory names on most filesystems
+- Note: colons in `name` work despite the Anthropic rule saying "hyphens only" — the plugin system already uses `plugin:skill` syntax
+- Non-namespaced skills continue to use plain kebab-case: `starship`, `just`, `dprint`
+
+**When to namespace:**
+
+- Multiple related skills sharing a domain (e.g. `cc_*` for Claude Code internals, `gh_*` for GitHub, `ts_*` for TypeScript)
+- When a single skill would exceed the 500-line limit or cover too many unrelated operations
+
+**Mapping summary:**
+
+| Directory | `name` | `Skill()` log | Permission syntax |
+|-----------|--------|---------------|-------------------|
+| `cc_internals/` | `cc:internals` | `Skill(cc_internals)` | `Skill(cc_internals)` |
+| `gh_pr-checks/` | `gh:pr-checks` | `Skill(gh_pr-checks)` | `Skill(gh_pr-checks)` |
+| `starship/` | `starship` | `Skill(starship)` | `Skill(starship)` |
 
 ## Skill Body Headings
 
@@ -112,7 +141,7 @@ Apply criteria from both this skill (CC platform) and `superpowers:writing-skill
 
 **Platform checklist:**
 
-- [ ] Frontmatter valid? (name format, description length, third person)
+- [ ] Frontmatter valid? (name format, description length, third person, namespace convention)
 - [ ] SKILL.md under 500 lines?
 - [ ] Reference files used for detailed content?
 - [ ] Code examples have language tags?

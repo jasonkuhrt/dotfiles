@@ -11,7 +11,6 @@
 import { Effect } from "effect"
 import { homedir } from "node:os"
 import { basename, join, resolve } from "node:path"
-import { createHash } from "node:crypto"
 import { Glob } from "bun"
 
 /**
@@ -24,29 +23,6 @@ const findSessionFile = async (input: string): Promise<string | null> => {
   for await (const file of glob.scan({ cwd: claudeDir, absolute: true })) {
     if (basename(file).startsWith(input)) {
       return file
-    }
-  }
-  return null
-}
-
-/**
- * Get the current session ID from tmp files (written by hooks)
- */
-export const getCurrentSessionId = async (): Promise<string | null> => {
-  const cwd = process.cwd()
-  const cwdHash = createHash("md5").update(cwd).digest("hex").slice(0, 8)
-
-  const paths = [
-    `/tmp/claude-session-id-${cwdHash}`,
-    "/tmp/claude-session-id",
-  ]
-
-  for (const path of paths) {
-    const file = Bun.file(path)
-    if (await file.exists()) {
-      const content = await file.text()
-      const sessionId = content.trim()
-      if (sessionId) return sessionId
     }
   }
   return null

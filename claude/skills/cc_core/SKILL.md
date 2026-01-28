@@ -19,10 +19,6 @@ Claude Code's task system (TaskCreate/TaskUpdate/TaskList/TaskGet), dependencies
 Search and analyze Claude Code conversation history. Find past discussions, extract timelines, generate continuation prompts.
 - [Overview](reference/session-search/overview.md)
 
-### Session Get ID
-Get the current Claude Code session UUID.
-- [Overview](reference/session-get-id/overview.md)
-
 ### Chrome Debugging
 Diagnose and fix Claude in Chrome extension issues: zombie MCP processes, CDP conflicts, action failures.
 - [Overview](reference/chrome-debugging/overview.md)

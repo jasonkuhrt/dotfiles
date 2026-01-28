@@ -21,7 +21,6 @@ import { Effect } from "effect"
 import { homedir } from "node:os"
 import { basename, join } from "node:path"
 import { readdir, stat } from "node:fs/promises"
-import { createHash } from "node:crypto"
 import { Glob } from "bun"
 
 // -----------------------------------------------------------------------------
@@ -94,29 +93,6 @@ const getProjectSessionIds = async (directory?: string): Promise<Set<string>> =>
 }
 
 /**
- * Get the current session ID from tmp files (written by hooks).
- */
-const getCurrentSessionId = async (): Promise<string | null> => {
-  const cwd = process.cwd()
-  const cwdHash = createHash("md5").update(cwd).digest("hex").slice(0, 8)
-
-  const paths = [
-    `/tmp/claude-session-id-${cwdHash}`,
-    "/tmp/claude-session-id",
-  ]
-
-  for (const path of paths) {
-    const file = Bun.file(path)
-    if (await file.exists()) {
-      const content = await file.text()
-      const sessionId = content.trim()
-      if (sessionId) return sessionId
-    }
-  }
-  return null
-}
-
-/**
  * Discover all task lists, optionally scoped to the current project.
  *
  * Project scoping: UUID lists are included only if their UUID matches a
@@ -136,7 +112,6 @@ export const discoverTaskLists = async (options: ResolveOptions = {}): Promise<T
 
   // For project scoping, find which session UUIDs belong to this project
   const projectSessionIds = options.all ? null : await getProjectSessionIds()
-  const currentSessionId = options.all ? null : await getCurrentSessionId()
 
   for (const entry of entries) {
     const entryPath = join(root, entry)
@@ -153,10 +128,7 @@ export const discoverTaskLists = async (options: ResolveOptions = {}): Promise<T
 
     // Project scoping: skip UUID lists that don't belong to this project
     if (!options.all && isSession) {
-      const belongs =
-        projectSessionIds?.has(entry) ||
-        entry === currentSessionId
-      if (!belongs) continue
+      if (!projectSessionIds?.has(entry)) continue
     }
 
     // Count task JSON files

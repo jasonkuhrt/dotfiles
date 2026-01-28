@@ -11,7 +11,7 @@
 * Challenge me with better system design and techniques
 * Flag potential tech debt explicitly
 * Let me make commits unless explicitly asked
-* Use `/capture-spark` when I drift to exciting tangents (multiple ideas = multiple sparks)
+* Use `/beads:offload` when I drift to exciting tangents (capture as beads)
 
 ## Decision Making
 

@@ -78,7 +78,6 @@ link_subdir "$HERE/claude/commands" "$HOME/.claude/commands" "claude/commands"
 link_subdir "$HERE/claude/rules" "$HOME/.claude/rules" "claude/rules"
 link_subdir "$HERE/claude/skills" "$HOME/.claude/skills" "claude/skills"
 link_subdir "$HERE/claude/hooks/scripts" "$HOME/.claude/hooks/scripts" "claude/hooks/scripts"
-link_subdir "$HERE/claude/sparks" "$HOME/.claude/sparks" "claude/sparks"
 
 # ─────────────────────────────────────────────────────────────
 header "Zed"

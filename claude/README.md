@@ -10,7 +10,7 @@ This directory contains Claude Code configuration managed via dotfiles.
 | `commands/` | ✅ Symlinked | Custom slash commands |
 | `rules/` | ✅ Symlinked | Project rules |
 | `skills/` | ✅ Symlinked | Custom skills |
-| `scripts/` | ✅ Symlinked | Hook scripts |
+| `hooks/scripts/` | ✅ Symlinked | Hook scripts |
 | `sparks/` | ✅ Symlinked | Idea captures |
 | `settings.json` | ⚠️ **Workaround** | See below |
 

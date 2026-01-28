@@ -23,7 +23,7 @@ Decide whether Claude Code config belongs in global (`claude/`) or project-local
 ├── CLAUDE.md      → dotfiles/claude/CLAUDE.md
 ├── commands/      → dotfiles/claude/commands/
 ├── rules/         → dotfiles/claude/rules/
-├── scripts/       → dotfiles/claude/scripts/
+├── hooks/scripts/ → dotfiles/claude/hooks/scripts/
 ├── skills/        → dotfiles/claude/skills/
 └── settings.json  (real file, NOT symlinked)
 ```
@@ -60,7 +60,7 @@ dotfiles/
 │   ├── CLAUDE.md
 │   ├── commands/
 │   ├── rules/
-│   ├── scripts/
+│   ├── hooks/scripts/
 │   ├── skills/
 │   └── settings.json          → ~/.claude/settings.json (reverse symlink)
 │

@@ -1,5 +1,5 @@
 ---
-name: cc-internals
+name: cc:internals
 description: How Claude Code works internally. Use for ANY question about CC behavior, architecture, or "how does CC do X". Covers session storage, /rename scope, project organization, file locations, and internal data structures.
 ---
 
@@ -11,7 +11,7 @@ Facts about how Claude Code organizes and stores data.
 
 ```
 ~/.claude/
-├── settings.json              # User config (see cc-configuring-permissions)
+├── settings.json              # User config (see cc_managing-permissions)
 ├── skills/                    # User-level skills
 ├── session-env/               # Session environment cache
 └── projects/                  # All session data, per-project
@@ -100,7 +100,7 @@ jq -r '.entries[] | select(.customTitle != null) | "\(.customTitle): \(.sessionI
 
 ## Session Transcripts (`.jsonl`)
 
-Each line is a JSON object. See `cc-thread-search` for search patterns.
+Each line is a JSON object. See `cc_session-search` for search patterns.
 
 ```json
 {"type": "user", "timestamp": "<ISO>", "message": {...}, "sessionId": "<uuid>"}
@@ -112,7 +112,7 @@ Each line is a JSON object. See `cc-thread-search` for search patterns.
 
 | Topic | Skill |
 |-------|-------|
-| Searching transcripts | `cc-thread-search` |
-| Permission config | `cc-configuring-permissions` |
-| Hook config | `cc-writing-hooks` |
-| MCP config | `cc-configuring-mcp` |
+| Searching transcripts | `cc_session-search` |
+| Permission config | `cc_managing-permissions` |
+| Hook config | `cc_writing-hooks` |
+| MCP config | `cc_managing-mcp` |

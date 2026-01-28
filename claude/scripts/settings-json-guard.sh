@@ -1,5 +1,5 @@
 #!/bin/bash
-# Guard: Remind Claude to use cc-configuring-permissions skill when editing settings.json
+# Guard: Remind Claude to use cc:managing-permissions skill when editing settings.json
 
 INPUT=$(cat)
 FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
@@ -12,7 +12,7 @@ FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 cat <<'MSG'
 ⚠️ SETTINGS.JSON EDIT DETECTED
 
-Before proceeding, verify you used the `cc-configuring-permissions` skill.
+Before proceeding, verify you used the `cc:managing-permissions` skill.
 If not, STOP and invoke it now to verify correct syntax and known issues.
 
 Key concerns:

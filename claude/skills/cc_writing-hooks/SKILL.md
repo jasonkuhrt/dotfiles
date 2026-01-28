@@ -1,5 +1,5 @@
 ---
-name: cc-writing-hooks
+name: cc:writing-hooks
 description: Use when debugging hook issues, working around known bugs (PreToolUse+AskUserQuestion), or configuring user hooks in settings.json. For plugin hook development, use plugin-dev:hook-development.
 ---
 

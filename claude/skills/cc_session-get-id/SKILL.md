@@ -1,5 +1,5 @@
 ---
-name: cc-get-session-id
+name: cc:session-get-id
 description: Get the current Claude Code session ID. Use when you need to reference or display the session ID.
 ---
 

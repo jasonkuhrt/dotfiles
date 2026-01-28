@@ -1,5 +1,5 @@
 ---
-name: claude-chrome-debugging
+name: cc:chrome-debugging
 description: Diagnoses and fixes Claude in Chrome extension issues including zombie MCP processes, action failures, and extension conflicts
 ---
 

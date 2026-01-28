@@ -1,5 +1,5 @@
 ---
-name: cc-session-search
+name: cc:session-search
 description: Search Claude Code conversation history. Use when user asks "where did I discuss X", "when did we talk about X", "find the conversation about X", or wants to continue previous work.
 ---
 
@@ -7,7 +7,7 @@ description: Search Claude Code conversation history. Use when user asks "where 
 
 Search and analyze Claude Code conversation history.
 
-**For storage internals** (sessions-index.json, /rename scope, path encoding): See `cc-internals` skill.
+**For storage internals** (sessions-index.json, /rename scope, path encoding): See `cc_internals` skill.
 
 ## Quick Reference
 
@@ -120,5 +120,5 @@ jq -rs '[.[].timestamp | select(.)] | sort | .[0], .[-1]' file.jsonl
 
 | Topic | Skill |
 |-------|-------|
-| Storage internals, /rename | `cc-internals` |
-| Permission config | `cc-configuring-permissions` |
+| Storage internals, /rename | `cc_internals` |
+| Permission config | `cc_managing-permissions` |

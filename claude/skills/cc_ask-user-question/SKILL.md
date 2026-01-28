@@ -1,5 +1,5 @@
 ---
-name: cc-askuserquestion
+name: cc:ask-user-question
 description: Use when designing AskUserQuestion tool calls - covers schema constraints, effectiveness patterns, and known issues.
 ---
 
@@ -98,7 +98,7 @@ When PreToolUse hooks are active, AskUserQuestion may return **empty responses**
 
 **Workaround:** Use `PermissionRequest` hook instead of `PreToolUse`. Both hooks fire for AskUserQuestion, but `PermissionRequest` is semantically correct for user-input scenarios and avoids the stdin/stdout conflict.
 
-See `cc-writing-hooks` skill for implementation example.
+See `cc_writing-hooks` skill for implementation example.
 
 ### Cannot Use From Subagents
 

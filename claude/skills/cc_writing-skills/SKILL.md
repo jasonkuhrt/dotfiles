@@ -1,5 +1,5 @@
 ---
-name: writing-skills
+name: cc:writing-skills
 description: Use when troubleshooting skill issues, understanding CC platform limitations, or reviewing skills for CC-specific gotchas. For skill creation tutorials, use plugin-dev:skill-development.
 ---
 

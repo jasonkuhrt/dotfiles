@@ -1,5 +1,5 @@
 ---
-name: writing-rules
+name: cc:writing-rules
 description: Use when creating project rules, adding .claude/rules/*.md files, or scoping rules to specific files with globs for token efficiency.
 ---
 

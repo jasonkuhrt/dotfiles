@@ -4,7 +4,9 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./upload": "./src/upload.ts",
+    "./download": "./src/download.ts"
   },
   "dependencies": {
     "graffle": "next",

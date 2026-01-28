@@ -42,6 +42,45 @@ This skill covers **Claude Code platform gotchas and limitations**. For differen
 - "Claude is already very smart. Only add context Claude doesn't already have."
 - **Paths are relative to skill directory** — use `scripts/foo` not `.claude/skills/my-skill/scripts/foo`
 
+## Scripts Over Inline Code
+
+**Core principle:** Skills should call scripts, not show code patterns for Claude to rewrite.
+
+| Approach | Tokens | Claude's job |
+|----------|--------|--------------|
+| Inline code in SKILL.md | High (every load) | Read pattern → rewrite code → execute |
+| Scripts in `scripts/` | Zero (only stdout) | Call script with args |
+
+**Why this matters:**
+- Inline code examples are re-read on every skill invocation
+- Scripts are executed but never loaded into context
+- Skills become "when to use what" docs, not code templates
+
+**Pattern:**
+
+```
+my-api-skill/
+├── SKILL.md              # Workflows: when to search vs create, validation rules
+├── scripts/
+│   ├── search.ts         # bun scripts/search.ts "query"
+│   ├── create.ts         # bun scripts/create.ts --title "..." --team ENG
+│   ├── update.ts         # bun scripts/update.ts ENG-123 --state "Done"
+│   └── gql.ts            # ESCAPE HATCH for arbitrary queries
+└── reference/            # Detailed docs if needed
+```
+
+**Escape hatch:** Always provide one script (or a separate skill) for arbitrary/custom operations. This is where import paths and raw API access are documented - keeps main skills clean.
+
+**Scripts encapsulate:**
+- Import paths (implementation detail)
+- API client setup
+- Output formatting
+
+**Skills document:**
+- When to use each operation
+- Business logic / validation rules
+- Workflows combining multiple operations
+
 ## File Structure
 
 ```
@@ -144,6 +183,8 @@ Apply criteria from both this skill (CC platform) and `superpowers:writing-skill
 - [ ] Frontmatter valid? (name format, description length, third person, namespace convention)
 - [ ] SKILL.md under 500 lines?
 - [ ] Reference files used for detailed content?
+- [ ] **Scripts over inline code?** (API calls in `scripts/`, SKILL.md documents workflows)
+- [ ] Escape hatch provided for arbitrary operations?
 - [ ] Code examples have language tags?
 - [ ] Known limitations acknowledged? (output collapse, status line)
 - [ ] Hooks correctly structured if used?

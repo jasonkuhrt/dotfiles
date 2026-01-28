@@ -9,11 +9,33 @@ Shared foundation for all `linear_*` skills. Covers config, auth, mentions, and 
 
 ## Client
 
-All Linear API access uses the Graffle-generated client at `packages/linear/`.
+All Linear API access uses the Graffle-generated client at `packages/linear/` in the dotfiles repo.
+
+### Import
+
+Use absolute path import - works from any directory:
 
 ```typescript
-import { client } from '@jasonkuhrt/linear/client'
+import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
 ```
+
+### Execution
+
+Use `bun -e` for inline scripts:
+
+```bash
+bun -e "
+import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
+
+const viewer = await client.query.viewer({ id: true, name: true })
+console.log(viewer)
+"
+```
+
+**Key points:**
+- Use `bun` (not `tsx` or `node`) - the package uses bun
+- Absolute import path works from any cwd
+- Extension is `.ts` (bun handles TypeScript natively)
 
 The client is pre-configured with:
 - HTTP transport to `https://api.linear.app/graphql`

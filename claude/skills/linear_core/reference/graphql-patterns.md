@@ -5,7 +5,7 @@ Query patterns for the Linear API via the Graffle client at `packages/linear/`.
 All examples use the typed Graffle client:
 
 ```typescript
-import { client } from '@jasonkuhrt/linear/client'
+import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
 ```
 
 ## Teams

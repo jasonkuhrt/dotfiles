@@ -1,5 +1,5 @@
 ---
-name: gh:ci-action-ts
+name: gh:actions-ts
 description: Use when writing TypeScript scripts for GitHub Actions workflows. Covers actions/github-script@v8, Node 24 native TS, ESM modules, and type setup.
 ---
 

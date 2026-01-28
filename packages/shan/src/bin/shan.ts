@@ -7,11 +7,14 @@
  *
  * Namespaces:
  *   transcript    Transcript manipulation commands
+ *   task          Task list inspection commands
  */
 
 import { Console, Effect } from "effect"
 import { transcriptDump } from "./transcript/dump.js"
 import { transcriptAnalyze } from "./transcript/analyze.js"
+import { taskDump } from "./task/dump.js"
+import { taskOpen } from "./task/open.js"
 
 const USAGE = `
 shan - Claude Code tooling CLI
@@ -21,18 +24,29 @@ Usage:
 
 Namespaces:
   transcript    Transcript manipulation commands
+  task          Task list inspection commands
 
 Commands:
   shan transcript dump [target]         Dump transcript as navigable Markdown
   shan transcript dump --raw [target]   Copy raw JSONL without transformation
   shan transcript analyze [target]      Visualize context consumption
 
-Options:
-  --all    Show sessions from all projects (default: current directory only)
+  shan task dump [target]               Copy task JSON into project
+  shan task dump --md [target]          Convert tasks to Markdown
+  shan task open [target]               Open task list or file in editor
 
-Target can be:
+Options:
+  --all    Show all sessions/task lists (default: current project only)
+
+Transcript target:
   - Session ID (or prefix): abc123, 9ba30f6f-...
   - File path: ./file.jsonl, /path/to/file.jsonl, ~/file.jsonl
+  - Omit for interactive picker (requires TTY)
+
+Task target:
+  - List name or UUID prefix: test-schema, 21b0
+  - List + task: test-schema@3, 21b0@1
+  - Subject search: @Scaffold
   - Omit for interactive picker (requires TTY)
 `.trim()
 
@@ -43,12 +57,14 @@ const parseArgs = (args: string[]) => {
   const flags = {
     raw: false,
     all: false,
+    md: false,
   }
   const positional: string[] = []
 
   for (const arg of args) {
     if (arg === "--raw") flags.raw = true
     else if (arg === "--all") flags.all = true
+    else if (arg === "--md") flags.md = true
     else positional.push(arg)
   }
 
@@ -73,6 +89,18 @@ const program = Effect.gen(function* () {
     } else {
       yield* Console.error(`Unknown transcript command: ${command}`)
       yield* Console.log("\nAvailable commands:\n  dump <session-id>       Dump transcript as navigable Markdown\n  analyze <session-id>    Visualize context consumption")
+      return yield* Effect.fail(new Error("Unknown command"))
+    }
+  } else if (namespace === "task") {
+    const { flags, positional } = parseArgs(args)
+
+    if (command === "dump") {
+      yield* taskDump(positional[0], { md: flags.md, all: flags.all })
+    } else if (command === "open") {
+      yield* taskOpen(positional[0], { all: flags.all })
+    } else {
+      yield* Console.error(`Unknown task command: ${command}`)
+      yield* Console.log("\nAvailable commands:\n  dump [target]    Copy task JSON into project\n  open [target]    Open task list or file in editor")
       return yield* Effect.fail(new Error("Unknown command"))
     }
   } else {

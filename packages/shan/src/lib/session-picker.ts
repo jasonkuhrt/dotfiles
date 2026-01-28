@@ -38,7 +38,7 @@ interface SessionInfo {
  * Claude uses the path with "/" replaced by "-" (e.g., /Users/foo -> -Users-foo)
  */
 const toClaudeProjectDir = (dir: string): string => {
-  return dir.replace(/\//g, "-")
+  return dir.replace(/[/.]/g, "-")
 }
 
 export interface DiscoverOptions {

@@ -6,6 +6,7 @@
  *   bun scripts/query.ts '{ viewer { id name } }'
  *   bun scripts/query.ts '{ teams { nodes { id key name } } }'
  *   bun scripts/query.ts 'mutation { ... }' --variables '{"input": {...}}'
+ *   echo '{ viewer { id } }' | bun scripts/query.ts --stdin
  */
 import { parseArgs } from 'node:util'
 
@@ -13,18 +14,28 @@ const { values, positionals } = parseArgs({
   args: Bun.argv.slice(2),
   options: {
     variables: { type: `string`, short: `v` },
+    stdin: { type: `boolean` },
     help: { type: `boolean`, short: `h` },
   },
   allowPositionals: true,
 })
 
-if (values.help || positionals.length === 0) {
+if (values.help || (positionals.length === 0 && !values.stdin)) {
   console.log(`Usage: bun scripts/query.ts <graphql-query> [--variables '{...}']
+       echo '<query>' | bun scripts/query.ts --stdin [--variables '{...}']
+
+Options:
+  --stdin         Read query from stdin (avoids shell escaping issues)
+  -v, --variables JSON object with query variables
+  -h, --help      Show this help
 
 Examples:
   bun scripts/query.ts '{ viewer { id name displayName } }'
   bun scripts/query.ts '{ teams { nodes { id key name } } }'
   bun scripts/query.ts 'query($id: String!) { issue(id: $id) { title } }' -v '{"id": "..."}'
+
+  # Using stdin to avoid shell escaping with String!
+  echo 'mutation($id: String!) { issueDelete(id: $id) { success } }' | bun scripts/query.ts --stdin -v '{"id": "..."}'
 `)
   process.exit(values.help ? 0 : 1)
 }
@@ -35,7 +46,17 @@ if (!token) {
   process.exit(1)
 }
 
-const query = positionals[0]
+let query: string
+if (values.stdin) {
+  query = await Bun.stdin.text()
+  query = query.trim()
+  if (!query) {
+    console.error(`Error: No query provided on stdin`)
+    process.exit(1)
+  }
+} else {
+  query = positionals[0]
+}
 const variables = values.variables ? JSON.parse(values.variables) : undefined
 
 const response = await fetch(`https://api.linear.app/graphql`, {

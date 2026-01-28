@@ -48,6 +48,25 @@ bun claude/skills/linear_gql/scripts/query.ts \
   --variables '{"input": {"issueId": "...", "body": "Comment text"}}'
 ```
 
+### Using stdin (avoids shell escaping)
+
+Queries with `String!` (non-null types) get mangled by bash due to history expansion on `!`. Use `--stdin` to sidestep shell interpretation:
+
+```bash
+# Pipe query from echo
+echo 'mutation($id: String!) { issueDelete(id: $id) { success } }' | \
+  bun claude/skills/linear_gql/scripts/query.ts --stdin -v '{"id": "..."}'
+
+# Heredoc for multiline queries
+bun claude/skills/linear_gql/scripts/query.ts --stdin -v '{"id": "..."}' <<'EOF'
+mutation($id: String!) {
+  issueArchive(id: $id) {
+    success
+  }
+}
+EOF
+```
+
 ## When to Use This
 
 - **Prefer pre-built scripts** in `linear_managing-issues`, `linear_uploading`, etc.

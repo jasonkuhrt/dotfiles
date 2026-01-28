@@ -33,6 +33,31 @@ Scripts read the token at startup and fail with a clear error if missing.
 
 1Password CLI is preferred because it avoids storing the token in plaintext on disk. With direnv, the token loads automatically when you `cd` into any project directory with a `.envrc`.
 
+## Workspace Cache
+
+Linear skills require validated workspace data (teams, states, users, labels). This data is cached locally after being pulled from the API.
+
+### Cache Location
+
+```
+.claude/tmp/linear/workspace.yaml   # READ-ONLY, pulled from Linear API
+```
+
+### Dependency Flow
+
+1. Skill needs workspace data (state UUID, user lookup, etc.)
+2. Check for `.claude/tmp/linear/workspace.yaml`
+3. If missing → invoke `linear_workspace-pull` → wait → continue
+4. Use cached data for validation/mapping
+
+### Initializing the Cache
+
+```bash
+bun claude/skills/linear_workspace-pull/scripts/pull.ts
+```
+
+Run this when setting up a new project or when workspace data changes (new team states, users, labels).
+
 ## Config Resolution
 
 Linear skills use a two-file YAML config system in each project:

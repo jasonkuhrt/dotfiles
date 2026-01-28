@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "graffle": "next",
-    "graphql": "^16.10.0"
+    "graphql": "^16.10.0",
+    "yaml": "^2.8.2"
   },
   "devDependencies": {
     "@tsconfig/strictest": "^2.0.8",

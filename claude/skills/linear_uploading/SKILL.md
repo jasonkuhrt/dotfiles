@@ -5,54 +5,74 @@ description: Use when uploading files to Linear, attaching to issues, adding scr
 
 # Linear Uploading
 
-Upload, attach, and download files for Linear issues. Uses helpers at `packages/linear/src/upload.ts` and `packages/linear/src/download.ts`.
+Upload, attach, and download files for Linear issues using pre-built scripts.
 
 **Prerequisite:** `LINEAR_API_TOKEN` must be set. See `linear_core` skill for auth setup.
 
-## Workflows
+## Scripts
 
-### 1. Upload for Embed
+All scripts live in `claude/skills/linear_uploading/scripts/` and output JSON.
 
-Upload a file and embed it inline in an issue description or comment.
+### Upload for Embed
 
-```typescript
-import { upload } from '@jasonkuhrt/linear/upload'
+Upload a file to Linear's cloud storage for embedding in descriptions/comments.
 
-const { assetUrl, markdown } = await upload('/path/to/screenshot.png')
-// markdown = "![screenshot.png](https://uploads.linear.app/...)"
+```bash
+bun claude/skills/linear_uploading/scripts/upload.ts /path/to/screenshot.png
 ```
 
-Then use `markdown` (or `![description](assetUrl)`) in the issue body or comment body. The upload **must** happen before the issue create/update since you need the `assetUrl` for the markdown.
-
-### 2. Attach to Issue
-
-Attach a file to an issue's paperclip area (attachments section).
-
-```typescript
-import { attach } from '@jasonkuhrt/linear/upload'
-
-const { assetUrl, markdown, attachmentId } = await attach(
-  '/path/to/meeting-notes.pdf',
-  'ENG-123',           // issue identifier or UUID
-  'Meeting Notes - Jan 12'  // optional title (defaults to filename)
-)
+**Output:**
+```json
+{
+  "assetUrl": "https://uploads.linear.app/...",
+  "markdown": "![screenshot.png](https://uploads.linear.app/...)"
+}
 ```
 
-### 3. Download
+Then use the `markdown` in the issue body or comment body. The upload **must** happen before issue create/update since you need the `assetUrl`.
+
+### Attach to Issue
+
+Upload a file and attach it to an issue's paperclip area (attachments section).
+
+```bash
+bun claude/skills/linear_uploading/scripts/attach.ts ENG-123 /path/to/document.pdf
+bun claude/skills/linear_uploading/scripts/attach.ts ENG-123 /path/to/spec.pdf --title "Feature Spec v2"
+```
+
+**Options:**
+- `-t, --title <text>` - Attachment title (defaults to filename)
+
+**Output:**
+```json
+{
+  "assetUrl": "https://uploads.linear.app/...",
+  "markdown": "![document.pdf](https://uploads.linear.app/...)",
+  "attachmentId": "attachment-uuid"
+}
+```
+
+### Download
 
 Download a Linear upload to disk for local analysis.
 
-```typescript
-import { download } from '@jasonkuhrt/linear/download'
+```bash
+# To a specific file path
+bun claude/skills/linear_uploading/scripts/download.ts "https://uploads.linear.app/..." /tmp/screenshot.png
 
-// To a specific file path
-const { path, size } = await download('https://uploads.linear.app/...', '/tmp/screenshot.png')
-
-// To a directory (derives filename from URL)
-const { path, size } = await download('https://uploads.linear.app/...', '/tmp/')
+# To a directory (derives filename from URL)
+bun claude/skills/linear_uploading/scripts/download.ts "https://uploads.linear.app/..." /tmp/
 ```
 
-Linear upload URLs require Bearer token auth. The `download` helper handles this automatically.
+**Output:**
+```json
+{
+  "path": "/tmp/screenshot.png",
+  "size": 12345
+}
+```
+
+Linear upload URLs require Bearer token auth. The download script handles this automatically.
 
 ## When to Use What
 
@@ -70,5 +90,5 @@ Linear upload URLs require Bearer token auth. The `download` helper handles this
 
 ## References
 
-- [Decision Guide](./reference/decision-guide.md) -- attachment vs embed logic, edge cases
-- [API Details](./reference/api-details.md) -- upload flow internals, supported types, GraphQL patterns
+- [Decision Guide](./reference/decision-guide.md) - Attachment vs embed logic, edge cases
+- [API Details](./reference/api-details.md) - Upload flow internals, supported types

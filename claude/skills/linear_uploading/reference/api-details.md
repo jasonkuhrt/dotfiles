@@ -2,7 +2,7 @@
 
 ## Upload Flow (3-Step Signed URL)
 
-The `upload()` function in `packages/linear/src/upload.ts` implements:
+The upload script implements a 3-step flow:
 
 1. **`fileUpload` mutation** -- Requests a signed GCS upload URL from Linear
    - Input: `contentType`, `filename`, `size`
@@ -16,7 +16,7 @@ The `upload()` function in `packages/linear/src/upload.ts` implements:
 
 ## Attach Flow (Upload + Link)
 
-The `attach()` function extends upload with a 4th step:
+The attach script extends upload with a 4th step:
 
 4. **`attachmentCreate` mutation** -- Links the uploaded asset to an issue
    - Input: `issueId`, `title`, `url` (the assetUrl from upload)
@@ -24,10 +24,10 @@ The `attach()` function extends upload with a 4th step:
 
 ## Download Flow
 
-The `download()` function in `packages/linear/src/download.ts`:
+The download script:
 
 1. **Authenticated GET** -- Fetches from `uploads.linear.app` with Bearer token
-2. **Write to disk** -- Uses `Bun.write` to save the response body
+2. **Write to disk** -- Saves the response body
 3. **Path resolution** -- If `outputPath` ends with `/`, derives filename from the URL pathname
 
 ## Supported File Types
@@ -49,94 +49,79 @@ MIME detection is automatic from file extension:
 | `.json` | `application/json` |
 | Other | `application/octet-stream` |
 
-## Function Signatures
+## Script Outputs
 
-```typescript
-// packages/linear/src/upload.ts
+### Upload
 
-interface UploadResult {
-  assetUrl: string   // Permanent public URL
-  markdown: string   // "![filename](assetUrl)"
-}
-
-interface AttachResult extends UploadResult {
-  attachmentId: string  // Linear attachment ID
-}
-
-upload(filePath: string): Promise<UploadResult>
-attach(filePath: string, issueId: string, title?: string): Promise<AttachResult>
-
-// packages/linear/src/download.ts
-
-interface DownloadResult {
-  path: string   // Absolute path where file was saved
-  size: number   // Bytes written
-}
-
-download(url: string, outputPath: string): Promise<DownloadResult>
+```bash
+bun claude/skills/linear_uploading/scripts/upload.ts /path/to/file.png
 ```
 
-## GraphQL Patterns for Embed Workflows
+```json
+{
+  "assetUrl": "https://uploads.linear.app/...",
+  "markdown": "![file.png](https://uploads.linear.app/...)"
+}
+```
 
-After uploading, use the `assetUrl` in GraphQL mutations.
+### Attach
+
+```bash
+bun claude/skills/linear_uploading/scripts/attach.ts ENG-123 /path/to/file.pdf
+```
+
+```json
+{
+  "assetUrl": "https://uploads.linear.app/...",
+  "markdown": "![file.pdf](https://uploads.linear.app/...)",
+  "attachmentId": "attachment-uuid"
+}
+```
+
+### Download
+
+```bash
+bun claude/skills/linear_uploading/scripts/download.ts "https://uploads.linear.app/..." /tmp/file.png
+```
+
+```json
+{
+  "path": "/tmp/file.png",
+  "size": 12345
+}
+```
+
+## Embed Workflows with Scripts
+
+After uploading, use the `assetUrl` in issue creation or updates.
 
 **Create issue with embedded image:**
 
-```typescript
-import { client } from '@jasonkuhrt/linear/client'
-import { upload } from '@jasonkuhrt/linear/upload'
+```bash
+# 1. Upload image
+result=$(bun claude/skills/linear_uploading/scripts/upload.ts /path/to/screenshot.png)
+asset_url=$(echo "$result" | jq -r '.assetUrl')
 
-const { assetUrl } = await upload('/path/to/screenshot.png')
+# 2. Create issue with embedded image
+bun claude/skills/linear_managing-issues/scripts/create.ts \
+  --title "Bug: layout broken on mobile" \
+  --team ENG \
+  --description "The layout is broken on mobile viewport.
 
-await client.mutation.issueCreate({
-  $: {
-    input: {
-      title: 'Bug: layout broken on mobile',
-      description: `The layout is broken on mobile viewport.\n\n![screenshot](${assetUrl})`,
-      teamId: 'team-uuid',
-    },
-  },
-  success: true,
-  issue: { id: true, identifier: true, url: true },
-})
-```
-
-**Add embedded image to existing issue description:**
-
-```typescript
-// 1. Get current description
-const issue = await client.query.issue({
-  $: { id: 'ENG-123' },
-  description: true,
-})
-
-// 2. Upload image
-const { assetUrl } = await upload('/path/to/screenshot.png')
-
-// 3. Append to description
-await client.mutation.issueUpdate({
-  $: {
-    id: 'issue-uuid',
-    input: {
-      description: `${issue.description}\n\n![screenshot](${assetUrl})`,
-    },
-  },
-  success: true,
-})
+![screenshot](${asset_url})"
 ```
 
 **Add comment with embedded image:**
 
-```typescript
-const { assetUrl } = await upload('/path/to/screenshot.png')
+```bash
+# 1. Upload image
+result=$(bun claude/skills/linear_uploading/scripts/upload.ts /path/to/screenshot.png)
+markdown=$(echo "$result" | jq -r '.markdown')
 
-await client.mutation.commentCreate({
-  $: {
-    input: {
-      issueId: 'issue-uuid',
-      body: `Here's the updated screenshot:\n\n![updated](${assetUrl})`,
-    },
-  },
-  success: true,
-})
+# 2. Post comment
+bun claude/skills/linear_managing-issues/scripts/comment.ts ENG-123 "Here's the updated screenshot:
+
+${markdown}"
 ```
+
+**For complex workflows**, use `linear_gql` directly to construct mutations with precise control over descriptions and bodies.

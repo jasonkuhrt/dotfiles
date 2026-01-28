@@ -2,30 +2,16 @@
 
 ## Post a Comment
 
-```typescript
-import { client } from '@jasonkuhrt/linear/client'
-
-const result = await client.mutation.commentCreate({
-  $: {
-    input: {
-      issueId: 'ISSUE_UUID',
-      body: 'Comment body with https://linear.app/{workspace}/profiles/nick mention',
-    },
-  },
-  success: true,
-  comment: {
-    id: true,
-    body: true,
-    url: true,
-  },
-})
+```bash
+bun claude/skills/linear_managing-issues/scripts/comment.ts ENG-123 "Comment body"
+bun claude/skills/linear_managing-issues/scripts/comment.ts ENG-123 --body "Multi-line comment here"
 ```
 
 ## Mention Validation
 
 Before posting any comment, validate mentions. The `@username` syntax does NOT work in Linear -- it renders as plain text and sends no notification.
 
-**Validation rule:** Scan the comment body for `@` followed by a word character (`/(?<!\w)@(\w+)/`). Replace each match with the profile URL:
+**Validation rule:** Scan the comment body for `@` followed by a word character. Replace each match with the profile URL:
 
 ```
 https://linear.app/{workspace}/profiles/{displayName}
@@ -55,55 +41,29 @@ View: https://linear.app/{workspace}/issue/ENG-1234
 
 ## List Comments on an Issue
 
-```typescript
-const result = await client.query.issue({
-  $: { id: 'ISSUE_UUID' },
-  identifier: true,
-  comments: {
-    nodes: {
-      id: true,
-      body: true,
-      user: {
-        name: true,
-        displayName: true,
-      },
-      createdAt: true,
-      updatedAt: true,
-    },
-  },
-})
+```bash
+bun claude/skills/linear_managing-issues/scripts/get.ts ENG-123
 ```
 
-## Edit a Comment
+The output includes the `comments` array with recent comments.
 
-```typescript
-const result = await client.mutation.commentUpdate({
-  $: {
-    id: 'COMMENT_UUID',
-    input: {
-      body: 'Updated comment body',
-    },
-  },
-  success: true,
-  comment: {
-    id: true,
-    body: true,
-  },
-})
+## Edit a Comment (via linear_gql)
+
+```bash
+bun claude/skills/linear_gql/scripts/query.ts \
+  'mutation($id: String!, $input: CommentUpdateInput!) { commentUpdate(id: $id, input: $input) { success comment { id body } } }' \
+  --variables '{"id": "COMMENT_UUID", "input": {"body": "Updated comment body"}}'
 ```
 
-## Delete a Comment
+## Delete a Comment (via linear_gql)
 
-```typescript
-const result = await client.mutation.commentDelete({
-  $: {
-    id: 'COMMENT_UUID',
-  },
-  success: true,
-})
+```bash
+bun claude/skills/linear_gql/scripts/query.ts \
+  'mutation($id: String!) { commentDelete(id: $id) { success } }' \
+  --variables '{"id": "COMMENT_UUID"}'
 ```
 
-To find the comment UUID, list comments on the issue first (see above), then match by body content or author.
+To find the comment UUID, get the issue first and look at `comments.nodes[].id`.
 
 ## Comment Formatting
 
@@ -123,19 +83,11 @@ Brief update on the issue.
 
 ## Identifying the Issue
 
-Comments require an `issueId` (UUID). To resolve from an identifier like `ENG-1234`:
-
-```typescript
-const results = await client.query.issueSearch({
-  $: { query: 'ENG-1234', first: 1 },
-  nodes: { id: true, identifier: true },
-})
-const issueId = results.nodes[0].id
-```
+The comment script accepts issue identifiers like `ENG-1234`. It resolves to UUID automatically.
 
 Common sources for the issue reference:
 - User's message (e.g., "comment on ENG-1234")
 - URL (extract identifier from `https://linear.app/.../ENG-1234`)
-- Current context (e.g., issue being worked on)
+- Current context (via `linear_current-issue` skill)
 
 If the issue reference is ambiguous, ask the user to clarify.

@@ -8,106 +8,63 @@
 
 ## Basic Creation
 
-```typescript
-import { client } from '@jasonkuhrt/linear/client'
-
-const result = await client.mutation.issueCreate({
-  $: {
-    input: {
-      title: 'Issue title',
-      description: 'Markdown description',
-      teamId: 'TEAM_UUID',
-      priority: 3,
-    },
-  },
-  success: true,
-  issue: {
-    id: true,
-    identifier: true,
-    title: true,
-    url: true,
-  },
-})
+```bash
+bun claude/skills/linear_managing-issues/scripts/create.ts \
+  --title "Issue title" \
+  --team ENG \
+  --description "Markdown description"
 ```
 
 ## With All Optional Fields
 
-```typescript
-const result = await client.mutation.issueCreate({
-  $: {
-    input: {
-      title: 'Issue title',
-      description: 'Markdown description with https://linear.app/{workspace}/profiles/nick mention',
-      teamId: 'TEAM_UUID',
-      assigneeId: 'USER_UUID',
-      priority: 2,                          // 0=None, 1=Urgent, 2=High, 3=Normal, 4=Low
-      stateId: 'STATE_UUID',                // override default starting state
-      labelIds: ['LABEL_UUID'],             // attach labels
-      parentId: 'PARENT_ISSUE_UUID',        // create as sub-issue
-      estimate: 3,                          // story points
-    },
-  },
-  success: true,
-  issue: {
-    id: true,
-    identifier: true,
-    title: true,
-    url: true,
-    state: { name: true },
-    assignee: { displayName: true },
-  },
-})
+```bash
+bun claude/skills/linear_managing-issues/scripts/create.ts \
+  --title "Issue title" \
+  --team ENG \
+  --description "Markdown description with details" \
+  --assignee USER_UUID \
+  --priority 2 \
+  --state STATE_UUID \
+  --label LABEL_UUID \
+  --parent PARENT_ISSUE_UUID
 ```
+
+**Options:**
+- `--title` (required) - Issue title
+- `--team` (required) - Team key (e.g., ENG, PLATFORM)
+- `-d, --description` - Markdown description
+- `-a, --assignee` - User UUID
+- `-p, --priority` - 0=None, 1=Urgent, 2=High, 3=Normal, 4=Low
+- `-s, --state` - Workflow state UUID (override default)
+- `-l, --label` - Label UUID (can repeat)
+- `--parent` - Parent issue UUID (create as sub-issue)
 
 ## Resolving IDs
 
 ### Team ID
 
-From config (`linear_core` config resolution) or query:
+The create script resolves team key to UUID automatically. For manual lookup:
 
-```typescript
-const teams = await client.query.teams({
-  $: { filter: { key: { eq: 'ENG' } } },
-  nodes: { id: true, name: true, key: true },
-})
-const teamId = teams.nodes[0].id
+```bash
+bun claude/skills/linear_gql/scripts/query.ts '{ teams(filter: { key: { eq: "ENG" } }) { nodes { id name key } } }'
 ```
 
 ### Assignee ID
 
-From config (`assignee_id` in `linear.local.yaml`) or query:
-
-```typescript
-const users = await client.query.users({
-  $: { filter: { displayName: { eq: 'jason' } } },
-  nodes: { id: true, name: true, displayName: true },
-})
-const assigneeId = users.nodes[0].id
+```bash
+bun claude/skills/linear_gql/scripts/query.ts '{ users(filter: { displayName: { eq: "jason" } }) { nodes { id name displayName } } }'
 ```
 
 ### Label IDs
 
-```typescript
-const labels = await client.query.issueLabels({
-  $: { filter: { name: { eq: 'bug' } } },
-  nodes: { id: true, name: true },
-})
-const labelId = labels.nodes[0].id
+```bash
+bun claude/skills/linear_gql/scripts/query.ts '{ issueLabels(filter: { name: { eq: "bug" } }) { nodes { id name } } }'
 ```
 
 ### State ID (to override starting state)
 
-```typescript
-const states = await client.query.workflowStates({
-  $: {
-    filter: {
-      team: { key: { eq: 'ENG' } },
-      name: { eq: 'In Progress' },
-    },
-  },
-  nodes: { id: true, name: true, type: true },
-})
-const stateId = states.nodes[0].id
+```bash
+bun claude/skills/linear_gql/scripts/query.ts '{ workflowStates(filter: { team: { key: { eq: "ENG" } }, name: { eq: "In Progress" } }) { nodes { id name type } } }'
 ```
 
 ## Description Formatting

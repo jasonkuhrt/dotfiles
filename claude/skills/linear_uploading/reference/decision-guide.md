@@ -22,17 +22,25 @@ Is the file visual content (screenshot, diagram, image)?
   NO  -> Attach
 ```
 
+## Scripts
+
+| Workflow | Script |
+|----------|--------|
+| Upload for embed | `bun claude/skills/linear_uploading/scripts/upload.ts <file>` |
+| Attach to issue | `bun claude/skills/linear_uploading/scripts/attach.ts <issue> <file>` |
+| Download | `bun claude/skills/linear_uploading/scripts/download.ts <url> <output>` |
+
 ## Ordering Constraint (Embeds Only)
 
 For inline embeds, the upload **must** precede the issue create/update:
 
-1. `upload(filePath)` -- get `assetUrl`
+1. `upload.ts` -- get `assetUrl`
 2. Use `![description](assetUrl)` in the markdown body
 3. Create or update the issue/comment with that body
 
 This is because the `assetUrl` must exist in Linear's storage before it can be rendered.
 
-Attachments have no ordering constraint -- `attach()` handles the full flow (upload + link) in one call.
+Attachments have no ordering constraint -- `attach.ts` handles the full flow (upload + link) in one call.
 
 ## Embed Syntax
 
@@ -47,34 +55,23 @@ Only markdown image syntax works for inline rendering:
 
 ## Multiple Files
 
-When uploading multiple files, upload them in parallel for performance:
+When uploading multiple files, you can run uploads in parallel:
 
-```typescript
-import { upload, attach } from '@jasonkuhrt/linear/upload'
+```bash
+# Parallel uploads (bash example)
+result1=$(bun claude/skills/linear_uploading/scripts/upload.ts before.png) &
+result2=$(bun claude/skills/linear_uploading/scripts/upload.ts after.png) &
+wait
 
-// Parallel embeds
-const results = await Promise.all([
-  upload('/path/to/before.png'),
-  upload('/path/to/after.png'),
-])
-
-const body = `## Visual comparison
-
-Before:
-${results[0].markdown}
-
-After:
-${results[1].markdown}`
-
-// Parallel attachments
-await Promise.all([
-  attach('/path/to/spec.pdf', 'ENG-123', 'Spec Document'),
-  attach('/path/to/notes.md', 'ENG-123', 'Meeting Notes'),
-])
+# Use results
+md1=$(echo "$result1" | jq -r '.markdown')
+md2=$(echo "$result2" | jq -r '.markdown')
 ```
+
+For Claude: execute multiple upload scripts in parallel tool calls, then combine the markdown in the issue body.
 
 ## Edge Cases
 
-- **File too large:** Linear's `fileUpload` mutation will reject files exceeding their size limit. The error surfaces from the mutation response.
+- **File too large:** Linear's `fileUpload` mutation will reject files exceeding their size limit. The error surfaces in the script output.
 - **Unsupported embed type:** Non-image files embedded with `![](url)` will render as a download link, not inline. This is fine but not visually rich. Prefer attachments for non-visual files.
-- **Issue identifier vs UUID:** The `attach()` helper accepts both forms (e.g., `"ENG-123"` or a UUID string). The Linear API resolves identifiers automatically.
+- **Issue identifier vs UUID:** The attach script accepts both forms (e.g., `"ENG-123"` or a UUID string). The Linear API resolves identifiers automatically.

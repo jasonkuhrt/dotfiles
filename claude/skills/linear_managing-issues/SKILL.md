@@ -1,69 +1,66 @@
 ---
 name: linear_managing-issues
-description: Manage Linear issues - search, create, update state/assignee/priority, and comment. Triggers on "show issues", "my issues", "search Linear", "create issue", "update issue", "comment on issue", "tell X on Linear", or any Linear issue operation. References linear_core for config/auth and packages/linear Graffle client.
+description: Manage Linear issues - search, create, update state/assignee/priority, and comment. Triggers on "show issues", "my issues", "search Linear", "create issue", "update issue", "comment on issue", "tell X on Linear", or any Linear issue operation. References linear_core for config/auth.
 ---
 
 # Managing Linear Issues
 
-Search, create, update, and comment on Linear issues using the Graffle client.
+Search, create, update, and comment on Linear issues using pre-built scripts.
 
-**Prerequisite:** `linear_core` provides config resolution, auth, mention syntax, and the Graffle client import.
+**Prerequisite:** `LINEAR_API_TOKEN` environment variable must be set. See `linear_core` skill for auth setup.
 
-## Workflows
+## Scripts
 
-### 1. Search Issues
+All scripts live in `claude/skills/linear_managing-issues/scripts/` and output JSON.
 
-Search by text query with automatic canceled-issue exclusion.
+### Search Issues
 
-```typescript
-import { client } from '@jasonkuhrt/linear/client'
-
-const results = await client.query.issueSearch({
-  $: { query: 'search terms', first: 10 },
-  nodes: {
-    id: true,
-    identifier: true,
-    title: true,
-    url: true,
-    state: { name: true, type: true },
-    assignee: { displayName: true },
-  },
-})
-
-// Filter out canceled issues
-const active = results.nodes.filter(issue => issue.state.type !== 'canceled')
+```bash
+bun claude/skills/linear_managing-issues/scripts/search.ts "auth bug"
+bun claude/skills/linear_managing-issues/scripts/search.ts "login" --status open
+bun claude/skills/linear_managing-issues/scripts/search.ts "old feature" --include-canceled
 ```
 
-**Default behavior:** Always exclude `canceled` state type from results. Canceled issues are not duplicates and should not affect decisions.
+**Options:**
+- `--status open|closed|all` - Filter by state type (default: excludes canceled)
+- `--include-canceled` - Include canceled issues
+- `-n, --limit <number>` - Max results (default: 20)
 
-See [reference/search.md](./reference/search.md) for advanced filters and patterns.
+**Default behavior:** Excludes canceled issues. Canceled issues are not duplicates and should not influence decisions.
 
-### 2. Create Issue
+### Get Single Issue
+
+```bash
+bun claude/skills/linear_managing-issues/scripts/get.ts ENG-123
+bun claude/skills/linear_managing-issues/scripts/get.ts UUID-HERE
+```
+
+Returns full issue details including comments.
+
+### Create Issue
 
 **CRITICAL: Always search before creating.** This prevents duplicate issues.
 
-```
-1. Search for existing issues on the topic (workflow 1)
-2. If an active issue exists -> comment on it instead
-3. If no match -> create new issue
-4. Report result to user (title, description, URL)
+```bash
+# Search first
+bun claude/skills/linear_managing-issues/scripts/search.ts "topic of new issue"
+
+# If no active match, create
+bun claude/skills/linear_managing-issues/scripts/create.ts \
+  --title "Issue title" \
+  --team ENG \
+  --description "## Context\nDetails here"
 ```
 
-```typescript
-const result = await client.mutation.issueCreate({
-  $: {
-    input: {
-      title: 'Issue title',
-      description: 'Description text',
-      teamId: 'TEAM_UUID',       // from config: teams.<key>.id
-      assigneeId: 'USER_UUID',   // from config: assignee_id
-      priority: 3,               // 0=None, 1=Urgent, 2=High, 3=Normal, 4=Low
-    },
-  },
-  success: true,
-  issue: { id: true, identifier: true, url: true },
-})
-```
+**Options:**
+- `--title` (required) - Issue title
+- `--team` (required) - Team key (e.g., ENG, PLATFORM)
+- `-d, --description` - Markdown description
+- `-a, --assignee <uuid>` - Assignee user UUID
+- `-p, --priority <0-4>` - 0=None, 1=Urgent, 2=High, 3=Normal, 4=Low
+- `-s, --state <uuid>` - Override starting state
+- `-l, --label <uuid>` - Add label (repeatable)
+- `--parent <uuid>` - Create as sub-issue
 
 **After creation, always report:**
 
@@ -75,57 +72,30 @@ Created ENG-1234: [title]
 View: https://linear.app/{workspace}/issue/ENG-1234
 ```
 
-See [reference/create.md](./reference/create.md) for labels, state overrides, and description formatting.
+### Update Issue
 
-### 3. Update Issue
-
-Update state, assignee, priority, or other fields on an existing issue.
-
-```typescript
-await client.mutation.issueUpdate({
-  $: {
-    id: 'ISSUE_UUID',
-    input: {
-      stateId: 'STATE_UUID',       // workflow state ID
-      assigneeId: 'USER_UUID',     // reassign
-      priority: 2,                 // change priority
-    },
-  },
-  success: true,
-  issue: { id: true, identifier: true, url: true, state: { name: true } },
-})
+```bash
+bun claude/skills/linear_managing-issues/scripts/update.ts ENG-123 --state "In Progress"
+bun claude/skills/linear_managing-issues/scripts/update.ts ENG-123 --priority 1
+bun claude/skills/linear_managing-issues/scripts/update.ts ENG-123 --assignee USER_UUID
 ```
 
-**To resolve a state UUID**, query workflow states first:
+**Options:**
+- `-s, --state <name>` - State name (e.g., "In Progress", "Done")
+- `--state-id <uuid>` - Direct state UUID
+- `-a, --assignee <uuid>` - User UUID
+- `-p, --priority <0-4>` - Priority level
+- `-t, --title` - New title
+- `-d, --description` - New description
 
-```typescript
-const states = await client.query.workflowStates({
-  $: { filter: { team: { key: { eq: 'ENG' } }, name: { eq: 'In Progress' } } },
-  nodes: { id: true, name: true, type: true },
-})
-const stateId = states.nodes[0].id
+### Comment on Issue
+
+```bash
+bun claude/skills/linear_managing-issues/scripts/comment.ts ENG-123 "This is fixed now"
+bun claude/skills/linear_managing-issues/scripts/comment.ts ENG-123 --body "## Update\nProgress notes"
 ```
 
-See [reference/update.md](./reference/update.md) for bulk updates and field reference.
-
-### 4. Comment on Issue
-
-Post a comment on an existing issue. Uses mention syntax from `linear_core`.
-
-```typescript
-const result = await client.mutation.commentCreate({
-  $: {
-    input: {
-      issueId: 'ISSUE_UUID',
-      body: 'Comment body with https://linear.app/{workspace}/profiles/nick mention',
-    },
-  },
-  success: true,
-  comment: { id: true, body: true, url: true },
-})
-```
-
-**Mention validation:** Before posting, scan the body for `@` followed by a word character. Replace any `@username` with `https://linear.app/{workspace}/profiles/{displayName}`. See `linear_core` for full mention rules.
+**Mention validation:** Before posting, scan for `@username` and replace with profile URLs. See `linear_core` for mention syntax.
 
 **After posting, always report:**
 
@@ -137,23 +107,19 @@ Comment posted to ENG-1234:
 View: https://linear.app/{workspace}/issue/ENG-1234
 ```
 
-See [reference/comments.md](./reference/comments.md) for editing, deleting, and listing comments.
-
 ## Issue Identification
 
 Issues can be referenced by:
 
 | Format | Example | Resolution |
 |--------|---------|------------|
-| Identifier | `ENG-1234` | Search by identifier filter |
-| UUID | `a1b2c3d4-...` | Direct lookup by `id` |
+| Identifier | `ENG-1234` | Most common, used directly |
+| UUID | `a1b2c3d4-...` | From API responses |
 | URL | `https://linear.app/.../ENG-1234` | Extract identifier from URL |
-
-When the user references an issue by identifier (e.g., "ENG-1234"), use `issueSearch` with the identifier as the query, or use the `issue` query with the `id` field if you have the UUID.
 
 ## Reference
 
-- [search.md](./reference/search.md) - Advanced search filters, pagination, saved views
+- [search.md](./reference/search.md) - Advanced search filters, pagination
 - [create.md](./reference/create.md) - Labels, state overrides, description formatting
-- [update.md](./reference/update.md) - Bulk updates, field reference, state transitions
-- [comments.md](./reference/comments.md) - Edit, delete, list comments, reaction patterns
+- [update.md](./reference/update.md) - Bulk updates, field reference
+- [comments.md](./reference/comments.md) - Edit, delete, list comments

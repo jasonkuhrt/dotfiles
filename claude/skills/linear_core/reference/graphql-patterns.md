@@ -1,268 +1,140 @@
 # GraphQL Patterns
 
-Query patterns for the Linear API via the Graffle client at `packages/linear/`.
-
-All examples use the typed Graffle client:
-
-```typescript
-import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
-```
+Query patterns for the Linear API. Use `linear_gql` to execute these queries, or reference them when building custom scripts.
 
 ## Teams
 
 ### List all teams
 
-```typescript
-const result = await client.query.teams({
-  nodes: {
-    id: true,
-    name: true,
-    key: true,
-    description: true,
-  },
-})
+```bash
+bun claude/skills/linear_gql/scripts/query.ts '{ teams { nodes { id name key description } } }'
 ```
 
 ### Get team by key
 
-```typescript
-const result = await client.query.teams({
-  $: {
-    filter: { key: { eq: 'ENG' } },
-  },
-  nodes: {
-    id: true,
-    name: true,
-    key: true,
-  },
-})
+```bash
+bun claude/skills/linear_gql/scripts/query.ts '{ teams(filter: { key: { eq: "ENG" } }) { nodes { id name key } } }'
 ```
 
 ### Get team members
 
-```typescript
-const result = await client.query.teams({
-  $: {
-    filter: { key: { eq: 'ENG' } },
-  },
-  nodes: {
-    members: {
-      nodes: {
-        id: true,
-        name: true,
-        displayName: true,
-        email: true,
-      },
-    },
-  },
-})
+```bash
+bun claude/skills/linear_gql/scripts/query.ts '{ teams(filter: { key: { eq: "ENG" } }) { nodes { members { nodes { id name displayName email } } } } }'
 ```
 
 ## Users
 
 ### Current authenticated user
 
-```typescript
-const result = await client.query.viewer({
-  id: true,
-  name: true,
-  displayName: true,
-  email: true,
-})
+```bash
+bun claude/skills/linear_gql/scripts/query.ts '{ viewer { id name displayName email } }'
 ```
 
 ### List all users
 
-```typescript
-const result = await client.query.users({
-  nodes: {
-    id: true,
-    name: true,
-    displayName: true,
-    email: true,
-    active: true,
-  },
-})
+```bash
+bun claude/skills/linear_gql/scripts/query.ts '{ users { nodes { id name displayName email active } } }'
 ```
 
 ### Find user by display name
 
-```typescript
-const result = await client.query.users({
-  $: {
-    filter: { displayName: { eq: 'jason' } },
-  },
-  nodes: {
-    id: true,
-    name: true,
-    displayName: true,
-  },
-})
+```bash
+bun claude/skills/linear_gql/scripts/query.ts '{ users(filter: { displayName: { eq: "jason" } }) { nodes { id name displayName } } }'
 ```
 
 ## Workflow States
 
 ### List states for a team
 
-```typescript
-const result = await client.query.workflowStates({
-  $: {
-    filter: { team: { key: { eq: 'ENG' } } },
-  },
-  nodes: {
-    id: true,
-    name: true,
-    type: true,
-    position: true,
-  },
-})
+```bash
+bun claude/skills/linear_gql/scripts/query.ts '{ workflowStates(filter: { team: { key: { eq: "ENG" } } }) { nodes { id name type position } } }'
 ```
 
 State types: `triage`, `backlog`, `unstarted`, `started`, `completed`, `canceled`
 
 ### Find specific state by name and team
 
-```typescript
-const result = await client.query.workflowStates({
-  $: {
-    filter: {
-      team: { key: { eq: 'ENG' } },
-      name: { eq: 'In Progress' },
-    },
-  },
-  nodes: {
-    id: true,
-    name: true,
-    type: true,
-  },
-})
+```bash
+bun claude/skills/linear_gql/scripts/query.ts '{ workflowStates(filter: { team: { key: { eq: "ENG" } }, name: { eq: "In Progress" } }) { nodes { id name type } } }'
 ```
 
 ## Issues
 
-### Create issue
+### Create issue (via linear_managing-issues script)
 
-```typescript
-const result = await client.mutation.issueCreate({
-  $: {
-    input: {
-      title: 'Issue title',
-      description: 'Description with https://linear.app/workspace/profiles/nick mention',
-      teamId: 'TEAM_UUID',
-      assigneeId: 'USER_UUID',
-      priority: 3,
-    },
-  },
-  success: true,
-  issue: {
-    id: true,
-    identifier: true,
-    url: true,
-  },
-})
+```bash
+bun claude/skills/linear_managing-issues/scripts/create.ts --title "Issue title" --team ENG
 ```
 
 ### Search issues
 
-```typescript
-const result = await client.query.issueSearch({
-  $: {
-    query: 'search terms',
-    first: 10,
-  },
-  nodes: {
-    id: true,
-    identifier: true,
-    title: true,
-    url: true,
-    state: {
-      name: true,
-      type: true,
-    },
-    assignee: {
-      displayName: true,
-    },
-  },
-})
+```bash
+bun claude/skills/linear_managing-issues/scripts/search.ts "search terms"
 ```
 
 ### Get issue by identifier
 
-```typescript
-const result = await client.query.issue({
-  $: {
-    id: 'ISSUE_UUID',
-  },
-  id: true,
-  identifier: true,
-  title: true,
-  description: true,
-  url: true,
-  state: {
-    name: true,
-    type: true,
-  },
-  assignee: {
-    name: true,
-    displayName: true,
-  },
-  team: {
-    key: true,
-    name: true,
-  },
-  priority: true,
-  labels: {
-    nodes: {
-      name: true,
-    },
-  },
-})
+```bash
+bun claude/skills/linear_managing-issues/scripts/get.ts ENG-123
 ```
 
 ### Comment on issue
 
-```typescript
-const result = await client.mutation.commentCreate({
-  $: {
-    input: {
-      issueId: 'ISSUE_UUID',
-      body: 'Comment body with https://linear.app/workspace/profiles/nick mention',
-    },
-  },
-  success: true,
-  comment: {
-    id: true,
-    body: true,
-    url: true,
-  },
-})
+```bash
+bun claude/skills/linear_managing-issues/scripts/comment.ts ENG-123 "Comment body"
 ```
 
 ## Pagination
 
-Linear uses cursor-based pagination. For queries that may return many results:
+Linear uses cursor-based pagination. For queries returning many results:
 
-```typescript
-const result = await client.query.issues({
-  $: {
-    first: 50,
-    after: 'cursor_string', // from previous pageInfo.endCursor
-    filter: { team: { key: { eq: 'ENG' } } },
-  },
-  nodes: {
-    id: true,
-    title: true,
-  },
-  pageInfo: {
-    hasNextPage: true,
-    endCursor: true,
-  },
-})
+```graphql
+query($after: String) {
+  issues(first: 50, after: $after, filter: { team: { key: { eq: "ENG" } } }) {
+    nodes { id identifier title }
+    pageInfo { hasNextPage endCursor }
+  }
+}
+```
+
+To paginate:
+1. First request: omit `after`
+2. If `pageInfo.hasNextPage` is true, pass `pageInfo.endCursor` as `after` in next request
+
+## Selection Set Reference
+
+When using `linear_gql` for custom queries, here are common field selections:
+
+### Issue fields
+```graphql
+id identifier title description url priority
+state { id name type }
+assignee { id name displayName }
+team { id key name }
+labels { nodes { id name } }
+comments { nodes { id body user { displayName } createdAt } }
+createdAt updatedAt
+```
+
+### User fields
+```graphql
+id name displayName email active
+```
+
+### Team fields
+```graphql
+id key name description
+members { nodes { id name displayName } }
+```
+
+### Workflow state fields
+```graphql
+id name type position
 ```
 
 ## Notes
 
-- The Graffle client provides full type safety: selection sets are validated against the schema at the type level.
 - All `id` fields are UUIDs. Issue identifiers like `ENG-123` are the `identifier` field, not `id`.
-- Filters use comparison operators: `eq`, `neq`, `in`, `nin`, `contains`, `startsWith`, etc.
-- Connection fields (`teams`, `users`, `issues`) return `{ nodes, pageInfo }` by default.
+- Filters use comparison operators: `eq`, `neq`, `in`, `nin`, `contains`, `startsWith`, `containsIgnoreCase`, etc.
+- Connection fields return `{ nodes, pageInfo }` by default.
+- Priority values: `0` = None, `1` = Urgent, `2` = High, `3` = Normal, `4` = Low

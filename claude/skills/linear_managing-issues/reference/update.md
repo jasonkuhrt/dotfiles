@@ -2,174 +2,93 @@
 
 ## Basic Update
 
-```typescript
-import { client } from '@jasonkuhrt/linear/client'
-
-const result = await client.mutation.issueUpdate({
-  $: {
-    id: 'ISSUE_UUID',
-    input: {
-      stateId: 'STATE_UUID',
-    },
-  },
-  success: true,
-  issue: {
-    id: true,
-    identifier: true,
-    url: true,
-    state: { name: true, type: true },
-  },
-})
+```bash
+bun claude/skills/linear_managing-issues/scripts/update.ts ENG-123 --state "In Progress"
+bun claude/skills/linear_managing-issues/scripts/update.ts ENG-123 --priority 1
+bun claude/skills/linear_managing-issues/scripts/update.ts ENG-123 --assignee USER_UUID
 ```
 
 ## Updatable Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `title` | `string` | Issue title |
-| `description` | `string` | Markdown description |
-| `stateId` | `string` | Workflow state UUID |
-| `assigneeId` | `string` | User UUID (or `null` to unassign) |
-| `priority` | `number` | 0=None, 1=Urgent, 2=High, 3=Normal, 4=Low |
-| `labelIds` | `string[]` | Replace all labels |
-| `parentId` | `string` | Parent issue UUID (sub-issue) |
-| `estimate` | `number` | Story points |
-| `dueDate` | `string` | ISO date string (YYYY-MM-DD) |
+| Field | Script Option | Description |
+|-------|---------------|-------------|
+| State | `--state <name>` or `--state-id <uuid>` | Workflow state |
+| Assignee | `--assignee <uuid>` | User UUID (unassign not supported via script) |
+| Priority | `--priority <0-4>` | 0=None, 1=Urgent, 2=High, 3=Normal, 4=Low |
+| Title | `--title <text>` | Issue title |
+| Description | `--description <text>` | Markdown description |
 
 ## Common Operations
 
 ### Change state
 
-```typescript
-// 1. Resolve state UUID
-const states = await client.query.workflowStates({
-  $: {
-    filter: {
-      team: { key: { eq: 'ENG' } },
-      name: { eq: 'In Progress' },
-    },
-  },
-  nodes: { id: true, name: true, type: true },
-})
-
-// 2. Update issue
-await client.mutation.issueUpdate({
-  $: {
-    id: 'ISSUE_UUID',
-    input: { stateId: states.nodes[0].id },
-  },
-  success: true,
-  issue: { identifier: true, state: { name: true } },
-})
+```bash
+bun claude/skills/linear_managing-issues/scripts/update.ts ENG-123 --state "In Progress"
+bun claude/skills/linear_managing-issues/scripts/update.ts ENG-123 --state "Done"
 ```
+
+The script resolves state names to UUIDs automatically. If the state name is ambiguous, it will show available states.
 
 ### Reassign
 
-```typescript
-// 1. Resolve user UUID
-const users = await client.query.users({
-  $: { filter: { displayName: { eq: 'jason' } } },
-  nodes: { id: true, displayName: true },
-})
+```bash
+# First, find the user UUID
+bun claude/skills/linear_gql/scripts/query.ts '{ users(filter: { displayName: { eq: "jason" } }) { nodes { id displayName } } }'
 
-// 2. Update issue
-await client.mutation.issueUpdate({
-  $: {
-    id: 'ISSUE_UUID',
-    input: { assigneeId: users.nodes[0].id },
-  },
-  success: true,
-  issue: { identifier: true, assignee: { displayName: true } },
-})
+# Then update
+bun claude/skills/linear_managing-issues/scripts/update.ts ENG-123 --assignee USER_UUID
 ```
 
-### Unassign
+### Unassign (via linear_gql)
 
-```typescript
-await client.mutation.issueUpdate({
-  $: {
-    id: 'ISSUE_UUID',
-    input: { assigneeId: null },
-  },
-  success: true,
-  issue: { identifier: true },
-})
+The update script doesn't support unassigning. Use `linear_gql`:
+
+```bash
+bun claude/skills/linear_gql/scripts/query.ts \
+  'mutation($id: String!, $input: IssueUpdateInput!) { issueUpdate(id: $id, input: $input) { success issue { identifier } } }' \
+  --variables '{"id": "ISSUE_UUID", "input": {"assigneeId": null}}'
 ```
 
 ### Change priority
 
-```typescript
-await client.mutation.issueUpdate({
-  $: {
-    id: 'ISSUE_UUID',
-    input: { priority: 1 }, // Urgent
-  },
-  success: true,
-  issue: { identifier: true, priority: true },
-})
+```bash
+bun claude/skills/linear_managing-issues/scripts/update.ts ENG-123 --priority 1  # Urgent
+bun claude/skills/linear_managing-issues/scripts/update.ts ENG-123 --priority 3  # Normal
 ```
 
 ### Update title and description
 
-```typescript
-await client.mutation.issueUpdate({
-  $: {
-    id: 'ISSUE_UUID',
-    input: {
-      title: 'Updated title',
-      description: 'Updated description',
-    },
-  },
-  success: true,
-  issue: { identifier: true, title: true },
-})
+```bash
+bun claude/skills/linear_managing-issues/scripts/update.ts ENG-123 --title "Updated title"
+bun claude/skills/linear_managing-issues/scripts/update.ts ENG-123 --description "Updated description"
 ```
 
-### Add labels
+### Add/update labels (via linear_gql)
 
-Labels are set as a complete list (replaces existing). To add without removing:
+Labels are set as a complete list (replaces existing). The update script doesn't support labels. Use `linear_gql`:
 
-```typescript
-// 1. Get current labels
-const issue = await client.query.issue({
-  $: { id: 'ISSUE_UUID' },
-  labels: { nodes: { id: true, name: true } },
-})
+```bash
+# 1. Get current labels
+bun claude/skills/linear_managing-issues/scripts/get.ts ENG-123
+# Look at labels.nodes[].id in output
 
-// 2. Append new label
-const currentIds = issue.labels.nodes.map(l => l.id)
-const newLabels = await client.query.issueLabels({
-  $: { filter: { name: { eq: 'needs-review' } } },
-  nodes: { id: true },
-})
+# 2. Get new label ID
+bun claude/skills/linear_gql/scripts/query.ts '{ issueLabels(filter: { name: { eq: "needs-review" } }) { nodes { id } } }'
 
-await client.mutation.issueUpdate({
-  $: {
-    id: 'ISSUE_UUID',
-    input: { labelIds: [...currentIds, newLabels.nodes[0].id] },
-  },
-  success: true,
-  issue: { identifier: true, labels: { nodes: { name: true } } },
-})
+# 3. Update with combined list
+bun claude/skills/linear_gql/scripts/query.ts \
+  'mutation($id: String!, $input: IssueUpdateInput!) { issueUpdate(id: $id, input: $input) { success } }' \
+  --variables '{"id": "ISSUE_UUID", "input": {"labelIds": ["existing-id-1", "new-id"]}}'
 ```
 
 ## Bulk Updates
 
-Update multiple issues in sequence. There is no batch mutation in the Linear API; loop over individual updates.
+For bulk updates, loop over the update script:
 
-```typescript
-const issueIds = ['UUID_1', 'UUID_2', 'UUID_3']
-
-for (const id of issueIds) {
-  await client.mutation.issueUpdate({
-    $: {
-      id,
-      input: { priority: 2 },
-    },
-    success: true,
-    issue: { identifier: true },
-  })
-}
+```bash
+for id in ENG-123 ENG-124 ENG-125; do
+  bun claude/skills/linear_managing-issues/scripts/update.ts "$id" --priority 2
+done
 ```
 
 ## State Transitions
@@ -183,4 +102,18 @@ Common state transition patterns:
 | In Review | Done | PR merged |
 | Any | Canceled | Issue no longer relevant |
 
-Resolve state names to UUIDs via `workflowStates` query (see `linear_core` reference/graphql-patterns.md).
+## All Updatable Fields (API Reference)
+
+For fields not covered by the script, use `linear_gql`:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | `string` | Issue title |
+| `description` | `string` | Markdown description |
+| `stateId` | `string` | Workflow state UUID |
+| `assigneeId` | `string` | User UUID (or `null` to unassign) |
+| `priority` | `number` | 0-4 |
+| `labelIds` | `string[]` | Replace all labels |
+| `parentId` | `string` | Parent issue UUID |
+| `estimate` | `number` | Story points |
+| `dueDate` | `string` | ISO date (YYYY-MM-DD) |

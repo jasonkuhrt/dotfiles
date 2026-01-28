@@ -5,51 +5,25 @@ description: Foundational Linear API skill. Use when any linear_* skill needs co
 
 # Linear Core
 
-Shared foundation for all `linear_*` skills. Covers config, auth, mentions, and data lookup.
+Shared foundation for all `linear_*` skills. Covers auth, config, mentions, and the script execution model.
 
-## Client
+## Scripts Model
 
-All Linear API access uses the Graffle-generated client at `packages/linear/` in the dotfiles repo.
+All Linear skills use executable scripts instead of inline code. Scripts:
+- Live in `claude/skills/linear_*/scripts/`
+- Execute with `bun <skill-path>/scripts/<name>.ts`
+- Output JSON to stdout
+- Exit non-zero on errors
 
-### Import
-
-Use absolute path import - works from any directory:
-
-```typescript
-import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
-```
-
-### Execution
-
-Use `bun -e` for inline scripts:
-
-```bash
-bun -e "
-import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
-
-const viewer = await client.query.viewer({ id: true, name: true })
-console.log(viewer)
-"
-```
-
-**Key points:**
-- Use `bun` (not `tsx` or `node`) - the package uses bun
-- Absolute import path works from any cwd
-- Extension is `.ts` (bun handles TypeScript natively)
-
-The client is pre-configured with:
-- HTTP transport to `https://api.linear.app/graphql`
-- Auth via `LINEAR_API_TOKEN` env var (see [Auth](#auth))
-- Type-safe document builder (Graffle selection sets)
-- Custom scalar codecs
+**For operations not covered by pre-built scripts**, use `linear_gql` for arbitrary GraphQL.
 
 ## Auth
 
-**Primary method:** `LINEAR_API_TOKEN` environment variable.
+**Required:** `LINEAR_API_TOKEN` environment variable.
 
-The client reads `process.env.LINEAR_API_TOKEN` at import time and throws if missing.
+Scripts read the token at startup and fail with a clear error if missing.
 
-**Alternatives for persistent setup:**
+**Setup options:**
 
 | Method | Setup |
 |--------|-------|
@@ -91,23 +65,27 @@ The `{workspace}` is the Linear organization slug (e.g., `heartbeat-chat`). The 
 
 **Validation rule:** Before posting any comment or issue description, scan for `@` followed by a word character. If found, replace with the profile URL pattern.
 
-## Team Data Lookup
+## Common Lookups
 
-Teams and users are fetched via the Graffle client. See [reference/graphql-patterns.md](./reference/graphql-patterns.md) for query examples.
+Use `linear_gql` for lookups not covered by other skills:
 
-**Common lookups:**
+```bash
+# List all teams
+bun claude/skills/linear_gql/scripts/query.ts '{ teams { nodes { id key name } } }'
 
-| Need | Query |
-|------|-------|
-| List all teams | `client.query.teams` |
-| Get team by key | `client.query.teams` with filter `{ key: { eq: "ENG" } }` |
-| List team members | `client.query.users` or `team.members` |
-| Get workflow states | `client.query.workflowStates` with team filter |
-| Current user | `client.query.viewer` |
+# Get current user
+bun claude/skills/linear_gql/scripts/query.ts '{ viewer { id name displayName } }'
+
+# List workflow states for a team
+bun claude/skills/linear_gql/scripts/query.ts '{ workflowStates(filter: { team: { key: { eq: "ENG" } } }) { nodes { id name type } } }'
+
+# Find user by display name
+bun claude/skills/linear_gql/scripts/query.ts '{ users(filter: { displayName: { eq: "jason" } }) { nodes { id name displayName } } }'
+```
 
 **Workflow state types:** `triage`, `backlog`, `unstarted`, `started`, `completed`, `canceled`
 
-Priority values: `0` = None, `1` = Urgent, `2` = High, `3` = Normal, `4` = Low
+**Priority values:** `0` = None, `1` = Urgent, `2` = High, `3` = Normal, `4` = Low
 
 ## References
 

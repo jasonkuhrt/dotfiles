@@ -1,0 +1,9 @@
+# Auto-managed state - DO NOT EDIT
+# Regenerated on each refresh
+
+# Schema:
+# "<package-name>":
+#   repo: owner/repo           # from npm registry
+#   mode: use | watch          # use = in package.json, watch = tracking only
+#   changelog_source: releases | git-history | changelog-file
+#   last_refresh: YYYY-MM-DD

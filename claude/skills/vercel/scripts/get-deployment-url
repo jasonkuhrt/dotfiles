@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Derive Vercel deployment URL from current branch or commit
+# Usage: vercel-url [--branch|--commit]
+
+set -euo pipefail
+
+# Config
+PROJECT_ROOT=$(git rev-parse --show-toplevel)
+DATA_FILE="$PROJECT_ROOT/.claude/vercel.json"
+
+if [[ ! -f "$DATA_FILE" ]]; then
+  echo '{"error": "Missing .claude/vercel.json in project root. Must contain teamId and project."}' >&2
+  exit 1
+fi
+
+PROJECT=$(jq -r '.project' "$DATA_FILE")
+
+# Parse args
+MODE="branch"
+for arg in "$@"; do
+  case $arg in
+    --branch) MODE="branch" ;;
+    --commit) MODE="commit" ;;
+  esac
+done
+
+if [[ "$MODE" == "branch" ]]; then
+  BRANCH=$(git branch --show-current | tr '/' '-' | tr '[:upper:]' '[:lower:]')
+  URL="$PROJECT-git-$BRANCH-$PROJECT.vercel.app"
+else
+  COMMIT=$(git rev-parse --short HEAD)
+  URL="$PROJECT-$COMMIT-$PROJECT.vercel.app"
+fi
+
+echo "{\"url\": \"$URL\", \"mode\": \"$MODE\"}"

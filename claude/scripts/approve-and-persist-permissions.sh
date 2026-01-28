@@ -66,7 +66,7 @@ if [[ "$TOOL_NAME" == "Skill" ]]; then
     # CAVEAT: This checks if the plugin NAME is registered from official marketplace,
     # not that THIS invocation is from there. A same-named plugin from another
     # marketplace would also be approved. Acceptable tradeoff for simplicity.
-    if grep -q "\"${PLUGIN_NAME}@claude-plugins-official\"" "$SETTINGS_FILE" 2>/dev/null; then
+    if grep -qE "\"${PLUGIN_NAME}@(claude-plugins-official|superpowers-marketplace|beads-marketplace)\"" "$SETTINGS_FILE" 2>/dev/null; then
       approve "Skill(${PLUGIN_NAME}:*)"
     fi
 

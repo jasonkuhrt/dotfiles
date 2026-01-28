@@ -62,8 +62,8 @@ if (isUuid) {
   })
 } else {
   // Search by identifier
-  const results = await client.query.issueSearch({
-    $: { query: idOrIdentifier, first: 1 },
+  const results = await client.query.searchIssues({
+    $: { term: idOrIdentifier, first: 1 },
     nodes: {
       id: true,
       identifier: true,

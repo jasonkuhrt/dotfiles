@@ -41,8 +41,8 @@ Examples:
 const query = positionals[0]
 const limit = parseInt(values.limit ?? `20`, 10)
 
-const results = await client.query.issueSearch({
-  $: { query, first: limit },
+const results = await client.query.searchIssues({
+  $: { term: query, first: limit },
   nodes: {
     id: true,
     identifier: true,

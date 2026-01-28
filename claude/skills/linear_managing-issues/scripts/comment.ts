@@ -49,8 +49,8 @@ if (!body) {
 }
 
 // First, get the issue UUID
-const searchResult = await client.query.issueSearch({
-  $: { query: identifier, first: 1 },
+const searchResult = await client.query.searchIssues({
+  $: { term: identifier, first: 1 },
   nodes: { id: true, identifier: true },
 })
 

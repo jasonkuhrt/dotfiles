@@ -59,8 +59,8 @@ const extractIdentifier = (text: string): string | null => {
 
 // Helper to fetch issue details by identifier
 const fetchIssue = async (identifier: string) => {
-  const results = await client.query.issueSearch({
-    $: { query: identifier, first: 1 },
+  const results = await client.query.searchIssues({
+    $: { term: identifier, first: 1 },
     nodes: {
       id: true,
       identifier: true,
@@ -112,7 +112,7 @@ const queryAssigned = async () => {
           },
         },
         first: 20,
-        orderBy: { updatedAt: `desc` } as any,
+        orderBy: `updatedAt` as any,
       },
       nodes: {
         id: true,
@@ -216,6 +216,7 @@ const main = async () => {
 }
 
 main().catch(err => {
-  console.error(err.message)
+  console.error(err.message || err)
+  if (err.stack) console.error(err.stack)
   process.exit(1)
 })

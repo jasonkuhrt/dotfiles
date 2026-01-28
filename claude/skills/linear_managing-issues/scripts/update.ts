@@ -46,8 +46,8 @@ Examples:
 const identifier = positionals[0]
 
 // First, get the issue to find its UUID and team
-const searchResult = await client.query.issueSearch({
-  $: { query: identifier, first: 1 },
+const searchResult = await client.query.searchIssues({
+  $: { term: identifier, first: 1 },
   nodes: {
     id: true,
     identifier: true,

@@ -1,5 +1,5 @@
 ---
-name: test-resolve-review
+name: gh:pr-test-resolve-review
 description: Integration test for /resolve-review skill. Creates fixtures, guides manual testing, verifies results.
 ---
 

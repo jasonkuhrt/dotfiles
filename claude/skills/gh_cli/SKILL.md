@@ -1,5 +1,5 @@
 ---
-name: gh-cli
+name: gh:cli
 description: GitHub CLI conventions for PRs, issues, and workflows. Applies when using gh commands or managing GitHub resources.
 ---
 

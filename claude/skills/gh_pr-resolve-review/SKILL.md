@@ -1,5 +1,5 @@
 ---
-name: resolve-review
+name: gh:pr-resolve-review
 description: Interactive PR review resolution - generates item files for user review, then applies changes. Use /resolve-review to generate, /resolve-review --apply to execute.
 ---
 

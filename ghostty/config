@@ -33,6 +33,12 @@ cursor-opacity          = 0.3
 
 
 #
+# Security
+#
+
+clipboard-paste-protection = false
+
+#
 # Keybindings
 #
 

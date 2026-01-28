@@ -13,6 +13,7 @@
  *   bun scripts/resolve.ts --list         # List assigned issues
  */
 import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
+import { resolveIssueId } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/resolve-issue.ts'
 import { parseArgs } from 'node:util'
 import { existsSync, readFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
@@ -59,21 +60,21 @@ const extractIdentifier = (text: string): string | null => {
 
 // Helper to fetch issue details by identifier
 const fetchIssue = async (identifier: string) => {
-  const results = await client.query.searchIssues({
-    $: { term: identifier, first: 1 },
-    nodes: {
-      id: true,
-      identifier: true,
-      title: true,
-      description: true,
-      url: true,
-      state: { name: true, type: true },
-      assignee: { name: true, displayName: true },
-      team: { key: true, name: true },
-      priority: true,
-    },
+  const { id } = await resolveIssueId(identifier).catch(() => ({ id: null as string | null }))
+  if (!id) return null
+  const issue = await client.query.issue({
+    $: { id },
+    id: true,
+    identifier: true,
+    title: true,
+    description: true,
+    url: true,
+    state: { name: true, type: true },
+    assignee: { name: true, displayName: true },
+    team: { key: true, name: true },
+    priority: true,
   })
-  return results.nodes[0] ?? null
+  return issue ?? null
 }
 
 // Step 1: Branch name

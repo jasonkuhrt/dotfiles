@@ -7,6 +7,7 @@
  *   bun scripts/update.ts ENG-123 --priority 1 --assignee UUID
  */
 import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
+import { resolveIssueId } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/resolve-issue.ts'
 import { parseArgs } from 'node:util'
 
 const { values, positionals } = parseArgs({
@@ -45,22 +46,8 @@ Examples:
 
 const identifier = positionals[0]
 
-// First, get the issue to find its UUID and team
-const searchResult = await client.query.searchIssues({
-  $: { term: identifier, first: 1 },
-  nodes: {
-    id: true,
-    identifier: true,
-    team: { key: true },
-  },
-})
-
-if (searchResult.nodes.length === 0) {
-  console.error(`Issue not found: ${identifier}`)
-  process.exit(1)
-}
-
-const issue = searchResult.nodes[0]
+// Resolve identifier or UUID to issue ID and team
+const issue = await resolveIssueId(identifier)
 const issueId = issue.id
 
 // Build update input
@@ -71,7 +58,7 @@ if (values.state) {
   const states = await client.query.workflowStates({
     $: {
       filter: {
-        team: { key: { eq: issue.team.key } },
+        team: { key: { eq: issue.teamKey } },
         name: { containsIgnoreCase: values.state },
       },
     },
@@ -80,9 +67,9 @@ if (values.state) {
 
   if (states.nodes.length === 0) {
     console.error(`State not found: ${values.state}`)
-    console.error(`Available states for team ${issue.team.key}:`)
+    console.error(`Available states for team ${issue.teamKey}:`)
     const allStates = await client.query.workflowStates({
-      $: { filter: { team: { key: { eq: issue.team.key } } } },
+      $: { filter: { team: { key: { eq: issue.teamKey } } } },
       nodes: { name: true, type: true },
     })
     allStates.nodes.forEach(s => console.error(`  - ${s.name} (${s.type})`))

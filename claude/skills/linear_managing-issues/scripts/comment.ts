@@ -7,6 +7,7 @@
  *   bun scripts/comment.ts ENG-123 --body "Multi-line comment"
  */
 import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
+import { resolveIssueId } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/resolve-issue.ts'
 import { parseArgs } from 'node:util'
 
 const { values, positionals } = parseArgs({
@@ -48,18 +49,8 @@ if (!body) {
   process.exit(1)
 }
 
-// First, get the issue UUID
-const searchResult = await client.query.searchIssues({
-  $: { term: identifier, first: 1 },
-  nodes: { id: true, identifier: true },
-})
-
-if (searchResult.nodes.length === 0) {
-  console.error(`Issue not found: ${identifier}`)
-  process.exit(1)
-}
-
-const issueId = searchResult.nodes[0].id
+// Resolve identifier or UUID to issue ID
+const { id: issueId } = await resolveIssueId(identifier)
 
 const result = await client.mutation.commentCreate({
   $: {

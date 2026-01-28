@@ -7,6 +7,7 @@
  *   bun scripts/get.ts a1b2c3d4-...
  */
 import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
+import { isUuid } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/resolve-issue.ts'
 import { parseArgs } from 'node:util'
 
 const { values, positionals } = parseArgs({
@@ -29,12 +30,9 @@ Examples:
 
 const idOrIdentifier = positionals[0]
 
-// Determine if it's a UUID or identifier
-const isUuid = idOrIdentifier.includes(`-`) && idOrIdentifier.length > 10 && !idOrIdentifier.match(/^[A-Z]+-\d+$/)
-
 let issue: any
 
-if (isUuid) {
+if (isUuid(idOrIdentifier)) {
   // Direct lookup by UUID
   issue = await client.query.issue({
     $: { id: idOrIdentifier },

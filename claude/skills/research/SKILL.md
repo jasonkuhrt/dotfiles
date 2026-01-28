@@ -24,12 +24,12 @@ Manage research files in `.claude/research/` — creation, naming, sorting, arch
 
 The script is NOT the complete solution. You are the orchestrator.
 
-**After ANY import/create/move:**
+**Two authorship paths — pick the right one:**
 
-1. Run the appropriate `research.sh` command
-2. Invoke the Format section below → apply `writing-compact` to the file
+- **Claude is the author** (flush, save, create-and-write) — write content in `writing-compact` format from the start. No separate formatting pass. No preview-iterate-apply. You're the author, so author it correctly the first time.
+- **Importing external content** (import, move) — run `writing-compact` as a separate formatting pass with preview-iterate-apply, because you're reformatting someone else's writing.
 
-**Skipping step 2 is a failure.** The script automates what it can. You do the rest.
+**Skipping `writing-compact` entirely is a failure.** But invoking it as a separate preview-iterate step on your own freshly written content is also wrong — there's no delta to review.
 
 ### Operations
 
@@ -39,7 +39,7 @@ The script is NOT the complete solution. You are the orchestrator.
   ~/.claude/skills/research/research.sh new <topic>
   ```
 
-  Then: apply `writing-compact` if adding content
+  Then: write content in `writing-compact` format directly (you're the author)
 
 - **Import existing file**
 
@@ -47,7 +47,7 @@ The script is NOT the complete solution. You are the orchestrator.
   ~/.claude/skills/research/research.sh import <file> [topic]
   ```
 
-  Script auto-enriches GH links. Then: apply `writing-compact`
+  Script auto-enriches GH links. Then: invoke `writing-compact` with preview-iterate-apply (external content)
 
 - **Sort/renumber**
 

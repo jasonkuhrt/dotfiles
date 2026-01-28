@@ -1,0 +1,150 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sync-plan.schema.json",
+  "title": "Plan",
+  "description": "Written to .claude/git-sync-plan.json",
+  "type": "object",
+  "required": [
+    "mainWorktree",
+    "startingDir",
+    "originalBranch",
+    "trunk",
+    "tagTasks",
+    "branchTasks"
+  ],
+  "properties": {
+    "mainWorktree": {
+      "type": "string",
+      "description": "path to main worktree (the original clone)"
+    },
+    "startingDir": {
+      "type": "string",
+      "description": "where user invoked git-sync from"
+    },
+    "originalBranch": {
+      "type": "string",
+      "description": "branch main worktree was on before sync"
+    },
+    "trunk": { "$ref": "#/definitions/TrunkTask" },
+    "tagTasks": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/TagTask" }
+    },
+    "branchTasks": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/BranchTask" }
+    }
+  },
+  "definitions": {
+    "TrunkTask": {
+      "type": "object",
+      "required": ["branch", "action"],
+      "properties": {
+        "branch": {
+          "type": "string",
+          "description": "e.g., 'develop', 'main'"
+        },
+        "action": { "type": "string", "enum": ["sync"] },
+        "result": {
+          "type": "string",
+          "enum": ["synced", "up-to-date", "error"]
+        },
+        "resultDetail": {
+          "type": "string",
+          "description": "e.g., 'pulled 3 commits'"
+        }
+      }
+    },
+    "TagTask": {
+      "type": "object",
+      "required": ["tag", "action", "localCommit", "remoteCommit"],
+      "properties": {
+        "tag": { "type": "string", "description": "e.g., 'v1.0.0'" },
+        "action": {
+          "type": "string",
+          "enum": ["push", "pull", "skip"],
+          "description": "push=overwrite remote, pull=overwrite local"
+        },
+        "localCommit": {
+          "type": "string",
+          "description": "SHA local tag points to"
+        },
+        "remoteCommit": {
+          "type": "string",
+          "description": "SHA remote tag points to"
+        },
+        "result": {
+          "type": "string",
+          "enum": ["pushed", "pulled", "skipped", "error"]
+        }
+      }
+    },
+    "BranchTask": {
+      "type": "object",
+      "required": ["branch", "type", "workingDir", "action"],
+      "properties": {
+        "branch": { "type": "string", "description": "e.g., 'feat/HEA-1234'" },
+        "type": {
+          "type": "string",
+          "enum": ["linked", "main"],
+          "description": "linked worktree or branch in main worktree"
+        },
+        "workingDir": {
+          "type": "string",
+          "description": "path to linked worktree, or mainWorktree for type='main'"
+        },
+        "action": { "type": "string", "enum": ["sync", "cleanup", "skip"] },
+        "skipReason": {
+          "type": "string",
+          "enum": ["mid-rebase", "mid-merge"],
+          "description": "For action='skip'"
+        },
+        "prStatus": {
+          "type": "string",
+          "enum": ["merged", "closed"],
+          "description": "For action='cleanup'"
+        },
+        "needsRescue": {
+          "type": "boolean",
+          "description": "For action='cleanup'"
+        },
+        "unpushedCommits": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Commit" },
+          "description": "For rescue warning"
+        },
+        "complexity": {
+          "type": "string",
+          "enum": ["none", "simple", "complex"],
+          "description": "For action='sync', from diff analysis"
+        },
+        "solution": {
+          "type": "string",
+          "description": "For action='sync', pre-recorded solution if dev solved during planning"
+        },
+        "hadWipEarly": {
+          "type": "boolean",
+          "description": "Set during execution if checkout branch needed early WIP"
+        },
+        "result": {
+          "type": "string",
+          "enum": ["synced", "skipped", "deleted", "aborted", "error"],
+          "description": "Populated during execution"
+        },
+        "resultDetail": {
+          "type": "string",
+          "description": "e.g., 'merged, pushed', 'dirty restored'"
+        }
+      }
+    },
+    "Commit": {
+      "type": "object",
+      "required": ["sha", "date", "message"],
+      "properties": {
+        "sha": { "type": "string" },
+        "date": { "type": "string" },
+        "message": { "type": "string" }
+      }
+    }
+  }
+}

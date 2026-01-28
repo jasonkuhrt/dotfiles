@@ -1,15 +1,11 @@
 ---
-name: beads
-description: Use for (1) onboarding beads for persistent agent memory, or (2) health check to verify this skill is accurate. NOT for ongoing usage (bd prime handles that).
+name: beads:teacher
+description: Onboarding beads for persistent agent memory. Use when setting up beads from scratch or learning workflow patterns. NOT for ongoing usage (bd prime handles that).
 ---
 
-# Beads Onboarding
+# Beads Teacher
 
 Beads provides **persistent agent memory** for large initiatives spanning multiple sessions. Issues live in your repo, travel with your code, and survive any context loss.
-
-**This skill is for:**
-- **Onboarding** — setting up beads from scratch
-- **Skill accuracy check** — verifying this skill matches current beads
 
 Once set up, `bd prime` handles ongoing workflow.
 
@@ -143,41 +139,6 @@ You have both plugin hooks AND `bd setup claude` hooks. Remove one:
 ```bash
 bd setup claude --remove
 ```
-
----
-
-## Skill Accuracy Check
-
-This is a **meta-check**: verifying this skill is still accurate with current beads.
-
-> **Note:** For beads installation health, use `bd doctor`. For beads version changes, use `bd upgrade review`. This section is about checking the skill itself.
-
-### Verify skill assumptions
-
-```bash
-bd --version                              # Current beads version
-bd setup --list                           # Available setup recipes
-cat ~/.claude/plugins/cache/beads-marketplace/beads/*/.claude-plugin/plugin.json | jq .hooks
-                                          # What hooks does plugin provide?
-bd doctor 2>&1 | grep -i claude           # What does doctor check?
-```
-
-### Check for breaking changes
-
-```bash
-bd upgrade review               # Full changelog since last version
-```
-
-### Signs this skill needs updating
-
-- Plugin structure changed (new hooks, removed hooks)
-- `bd doctor` checks for different things
-- New setup steps in `bd upgrade review`
-- Marketplace repo moved
-
-### If skill is stale
-
-Update this skill's setup steps and commands to match current beads, then test the onboarding flow on a fresh project.
 
 ---
 

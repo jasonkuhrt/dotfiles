@@ -1,0 +1,6 @@
+export type backlog = "backlog"
+export type planned = "planned"
+export type started = "started"
+export type paused = "paused"
+export type completed = "completed"
+export type canceled = "canceled"

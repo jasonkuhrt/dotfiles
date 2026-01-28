@@ -1,0 +1,17 @@
+{
+  "name": "@jasonkuhrt/linear",
+  "version": "0.0.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./client": "./src/client.ts"
+  },
+  "dependencies": {
+    "graffle": "next",
+    "graphql": "^16.10.0"
+  },
+  "devDependencies": {
+    "@tsconfig/strictest": "^2.0.8",
+    "@types/bun": "^1.2.0"
+  }
+}

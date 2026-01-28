@@ -1,0 +1,7 @@
+export type system = "system"
+export type light = "light"
+export type pureLight = "pureLight"
+export type dark = "dark"
+export type magicBlue = "magicBlue"
+export type classicDark = "classicDark"
+export type custom = "custom"

@@ -1,0 +1,5 @@
+export type DirectMessage = "DirectMessage"
+export type MultiPersonDirectMessage = "MultiPersonDirectMessage"
+export type Private = "Private"
+export type PrivateGroup = "PrivateGroup"
+export type Public = "Public"

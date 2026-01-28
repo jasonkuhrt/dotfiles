@@ -1,0 +1,42 @@
+import type * as $Fields from './fields.js'
+
+export * as InitiativeUpdateFilter from './fields.js'
+
+/**
+* GraphQL {@link https://graphql.org/learn/schema/#input-types | InputObject}.
+*
+* Options for filtering initiative updates.
+*
+* # Info
+*
+* | | |
+* | - | - |
+* | **Kind** | {@link https://graphql.org/graphql-js/type/#graphqlinputobjecttype | InputObject ↗} |
+* | **Fields** | 8 |
+* | **All Fields Nullable** | Yes |
+*/
+export interface InitiativeUpdateFilter {
+kind: "InputObject",
+name: "InitiativeUpdateFilter",
+isAllFieldsNullable: true,
+fields: {
+id: $Fields.id,
+createdAt: $Fields.createdAt,
+updatedAt: $Fields.updatedAt,
+user: $Fields.user,
+initiative: $Fields.initiative,
+reactions: $Fields.reactions,
+and: $Fields.and,
+or: $Fields.or
+},
+type: {
+id?: $Fields.id['type'],
+createdAt?: $Fields.createdAt['type'],
+updatedAt?: $Fields.updatedAt['type'],
+user?: $Fields.user['type'],
+initiative?: $Fields.initiative['type'],
+reactions?: $Fields.reactions['type'],
+and?: $Fields.and['type'],
+or?: $Fields.or['type']
+}
+}

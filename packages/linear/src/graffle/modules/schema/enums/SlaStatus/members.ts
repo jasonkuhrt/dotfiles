@@ -1,0 +1,6 @@
+export type Breached = "Breached"
+export type HighRisk = "HighRisk"
+export type MediumRisk = "MediumRisk"
+export type LowRisk = "LowRisk"
+export type Completed = "Completed"
+export type Failed = "Failed"

@@ -1,0 +1,6 @@
+export type thought = "thought"
+export type action = "action"
+export type response = "response"
+export type elicitation = "elicitation"
+export type error = "error"
+export type prompt = "prompt"

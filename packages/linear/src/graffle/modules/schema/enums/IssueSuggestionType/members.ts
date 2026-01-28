@@ -1,0 +1,6 @@
+export type team = "team"
+export type project = "project"
+export type assignee = "assignee"
+export type label = "label"
+export type similarIssue = "similarIssue"
+export type relatedIssue = "relatedIssue"

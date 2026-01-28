@@ -1,0 +1,5 @@
+export type owner = "owner"
+export type admin = "admin"
+export type guest = "guest"
+export type user = "user"
+export type app = "app"

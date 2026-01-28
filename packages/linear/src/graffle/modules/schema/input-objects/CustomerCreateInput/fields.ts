@@ -1,0 +1,270 @@
+import type { Schema as $Schema } from '../../_.js'
+
+/**
+* GraphQL {@link https://graphql.org/learn/schema/#input-types | input field} ↗ on type {@link $Schema.CustomerCreateInput}.
+*
+* The identifier in UUID v4 format. If none is provided, the backend will generate one.
+*
+* # Info
+*
+* | | |
+* | - | - |
+* | **Type** | {@link $Schema.String} |
+* | **Kind** | {@link https://graphql.org/graphql-js/type/#scalars | ScalarStandard ↗} |
+* | **Parent** | {@link $Schema.CustomerCreateInput} |
+* | **Path** | `CustomerCreateInput.id` |
+* | **Nullability** | Optional |
+*/
+export interface id {
+kind: "InputField",
+name: "id",
+inlineType: [0, ],
+namedType: $Schema.String,
+type: $Schema.String['codec']['_typeDecoded'] | null | undefined
+}
+/**
+* GraphQL {@link https://graphql.org/learn/schema/#input-types | input field} ↗ on type {@link $Schema.CustomerCreateInput}.
+*
+* The name of the customer.
+*
+* # Info
+*
+* | | |
+* | - | - |
+* | **Type** | {@link $Schema.String}! |
+* | **Kind** | {@link https://graphql.org/graphql-js/type/#scalars | ScalarStandard ↗} |
+* | **Parent** | {@link $Schema.CustomerCreateInput} |
+* | **Path** | `CustomerCreateInput.name` |
+* | **Nullability** | Required |
+*/
+export interface name {
+kind: "InputField",
+name: "name",
+inlineType: [1, ],
+namedType: $Schema.String,
+type: $Schema.String['codec']['_typeDecoded']
+}
+/**
+* GraphQL {@link https://graphql.org/learn/schema/#input-types | input field} ↗ on type {@link $Schema.CustomerCreateInput}.
+*
+* The domains associated with this customer.
+*
+* # Info
+*
+* | | |
+* | - | - |
+* | **Type** | {@link $Schema.String}[] |
+* | **Kind** | {@link https://graphql.org/graphql-js/type/#scalars | ScalarStandard ↗} |
+* | **Parent** | {@link $Schema.CustomerCreateInput} |
+* | **Path** | `CustomerCreateInput.domains` |
+* | **Default** | `[]` |
+* | **Nullability** | Optional |
+* | **List** | Yes |
+*/
+export interface domains {
+kind: "InputField",
+name: "domains",
+inlineType: [0, [1, ]],
+namedType: $Schema.String,
+type: readonly ($Schema.String['codec']['_typeDecoded'])[] | null | undefined
+}
+/**
+* GraphQL {@link https://graphql.org/learn/schema/#input-types | input field} ↗ on type {@link $Schema.CustomerCreateInput}.
+*
+* The ids of the customers in external systems.
+*
+* # Info
+*
+* | | |
+* | - | - |
+* | **Type** | {@link $Schema.String}[] |
+* | **Kind** | {@link https://graphql.org/graphql-js/type/#scalars | ScalarStandard ↗} |
+* | **Parent** | {@link $Schema.CustomerCreateInput} |
+* | **Path** | `CustomerCreateInput.externalIds` |
+* | **Default** | `[]` |
+* | **Nullability** | Optional |
+* | **List** | Yes |
+*/
+export interface externalIds {
+kind: "InputField",
+name: "externalIds",
+inlineType: [0, [1, ]],
+namedType: $Schema.String,
+type: readonly ($Schema.String['codec']['_typeDecoded'])[] | null | undefined
+}
+/**
+* GraphQL {@link https://graphql.org/learn/schema/#input-types | input field} ↗ on type {@link $Schema.CustomerCreateInput}.
+*
+* The ID of the Slack channel used to interact with the customer.
+*
+* # Info
+*
+* | | |
+* | - | - |
+* | **Type** | {@link $Schema.String} |
+* | **Kind** | {@link https://graphql.org/graphql-js/type/#scalars | ScalarStandard ↗} |
+* | **Parent** | {@link $Schema.CustomerCreateInput} |
+* | **Path** | `CustomerCreateInput.slackChannelId` |
+* | **Nullability** | Optional |
+*/
+export interface slackChannelId {
+kind: "InputField",
+name: "slackChannelId",
+inlineType: [0, ],
+namedType: $Schema.String,
+type: $Schema.String['codec']['_typeDecoded'] | null | undefined
+}
+/**
+* GraphQL {@link https://graphql.org/learn/schema/#input-types | input field} ↗ on type {@link $Schema.CustomerCreateInput}.
+*
+* The user who owns the customer.
+*
+* # Info
+*
+* | | |
+* | - | - |
+* | **Type** | {@link $Schema.String} |
+* | **Kind** | {@link https://graphql.org/graphql-js/type/#scalars | ScalarStandard ↗} |
+* | **Parent** | {@link $Schema.CustomerCreateInput} |
+* | **Path** | `CustomerCreateInput.ownerId` |
+* | **Nullability** | Optional |
+*/
+export interface ownerId {
+kind: "InputField",
+name: "ownerId",
+inlineType: [0, ],
+namedType: $Schema.String,
+type: $Schema.String['codec']['_typeDecoded'] | null | undefined
+}
+/**
+* GraphQL {@link https://graphql.org/learn/schema/#input-types | input field} ↗ on type {@link $Schema.CustomerCreateInput}.
+*
+* The status of the customer.
+*
+* # Info
+*
+* | | |
+* | - | - |
+* | **Type** | {@link $Schema.String} |
+* | **Kind** | {@link https://graphql.org/graphql-js/type/#scalars | ScalarStandard ↗} |
+* | **Parent** | {@link $Schema.CustomerCreateInput} |
+* | **Path** | `CustomerCreateInput.statusId` |
+* | **Nullability** | Optional |
+*/
+export interface statusId {
+kind: "InputField",
+name: "statusId",
+inlineType: [0, ],
+namedType: $Schema.String,
+type: $Schema.String['codec']['_typeDecoded'] | null | undefined
+}
+/**
+* GraphQL {@link https://graphql.org/learn/schema/#input-types | input field} ↗ on type {@link $Schema.CustomerCreateInput}.
+*
+* The annual revenue generated by the customer.
+*
+* # Info
+*
+* | | |
+* | - | - |
+* | **Type** | {@link $Schema.Int} |
+* | **Kind** | {@link https://graphql.org/graphql-js/type/#scalars | ScalarStandard ↗} |
+* | **Parent** | {@link $Schema.CustomerCreateInput} |
+* | **Path** | `CustomerCreateInput.revenue` |
+* | **Nullability** | Optional |
+*/
+export interface revenue {
+kind: "InputField",
+name: "revenue",
+inlineType: [0, ],
+namedType: $Schema.Int,
+type: $Schema.Int['codec']['_typeDecoded'] | null | undefined
+}
+/**
+* GraphQL {@link https://graphql.org/learn/schema/#input-types | input field} ↗ on type {@link $Schema.CustomerCreateInput}.
+*
+* The size of the customer.
+*
+* # Info
+*
+* | | |
+* | - | - |
+* | **Type** | {@link $Schema.Int} |
+* | **Kind** | {@link https://graphql.org/graphql-js/type/#scalars | ScalarStandard ↗} |
+* | **Parent** | {@link $Schema.CustomerCreateInput} |
+* | **Path** | `CustomerCreateInput.size` |
+* | **Nullability** | Optional |
+*/
+export interface size {
+kind: "InputField",
+name: "size",
+inlineType: [0, ],
+namedType: $Schema.Int,
+type: $Schema.Int['codec']['_typeDecoded'] | null | undefined
+}
+/**
+* GraphQL {@link https://graphql.org/learn/schema/#input-types | input field} ↗ on type {@link $Schema.CustomerCreateInput}.
+*
+* The tier of the customer customer.
+*
+* # Info
+*
+* | | |
+* | - | - |
+* | **Type** | {@link $Schema.String} |
+* | **Kind** | {@link https://graphql.org/graphql-js/type/#scalars | ScalarStandard ↗} |
+* | **Parent** | {@link $Schema.CustomerCreateInput} |
+* | **Path** | `CustomerCreateInput.tierId` |
+* | **Nullability** | Optional |
+*/
+export interface tierId {
+kind: "InputField",
+name: "tierId",
+inlineType: [0, ],
+namedType: $Schema.String,
+type: $Schema.String['codec']['_typeDecoded'] | null | undefined
+}
+/**
+* GraphQL {@link https://graphql.org/learn/schema/#input-types | input field} ↗ on type {@link $Schema.CustomerCreateInput}.
+*
+* The URL of the customer's logo.
+*
+* # Info
+*
+* | | |
+* | - | - |
+* | **Type** | {@link $Schema.String} |
+* | **Kind** | {@link https://graphql.org/graphql-js/type/#scalars | ScalarStandard ↗} |
+* | **Parent** | {@link $Schema.CustomerCreateInput} |
+* | **Path** | `CustomerCreateInput.logoUrl` |
+* | **Nullability** | Optional |
+*/
+export interface logoUrl {
+kind: "InputField",
+name: "logoUrl",
+inlineType: [0, ],
+namedType: $Schema.String,
+type: $Schema.String['codec']['_typeDecoded'] | null | undefined
+}
+/**
+* GraphQL {@link https://graphql.org/learn/schema/#input-types | input field} ↗ on type {@link $Schema.CustomerCreateInput}.
+*
+* The main source of the customer, for customers with multiple sources. Must be one of externalIds.
+*
+* # Info
+*
+* | | |
+* | - | - |
+* | **Type** | {@link $Schema.String} |
+* | **Kind** | {@link https://graphql.org/graphql-js/type/#scalars | ScalarStandard ↗} |
+* | **Parent** | {@link $Schema.CustomerCreateInput} |
+* | **Path** | `CustomerCreateInput.mainSourceId` |
+* | **Nullability** | Optional |
+*/
+export interface mainSourceId {
+kind: "InputField",
+name: "mainSourceId",
+inlineType: [0, ],
+namedType: $Schema.String,
+type: $Schema.String['codec']['_typeDecoded'] | null | undefined
+}

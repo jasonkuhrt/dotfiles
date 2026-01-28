@@ -1,0 +1,7 @@
+export type Sunday = "Sunday"
+export type Monday = "Monday"
+export type Tuesday = "Tuesday"
+export type Wednesday = "Wednesday"
+export type Thursday = "Thursday"
+export type Friday = "Friday"
+export type Saturday = "Saturday"

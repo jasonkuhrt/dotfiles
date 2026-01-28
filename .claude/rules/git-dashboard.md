@@ -1,5 +1,6 @@
 ---
-globs: fish/modules/git-dashboard.fish
+paths:
+  - "fish/modules/git-dashboard.fish"
 ---
 
 # Git Dashboard

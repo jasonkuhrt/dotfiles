@@ -1,40 +1,10 @@
----
-name: writing-compact
-description: Use when reformatting verbose prose to scannable nested lists, reducing scrolling in docs, standardizing document formatting, or when asked to "make this compact"
----
-
-# Writing Compact
-
-Reformat documentation to nested list style optimized for scannability and information density.
-
-## CRITICAL
-
-### Optimize for Raw Markdown
-
-- Target audience reads `.md` files directly in editors/terminals, not rendered HTML
-- No `<details>` collapsibles, HTML tags, or render-dependent features
-- Structure must be scannable in plain text
-
-### Meaning is Sacred
-
-- Never lose information — preserve all facts, relationships, nuance
-- Succinct (same meaning, fewer words) is encouraged
-- Succinct ≠ lossy — tighter writing that preserves meaning is a win
-- Keep content DRY — reference instead of repeating
+# Compact Mode
 
 ## Use Cases
 
 - Reformatting research documents before flushing
 - Converting verbose documentation to scannable lists
 - Standardizing formatting across docs
-
-## Steps
-
-1. **Read** — read the target file
-2. **Check git status** — is file tracked with no unstaged changes?
-   - **Yes** → apply directly, user reviews via `git diff`
-   - **No** → show preview in fenced code block, wait for approval
-3. **Iterate** — adjust if user requests changes
 
 ## Examples
 
@@ -64,9 +34,50 @@ edit this file to change settings.
     3. Save and restart
 ```
 
-## Reference
+**Before** (sparse headings):
 
-### Decision Tree
+```markdown
+### Foo
+
+abc
+
+### Bar
+
+def
+```
+
+**After**:
+
+```markdown
+- **Foo:** abc
+- **Bar:** def
+```
+
+## Preserving Content
+
+**Compact mode is a formatting change, NOT a content reduction.** Nested lists support code blocks, tables, blockquotes, and sub-lists — all content from heading-based versions MUST appear in compact versions.
+
+````markdown
+<!-- WRONG: Lost the code block -->
+
+- **Setup:** Configure the service
+- **Logic:** Find users, delete records
+
+<!-- RIGHT: Code block preserved via nesting -->
+
+- **Setup:** Configure the service
+  ```typescript
+  const config = { ... };
+  ```
+- **Logic:**
+  1. Find users by pattern
+  2. Delete records
+  ```typescript
+  await prisma.user.deleteMany({ where: { email: { contains: pattern } } });
+  ```
+````
+
+## Decision Tree
 
 ```dot
 digraph decision {
@@ -92,7 +103,7 @@ digraph decision {
 }
 ```
 
-### Priority Order
+## Priority Order
 
 Never sacrifice a higher priority for a lower one:
 
@@ -101,9 +112,7 @@ Never sacrifice a higher priority for a lower one:
 3. **Information density** — less scrolling, easier to maintain context
 4. **Point-form skeleton** — content in nested lists, not prose paragraphs
 
-### Formatting Rules
-
-For Markdown syntax (tables, code blocks, lists), see `writing-markdown` skill.
+## Formatting Rules
 
 | Rule             | Guidance                                                          |
 | ---------------- | ----------------------------------------------------------------- |
@@ -120,14 +129,14 @@ For Markdown syntax (tables, code blocks, lists), see `writing-markdown` skill.
 | Columnar layout  | Side-by-side comparisons (tables) vs sequential prose             |
 | Glossary         | Define abbreviations at top in backticks, use short form after    |
 
-### Anti-patterns
+## Anti-patterns
 
 - `**Title:** desc` when siblings are multi-line — breaks consistency
 - Prose paragraphs between list items — keep everything in list structure
 - Multiple `##`/`###` headers
 - Removing context "to be concise" — that's lossy, not succinct
 
-### Inline Arrows vs Sublists
+## Inline Arrows vs Sublists
 
 **Hard to parse:**
 
@@ -145,6 +154,13 @@ For Markdown syntax (tables, code blocks, lists), see `writing-markdown` skill.
 ```
 
 Sequential info (3+ items) should be vertical with clear ordering, not horizontal arrows.
+
+## Rationale
+
+- Reduces vertical whitespace
+- Improves scannability
+- Keeps related information visually grouped
+- Better for reference documents, checklists, and specs
 
 ## Notes
 

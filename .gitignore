@@ -22,5 +22,8 @@ bookmarks/.sync-state.json
 # Claude transcripts (generated output)
 **/.claude/transcripts/
 
+# Claude skills tmp dir (runtime state, never committed)
+.clauding/
+
 # Node.js
 node_modules/

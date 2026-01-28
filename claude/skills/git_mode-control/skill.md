@@ -40,9 +40,16 @@ mode: commit-push
 
 ## Steps
 
-1. Read state file
+1. Read `<tmp>/git-mode.yaml`
 2. If missing or mode blocks action → AskUserQuestion with exact options below
-3. If persistent mode chosen → write to file, then proceed
+3. If persistent mode chosen → **create dir + write file using Write tool**, then proceed:
+   ```bash
+   mkdir -p .clauding/git_mode-control
+   ```
+   Then use Write tool to create `.clauding/git_mode-control/git-mode.yaml` with content:
+   ```yaml
+   mode: <chosen-mode>
+   ```
 4. If one-time option chosen → proceed without writing
 
 ## AskUserQuestion options

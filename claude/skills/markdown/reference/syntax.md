@@ -1,9 +1,4 @@
----
-name: writing-markdown
-description: Applies correct Markdown syntax when writing tables, code blocks, and other structures that have non-obvious requirements.
----
-
-# Writing Markdown
+# Syntax Pitfalls
 
 Common Markdown syntax pitfalls to avoid.
 

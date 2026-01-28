@@ -37,6 +37,7 @@ Use `snake_case` for multi-word: `user_profile`, `validate_credentials`.
 
 ## References
 
+- `references/style.md` - default style guide (node IDs, edge labels, subgraphs, formatting)
 - `references/syntax.md` - flowcharts, sequences, state, class, ER, Gantt
 - `references/directives.md` - accTitle, accDescr, %%{init}%%, themes
 

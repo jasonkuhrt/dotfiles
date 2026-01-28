@@ -181,6 +181,53 @@ Update this skill's setup steps and commands to match current beads, then test t
 
 ---
 
+## Working with Beads
+
+Practical patterns for getting value from beads once set up. Sourced from community experience.
+
+### Workflow Patterns
+
+- **Issue-first** (planned) — create issue with acceptance criteria, then tell CC "work on `bd-xxx`". Best for features, known scope.
+- **Prompt-first** (reactive) — describe a problem, CC investigates and files issues as it plans. Best for bugs, exploration, unknown scope.
+- **Hybrid** — write a detailed spec/design doc, then ask CC to decompose it into a beads epic with tasks. Spec provides "why", beads provides "what's next".
+
+### Session Discipline
+
+- **Start** — `bd ready` → pick issue → `bd update <id> --status=in_progress`
+- **End** — close completed issues → `bd sync` → `git push`
+- **"Land the plane"** — work isn't done until `git push` succeeds. Run quality gates, file discovered work, close issues, sync, push.
+- **Kill sessions early** — if CC starts forgetting beads mid-session, end it. Fresh session > fighting context rot. Yegge's guidance: "kill agents after completing each issue."
+
+### Task Granularity
+
+- Anything taking **>2 minutes** of work → separate issue
+- Shorter sessions with focused issues > long sessions with many issues
+- Discovered work → file with `bd create`, use `bd dep add` if it blocks current work, otherwise continue
+
+### Closures Preserve Context Across Sessions
+
+Use `bd close --reason="..."` to capture what changed from the original spec. Future sessions follow dependency links to read the *evolved* conclusion, not the stale description. See [architecture.md § Closure Semantics](architecture.md#closure-semantics) for the full mental model and example.
+
+### Avoiding Backlog Bloat
+
+- Keep `bd ready` crisp — only actionable work for this week
+- Distant backlog belongs elsewhere (GitHub Issues, Linear, markdown)
+- Import to beads when work moves to "now"
+- P4 (backlog) priority exists but is a holding pen, not a planning tool
+
+### Context Rot Management
+
+- CLAUDE.md/AGENTS.md instructions fade over long sessions
+- Beads hooks (`bd prime`) re-inject context at session start and compaction — this is the primary defense
+- If CC stops checking beads: end session, start fresh
+- Per-issue notes (`bd update <id> --notes="..."`) survive context loss better than conversation
+
+---
+
+## Architecture
+
+See [architecture.md](architecture.md) for storage model (SQLite + JSONL dual-store), sync mechanics, conflict resolution, and closure semantics.
+
 ## Beads vs CC Tasks
 
 See [comparison.md](comparison.md) for when to use which.

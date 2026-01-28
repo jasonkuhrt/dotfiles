@@ -26,9 +26,11 @@ TaskCreate:
   activeForm: "Working on <bead title>"
 ```
 
-### 3. Spawn subagents
+If the selected beads have dependency relationships (`bd show` shows BLOCKS/BLOCKED BY), mirror those with `TaskUpdate` using `addBlockedBy`. This lets CC's task system track execution ordering — only spawn agents for tasks whose `blockedBy` are all completed.
 
-Launch all agents in a **single message** (parallel) using `Task(<agent_type>, run_in_background: true)`. Choose the agent type that best fits each bead's work (e.g. `general-purpose` for implementation, `Explore` for research, `Bash` for script-heavy tasks).
+### 3. Execute
+
+Work through the task list, spawning parallel background agents via `Task(<agent_type>, run_in_background: true)` for ready tasks.
 
 Prompt template per agent:
 
@@ -54,15 +56,14 @@ Only modify files relevant to this bead. Other agents are running concurrently o
 
 ### 4. Wrap up
 
-As each agent completes, TaskUpdate the corresponding task to `completed`.
-
-After all agents finish:
+After all tasks are completed:
 
 1. `bd sync`
 2. Commit the beads state: `git add .beads/issues.jsonl && git commit -m "chore(beads): sync"`
 
 ## Rules
 
-- **Non-overlapping files required.** Parallel commits are safe only when agents touch disjoint file sets. If overlap is detected, fall back to sequential.
-- **Agents self-commit.** Each agent commits its own work via `git commit -- <paths>` which uses `--only` mode — atomic, no staging area cross-contamination. See `git:parallel-commit` skill.
-- **Close reason captures context.** The `--reason` preserves what happened for future sessions reading dependency chains.
+* __Non-overlapping files required.__ Parallel commits are safe only when agents touch disjoint file sets. If overlap is detected, fall back to sequential.
+* __Agents self-commit.__ Each agent commits its own work via `git commit -- <paths>` which uses `--only` mode — atomic, no staging area cross-contamination. See `git:parallel-commit` skill.
+* __Close reason captures context.__ The `--reason` preserves what happened for future sessions reading dependency chains.
+* __Bead deps → task deps.__ When beads have dependency relationships, mirror them with `addBlockedBy` on CC tasks. CC's task list system handles the rest.

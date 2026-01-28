@@ -3,8 +3,9 @@
 aws/credentials
 migrations/.marker
 
-# Claude Code runtime settings (convenience symlink created by sync)
+# Claude Code runtime (convenience symlinks created by sync)
 claude/settings.json
+claude/tasks
 
 # macOS
 .DS_Store

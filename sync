@@ -65,6 +65,15 @@ else
     ln -s "$HOME/.claude/settings.json" "$HERE/claude/settings.json"
     task "claude/settings.json ${DIM}← ~/.claude/settings.json (convenience)${RESET}"
 fi
+# Convenience symlinks: view runtime dirs from dotfiles repo (not synced, just browsing)
+if [ -L "$HERE/claude/tasks" ]; then
+    skip "claude/tasks (convenience symlink)"
+elif [ -e "$HERE/claude/tasks" ]; then
+    warn "claude/tasks exists but is not a symlink - remove to create convenience link"
+else
+    ln -s "$HOME/.claude/tasks" "$HERE/claude/tasks"
+    task "claude/tasks ${DIM}← ~/.claude/tasks (convenience)${RESET}"
+fi
 link_subdir "$HERE/claude/commands" "$HOME/.claude/commands" "claude/commands"
 link_subdir "$HERE/claude/rules" "$HOME/.claude/rules" "claude/rules"
 link_subdir "$HERE/claude/skills" "$HOME/.claude/skills" "claude/skills"
@@ -92,6 +101,12 @@ header "Lazygit"
 
 ensure_real_dir "$HOME/.config/lazygit" "$HERE/lazygit"
 link_file "$HERE/lazygit/config.yml" "$HOME/.config/lazygit/config.yml" "lazygit/config.yml"
+
+# ─────────────────────────────────────────────────────────────
+header "Perles"
+
+ensure_real_dir "$HOME/.config/perles" "$HERE/perles"
+link_file "$HERE/perles/config.yaml" "$HOME/.config/perles/config.yaml" "perles/config.yaml"
 
 # ─────────────────────────────────────────────────────────────
 header "tmux"

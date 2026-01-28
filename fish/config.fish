@@ -102,6 +102,18 @@ abbr -a tf terraform
 abbr -a p pnpm
 abbr -a c claude
 abbr -a cx 'claude --print'
+abbr -a clp 'claude plugin'
+abbr -a clpi 'claude plugin install'
+abbr -a clpr 'claude plugin uninstall'
+abbr -a clpl 'claude plugin list'
+abbr -a clpe 'claude plugin enable'
+abbr -a clpd 'claude plugin disable'
+abbr -a clpu 'claude plugin update'
+abbr -a clpm 'claude plugin marketplace'
+abbr -a clpma 'claude plugin marketplace add'
+abbr -a clpml 'claude plugin marketplace list'
+abbr -a clpmu 'claude plugin marketplace update'
+abbr -a clpmr 'claude plugin marketplace remove'
 abbr -a l libra
 
 # Modern Unix replacements (only expand in interactive mode, not scripts)

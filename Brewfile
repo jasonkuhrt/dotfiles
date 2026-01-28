@@ -4,6 +4,7 @@
 tap "electrikmilk/cherri"
 tap "planetscale/tap"
 tap "polidog/kilar"
+tap "zjrosen/perles"
 
 # ═══════════════════════════════════════════════════════════
 # CLI Tools
@@ -50,6 +51,7 @@ brew "direnv"        # per-directory env vars
 brew "shellcheck"    # shell script linter
 brew "shfmt"         # shell formatter
 brew "gum"           # shell script UI components
+brew "just"          # command runner (modern make alternative)
 brew "up"            # interactive piping (Ultimate Plumber)
 
 # Apple Shortcuts
@@ -61,6 +63,7 @@ brew "gh"            # GitHub CLI
 brew "git-delta"     # better diffs (also in gitconfig)
 brew "git-crypt"     # transparent file encryption
 brew "lazygit"       # terminal UI for git
+brew "perles"        # terminal UI for beads issue tracking (kanban, BQL search)
 brew "gitmux"        # git status in tmux status bar
 brew "tmux"          # terminal multiplexer
 brew "pre-commit"    # git hooks framework

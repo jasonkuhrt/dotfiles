@@ -8,6 +8,7 @@ Quick reference for all the tools installed via Brewfile. Forget what something 
 | Data     | `jq`         | JSON processor (query, transform)     | `cat data.json \| jq '.users[0].name'`         |
 | Data     | `yj`         | Convert between YAML/JSON/TOML        | `yj < config.yaml > config.json`               |
 | Dev      | `deno`       | Secure JS/TS runtime                  | `deno run script.ts`                           |
+| Dev      | `just`       | Command runner (modern make)          | `just --list`, `just sync`                     |
 | Dev      | `dprint`     | Fast code formatter                   | `dprint fmt`                                   |
 | Dev      | `hyperfine`  | Benchmark CLI commands                | `hyperfine 'fd . -e ts' 'find . -name "*.ts"'` |
 | Dev      | `neovim`     | Editor                                | `nvim file.ts`                                 |

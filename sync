@@ -96,6 +96,12 @@ ensure_real_dir "$HOME/.config/ghostty" "$HERE/ghostty"
 link_file "$HERE/ghostty/config" "$HOME/.config/ghostty/config" "ghostty/config"
 
 # ─────────────────────────────────────────────────────────────
+header "Serena"
+
+ensure_real_dir "$HOME/.serena" "$HERE/serena"
+link_file "$HERE/serena/serena_config.yml" "$HOME/.serena/serena_config.yml" "serena/serena_config.yml"
+
+# ─────────────────────────────────────────────────────────────
 header "Lazygit"
 
 ensure_real_dir "$HOME/.config/lazygit" "$HERE/lazygit"

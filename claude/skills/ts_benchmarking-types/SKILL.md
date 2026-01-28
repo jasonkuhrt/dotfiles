@@ -1,5 +1,5 @@
 ---
-name: benchmarking-types
+name: ts:benchmarking-types
 description: Guidance for measuring TypeScript type instantiations using @ark/attest. Use when optimizing type-level performance, writing type benchmarks, or debugging slow type evaluation.
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: exploring-packages
+name: ts:exploring-packages
 description: Explore npm package source code locally. Use when needing to understand a library's API, types, or implementation.
 ---
 

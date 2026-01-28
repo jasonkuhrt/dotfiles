@@ -1,5 +1,5 @@
 ---
-name: domain-modeling
+name: ts:domain-modeling
 description: Creates structured domain documentation with anatomy diagrams, entity schemas, and operation specs. Use when designing systems, after brainstorming, or documenting existing architecture.
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: formatting-conditional-types
+name: ts:formatting-conditional-types
 description: Formatting rules for TypeScript conditional types. Use when writing complex conditional types to ensure debuggable, maintainable formatting with proper alignment.
 ---
 

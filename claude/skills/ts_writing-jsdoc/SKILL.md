@@ -1,5 +1,5 @@
 ---
-name: writing-jsdoc
+name: ts:writing-jsdoc
 description: This skill should be used when the user asks to "add JSDoc", "document this function", "write JSDoc comments", "link to a type", "use @link tag", "hyperlink in JSDoc", "reference external service in docs", or needs guidance on JSDoc syntax, clickable type references, or TypeScript-optimized documentation.
 ---
 

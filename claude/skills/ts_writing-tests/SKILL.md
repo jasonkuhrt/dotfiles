@@ -1,5 +1,5 @@
 ---
-name: writing-tests
+name: ts:writing-tests
 description: TypeScript testing conventions and TDD practices. Use when writing tests, fixing bugs, or organizing test files.
 ---
 

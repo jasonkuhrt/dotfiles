@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "repository-state.schema.json",
+  "title": "RepositoryState",
+  "description": "Output from scripts/gather.sh",
+  "type": "object",
+  "required": [
+    "trunk",
+    "startingDir",
+    "mainWorktree",
+    "currentBranch",
+    "isDirty",
+    "ghAvailable",
+    "worktrees",
+    "mainWorktreeBranches",
+    "tagConflicts"
+  ],
+  "properties": {
+    "trunk": { "type": "string", "description": "e.g., 'develop', 'main'" },
+    "startingDir": {
+      "type": "string",
+      "description": "where user invoked git-sync from"
+    },
+    "mainWorktree": {
+      "type": "string",
+      "description": "path to main worktree (the original clone)"
+    },
+    "currentBranch": {
+      "type": "string",
+      "description": "branch main worktree is on"
+    },
+    "isDirty": { "type": "boolean", "description": "has uncommitted changes" },
+    "ghAvailable": {
+      "type": "boolean",
+      "description": "gh CLI available for PR status"
+    },
+    "worktrees": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/WorktreeInfo" }
+    },
+    "mainWorktreeBranches": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/BranchInfo" }
+    },
+    "tagConflicts": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/TagConflict" }
+    }
+  },
+  "definitions": {
+    "WorktreeInfo": {
+      "type": "object",
+      "required": ["path", "branch", "midRebase", "midMerge", "unpushedCount"],
+      "properties": {
+        "path": { "type": "string" },
+        "branch": { "type": "string" },
+        "midRebase": { "type": "boolean" },
+        "midMerge": { "type": "boolean" },
+        "unpushedCount": { "type": "integer" },
+        "prState": { "type": "string", "enum": ["OPEN", "MERGED", "CLOSED"] }
+      }
+    },
+    "BranchInfo": {
+      "type": "object",
+      "required": ["branch", "unpushedCount"],
+      "properties": {
+        "branch": { "type": "string" },
+        "unpushedCount": { "type": "integer" },
+        "prState": { "type": "string", "enum": ["OPEN", "MERGED", "CLOSED"] }
+      }
+    },
+    "TagConflict": {
+      "type": "object",
+      "required": ["tag", "localCommit", "remoteCommit"],
+      "properties": {
+        "tag": { "type": "string" },
+        "localCommit": { "type": "string" },
+        "remoteCommit": { "type": "string" }
+      }
+    }
+  }
+}

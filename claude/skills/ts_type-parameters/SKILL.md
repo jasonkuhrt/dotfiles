@@ -1,5 +1,5 @@
 ---
-name: type-parameters
+name: ts:type-parameters
 description: Type parameter naming conventions for personal TypeScript projects. Triggers on generic type/function creation, type-level code, or when asking about TypeScript generics.
 ---
 

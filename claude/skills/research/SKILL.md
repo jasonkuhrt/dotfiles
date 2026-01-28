@@ -36,7 +36,7 @@ The script is NOT the complete solution. You are the orchestrator.
 - **Create new file**
 
   ```bash
-  ~/.claude/scripts/research.sh new <topic>
+  ~/.claude/skills/research/research.sh new <topic>
   ```
 
   Then: apply `writing-compact` if adding content
@@ -44,7 +44,7 @@ The script is NOT the complete solution. You are the orchestrator.
 - **Import existing file**
 
   ```bash
-  ~/.claude/scripts/research.sh import <file> [topic]
+  ~/.claude/skills/research/research.sh import <file> [topic]
   ```
 
   Script auto-enriches GH links. Then: apply `writing-compact`
@@ -52,25 +52,25 @@ The script is NOT the complete solution. You are the orchestrator.
 - **Sort/renumber**
 
   ```bash
-  ~/.claude/scripts/research.sh sort
+  ~/.claude/skills/research/research.sh sort
   ```
 
 - **Archive old files**
 
   ```bash
-  ~/.claude/scripts/research.sh cleanup
+  ~/.claude/skills/research/research.sh cleanup
   ```
 
 - **List files**
 
   ```bash
-  ~/.claude/scripts/research.sh list
+  ~/.claude/skills/research/research.sh list
   ```
 
 - **Enrich GitHub links**
 
   ```bash
-  ~/.claude/scripts/research.sh format-gh-links <target>
+  ~/.claude/skills/research/research.sh format-gh-links <target>
   # Targets: current, all, diff, all-including-old, <file>...
   ```
 
@@ -163,7 +163,7 @@ Triggers: "format research", "enrich research links"
 1. **Enrich GitHub links** (issues, PRs, discussions)
 
    ```bash
-   ~/.claude/scripts/research.sh format-gh-links <target>
+   ~/.claude/skills/research/research.sh format-gh-links <target>
    # Targets: current, all, diff, all-including-old, <file>...
    ```
 

@@ -74,15 +74,15 @@ task-open *args:
 
 # List current research files
 research-list:
-    ./claude/scripts/research.sh list
+    ./claude/skills/research/research.sh list
 
 # Create new research file
 research-new topic:
-    ./claude/scripts/research.sh new {{ topic }}
+    ./claude/skills/research/research.sh new {{ topic }}
 
 # Archive research files older than 30 days
 research-cleanup:
-    ./claude/scripts/research.sh cleanup
+    ./claude/skills/research/research.sh cleanup
 
 # ─────────────────────────────────────────────────────────
 # Edit

@@ -46,7 +46,7 @@ Work through an epic one bead at a time with full chain awareness. Additive to b
 | `bd graph <epic> --compact`             | Dependency graph with layers and status icons — show to user for orientation               |
 | `bd show <id>`                          | Full bead details (body, acceptance, design, notes)                                        |
 | `bd comments <id>`                      | Comments on a bead                                                                         |
-| `bd update <id> --claim`                | **Atomic claim**: sets assignee + in_progress; fails if already claimed by another agent   |
+| `bd update <id> --claim --actor "u/s"`  | **Atomic claim** with session identity; fails if already claimed                           |
 | `bd close <id> --reason "..."`          | Close with result                                                                          |
 | `bd comments add <id> "..."`            | Add session learnings                                                                      |
 
@@ -147,10 +147,12 @@ You don't need to trace the entire chain — the immediate predecessor is usuall
 
 ```
 bd show <id>            # Full body, acceptance, design, notes
-bd update <id> --claim  # Atomic: sets assignee + in_progress; fails if already claimed
+bd update <id> --claim --actor "<user>/<session-id-prefix>"
 ```
 
-Use `--claim`, NOT `--status in_progress`. The `--claim` flag is an atomic operation that sets both the assignee (to your actor identity) and status (to in_progress) in one step. If another agent already claimed the bead, it fails — preventing two agents from working on the same bead. If the claim fails, go back to step 4 and pick a different bead.
+**Claim identity:** Use `--actor` with the format `<git user.name>/<first 8 chars of session ID>`. Your session ID is the UUID from the session start message (the `--resume` value, e.g. `e65f21da-49c5-4bf9-8a2f-dc723444d3af`). Take the first 8 characters as the prefix. Example: `--actor "Jason Kuhrt/e65f21da"`.
+
+Use `--claim`, NOT `--status in_progress`. The `--claim` flag is an atomic operation that sets both the assignee (to the actor value) and status (to in_progress) in one step. If another agent already claimed the bead, it fails — preventing two agents from working on the same bead. If the claim fails, go back to step 4 and pick a different bead.
 
 Cross-reference the bead body against the terminology/design docs. If the bead uses stale terms (written before a terminology audit, for example), use the design docs as the authority.
 
@@ -218,4 +220,4 @@ git push
 - This skill layers on top of the beads session protocol. It does not replace `bd ready`, `bd sync`, or the session close checklist — it adds chain tracing and plan integrity checking.
 - Git commit/push permissions come from the beads session protocol, not this skill's `allowed-tools`.
 - The context script is zero-token when the agent reads the stdout. The script source is never loaded.
-- For parallel agent sessions (1-3 concurrent), each agent runs its own `flo:next` entry. The `--claim` flag is the concurrency primitive — it atomically sets assignee + status and fails if another agent already claimed the bead. The assignee value comes from `$BD_ACTOR`, git `user.name`, or `$USER` (in that precedence). For multiple agents running as the same OS user, set `BD_ACTOR` to a unique session identifier per agent.
+- For parallel agent sessions (1-3 concurrent), each agent runs its own `flo:next` entry. The `--claim --actor` flag is the concurrency primitive — it atomically sets assignee + status and fails if another agent already claimed the bead. Each agent uses its session ID (from the conversation start message) to form a unique actor identity: `<git user.name>/<session-id-first-8-chars>`.

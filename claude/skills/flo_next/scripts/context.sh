@@ -85,14 +85,29 @@ if [[ "$hot" == "true" ]]; then
   echo
   bd graph "$epic_id" --compact
 
-  # Ready (authoritative — only unblocked open beads)
+  # Ready + unclaimed (selectable)
   echo
   printf '─%.0s' {1..40}
   echo
-  echo "READY (selectable)"
+  echo "READY (selectable — unclaimed, unblocked)"
   printf '─%.0s' {1..40}
   echo
-  bd ready --parent "$epic_id" --limit 0
+  bd ready --unassigned --parent "$epic_id" --limit 0
+
+  # Claimed (not selectable — another agent is working on it)
+  claimed=$(bd list --parent "$epic_id" --status in_progress --json --limit 0 2>/dev/null \
+    | jq '[.[] | select(.assignee != null and .assignee != "")]')
+  claimed_count=$(echo "$claimed" | jq 'length')
+
+  if [[ "$claimed_count" != "0" ]]; then
+    echo
+    printf '─%.0s' {1..40}
+    echo
+    echo "CLAIMED (not selectable — being worked on)"
+    printf '─%.0s' {1..40}
+    echo
+    echo "$claimed" | jq -r '.[] | "  \u25d0 \(.id): \(.title) [claimed by \(.assignee)]"'
+  fi
 
   # Blocked
   echo
@@ -102,20 +117,6 @@ if [[ "$hot" == "true" ]]; then
   printf '─%.0s' {1..40}
   echo
   bd blocked --parent "$epic_id"
-
-  # In-progress (not selectable — being worked on)
-  in_progress=$(bd list --parent "$epic_id" --status in_progress --json --limit 0 2>/dev/null)
-  count=$(echo "$in_progress" | jq 'length')
-
-  if [[ "$count" != "0" ]]; then
-    echo
-    printf '─%.0s' {1..40}
-    echo
-    echo "IN PROGRESS (not selectable)"
-    printf '─%.0s' {1..40}
-    echo
-    echo "$in_progress" | jq -r '.[] | "  \u25d0 \(.id): \(.title) [\(.assignee // "unassigned")]"'
-  fi
 
   echo
   exit 0
@@ -196,17 +197,32 @@ echo
 
 bd graph "$epic_id" --compact
 
-# 7. Ready (authoritative — only unblocked open beads)
+# 7. Ready + unclaimed (selectable)
 echo
 printf '─%.0s' {1..40}
 echo
-echo "READY (selectable)"
+echo "READY (selectable — unclaimed, unblocked)"
 printf '─%.0s' {1..40}
 echo
 
-bd ready --parent "$epic_id" --limit 0
+bd ready --unassigned --parent "$epic_id" --limit 0
 
-# 8. Blocked
+# 8. Claimed (not selectable — another agent is working on it)
+claimed=$(bd list --parent "$epic_id" --status in_progress --json --limit 0 2>/dev/null \
+  | jq '[.[] | select(.assignee != null and .assignee != "")]')
+claimed_count=$(echo "$claimed" | jq 'length')
+
+if [[ "$claimed_count" != "0" ]]; then
+  echo
+  printf '─%.0s' {1..40}
+  echo
+  echo "CLAIMED (not selectable — being worked on)"
+  printf '─%.0s' {1..40}
+  echo
+  echo "$claimed" | jq -r '.[] | "  \u25d0 \(.id): \(.title) [claimed by \(.assignee)]"'
+fi
+
+# 9. Blocked
 echo
 printf '─%.0s' {1..40}
 echo
@@ -215,19 +231,5 @@ printf '─%.0s' {1..40}
 echo
 
 bd blocked --parent "$epic_id"
-
-# 9. In-progress (not selectable — being worked on)
-in_progress=$(bd list --parent "$epic_id" --status in_progress --json --limit 0 2>/dev/null)
-count=$(echo "$in_progress" | jq 'length')
-
-if [[ "$count" != "0" ]]; then
-  echo
-  printf '─%.0s' {1..40}
-  echo
-  echo "IN PROGRESS (not selectable)"
-  printf '─%.0s' {1..40}
-  echo
-  echo "$in_progress" | jq -r '.[] | "  \u25d0 \(.id): \(.title) [\(.assignee // "unassigned")]"'
-fi
 
 echo

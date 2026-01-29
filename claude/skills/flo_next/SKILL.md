@@ -39,16 +39,16 @@ Work through an epic one bead at a time with full chain awareness. Additive to b
 
 ## Key `bd` Commands
 
-| Command                               | Purpose                                                                               |
-| ------------------------------------- | ------------------------------------------------------------------------------------- |
-| `bd ready --parent <epic>`            | **Authoritative** list of unblocked, open beads — the ONLY source for selectable work |
-| `bd blocked --parent <epic>`          | Blocked beads with their blockers — informational only                                |
-| `bd graph <epic> --compact`           | Dependency graph with layers and status icons — show to user for orientation          |
-| `bd show <id>`                        | Full bead details (body, acceptance, design, notes)                                   |
-| `bd comments <id>`                    | Comments on a bead                                                                    |
-| `bd update <id> --status in_progress` | Claim a bead                                                                          |
-| `bd close <id> --reason "..."`        | Close with result                                                                     |
-| `bd comments add <id> "..."`          | Add session learnings                                                                 |
+| Command                                 | Purpose                                                                                    |
+| --------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `bd ready --unassigned --parent <epic>` | **Authoritative** list of unclaimed, unblocked beads — the ONLY source for selectable work |
+| `bd blocked --parent <epic>`            | Blocked beads with their blockers — informational only                                     |
+| `bd graph <epic> --compact`             | Dependency graph with layers and status icons — show to user for orientation               |
+| `bd show <id>`                          | Full bead details (body, acceptance, design, notes)                                        |
+| `bd comments <id>`                      | Comments on a bead                                                                         |
+| `bd update <id> --claim`                | **Atomic claim**: sets assignee + in_progress; fails if already claimed by another agent   |
+| `bd close <id> --reason "..."`          | Close with result                                                                          |
+| `bd comments add <id> "..."`            | Add session learnings                                                                      |
 
 ## CRITICAL — Downstream Plan Integrity
 
@@ -121,15 +121,15 @@ Present the epic state to the user:
 
 1. **Show the dependency graph** from the context dump (`bd graph` output) — this gives the user a visual map of the epic's structure and progress
 2. **Show the ready, blocked, and in-progress sections** from the context dump
-3. **Use AskUserQuestion with ONLY ready beads as options** (up to 4, priority-sorted). The READY section of the context dump (sourced from `bd ready --parent`) is the **sole authority** for what appears as a selectable option.
-4. If no ready beads: report to user — either all are blocked (show the blocked list with blockers) or the epic is complete
+3. **Use AskUserQuestion with ONLY ready beads as options** (up to 4, priority-sorted). The READY section of the context dump (sourced from `bd ready --unassigned --parent`) is the **sole authority** for what appears as a selectable option.
+4. If no ready beads: report to user — either all are blocked (show blockers), all are claimed (show who claimed them), or the epic is complete
 
-**NEVER offer blocked or in-progress beads as AskUserQuestion options.** They are shown for situational awareness only:
+**NEVER offer claimed, blocked, or in-progress beads as AskUserQuestion options.** They are shown for situational awareness only:
 
+- **Claimed** beads have an assignee and are being worked on by another agent session
 - **Blocked** beads have unsatisfied dependencies — they cannot be worked on yet
-- **In-progress** beads are being worked on by another session — claiming them causes conflicts
 
-If the user explicitly asks to override (e.g., work on a blocked bead anyway), that's their call — but the default presentation must only offer ready work.
+If the user explicitly asks to override (e.g., work on a claimed or blocked bead anyway), that's their call — but the default presentation must only offer unclaimed, unblocked work.
 
 ### 5. Trace the chain
 
@@ -147,8 +147,10 @@ You don't need to trace the entire chain — the immediate predecessor is usuall
 
 ```
 bd show <id>            # Full body, acceptance, design, notes
-bd update <id> --status in_progress
+bd update <id> --claim  # Atomic: sets assignee + in_progress; fails if already claimed
 ```
+
+Use `--claim`, NOT `--status in_progress`. The `--claim` flag is an atomic operation that sets both the assignee (to your actor identity) and status (to in_progress) in one step. If another agent already claimed the bead, it fails — preventing two agents from working on the same bead. If the claim fails, go back to step 4 and pick a different bead.
 
 Cross-reference the bead body against the terminology/design docs. If the bead uses stale terms (written before a terminology audit, for example), use the design docs as the authority.
 
@@ -198,7 +200,7 @@ git push
 
 | Mistake                                  | Fix                                                                 |
 | ---------------------------------------- | ------------------------------------------------------------------- |
-| Offering blocked/in-progress as options  | ONLY `bd ready` output goes into AskUserQuestion options            |
+| Offering claimed/blocked as options      | ONLY `bd ready --unassigned` output goes into AskUserQuestion       |
 | Skipping the dependency graph            | Always show `bd graph` output — the user needs the visual map       |
 | Hand-rolling a ready list                | Use `bd ready --parent` — it is authoritative; never reimplement it |
 | Assuming hot path = skip chain trace     | Other agents may have closed beads — check for new predecessors     |
@@ -206,7 +208,7 @@ git push
 | Skipping chain trace                     | Always read predecessor's close reason before starting              |
 | Closing without downstream check         | The CRITICAL section is non-negotiable — do it every time           |
 | Using stale terminology                  | Design docs are authority over bead body text                       |
-| Not claiming with `in_progress`          | Another agent may grab the same bead                                |
+| Using `--status in_progress` to claim    | Use `--claim` — it's atomic and sets assignee; `--status` does not  |
 | Ignoring epic comments                   | Epic comments carry session learnings — read them at entry          |
 | Reading only close_reason on predecessor | Also check comments, design, notes for implementation decisions     |
 | Skipping bead selection with user        | Always present options via AskUserQuestion — user chooses           |
@@ -216,4 +218,4 @@ git push
 - This skill layers on top of the beads session protocol. It does not replace `bd ready`, `bd sync`, or the session close checklist — it adds chain tracing and plan integrity checking.
 - Git commit/push permissions come from the beads session protocol, not this skill's `allowed-tools`.
 - The context script is zero-token when the agent reads the stdout. The script source is never loaded.
-- For parallel agent sessions (1-3 concurrent), each agent runs its own `flo:next` entry. The `in_progress` status prevents two agents from claiming the same bead.
+- For parallel agent sessions (1-3 concurrent), each agent runs its own `flo:next` entry. The `--claim` flag is the concurrency primitive — it atomically sets assignee + status and fails if another agent already claimed the bead. The assignee value comes from `$BD_ACTOR`, git `user.name`, or `$USER` (in that precedence). For multiple agents running as the same OS user, set `BD_ACTOR` to a unique session identifier per agent.

@@ -1,6 +1,6 @@
 ---
 name: cc:core
-description: Use when asking how Claude Code works internally, managing tasks (TaskCreate/TaskUpdate), searching session history, getting session IDs, debugging Chrome extension issues, or forking parallel agents.
+description: Use when asking how Claude Code works internally, investigating CC behavior or architecture, managing tasks (TaskCreate/TaskUpdate/TaskList/TaskGet), searching or analyzing session history, understanding CC data storage or file locations, debugging Chrome extension issues, forking parallel agents, or diagnosing any CC internal mechanism.
 ---
 
 ## Topics

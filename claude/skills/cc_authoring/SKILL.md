@@ -1,6 +1,6 @@
 ---
 name: cc:authoring
-description: Use when creating or troubleshooting Claude Code skills, hooks, rules, markers, or AskUserQuestion calls. Covers platform gotchas, frontmatter config, progressive disclosure patterns, and known limitations.
+description: Use when writing, editing, reviewing, debugging, or iterating on Claude Code skills, hooks, rules, or markers. Also when a skill isn't triggering, hook isn't firing, frontmatter has errors, description is too long, output is collapsing, AskUserQuestion misbehaves, or any CC authoring artifact needs work.
 ---
 
 ## Topics

@@ -1,5 +1,5 @@
 ---
-name: reviewing-skills
+name: skills:doctor
 description: Use when asked to "review skill", "check skill", "evaluate skill", "assess skill", or any skill quality check.
 ---
 

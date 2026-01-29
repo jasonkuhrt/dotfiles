@@ -1,0 +1,5 @@
+# LSD configuration
+# https://github.com/lsd-rs/lsd#config-file-content
+
+# OSC 8 hyperlinks: makes file paths clickable in supported terminals
+hyperlink: auto

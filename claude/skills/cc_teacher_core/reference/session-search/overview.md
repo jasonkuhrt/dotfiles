@@ -2,7 +2,7 @@
 
 Search and analyze Claude Code conversation history.
 
-**For storage internals** (sessions-index.json, /rename scope, path encoding): See `cc:core`, Internals topic.
+**For storage internals** (sessions-index.json, /rename scope, path encoding): See `cc:teacher-core`, Internals topic.
 
 ## Quick Reference
 
@@ -115,5 +115,5 @@ jq -rs '[.[].timestamp | select(.)] | sort | .[0], .[-1]' file.jsonl
 
 | Topic | Location |
 |-------|----------|
-| Storage internals, /rename | `cc:core`, Internals |
+| Storage internals, /rename | `cc:teacher-core`, Internals |
 | Permission config | `cc:ecosystem`, Managing Permissions |

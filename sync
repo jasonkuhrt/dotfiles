@@ -188,6 +188,12 @@ link_file "$HERE/starship/starship.toml" "$HOME/.config/starship.toml" "starship
 mkdir -p "$HOME/.config/bat"
 link_file "$HERE/bat/config" "$HOME/.config/bat/config" "bat/config"
 
+mkdir -p "$HOME/.config/ripgrep"
+link_file "$HERE/ripgrep/config" "$HOME/.config/ripgrep/config" "ripgrep/config"
+
+mkdir -p "$HOME/.config/lsd"
+link_file "$HERE/lsd/config.yaml" "$HOME/.config/lsd/config.yaml" "lsd/config.yaml"
+
 mkdir -p "$HOME/.config/gh"
 link_file "$HERE/gh/config.yml" "$HOME/.config/gh/config.yml" "gh/config.yml"
 

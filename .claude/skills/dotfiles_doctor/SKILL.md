@@ -1,5 +1,5 @@
 ---
-name: audit
+name: dotfiles:doctor
 description: Audit dotfiles setup for improvements, obsolete workarounds, and optimization opportunities. Use when user runs /audit or asks to audit their dotfiles configuration.
 arg: "[scope]"
 ---

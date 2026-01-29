@@ -22,6 +22,7 @@ test -f ~/.config/fish/config.secrets.fish && source ~/.config/fish/config.secre
 
 set --export EDITOR nvim
 set --export XDG_CONFIG_HOME ~/.config
+set --export RIPGREP_CONFIG_PATH ~/.config/ripgrep/config
 
 # Claude Code: reduce buffer from 45k→35k for ~10k more effective context
 # Trade-off: max response length 22k (vs 32k default)
@@ -121,7 +122,7 @@ abbr -a ls lsd
 abbr -a cat bat
 abbr -a top btm
 abbr -a htop btm
-abbr -a find fd
+abbr -a find 'fd --hyperlink auto'
 abbr -a grep rg
 abbr -a du dust
 abbr -a df duf
@@ -158,6 +159,9 @@ alias gi="gh issue"
 alias gic="gh issue create"
 
 # Other
+# OSC 8 hyperlinks (tree has no config file; no auto mode, just on/off)
+alias tree='tree --hyperlink'
+
 alias ..="cd .."
 alias grepp="pcregrep"
 alias pnx="pnpm nx"

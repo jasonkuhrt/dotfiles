@@ -15,7 +15,7 @@ Fork tasks to independent Claude Code sessions in separate Ghostty fullscreen sp
 1. Run the fork script:
 
    ```bash
-   ~/.claude/skills/cc_core/scripts/fork.sh "<task-title>" "${CLAUDE_SESSION_ID}" "<prompt>"
+   ~/.claude/skills/cc_teacher_core/scripts/fork.sh "<task-title>" "${CLAUDE_SESSION_ID}" "<prompt>"
    ```
 
 2. Tell user the fork was spawned.

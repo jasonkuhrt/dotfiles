@@ -95,7 +95,7 @@ jq -r '.entries[] | select(.customTitle != null) | "\(.customTitle): \(.sessionI
 
 ## Session Transcripts (`.jsonl`)
 
-Each line is a JSON object. See `cc:core`, Session Search topic for search patterns.
+Each line is a JSON object. See `cc:teacher-core`, Session Search topic for search patterns.
 
 ```json
 {"type": "user", "timestamp": "<ISO>", "message": {...}, "sessionId": "<uuid>"}
@@ -107,7 +107,7 @@ Each line is a JSON object. See `cc:core`, Session Search topic for search patte
 
 | Topic | Location |
 |-------|----------|
-| Searching transcripts | `cc:core`, Session Search |
+| Searching transcripts | `cc:teacher-core`, Session Search |
 | Permission config | `cc:ecosystem`, Managing Permissions |
 | Hook config | `cc:authoring`, Writing Hooks |
 | MCP config | `cc:ecosystem`, Managing MCP |

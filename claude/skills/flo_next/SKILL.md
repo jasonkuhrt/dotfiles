@@ -39,16 +39,17 @@ Work through an epic one bead at a time with full chain awareness. Additive to b
 
 ## Key `bd` Commands
 
-| Command                                 | Purpose                                                                                    |
-| --------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `bd ready --unassigned --parent <epic>` | **Authoritative** list of unclaimed, unblocked beads — the ONLY source for selectable work |
-| `bd blocked --parent <epic>`            | Blocked beads with their blockers — informational only                                     |
-| `bd graph <epic> --compact`             | Dependency graph with layers and status icons — show to user for orientation               |
-| `bd show <id>`                          | Full bead details (body, acceptance, design, notes)                                        |
-| `bd comments <id>`                      | Comments on a bead                                                                         |
-| `bd update <id> --claim --actor "u/s"`  | **Atomic claim** with session identity; fails if already claimed                           |
-| `bd close <id> --reason "..."`          | Close with result                                                                          |
-| `bd comments add <id> "..."`            | Add session learnings                                                                      |
+| Command                                                       | Purpose                                                                                    |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `bd ready --unassigned --parent <epic>`                       | **Authoritative** list of unclaimed, unblocked beads — the ONLY source for selectable work |
+| `bd blocked --parent <epic>`                                  | Blocked beads with their blockers — informational only                                     |
+| `bd graph <epic> --compact`                                   | Dependency graph with layers and status icons — show to user for orientation               |
+| `bd show <id>`                                                | Full bead details (body, acceptance, design, notes)                                        |
+| `bd comments <id>`                                            | Comments on a bead                                                                         |
+| `bd update <id> --claim --actor "u/s"`                        | **Atomic claim** with session identity; fails if already claimed                           |
+| `bd close <id> --reason "..." --session <sid> --suggest-next` | Close with result, record session, show unblocked beads                                    |
+| `bd dep tree <id> --direction=up --status open`               | Downstream beads that depend on this one (for integrity check)                             |
+| `bd comments add <id> "..."`                                  | Add session learnings                                                                      |
 
 ## CRITICAL — Downstream Plan Integrity
 
@@ -57,7 +58,7 @@ Work through an epic one bead at a time with full chain awareness. Additive to b
 **The rule:**
 
 1. Compare your close reason against the bead's original body
-2. If they diverge: scan ALL downstream beads in the dependency graph
+2. If they diverge: run `bd dep tree <id> --direction=up --status open` to get all downstream beads that depend on this one
 3. For each downstream bead, assess: does this change affect its body, acceptance criteria, or feasibility?
 4. **If you are confident** the downstream impact is clear and mechanical (e.g., a rename, a symbol that moved): propose the updates and apply them after user confirmation
 5. **If you are NOT confident** — if there is ANY ambiguity about how the change cascades — you MUST:
@@ -199,10 +200,13 @@ bd comments add <epic-id> "Session: <what was learned or decided>"
 
 ```
 git add <files> && git commit -m "..."
-bd close <id> --reason "..."
+bd close <id> --reason "..." --session <full-session-id> --suggest-next
 bd sync
 git push
 ```
+
+- `--session` records which Claude Code session closed this bead (first-class field, separate from comments)
+- `--suggest-next` shows newly unblocked beads after closing — feeds directly into hot path if continuing
 
 ## Common Mistakes
 

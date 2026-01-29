@@ -126,13 +126,16 @@ fi
 # Full context: epic details + chain + graph + ready + blocked
 # ---------------------------------------------------------------------------
 
-# 2. Epic details
+# 2. Epic details + progress
 printf '\n%.0s' {1..1}
 printf '═%.0s' {1..60}
 echo
 echo "FLO CONTEXT"
 printf '═%.0s' {1..60}
 echo
+echo
+
+bd epic status 2>/dev/null | grep -A1 -F "$epic_id" || true
 echo
 
 bd show "$epic_id"

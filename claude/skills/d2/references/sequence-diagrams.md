@@ -14,6 +14,26 @@ db -> api: rows
 api -> client: 201 Created
 ```
 
+## Composing with Other Diagrams
+
+A `sequence_diagram` is just a shape — it can be nested inside regular containers and connected to other objects:
+
+```d2
+step_1: Upload CSV {
+  admin -> dromo: drop file
+}
+
+step_2: Process {
+  shape: sequence_diagram
+  api -> stripe: create subscription
+  stripe -> api: ok
+}
+
+step_1 -> step_2: validated
+```
+
+This renders step_1 as a normal container and step_2 as an embedded sequence diagram, linked by an edge.
+
 ## Key Differences from Regular D2
 
 - **Order matters** — connections render top-to-bottom in declaration order

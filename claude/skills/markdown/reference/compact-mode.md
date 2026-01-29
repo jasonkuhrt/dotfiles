@@ -123,7 +123,7 @@ Never sacrifice a higher priority for a lower one:
 | Arrow (→)        | Simple A→B mappings only; use vertical lists for 3+ item chains   |
 | Tables           | Use for truly tabular (multi-column) data, not nested under lists |
 | Blank lines      | None between list items (breaks list continuity)                  |
-| Backticks        | Proper nouns: files (`config.json`), commands (`npm run`), terms  |
+| Backticks        | Commands (`npm run`), code terms — NOT file paths (kills editor clickability) |
 | Imperative voice | "Run X" not "You should run X" — sentence fragments fine          |
 | Footnotes        | `[1]` references for long URLs/citations — keeps flow clean       |
 | Columnar layout  | Side-by-side comparisons (tables) vs sequential prose             |

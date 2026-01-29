@@ -85,3 +85,27 @@ Nested lists require consistent indentation (2 or 4 spaces).
 ```
 [Link text](https://example.com)
 ```
+
+## File Paths
+
+Editors (Zed, VS Code) auto-detect file paths and make them clickable. Wrapping paths in backticks suppresses this — the editor treats the content as an opaque code span, not a navigable path.
+
+**BAD** - backticks kill clickability:
+
+```
+See `src/utils/config.ts` for details.
+Check `./docs/setup.md` for setup instructions.
+```
+
+**GOOD** - bare path, editor makes it clickable:
+
+```
+See src/utils/config.ts for details.
+Check ./docs/setup.md for setup instructions.
+```
+
+**Rules:**
+
+- Never wrap file paths in backticks if clickability matters (documentation, comments, issue descriptions)
+- Backticks ARE appropriate when the path is part of a code expression: `` `import "./foo"` ``, `` `cat ./foo` ``
+- Applies to relative paths (`src/...`, `./...`) and absolute paths alike

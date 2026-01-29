@@ -14,10 +14,6 @@ Onboarding beads for persistent agent memory. Setup, workflow patterns, troubles
 - [Architecture Diagram (TXT)](reference/teacher/architecture.txt)
 - [Beads vs CC Tasks Comparison](reference/teacher/comparison.md)
 
-### Fanout
-Orchestrating parallel subagents to work on multiple ready beads concurrently.
-- [Overview](reference/fanout/overview.md)
-
 ### Teacher Refresh
 Verifying beads:teacher accuracy with current beads version.
 - [Overview](reference/teacher-refresh/overview.md)

@@ -22,6 +22,17 @@ Quick reference for effective Claude Code usage.
 [1]: https://github.com/anthropics/claude-code/issues/14740
 [2]: https://x.com/adocomplete/status/2014047394585825296
 
+## Checkpoints & Course Correction
+
+Responses are **not** checkpoints — you can't rewind to them. Only tool calls create checkpoints.
+
+| Situation | Do this | Not this |
+|-----------|---------|----------|
+| Response going off-track (and you want to rewind) | `Ctrl+C` (SIGTERM) to abort and rewind to last checkpoint | "Say something else" (burns the bad response into history) |
+| Response going off-track (don't care about rewinding) | "Say something else" or just correct in next prompt | — |
+
+**Why it matters:** "Say something else" replaces the text but the conversation still advances past the last checkpoint. If you want to actually undo, you need to kill the response before it completes.
+
 ## Context Hygiene
 
 - `/clear` aggressively - long contexts slow responses

@@ -225,6 +225,22 @@ git push
 | Reading only close_reason on predecessor | Also check comments, design, notes for implementation decisions     |
 | Skipping bead selection with user        | Always present options via AskUserQuestion — user chooses           |
 
+## Compaction Recovery
+
+A `SessionStart` hook (`compact-recovery.sh`) automatically fires after context compaction. It:
+
+1. Detects that the session was compacted (source=`compact`)
+2. Resolves the epic from the git branch
+3. Syncs with remote (`bd sync --import`)
+4. Finds the in_progress bead claimed by this session (matches session prefix in assignee)
+5. Outputs the bead body and recovery instructions as a system message
+
+**What the agent receives post-compaction:** CC's compaction summary (what you were doing) + the hook's recovery context (epic progress, active bead body, instructions to run `context.sh --hot`).
+
+**What the agent should do:** Follow the recovery instructions — run the hot path, re-read the bead body, and resume implementation. The compaction summary tells you where you left off; the hook output tells you what you're building.
+
+**If no active bead is found:** The hook instructs you to run the hot path and choose a bead (step 4). This happens if the bead was closed before compaction or was claimed with `--status in_progress` instead of `--claim`.
+
 ## Notes
 
 - This skill layers on top of the beads session protocol. It does not replace `bd ready`, `bd sync`, or the session close checklist — it adds chain tracing and plan integrity checking.

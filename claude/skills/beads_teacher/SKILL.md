@@ -1,7 +1,9 @@
 ---
 name: beads:teacher
-description: Use when onboarding beads for persistent agent memory, orchestrating parallel subagents for ready tasks, or verifying beads:teacher accuracy. Covers beads methodology, not beads CLI commands (those are in the beads plugin).
+description: Use when onboarding beads for persistent agent memory, orchestrating parallel subagents for ready tasks, or verifying beads:teacher accuracy.
 ---
+
+# Beads Teacher
 
 ## Topics
 

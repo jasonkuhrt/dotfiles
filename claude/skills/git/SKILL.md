@@ -1,7 +1,9 @@
 ---
 name: git
-description: Use when performing git operations — syncing with remote, managing worktrees, committing changes, controlling commit mode, or running parallel commits. Covers sync workflows, worktree lifecycle, and commit conventions.
+description: Use when performing git operations — syncing with remote, managing worktrees, committing changes, controlling commit mode, or running parallel commits.
 ---
+
+# Git
 
 ## Topics
 

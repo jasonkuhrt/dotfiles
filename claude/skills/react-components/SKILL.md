@@ -1,6 +1,6 @@
 ---
 name: components
-description: React component structure and export conventions for personal projects. Triggers on component creation, refactoring, or when asking about React patterns.
+description: Use when creating React components, refactoring component structure, or applying React export and typing conventions.
 ---
 
 # React Components

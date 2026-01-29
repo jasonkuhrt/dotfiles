@@ -1,7 +1,9 @@
 ---
 name: gh:actions
-description: Use when writing GitHub Actions workflows, TypeScript scripts for Actions, or reading GitHub issues/PRs via gh CLI. Covers workflow syntax, Actions TS patterns, and issue/PR data retrieval.
+description: Use when writing GitHub Actions workflows, TypeScript scripts for Actions, or reading GitHub issues/PRs via gh CLI.
 ---
+
+# GitHub Actions
 
 ## Topics
 

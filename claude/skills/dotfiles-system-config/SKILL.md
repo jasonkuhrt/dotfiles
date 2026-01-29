@@ -1,6 +1,6 @@
 ---
 name: dotfiles-system-config
-description: Use when making system configuration changes - decides if changes belong in dotfiles and where
+description: Use when making system configuration changes that may belong in dotfiles, such as shell, git, editor, Homebrew, or macOS settings.
 ---
 
 # System Configuration

@@ -1,7 +1,9 @@
 ---
 name: linear
-description: Use when working with Linear — searching/creating/updating issues, uploading attachments, resolving current issue context, executing GraphQL queries, or pulling workspace settings. Covers API scripts, auth config, and mention syntax.
+description: Use when working with Linear — searching/creating/updating issues, uploading attachments, resolving current issue context, executing GraphQL queries, or pulling workspace settings.
 ---
+
+# Linear
 
 ## Topics
 

@@ -1,6 +1,6 @@
 ---
 name: notmuch
-description: notmuch email indexer - search, threading, tagging for local Maildir. Use when searching emails, understanding notmuch queries, or integrating with notmuch.
+description: Use when searching emails, managing tags, understanding notmuch queries, or integrating with notmuch for local Maildir.
 ---
 
 # notmuch

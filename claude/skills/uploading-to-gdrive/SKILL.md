@@ -1,6 +1,6 @@
 ---
 name: uploading-to-gdrive
-description: This skill should be used when the user asks to "upload to Drive", "share via Google Drive", "get a Drive link", "upload screenshot", "upload recording", "share file", or needs to upload files to Google Drive for embedding in Linear, GitHub, or other services.
+description: Use when uploading files to Google Drive, getting shareable Drive links, or sharing screenshots and recordings for embedding in Linear, GitHub, or other services.
 ---
 
 # Uploading To GDrive

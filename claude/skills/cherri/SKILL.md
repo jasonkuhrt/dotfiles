@@ -1,6 +1,6 @@
 ---
 name: cherri
-description: Use when writing Apple Shortcuts as code using Cherri language. Covers syntax, actions, compilation, and common patterns.
+description: Use when writing Apple Shortcuts as code using Cherri language.
 ---
 
 # Cherri - Apple Shortcuts Programming Language

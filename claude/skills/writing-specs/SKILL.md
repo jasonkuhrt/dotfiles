@@ -1,6 +1,6 @@
 ---
 name: writing-specs
-description: Use when translating requirements into structured Gherkin specifications, when establishing domain terminology for a feature, or when asked to "write spec", "create requirements", "write acceptance criteria".
+description: Use when translating requirements into structured Gherkin specifications, establishing domain terminology for a feature, or asked to "write spec", "create requirements", "write acceptance criteria".
 ---
 
 # Writing Specs

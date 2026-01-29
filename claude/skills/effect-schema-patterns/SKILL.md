@@ -1,6 +1,6 @@
 ---
 name: schema-patterns
-description: Effect Schema conventions and patterns. Triggers on Schema class creation, tagged unions, enums, type guards, or test fixtures using Effect Schema.
+description: Use when creating Schema classes, tagged unions, enums, type guards, or test fixtures using Effect Schema.
 ---
 
 # Effect Schema Patterns

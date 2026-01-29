@@ -1,6 +1,6 @@
 ---
 name: pnpm
-description: pnpm package manager patterns and gotchas. Use when running pnpm commands, configuring workspaces, or parallel script execution.
+description: Use when running pnpm commands, configuring workspaces, or executing parallel scripts.
 ---
 
 # pnpm

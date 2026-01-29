@@ -3,6 +3,8 @@ name: ts:conventions
 description: Use when writing TypeScript — type parameter naming, conditional type formatting, JSDoc documentation, or domain modeling patterns. Covers style conventions and structured documentation approaches.
 ---
 
+# TypeScript Conventions
+
 ## Topics
 
 ### Type Parameters

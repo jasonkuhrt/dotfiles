@@ -1,6 +1,6 @@
 ---
 name: running-binaries
-description: How to run Node.js package binaries with npm/pnpm/npx. Use when installing global packages, running CLI tools, or configuring editor formatters.
+description: Use when installing global packages, running CLI tools with npm/pnpm/npx, or configuring editor formatters.
 ---
 
 # Running Binaries

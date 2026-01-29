@@ -1,6 +1,6 @@
 ---
 name: markdown
-description: Applies markdown syntax correctness and compact formatting when writing or editing markdown. Always evaluates heading density for compact mode.
+description: Use when writing or editing markdown files. Applies syntax correctness and evaluates heading density for compact mode.
 ---
 
 # Markdown

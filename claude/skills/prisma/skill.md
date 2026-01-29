@@ -132,6 +132,12 @@ Review Prisma query patterns in backend code for efficiency.
   - Group related writes in single transaction
   - Keep transactions short (lock duration)
 
+- **TOCTOU / find-then-create races:**
+  - `findFirst` → `create` on a unique field = race condition under concurrency
+  - Safe in sequential flows (user signup), explodes under fan-out (batch jobs, Inngest, queues)
+  - Fix: `upsert` with `update: {}` no-op — atomic find-or-create in one DB operation
+  - Detect `created`: generate ID upfront, compare returned ID to know if record was created or found
+
 - **Relation load strategy:**
   - `relationLoadStrategy: "join"` - single query with DB JOIN instead of multiple queries
   - Useful when you know you'll use the relation

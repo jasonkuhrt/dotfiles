@@ -1,6 +1,6 @@
 ---
 name: gel
-description: Gel (formerly EdgeDB) graph database schema design and querying. Use when designing Gel schemas, writing SDL, or querying with EdgeQL.
+description: Use when designing Gel schemas, writing SDL, or querying with EdgeQL.
 ---
 
 # Gel Database

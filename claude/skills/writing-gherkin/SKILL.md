@@ -1,6 +1,6 @@
 ---
 name: writing-gherkin
-description: Use when writing Gherkin scenarios, when another skill (like writing-specs) needs Given/When/Then syntax, or when asked to "create scenarios", "write acceptance criteria". Covers Gherkin DSL syntax, style rules, and validation.
+description: Use when writing Gherkin scenarios, when another skill (like writing-specs) needs Given/When/Then syntax, or when asked to "create scenarios", "write acceptance criteria".
 ---
 
 # Writing Gherkin

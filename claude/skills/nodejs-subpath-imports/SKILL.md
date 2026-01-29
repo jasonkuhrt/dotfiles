@@ -1,6 +1,6 @@
 ---
 name: nodejs-subpath-imports
-description: Use when debugging subpath import errors (ERR_PACKAGE_IMPORT_NOT_DEFINED, "only allows ./"), configuring package.json imports field, migrating from tsconfig paths, or building cross-platform code with conditions. Covers Node.js spec constraints that ALL bundlers enforce.
+description: Use when debugging subpath import errors (ERR_PACKAGE_IMPORT_NOT_DEFINED, "only allows ./"), configuring package.json imports field, migrating from tsconfig paths, or building cross-platform code with conditions.
 ---
 
 # Node.js Subpath Imports

@@ -1,6 +1,6 @@
 ---
 name: sd-find-replace
-description: Use sd for batch string replacements. Triggers on find/replace in text files, batch renaming, pattern substitution. NOT for code symbol renaming (use Serena).
+description: Use when performing batch find/replace in text files, batch renaming, or pattern substitution. Not for code symbol renaming (use Serena).
 ---
 
 # sd Find Replace

@@ -1,6 +1,6 @@
 ---
 name: type-assertions
-description: Type assertion patterns using @kitz/assert. Triggers on type-level tests, .test-d.ts files, or when asserting TypeScript types.
+description: Use when writing type-level tests, .test-d.ts files, or asserting TypeScript types with @kitz/assert.
 ---
 
 # Type Assertions

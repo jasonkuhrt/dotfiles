@@ -3,6 +3,8 @@ name: ts:tooling
 description: Use when working with TypeScript tooling — incremental build cache (tsbuildinfo), exploring npm package source code, benchmarking type instantiations, or writing tests. Covers build optimization and development workflow.
 ---
 
+# TypeScript Tooling
+
 ## Topics
 
 ### Buildinfo

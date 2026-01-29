@@ -3,6 +3,8 @@ name: cc:plugins
 description: Use when installing, updating, evaluating, or debugging Claude Code plugins, configuring or troubleshooting MCP servers, managing permissions or allow-deny rules, browsing or publishing to marketplaces, advancing CC plugin or MCP setup, or diagnosing any plugin, MCP, permission, or marketplace failure.
 ---
 
+# CC Plugins
+
 ## Topics
 
 ### Managing Plugins

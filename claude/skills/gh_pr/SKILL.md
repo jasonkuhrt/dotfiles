@@ -1,7 +1,9 @@
 ---
 name: gh:pr
-description: Use when working with GitHub PRs — resolving review comments, checking CI status, writing PR comments, triggering AI re-reviews, or running PR review integration tests. Covers gh CLI patterns and PR workflow automation.
+description: Use when working with GitHub PRs — resolving review comments, checking CI status, writing PR comments, triggering AI re-reviews, or running PR review integration tests.
 ---
+
+# GitHub PRs
 
 ## Topics
 

@@ -1,7 +1,9 @@
 ---
 name: research
-description: Use when working with research files (~/.claude/research/ by default, .claude/research/ for project level) — creating, importing, formatting, pruning conversational artifacts, or flushing session learnings before context loss. Covers research file lifecycle.
+description: Use when working with research files (~/.claude/research/ by default, .claude/research/ for project level) — creating, importing, formatting, pruning conversational artifacts, or flushing session learnings before context loss.
 ---
+
+# Research
 
 ## Level
 

@@ -1,6 +1,6 @@
 ---
 name: serena_teacher
-description: Use when onboarding to Serena MCP, configuring project.yml, troubleshooting language server issues, or learning which Serena tools to use for code navigation. NOT for using Serena tools directly—just call mcp__serena__* tools.
+description: Use when onboarding to Serena MCP, configuring project.yml, troubleshooting language server issues, or learning which Serena tools to use for code navigation.
 ---
 
 # Serena

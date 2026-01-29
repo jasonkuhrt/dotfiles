@@ -1,6 +1,6 @@
 ---
 name: configuring-zed
-description: Provides guidance for configuring and customizing the Zed editor. Use when modifying Zed settings, keybindings, themes, or extensions.
+description: Use when modifying Zed editor settings, keybindings, themes, or extensions.
 ---
 
 # Configuring Zed

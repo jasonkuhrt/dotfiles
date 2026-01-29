@@ -50,19 +50,25 @@ fi
 # Sync to pick up any changes from concurrent agents
 bd sync --import 2>/dev/null || true
 
-# Find active bead claimed by this session (assignee contains session prefix)
-session_prefix="${session_id:0:8}"
+# Find non-closed bead connected to this session (full session ID in comments).
+# Comments are the canonical session identity store — assignee is just a short label.
 active_bead=""
-if [[ -n "$session_prefix" ]]; then
-  active_bead=$(bd list --parent "$epic_id" --status in_progress --json --limit 0 2>/dev/null \
-    | jq -r --arg prefix "$session_prefix" '
-      .[] | select(.assignee != null and (.assignee | contains($prefix))) | .id
-    ' | head -1)
+if [[ -n "$session_id" ]]; then
+  while IFS= read -r bid; do
+    [[ -z "$bid" ]] && continue
+    if bd comments "$bid" --json 2>/dev/null \
+      | jq -e --arg sid "$session_id" 'last | .body | contains($sid)' \
+        >/dev/null 2>&1; then
+      active_bead="$bid"
+      break
+    fi
+  done < <(bd list --parent "$epic_id" --json --limit 0 2>/dev/null \
+    | jq -r '.[] | select(.status != "closed") | .id')
 fi
 
-# Only recover if this session actually claimed a bead (was doing flo:next work).
-# Sessions not using flo:next won't have claimed anything — exit silently to
-# avoid hijacking their post-compaction resume.
+# Only recover if this session has a connected bead (was doing flo:next work).
+# Sessions not using flo:next won't have logged their session ID — exit silently
+# to avoid hijacking their post-compaction resume.
 if [[ -z "$active_bead" ]]; then
   exit 0
 fi

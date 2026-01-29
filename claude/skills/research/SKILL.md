@@ -1,17 +1,39 @@
 ---
 name: research
-description: Use when working with .claude/research files — creating, importing, formatting, pruning conversational artifacts, or flushing session learnings before context loss. Covers research file lifecycle.
+description: Use when working with research files (~/.claude/research/ by default, .claude/research/ for project level) — creating, importing, formatting, pruning conversational artifacts, or flushing session learnings before context loss. Covers research file lifecycle.
 ---
+
+## Level
+
+Research files live in one of two locations:
+
+| Level   | Path                  | When                                      |
+| ------- | --------------------- | ----------------------------------------- |
+| user    | `~/.claude/research/` | **Default** — general learnings, cross-project |
+| project | `.claude/research/`   | Only when user explicitly says "project level" |
+
+**Default is user level.** Use `--project` flag to override:
+
+```bash
+# User level (default)
+~/.claude/skills/research/research.sh new <topic>
+
+# Project level (only when explicitly requested)
+~/.claude/skills/research/research.sh --project new <topic>
+```
+
+**Trigger phrases for project level:** "project level", "project research", "in this project's research"
+— anything else defaults to user level.
 
 ## Write
 
-Manage research files in `.claude/research/` — creation, naming, sorting, archival.
+Manage research files — creation, naming, sorting, archival.
 
 ### CRITICAL
 
 #### ALWAYS Use This Skill
 
-**NEVER write directly to `.claude/research/`.** All research file creation MUST go through this skill to ensure:
+**NEVER write directly to the research directory.** All research file creation MUST go through this skill to ensure:
 
 - Correct naming convention
 - `writing-compact` formatting applied
@@ -104,7 +126,7 @@ Triggers: "prune research", "clean up research", "remove conversational bits"
 
 | Request                   | Target                               |
 | ------------------------- | ------------------------------------ |
-| "prune research"          | All recent (`.claude/research/*.md`) |
+| "prune research"          | All recent (`<research-dir>/*.md`)   |
 | "prune current/latest"    | Most recent (`01-*.md`)              |
 | "prune dirty/changed"     | Git dirty files                      |
 | "prune these docs" + list | Specified files                      |

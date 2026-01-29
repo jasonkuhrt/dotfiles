@@ -8,8 +8,17 @@
 
 set -e
 
-RESEARCH_DIR="$(git rev-parse --show-toplevel)/.claude/research"
+# Default to user-level research; use --project for project-level
+if [ "${1:-}" = "--project" ]; then
+  RESEARCH_DIR="$(git rev-parse --show-toplevel)/.claude/research"
+  shift
+elif [ -n "${RESEARCH_PROJECT_LEVEL:-}" ]; then
+  RESEARCH_DIR="$(git rev-parse --show-toplevel)/.claude/research"
+else
+  RESEARCH_DIR="$HOME/.claude/research"
+fi
 ARCHIVE_DIR="$RESEARCH_DIR/older-than-30"
+mkdir -p "$RESEARCH_DIR"
 
 cmd_cleanup() {
   echo "=== Cleanup ==="

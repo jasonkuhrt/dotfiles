@@ -60,6 +60,13 @@ if [[ -n "$session_prefix" ]]; then
     ' | head -1)
 fi
 
+# Only recover if this session actually claimed a bead (was doing flo:next work).
+# Sessions not using flo:next won't have claimed anything — exit silently to
+# avoid hijacking their post-compaction resume.
+if [[ -z "$active_bead" ]]; then
+  exit 0
+fi
+
 # --- Output recovery context ---
 
 echo ""
@@ -72,25 +79,13 @@ echo ""
 bd epic status 2>/dev/null | grep -A1 -F "$epic_id" || true
 echo ""
 
-if [[ -n "$active_bead" ]]; then
-  echo "## Active Bead (claimed by this session)"
-  echo ""
-  bd show "$active_bead" 2>/dev/null
-  echo ""
-  echo "## Recovery Instructions"
-  echo ""
-  echo "You were working on $active_bead. Resume implementation:"
-  echo "1. Run: bash ~/.claude/skills/flo_next/scripts/context.sh --hot"
-  echo "2. Re-read the bead body above and continue where the compaction summary left off"
-  echo "3. When done, follow the flo:next Exit Protocol"
-else
-  echo "## No Active Bead Found"
-  echo ""
-  echo "No in_progress bead found for session $session_prefix under $epic_id."
-  echo "You may have completed your bead before compaction, or it was not claimed with --claim."
-  echo ""
-  echo "## Recovery Instructions"
-  echo ""
-  echo "1. Run: bash ~/.claude/skills/flo_next/scripts/context.sh --hot"
-  echo "2. Choose a bead from the READY list (flo:next step 4)"
-fi
+echo "## Active Bead (claimed by this session)"
+echo ""
+bd show "$active_bead" 2>/dev/null
+echo ""
+echo "## Recovery Instructions"
+echo ""
+echo "You were working on $active_bead. Resume implementation:"
+echo "1. Run: bash ~/.claude/skills/flo_next/scripts/context.sh --hot"
+echo "2. Re-read the bead body above and continue where the compaction summary left off"
+echo "3. When done, follow the flo:next Exit Protocol"

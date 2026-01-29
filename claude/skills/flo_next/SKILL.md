@@ -239,7 +239,7 @@ A `SessionStart` hook (`compact-recovery.sh`) automatically fires after context 
 
 **What the agent should do:** Follow the recovery instructions — run the hot path, re-read the bead body, and resume implementation. The compaction summary tells you where you left off; the hook output tells you what you're building.
 
-**If no active bead is found:** The hook instructs you to run the hot path and choose a bead (step 4). This happens if the bead was closed before compaction or was claimed with `--status in_progress` instead of `--claim`.
+**If no active bead is found:** The hook exits silently (no output). This means the session was not doing flo:next work — it hadn't claimed a bead — so the hook does not inject recovery context that would hijack the session's actual task. This also covers: bead closed before compaction, bead claimed with `--status in_progress` instead of `--claim` (no assignee to match).
 
 ## Notes
 

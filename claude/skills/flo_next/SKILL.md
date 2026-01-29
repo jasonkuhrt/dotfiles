@@ -147,12 +147,18 @@ You don't need to trace the entire chain — the immediate predecessor is usuall
 
 ```
 bd show <id>            # Full body, acceptance, design, notes
-bd update <id> --claim --actor "<user>/<session-id-prefix>"
+bd update <id> --claim --actor "<user>/<session-prefix>"
+bd comments add <id> "claimed by session <full-session-id>"
 ```
 
-**Claim identity:** Use `--actor` with the format `<git user.name>/<first 8 chars of session ID>`. Your session ID is the UUID from the session start message (the `--resume` value, e.g. `e65f21da-49c5-4bf9-8a2f-dc723444d3af`). Take the first 8 characters as the prefix. Example: `--actor "Jason Kuhrt/e65f21da"`.
+**Claim identity:** Your session ID is the UUID from the session start message (the `--resume` value, e.g. `e65f21da-49c5-4bf9-8a2f-dc723444d3af`).
 
-Use `--claim`, NOT `--status in_progress`. The `--claim` flag is an atomic operation that sets both the assignee (to the actor value) and status (to in_progress) in one step. If another agent already claimed the bead, it fails — preventing two agents from working on the same bead. If the claim fails, go back to step 4 and pick a different bead.
+- **Assignee** (short, current holder): `--actor "<git user.name>/<first 8 chars>"` — e.g. `"Jason Kuhrt/e65f21da"`
+- **Comment** (full audit trail): log the complete session UUID so any future session can trace back or resume
+
+Multiple sessions may touch the same bead (hand-offs, retries). Each adds a comment — the history accumulates naturally.
+
+Use `--claim`, NOT `--status in_progress`. The `--claim` flag atomically sets assignee + in_progress and fails if already claimed. If the claim fails, go back to step 4 and pick a different bead.
 
 Cross-reference the bead body against the terminology/design docs. If the bead uses stale terms (written before a terminology audit, for example), use the design docs as the authority.
 

@@ -69,12 +69,22 @@ fi
 # ---------------------------------------------------------------------------
 
 if [[ "$hot" == "true" ]]; then
-  printf '\n%.0s' {1..1}
+  echo
   printf '═%.0s' {1..60}
   echo
   echo "FLO HOT NEXT · $epic_id"
   printf '═%.0s' {1..60}
   echo
+
+  # Recently closed (for detecting concurrent agent closes)
+  echo
+  printf '─%.0s' {1..40}
+  echo
+  echo "RECENTLY CLOSED (check for new predecessors)"
+  printf '─%.0s' {1..40}
+  echo
+  bd list --parent "$epic_id" --status closed --sort updated --reverse --limit 5 --json 2>/dev/null \
+    | jq -r '.[] | "  \u2713 \(.id): \(.title)\n    REASON: \(.close_reason // "(none)")\n    CLOSED: \(.closed_at // "unknown")"'
 
   # Dependency graph
   echo
@@ -127,7 +137,7 @@ fi
 # ---------------------------------------------------------------------------
 
 # 2. Epic details + progress
-printf '\n%.0s' {1..1}
+echo
 printf '═%.0s' {1..60}
 echo
 echo "FLO CONTEXT"

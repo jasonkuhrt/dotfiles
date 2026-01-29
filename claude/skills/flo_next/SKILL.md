@@ -84,9 +84,9 @@ bash ~/.claude/skills/flo_next/scripts/context.sh --hot
 
 **Always sync before hot next.** Other agents may have closed beads, added comments, or changed dependencies since you started working. `bd sync --import` pulls their changes so the context dump reflects current state.
 
-The hot output includes the dependency graph, ready list, blocked list, and in-progress list — all fetched fresh from `bd`. Then jump to **step 4** (choose bead).
+The hot output includes: recently closed beads (with timestamps), dependency graph, ready list, claimed list, and blocked list — all fetched fresh from `bd`. Then jump to **step 4** (choose bead).
 
-You may skip steps 2 and 3 (epic fields and design docs are already in your window). **Do NOT skip step 5** (trace chain) — if another agent closed a bead while you were working, there is a new predecessor you haven't seen. Check the context dump's COMPLETED section for any beads closed since your session started. If you see new ones, read their close reasons before choosing your next bead.
+You may skip steps 2 and 3 (epic fields and design docs are already in your window). **Do NOT skip step 5** (trace chain) — if another agent closed a bead while you were working, there is a new predecessor you haven't seen. Check the RECENTLY CLOSED section for any beads closed since your session started. If you see new ones, read their close reasons before choosing your next bead.
 
 ---
 
@@ -121,7 +121,7 @@ Follow the epic's DESIGN pointer:
 Present the epic state to the user:
 
 1. **Show the dependency graph** from the context dump (`bd graph` output) — this gives the user a visual map of the epic's structure and progress
-2. **Show the ready, blocked, and in-progress sections** from the context dump
+2. **Show the ready, claimed, and blocked sections** from the context dump
 3. **Use AskUserQuestion with ONLY ready beads as options** (up to 4, priority-sorted). The READY section of the context dump (sourced from `bd ready --unassigned --parent`) is the **sole authority** for what appears as a selectable option.
 4. If no ready beads: report to user — either all are blocked (show blockers), all are claimed (show who claimed them), or the epic is complete
 

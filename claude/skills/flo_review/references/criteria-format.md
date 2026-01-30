@@ -6,18 +6,18 @@ Project and issue criteria files use markdown with YAML frontmatter.
 
 ```yaml
 ---
-mode: extend        # extend (default) | replace
+mode: extend # extend (default) | replace
 tiers:
-  gate: true        # on by default
-  quality: true     # on by default
-  polish: false     # off — skip this tier entirely
+  gate: true # on by default
+  quality: true # on by default
+  polish: false # off — skip this tier entirely
 ---
 ```
 
-| Field | Type | Default | Purpose |
-|-------|------|---------|---------|
-| `mode` | `extend` \| `replace` | `extend` | How this file merges with lower levels |
-| `tiers` | map of tier → boolean | all `true` | Enable/disable entire tiers |
+| Field   | Type                  | Default    | Purpose                                |
+| ------- | --------------------- | ---------- | -------------------------------------- |
+| `mode`  | `extend` \| `replace` | `extend`   | How this file merges with lower levels |
+| `tiers` | map of tier → boolean | all `true` | Enable/disable entire tiers            |
 
 - **`extend`**: Checks add to matching group/tier. New groups and tiers append.
 - **`replace`**: Lower levels discarded. This file is the sole criteria source.
@@ -46,7 +46,9 @@ Groups and checks merge into matching tiers from lower levels. New groups append
 
 ## Findings Output
 
-Findings mirror the criteria structure. Only items with findings appear:
+Results split into two top-level sections: **FAILING** (needs attention) and **PASSING** (criteria met). Failures always come first. Tiers nest under each section.
+
+Record every criterion's outcome — both passes and failures.
 
 ```markdown
 # QA Findings — Pass {N}
@@ -56,18 +58,35 @@ Sources: lib + project + issue (or whichever were found).
 
 ---
 
-## {Tier Name}
+## FAILING
+
+### {Tier Name}
 
 - **{GROUP NAME}**
   - **{Sub-group}** — {original criterion text}
     - {criterion item}
       - FINDING: {observation, with file:line references}
+      - FINDING: {another observation if multiple}
+
+---
+
+## PASSING
+
+### {Tier Name}
+
+- **{GROUP NAME}**
+  - {criterion that passed} — Pass.
+  - {another criterion} — Pass. No errors.
 ```
 
+**Rules:**
+
 - Preserve original criteria text verbatim
-- Prefix findings with `FINDING:`
-- Include `file:line` references
-- Omit criteria/groups/tiers with zero findings
+- Prefix findings with `FINDING:` — include `file:line` references
+- Passing criteria get a brief `— Pass.` suffix (or short note, e.g. `— Pass. Built in 19s.`)
+- Within each status section, omit criteria/groups/tiers with zero entries
+- Omit `## FAILING` entirely if everything passed
+- Omit `## PASSING` entirely if everything failed
 
 <!-- FUTURE IDEAS (parked):
   - `include`/`exclude` fields for path scoping

@@ -8,10 +8,10 @@
  * - SUMMARY and LEGEND sections
  */
 
-import { Console, Effect, Option, Schema } from "effect"
+import { Console, Effect } from "effect"
 import { join } from "node:path"
 import { mkdir } from "node:fs/promises"
-import { TranscriptEntry } from "../../lib/transcript-schema.js"
+import { parseTranscriptEntries } from "../../lib/transcript-parser.js"
 import { analyzeTranscript } from "../../lib/transcript-analyzer.js"
 import { renderTimeChart, renderTokenChart, getTimeChartLabelWidth, getTokenChartLabelWidth } from "../../lib/viz/chart.js"
 import { renderDimensions, getDimensionLabelWidth } from "../../lib/viz/dimensions.js"
@@ -22,29 +22,6 @@ import { pickSession, type PickSessionOptions } from "../../lib/session-picker.j
 // -----------------------------------------------------------------------------
 // JSONL parsing
 // -----------------------------------------------------------------------------
-
-const parseTranscript = (text: string) =>
-  Effect.gen(function* () {
-    const lines = text.trim().split("\n")
-    const entries: TranscriptEntry[] = []
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i]!.trim()
-      if (!line) continue
-
-      const raw = yield* Effect.try({
-        try: () => JSON.parse(line) as unknown,
-        catch: () => new Error(`Invalid JSON at line ${i + 1}`),
-      })
-
-      const decoded = Schema.decodeUnknownOption(TranscriptEntry)(raw)
-      if (Option.isSome(decoded)) {
-        entries.push(decoded.value)
-      }
-    }
-
-    return entries
-  })
 
 // -----------------------------------------------------------------------------
 // Main command
@@ -64,7 +41,7 @@ export const transcriptAnalyze = (input: string | undefined, options: AnalyzeOpt
 
     const file = Bun.file(sessionPath)
     const text = yield* Effect.promise(() => file.text())
-    const entries = yield* parseTranscript(text)
+    const entries = (yield* parseTranscriptEntries(text)).map((e) => e.entry)
 
     if (entries.length === 0) {
       return yield* Effect.fail(new Error("No valid entries found in transcript"))

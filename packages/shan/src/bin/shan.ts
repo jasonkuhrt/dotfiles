@@ -13,6 +13,7 @@
 import { Console, Effect } from "effect"
 import { transcriptDump } from "./transcript/dump.js"
 import { transcriptAnalyze } from "./transcript/analyze.js"
+import { transcriptPrint } from "./transcript/print.js"
 import { taskDump } from "./task/dump.js"
 import { taskOpen } from "./task/open.js"
 
@@ -27,6 +28,7 @@ Namespaces:
   task          Task list inspection commands
 
 Commands:
+  shan transcript print [target]        Print readable conversation log
   shan transcript dump [target]         Dump transcript as navigable Markdown
   shan transcript dump --raw [target]   Copy raw JSONL without transformation
   shan transcript analyze [target]      Visualize context consumption
@@ -36,7 +38,9 @@ Commands:
   shan task open [target]               Open task list or file in editor
 
 Options:
-  --all    Show all sessions/task lists (default: current project only)
+  --all              Show all sessions/task lists (default: current project only)
+  --show <layers>    Add detail layers to print: results,diffs,thinking,trace,all
+                     Comma-separated or repeated (--show a --show b)
 
 Transcript target:
   - Session ID (or prefix): abc123, 9ba30f6f-...
@@ -58,14 +62,19 @@ const parseArgs = (args: string[]) => {
     raw: false,
     all: false,
     md: false,
+    show: [] as string[],
   }
   const positional: string[] = []
 
-  for (const arg of args) {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]!
     if (arg === "--raw") flags.raw = true
     else if (arg === "--all") flags.all = true
     else if (arg === "--md") flags.md = true
-    else positional.push(arg)
+    else if (arg.startsWith("--show=")) flags.show.push(arg.slice(7))
+    else if (arg === "--show" && i + 1 < args.length) {
+      flags.show.push(args[++i]!)
+    } else positional.push(arg)
   }
 
   return { flags, positional }
@@ -82,13 +91,15 @@ const program = Effect.gen(function* () {
   if (namespace === "transcript") {
     const { flags, positional } = parseArgs(args)
 
-    if (command === "dump") {
+    if (command === "print") {
+      yield* transcriptPrint(positional[0], { show: flags.show, all: flags.all })
+    } else if (command === "dump") {
       yield* transcriptDump(positional[0], { raw: flags.raw, all: flags.all })
     } else if (command === "analyze") {
       yield* transcriptAnalyze(positional[0], { all: flags.all })
     } else {
       yield* Console.error(`Unknown transcript command: ${command}`)
-      yield* Console.log("\nAvailable commands:\n  dump <session-id>       Dump transcript as navigable Markdown\n  analyze <session-id>    Visualize context consumption")
+      yield* Console.log("\nAvailable commands:\n  print <session-id>      Print readable conversation log\n  dump <session-id>       Dump transcript as navigable Markdown\n  analyze <session-id>    Visualize context consumption")
       return yield* Effect.fail(new Error("Unknown command"))
     }
   } else if (namespace === "task") {

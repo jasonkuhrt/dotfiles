@@ -2,15 +2,16 @@
  * shan transcript dump - Convert Claude Code JSONL transcripts to navigable Markdown.
  */
 
-import { Console, Effect, Option, Schema } from "effect"
+import { Console, Effect } from "effect"
 import { join } from "node:path"
 import { mkdir } from "node:fs/promises"
 import {
-  TranscriptEntry,
+  type TranscriptEntry,
   type ToolUseBlock,
   type UserEntry,
   type AssistantEntry,
 } from "../../lib/transcript-schema.js"
+import { parseTranscriptEntries } from "../../lib/transcript-parser.js"
 import { resolveSessionPath, extractSessionId } from "../../lib/session-resolver.js"
 import { pickSession, type PickSessionOptions } from "../../lib/session-picker.js"
 
@@ -115,32 +116,6 @@ const getSummary = (entry: TranscriptEntry): string => {
 }
 
 // -----------------------------------------------------------------------------
-// Line parsing
-// -----------------------------------------------------------------------------
-
-const parseLine = (line: string, lineNum: number) =>
-  Effect.gen(function* () {
-    const trimmed = line.trim()
-    if (!trimmed) {
-      return Option.none<{ entry: TranscriptEntry; raw: unknown }>()
-    }
-
-    const raw = yield* Effect.try({
-      try: () => JSON.parse(trimmed) as unknown,
-      catch: () => new Error(`Invalid JSON at line ${lineNum}`),
-    })
-
-    const decoded = Schema.decodeUnknownOption(TranscriptEntry)(raw)
-    if (Option.isNone(decoded)) {
-      const rawObj = raw as { type?: string }
-      yield* Console.warn(`Unknown entry type "${rawObj.type}" at line ${lineNum}`)
-      return Option.none<{ entry: TranscriptEntry; raw: unknown }>()
-    }
-
-    return Option.some({ entry: decoded.value, raw })
-  })
-
-// -----------------------------------------------------------------------------
 // Export
 // -----------------------------------------------------------------------------
 
@@ -178,27 +153,22 @@ export const transcriptDump = (input: string | undefined, options: DumpOptions =
     yield* Console.log(`Reading: ${sessionPath}`)
 
     const text = yield* Effect.promise(() => file.text())
-    const lines = text.trim().split("\n")
+    const parsed = yield* parseTranscriptEntries(text)
 
     const output: string[] = []
     let n = 0
 
-    for (let i = 0; i < lines.length; i++) {
-      const result = yield* parseLine(lines[i]!, i + 1)
+    for (const { entry, raw } of parsed) {
+      n++
+      const time = formatTimestamp(raw)
+      const summary = getSummary(entry)
+      const heading = formatHeading(n, time, entry.type, summary)
+      const body = "```json\n" + JSON.stringify(raw, null, 2) + "\n```"
 
-      if (Option.isSome(result)) {
-        n++
-        const { entry, raw } = result.value
-        const time = formatTimestamp(raw)
-        const summary = getSummary(entry)
-        const heading = formatHeading(n, time, entry.type, summary)
-        const body = "```json\n" + JSON.stringify(raw, null, 2) + "\n```"
-
-        output.push(heading)
-        output.push("")
-        output.push(body)
-        output.push("")
-      }
+      output.push(heading)
+      output.push("")
+      output.push(body)
+      output.push("")
     }
 
     yield* Effect.promise(() => Bun.write(outputPath, output.join("\n")))

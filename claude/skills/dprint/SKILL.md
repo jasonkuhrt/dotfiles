@@ -9,7 +9,7 @@ Fast pluggable code formatter.
 
 ## Config Resolution
 
-**CC Misconception:** "dprint is project-local only." **Wrong.** dprint supports:
+dprint is NOT project-local only. It supports three resolution modes:
 
 1. **Ancestor lookup** - walks UP directory tree for `dprint.json`
 2. **Global fallback** - `~/.config/dprint/dprint.json` (or `DPRINT_CONFIG_DIR`)
@@ -21,41 +21,11 @@ Fast pluggable code formatter.
 | `--config-discovery=global` | Global only |
 | `--config-discovery=false` | Require explicit `-c` |
 
-No config found anywhere → dprint errors.
+No config found anywhere -> dprint errors.
 
 ## Plugins
 
-Plugins are WASM files loaded via URL in `dprint.json`:
-
-```json
-{
-  "plugins": [
-    "https://plugins.dprint.dev/typescript-0.95.13.wasm",
-    "https://plugins.dprint.dev/json-0.21.1.wasm",
-    "https://plugins.dprint.dev/markdown-0.20.0.wasm"
-  ]
-}
-```
-
-**Common plugins:**
-- `typescript` - TS/JS/JSX/TSX
-- `json` - JSON/JSONC
-- `markdown` - Markdown
-- `toml` - TOML
-- `g-plane/pretty_yaml` - YAML
-- `g-plane/malva` - CSS/SCSS/Less
-- `g-plane/pretty_graphql` - GraphQL
-
-**Plugin config** - top-level keys match plugin name:
-
-```json
-{
-  "typescript": { "quoteStyle": "preferSingle", "semiColons": "asi" },
-  "markdown": { "lineWidth": 100, "textWrap": "maintain" }
-}
-```
-
-**Update plugins:** Check https://plugins.dprint.dev for latest versions.
+Plugins are WASM files loaded via URL in `dprint.json`. See `reference/plugins.md` for common plugins and config.
 
 ## CLI Commands
 
@@ -74,26 +44,7 @@ dprint lsp                    # Start language server
 
 ## Editor Integration
 
-### Zed
-
-```json
-{
-  "formatter": {
-    "external": {
-      "command": "dprint",
-      "arguments": ["fmt", "--stdin", "{buffer_path}"]
-    }
-  }
-}
-```
-
-### VS Code
-
-Install "dprint" extension. It uses dprint LSP automatically.
-
-### Neovim
-
-Use `null-ls` or `conform.nvim` with dprint as formatter.
+See `reference/editor-integration.md` for Zed, VS Code, and Neovim setup.
 
 ## Dotfiles Pattern
 

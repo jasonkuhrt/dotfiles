@@ -5,6 +5,8 @@ description: Use when creating React components, refactoring component structure
 
 # React Components
 
+Keywords: React.FC, functional component, props interface, named export, component file structure
+
 ## Structure
 
 * One component per module
@@ -26,10 +28,3 @@ export const MyComponent: React.FC<Props> = ({ value, onChange }) => {
   return <div>{value}</div>
 }
 ```
-
-## Key Points
-
-* __Named export__ with `export const`
-* __`React.FC<Props>`__ for type annotation
-* __Arrow function__ expression
-* __Destructure props__ in parameter

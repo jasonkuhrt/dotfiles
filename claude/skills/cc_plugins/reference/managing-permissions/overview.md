@@ -5,7 +5,7 @@
 **Before using this skill:** Check `.state` file — if missing or `last_evaluated` > 7 days ago, warn user and research current CC issues before proceeding.
 
 ```bash
-find ~/.claude/plugins -path "*/claude-code/skills/cc_managing-permissions/.state" 2>/dev/null | head -1
+find ~/.claude/plugins -path "*/claude-code/skills/cc_plugins/.state" 2>/dev/null | head -1
 ```
 
 **Full procedure:** [freshness-check.md](freshness-check.md)

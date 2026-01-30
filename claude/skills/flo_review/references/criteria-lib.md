@@ -18,9 +18,10 @@ Fast, automated, binary. If these fail, stop — nothing else matters.
 
 - **No debug artifacts** — grep diff for `console.log`, `debugger`, `.only`, `.skip`
   - `console.log` in dedicated logging/error-reporting modules is intentional — only flag in component/service/handler code
-- **No untracked TODOs** — grep diff for `TODO`, `FIXME`, `HACK`. Every instance must either:
+- **No untracked TODOs** — grep diff for `TODO`, `HACK`. Every instance must either:
   - Reference a tracked issue (beads ID, Linear ID), or
   - Be flagged as untracked and filed
+  - `FIXME` is exempt — it marks deferred work to be addressed when that area is next touched. Do not require tracked issue references for FIXMEs.
 - **All PR comments addressed** — scan for unresolved review threads
 
 ## Quality

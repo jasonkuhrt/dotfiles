@@ -19,5 +19,5 @@ Specifically:
 
 Invoke both and exhaustively apply their guidance:
 
-1. `superpowers:writing-skills` - Structure, CSO, token efficiency, anti-patterns, quality criteria
-2. `superpowers-developing-for-claude-code:working-with-claude-code` - Official CC skill format, capabilities
+1. REQUIRED SUB-SKILL: superpowers:writing-skills - Structure, CSO, token efficiency, anti-patterns, quality criteria
+2. REQUIRED SUB-SKILL: superpowers-developing-for-claude-code:working-with-claude-code - Official CC skill format, capabilities

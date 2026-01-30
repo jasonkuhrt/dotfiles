@@ -155,13 +155,6 @@ Never sacrifice a higher priority for a lower one:
 
 Sequential info (3+ items) should be vertical with clear ordering, not horizontal arrows.
 
-## Rationale
-
-- Reduces vertical whitespace
-- Improves scannability
-- Keeps related information visually grouped
-- Better for reference documents, checklists, and specs
-
 ## Notes
 
 - Frequent format switching creates cognitive load

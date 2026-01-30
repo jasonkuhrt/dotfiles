@@ -31,71 +31,9 @@ starship init fish | source
 ```
 
 **When to use multiple configs:**
-- tmux (git info in status bar) → minimal prompt
-- SSH sessions → show hostname
-- Work vs personal → different themes
-
-## Module System
-
-### Disabling Modules
-
-```toml
-[nodejs]
-disabled = true
-```
-
-### Module Detection
-
-Modules auto-activate based on context:
-
-| Option | Example |
-|--------|---------|
-| `detect_extensions` | `['js', 'ts']` |
-| `detect_files` | `['package.json']` |
-| `detect_folders` | `['node_modules']` |
-| `detect_env_vars` | `['NODE_ENV']` |
-
-Prefix with `!` for negative matching: `['!VIRTUAL_ENV']`
-
-### Conditional Format Strings
-
-Parentheses make content conditional:
-
-```toml
-format = '(@$region)'  # Shows nothing if $region is empty
-```
-
-## Styling
-
-Style strings are space-separated words:
-
-```toml
-style = 'bold fg:#7aa2f7 bg:black'
-```
-
-| Element | Options |
-|---------|---------|
-| Colors | `red`, `#ff0000`, `0-255` |
-| Modifiers | `bold`, `italic`, `underline`, `dimmed`, `inverted`, `blink` |
-| Reset | `none` |
-| Foreground | `fg:color` |
-| Background | `bg:color` |
-
-## Prompt Format
-
-The `format` key controls module order:
-
-```toml
-format = """
-$directory\
-$git_branch\
-$git_status\
-$character"""
-```
-
-- `\` continues to next line (no newline in output)
-- `$module_name` inserts module
-- Literal text appears as-is
+- tmux (git info in status bar) -> minimal prompt
+- SSH sessions -> show hostname
+- Work vs personal -> different themes
 
 ## Quick Reference
 
@@ -106,19 +44,6 @@ $character"""
 | Time prompt | `starship timings` |
 | List presets | `starship preset --list` |
 | Apply preset | `starship preset bracketed-segments -o ~/.config/starship.toml` |
-
-## Custom Modules
-
-For arbitrary commands in prompt:
-
-```toml
-[custom.my_module]
-command = 'echo hello'
-when = 'test -f .my-marker'  # Only show when condition passes
-shell = ['bash', '--noprofile', '--norc']
-format = '[$output]($style) '
-style = 'green bold'
-```
 
 ## TransientPrompt (Fish)
 
@@ -145,13 +70,7 @@ end
 
 ## Theme
 
-Current: **Tokyo Night**
-
-```toml
-# Palette reference
-# blue: #7aa2f7    cyan: #7dcfff    green: #9ece6a
-# magenta: #bb9af7 red: #f7768e     yellow: #e0af68
-```
+Current: **Tokyo Night** (colors defined in config files).
 
 ## Files
 
@@ -159,3 +78,8 @@ Current: **Tokyo Night**
 |------|---------|
 | `starship/starship.toml` | Full config (outside tmux) |
 | `starship/starship-tmux.toml` | Minimal config (in tmux) |
+
+## Reference
+
+- `reference/modules.md` -- module detection, disabling, conditional formats, custom modules
+- `reference/styling.md` -- style strings, colors, modifiers, prompt format, Tokyo Night palette

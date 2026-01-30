@@ -6,10 +6,10 @@
 
 ```mermaid
 flowchart LR
-    A[Start] --> B[Process]
-    B --> C{Decision}
-    C -->|Yes| D[Action 1]
-    C -->|No| E[Action 2]
+    login --> validate_credentials
+    validate_credentials --> is_valid{is_valid}
+    is_valid -->|yes| grant_access
+    is_valid -->|no| show_error
 ```
 
 ### Directions
@@ -35,13 +35,13 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    subgraph Frontend
-        A[React] --> B[Redux]
+    subgraph frontend[frontend]
+        react_app --> state_store
     end
-    subgraph Backend
-        C[API] --> D[Database]
+    subgraph backend[backend]
+        api_server --> database
     end
-    B --> C
+    state_store --> api_server
 ```
 
 ## Sequence Diagrams
@@ -50,15 +50,15 @@ flowchart TB
 
 ```mermaid
 sequenceDiagram
-    participant C as Client
-    participant A as API
-    participant D as Database
+    participant browser as Browser
+    participant api as API
+    participant db as Database
 
-    C->>A: POST /data
-    A->>A: Validate
-    A->>D: INSERT
-    D-->>A: Success
-    A-->>C: 201 Created
+    browser->>api: POST /users
+    api->>api: validate_payload
+    api->>db: INSERT user
+    db-->>api: user_record
+    api-->>browser: 201 Created
 ```
 
 ### Arrow Types
@@ -76,29 +76,29 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant A
-    participant B
+    participant client as Client
+    participant server as Server
 
-    A->>+B: Request
-    Note right of B: Processing
-    B-->>-A: Response
+    client->>+server: send_request
+    Note right of server: validate_and_process
+    server-->>-client: send_response
 ```
 
 ### Loops and Alternatives
 
 ```mermaid
 sequenceDiagram
-    participant A
-    participant B
+    participant monitor as Monitor
+    participant service as Service
 
-    loop Every minute
-        A->>B: Heartbeat
+    loop every_minute
+        monitor->>service: health_check
     end
 
-    alt Success
-        B-->>A: OK
-    else Failure
-        B-->>A: Error
+    alt healthy
+        service-->>monitor: status_ok
+    else degraded
+        service-->>monitor: status_error
     end
 ```
 
@@ -108,25 +108,25 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Draft
-    Draft --> Review: Submit
-    Review --> Approved: Approve
-    Review --> Draft: Reject
-    Approved --> Published: Publish
-    Published --> [*]
+    [*] --> draft
+    draft --> review: submit
+    review --> approved: approve
+    review --> draft: reject
+    approved --> published: publish
+    published --> [*]
 ```
 
 ### Composite States
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Active
-    state Active {
-        [*] --> Idle
-        Idle --> Processing: Start
-        Processing --> Idle: Complete
+    [*] --> active
+    state active {
+        [*] --> idle
+        idle --> processing: start_job
+        processing --> idle: job_complete
     }
-    Active --> [*]: Shutdown
+    active --> [*]: shutdown
 ```
 
 ## Class Diagrams
@@ -135,16 +135,16 @@ stateDiagram-v2
 
 ```mermaid
 classDiagram
-    class Animal {
-        +String name
-        +int age
-        +makeSound()
+    class HttpClient {
+        +String base_url
+        +int timeout_ms
+        +send_request()
     }
-    class Dog {
-        +String breed
-        +bark()
+    class JsonClient {
+        +String content_type
+        +parse_response()
     }
-    Animal <|-- Dog
+    HttpClient <|-- JsonClient
 ```
 
 ### Relationships
@@ -162,23 +162,23 @@ classDiagram
 
 ```mermaid
 gantt
-    title Project Timeline
+    title Release Pipeline
     dateFormat YYYY-MM-DD
 
-    section Phase 1
-    Research     :a1, 2025-01-01, 14d
-    Design       :a2, after a1, 10d
+    section planning
+    user_research     :a1, 2025-01-01, 14d
+    schema_design     :a2, after a1, 10d
 
-    section Phase 2
-    Development  :b1, after a2, 30d
-    Testing      :b2, after b1, 14d
+    section delivery
+    implementation    :b1, after a2, 30d
+    integration_tests :b2, after b1, 14d
 ```
 
 ## Entity Relationship
 
 ```mermaid
 erDiagram
-    USER ||--o{ ORDER : places
+    CUSTOMER ||--o{ ORDER : places
     ORDER ||--|{ LINE_ITEM : contains
     PRODUCT ||--o{ LINE_ITEM : "ordered in"
 ```
@@ -198,8 +198,8 @@ erDiagram
 
 ```mermaid
 flowchart LR
-    A[Default]
-    B[Styled]:::highlight
+    fetch_data
+    transform_data:::highlight
 
     classDef highlight fill:#f96,stroke:#333
 ```
@@ -208,19 +208,11 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    A --> B
-    B -.-> C
-    C ==> D
+    parse_input --> validate
+    validate -.-> log_warning
+    log_warning ==> halt_pipeline
 ```
 
 * `-->` Solid arrow
 * `-.->` Dotted arrow
 * `==>` Thick arrow
-
-## Tips
-
-* Keep diagrams simple - split complex flows into multiple diagrams
-* Use clear, descriptive labels
-* Follow natural reading direction (LR or TD)
-* Group related items with subgraphs
-* Test rendering in target environment (GitHub, VS Code, etc.)

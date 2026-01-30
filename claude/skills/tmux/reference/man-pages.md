@@ -36,33 +36,4 @@ After tmux updates:
 
 ## Searching
 
-```sh
-cd claude/skills/tmux/man-pages
-
-# Find an option
-grep -ri "mouse" 2-config/
-
-# Find a command
-grep -rl "split-window" 3-commands/
-
-# Find a format variable
-grep "#{" 4-syntax/formats.txt | grep -i pane
-
-# Find anything
-grep -ri "escape" .
-```
-
-## Structure Rationale
-
-**Directory numbers** encode progression: concepts → config → commands
-
-**File numbers** (where present) encode reading order within a directory.
-
-Unnumbered files are peers—pick what you need.
-
-## Why Local Copy?
-
-- **Grep-able**: `grep -ri mouse 2-config/` vs scrolling 4000 lines
-- **Focused**: Open just `hooks.txt` when you need hooks
-- **Editor-friendly**: Jump to files, use editor search
-- **Categorized**: Directory structure tells you where to look
+See [man-pages/INDEX.md](../man-pages/INDEX.md#search-tips) for search tips.

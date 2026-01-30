@@ -6,7 +6,7 @@ Facts about how Claude Code organizes and stores data.
 
 ```
 ~/.claude/
-├── settings.json              # User config (see cc:ecosystem, Managing Permissions)
+├── settings.json              # User config (see cc:plugins, Managing Permissions)
 ├── skills/                    # User-level skills
 ├── session-env/               # Session environment cache
 └── projects/                  # All session data, per-project
@@ -108,6 +108,6 @@ Each line is a JSON object. See `cc:teacher-core`, Session Search topic for sear
 | Topic | Location |
 |-------|----------|
 | Searching transcripts | `cc:teacher-core`, Session Search |
-| Permission config | `cc:ecosystem`, Managing Permissions |
+| Permission config | `cc:plugins`, Managing Permissions |
 | Hook config | `cc:authoring`, Writing Hooks |
-| MCP config | `cc:ecosystem`, Managing MCP |
+| MCP config | `cc:plugins`, Managing MCP |

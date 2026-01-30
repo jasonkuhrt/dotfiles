@@ -4,7 +4,7 @@
 
 ```bash
 # Works regardless of installation location
-find ~/.claude/plugins -path "*/claude-code/skills/cc_managing-permissions/.state" 2>/dev/null | head -1
+find ~/.claude/plugins -path "*/claude-code/skills/cc_plugins/.state" 2>/dev/null | head -1
 ```
 
 ## Research Queries

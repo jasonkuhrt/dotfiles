@@ -49,29 +49,9 @@ If you can't write a clear scenario, the concept is undefined.
 
 ## Ubiquitous Language
 
-The spec establishes shared vocabulary that flows to design docs and code. This eliminates translation drift between requirements and implementation.
+The spec establishes shared vocabulary that flows to design docs and code. This eliminates translation drift between requirements and implementation. Well-written specs reveal entities (nouns), behaviors (scenario names), and relationships (composing terms).
 
 **The spec IS the glossary.** If you call it "filter chip" in the spec, it should be `FilterChip` in code.
-
-### The Cost of Translation
-
-Each translation introduces drift (Evans, 2003):
-
-```
-Business language → Analyst interpretation → Developer interpretation → Code
-        ↓                    ↓                       ↓                    ↓
-    "unread filter"    "visibility toggle"    "isRead predicate"    hideReadMessages()
-```
-
-By the time code ships, it may solve a different problem than intended. Gherkin specs fix this by becoming the authoritative vocabulary - no translation, just transcription.
-
-### The Spec as Domain Model
-
-A well-written Gherkin spec functions as a lightweight domain model:
-
-- **Entities** emerge as nouns used consistently (filter, thread, chip, footer)
-- **Behaviors** emerge as scenario descriptions (activation, clearing, snapshot)
-- **Relationships** emerge from how terms compose (filter chip, filter footer, filter state)
 
 ### Guidelines
 
@@ -122,6 +102,6 @@ This is **explicit** (section was considered) and **consistent** (always just `N
 
 ## Reference
 
-- `writing-gherkin` skill - Gherkin DSL syntax, structure, validation
+REQUIRED SUB-SKILL: writing-gherkin - Gherkin DSL syntax, structure, validation
 - Evans, Eric. _Domain-Driven Design_ (2003) - introduced Ubiquitous Language
 - North, Dan. "Introducing BDD" (2006) - connected Ubiquitous Language to executable specs

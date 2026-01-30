@@ -60,11 +60,11 @@ Settings require process restart. **Never auto-logout or auto-restart** - tell t
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Configuring [category]..."
+echo "Configuring screenshot location..."
 
-defaults write DOMAIN KEY -TYPE VALUE
+defaults write com.apple.screencapture location -string ~/Screenshots
 
-killall PROCESS 2>/dev/null || true
+killall SystemUIServer 2>/dev/null || true
 
 echo "Done."
 ```
@@ -77,17 +77,6 @@ echo "Done."
 | No effect | Wrong domain (`defaults find KEYWORD`), or needs logout not killall |
 | Cached values | `killall cfprefsd` flushes preference cache |
 | Permission denied | May need `sudo`, or protected by SIP |
-
-## Quick Reference
-
-```bash
-defaults write DOMAIN KEY -TYPE VALUE   # Set
-defaults read DOMAIN KEY                # Get
-defaults delete DOMAIN KEY              # Remove
-defaults find KEYWORD                   # Search all domains
-```
-
-Types: `-string`, `-int`, `-float`, `-bool`, `-array`, `-dict`
 
 ## Resources
 

@@ -31,7 +31,7 @@ Debug and fix failing CI checks in an analyze-fix-push-watch loop until all chec
 
 ---
 
-Read this flowlist using the `flowlist` skill (Reading operation).
+REQUIRED SUB-SKILL: flowlist (Reading operation)
 
 ## Operations
 

@@ -5,6 +5,8 @@ description: Use when creating Schema classes, tagged unions, enums, type guards
 
 # Effect Schema Patterns
 
+Keywords: Schema.Class, Schema.TaggedStruct, _tag, Schema.make, Schema.is, Schema.Enums, Effect Schema
+
 ## Class Instantiation
 
 __ALWAYS use `Schema.make()` for creating instances:__
@@ -50,10 +52,3 @@ export const StatusValues = {
 } as const
 export const Status = Schema.Enums(StatusValues)
 ```
-
-## Key Points
-
-* Use `Schema.make()` for type-safe instantiation
-* Use `Schema.is()` for type predicates, never manual `_tag` checks
-* Inline enum values directly in `Schema.Enums()`
-* Access runtime enum values via `.enums` property

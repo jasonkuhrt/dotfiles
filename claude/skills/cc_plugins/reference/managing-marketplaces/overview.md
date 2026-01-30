@@ -2,110 +2,9 @@
 
 ## Overview
 
-Plugin marketplaces are catalogs of available plugins. This skill covers the CLI, scoping, updates, caching, versioning, and known bugs.
+Plugin marketplaces are catalogs of available plugins. This topic covers marketplace-specific concerns: caching, versioning, update mechanism, local development, and creating plugins.
 
-## CRITICAL
-
-### Never Edit Plugin JSON Directly
-
-**FORBIDDEN**: Never directly edit `~/.claude/plugins/installed_plugins.json` or other CC-internal JSON files. These are managed by `claude plugin` CLI commands. Direct edits can produce invalid state, get silently overwritten, or break plugin loading.
-
-### Use External CLI, Not REPL
-
-All plugin/marketplace management works **outside** CC sessions via the `claude plugin` subcommand. No need to open a session, wait for init, type the command, and restart.
-
-```bash
-# These work from any terminal — no CC session needed
-claude plugin install beads@beads-marketplace --scope user
-claude plugin uninstall beads@beads-marketplace --scope project
-claude plugin list
-```
-
-Source: [Claude Code Plugin CLI: The Missing Manual](https://garyj.dev/post/claude-cli-the-missing-manual/)
-
-## Plugin CLI Reference
-
-### Plugin Commands
-
-```bash
-claude plugin install <plugin>@<marketplace>              # Install (default: --scope user)
-claude plugin install <plugin>@<marketplace> --scope user|project|local
-claude plugin uninstall <plugin>@<marketplace>             # Uninstall (must match scope)
-claude plugin uninstall <plugin>@<marketplace> --scope project
-claude plugin enable <plugin>@<marketplace>                # Enable disabled plugin
-claude plugin disable <plugin>@<marketplace>               # Disable without uninstalling
-claude plugin list                                         # List installed plugins
-claude plugin update <plugin>@<marketplace>                # Update to latest version
-```
-
-### Marketplace Commands
-
-```bash
-claude plugin marketplace add <url-or-repo>       # Add marketplace
-claude plugin marketplace add owner/repo           # GitHub shorthand
-claude plugin marketplace add ./local-path         # Local path
-claude plugin marketplace list                     # List all marketplaces
-claude plugin marketplace update <name>            # Pull latest
-claude plugin marketplace remove <name>            # Remove (and its plugins)
-```
-
-### REPL Equivalents
-
-Same commands work inside a CC session with `/plugin` prefix:
-
-```
-/plugin install beads@beads-marketplace
-/plugin marketplace list
-```
-
-## Plugin Scoping
-
-### Scope Hierarchy
-
-| Scope | Flag | Applies to | Use case |
-|-------|------|-----------|----------|
-| `user` | `--scope user` (default) | All projects, all worktrees | Plugins you want everywhere |
-| `project` | `--scope project` | One project path only | Project-specific plugins |
-| `local` | `--scope local` | One project path only | Local testing |
-
-### Scope and Worktrees
-
-CC treats each worktree as a **separate project** (by cwd path, not git repo identity). A plugin installed at `--scope project` for `/repo` is NOT available in `/repo/.worktrees/feature-branch`.
-
-**Recommendation:** Install plugins you want across worktrees at `--scope user`.
-
-### Scope Affects Loading, Not Data
-
-For plugins with their own data stores (e.g., beads), scope only controls whether CC loads the plugin's skills/hooks/commands. The plugin's data is managed independently (e.g., beads stores data in per-project `.beads/` directories regardless of plugin scope).
-
-## Known Bugs (Jan 2026)
-
-### Install Reports "Already Installed" for Wrong Project
-
-**Bug:** `claude plugin install X --scope project` reports "already installed" if X is installed for ANY project, even a different one. The install command checks plugin key existence globally without verifying `projectPath` matches cwd.
-
-**Tracked:** [#14185](https://github.com/anthropics/claude-code/issues/14185), [#14202](https://github.com/anthropics/claude-code/issues/14202), [#16205](https://github.com/anthropics/claude-code/issues/16205)
-
-**Workaround:** Use `--scope user` to install globally, or uninstall from the other project first:
-
-```bash
-claude plugin uninstall beads@beads-marketplace --scope project
-claude plugin install beads@beads-marketplace --scope user
-```
-
-### Marketplace Add Not Idempotent
-
-`claude plugin marketplace add` errors if marketplace already exists instead of updating it.
-
-**Workaround:** Check first, update if exists:
-
-```bash
-output=$(claude plugin marketplace add "$url" 2>&1)
-if echo "$output" | grep -qi "already installed"; then
-    name=$(echo "$output" | sed -n "s/.*Marketplace '\([^']*\)'.*/\1/p")
-    claude plugin marketplace update "$name"
-fi
-```
+For CLI commands, scoping, warnings, and known bugs, see the **Managing Plugins** topic.
 
 ## Key Locations
 
@@ -146,10 +45,10 @@ Plugins ARE versioned via the `version` field in plugin.json:
 ~/.claude/plugins/cache/
 ├── superpowers-marketplace/
 │   └── superpowers/
-│       └── 4.0.3/           ← version from plugin.json
+│       └── 4.0.3/           <- version from plugin.json
 └── claude-plugins-official/
     └── hookify/
-        └── e30768372b41/    ← commit hash for official plugins
+        └── e30768372b41/    <- commit hash for official plugins
 ```
 
 ### Update Flow
@@ -183,7 +82,11 @@ digraph update_flow {
 | Layer | Pinned? | Update Mechanism |
 |-------|---------|------------------|
 | Marketplace | No (tracks main HEAD) | `autoUpdate: true` or `claude plugin marketplace update` |
-| Plugin | Yes (version field) | Bump version in plugin.json → new cache dir |
+| Plugin | Yes (version field) | Bump version in plugin.json -> new cache dir |
+
+## Scope Affects Loading, Not Data
+
+For plugins with their own data stores (e.g., beads), scope only controls whether CC loads the plugin's skills/hooks/commands. The plugin's data is managed independently (e.g., beads stores data in per-project `.beads/` directories regardless of plugin scope).
 
 ## Local Development
 
@@ -263,10 +166,10 @@ In project or user `settings.json`:
 ```
 marketplace/
 ├── .claude-plugin/
-│   └── marketplace.json    ← MUST add entry here
+│   └── marketplace.json    <- MUST add entry here
 └── plugins/
     └── new-plugin/
-        └── plugin.json     ← AND create this
+        └── plugin.json     <- AND create this
 ```
 
 **Failure mode**: Creating only the directory results in `/doctor` errors like:

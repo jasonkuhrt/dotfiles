@@ -1,11 +1,5 @@
 # Parallel Commit
 
-## The Problem
-
-Git's staging area (`.git/index`) is shared. Concurrent `git add` + `git commit` from parallel agents can cross-contaminate commits or hit `index.lock` errors.
-
-## The Solution
-
 Use `git commit -- <paths>` which defaults to `--only` mode:
 
 ```bash

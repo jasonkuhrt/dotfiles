@@ -1,7 +1,6 @@
 ---
 name: shan
 description: Dump a Claude Code session transcript as navigable Markdown, or inspect CC task lists outside of CC. Use when user wants to review, analyze, or export a session transcript, or dump/open task files.
-argument-hint: transcript dump [session-id]
 allowed-tools: Bash(bun:*)
 ---
 

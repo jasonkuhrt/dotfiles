@@ -66,9 +66,7 @@ This is why you can `tt` from anywhere and land in the same session state - atta
    tmux capture-pane -t :.1 -p -S -50  # last 50 lines from pane 1
    ```
 
-Target format: `-t session:window.pane`
-* `:.1` = current session, current window, pane 1
-* `:.2` = pane 2, etc.
+See [sending-commands reference](./reference/sending-commands.md) for target format syntax (`-t session:window.pane`).
 
 ## Starting Processes in New Panes
 

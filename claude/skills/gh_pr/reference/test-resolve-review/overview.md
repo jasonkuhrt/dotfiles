@@ -22,7 +22,7 @@ Integration test for the resolve-review skill with preset fixtures.
 Run the setup script:
 
 ```bash
-SETUP_OUTPUT=$(plugins/pr/skills/test-resolve-review/scripts/setup-test-pr.sh)
+SETUP_OUTPUT=$(bash scripts/test-resolve-review-setup-test-pr.sh)
 PR_NUMBER=$(echo "$SETUP_OUTPUT" | jq -r '.pr_number')
 BRANCH=$(echo "$SETUP_OUTPUT" | jq -r '.branch')
 ```
@@ -90,7 +90,7 @@ Wait for user to complete manual testing and say "verify".
 When user says "verify", run verification:
 
 ```bash
-VERIFY_OUTPUT=$(plugins/pr/skills/test-resolve-review/scripts/verify-test-pr.sh --pr="$PR_NUMBER")
+VERIFY_OUTPUT=$(bash scripts/test-resolve-review-verify-test-pr.sh --pr="$PR_NUMBER")
 PASSED=$(echo "$VERIFY_OUTPUT" | jq -r '.passed')
 ```
 
@@ -119,7 +119,7 @@ Some assertions failed. Cleanup? [Yes / Keep for inspection]
 If user confirms cleanup:
 
 ```bash
-plugins/pr/skills/test-resolve-review/scripts/cleanup-test-pr.sh --pr="$PR_NUMBER" --branch="$BRANCH"
+bash scripts/test-resolve-review-cleanup-test-pr.sh --pr="$PR_NUMBER" --branch="$BRANCH"
 ```
 
 Display:

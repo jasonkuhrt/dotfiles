@@ -47,9 +47,3 @@ When `minimize-permission-prompts: true` is set:
 2. Generate `Skill(plugin-name:*)` pattern for each enabled plugin
 3. Add to `.claude/settings.local.json` (or committed settings if team shares)
 4. Remember: `Skill(*)` doesn't work in project settings — must list individually
-
-## Why This Matters
-
-- User-level `Skill(*)` doesn't help teammates
-- Team projects need project-level permissions
-- Without this check, you might configure only for one user while breaking team workflow

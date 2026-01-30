@@ -5,6 +5,8 @@ description: Use when creating test cases, parameterized tests, or writing .test
 
 # Table-Driven Testing
 
+Keywords: vitest, test.each, parameterized, snapshot, table-driven, @kitz/test
+
 ## Import
 
 ```typescript

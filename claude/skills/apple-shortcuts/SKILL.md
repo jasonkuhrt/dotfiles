@@ -55,7 +55,7 @@ cd ~/projects/jasonkuhrt/dotfiles/shortcuts
 ~/Library/Shortcuts/ToolKit/             # Action database
 ```
 
-Shortcuts are stored in SQLite with actions as binary plist blobs. Not meant for direct editing—use Cherri for code-based shortcuts.
+Shortcuts are stored in SQLite with actions as binary plist blobs. Not meant for direct editing -- use Cherri for code-based shortcuts.
 
 ## Persistent Config
 
@@ -72,43 +72,11 @@ shortcuts-config get currentProject     # Get key
 
 **In Shortcuts:** Use "Get File" / "Save File" pointing to `/dotfiles/shortcuts/config.json`
 
-**Do not use Data Jar or similar apps.** JSON gives:
-- Direct CLI access (`jq`, `shortcuts-config`)
-- Version controllable (symlink to git repo)
-- No app dependency
-- Cross-platform (iOS Files app can read it too)
-- Claude Code can read/write directly
+Prefer JSON over Data Jar -- gives CLI access (`jq`, `shortcuts-config`), version control, and no app dependency. See [DESIGN.md](./DESIGN.md) for full rationale.
 
 ## Extension Apps
 
-Apps that add actions to Shortcuts:
-
-| App | Platform | Purpose |
-|-----|----------|---------|
-| **Toolbox Pro** | iOS + Mac (M1+)* | Global variables, OCR, device info |
-| **Actions** | iOS + macOS | 180+ extra actions (Sindre Sorhus) |
-| **Menu Box** | iOS + macOS | Beautiful menus with SF Symbols, colors, hidden data |
-| **Logger** | iOS + macOS | Debug console with log levels, tags, iCloud sync |
-| **FocusCuts** | macOS only | Status bar menu for Focus Mode-aware shortcuts |
-| **Charty** | iOS + macOS | Generate charts (bar, line, pie, scatter, etc.) |
-
-*Wrapped iOS app—runs on Apple Silicon via "Designed for iPhone/iPad"
-
-### Installing Extension Apps
-
-```bash
-# Native macOS apps (via mas)
-mas install 1586435171  # Actions
-```
-
-Wrapped iOS apps (Toolbox Pro) require manual App Store install—`mas` can't install them.
-
-### After Installing New Apps
-
-1. Open Shortcuts app (triggers ToolKit database refresh)
-2. Discover actions: `./analyze-shortcuts-actions.fish actions <appname>`
-3. Get parameters: `./analyze-shortcuts-actions.fish params <action>`
-4. Use in Cherri with `rawAction()` syntax
+See [reference/extension-apps.md](./reference/extension-apps.md) for the full table, installation instructions, and post-install steps.
 
 ## macOS Signing Requirement
 
@@ -129,56 +97,15 @@ Signed shortcuts contain `AppleIDValidationRecord` and `SigningPublicKey` in an 
 
 ## Wrapped iOS Apps on Mac
 
-Some iOS apps run on Apple Silicon Macs via compatibility mode:
-
-```
-/Applications/App Name.app/
-├── WrappedBundle -> Wrapper/ActualApp.app
-└── Wrapper/
-    └── ActualApp.app  (iOS app)
-```
-
-These apps:
-- Can't be installed via `mas` CLI
-- Require manual App Store install
-- Work identically to iOS versions
-- Sync via iCloud
+See [reference/wrapped-ios-apps.md](./reference/wrapped-ios-apps.md) for details on iOS compatibility mode on Apple Silicon.
 
 ## Shortcuts Database Schema
 
-For advanced exploration:
-
-```sql
--- List all third-party actions
-SELECT id FROM Tools
-WHERE id NOT LIKE 'com.apple.%'
-ORDER BY id;
-
--- Count by vendor
-SELECT
-    substr(id, 1, instr(substr(id, instr(id, '.') + 1), '.') + instr(id, '.')) as vendor,
-    COUNT(*) as count
-FROM Tools
-WHERE id NOT LIKE 'com.apple.%'
-GROUP BY vendor
-ORDER BY count DESC;
-```
+See [reference/database-schema.md](./reference/database-schema.md) for advanced SQL queries against the ToolKit database.
 
 ## Integration with Cherri
 
-See the `cherri` skill for:
-- Writing shortcuts as code
-- Raw action syntax for third-party apps
-- Known extension app patterns
-
-## Key Learnings
-
-1. **Shortcuts are signed** - macOS requires signed `.shortcut` files for import
-2. **Actions come from apps** - Install extension apps to get more actions
-3. **ToolKit database is truth** - Query it to discover available actions and parameters
-4. **URL schemes work everywhere** - Trigger shortcuts from CLI, scripts, other apps
-5. **Wrapped iOS apps exist** - Some "Mac" apps are actually iOS apps in disguise
-6. **Use JSON for config** - Store persistent data in `iCloud Drive/dotfiles/shortcuts/config.json`, not extension apps like Data Jar. This gives CLI access via `shortcuts-config` and works cross-platform.
+REQUIRED SUB-SKILL: cherri -- for writing shortcuts as code, raw action syntax, and extension app patterns.
 
 ## Resources
 

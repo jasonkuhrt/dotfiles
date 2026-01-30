@@ -192,74 +192,9 @@ notmuch tag -new -- tag:new
 
 Query syntax for searching messages.
 
-### Text Search Prefixes
+> **Quick reference:** See `reference/search-syntax.md` for an operational summary of prefixes, operators, dates, and thread queries.
 
-| Prefix | Description | Example |
-|--------|-------------|---------|
-| `body:` | Message body content | `body:meeting` |
-| `from:` | Sender (name or address) | `from:alice@example.com` |
-| `from:/<regex>/` | Sender regex | `from:/.*@amazon\./` |
-| `to:` | Recipient (To, Cc, Bcc) | `to:me@example.com` |
-| `subject:` | Subject line | `subject:invoice` |
-| `subject:/<regex>/` | Subject regex | `subject:/order.*shipped/` |
-| `attachment:` | Attachment filename | `attachment:pdf` |
-| `mimetype:` | MIME type | `mimetype:image/jpeg` |
-
-### Metadata Prefixes
-
-| Prefix | Description | Example |
-|--------|-------------|---------|
-| `tag:` or `is:` | Message tag | `tag:unread` |
-| `id:` or `mid:` | Message-ID header | `id:abc123@example.com` |
-| `thread:` | Thread ID | `thread:0000000000006bcd` |
-| `thread:{<query>}` | Indirect thread search | `thread:{from:alice}` |
-| `path:` | File path | `path:INBOX/**` |
-| `folder:` | Maildir folder | `folder:Sent` |
-| `date:` | Date range | `date:today` |
-| `lastmod:` | Database revision | `lastmod:1000..` |
-| `property:` | Custom property | `property:index.decryption=success` |
-
-### Boolean Operators
-
-| Operator | Description |
-|----------|-------------|
-| `and` | Both terms must match (also: space between terms) |
-| `or` | Either term matches |
-| `not` | Negate term |
-| `xor` | Exclusive or |
-| `-term` | Shorthand for `not term` (not at start) |
-| `(...)` | Grouping (requires shell escaping) |
-
-### Date Syntax
-
-**Ranges:**
-```
-date:<since>..<until>
-date:2024-01-01..2024-12-31
-date:last_week..today
-date:..yesterday        # Up to yesterday
-date:2024-01-01..       # Since date
-```
-
-**Relative Terms:**
-- `today`, `yesterday`, `this_week`, `last_week`
-- `this_month`, `last_month`, `this_year`, `last_year`
-- `N days ago`, `N weeks ago`, `N months ago`
-
-**Absolute Formats:**
-- `YYYY-MM-DD`, `DD-MM-YYYY`
-- `@<unix-timestamp>`
-- Timezone: `±HH:MM`, `UTC`, `EET`
-
-### Thread Queries
-
-```bash
-# By thread ID
-notmuch search thread:0000000000006bcd
-
-# Threads containing messages matching query
-notmuch search 'thread:{from:alice} and thread:{subject:project}'
-```
+The following covers man-page-specific details not in the quick reference.
 
 ### Quoting
 

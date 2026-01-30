@@ -116,4 +116,4 @@ jq -rs '[.[].timestamp | select(.)] | sort | .[0], .[-1]' file.jsonl
 | Topic | Location |
 |-------|----------|
 | Storage internals, /rename | `cc:teacher-core`, Internals |
-| Permission config | `cc:ecosystem`, Managing Permissions |
+| Permission config | `cc:plugins`, Managing Permissions |

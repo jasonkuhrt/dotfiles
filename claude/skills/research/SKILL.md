@@ -29,11 +29,9 @@ Research files live in one of two locations:
 
 ## Write
 
-Manage research files — creation, naming, sorting, archival.
+Manage research files — creation, naming, archival.
 
 ### CRITICAL
-
-#### ALWAYS Use This Skill
 
 **NEVER write directly to the research directory.** All research file creation MUST go through this skill to ensure:
 
@@ -48,12 +46,12 @@ Manage research files — creation, naming, sorting, archival.
 
 The script is NOT the complete solution. You are the orchestrator.
 
-**Two authorship paths — pick the right one:**
+| Authorship    | Operations              | writing-compact            |
+| ------------- | ----------------------- | -------------------------- |
+| Claude writes | flush, save, create     | Apply inline (no preview)  |
+| External      | import, move            | Preview-iterate-apply pass |
 
-- **Claude is the author** (flush, save, create-and-write) — write content in `writing-compact` format from the start. No separate formatting pass. No preview-iterate-apply. You're the author, so author it correctly the first time.
-- **Importing external content** (import, move) — run `writing-compact` as a separate formatting pass with preview-iterate-apply, because you're reformatting someone else's writing.
-
-**Skipping `writing-compact` entirely is a failure.** But invoking it as a separate preview-iterate step on your own freshly written content is also wrong — there's no delta to review.
+**Skipping `writing-compact` entirely is a failure.**
 
 ### Operations
 
@@ -72,12 +70,6 @@ The script is NOT the complete solution. You are the orchestrator.
   ```
 
   Script auto-enriches GH links. Then: invoke `writing-compact` with preview-iterate-apply (external content)
-
-- **Sort/renumber**
-
-  ```bash
-  ~/.claude/skills/research/research.sh sort
-  ```
 
 - **Archive old files**
 
@@ -112,117 +104,8 @@ The script is NOT the complete solution. You are the orchestrator.
 - All timestamps UTC (`date -u`)
 - 30-day auto-archive keeps recent files manageable
 
-## Prune
+## Subcommands
 
-Remove non-factual content from research files. Intentionally lossy — removes conversational artifacts to distill knowledge.
-
-### Use Cases
-
-- After importing PR comments or conversation excerpts
-- When research files contain Q&A formatting
-- To distill knowledge from discussion threads
-
-Triggers: "prune research", "clean up research", "remove conversational bits"
-
-### Scope
-
-| Request                   | Target                               |
-| ------------------------- | ------------------------------------ |
-| "prune research"          | All recent (`<research-dir>/*.md`)   |
-| "prune current/latest"    | Most recent (`01-*.md`)              |
-| "prune dirty/changed"     | Git dirty files                      |
-| "prune these docs" + list | Specified files                      |
-| "prune all including old" | Include `older-than-30/`             |
-
-**Default: recent only** — avoids accidentally processing large archives.
-
-### Conversational Heuristics
-
-| Pattern             | Example                                  | Action                         |
-| ------------------- | ---------------------------------------- | ------------------------------ |
-| Greetings           | "Hey @person, here's the lowdown..."     | Remove                         |
-| Quoted Q&A          | `> Question` + response                  | Extract fact, remove framing   |
-| Agreement           | "Right!", "Yes.", "Correct."             | Remove                         |
-| Opinion framing     | "I'd push back on this"                  | Keep fact, remove framing      |
-| Hedging             | "maybe", "I think", "IIUC"               | Remove or convert to fact      |
-| PR negotiation      | "Fine to do it in this PR"               | Remove                         |
-| Questions to reader | "But I don't think we're doing X?"       | Convert to statement           |
-| Personal refs       | "like I've done with X, Y, Z"            | Remove                         |
-| Future intentions   | "I'll look into...", "TODO for tomorrow" | Remove or track in Linear      |
-| Status updates      | "no more major changes"                  | Delete file if no facts remain |
-
-### Process
-
-1. **Read file**
-2. **Present removals** — table with line numbers and suggestions
-3. **Wait for confirmation** — user approves or adjusts
-4. **Apply edits** — only after approval
-
-## Format
-
-Apply formatting to research files. Never lossy — only restructures and enriches.
-
-### Use Cases
-
-- Standardizing research file formatting
-- Enriching GitHub issue references with dates
-- Applying writing-compact style
-
-Triggers: "format research", "enrich research links"
-
-### Scope
-
-| Request                    | CLI Target          |
-| -------------------------- | ------------------- |
-| "format research"          | `all`               |
-| "format current/latest"    | `current`           |
-| "format dirty/changed"     | `diff`              |
-| "format these docs" + list | `<file>...`         |
-| "format all including old" | `all-including-old` |
-
-**Default: `all` (recent only)** — avoids accidentally processing large archives.
-
-### Steps
-
-1. **Enrich GitHub links** (issues, PRs, discussions)
-
-   ```bash
-   ~/.claude/skills/research/research.sh format-gh-links <target>
-   # Targets: current, all, diff, all-including-old, <file>...
-   ```
-
-   **Output formats:**
-   - Issues/PRs open: `[org/repo#N (2025-03-05)](url)`
-   - Issues/PRs closed: `[org/repo#N (2025-03-05 → 09)](url)` — smart abbreviation
-   - Discussions: `[org/repo#dN (date)](url)` — `#d` prefix (separate namespace)
-
-2. **Apply `writing-compact` skill** for structure/layout
-
-## Flush CC Thread
-
-Extract and preserve learnings from current Claude Code conversation before context window exhaustion or session end.
-
-### Use Cases
-
-- **Context preservation** — session ending, need to capture discoveries
-- **Failed experiments** — document what didn't work and why
-- **Non-obvious behavior** — capture gotchas for future reference
-- **Decision rationale** — record alternatives considered
-
-Triggers: "flush research", "save this to research", "preserve this thread", "capture these learnings"
-
-### Steps
-
-1. **Identify knowledge worth preserving**
-   - technical findings, blockers, workarounds
-   - decisions and alternatives considered
-   - gotchas and non-obvious behavior
-   - links to issues, PRs, documentation
-
-2. **Use the Write section above** to create file and write content
-   - follow its pipeline for format
-   - include session source at end of file:
-     ```
-     ---
-     Source: claude -r ${CLAUDE_SESSION_ID}
-     ```
+- [Prune](./reference/pruning.md) — remove conversational artifacts, distill knowledge
+- [Format](./reference/formatting.md) — enrich GH links, apply writing-compact
+- [Flush CC Thread](./reference/flush.md) — extract learnings before context loss

@@ -5,6 +5,8 @@ description: Use when writing type-level tests, .test-d.ts files, or asserting T
 
 # Type Assertions
 
+Keywords: ts-expect-error, type-level testing, type equality, .test-d.ts, @kitz/assert
+
 ## Import
 
 ```typescript

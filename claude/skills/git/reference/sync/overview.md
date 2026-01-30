@@ -16,7 +16,7 @@ Sync local with remote: pull trunk, merge into feature branches, push, sync tags
 
 **Visual flow:** `reference/sync/flow.d2` — render with `d2 flow.d2 flow.svg` or `d2 flow.d2 flow.txt` for ASCII.
 
-Read this speclist flow using the `speclist` skill (Reading operation).
+REQUIRED SUB-SKILL: speclist (Reading operation)
 
 ---
 

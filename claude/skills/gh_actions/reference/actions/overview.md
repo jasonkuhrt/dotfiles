@@ -31,4 +31,4 @@ Only add when surfacing info NOT already visible in workflow UI. Don't repeat wh
 
 **Separate summary steps**: Never inline `$GITHUB_STEP_SUMMARY` writes into work steps. Use a dedicated summary step with conditional execution based on `$GITHUB_OUTPUT` from previous steps.
 
-**Markdown syntax**: Use `writing-markdown` skill for table/code block syntax.
+**Markdown syntax**: REQUIRED SUB-SKILL: writing-markdown

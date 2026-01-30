@@ -4,9 +4,9 @@
 
 This skill covers **plugin lifecycle operations** (install, uninstall, enable, disable, update) and marketplace setup. For different purposes, use:
 
-- **Marketplace internals** (caching, versioning, local dev): `cc:ecosystem`, Managing Marketplaces topic
+- **Marketplace internals** (caching, versioning, local dev): `cc:plugins`, Managing Marketplaces topic
 - **Plugin authoring**: `plugin-dev:*`
-- **Permission configuration**: `cc:ecosystem`, Managing Permissions topic
+- **Permission configuration**: `cc:plugins`, Managing Permissions topic
 
 ## CRITICAL
 

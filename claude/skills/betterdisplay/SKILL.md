@@ -41,13 +41,11 @@ Display this:
 ```
 /betterdisplay - Sync display settings with dotfiles
 
-┌─────────────────────────────────────────────────┐
-│  [sync if needed] → [configure] → [export]      │
-│                                                 │
-│  1. Import from dotfiles (if changed elsewhere) │
-│  2. Open app for you to configure               │
-│  3. Export your changes back to dotfiles        │
-└─────────────────────────────────────────────────┘
+Steps: import (if needed) → configure → export
+
+1. Import from dotfiles (if changed elsewhere)
+2. Open app for you to configure
+3. Export your changes back to dotfiles
 ```
 
 ### 2. Check sync status

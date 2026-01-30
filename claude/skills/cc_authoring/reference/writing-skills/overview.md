@@ -46,11 +46,6 @@ This skill covers **Claude Code platform gotchas and limitations**. For differen
 | Inline code in SKILL.md | High (every load) | Read pattern → rewrite code → execute |
 | Scripts in `scripts/` | Zero (only stdout) | Call script with args |
 
-**Why this matters:**
-- Inline code examples are re-read on every skill invocation
-- Scripts are executed but never loaded into context
-- Skills become "when to use what" docs, not code templates
-
 **Pattern:**
 
 ```

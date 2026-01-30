@@ -9,7 +9,7 @@
 ## Basic Creation
 
 ```bash
-bun claude/skills/linear/scripts/create.ts \
+bun ~/.claude/skills/linear/scripts/create.ts \
   --title "Issue title" \
   --team ENG \
   --description "Markdown description"
@@ -18,7 +18,7 @@ bun claude/skills/linear/scripts/create.ts \
 ## With All Optional Fields
 
 ```bash
-bun claude/skills/linear/scripts/create.ts \
+bun ~/.claude/skills/linear/scripts/create.ts \
   --title "Issue title" \
   --team ENG \
   --description "Markdown description with details" \
@@ -46,25 +46,25 @@ bun claude/skills/linear/scripts/create.ts \
 The create script resolves team key to UUID automatically. For manual lookup:
 
 ```bash
-bun claude/skills/linear/scripts/query.ts '{ teams(filter: { key: { eq: "ENG" } }) { nodes { id name key } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ teams(filter: { key: { eq: "ENG" } }) { nodes { id name key } } }'
 ```
 
 ### Assignee ID
 
 ```bash
-bun claude/skills/linear/scripts/query.ts '{ users(filter: { displayName: { eq: "jason" } }) { nodes { id name displayName } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ users(filter: { displayName: { eq: "jason" } }) { nodes { id name displayName } } }'
 ```
 
 ### Label IDs
 
 ```bash
-bun claude/skills/linear/scripts/query.ts '{ issueLabels(filter: { name: { eq: "bug" } }) { nodes { id name } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ issueLabels(filter: { name: { eq: "bug" } }) { nodes { id name } } }'
 ```
 
 ### State ID (to override starting state)
 
 ```bash
-bun claude/skills/linear/scripts/query.ts '{ workflowStates(filter: { team: { key: { eq: "ENG" } }, name: { eq: "In Progress" } }) { nodes { id name type } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ workflowStates(filter: { team: { key: { eq: "ENG" } }, name: { eq: "In Progress" } }) { nodes { id name type } } }'
 ```
 
 ## Description Formatting

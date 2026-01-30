@@ -3,9 +3,9 @@
  * Search Linear issues by text query.
  *
  * Usage:
- *   bun scripts/search.ts "auth bug"
- *   bun scripts/search.ts "login" --status open
- *   bun scripts/search.ts "refactor" --include-canceled
+ *   bun ~/.claude/skills/linear/scripts/search.ts "auth bug"
+ *   bun ~/.claude/skills/linear/scripts/search.ts "login" --status open
+ *   bun ~/.claude/skills/linear/scripts/search.ts "refactor" --include-canceled
  */
 import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
 import { parseArgs } from 'node:util'
@@ -22,7 +22,7 @@ const { values, positionals } = parseArgs({
 })
 
 if (values.help || positionals.length === 0) {
-  console.log(`Usage: bun scripts/search.ts <query> [options]
+  console.log(`Usage: bun ~/.claude/skills/linear/scripts/search.ts <query> [options]
 
 Options:
   -s, --status <type>     Filter by state type: open, closed, all (default: excludes canceled)
@@ -31,9 +31,9 @@ Options:
   -h, --help              Show this help
 
 Examples:
-  bun scripts/search.ts "auth bug"
-  bun scripts/search.ts "login" --status open
-  bun scripts/search.ts "old feature" --include-canceled
+  bun ~/.claude/skills/linear/scripts/search.ts "auth bug"
+  bun ~/.claude/skills/linear/scripts/search.ts "login" --status open
+  bun ~/.claude/skills/linear/scripts/search.ts "old feature" --include-canceled
 `)
   process.exit(values.help ? 0 : 1)
 }

@@ -3,8 +3,8 @@
  * Create a new Linear issue.
  *
  * Usage:
- *   bun scripts/create.ts --title "Issue title" --team ENG
- *   bun scripts/create.ts --title "Bug fix" --team ENG --description "Details here" --priority 2
+ *   bun ~/.claude/skills/linear/scripts/create.ts --title "Issue title" --team ENG
+ *   bun ~/.claude/skills/linear/scripts/create.ts --title "Bug fix" --team ENG --description "Details here" --priority 2
  */
 import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
 import { parseArgs } from 'node:util'
@@ -26,7 +26,7 @@ const { values } = parseArgs({
 })
 
 if (values.help || !values.title || !values.team) {
-  console.log(`Usage: bun scripts/create.ts --title <title> --team <key> [options]
+  console.log(`Usage: bun ~/.claude/skills/linear/scripts/create.ts --title <title> --team <key> [options]
 
 Required:
   -t, --title <string>       Issue title
@@ -42,8 +42,8 @@ Options:
   -h, --help                 Show this help
 
 Examples:
-  bun scripts/create.ts --title "Fix login bug" --team ENG
-  bun scripts/create.ts --title "New feature" --team ENG -d "## Requirements\\n- Item 1" -p 2
+  bun ~/.claude/skills/linear/scripts/create.ts --title "Fix login bug" --team ENG
+  bun ~/.claude/skills/linear/scripts/create.ts --title "New feature" --team ENG -d "## Requirements\\n- Item 1" -p 2
 `)
   process.exit(values.help ? 0 : 1)
 }

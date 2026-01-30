@@ -54,7 +54,7 @@ MIME detection is automatic from file extension:
 ### Upload
 
 ```bash
-bun claude/skills/linear/scripts/upload.ts /path/to/file.png
+bun ~/.claude/skills/linear/scripts/upload.ts /path/to/file.png
 ```
 
 ```json
@@ -67,7 +67,7 @@ bun claude/skills/linear/scripts/upload.ts /path/to/file.png
 ### Attach
 
 ```bash
-bun claude/skills/linear/scripts/attach.ts ENG-123 /path/to/file.pdf
+bun ~/.claude/skills/linear/scripts/attach.ts ENG-123 /path/to/file.pdf
 ```
 
 ```json
@@ -81,7 +81,7 @@ bun claude/skills/linear/scripts/attach.ts ENG-123 /path/to/file.pdf
 ### Download
 
 ```bash
-bun claude/skills/linear/scripts/download.ts "https://uploads.linear.app/..." /tmp/file.png
+bun ~/.claude/skills/linear/scripts/download.ts "https://uploads.linear.app/..." /tmp/file.png
 ```
 
 ```json
@@ -99,11 +99,11 @@ After uploading, use the `assetUrl` in issue creation or updates.
 
 ```bash
 # 1. Upload image
-result=$(bun claude/skills/linear/scripts/upload.ts /path/to/screenshot.png)
+result=$(bun ~/.claude/skills/linear/scripts/upload.ts /path/to/screenshot.png)
 asset_url=$(echo "$result" | jq -r '.assetUrl')
 
 # 2. Create issue with embedded image
-bun claude/skills/linear/scripts/create.ts \
+bun ~/.claude/skills/linear/scripts/create.ts \
   --title "Bug: layout broken on mobile" \
   --team ENG \
   --description "The layout is broken on mobile viewport.
@@ -115,11 +115,11 @@ bun claude/skills/linear/scripts/create.ts \
 
 ```bash
 # 1. Upload image
-result=$(bun claude/skills/linear/scripts/upload.ts /path/to/screenshot.png)
+result=$(bun ~/.claude/skills/linear/scripts/upload.ts /path/to/screenshot.png)
 markdown=$(echo "$result" | jq -r '.markdown')
 
 # 2. Post comment
-bun claude/skills/linear/scripts/comment.ts ENG-123 "Here's the updated screenshot:
+bun ~/.claude/skills/linear/scripts/comment.ts ENG-123 "Here's the updated screenshot:
 
 ${markdown}"
 ```

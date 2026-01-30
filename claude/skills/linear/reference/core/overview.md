@@ -5,8 +5,8 @@ Shared foundation for all Linear topics. Covers auth, config, mentions, and the 
 ## Scripts Model
 
 All Linear scripts use executable scripts instead of inline code. Scripts:
-- Live in `claude/skills/linear/scripts/`
-- Execute with `bun claude/skills/linear/scripts/<name>.ts`
+- Live in `~/.claude/skills/linear/scripts/`
+- Execute with `bun ~/.claude/skills/linear/scripts/<name>.ts`
 - Output JSON to stdout
 - Exit non-zero on errors
 
@@ -48,7 +48,7 @@ Linear skills require validated workspace data (teams, states, users, labels). T
 ### Initializing the Cache
 
 ```bash
-bun claude/skills/linear/scripts/pull.ts
+bun ~/.claude/skills/linear/scripts/pull.ts
 ```
 
 Run this when setting up a new project or when workspace data changes (new team states, users, labels).
@@ -91,16 +91,16 @@ Use the `gql` topic for lookups not covered by other scripts:
 
 ```bash
 # List all teams
-bun claude/skills/linear/scripts/query.ts '{ teams { nodes { id key name } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ teams { nodes { id key name } } }'
 
 # Get current user
-bun claude/skills/linear/scripts/query.ts '{ viewer { id name displayName } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ viewer { id name displayName } }'
 
 # List workflow states for a team
-bun claude/skills/linear/scripts/query.ts '{ workflowStates(filter: { team: { key: { eq: "ENG" } } }) { nodes { id name type } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ workflowStates(filter: { team: { key: { eq: "ENG" } } }) { nodes { id name type } } }'
 
 # Find user by display name
-bun claude/skills/linear/scripts/query.ts '{ users(filter: { displayName: { eq: "jason" } }) { nodes { id name displayName } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ users(filter: { displayName: { eq: "jason" } }) { nodes { id name displayName } } }'
 ```
 
 **Workflow state types:** `triage`, `backlog`, `unstarted`, `started`, `completed`, `canceled`

@@ -3,8 +3,8 @@
  * Post a comment on a Linear issue.
  *
  * Usage:
- *   bun scripts/comment.ts ENG-123 "Comment body text"
- *   bun scripts/comment.ts ENG-123 --body "Multi-line comment"
+ *   bun ~/.claude/skills/linear/scripts/comment.ts ENG-123 "Comment body text"
+ *   bun ~/.claude/skills/linear/scripts/comment.ts ENG-123 --body "Multi-line comment"
  */
 import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
 import { resolveIssueId } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/resolve-issue.ts'
@@ -20,8 +20,8 @@ const { values, positionals } = parseArgs({
 })
 
 if (values.help || positionals.length === 0) {
-  console.log(`Usage: bun scripts/comment.ts <identifier> <body>
-       bun scripts/comment.ts <identifier> --body <body>
+  console.log(`Usage: bun ~/.claude/skills/linear/scripts/comment.ts <identifier> <body>
+       bun ~/.claude/skills/linear/scripts/comment.ts <identifier> --body <body>
 
 Arguments:
   identifier    Issue identifier (e.g., ENG-123)
@@ -35,8 +35,8 @@ Note: @mentions don't work in Linear. Use profile URLs instead:
   https://linear.app/{workspace}/profiles/{displayName}
 
 Examples:
-  bun scripts/comment.ts ENG-123 "This is fixed now"
-  bun scripts/comment.ts ENG-123 --body "## Update\\nProgress notes here"
+  bun ~/.claude/skills/linear/scripts/comment.ts ENG-123 "This is fixed now"
+  bun ~/.claude/skills/linear/scripts/comment.ts ENG-123 --body "## Update\\nProgress notes here"
 `)
   process.exit(values.help ? 0 : 1)
 }

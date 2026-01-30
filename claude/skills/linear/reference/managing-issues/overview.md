@@ -11,9 +11,9 @@ All scripts live in `claude/skills/linear/scripts/` and output JSON.
 ### Search Issues
 
 ```bash
-bun claude/skills/linear/scripts/search.ts "auth bug"
-bun claude/skills/linear/scripts/search.ts "login" --status open
-bun claude/skills/linear/scripts/search.ts "old feature" --include-canceled
+bun ~/.claude/skills/linear/scripts/search.ts "auth bug"
+bun ~/.claude/skills/linear/scripts/search.ts "login" --status open
+bun ~/.claude/skills/linear/scripts/search.ts "old feature" --include-canceled
 ```
 
 **Options:**
@@ -26,8 +26,8 @@ bun claude/skills/linear/scripts/search.ts "old feature" --include-canceled
 ### Get Single Issue
 
 ```bash
-bun claude/skills/linear/scripts/get.ts ENG-123
-bun claude/skills/linear/scripts/get.ts UUID-HERE
+bun ~/.claude/skills/linear/scripts/get.ts ENG-123
+bun ~/.claude/skills/linear/scripts/get.ts UUID-HERE
 ```
 
 Returns full issue details including comments.
@@ -38,10 +38,10 @@ Returns full issue details including comments.
 
 ```bash
 # Search first
-bun claude/skills/linear/scripts/search.ts "topic of new issue"
+bun ~/.claude/skills/linear/scripts/search.ts "topic of new issue"
 
 # If no active match, create
-bun claude/skills/linear/scripts/create.ts \
+bun ~/.claude/skills/linear/scripts/create.ts \
   --title "Issue title" \
   --team ENG \
   --description "## Context\nDetails here"
@@ -70,9 +70,9 @@ View: https://linear.app/{workspace}/issue/ENG-1234
 ### Update Issue
 
 ```bash
-bun claude/skills/linear/scripts/update.ts ENG-123 --state "In Progress"
-bun claude/skills/linear/scripts/update.ts ENG-123 --priority 1
-bun claude/skills/linear/scripts/update.ts ENG-123 --assignee USER_UUID
+bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --state "In Progress"
+bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --priority 1
+bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --assignee USER_UUID
 ```
 
 **Options:**
@@ -86,8 +86,8 @@ bun claude/skills/linear/scripts/update.ts ENG-123 --assignee USER_UUID
 ### Comment on Issue
 
 ```bash
-bun claude/skills/linear/scripts/comment.ts ENG-123 "This is fixed now"
-bun claude/skills/linear/scripts/comment.ts ENG-123 --body "## Update\nProgress notes"
+bun ~/.claude/skills/linear/scripts/comment.ts ENG-123 "This is fixed now"
+bun ~/.claude/skills/linear/scripts/comment.ts ENG-123 --body "## Update\nProgress notes"
 ```
 
 **Mention validation:** Before posting, scan for `@username` and replace with profile URLs. See the core topic for mention syntax.

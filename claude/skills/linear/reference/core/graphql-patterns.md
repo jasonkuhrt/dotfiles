@@ -7,19 +7,19 @@ Query patterns for the Linear API. Use the gql topic to execute these queries, o
 ### List all teams
 
 ```bash
-bun claude/skills/linear/scripts/query.ts '{ teams { nodes { id name key description } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ teams { nodes { id name key description } } }'
 ```
 
 ### Get team by key
 
 ```bash
-bun claude/skills/linear/scripts/query.ts '{ teams(filter: { key: { eq: "ENG" } }) { nodes { id name key } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ teams(filter: { key: { eq: "ENG" } }) { nodes { id name key } } }'
 ```
 
 ### Get team members
 
 ```bash
-bun claude/skills/linear/scripts/query.ts '{ teams(filter: { key: { eq: "ENG" } }) { nodes { members { nodes { id name displayName email } } } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ teams(filter: { key: { eq: "ENG" } }) { nodes { members { nodes { id name displayName email } } } } }'
 ```
 
 ## Users
@@ -27,19 +27,19 @@ bun claude/skills/linear/scripts/query.ts '{ teams(filter: { key: { eq: "ENG" } 
 ### Current authenticated user
 
 ```bash
-bun claude/skills/linear/scripts/query.ts '{ viewer { id name displayName email } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ viewer { id name displayName email } }'
 ```
 
 ### List all users
 
 ```bash
-bun claude/skills/linear/scripts/query.ts '{ users { nodes { id name displayName email active } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ users { nodes { id name displayName email active } } }'
 ```
 
 ### Find user by display name
 
 ```bash
-bun claude/skills/linear/scripts/query.ts '{ users(filter: { displayName: { eq: "jason" } }) { nodes { id name displayName } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ users(filter: { displayName: { eq: "jason" } }) { nodes { id name displayName } } }'
 ```
 
 ## Workflow States
@@ -47,7 +47,7 @@ bun claude/skills/linear/scripts/query.ts '{ users(filter: { displayName: { eq: 
 ### List states for a team
 
 ```bash
-bun claude/skills/linear/scripts/query.ts '{ workflowStates(filter: { team: { key: { eq: "ENG" } } }) { nodes { id name type position } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ workflowStates(filter: { team: { key: { eq: "ENG" } } }) { nodes { id name type position } } }'
 ```
 
 State types: `triage`, `backlog`, `unstarted`, `started`, `completed`, `canceled`
@@ -55,7 +55,7 @@ State types: `triage`, `backlog`, `unstarted`, `started`, `completed`, `canceled
 ### Find specific state by name and team
 
 ```bash
-bun claude/skills/linear/scripts/query.ts '{ workflowStates(filter: { team: { key: { eq: "ENG" } }, name: { eq: "In Progress" } }) { nodes { id name type } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ workflowStates(filter: { team: { key: { eq: "ENG" } }, name: { eq: "In Progress" } }) { nodes { id name type } } }'
 ```
 
 ## Issues
@@ -63,25 +63,25 @@ bun claude/skills/linear/scripts/query.ts '{ workflowStates(filter: { team: { ke
 ### Create issue (via create script)
 
 ```bash
-bun claude/skills/linear/scripts/create.ts --title "Issue title" --team ENG
+bun ~/.claude/skills/linear/scripts/create.ts --title "Issue title" --team ENG
 ```
 
 ### Search issues
 
 ```bash
-bun claude/skills/linear/scripts/search.ts "search terms"
+bun ~/.claude/skills/linear/scripts/search.ts "search terms"
 ```
 
 ### Get issue by identifier
 
 ```bash
-bun claude/skills/linear/scripts/get.ts ENG-123
+bun ~/.claude/skills/linear/scripts/get.ts ENG-123
 ```
 
 ### Comment on issue
 
 ```bash
-bun claude/skills/linear/scripts/comment.ts ENG-123 "Comment body"
+bun ~/.claude/skills/linear/scripts/comment.ts ENG-123 "Comment body"
 ```
 
 ## Pagination

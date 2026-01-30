@@ -3,7 +3,7 @@
  * Upload a file to Linear's cloud storage for embedding in descriptions/comments.
  *
  * Usage:
- *   bun scripts/upload.ts /path/to/screenshot.png
+ *   bun ~/.claude/skills/linear/scripts/upload.ts /path/to/screenshot.png
  */
 import { upload } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/upload.ts'
 import { parseArgs } from 'node:util'
@@ -17,7 +17,7 @@ const { values, positionals } = parseArgs({
 })
 
 if (values.help || positionals.length === 0) {
-  console.log(`Usage: bun scripts/upload.ts <file-path>
+  console.log(`Usage: bun ~/.claude/skills/linear/scripts/upload.ts <file-path>
 
 Uploads a file to Linear's cloud storage and returns the asset URL
 and markdown embed snippet for use in issue descriptions or comments.
@@ -29,8 +29,8 @@ Output (JSON):
   }
 
 Examples:
-  bun scripts/upload.ts ./screenshot.png
-  bun scripts/upload.ts ~/Downloads/diagram.svg
+  bun ~/.claude/skills/linear/scripts/upload.ts ./screenshot.png
+  bun ~/.claude/skills/linear/scripts/upload.ts ~/Downloads/diagram.svg
 `)
   process.exit(values.help ? 0 : 1)
 }

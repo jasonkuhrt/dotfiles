@@ -3,8 +3,8 @@
  * Upload a file and attach it to a Linear issue's attachments area.
  *
  * Usage:
- *   bun scripts/attach.ts ENG-123 /path/to/document.pdf
- *   bun scripts/attach.ts ENG-123 /path/to/file.pdf --title "Meeting Notes"
+ *   bun ~/.claude/skills/linear/scripts/attach.ts ENG-123 /path/to/document.pdf
+ *   bun ~/.claude/skills/linear/scripts/attach.ts ENG-123 /path/to/file.pdf --title "Meeting Notes"
  */
 import { attach } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/upload.ts'
 import { parseArgs } from 'node:util'
@@ -19,7 +19,7 @@ const { values, positionals } = parseArgs({
 })
 
 if (values.help || positionals.length < 2) {
-  console.log(`Usage: bun scripts/attach.ts <issue-identifier> <file-path> [options]
+  console.log(`Usage: bun ~/.claude/skills/linear/scripts/attach.ts <issue-identifier> <file-path> [options]
 
 Uploads a file and attaches it to a Linear issue's paperclip area.
 
@@ -39,8 +39,8 @@ Output (JSON):
   }
 
 Examples:
-  bun scripts/attach.ts ENG-123 ./meeting-notes.pdf
-  bun scripts/attach.ts ENG-123 ./spec.pdf --title "Feature Specification v2"
+  bun ~/.claude/skills/linear/scripts/attach.ts ENG-123 ./meeting-notes.pdf
+  bun ~/.claude/skills/linear/scripts/attach.ts ENG-123 ./spec.pdf --title "Feature Specification v2"
 `)
   process.exit(values.help ? 0 : 1)
 }

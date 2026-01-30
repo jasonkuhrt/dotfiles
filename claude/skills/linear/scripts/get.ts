@@ -3,8 +3,8 @@
  * Get a single Linear issue by identifier (e.g., ENG-123) or UUID.
  *
  * Usage:
- *   bun scripts/get.ts ENG-123
- *   bun scripts/get.ts a1b2c3d4-...
+ *   bun ~/.claude/skills/linear/scripts/get.ts ENG-123
+ *   bun ~/.claude/skills/linear/scripts/get.ts a1b2c3d4-...
  */
 import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
 import { isUuid } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/resolve-issue.ts'
@@ -19,11 +19,11 @@ const { values, positionals } = parseArgs({
 })
 
 if (values.help || positionals.length === 0) {
-  console.log(`Usage: bun scripts/get.ts <identifier-or-uuid>
+  console.log(`Usage: bun ~/.claude/skills/linear/scripts/get.ts <identifier-or-uuid>
 
 Examples:
-  bun scripts/get.ts ENG-123
-  bun scripts/get.ts a1b2c3d4-5678-...
+  bun ~/.claude/skills/linear/scripts/get.ts ENG-123
+  bun ~/.claude/skills/linear/scripts/get.ts a1b2c3d4-5678-...
 `)
   process.exit(values.help ? 0 : 1)
 }
@@ -47,12 +47,20 @@ if (isUuid(idOrIdentifier)) {
     team: { key: true, name: true },
     labels: { nodes: { name: true } },
     comments: {
-      $: { first: 10 },
+      $: { first: 50 },
       nodes: {
         id: true,
         body: true,
         user: { displayName: true },
         createdAt: true,
+        children: {
+          nodes: {
+            id: true,
+            body: true,
+            user: { displayName: true },
+            createdAt: true,
+          },
+        },
       },
     },
     createdAt: true,
@@ -74,12 +82,20 @@ if (isUuid(idOrIdentifier)) {
       team: { key: true, name: true },
       labels: { nodes: { name: true } },
       comments: {
-        $: { first: 10 },
+        $: { first: 50 },
         nodes: {
           id: true,
           body: true,
           user: { displayName: true },
           createdAt: true,
+          children: {
+            nodes: {
+              id: true,
+              body: true,
+              user: { displayName: true },
+              createdAt: true,
+            },
+          },
         },
       },
       createdAt: true,

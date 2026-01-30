@@ -26,9 +26,9 @@ Is the file visual content (screenshot, diagram, image)?
 
 | Workflow | Script |
 |----------|--------|
-| Upload for embed | `bun claude/skills/linear/scripts/upload.ts <file>` |
-| Attach to issue | `bun claude/skills/linear/scripts/attach.ts <issue> <file>` |
-| Download | `bun claude/skills/linear/scripts/download.ts <url> <output>` |
+| Upload for embed | `bun ~/.claude/skills/linear/scripts/upload.ts <file>` |
+| Attach to issue | `bun ~/.claude/skills/linear/scripts/attach.ts <issue> <file>` |
+| Download | `bun ~/.claude/skills/linear/scripts/download.ts <url> <output>` |
 
 ## Ordering Constraint (Embeds Only)
 
@@ -59,8 +59,8 @@ When uploading multiple files, you can run uploads in parallel:
 
 ```bash
 # Parallel uploads (bash example)
-result1=$(bun claude/skills/linear/scripts/upload.ts before.png) &
-result2=$(bun claude/skills/linear/scripts/upload.ts after.png) &
+result1=$(bun ~/.claude/skills/linear/scripts/upload.ts before.png) &
+result2=$(bun ~/.claude/skills/linear/scripts/upload.ts after.png) &
 wait
 
 # Use results

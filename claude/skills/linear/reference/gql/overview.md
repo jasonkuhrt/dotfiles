@@ -7,53 +7,63 @@ Execute arbitrary GraphQL queries when the pre-built scripts don't cover your us
 ## Usage
 
 ```bash
-bun claude/skills/linear/scripts/query.ts '<graphql-query>' [--variables '{"key": "value"}']
+bun ~/.claude/skills/linear/scripts/query.ts '<graphql-query>' [--variables '{"key": "value"}']
+bun ~/.claude/skills/linear/scripts/query.ts --file <path> [--variables '{"key": "value"}']
 ```
+
+## Shell Escaping Warning
+
+> **⚠️ zsh eval escapes `!` to `\!`** — GraphQL non-null types like `String!` get corrupted when passed as positional arguments or through `echo`/`printf` pipes. This affects all commands run via Claude Code's Bash tool.
+>
+> **Use `--file` or heredoc `--stdin`** for any query containing `!`. Positional args are safe only for queries without `!`.
 
 ## Examples
 
-### Simple queries
+### Simple queries (no `!` — positional arg is safe)
 
 ```bash
 # Get current user
-bun claude/skills/linear/scripts/query.ts '{ viewer { id name displayName email } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ viewer { id name displayName email } }'
 
 # List all teams
-bun claude/skills/linear/scripts/query.ts '{ teams { nodes { id key name } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ teams { nodes { id key name } } }'
 
 # Get workflow states for a team
-bun claude/skills/linear/scripts/query.ts '{ workflowStates(filter: { team: { key: { eq: "ENG" } } }) { nodes { id name type } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ workflowStates(filter: { team: { key: { eq: "ENG" } } }) { nodes { id name type } } }'
 ```
 
-### Queries with variables
+### Queries with variables (use `--file` for `String!`)
+
+Write the query to a file first (using the Write tool), then pass it:
 
 ```bash
-# Get issue by ID
-bun claude/skills/linear/scripts/query.ts \
-  'query($id: String!) { issue(id: $id) { identifier title state { name } } }' \
+# 1. Write query to a file (via Write tool)
+# Contents of /tmp/query.graphql:
+#   query($id: String!) { issue(id: $id) { identifier title state { name } } }
+
+# 2. Execute with --file
+bun ~/.claude/skills/linear/scripts/query.ts --file /tmp/query.graphql \
   --variables '{"id": "issue-uuid-here"}'
 ```
 
-### Mutations
+### Mutations (use `--file` for `Input!` types)
 
 ```bash
-# Create a comment
-bun claude/skills/linear/scripts/query.ts \
-  'mutation($input: CommentCreateInput!) { commentCreate(input: $input) { success comment { id url } } }' \
+# 1. Write mutation to a file (via Write tool)
+# Contents of /tmp/mutation.graphql:
+#   mutation($input: CommentCreateInput!) { commentCreate(input: $input) { success comment { id url } } }
+
+# 2. Execute with --file
+bun ~/.claude/skills/linear/scripts/query.ts --file /tmp/mutation.graphql \
   --variables '{"input": {"issueId": "...", "body": "Comment text"}}'
 ```
 
-### Using stdin (avoids shell escaping)
+### Using heredoc (`--stdin`)
 
-Queries with `String!` (non-null types) get mangled by bash due to history expansion on `!`. Use `--stdin` to sidestep shell interpretation:
+Heredocs with quoted delimiters (`<<'EOF'`) bypass shell escaping:
 
 ```bash
-# Pipe query from echo
-echo 'mutation($id: String!) { issueDelete(id: $id) { success } }' | \
-  bun claude/skills/linear/scripts/query.ts --stdin -v '{"id": "..."}'
-
-# Heredoc for multiline queries
-bun claude/skills/linear/scripts/query.ts --stdin -v '{"id": "..."}' <<'EOF'
+bun ~/.claude/skills/linear/scripts/query.ts --stdin -v '{"id": "..."}' <<'EOF'
 mutation($id: String!) {
   issueArchive(id: $id) {
     success

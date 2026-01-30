@@ -5,7 +5,7 @@ Resolve "the issue" or "the ticket" to a specific Linear issue identifier (e.g.,
 ## Resolution Script
 
 ```bash
-bun claude/skills/linear/scripts/resolve.ts
+bun ~/.claude/skills/linear/scripts/resolve.ts
 ```
 
 The script follows a resolution chain (first match wins):
@@ -18,16 +18,16 @@ The script follows a resolution chain (first match wins):
 
 ```bash
 # Full resolution chain (default)
-bun claude/skills/linear/scripts/resolve.ts
+bun ~/.claude/skills/linear/scripts/resolve.ts
 
 # Only try branch detection
-bun claude/skills/linear/scripts/resolve.ts --branch
+bun ~/.claude/skills/linear/scripts/resolve.ts --branch
 
 # Only try context file
-bun claude/skills/linear/scripts/resolve.ts --context-file
+bun ~/.claude/skills/linear/scripts/resolve.ts --context-file
 
 # Skip auto-detection, list assigned issues
-bun claude/skills/linear/scripts/resolve.ts --list
+bun ~/.claude/skills/linear/scripts/resolve.ts --list
 ```
 
 ### Output

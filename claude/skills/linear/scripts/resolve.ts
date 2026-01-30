@@ -8,9 +8,9 @@
  *   3. Query assigned issues (interactive if multiple)
  *
  * Usage:
- *   bun scripts/resolve.ts
- *   bun scripts/resolve.ts --branch       # Only try branch detection
- *   bun scripts/resolve.ts --list         # List assigned issues
+ *   bun ~/.claude/skills/linear/scripts/resolve.ts
+ *   bun ~/.claude/skills/linear/scripts/resolve.ts --branch       # Only try branch detection
+ *   bun ~/.claude/skills/linear/scripts/resolve.ts --list         # List assigned issues
  */
 import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
 import { resolveIssueId } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/resolve-issue.ts'
@@ -30,7 +30,7 @@ const { values } = parseArgs({
 })
 
 if (values.help) {
-  console.log(`Usage: bun scripts/resolve.ts [options]
+  console.log(`Usage: bun ~/.claude/skills/linear/scripts/resolve.ts [options]
 
 Resolution chain (first match wins):
   1. Git branch name (extracts [A-Z]+-\\d+ pattern)

@@ -3,8 +3,8 @@
  * Download a file from Linear's uploads storage.
  *
  * Usage:
- *   bun scripts/download.ts https://uploads.linear.app/... /tmp/screenshot.png
- *   bun scripts/download.ts https://uploads.linear.app/... /tmp/  # derives filename
+ *   bun ~/.claude/skills/linear/scripts/download.ts https://uploads.linear.app/... /tmp/screenshot.png
+ *   bun ~/.claude/skills/linear/scripts/download.ts https://uploads.linear.app/... /tmp/  # derives filename
  */
 import { download } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/download.ts'
 import { parseArgs } from 'node:util'
@@ -18,7 +18,7 @@ const { values, positionals } = parseArgs({
 })
 
 if (values.help || positionals.length < 2) {
-  console.log(`Usage: bun scripts/download.ts <url> <output-path>
+  console.log(`Usage: bun ~/.claude/skills/linear/scripts/download.ts <url> <output-path>
 
 Downloads a file from Linear's uploads storage (requires auth).
 
@@ -33,8 +33,8 @@ Output (JSON):
   }
 
 Examples:
-  bun scripts/download.ts "https://uploads.linear.app/.../file.png" /tmp/screenshot.png
-  bun scripts/download.ts "https://uploads.linear.app/.../file.png" /tmp/
+  bun ~/.claude/skills/linear/scripts/download.ts "https://uploads.linear.app/.../file.png" /tmp/screenshot.png
+  bun ~/.claude/skills/linear/scripts/download.ts "https://uploads.linear.app/.../file.png" /tmp/
 `)
   process.exit(values.help ? 0 : 1)
 }

@@ -3,7 +3,7 @@
  * Pull Linear workspace data and cache locally.
  *
  * Usage:
- *   bun scripts/pull.ts
+ *   bun ~/.claude/skills/linear/scripts/pull.ts
  *
  * Fetches teams, workflow states, labels, and users from Linear API
  * and writes to .claude/tmp/linear/workspace.yaml
@@ -23,7 +23,7 @@ const { values } = parseArgs({
 })
 
 if (values.help) {
-  console.log(`Usage: bun scripts/pull.ts
+  console.log(`Usage: bun ~/.claude/skills/linear/scripts/pull.ts
 
 Pulls workspace data from Linear API and caches to .claude/tmp/linear/workspace.yaml
 

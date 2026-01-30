@@ -16,7 +16,7 @@ Linear skills must NEVER invent workspace-specific data. This skill provides a d
 
 ```bash
 # Initialize or refresh the workspace cache
-bun claude/skills/linear/scripts/pull.ts
+bun ~/.claude/skills/linear/scripts/pull.ts
 ```
 
 Run this:

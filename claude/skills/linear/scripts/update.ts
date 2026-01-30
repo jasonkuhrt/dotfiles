@@ -3,8 +3,8 @@
  * Update a Linear issue's state, assignee, priority, or other fields.
  *
  * Usage:
- *   bun scripts/update.ts ENG-123 --state "In Progress"
- *   bun scripts/update.ts ENG-123 --priority 1 --assignee UUID
+ *   bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --state "In Progress"
+ *   bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --priority 1 --assignee UUID
  */
 import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
 import { resolveIssueId } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/resolve-issue.ts'
@@ -25,7 +25,7 @@ const { values, positionals } = parseArgs({
 })
 
 if (values.help || positionals.length === 0) {
-  console.log(`Usage: bun scripts/update.ts <identifier> [options]
+  console.log(`Usage: bun ~/.claude/skills/linear/scripts/update.ts <identifier> [options]
 
 Options:
   -s, --state <name>         State name (e.g., "In Progress", "Done")
@@ -37,9 +37,9 @@ Options:
   -h, --help                 Show this help
 
 Examples:
-  bun scripts/update.ts ENG-123 --state "In Progress"
-  bun scripts/update.ts ENG-123 --priority 1
-  bun scripts/update.ts ENG-123 --assignee USER_UUID --state "Done"
+  bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --state "In Progress"
+  bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --priority 1
+  bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --assignee USER_UUID --state "Done"
 `)
   process.exit(values.help ? 0 : 1)
 }

@@ -13,7 +13,7 @@ All scripts live in `claude/skills/linear/scripts/` and output JSON.
 Upload a file to Linear's cloud storage for embedding in descriptions/comments.
 
 ```bash
-bun claude/skills/linear/scripts/upload.ts /path/to/screenshot.png
+bun ~/.claude/skills/linear/scripts/upload.ts /path/to/screenshot.png
 ```
 
 **Output:**
@@ -31,8 +31,8 @@ Then use the `markdown` in the issue body or comment body. The upload **must** h
 Upload a file and attach it to an issue's paperclip area (attachments section).
 
 ```bash
-bun claude/skills/linear/scripts/attach.ts ENG-123 /path/to/document.pdf
-bun claude/skills/linear/scripts/attach.ts ENG-123 /path/to/spec.pdf --title "Feature Spec v2"
+bun ~/.claude/skills/linear/scripts/attach.ts ENG-123 /path/to/document.pdf
+bun ~/.claude/skills/linear/scripts/attach.ts ENG-123 /path/to/spec.pdf --title "Feature Spec v2"
 ```
 
 **Options:**
@@ -53,10 +53,10 @@ Download a Linear upload to disk for local analysis.
 
 ```bash
 # To a specific file path
-bun claude/skills/linear/scripts/download.ts "https://uploads.linear.app/..." /tmp/screenshot.png
+bun ~/.claude/skills/linear/scripts/download.ts "https://uploads.linear.app/..." /tmp/screenshot.png
 
 # To a directory (derives filename from URL)
-bun claude/skills/linear/scripts/download.ts "https://uploads.linear.app/..." /tmp/
+bun ~/.claude/skills/linear/scripts/download.ts "https://uploads.linear.app/..." /tmp/
 ```
 
 **Output:**

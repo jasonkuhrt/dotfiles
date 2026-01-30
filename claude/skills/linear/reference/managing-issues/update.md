@@ -3,9 +3,9 @@
 ## Basic Update
 
 ```bash
-bun claude/skills/linear/scripts/update.ts ENG-123 --state "In Progress"
-bun claude/skills/linear/scripts/update.ts ENG-123 --priority 1
-bun claude/skills/linear/scripts/update.ts ENG-123 --assignee USER_UUID
+bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --state "In Progress"
+bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --priority 1
+bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --assignee USER_UUID
 ```
 
 ## Updatable Fields
@@ -23,8 +23,8 @@ bun claude/skills/linear/scripts/update.ts ENG-123 --assignee USER_UUID
 ### Change state
 
 ```bash
-bun claude/skills/linear/scripts/update.ts ENG-123 --state "In Progress"
-bun claude/skills/linear/scripts/update.ts ENG-123 --state "Done"
+bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --state "In Progress"
+bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --state "Done"
 ```
 
 The script resolves state names to UUIDs automatically. If the state name is ambiguous, it will show available states.
@@ -33,34 +33,37 @@ The script resolves state names to UUIDs automatically. If the state name is amb
 
 ```bash
 # First, find the user UUID
-bun claude/skills/linear/scripts/query.ts '{ users(filter: { displayName: { eq: "jason" } }) { nodes { id displayName } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ users(filter: { displayName: { eq: "jason" } }) { nodes { id displayName } } }'
 
 # Then update
-bun claude/skills/linear/scripts/update.ts ENG-123 --assignee USER_UUID
+bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --assignee USER_UUID
 ```
 
 ### Unassign (via gql escape hatch)
 
-The update script doesn't support unassigning. Use the gql escape hatch:
+The update script doesn't support unassigning. Use the gql escape hatch with `--file` (queries with `String!` get corrupted by zsh eval — see gql topic):
 
 ```bash
-bun claude/skills/linear/scripts/query.ts \
-  'mutation($id: String!, $input: IssueUpdateInput!) { issueUpdate(id: $id, input: $input) { success issue { identifier } } }' \
+# 1. Write to file (via Write tool):
+#   mutation($id: String!, $input: IssueUpdateInput!) { issueUpdate(id: $id, input: $input) { success issue { identifier } } }
+
+# 2. Execute
+bun ~/.claude/skills/linear/scripts/query.ts --file /tmp/mutation.graphql \
   --variables '{"id": "ISSUE_UUID", "input": {"assigneeId": null}}'
 ```
 
 ### Change priority
 
 ```bash
-bun claude/skills/linear/scripts/update.ts ENG-123 --priority 1  # Urgent
-bun claude/skills/linear/scripts/update.ts ENG-123 --priority 3  # Normal
+bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --priority 1  # Urgent
+bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --priority 3  # Normal
 ```
 
 ### Update title and description
 
 ```bash
-bun claude/skills/linear/scripts/update.ts ENG-123 --title "Updated title"
-bun claude/skills/linear/scripts/update.ts ENG-123 --description "Updated description"
+bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --title "Updated title"
+bun ~/.claude/skills/linear/scripts/update.ts ENG-123 --description "Updated description"
 ```
 
 ### Add/update labels (via gql escape hatch)
@@ -69,15 +72,17 @@ Labels are set as a complete list (replaces existing). The update script doesn't
 
 ```bash
 # 1. Get current labels
-bun claude/skills/linear/scripts/get.ts ENG-123
+bun ~/.claude/skills/linear/scripts/get.ts ENG-123
 # Look at labels.nodes[].id in output
 
 # 2. Get new label ID
-bun claude/skills/linear/scripts/query.ts '{ issueLabels(filter: { name: { eq: "needs-review" } }) { nodes { id } } }'
+bun ~/.claude/skills/linear/scripts/query.ts '{ issueLabels(filter: { name: { eq: "needs-review" } }) { nodes { id } } }'
 
-# 3. Update with combined list
-bun claude/skills/linear/scripts/query.ts \
-  'mutation($id: String!, $input: IssueUpdateInput!) { issueUpdate(id: $id, input: $input) { success } }' \
+# 3. Write mutation to file (via Write tool):
+#   mutation($id: String!, $input: IssueUpdateInput!) { issueUpdate(id: $id, input: $input) { success } }
+
+# 4. Execute with --file
+bun ~/.claude/skills/linear/scripts/query.ts --file /tmp/mutation.graphql \
   --variables '{"id": "ISSUE_UUID", "input": {"labelIds": ["existing-id-1", "new-id"]}}'
 ```
 
@@ -87,7 +92,7 @@ For bulk updates, loop over the update script:
 
 ```bash
 for id in ENG-123 ENG-124 ENG-125; do
-  bun claude/skills/linear/scripts/update.ts "$id" --priority 2
+  bun ~/.claude/skills/linear/scripts/update.ts "$id" --priority 2
 done
 ```
 

@@ -3,10 +3,9 @@
  * Execute arbitrary GraphQL queries against the Linear API.
  *
  * Usage:
- *   bun scripts/query.ts '{ viewer { id name } }'
- *   bun scripts/query.ts '{ teams { nodes { id key name } } }'
- *   bun scripts/query.ts 'mutation { ... }' --variables '{"input": {...}}'
- *   echo '{ viewer { id } }' | bun scripts/query.ts --stdin
+ *   bun ~/.claude/skills/linear/scripts/query.ts '{ viewer { id name } }'
+ *   bun ~/.claude/skills/linear/scripts/query.ts --file query.graphql
+ *   bun ~/.claude/skills/linear/scripts/query.ts --stdin < query.graphql
  */
 import { parseArgs } from 'node:util'
 
@@ -14,28 +13,35 @@ const { values, positionals } = parseArgs({
   args: Bun.argv.slice(2),
   options: {
     variables: { type: `string`, short: `v` },
+    file: { type: `string`, short: `f` },
     stdin: { type: `boolean` },
     help: { type: `boolean`, short: `h` },
   },
   allowPositionals: true,
 })
 
-if (values.help || (positionals.length === 0 && !values.stdin)) {
-  console.log(`Usage: bun scripts/query.ts <graphql-query> [--variables '{...}']
-       echo '<query>' | bun scripts/query.ts --stdin [--variables '{...}']
+if (values.help || (positionals.length === 0 && !values.stdin && !values.file)) {
+  console.log(`Usage: bun ~/.claude/skills/linear/scripts/query.ts <graphql-query> [--variables '{...}']
+       bun ~/.claude/skills/linear/scripts/query.ts --file <path> [--variables '{...}']
+       bun ~/.claude/skills/linear/scripts/query.ts --stdin [--variables '{...}'] < <path>
 
 Options:
+  -f, --file      Read query from a file (avoids shell escaping issues)
   --stdin         Read query from stdin (avoids shell escaping issues)
   -v, --variables JSON object with query variables
   -h, --help      Show this help
 
 Examples:
-  bun scripts/query.ts '{ viewer { id name displayName } }'
-  bun scripts/query.ts '{ teams { nodes { id key name } } }'
-  bun scripts/query.ts 'query($id: String!) { issue(id: $id) { title } }' -v '{"id": "..."}'
+  # Simple queries (no ! in types) — positional arg is fine
+  bun ~/.claude/skills/linear/scripts/query.ts '{ viewer { id name displayName } }'
+  bun ~/.claude/skills/linear/scripts/query.ts '{ teams { nodes { id key name } } }'
 
-  # Using stdin to avoid shell escaping with String!
-  echo 'mutation($id: String!) { issueDelete(id: $id) { success } }' | bun scripts/query.ts --stdin -v '{"id": "..."}'
+  # Queries with String! or other non-null types — use --file or --stdin
+  # (zsh eval escapes ! to \\! in positional args and echo/printf pipes)
+  bun ~/.claude/skills/linear/scripts/query.ts --file query.graphql -v '{"id": "..."}'
+  bun ~/.claude/skills/linear/scripts/query.ts --stdin -v '{"id": "..."}' <<'EOF'
+query($id: String!) { issue(id: $id) { title } }
+EOF
 `)
   process.exit(values.help ? 0 : 1)
 }
@@ -47,7 +53,18 @@ if (!token) {
 }
 
 let query: string
-if (values.stdin) {
+if (values.file) {
+  const file = Bun.file(values.file)
+  if (!await file.exists()) {
+    console.error(`Error: File not found: ${values.file}`)
+    process.exit(1)
+  }
+  query = (await file.text()).trim()
+  if (!query) {
+    console.error(`Error: File is empty: ${values.file}`)
+    process.exit(1)
+  }
+} else if (values.stdin) {
   query = await Bun.stdin.text()
   query = query.trim()
   if (!query) {

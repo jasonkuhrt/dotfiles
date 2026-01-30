@@ -3,8 +3,8 @@
 ## Post a Comment
 
 ```bash
-bun claude/skills/linear/scripts/comment.ts ENG-123 "Comment body"
-bun claude/skills/linear/scripts/comment.ts ENG-123 --body "Multi-line comment here"
+bun ~/.claude/skills/linear/scripts/comment.ts ENG-123 "Comment body"
+bun ~/.claude/skills/linear/scripts/comment.ts ENG-123 --body "Multi-line comment here"
 ```
 
 ## Mention Validation
@@ -42,24 +42,32 @@ View: https://linear.app/{workspace}/issue/ENG-1234
 ## List Comments on an Issue
 
 ```bash
-bun claude/skills/linear/scripts/get.ts ENG-123
+bun ~/.claude/skills/linear/scripts/get.ts ENG-123
 ```
 
 The output includes the `comments` array with recent comments.
 
 ## Edit a Comment (via gql escape hatch)
 
+Write the mutation to a file first (queries with `String!` get corrupted by zsh eval — see gql topic):
+
 ```bash
-bun claude/skills/linear/scripts/query.ts \
-  'mutation($id: String!, $input: CommentUpdateInput!) { commentUpdate(id: $id, input: $input) { success comment { id body } } }' \
+# 1. Write to file (via Write tool):
+#   mutation($id: String!, $input: CommentUpdateInput!) { commentUpdate(id: $id, input: $input) { success comment { id body } } }
+
+# 2. Execute
+bun ~/.claude/skills/linear/scripts/query.ts --file /tmp/mutation.graphql \
   --variables '{"id": "COMMENT_UUID", "input": {"body": "Updated comment body"}}'
 ```
 
 ## Delete a Comment (via gql escape hatch)
 
 ```bash
-bun claude/skills/linear/scripts/query.ts \
-  'mutation($id: String!) { commentDelete(id: $id) { success } }' \
+# 1. Write to file (via Write tool):
+#   mutation($id: String!) { commentDelete(id: $id) { success } }
+
+# 2. Execute
+bun ~/.claude/skills/linear/scripts/query.ts --file /tmp/mutation.graphql \
   --variables '{"id": "COMMENT_UUID"}'
 ```
 

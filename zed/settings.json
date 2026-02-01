@@ -544,7 +544,7 @@
     },
     // https://zed.dev/docs/languages/markdown
     "Markdown": {
-      "soft_wrap": "none",
+      "soft_wrap": "editor_width",
       "formatter": {
         "external": {
           "command": "npx",

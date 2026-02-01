@@ -1,4 +1,3 @@
-
 # the language backend to use for code understanding and manipulation.
 # Possible values are:
 #  * LSP: Use the language server protocol (LSP), spawning freely available language servers
@@ -80,6 +79,7 @@ token_count_estimator: CHAR_COUNT
 projects:
 - /Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat
 - /Users/jasonkuhrt/projects/jasonkuhrt/dotfiles
+- /Users/jasonkuhrt/projects/jasonkuhrt/telescope
 
 # fixed set of tools to use as the base tool set (if non-empty), replacing Serena's default set of tools.
 # This cannot be combined with non-empty excluded_tools or included_optional_tools.

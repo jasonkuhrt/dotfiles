@@ -30,7 +30,10 @@ set --export RIPGREP_CONFIG_PATH ~/.config/ripgrep/config
 # Source: https://x.com/bcherny/status/2012670336362492296
 set --export CLAUDE_CODE_MAX_OUTPUT_TOKENS 22000
 
-
+# Claude Code: double skill description budget from 15k→30k chars
+# Prevents skills silently disappearing when you have many installed
+# Docs: https://code.claude.com/docs/en/skills#claude-doesnt-see-all-my-skills
+set --export SLASH_COMMAND_TOOL_CHAR_BUDGET 30000
 
 # Direnv: lazy-load only when needed (saves ~130ms startup)
 # Auto-activates if .envrc exists in current dir, otherwise run `direnv-init`
@@ -68,6 +71,10 @@ set --export FZF_DEFAULT_OPTS "\
 
 # https://fishshell.com/docs/current/faq.html#how-do-i-change-the-greeting-message
 set --universal fish_greeting ""
+
+# https://supermemory.ai/docs/integrations/claude-code#environment-variables
+# SUPERMEMORY_SKIP_TOOLS=Read,Glob,Grep # Tools to not capture (optional)
+# SUPERMEMORY_DEBUG=true                # Enable debug logging (optional)
 
 # Abbreviations & Aliases
 # =======================
@@ -222,7 +229,7 @@ set --export GITHUB_HANDLE jasonkuhrt
 # See README "Node Package Management" for details
 set -gx NPM_GLOBAL "$HOME/.npm-global"
 set -gx PNPM_HOME "$HOME/Library/pnpm"
-set -gx PATH "$NPM_GLOBAL/bin" "$PNPM_HOME" $PATH
+set -gx PATH "$HOME/.local/bin" "$NPM_GLOBAL/bin" "$PNPM_HOME" $PATH
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/jasonkuhrt/google-cloud-sdk/path.fish.inc' ]; . '/Users/jasonkuhrt/google-cloud-sdk/path.fish.inc'; end

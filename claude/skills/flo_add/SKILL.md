@@ -1,14 +1,8 @@
 ---
 name: flo:add
 description: >
-  Creates beads as children of the active epic. Use when creating beads during feature work
-  to prevent orphaned beads. Triggers on "add a bead", "create a task for", "track this as a bead",
-  or /flo:add.
-allowed-tools:
-  - Read
-  - Bash(bd:*)
-  - Bash(bash:*)
-  - Bash(git:*)
+  Use when creating beads during feature work on an epic branch. Triggers on
+  "add a bead", "create a task for", "track this as a bead", or /flo:add.
 ---
 
 # flo:add
@@ -25,13 +19,7 @@ Create beads that are always parented to the active epic. Prevents orphaned bead
 
 ## CRITICAL — Bead Sizing
 
-Every bead must complete within a single agent session (~165k token window) with no compaction. This is an economic and quality constraint, not a preference:
-
-- **Each agent turn compounds cost.** A bead that takes 40 turns costs exponentially more than two beads that take 15 turns each.
-- **Agent quality degrades with context length.** The further into a session, the more likely the agent drifts, hallucinates, or loses the thread.
-- **Compaction destroys context.** If a bead forces compaction, the agent loses the very context it spent tokens acquiring. This is the worst outcome — high cost AND low quality.
-
-Well-factored bite-size beads are the bedrock strategy: fast completion, high quality, low cost. Never trade quality for speed — use AI to enhance quality — but always decompose to reach that quality optimally.
+Every bead must complete within a single agent session (~165k token window) with no compaction. Turns compound cost, context length degrades quality, and compaction destroys the context you spent tokens acquiring. Size beads to finish well before the window fills. (See DESIGN.md for the full economic model.)
 
 ### Sizing Heuristic
 
@@ -65,7 +53,7 @@ When a bead is too large, split it:
 
 ## CRITICAL — Bead Quality
 
-Context is cheap to write now and ruinously expensive for a future agent to reconstruct. Every bead created through this skill must be **self-contained**: an agent in a fresh session with no prior context should be able to read the bead and start working without asking questions or exploring the codebase to understand what's needed.
+Every bead must be **self-contained**: a fresh agent with no prior context should start working without asking questions or exploring to understand what's needed. Context is cheap to write now, ruinously expensive to reconstruct later. (See DESIGN.md.)
 
 ### Required Description Elements
 
@@ -116,7 +104,7 @@ Before running `bd create`, verify:
 - <Another criterion>
 ```
 
-Not every section is needed for every bead — a trivial bug fix may only need What + Location + Acceptance. But **err on the side of too much context**. A 500-word description that saves a future agent 20 minutes of exploration is a good trade.
+Scale sections to the bead — a trivial bug fix needs What + Location + Acceptance. Always err toward more context.
 
 ## Invocation Modes
 
@@ -160,16 +148,14 @@ When the agent itself triggers this skill (not from `/flo:add`), it already has 
 
 ## Context Harvesting
 
-When this skill is invoked, the agent is usually mid-session with rich context about the work that triggered the bead creation — a bug just found, a missing feature just noticed, a refactor need just identified. **This context is the most valuable input to the bead and it's about to be lost.**
-
-Before doing anything else, harvest from the current conversation:
+Harvest from the current conversation before doing anything else:
 
 1. **What triggered this?** What was the agent doing when the need was discovered? What file, function, or behavior revealed the gap?
 2. **What does the agent already know?** File paths, symbol names, error messages, patterns observed, related code — all of this is already in the context window. Extract it.
 3. **What was the user's intent?** The user's words when they asked for the bead — their mental model of the problem — is signal. Capture it, don't paraphrase it away.
 4. **What adjacent decisions were made?** If the current session made design decisions that constrain this new work, record them.
 
-This harvested context feeds directly into the description (step 4). The agent should not ask the user to re-explain what they just said — it's already in the conversation. Use it.
+This harvested context feeds directly into the description (step 4). Don't ask the user to re-explain what's already in the conversation.
 
 ## Steps
 
@@ -208,7 +194,7 @@ Before writing the description, apply the sizing heuristic. Mentally walk throug
 3. How many modules does it need to understand?
 4. Can the result be verified in isolation?
 
-**If it's too large:** Decompose into sub-beads using the decomposition rules. Each sub-bead goes through this entire skill workflow independently (steps 3-6). Wire dependencies between them.
+**If it's too large:** Decompose into sub-beads using the decomposition rules. Each sub-bead goes through this entire skill workflow independently (steps 3-7). Wire dependencies between them.
 
 **If it fits:** Proceed to draft the description.
 

@@ -6,7 +6,7 @@ Apply formatting to research files. Never lossy -- only restructures and enriche
 
 - Standardizing research file formatting
 - Enriching GitHub issue references with dates
-- Applying writing-compact style
+- Applying compact formatting (via `markdown` skill, operation 3)
 
 Triggers: "format research", "enrich research links"
 
@@ -36,4 +36,4 @@ Triggers: "format research", "enrich research links"
    - Issues/PRs closed: `[org/repo#N (2025-03-05 -> 09)](url)` -- smart abbreviation
    - Discussions: `[org/repo#dN (date)](url)` -- `#d` prefix (separate namespace)
 
-2. **Apply `writing-compact` skill** for structure/layout
+2. **Apply `markdown` skill operation 3** (compact mode) for structure/layout

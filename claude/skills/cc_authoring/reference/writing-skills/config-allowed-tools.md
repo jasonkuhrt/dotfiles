@@ -2,6 +2,10 @@
 
 Restricts which tools Claude can use without permission prompts when skill is active.
 
+## Preference: Omit by Default
+
+**Prefer omitting `allowed-tools` for personal skills.** The skill's steps already prescribe which commands to run — `allowed-tools` adds a redundant constraint layer that can cause confusing failures if the agent needs to do something slightly outside the prescribed path. Only use `allowed-tools` for **public marketplace plugins** where explicit permission scoping matters for trust and distribution.
+
 ## How It Works
 
 - **Allowlist model**: Only listed tools skip permission

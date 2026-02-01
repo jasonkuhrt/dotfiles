@@ -9,8 +9,8 @@ description: Use when working with research files (~/.claude/research/ by defaul
 
 Research files live in one of two locations:
 
-| Level   | Path                  | When                                      |
-| ------- | --------------------- | ----------------------------------------- |
+| Level   | Path                  | When                                           |
+| ------- | --------------------- | ---------------------------------------------- |
 | user    | `~/.claude/research/` | **Default** — general learnings, cross-project |
 | project | `.claude/research/`   | Only when user explicitly says "project level" |
 
@@ -36,22 +36,22 @@ Manage research files — creation, naming, archival.
 **NEVER write directly to the research directory.** All research file creation MUST go through this skill to ensure:
 
 - Correct naming convention
-- `writing-compact` formatting applied
+- Compact formatting applied (via `markdown` skill, operation 3)
 - Proper integration with existing research
 
 **Every write operation (create, import, move) MUST complete the full pipeline:**
 
 1. **Script** — `research.sh` handles mechanical parts (move, rename, gh-links)
-2. **Claude** — YOU handle Claude-only parts (`writing-compact`)
+2. **Claude** — YOU handle Claude-only parts (compact formatting via `markdown` skill)
 
 The script is NOT the complete solution. You are the orchestrator.
 
-| Authorship    | Operations              | writing-compact            |
-| ------------- | ----------------------- | -------------------------- |
-| Claude writes | flush, save, create     | Apply inline (no preview)  |
-| External      | import, move            | Preview-iterate-apply pass |
+| Authorship    | Operations          | Compact formatting         |
+| ------------- | ------------------- | -------------------------- |
+| Claude writes | flush, save, create | Apply inline (no preview)  |
+| External      | import, move        | Preview-iterate-apply pass |
 
-**Skipping `writing-compact` entirely is a failure.**
+**Skipping compact formatting entirely is a failure.**
 
 ### Operations
 
@@ -61,7 +61,7 @@ The script is NOT the complete solution. You are the orchestrator.
   ~/.claude/skills/research/research.sh new <topic>
   ```
 
-  Then: write content in `writing-compact` format directly (you're the author)
+  Then: write content in compact format directly (invoke `markdown` skill operation 3 — you're the author)
 
 - **Import existing file**
 
@@ -69,7 +69,7 @@ The script is NOT the complete solution. You are the orchestrator.
   ~/.claude/skills/research/research.sh import <file> [topic]
   ```
 
-  Script auto-enriches GH links. Then: invoke `writing-compact` with preview-iterate-apply (external content)
+  Script auto-enriches GH links. Then: invoke `markdown` skill operation 3 with preview-iterate-apply (external content)
 
 - **Archive old files**
 
@@ -107,5 +107,5 @@ The script is NOT the complete solution. You are the orchestrator.
 ## Subcommands
 
 - [Prune](./reference/pruning.md) — remove conversational artifacts, distill knowledge
-- [Format](./reference/formatting.md) — enrich GH links, apply writing-compact
+- [Format](./reference/formatting.md) — enrich GH links, apply compact formatting
 - [Flush CC Thread](./reference/flush.md) — extract learnings before context loss

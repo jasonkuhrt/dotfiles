@@ -17,6 +17,8 @@
  */
 
 import { Console, Effect } from "effect"
+import * as YamlModule from "../lib/yaml.js"
+import * as path from "node:path"
 
 const USAGE = `
 bookmarks - Cross-browser bookmark sync from dotfiles
@@ -95,9 +97,14 @@ const program = Effect.gen(function* () {
       yield* notImplemented(`daemon ${subcommand}`)
       break
     }
-    case "validate":
-      yield* notImplemented("validate")
+    case "validate": {
+      const yamlPath = path.resolve(import.meta.dirname, "../../../..", "bookmarks/bookmarks.yaml")
+      yield* YamlModule.load(yamlPath).pipe(
+        Effect.flatMap(() => Console.log("✓ bookmarks.yaml is valid")),
+        Effect.catchAll((e) => Console.error(`✗ ${e.message}`)),
+      )
       break
+    }
     default:
       yield* Console.error(`Unknown command: ${command}`)
       yield* Console.log(USAGE)

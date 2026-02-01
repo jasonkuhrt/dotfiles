@@ -1,188 +1,131 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/jasonkuhrt/dotfiles/bookmarks/bookmarks.schema.json",
-  "title": "Bookmarks Configuration",
-  "description": "Cross-browser bookmark sync with bidirectional support",
-  "type": "object",
-  "required": ["targets", "base"],
-  "additionalProperties": false,
-  "properties": {
-    "$schema": {
-      "type": "string"
-    },
-    "targets": {
-      "$ref": "#/$defs/targets"
-    },
-    "base": {
-      "$ref": "#/$defs/bookmarkSections",
-      "description": "Default bookmarks inherited by all targets"
-    },
-    "overrides": {
-      "type": "object",
-      "description": "Per-target overrides (safari, chrome/personal, chrome/work)",
-      "additionalProperties": {
-        "$ref": "#/$defs/overrideSet"
-      }
-    }
-  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "$defs": {
-    "targets": {
+    "BookmarksConfig": {
       "type": "object",
-      "additionalProperties": false,
+      "required": [
+        "targets",
+        "base"
+      ],
       "properties": {
-        "safari": {
-          "$ref": "#/$defs/safariTarget"
-        },
-        "chrome": {
+        "targets": {
           "type": "object",
-          "description": "Chrome profiles keyed by logical name",
+          "required": [],
+          "properties": {},
           "additionalProperties": {
-            "$ref": "#/$defs/chromeProfile"
+            "type": "object",
+            "required": [],
+            "properties": {},
+            "additionalProperties": {
+              "$ref": "#/$defs/TargetProfile"
+            }
+          }
+        },
+        "base": {
+          "$ref": "#/$defs/BookmarkTree"
+        },
+        "profiles": {
+          "type": "object",
+          "required": [],
+          "properties": {},
+          "additionalProperties": {
+            "$ref": "#/$defs/BookmarkTree"
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
-    "safariTarget": {
+    "TargetProfile": {
       "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "path": {
-          "type": "string",
-          "default": "~/Library/Safari/Bookmarks.plist"
-        },
-        "enabled": {
-          "type": "boolean",
-          "default": true
-        }
-      }
-    },
-    "chromeProfile": {
-      "type": "object",
-      "additionalProperties": false,
+      "required": [
+        "path"
+      ],
       "properties": {
         "path": {
           "type": "string"
         },
         "enabled": {
-          "type": "boolean",
-          "default": true
+          "type": "boolean"
         }
-      }
+      },
+      "additionalProperties": false
     },
-    "bookmarkSections": {
+    "BookmarkTree": {
       "type": "object",
-      "additionalProperties": false,
-      "description": "Bookmark sections matching browser structure",
+      "required": [],
       "properties": {
         "favorites_bar": {
           "type": "array",
-          "description": "Safari BookmarksBar / Chrome bookmark_bar",
-          "items": { "$ref": "#/$defs/bookmarkItem" }
+          "items": {
+            "$ref": "#/$defs/BookmarkNode"
+          }
         },
         "other": {
           "type": "array",
-          "description": "Safari BookmarksMenu / Chrome other",
-          "items": { "$ref": "#/$defs/bookmarkItem" }
+          "items": {
+            "$ref": "#/$defs/BookmarkNode"
+          }
         },
         "reading_list": {
           "type": "array",
-          "description": "Safari Reading List (Safari-only, syncs via iCloud)",
-          "items": { "$ref": "#/$defs/bookmarkItem" }
+          "items": {
+            "$ref": "#/$defs/BookmarkNode"
+          }
         },
         "mobile": {
           "type": "array",
-          "description": "Chrome synced/mobile bookmarks (Chrome-only)",
-          "items": { "$ref": "#/$defs/bookmarkItem" }
+          "items": {
+            "$ref": "#/$defs/BookmarkNode"
+          }
         }
-      }
+      },
+      "additionalProperties": false
     },
-    "bookmarkItem": {
-      "oneOf": [
-        { "$ref": "#/$defs/bookmark" },
-        { "$ref": "#/$defs/folder" }
+    "BookmarkNode": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BookmarkLeaf"
+        },
+        {
+          "$ref": "#/$defs/BookmarkFolder"
+        }
       ]
     },
-    "bookmark": {
+    "BookmarkLeaf": {
       "type": "object",
-      "additionalProperties": false,
-      "required": ["name", "url"],
+      "required": [
+        "name",
+        "url"
+      ],
       "properties": {
         "name": {
           "type": "string"
         },
         "url": {
-          "type": "string",
-          "format": "uri"
-        },
-        "date_added": {
-          "type": "string",
-          "format": "date-time",
-          "description": "ISO 8601 timestamp when bookmark was added"
-        },
-        "uuid": {
-          "type": "string",
-          "description": "Safari UUID for tracking"
-        },
-        "guid": {
-          "type": "string",
-          "description": "Chrome GUID for tracking"
+          "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     },
-    "folder": {
+    "BookmarkFolder": {
       "type": "object",
-      "additionalProperties": false,
-      "required": ["name"],
+      "required": [
+        "name",
+        "children"
+      ],
       "properties": {
         "name": {
           "type": "string"
         },
         "children": {
           "type": "array",
-          "items": { "$ref": "#/$defs/bookmarkItem" },
-          "default": []
-        },
-        "date_added": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "date_modified": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "uuid": {
-          "type": "string"
-        },
-        "guid": {
-          "type": "string"
+          "items": {
+            "$ref": "#/$defs/BookmarkNode"
+          }
         }
-      }
-    },
-    "overrideSet": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "favorites_bar": { "$ref": "#/$defs/overrideOperations" },
-        "other": { "$ref": "#/$defs/overrideOperations" },
-        "reading_list": { "$ref": "#/$defs/overrideOperations" },
-        "mobile": { "$ref": "#/$defs/overrideOperations" }
-      }
-    },
-    "overrideOperations": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "+": {
-          "type": "array",
-          "description": "Items to add",
-          "items": { "$ref": "#/$defs/bookmarkItem" }
-        },
-        "-": {
-          "type": "array",
-          "description": "Items to remove (by name or URL)",
-          "items": { "type": "string" }
-        }
-      }
+      },
+      "additionalProperties": false
     }
-  }
+  },
+  "$ref": "#/$defs/BookmarksConfig"
 }

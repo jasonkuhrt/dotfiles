@@ -17,7 +17,7 @@ Work through an epic one bead at a time with full chain awareness. Additive to b
 ## When to Use
 
 - Continuing a multi-session epic (1-3 concurrent agents)
-- Starting a new session on an existing epic branch
+- Starting a new session on an existing epic
 - Told to "pick up the next bead" or "continue the epic"
 
 **Not for:** Single-bead standalone tasks (no epic parent), exploratory work not tracked in beads.
@@ -26,8 +26,8 @@ Work through an epic one bead at a time with full chain awareness. Additive to b
 
 - `bd` CLI (beads plugin active)
 - `jq` (used by context.sh)
-- Git repo on a feature branch with issue key (e.g. `feature/hea-3849-*`)
-- Epic must have `--external-ref` set to the issue key
+- Git repo with an active beads epic (auto-detected via `.flo/state.yml` — bootstraps on first use)
+- Override with `--epic <id>` if auto-detection picks the wrong epic
 
 ## Quick Reference
 
@@ -98,23 +98,24 @@ bash ~/.claude/skills/flo_next/scripts/context.sh
 
 Outputs: epic metadata + all fields, epic comments, completed chain with close reasons, latest predecessor details (comments/design/notes), dependency graph, ready/blocked/in-progress children.
 
-If branch detection fails, pass explicitly: `bash scripts/context.sh --epic <id>`
+Epic resolution is handled by `.flo/state.yml` (auto-bootstraps on first use). To override: `bash scripts/context.sh --epic <id>`
 
 ### 2. Read epic fields (MANDATORY every session)
 
 These fields carry cross-session context. Read all of them:
 
-- **design** → follow its pointer to the issue directory (feeds step 3)
+- **design** → if it points to a design doc or issue directory, follow it (feeds step 3)
 - **notes** → constraints and conventions set by the epic author
 - **comments** → session learnings from all prior agents (already in context dump)
 
-### 3. Read design docs
+### 3. Read design docs (if available)
 
-Follow the epic's DESIGN pointer:
+Follow the epic's DESIGN pointer if it exists:
 
-1. Read the issue dir's `README.md` — it explains the directory structure
-2. Read files it calls out as prerequisites (e.g., `terminology.md`)
-3. _(Task-specific design doc read happens after choosing a bead in step 5)_
+1. If it points to an issue directory (`.issues/<key>/`): read the dir's `README.md`, then files it calls out as prerequisites (e.g., `terminology.md`)
+2. If it points to a design doc directly (e.g., `docs/plans/...`): read that doc
+3. If the epic has no design field: skip this step — the epic description and bead descriptions carry the context
+4. _(Task-specific design doc read happens after choosing a bead in step 5)_
 
 ### 4. Choose bead (interactive)
 

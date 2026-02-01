@@ -36,21 +36,21 @@ See [references/criteria-format.md](references/criteria-format.md) for the crite
 ## Requirements
 
 - `bd` CLI (beads plugin active)
-- Git repo on a feature branch with issue key (e.g. `feature/hea-3849-*`)
-- Epic with `--external-ref` pointing to the issue key
-- Issue directory with spec (`1-spec/SPEC.md`) and design docs (`2-design/`)
+- Git repo with an active beads epic (auto-detected via `.flo/state.yml` — bootstraps on first use)
+- If the epic has a linked issue directory (`.issues/<key>/`): spec and design docs are used for judgment checks
+- If no issue directory: the epic's own fields (description, design, notes) carry the context
 
 ## Steps
 
 ### 1. Resolve issue context
 
-Resolve the epic from the branch (same as `flo:next`). Read the epic's `design` field to find the issue directory. Read the spec and terminology doc — these feed judgment-based checks.
+Resolve the epic via `.flo/state.yml` (auto-bootstraps on first use, same as `flo:next`). Read the epic's `design` field — if it points to an issue directory, read the spec and terminology doc. If the epic has no linked issue directory, use the epic's own description and bead descriptions for judgment-based checks.
 
 ### 2. Discover and merge criteria
 
 1. Load built-in criteria from [references/criteria-lib.md](references/criteria-lib.md)
 2. Check for `.claude/review-criteria.md` — if present, merge
-3. Check for `.issues/<key>/4-qa/CRITERIA.md` — if present, merge
+3. Check for issue-level criteria (`.issues/<key>/4-qa/CRITERIA.md`) — if present, merge; skip if no issue directory
 4. Apply tier toggles from all levels
 
 Report which sources were found and which tiers are enabled.
@@ -70,7 +70,7 @@ Each tier runs independently. `all` runs every enabled tier.
 1. Run each group's checks against the codebase. Gate checks run commands; judgment checks read code.
 2. Only review the diff — never flag pre-existing code.
 3. Record every criterion's outcome — passes and failures both. Failures go under `## FAILING` (first), passes under `## PASSING`.
-4. Write to `.issues/<key>/4-qa/FINDINGS.{N}.md` (N increments from existing files). Create the directory if needed.
+4. Write findings: if `.issues/<key>/4-qa/` exists, write to `FINDINGS.{N}.md` there. Otherwise, write to `.claude/review/FINDINGS.{N}.md` (create the directory if needed).
 5. Summarize: criteria checked, findings count, groups with most findings, gate blockers.
 
 ### 5. Propose beads

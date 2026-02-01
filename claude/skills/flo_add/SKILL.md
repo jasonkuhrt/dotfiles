@@ -1,7 +1,7 @@
 ---
 name: flo:add
 description: >
-  Use when creating beads during feature work on an epic branch. Triggers on
+  Use when creating beads during feature work on an epic. Triggers on
   "add a bead", "create a task for", "track this as a bead", or /flo:add.
 ---
 
@@ -11,11 +11,11 @@ Create beads that are always parented to the active epic. Prevents orphaned bead
 
 ## When to Use
 
-- Creating beads during feature work on an epic branch
+- Creating beads during feature work on an epic
 - Agent discovers work that needs tracking as a child of the current epic
 - Batch creation of multiple related beads
 
-**Not for:** Standalone beads with no epic context (use `bd create` directly), offloading tangent ideas (use `beads:offload`).
+**Not for:** Offloading tangent ideas (use `beads:offload`). For standalone beads with no epic, use `bd create` directly.
 
 ## CRITICAL — Bead Sizing
 
@@ -162,14 +162,10 @@ This harvested context feeds directly into the description (step 4). Don't ask t
 ### 1. Resolve the epic
 
 ```bash
-bash ~/.claude/skills/flo_add/scripts/resolve-epic.sh
+bash ~/.claude/skills/flo_shared/resolve.sh
 ```
 
-Resolution cascade:
-
-1. Explicit `--epic <id>` argument (from `/flo:add --epic Heartbeat-2az ...`)
-2. Branch name → issue key (e.g. `feature/hea-3849-research` → `HEA-3849`)
-3. `.issues/` directory scan
+Reads `.flo/state.yml` if it exists, otherwise auto-bootstraps (tries branch-key detection, then single-epic detection, then prompts). Pass `--epic <id>` to override.
 
 **If resolution fails:** STOP. Do not create the bead. Report the failure and suggest `--epic <id>`.
 
@@ -256,7 +252,7 @@ Created 3 beads as children of epic Heartbeat-2az:
 | `--priority=1`        | `bd create --priority=1`                              |
 | `--description="..."` | `bd create --description="..."`                       |
 | `--deps <id>`         | `bd create --deps <id>`                               |
-| `--epic <id>`         | Epic override (consumed by resolve, not passed to bd) |
+| `--epic <id>`         | Epic override (re-bootstraps `.flo/state.yml`, not passed to bd) |
 
 Everything else passes through to `bd create` unchanged.
 

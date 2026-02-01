@@ -35,34 +35,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ---------------------------------------------------------------------------
-# 1. Resolve epic
+# 1. Resolve epic (via .flo/state.yml — auto-bootstraps if missing)
 # ---------------------------------------------------------------------------
 
-if [[ -z "$epic_id" ]]; then
-  branch=$(git branch --show-current)
-  key=$(echo "$branch" | grep -oiE '[a-z]+-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]')
-
-  if [[ -z "$key" ]]; then
-    echo "No issue key found in branch: $branch" >&2
-    echo "Use --epic <id> to specify explicitly" >&2
-    exit 1
-  fi
-
-  # Search by external_ref first, then title
-  epic_id=$(bd list --type epic --status open --json --limit 0 2>/dev/null \
-    | jq -r --arg key "$key" '
-      (.[] | select(.external_ref != null and (.external_ref | ascii_upcase) == $key) | .id)
-      // (.[] | select(.title | ascii_upcase | contains($key)) | .id)
-      // empty
-    ' | head -1)
-
-  if [[ -z "$epic_id" ]]; then
-    echo "No open epic found matching issue key: $key" >&2
-    echo "Branch: $branch" >&2
-    echo "Use --epic <id> to specify explicitly" >&2
-    exit 1
-  fi
-fi
+SHARED_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../flo_shared" && pwd)"
+epic_id=$(bash "$SHARED_DIR/resolve.sh" ${epic_id:+--epic "$epic_id"})
 
 # ---------------------------------------------------------------------------
 # Hot next: graph + ready + blocked + in-progress

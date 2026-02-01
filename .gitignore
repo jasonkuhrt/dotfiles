@@ -25,5 +25,8 @@ bookmarks/.sync-state.json
 # Claude skills tmp dir (runtime state, never committed)
 .clauding/
 
+# flo skill state (machine-local epic context)
+.flo/
+
 # Node.js
 node_modules/

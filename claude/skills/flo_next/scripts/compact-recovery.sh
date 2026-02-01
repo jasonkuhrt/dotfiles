@@ -27,21 +27,9 @@ if ! command -v bd &>/dev/null; then
   exit 0
 fi
 
-# Derive issue key from branch
-branch=$(git branch --show-current 2>/dev/null || true)
-key=$(echo "$branch" | grep -oiE '[a-z]+-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]')
-
-if [[ -z "$key" ]]; then
-  exit 0
-fi
-
-# Resolve epic (same logic as context.sh)
-epic_id=$(bd list --type epic --status open --json --limit 0 2>/dev/null \
-  | jq -r --arg key "$key" '
-    (.[] | select(.external_ref != null and (.external_ref | ascii_upcase) == $key) | .id)
-    // (.[] | select(.title | ascii_upcase | contains($key)) | .id)
-    // empty
-  ' | head -1)
+# Resolve epic via .flo/state.yml (auto-bootstraps if missing)
+SHARED_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../flo_shared" && pwd)"
+epic_id=$(bash "$SHARED_DIR/resolve.sh" 2>/dev/null || true)
 
 if [[ -z "$epic_id" ]]; then
   exit 0

@@ -4,6 +4,7 @@
 tap "electrikmilk/cherri"
 tap "planetscale/tap"
 tap "polidog/kilar"
+tap "assimelha/tap"
 tap "zjrosen/perles"
 
 # ═══════════════════════════════════════════════════════════
@@ -65,6 +66,7 @@ brew "gh"            # GitHub CLI
 brew "git-delta"     # better diffs (also in gitconfig)
 brew "git-crypt"     # transparent file encryption
 brew "lazygit"       # terminal UI for git
+brew "bdui"          # terminal UI for beads (kanban, tree, graph views)
 brew "perles"        # terminal UI for beads issue tracking (kanban, BQL search)
 brew "gitmux"        # git status in tmux status bar
 brew "tmux"          # terminal multiplexer

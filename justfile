@@ -45,6 +45,14 @@ brew-cleanup:
     brew bundle cleanup --file=Brewfile
 
 # ─────────────────────────────────────────────────────────
+# Go tools (no Homebrew tap available)
+# ─────────────────────────────────────────────────────────
+
+# Install/update lazybeads TUI for beads
+install-lazybeads:
+    cd /tmp && rm -rf lazybeads && git clone --depth 1 https://github.com/codegangsta/lazybeads.git && cd lazybeads && go install .
+
+# ─────────────────────────────────────────────────────────
 # Shan (Claude Code tooling)
 # ─────────────────────────────────────────────────────────
 

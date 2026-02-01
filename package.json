@@ -3,6 +3,7 @@
   "private": true,
   "workspaces": ["packages/*"],
   "scripts": {
+    "bookmarks": "bun packages/bookmarks/src/bin/bookmarks.ts",
     "shan": "bun packages/shan/src/bin/shan.ts"
   },
   "dependencies": {

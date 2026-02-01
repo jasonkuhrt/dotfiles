@@ -26,6 +26,8 @@ brew "doggo"         # dig replacement, colorized DNS (dog successor)
 brew "gping"         # ping with live graph
 brew "difftastic"    # syntax-aware diff (code-aware)
 brew "git-delta"     # diff with syntax highlighting
+brew "lnav"          # log file navigator (syntax-aware, searchable, SQL)
+brew "multitail"     # tail multiple files in split view
 brew "onefetch"      # git repo info (neofetch for repos)
 brew "speedtest-cli" # internet speed test
 brew "neofetch"      # system info with ASCII art

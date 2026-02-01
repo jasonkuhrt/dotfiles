@@ -271,5 +271,4 @@ set --export PATH $BUN_INSTALL/bin $PATH
 # cargo (rust)
 fish_add_path "$HOME/.cargo/bin"
 
-# uv
-fish_add_path "/Users/jasonkuhrt/.local/bin"
+# uv (uses ~/.local/bin, already in PATH from node package managers section)

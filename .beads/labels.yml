@@ -7,6 +7,7 @@ directory:
   rule: claude/rules
   shan: packages/shan
   linear: packages/linear
+  bookmarks: packages/bookmarks, bookmarks
   fish: fish
   ghostty: ghostty
   tmux: tmux

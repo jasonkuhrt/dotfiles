@@ -78,6 +78,7 @@ link_subdir "$HERE/claude/commands" "$HOME/.claude/commands" "claude/commands"
 link_subdir "$HERE/claude/rules" "$HOME/.claude/rules" "claude/rules"
 link_subdir "$HERE/claude/skills" "$HOME/.claude/skills" "claude/skills"
 link_subdir "$HERE/claude/hooks/scripts" "$HOME/.claude/hooks/scripts" "claude/hooks/scripts"
+link_subdir "$HERE/claude/schemas" "$HOME/.claude/schemas" "claude/schemas"
 
 # ─────────────────────────────────────────────────────────────
 header "Zed"
@@ -202,6 +203,9 @@ link_file "$HERE/libra/config.json" "$HOME/.config/libra/config.json" "libra/con
 
 mkdir -p "$HOME/.config/direnv"
 link_file "$HERE/direnv/direnv.toml" "$HOME/.config/direnv/direnv.toml" "direnv/direnv.toml"
+
+mkdir -p "$HOME/.config/lnav/formats"
+link_subdir "$HERE/lnav/formats" "$HOME/.config/lnav/formats/custom" "lnav/formats"
 
 # ─────────────────────────────────────────────────────────────
 header "AWS"

@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=~/.claude/schemas/beads-labels.schema.json
+
+# Directory-mapped: label → repo path
+directory:
+  skill: claude/skills
+  hook: claude/hooks
+  rule: claude/rules
+  shan: packages/shan
+  linear: packages/linear
+  fish: fish
+  ghostty: ghostty
+  tmux: tmux
+  zed: zed
+  starship: starship
+  git: git
+  infra: sync, Brewfile, justfile
+  research: research
+
+# Cross-cutting: label → description
+cross-cutting:
+  workflow: Process improvements and workflow optimization
+  learning: External resources, tips, patterns to evaluate
+  meta: Beads system, labels, hooks, dotfiles infrastructure

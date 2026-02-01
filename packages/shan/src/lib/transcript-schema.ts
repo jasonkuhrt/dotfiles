@@ -12,6 +12,112 @@
 import { Schema } from "effect"
 
 // -----------------------------------------------------------------------------
+// Tool Input Schemas (typed inputs for known CC tools)
+// -----------------------------------------------------------------------------
+
+export const ReadInput = Schema.Struct({
+  file_path: Schema.String,
+  offset: Schema.optional(Schema.Number),
+  limit: Schema.optional(Schema.Number),
+})
+export type ReadInput = typeof ReadInput.Type
+
+export const WriteInput = Schema.Struct({
+  file_path: Schema.String,
+  content: Schema.String,
+})
+export type WriteInput = typeof WriteInput.Type
+
+export const EditInput = Schema.Struct({
+  file_path: Schema.String,
+  old_string: Schema.String,
+  new_string: Schema.String,
+  replace_all: Schema.optional(Schema.Boolean),
+})
+export type EditInput = typeof EditInput.Type
+
+export const BashInput = Schema.Struct({
+  command: Schema.String,
+  description: Schema.optional(Schema.String),
+  timeout: Schema.optional(Schema.Number),
+})
+export type BashInput = typeof BashInput.Type
+
+export const GrepInput = Schema.Struct({
+  pattern: Schema.String,
+  path: Schema.optional(Schema.String),
+  glob: Schema.optional(Schema.String),
+})
+export type GrepInput = typeof GrepInput.Type
+
+export const GlobInput = Schema.Struct({
+  pattern: Schema.String,
+  path: Schema.optional(Schema.String),
+})
+export type GlobInput = typeof GlobInput.Type
+
+export const WebSearchInput = Schema.Struct({
+  query: Schema.String,
+})
+export type WebSearchInput = typeof WebSearchInput.Type
+
+export const WebFetchInput = Schema.Struct({
+  url: Schema.String,
+  prompt: Schema.optional(Schema.String),
+})
+export type WebFetchInput = typeof WebFetchInput.Type
+
+export const TaskInput = Schema.Struct({
+  description: Schema.optional(Schema.String),
+  prompt: Schema.optional(Schema.String),
+  subagent_type: Schema.optional(Schema.String),
+})
+export type TaskInput = typeof TaskInput.Type
+
+export const LSPInput = Schema.Struct({
+  operation: Schema.String,
+  filePath: Schema.String,
+  line: Schema.optional(Schema.Number),
+  character: Schema.optional(Schema.Number),
+})
+export type LSPInput = typeof LSPInput.Type
+
+export const SkillInput = Schema.Struct({
+  skill: Schema.String,
+  args: Schema.optional(Schema.String),
+})
+export type SkillInput = typeof SkillInput.Type
+
+export const NotebookEditInput = Schema.Struct({
+  notebook_path: Schema.String,
+  new_source: Schema.String,
+  cell_type: Schema.optional(Schema.String),
+  edit_mode: Schema.optional(Schema.String),
+})
+export type NotebookEditInput = typeof NotebookEditInput.Type
+
+// Lookup table mapping tool name → input schema (for consumers)
+export const ToolInputSchemas = {
+  Read: ReadInput,
+  Write: WriteInput,
+  Edit: EditInput,
+  Bash: BashInput,
+  Grep: GrepInput,
+  Glob: GlobInput,
+  WebSearch: WebSearchInput,
+  WebFetch: WebFetchInput,
+  Task: TaskInput,
+  LSP: LSPInput,
+  Skill: SkillInput,
+  NotebookEdit: NotebookEditInput,
+} as const
+
+export type KnownToolName = keyof typeof ToolInputSchemas
+
+export const isKnownTool = (name: string): name is KnownToolName =>
+  name in ToolInputSchemas
+
+// -----------------------------------------------------------------------------
 // Content Blocks (nested inside message.content)
 // -----------------------------------------------------------------------------
 
@@ -185,3 +291,19 @@ export const TranscriptEntry = Schema.Union(
   QueueOperationEntry,
 ).annotations({ identifier: "TranscriptEntry" })
 export type TranscriptEntry = typeof TranscriptEntry.Type
+
+// -----------------------------------------------------------------------------
+// Typed tool input decoder
+// -----------------------------------------------------------------------------
+
+/**
+ * Decode a ToolUseBlock's `input` field using the known tool input schema.
+ * Returns the decoded typed input for known tools, or the raw unknown for others.
+ */
+export const decodeToolInput = (block: ToolUseBlock): unknown => {
+  if (!isKnownTool(block.name)) return block.input
+  // Each schema is Schema<A, I, R> with different A — use Schema.Unknown as the common decode target
+  // since we return `unknown` anyway. The individual schemas validate the shape.
+  const schema = ToolInputSchemas[block.name] as Schema.Schema<unknown>
+  return Schema.decodeUnknownSync(schema)(block.input)
+}

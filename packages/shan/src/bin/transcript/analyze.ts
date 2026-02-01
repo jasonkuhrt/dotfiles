@@ -9,19 +9,12 @@
  */
 
 import { Console, Effect } from "effect"
-import { join } from "node:path"
-import { mkdir } from "node:fs/promises"
-import { parseTranscriptEntries } from "../../lib/transcript-parser.js"
 import { analyzeTranscript } from "../../lib/transcript-analyzer.js"
 import { renderTimeChart, renderTokenChart, getTimeChartLabelWidth, getTokenChartLabelWidth } from "../../lib/viz/chart.js"
 import { renderDimensions, getDimensionLabelWidth } from "../../lib/viz/dimensions.js"
 import { renderTopConsumers, renderSummary, renderLegend } from "../../lib/viz/legend.js"
-import { resolveSessionPath, extractSessionId } from "../../lib/session-resolver.js"
-import { pickSession, type PickSessionOptions } from "../../lib/session-picker.js"
-
-// -----------------------------------------------------------------------------
-// JSONL parsing
-// -----------------------------------------------------------------------------
+import { loadTranscript, ensureOutputDir, writeOutput } from "../../lib/transcript-io.js"
+import type { PickSessionOptions } from "../../lib/session-picker.js"
 
 // -----------------------------------------------------------------------------
 // Main command
@@ -31,17 +24,7 @@ export interface AnalyzeOptions extends PickSessionOptions {}
 
 export const transcriptAnalyze = (input: string | undefined, options: AnalyzeOptions = {}) =>
   Effect.gen(function* () {
-    // If no input, use interactive picker (requires TTY)
-    const sessionPath = input
-      ? yield* resolveSessionPath(input)
-      : yield* pickSession(options)
-    const sessionId = extractSessionId(sessionPath)
-
-    yield* Console.log(`Analyzing: ${sessionPath}`)
-
-    const file = Bun.file(sessionPath)
-    const text = yield* Effect.promise(() => file.text())
-    const entries = (yield* parseTranscriptEntries(text)).map((e) => e.entry)
+    const { sessionId, entries } = yield* loadTranscript(input, options)
 
     if (entries.length === 0) {
       return yield* Effect.fail(new Error("No valid entries found in transcript"))
@@ -81,10 +64,7 @@ export const transcriptAnalyze = (input: string | undefined, options: AnalyzeOpt
     output.push(...renderLegend())
 
     // Write to file
-    const outputDir = join(process.cwd(), ".claude", "transcripts")
-    yield* Effect.promise(() => mkdir(outputDir, { recursive: true }))
-    const outputPath = join(outputDir, `${sessionId}.viz.txt`)
-
-    yield* Effect.promise(() => Bun.write(outputPath, output.join("\n")))
+    const outputDir = yield* ensureOutputDir()
+    const outputPath = yield* writeOutput(outputDir, `${sessionId}.viz.txt`, output.join("\n"))
     yield* Console.log(`Wrote: ${outputPath} (${analysis.summary.totalEntries} entries, ${analysis.summary.requestCount} requests)`)
   })

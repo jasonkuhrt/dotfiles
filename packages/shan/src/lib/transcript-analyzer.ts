@@ -15,9 +15,9 @@ import type {
   TranscriptEntry,
   AssistantEntry,
   UserEntry,
-  ToolUseBlock,
   Usage,
 } from "./transcript-schema.js"
+import { decodeToolInput, type SkillInput } from "./transcript-schema.js"
 
 // -----------------------------------------------------------------------------
 // Types
@@ -82,7 +82,21 @@ export interface AnalyzedTranscript {
 // -----------------------------------------------------------------------------
 
 const parseTimestamp = (entry: TranscriptEntry): Date | null => {
-  const ts = (entry as { timestamp?: string }).timestamp
+  // All entry types have `timestamp` but with different optionality
+  let ts: string | undefined
+  switch (entry.type) {
+    case "user":
+    case "assistant":
+    case "system":
+    case "queue-operation":
+      ts = entry.timestamp
+      break
+    case "progress":
+    case "file-history-snapshot":
+    case "summary":
+      ts = entry.timestamp
+      break
+  }
   if (!ts) return null
   const date = new Date(ts)
   return isNaN(date.getTime()) ? null : date
@@ -105,7 +119,7 @@ const extractTools = (entry: AssistantEntry): string[] => {
   const tools: string[] = []
   for (const block of entry.message.content) {
     if (block.type === "tool_use") {
-      tools.push((block as ToolUseBlock).name)
+      tools.push(block.name)
     }
   }
   return tools
@@ -118,11 +132,10 @@ const countFilesRead = (tools: string[]): number => {
 const extractTextFromContent = (content: UserEntry["message"]["content"]): string => {
   if (typeof content === "string") return content
 
-  // Extract text from content blocks
   const texts: string[] = []
   for (const block of content) {
     if (block.type === "text") {
-      texts.push((block as { text: string }).text ?? "")
+      texts.push(block.text)
     }
   }
   return texts.join("\n")
@@ -132,7 +145,6 @@ const extractSkillFromUser = (entry: UserEntry, previousSkill: string | null): S
   const text = extractTextFromContent(entry.message.content)
 
   // Pattern 1: "Base directory for this skill:" in message content
-  // The path is always on the same line, ending at newline or end of string
   const baseDirMatch = text.match(/Base directory for this skill:\s*([^\n]+)/)
   if (baseDirMatch) {
     const path = baseDirMatch[1]!.trim()
@@ -163,15 +175,12 @@ const extractSkillFromUser = (entry: UserEntry, previousSkill: string | null): S
 }
 
 const extractSkillFromTool = (tools: string[], entry: AssistantEntry): string | null => {
-  // Check if Skill tool was called and extract the skill name from input
   if (!tools.includes("Skill")) return null
 
   for (const block of entry.message.content) {
-    if (block.type === "tool_use" && (block as ToolUseBlock).name === "Skill") {
-      const input = (block as ToolUseBlock).input as { skill?: string }
-      if (input?.skill) {
-        return input.skill
-      }
+    if (block.type === "tool_use" && block.name === "Skill") {
+      const input = decodeToolInput(block) as SkillInput
+      return input.skill ?? null
     }
   }
   return null
@@ -183,8 +192,7 @@ const checkTruncated = (entry: UserEntry): boolean => {
 
   for (const block of content) {
     if (block.type === "tool_result") {
-      // Check for truncation indicators in the content
-      const resultContent = (block as { content?: unknown }).content
+      const resultContent = block.content
       if (typeof resultContent === "string" && resultContent.includes("[truncated]")) {
         return true
       }
@@ -198,7 +206,7 @@ const checkError = (entry: UserEntry): boolean => {
   if (typeof content === "string") return false
 
   for (const block of content) {
-    if (block.type === "tool_result" && (block as { is_error?: boolean }).is_error) {
+    if (block.type === "tool_result" && block.is_error) {
       return true
     }
   }
@@ -215,28 +223,16 @@ const ALERT_THRESHOLD_TOKENS = 5000
 export const analyzeTranscript = (entries: TranscriptEntry[]): AnalyzedTranscript => {
   // -------------------------------------------------------------------------
   // Pass 1: Aggregate token usage per requestId
-  // Claude Code stores streaming chunks with tiny incremental token deltas.
-  // We sum across all chunks for each requestId.
-  //
-  // Context consumption tracking:
-  // - input_tokens: Non-cached new input tokens
-  // - cache_creation_input_tokens: New tokens being cached (represents context growth)
-  // - cache_read_input_tokens: Tokens read from cache (same content, not growth)
-  // - output_tokens: New output generated
-  //
-  // For cumulative context GROWTH, we track:
-  //   input_tokens + cache_creation_input_tokens + output_tokens
-  // We exclude cache_read_input_tokens because those are rereads of existing content.
   // -------------------------------------------------------------------------
   interface RequestData {
     totalInputTokens: number
     totalCacheCreationTokens: number
     totalOutputTokens: number
     cacheHit: boolean
-    firstIndex: number // First entry index for this request
-    tools: string[] // Aggregated tools across all chunks
+    firstIndex: number
+    tools: string[]
     model: "opus" | "sonnet" | "haiku" | null
-    skillInvoked: string | null // Skill name if Skill tool was called
+    skillInvoked: string | null
   }
   const requestTokens = new Map<string, RequestData>()
 
@@ -244,14 +240,14 @@ export const analyzeTranscript = (entries: TranscriptEntry[]): AnalyzedTranscrip
     const entry = entries[i]!
     if (entry.type !== "assistant") continue
 
-    const assistantEntry = entry as AssistantEntry
-    const requestId = assistantEntry.requestId
+    // TS narrows entry to AssistantEntry after the type guard above
+    const requestId = entry.requestId
     if (!requestId) continue
 
-    const usage = extractUsage(assistantEntry)
-    const tools = extractTools(assistantEntry)
-    const model = extractModel(assistantEntry)
-    const skillInvoked = extractSkillFromTool(tools, assistantEntry)
+    const usage = extractUsage(entry)
+    const tools = extractTools(entry)
+    const model = extractModel(entry)
+    const skillInvoked = extractSkillFromTool(tools, entry)
 
     const existing = requestTokens.get(requestId)
     if (existing) {
@@ -259,18 +255,14 @@ export const analyzeTranscript = (entries: TranscriptEntry[]): AnalyzedTranscrip
         existing.totalInputTokens += usage.input_tokens ?? 0
         existing.totalCacheCreationTokens += usage.cache_creation_input_tokens ?? 0
         existing.totalOutputTokens += usage.output_tokens ?? 0
-        // Cache hit if any chunk has cache_read > 0
         if ((usage.cache_read_input_tokens ?? 0) > 0) {
           existing.cacheHit = true
         }
       }
-      // Aggregate tools across all chunks
       existing.tools.push(...tools)
-      // Use first non-null model
       if (!existing.model && model) {
         existing.model = model
       }
-      // Use first skill invocation found
       if (!existing.skillInvoked && skillInvoked) {
         existing.skillInvoked = skillInvoked
       }
@@ -306,7 +298,6 @@ export const analyzeTranscript = (entries: TranscriptEntry[]): AnalyzedTranscrip
       startTime = timestamp
     }
 
-    // Ensure elapsed time is monotonically increasing
     const rawElapsedMs = startTime && timestamp ? timestamp.getTime() - startTime.getTime() : 0
     const elapsedMs = Math.max(prevElapsedMs, rawElapsedMs)
     prevElapsedMs = elapsedMs
@@ -337,22 +328,17 @@ export const analyzeTranscript = (entries: TranscriptEntry[]): AnalyzedTranscrip
         type = "assistant"
         requestId = entry.requestId ?? null
 
-        // Assign tokens only to the FIRST entry of each requestId
-        // This prevents counting the same request multiple times
         if (requestId && !seenRequestIds.has(requestId)) {
           seenRequestIds.add(requestId)
           const reqData = requestTokens.get(requestId)
           if (reqData) {
-            // Context growth = new input + cached content creation + output
             deltaTokens = reqData.totalInputTokens + reqData.totalCacheCreationTokens + reqData.totalOutputTokens
             cumulativeTokens += deltaTokens
             cacheHit = reqData.cacheHit
-            // Use aggregated tools and model from all chunks
             tools = reqData.tools
             model = reqData.model
             filesRead = countFilesRead(tools)
 
-            // Check for skill tool invocation (from aggregated data)
             if (reqData.skillInvoked) {
               skill = {
                 name: reqData.skillInvoked,
@@ -361,7 +347,6 @@ export const analyzeTranscript = (entries: TranscriptEntry[]): AnalyzedTranscrip
               }
               currentSkill = reqData.skillInvoked
             } else if (currentSkill) {
-              // No new skill invocation, but carry forward the active skill context
               skill = {
                 name: currentSkill,
                 isInitial: false,
@@ -370,7 +355,6 @@ export const analyzeTranscript = (entries: TranscriptEntry[]): AnalyzedTranscrip
             }
           }
         } else if (requestId) {
-          // Subsequent entries for same requestId: just carry forward cache status
           const reqData = requestTokens.get(requestId)
           if (reqData) {
             cacheHit = reqData.cacheHit
@@ -406,13 +390,13 @@ export const analyzeTranscript = (entries: TranscriptEntry[]): AnalyzedTranscrip
       filesRead,
       truncated,
       error,
-      alert: deltaTokens >= ALERT_THRESHOLD_TOKENS, // Fixed 5k threshold
-      topRank: null, // Filled in next pass
+      alert: deltaTokens >= ALERT_THRESHOLD_TOKENS,
+      topRank: null,
     })
   }
 
   // -------------------------------------------------------------------------
-  // Pass 3: Identify top consumers (by delta tokens) and assign ranks
+  // Pass 3: Identify top consumers and assign ranks
   // -------------------------------------------------------------------------
   const assistantEntries = analyzed.filter((e) => e.type === "assistant" && e.deltaTokens > 0)
   const sorted = [...assistantEntries].sort((a, b) => b.deltaTokens - a.deltaTokens)
@@ -428,7 +412,6 @@ export const analyzeTranscript = (entries: TranscriptEntry[]): AnalyzedTranscrip
     cacheHit: e.cacheHit ?? false,
   }))
 
-  // Assign top ranks back to entries
   for (const tc of topConsumers) {
     const entry = analyzed[tc.index]
     if (entry) {

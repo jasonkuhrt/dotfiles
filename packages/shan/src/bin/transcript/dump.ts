@@ -2,16 +2,15 @@
  * shan transcript dump - Convert Claude Code JSONL transcripts to navigable Markdown.
  */
 
-import { Console, Effect } from "effect"
-import { join } from "node:path"
-import { mkdir } from "node:fs/promises"
-import {
-  type TranscriptEntry,
-  type ToolUseBlock,
-  type UserEntry,
-  type AssistantEntry,
+import { Console, Effect, Schema } from "effect"
+import type {
+  TranscriptEntry,
+  ToolUseBlock,
+  UserEntry,
+  AssistantEntry,
 } from "../../lib/transcript-schema.js"
-import { parseTranscriptEntries } from "../../lib/transcript-parser.js"
+import { TranscriptEntry as TranscriptEntrySchema } from "../../lib/transcript-schema.js"
+import { loadTranscript, ensureOutputDir, writeOutput } from "../../lib/transcript-io.js"
 import { resolveSessionPath, extractSessionId } from "../../lib/session-resolver.js"
 import { pickSession, type PickSessionOptions } from "../../lib/session-picker.js"
 
@@ -28,15 +27,26 @@ const COL_SUMMARY = 30
 // Helpers
 // -----------------------------------------------------------------------------
 
-// Use underscores for padding since formatters collapse spaces in backticks
 const PAD_CHAR = "_"
 
 const pad = (s: string, width: number): string =>
   s.length >= width ? s.slice(0, width) : s + PAD_CHAR.repeat(width - s.length)
 
-const formatTimestamp = (raw: unknown): string => {
-  const obj = raw as { timestamp?: string; snapshot?: { timestamp?: string } }
-  const ts = obj.timestamp ?? obj.snapshot?.timestamp
+const formatEntryTimestamp = (entry: TranscriptEntry): string => {
+  let ts: string | undefined
+  switch (entry.type) {
+    case "user":
+    case "assistant":
+    case "system":
+    case "queue-operation":
+      ts = entry.timestamp
+      break
+    case "progress":
+    case "file-history-snapshot":
+    case "summary":
+      ts = entry.timestamp
+      break
+  }
   if (!ts) return pad("", COL_TIME)
 
   const date = new Date(ts)
@@ -64,12 +74,12 @@ const extractUserSummary = (entry: UserEntry): string => {
   if (typeof content === "string") {
     return content.slice(0, COL_SUMMARY).replace(/\n/g, " ")
   }
-  const toolResults = content.filter((b): b is typeof b & { type: "tool_result" } => b.type === "tool_result")
+  const toolResults = content.filter((b) => b.type === "tool_result")
   if (toolResults.length > 0) {
     return `tool_result ×${toolResults.length}`
   }
-  const textBlock = content.find((b): b is typeof b & { type: "text"; text: string } => b.type === "text")
-  if (textBlock) {
+  const textBlock = content.find((b) => b.type === "text")
+  if (textBlock && textBlock.type === "text") {
     return textBlock.text.slice(0, COL_SUMMARY).replace(/\n/g, " ")
   }
   return "(content)"
@@ -115,6 +125,11 @@ const getSummary = (entry: TranscriptEntry): string => {
   }
 }
 
+// Effect JSON codec: TranscriptEntry → JSON string (pretty-printed)
+const encodeEntryToJson = Schema.encodeSync(
+  Schema.parseJson(TranscriptEntrySchema, { space: 2 }),
+)
+
 // -----------------------------------------------------------------------------
 // Export
 // -----------------------------------------------------------------------------
@@ -125,45 +140,34 @@ export interface DumpOptions extends PickSessionOptions {
 
 export const transcriptDump = (input: string | undefined, options: DumpOptions = {}) =>
   Effect.gen(function* () {
-    // If no input, use interactive picker (requires TTY)
-    const sessionPath = input
-      ? yield* resolveSessionPath(input)
-      : yield* pickSession(options)
-    const sessionId = extractSessionId(sessionPath)
-
-    // Output to project's .claude/transcripts/ directory
-    const outputDir = join(process.cwd(), ".claude", "transcripts")
-    yield* Effect.promise(() => mkdir(outputDir, { recursive: true }))
-
-    const file = Bun.file(sessionPath)
-
     if (options.raw) {
-      // Raw mode: copy JSONL as-is
-      const outputPath = join(outputDir, `${sessionId}.jsonl`)
+      // Raw mode: resolve session + copy JSONL as-is (no parsing needed)
+      const sessionPath = input
+        ? yield* resolveSessionPath(input)
+        : yield* pickSession(options)
+      const sessionId = extractSessionId(sessionPath)
+      const outputDir = yield* ensureOutputDir()
+
       yield* Console.log(`Copying: ${sessionPath}`)
-      const text = yield* Effect.promise(() => file.text())
-      yield* Effect.promise(() => Bun.write(outputPath, text))
+      const text = yield* Effect.promise(() => Bun.file(sessionPath).text())
+      const outputPath = yield* writeOutput(outputDir, `${sessionId}.jsonl`, text)
       yield* Console.log(`Wrote: ${outputPath}`)
       return
     }
 
-    // Formatted mode: convert to navigable Markdown
-    const outputPath = join(outputDir, `${sessionId}.transcript.md`)
-
-    yield* Console.log(`Reading: ${sessionPath}`)
-
-    const text = yield* Effect.promise(() => file.text())
-    const parsed = yield* parseTranscriptEntries(text)
+    // Formatted mode: load + parse via shared helper
+    const { sessionId, entries } = yield* loadTranscript(input, options)
+    const outputDir = yield* ensureOutputDir()
 
     const output: string[] = []
     let n = 0
 
-    for (const { entry, raw } of parsed) {
+    for (const entry of entries) {
       n++
-      const time = formatTimestamp(raw)
+      const time = formatEntryTimestamp(entry)
       const summary = getSummary(entry)
       const heading = formatHeading(n, time, entry.type, summary)
-      const body = "```json\n" + JSON.stringify(raw, null, 2) + "\n```"
+      const body = "```json\n" + encodeEntryToJson(entry) + "\n```"
 
       output.push(heading)
       output.push("")
@@ -171,6 +175,6 @@ export const transcriptDump = (input: string | undefined, options: DumpOptions =
       output.push("")
     }
 
-    yield* Effect.promise(() => Bun.write(outputPath, output.join("\n")))
+    const outputPath = yield* writeOutput(outputDir, `${sessionId}.transcript.md`, output.join("\n"))
     yield* Console.log(`Wrote: ${outputPath} (${n} entries)`)
   })

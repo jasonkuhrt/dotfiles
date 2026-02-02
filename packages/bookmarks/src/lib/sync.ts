@@ -6,10 +6,11 @@
  * Produces graveyard entries for conflict losers.
  */
 
-import { Array as Arr, DateTime, Effect, Order, Schema as EffectSchema, Trie, pipe } from "effect"
+import { Array as Arr, DateTime, Duration, Effect, Order, Schema as EffectSchema, Trie, pipe } from "effect"
 import { execFile } from "node:child_process"
 import * as Path from "node:path"
 import * as Yaml from "yaml"
+import * as Graveyard from "./graveyard.js"
 import * as Patch from "./patch.js"
 import * as Safari from "./safari.js"
 import type * as SchemaModule from "./schema.js"
@@ -254,6 +255,8 @@ export interface SyncConfig {
   readonly yamlPath: string
   readonly safariPlistPath: string
   readonly dryRun?: boolean
+  /** Max age for graveyard entries before GC removes them. Default: 90 days. */
+  readonly graveyardMaxAge?: Duration.Duration
 }
 
 /**
@@ -310,12 +313,21 @@ export const sync = (config: SyncConfig): Effect.Effect<SyncResult, Error> =>
     // 6. Apply resolved patches to baseline
     const mergedTree = yield* applyPatches(baselineTree, resolution.apply)
 
+    // 6b. Add graveyard entries for conflict losers
+    const withGraveyard = resolution.graveyard.length > 0
+      ? yield* Graveyard.addGraveyardEntries(mergedTree, resolution.graveyard, "safari", "conflict")
+      : mergedTree
+
+    // 6c. Run graveyard GC (remove entries older than maxAge)
+    const maxAge = config.graveyardMaxAge ?? Duration.days(90)
+    const finalTree = yield* Graveyard.gc(withGraveyard, maxAge)
+
     if (!config.dryRun) {
       // 7. Save merged YAML
       yield* Effect.log("Saving bookmarks.yaml...")
       const newConfig = new Schema.BookmarksConfig({
         targets: yamlConfig.targets,
-        base: mergedTree,
+        base: finalTree,
         profiles: yamlConfig.profiles,
       })
       yield* YamlModule.save(config.yamlPath, newConfig)

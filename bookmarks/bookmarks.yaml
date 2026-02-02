@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=./bookmarks.schema.json
 targets:
   safari:
     default:
@@ -506,7 +507,7 @@ base:
       url: https://guybedford.com/es-module-shims-2.0
     - name: Beads - Memory for your Agent and The Best Damn Issue Tracker Your're Not
         Using
-      url: https://ianbull.com/posts/beads/
+      url: https://ianbull.com/posts/beads
     - name: Best Practices for Claude Code - Claude Code Docs
       url: https://code.claude.com/docs/en/best-practices
     - name: Boost Node.js with V8 GC Optimization

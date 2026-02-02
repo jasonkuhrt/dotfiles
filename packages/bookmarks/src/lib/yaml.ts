@@ -23,13 +23,15 @@ export const load = (path: string): Effect.Effect<SchemaModule.BookmarksConfig, 
     )
   })
 
+const SCHEMA_MODELINE = "# yaml-language-server: $schema=./bookmarks.schema.json\n"
+
 /** Write a BookmarksConfig back to bookmarks.yaml. */
 export const save = (path: string, config: SchemaModule.BookmarksConfig): Effect.Effect<void, Error> =>
   Effect.gen(function* () {
     const encoded = yield* Schema.encode(SchemaModule.BookmarksConfig)(config).pipe(
       Effect.mapError((e) => new Error(`Schema encoding failed: ${e.message}`)),
     )
-    const yamlStr = Yaml.stringify(encoded, { indent: 2 })
+    const yamlStr = SCHEMA_MODELINE + Yaml.stringify(encoded, { indent: 2 })
     yield* Effect.tryPromise({
       try: () => Fs.writeFile(path, yamlStr, "utf-8"),
       catch: (e) => new Error(`Failed to write ${path}: ${e}`),

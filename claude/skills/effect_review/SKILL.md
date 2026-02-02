@@ -70,18 +70,40 @@ Discriminated unions MUST use `Data.TaggedEnum` — never raw TS unions with man
 
 ### 6. Schema Patterns
 
-- [ ] Instances created via `Schema.make(MyClass)({ ... })` — never raw object literals with manual `_tag`
-- [ ] Type guards use `Schema.is(MyClass)` or static `MyClass.is` — never manual `_tag` checks
+- [ ] **TaggedClass for discriminated unions**: Types participating in unions MUST use `Schema.TaggedClass`, not `Schema.Class` — `TaggedClass` adds `_tag` as a typed runtime field enabling derived predicates; `Class` only sets a Schema identifier
+- [ ] **static is on every class**: All Schema classes define `static is = Schema.is(ClassName)` — the class IS the namespace for its own type guard
+- [ ] **No instanceof on Schema types**: Always use `MyClass.is(value)` — never `value instanceof MyClass` (breaks across serialization boundaries, doesn't narrow structurally)
+- [ ] **No direct _tag access**: Never `value._tag === "Foo"` — use `MyClass.is(value)` instead
+- [ ] Instances created via `new MyClass({ ... })` or `Schema.make(MyClass)({ ... })` — never raw object literals with manual `_tag`
 - [ ] Enums inline values directly in `Schema.Enums({ ... })` — no separate const object
 - [ ] Runtime enum access via `MyEnum.enums.value` — not re-exporting the const
 
 ```typescript
-// ✅ Instantiation
-const user = Schema.make(User)({ name: "Alice", age: 30 })
+// ✅ Class definition — TaggedClass with static is
+export class BookmarkLeaf extends Schema.TaggedClass<BookmarkLeaf>("BookmarkLeaf")("BookmarkLeaf", {
+  name: Schema.String,
+  url: Schema.String,
+}) {
+  static is = Schema.is(BookmarkLeaf)
+}
 
-// ✅ Type guard
-if (Standard.is(value)) { ... }
-if (Schema.is(Standard)(value)) { ... }
+// ✅ Type guard — class as namespace
+if (BookmarkLeaf.is(value)) { ... }
+
+// ❌ instanceof — fragile, breaks across serialization
+if (value instanceof BookmarkLeaf) { ... }
+
+// ❌ direct _tag check — bypasses schema validation
+if (value._tag === "BookmarkLeaf") { ... }
+
+// ❌ Schema.Class for union members — no _tag field, no derived predicates
+export class BookmarkLeaf extends Schema.Class<BookmarkLeaf>("BookmarkLeaf")({
+  name: Schema.String,
+  url: Schema.String,
+}) {}
+
+// ❌ Freestanding predicate — predicate belongs on the class
+const isLeaf = Schema.is(BookmarkLeaf)
 
 // ✅ Enum — inline values, access via .enums
 export const Status = Schema.Enums({

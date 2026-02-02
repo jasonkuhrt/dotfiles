@@ -16,15 +16,19 @@ import * as Schema from "effect/Schema"
 // The suspend() in BookmarkFolder.children references BookmarkNode by identifier,
 // which lets JSONSchema.make produce clean $ref pointers.
 
-export class BookmarkLeaf extends Schema.Class<BookmarkLeaf>("BookmarkLeaf")({
+export class BookmarkLeaf extends Schema.TaggedClass<BookmarkLeaf>("BookmarkLeaf")("BookmarkLeaf", {
   name: Schema.String,
   url: Schema.String,
-}) {}
+}) {
+  static is = Schema.is(BookmarkLeaf)
+}
 
-export class BookmarkFolder extends Schema.Class<BookmarkFolder>("BookmarkFolder")({
+export class BookmarkFolder extends Schema.TaggedClass<BookmarkFolder>("BookmarkFolder")("BookmarkFolder", {
   name: Schema.String,
   children: Schema.Array(Schema.suspend((): Schema.Schema<BookmarkNode> => BookmarkNode)),
-}) {}
+}) {
+  static is = Schema.is(BookmarkFolder)
+}
 
 export type BookmarkNode = BookmarkLeaf | BookmarkFolder
 

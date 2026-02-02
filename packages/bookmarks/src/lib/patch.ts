@@ -57,14 +57,14 @@ export const flatten = (tree: SchemaModule.BookmarkTree): FlattenResult => {
   const visit = (nodes: SchemaModule.BookmarkSection | undefined, path: string): void => {
     if (!nodes) return
     for (const node of nodes) {
-      if (node instanceof SchemaModule.BookmarkLeaf) {
+      if (SchemaModule.BookmarkLeaf.is(node)) {
         if (seen.has(node.url)) {
           warnings.push(`Duplicate URL "${node.url}" at path "${path}" — keeping first occurrence`)
         } else {
           seen.add(node.url)
           entries.push([node.url, { url: node.url, name: node.name, path }])
         }
-      } else if (node instanceof SchemaModule.BookmarkFolder) {
+      } else if (SchemaModule.BookmarkFolder.is(node)) {
         visit(node.children as SchemaModule.BookmarkSection, path === "" ? node.name : `${path}/${node.name}`)
       }
     }
@@ -86,10 +86,10 @@ export const toTrie = (tree: SchemaModule.BookmarkTree): BookmarkTrie => {
   const visit = (nodes: SchemaModule.BookmarkSection | undefined, path: string): void => {
     if (!nodes) return
     for (const node of nodes) {
-      if (node instanceof SchemaModule.BookmarkLeaf) {
+      if (SchemaModule.BookmarkLeaf.is(node)) {
         const fullPath = `${path}/${node.name}`
         trie = Trie.insert(trie, fullPath, node)
-      } else if (node instanceof SchemaModule.BookmarkFolder) {
+      } else if (SchemaModule.BookmarkFolder.is(node)) {
         visit(node.children as SchemaModule.BookmarkSection, `${path}/${node.name}`)
       }
     }

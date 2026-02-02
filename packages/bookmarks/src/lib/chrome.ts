@@ -87,7 +87,7 @@ const ChromeLeafTransform = Schema.transform(
   BookmarkLeaf,
   {
     strict: false,
-    decode: (chrome) => ({ url: chrome.url, name: chrome.name }),
+    decode: (chrome) => ({ _tag: "BookmarkLeaf" as const, url: chrome.url, name: chrome.name }),
     encode: (leaf) => ({
       type: "url" as const,
       name: leaf.name,
@@ -106,6 +106,7 @@ const ChromeFolderTransform = Schema.transform(
   {
     strict: false,
     decode: (chrome) => ({
+      _tag: "BookmarkFolder" as const,
       name: chrome.name,
       children: chrome.children ? decodeNodes(chrome.children as ChromeNode[]) : [],
     }),

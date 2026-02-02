@@ -84,7 +84,7 @@ describe("addToGraveyard", () => {
 
     expect(result.other).toBeDefined()
     const graveyardFolder = result.other!.find(
-      (n): n is BookmarkFolder => n instanceof BookmarkFolder && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )
     expect(graveyardFolder).toBeDefined()
     expect(graveyardFolder!.children.length).toBe(1)
@@ -99,7 +99,7 @@ describe("addToGraveyard", () => {
     )
 
     const graveyardFolder = result.other!.find(
-      (n): n is BookmarkFolder => n instanceof BookmarkFolder && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )!
     // Event folder is the first child
     const eventFolder = graveyardFolder.children[0] as BookmarkFolder
@@ -129,7 +129,7 @@ describe("addToGraveyard", () => {
 
     expect(result.other!.length).toBe(2) // existing leaf + _graveyard folder
     const existingLeaf = result.other!.find(
-      (n): n is BookmarkLeaf => n instanceof BookmarkLeaf && n.name === "Existing",
+      (n): n is BookmarkLeaf => BookmarkLeaf.is(n) && n.name === "Existing",
     )
     expect(existingLeaf).toBeDefined()
   })
@@ -143,7 +143,7 @@ describe("addToGraveyard", () => {
     )
 
     const graveyardFolder = result.other!.find(
-      (n): n is BookmarkFolder => n instanceof BookmarkFolder && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )!
     expect(graveyardFolder.children.length).toBe(1)
     const eventFolder = graveyardFolder.children[0] as BookmarkFolder
@@ -166,7 +166,7 @@ describe("addGraveyardEntries", () => {
     )
 
     const graveyardFolder = result.other!.find(
-      (n): n is BookmarkFolder => n instanceof BookmarkFolder && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )!
     // Both patches should share the same event folder (same date, source, reason)
     const eventFolder = graveyardFolder.children[0] as BookmarkFolder
@@ -208,7 +208,7 @@ describe("gc", () => {
     )
 
     const graveyardFolder = result.other!.find(
-      (n): n is BookmarkFolder => n instanceof BookmarkFolder && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )!
     expect(graveyardFolder.children.length).toBe(1)
     expect((graveyardFolder.children[0] as BookmarkFolder).name).toBe("2025-12-01_safari_conflict")
@@ -229,7 +229,7 @@ describe("gc", () => {
 
     // Graveyard folder should be removed entirely
     const graveyardFolder = result.other!.find(
-      (n): n is BookmarkFolder => n instanceof BookmarkFolder && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )
     expect(graveyardFolder).toBeUndefined()
   })
@@ -248,7 +248,7 @@ describe("gc", () => {
     )
 
     const graveyardFolder = result.other!.find(
-      (n): n is BookmarkFolder => n instanceof BookmarkFolder && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )!
     expect(graveyardFolder.children.length).toBe(2)
   })
@@ -317,7 +317,7 @@ describe("gc", () => {
     )
 
     const graveyardFolder = result.other!.find(
-      (n): n is BookmarkFolder => n instanceof BookmarkFolder && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )!
     // Only the unparseable folder should remain
     expect(graveyardFolder.children.length).toBe(1)

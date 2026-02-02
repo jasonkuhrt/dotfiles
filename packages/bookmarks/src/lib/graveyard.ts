@@ -88,7 +88,7 @@ const ensureGraveyardFolder = (
   other: readonly BookmarkNode[],
 ): { other: readonly BookmarkNode[]; graveyardFolder: BookmarkFolder } => {
   const existing = other.find(
-    (n): n is BookmarkFolder => n instanceof BookmarkFolder && n.name === GRAVEYARD_FOLDER_NAME,
+    (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === GRAVEYARD_FOLDER_NAME,
   )
   if (existing) {
     return { other, graveyardFolder: existing }
@@ -106,7 +106,7 @@ const ensureEventFolder = (
   eventFolderName: string,
 ): { graveyardFolder: BookmarkFolder; eventFolder: BookmarkFolder } => {
   const existing = graveyardFolder.children.find(
-    (n): n is BookmarkFolder => n instanceof BookmarkFolder && n.name === eventFolderName,
+    (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === eventFolderName,
   )
   if (existing) {
     return { graveyardFolder, eventFolder: existing }
@@ -127,7 +127,7 @@ const replaceGraveyardInOther = (
   graveyardFolder: BookmarkFolder,
 ): readonly BookmarkNode[] =>
   other.map((n) =>
-    n instanceof BookmarkFolder && n.name === GRAVEYARD_FOLDER_NAME ? graveyardFolder : n,
+    BookmarkFolder.is(n) && n.name === GRAVEYARD_FOLDER_NAME ? graveyardFolder : n,
   )
 
 /**
@@ -140,7 +140,7 @@ const replaceEventInGraveyard = (
   new BookmarkFolder({
     name: graveyardFolder.name,
     children: graveyardFolder.children.map((n) =>
-      n instanceof BookmarkFolder && n.name === eventFolder.name ? eventFolder : n,
+      BookmarkFolder.is(n) && n.name === eventFolder.name ? eventFolder : n,
     ),
   })
 
@@ -219,7 +219,7 @@ export const gc = (
     if (!otherSection) return tree
 
     const graveyardFolder = otherSection.find(
-      (n): n is BookmarkFolder => n instanceof BookmarkFolder && n.name === GRAVEYARD_FOLDER_NAME,
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === GRAVEYARD_FOLDER_NAME,
     )
     if (!graveyardFolder) return tree
 
@@ -228,7 +228,7 @@ export const gc = (
 
     // Filter event folders: keep those whose date is within maxAge
     const keptChildren = graveyardFolder.children.filter((child) => {
-      if (!(child instanceof BookmarkFolder)) return true // keep non-folder nodes (shouldn't exist, but safe)
+      if (!BookmarkFolder.is(child)) return true // keep non-folder nodes (shouldn't exist, but safe)
       const parsed = parseEventFolderName(child.name)
       if (Option.isNone(parsed)) return true // keep unparseable folders
       const ageMillis = DateTime.distance(parsed.value.date, now)
@@ -241,7 +241,7 @@ export const gc = (
     // If no children remain, remove the graveyard folder entirely
     if (keptChildren.length === 0) {
       const updatedOther = otherSection.filter(
-        (n) => !(n instanceof BookmarkFolder && n.name === GRAVEYARD_FOLDER_NAME),
+        (n) => !(BookmarkFolder.is(n) && n.name === GRAVEYARD_FOLDER_NAME),
       )
       return new BookmarkTree({
         ...tree,

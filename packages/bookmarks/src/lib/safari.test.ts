@@ -95,7 +95,7 @@ describe("applyPatches", () => {
 
       const tree = await run(Safari.readBookmarks(path))
       const found = (tree.favorites_bar ?? []).find(
-        (n): n is BookmarkLeaf => n instanceof BookmarkLeaf && n.url === testUrl,
+        (n): n is BookmarkLeaf => BookmarkLeaf.is(n) && n.url === testUrl,
       )
       expect(found).toBeDefined()
       expect(found!.name).toBe(testName)
@@ -116,7 +116,7 @@ describe("applyPatches", () => {
 
       const treeAfter = await run(Safari.readBookmarks(path))
       const remainingUrls = (treeAfter.reading_list ?? [])
-        .filter((n): n is BookmarkLeaf => n instanceof BookmarkLeaf)
+        .filter((n): n is BookmarkLeaf => BookmarkLeaf.is(n))
         .map((n) => n.url)
       expect(remainingUrls).not.toContain(target.url)
     } finally {
@@ -137,7 +137,7 @@ describe("applyPatches", () => {
 
       const treeAfter = await run(Safari.readBookmarks(path))
       const found = (treeAfter.reading_list ?? []).find(
-        (n): n is BookmarkLeaf => n instanceof BookmarkLeaf && n.url === target.url,
+        (n): n is BookmarkLeaf => BookmarkLeaf.is(n) && n.url === target.url,
       )
       expect(found).toBeDefined()
       expect(found!.name).toBe(newName)
@@ -160,13 +160,13 @@ describe("applyPatches", () => {
 
       // Gone from reading_list
       const remainingUrls = (treeAfter.reading_list ?? [])
-        .filter((n): n is BookmarkLeaf => n instanceof BookmarkLeaf)
+        .filter((n): n is BookmarkLeaf => BookmarkLeaf.is(n))
         .map((n) => n.url)
       expect(remainingUrls).not.toContain(target.url)
 
       // Present in favorites_bar
       const found = (treeAfter.favorites_bar ?? []).find(
-        (n): n is BookmarkLeaf => n instanceof BookmarkLeaf && n.url === target.url,
+        (n): n is BookmarkLeaf => BookmarkLeaf.is(n) && n.url === target.url,
       )
       expect(found).toBeDefined()
       expect(found!.name).toBe(target.name)
@@ -188,15 +188,15 @@ describe("applyPatches", () => {
       const tree = await run(Safari.readBookmarks(path))
       // Navigate: other → NewFolder → SubFolder → leaf
       const newFolder = (tree.other ?? []).find(
-        (n): n is BookmarkFolder => n instanceof BookmarkFolder && n.name === "NewFolder",
+        (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "NewFolder",
       )
       expect(newFolder).toBeDefined()
       const subFolder = newFolder!.children.find(
-        (n): n is BookmarkFolder => n instanceof BookmarkFolder && n.name === "SubFolder",
+        (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "SubFolder",
       )
       expect(subFolder).toBeDefined()
       const leaf = subFolder!.children.find(
-        (n): n is BookmarkLeaf => n instanceof BookmarkLeaf && n.url === testUrl,
+        (n): n is BookmarkLeaf => BookmarkLeaf.is(n) && n.url === testUrl,
       )
       expect(leaf).toBeDefined()
       expect(leaf!.name).toBe(testName)

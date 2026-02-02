@@ -95,7 +95,8 @@
       "type": "object",
       "required": [
         "name",
-        "url"
+        "url",
+        "_tag"
       ],
       "properties": {
         "name": {
@@ -103,6 +104,12 @@
         },
         "url": {
           "type": "string"
+        },
+        "_tag": {
+          "type": "string",
+          "enum": [
+            "BookmarkLeaf"
+          ]
         }
       },
       "additionalProperties": false
@@ -111,7 +118,8 @@
       "type": "object",
       "required": [
         "name",
-        "children"
+        "children",
+        "_tag"
       ],
       "properties": {
         "name": {
@@ -122,6 +130,12 @@
           "items": {
             "$ref": "#/$defs/BookmarkNode"
           }
+        },
+        "_tag": {
+          "type": "string",
+          "enum": [
+            "BookmarkFolder"
+          ]
         }
       },
       "additionalProperties": false

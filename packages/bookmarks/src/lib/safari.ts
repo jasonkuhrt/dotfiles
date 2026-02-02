@@ -57,7 +57,7 @@ const SafariLeafTransform = Schema.transform(
   BookmarkLeaf,
   {
     strict: true,
-    decode: (plist) => ({ url: plist.URLString, name: plist.URIDictionary.title }),
+    decode: (plist) => ({ _tag: "BookmarkLeaf" as const, url: plist.URLString, name: plist.URIDictionary.title }),
     encode: (leaf) => ({
       WebBookmarkType: "WebBookmarkTypeLeaf" as const,
       URLString: leaf.url,
@@ -76,6 +76,7 @@ const SafariFolderTransform = Schema.transform(
   {
     strict: false,
     decode: (plist) => ({
+      _tag: "BookmarkFolder" as const,
       name: plist.Title,
       children: plist.Children ? decodeNodes(plist.Children as PlistDict[]) : [],
     }),

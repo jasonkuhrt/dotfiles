@@ -108,17 +108,17 @@ describe("applyPatches", () => {
     expect(result.favorites_bar).toBeDefined()
 
     const aiFolder = result.favorites_bar!.find(
-      (n) => n instanceof BookmarkFolder && n.name === "AI",
+      (n) => BookmarkFolder.is(n) && n.name === "AI",
     ) as BookmarkFolder
     expect(aiFolder).toBeDefined()
 
     const toolsFolder = aiFolder.children.find(
-      (n) => n instanceof BookmarkFolder && n.name === "Tools",
+      (n) => BookmarkFolder.is(n) && n.name === "Tools",
     ) as BookmarkFolder
     expect(toolsFolder).toBeDefined()
 
     const gpt = toolsFolder.children.find(
-      (n) => n instanceof BookmarkLeaf && n.url === "https://gpt.com",
+      (n) => BookmarkLeaf.is(n) && n.url === "https://gpt.com",
     ) as BookmarkLeaf
     expect(gpt).toBeDefined()
     expect(gpt.name).toBe("ChatGPT")
@@ -161,7 +161,7 @@ describe("applyPatches", () => {
     const result = await run(Sync.applyPatches(tree, patches))
     expect(result.favorites_bar).toBeDefined()
     const node = result.favorites_bar!.find(
-      (n) => n instanceof BookmarkLeaf && n.url === "https://a.com",
+      (n) => BookmarkLeaf.is(n) && n.url === "https://a.com",
     ) as BookmarkLeaf
     expect(node).toBeDefined()
     expect(node.name).toBe("New Name")
@@ -178,7 +178,7 @@ describe("applyPatches", () => {
     expect(result.favorites_bar).toBeUndefined()
     expect(result.other).toBeDefined()
     const node = result.other!.find(
-      (n) => n instanceof BookmarkLeaf && n.url === "https://a.com",
+      (n) => BookmarkLeaf.is(n) && n.url === "https://a.com",
     ) as BookmarkLeaf
     expect(node).toBeDefined()
     expect(node.name).toBe("A")
@@ -197,7 +197,7 @@ describe("applyPatches", () => {
     expect(result.favorites_bar).toBeDefined()
 
     const urls = result.favorites_bar!
-      .filter((n): n is BookmarkLeaf => n instanceof BookmarkLeaf)
+      .filter((n): n is BookmarkLeaf => BookmarkLeaf.is(n))
       .map((n) => n.url)
 
     expect(urls).toContain("https://rename.com")
@@ -205,7 +205,7 @@ describe("applyPatches", () => {
     expect(urls).not.toContain("https://remove.com")
 
     const renamed = result.favorites_bar!.find(
-      (n) => n instanceof BookmarkLeaf && n.url === "https://rename.com",
+      (n) => BookmarkLeaf.is(n) && n.url === "https://rename.com",
     ) as BookmarkLeaf
     expect(renamed.name).toBe("Renamed")
   })

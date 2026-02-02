@@ -106,7 +106,7 @@ describe("toTrie / fromTrie", () => {
 
     // Check nested structure
     const aiFolder = result.favorites_bar!.find(
-      (n) => n instanceof BookmarkFolder && n.name === "AI",
+      (n) => BookmarkFolder.is(n) && n.name === "AI",
     ) as BookmarkFolder
     expect(aiFolder).toBeDefined()
     expect(aiFolder.children.length).toBe(2)

@@ -84,8 +84,8 @@ describe("readBookmarks", () => {
     // Find a leaf somewhere in the tree
     const findLeaf = (nodes: readonly (BookmarkLeaf | BookmarkFolder)[]): BookmarkLeaf | undefined => {
       for (const n of nodes) {
-        if (n instanceof BookmarkLeaf) return n
-        if (n instanceof BookmarkFolder) {
+        if (BookmarkLeaf.is(n)) return n
+        if (BookmarkFolder.is(n)) {
           const found = findLeaf(n.children as readonly (BookmarkLeaf | BookmarkFolder)[])
           if (found) return found
         }
@@ -101,7 +101,7 @@ describe("readBookmarks", () => {
   test("folder nodes have name and children", async () => {
     const tree = await run(Chrome.readBookmarks(BOOKMARKS_PATH))
     const folder = tree.favorites_bar?.find(
-      (n): n is BookmarkFolder => n instanceof BookmarkFolder,
+      (n): n is BookmarkFolder => BookmarkFolder.is(n),
     )
     expect(folder).toBeDefined()
     expect(folder!.name).toBeTruthy()
@@ -144,7 +144,7 @@ describe("applyPatches", () => {
 
       const tree = await run(Chrome.readBookmarks(path))
       const found = (tree.favorites_bar ?? []).find(
-        (n): n is BookmarkLeaf => n instanceof BookmarkLeaf && n.url === testUrl,
+        (n): n is BookmarkLeaf => BookmarkLeaf.is(n) && n.url === testUrl,
       )
       expect(found).toBeDefined()
       expect(found!.name).toBe(testName)
@@ -185,8 +185,8 @@ describe("applyPatches", () => {
         nodes: readonly (BookmarkLeaf | BookmarkFolder)[],
       ): BookmarkLeaf | undefined => {
         for (const n of nodes) {
-          if (n instanceof BookmarkLeaf) return n
-          if (n instanceof BookmarkFolder) {
+          if (BookmarkLeaf.is(n)) return n
+          if (BookmarkFolder.is(n)) {
             const found = findLeaf(n.children as readonly (BookmarkLeaf | BookmarkFolder)[])
             if (found) return found
           }
@@ -206,8 +206,8 @@ describe("applyPatches", () => {
       const allUrls: string[] = []
       const collectUrls = (nodes: readonly (BookmarkLeaf | BookmarkFolder)[]): void => {
         for (const n of nodes) {
-          if (n instanceof BookmarkLeaf) allUrls.push(n.url)
-          if (n instanceof BookmarkFolder)
+          if (BookmarkLeaf.is(n)) allUrls.push(n.url)
+          if (BookmarkFolder.is(n))
             collectUrls(n.children as readonly (BookmarkLeaf | BookmarkFolder)[])
         }
       }
@@ -226,8 +226,8 @@ describe("applyPatches", () => {
         nodes: readonly (BookmarkLeaf | BookmarkFolder)[],
       ): BookmarkLeaf | undefined => {
         for (const n of nodes) {
-          if (n instanceof BookmarkLeaf) return n
-          if (n instanceof BookmarkFolder) {
+          if (BookmarkLeaf.is(n)) return n
+          if (BookmarkFolder.is(n)) {
             const found = findLeaf(n.children as readonly (BookmarkLeaf | BookmarkFolder)[])
             if (found) return found
           }
@@ -250,8 +250,8 @@ describe("applyPatches", () => {
         url: string,
       ): BookmarkLeaf | undefined => {
         for (const n of nodes) {
-          if (n instanceof BookmarkLeaf && n.url === url) return n
-          if (n instanceof BookmarkFolder) {
+          if (BookmarkLeaf.is(n) && n.url === url) return n
+          if (BookmarkFolder.is(n)) {
             const found = findByUrl(n.children as readonly (BookmarkLeaf | BookmarkFolder)[], url)
             if (found) return found
           }
@@ -274,8 +274,8 @@ describe("applyPatches", () => {
         nodes: readonly (BookmarkLeaf | BookmarkFolder)[],
       ): BookmarkLeaf | undefined => {
         for (const n of nodes) {
-          if (n instanceof BookmarkLeaf) return n
-          if (n instanceof BookmarkFolder) {
+          if (BookmarkLeaf.is(n)) return n
+          if (BookmarkFolder.is(n)) {
             const found = findLeaf(n.children as readonly (BookmarkLeaf | BookmarkFolder)[])
             if (found) return found
           }
@@ -302,8 +302,8 @@ describe("applyPatches", () => {
       const favUrls: string[] = []
       const collectUrls = (nodes: readonly (BookmarkLeaf | BookmarkFolder)[]): void => {
         for (const n of nodes) {
-          if (n instanceof BookmarkLeaf) favUrls.push(n.url)
-          if (n instanceof BookmarkFolder)
+          if (BookmarkLeaf.is(n)) favUrls.push(n.url)
+          if (BookmarkFolder.is(n))
             collectUrls(n.children as readonly (BookmarkLeaf | BookmarkFolder)[])
         }
       }
@@ -314,8 +314,8 @@ describe("applyPatches", () => {
       const collectOtherUrls = (nodes: readonly (BookmarkLeaf | BookmarkFolder)[]): string[] => {
         const urls: string[] = []
         for (const n of nodes) {
-          if (n instanceof BookmarkLeaf) urls.push(n.url)
-          if (n instanceof BookmarkFolder)
+          if (BookmarkLeaf.is(n)) urls.push(n.url)
+          if (BookmarkFolder.is(n))
             urls.push(
               ...collectOtherUrls(n.children as readonly (BookmarkLeaf | BookmarkFolder)[]),
             )
@@ -349,15 +349,15 @@ describe("applyPatches", () => {
       const tree = await run(Chrome.readBookmarks(path))
       // Navigate: other -> NewFolder -> SubFolder -> leaf
       const newFolder = (tree.other ?? []).find(
-        (n): n is BookmarkFolder => n instanceof BookmarkFolder && n.name === "NewFolder",
+        (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "NewFolder",
       )
       expect(newFolder).toBeDefined()
       const subFolder = newFolder!.children.find(
-        (n): n is BookmarkFolder => n instanceof BookmarkFolder && n.name === "SubFolder",
+        (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "SubFolder",
       )
       expect(subFolder).toBeDefined()
       const leaf = subFolder!.children.find(
-        (n): n is BookmarkLeaf => n instanceof BookmarkLeaf && n.url === testUrl,
+        (n): n is BookmarkLeaf => BookmarkLeaf.is(n) && n.url === testUrl,
       )
       expect(leaf).toBeDefined()
       expect(leaf!.name).toBe(testName)

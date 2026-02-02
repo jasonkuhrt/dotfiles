@@ -1,6 +1,9 @@
 ---
 name: effect-review
-description: Review Effect-based code for data structure exhaustiveness, idiomatic patterns, and best practices. Use when reviewing PRs, writing new Effect modules, or auditing existing code.
+description: >
+  Review Effect-based code for data structure exhaustiveness, Schema patterns, idiomatic
+  patterns, and best practices. Use when reviewing PRs, writing new Effect modules, creating
+  Schema classes, tagged unions, enums, type guards, or auditing existing code.
 ---
 
 # Effect Code Review
@@ -64,3 +67,27 @@ Discriminated unions MUST use `Data.TaggedEnum` — never raw TS unions with man
 - [ ] Typed errors with `Data.TaggedError` or `Schema.TaggedError`
 - [ ] No `Error` base class in Effect signatures — use domain-specific errors
 - [ ] `Effect.catchTag` for selective error recovery
+
+### 6. Schema Patterns
+
+- [ ] Instances created via `Schema.make(MyClass)({ ... })` — never raw object literals with manual `_tag`
+- [ ] Type guards use `Schema.is(MyClass)` or static `MyClass.is` — never manual `_tag` checks
+- [ ] Enums inline values directly in `Schema.Enums({ ... })` — no separate const object
+- [ ] Runtime enum access via `MyEnum.enums.value` — not re-exporting the const
+
+```typescript
+// ✅ Instantiation
+const user = Schema.make(User)({ name: "Alice", age: 30 })
+
+// ✅ Type guard
+if (Standard.is(value)) { ... }
+if (Schema.is(Standard)(value)) { ... }
+
+// ✅ Enum — inline values, access via .enums
+export const Status = Schema.Enums({
+  active: "active",
+  inactive: "inactive",
+})
+export type Status = typeof Status.Type
+// Runtime: Status.enums.active
+```

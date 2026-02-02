@@ -76,49 +76,41 @@ const program = Effect.gen(function* () {
       yield* notImplemented("push")
       break
     case "pull": {
-      // One-way: browsers → YAML (fresh sync: wipe state + YAML, then pull)
+      // One-way: browsers -> YAML (wipe YAML, then sync from scratch)
       const { flags: pullFlags } = parseArgs(args)
       const pullYamlPath = path.resolve(import.meta.dirname, "../../../..", "bookmarks/bookmarks.yaml")
-      const pullStateBasePath = path.resolve(import.meta.dirname, "../../../..", "bookmarks")
       const safariPlistPath = path.resolve(
         process.env["HOME"] ?? "",
         "Library/Safari/Bookmarks.plist",
       )
 
-      // Wipe existing state and YAML for clean pull
+      // Wipe existing YAML for clean pull (git baseline will be empty after this)
       yield* Effect.tryPromise({
         try: () => Fs.rm(pullYamlPath, { force: true }),
         catch: () => new Error("Failed to remove bookmarks.yaml"),
       }).pipe(Effect.catchAll(() => Effect.void))
-      yield* Effect.tryPromise({
-        try: () => Fs.rm(path.join(pullStateBasePath, ".sync-state.json"), { force: true }),
-        catch: () => new Error("Failed to remove .sync-state.json"),
-      }).pipe(Effect.catchAll(() => Effect.void))
 
       const pullResult = yield* SyncModule.sync({
         yamlPath: pullYamlPath,
-        stateBasePath: pullStateBasePath,
         safariPlistPath,
         dryRun: pullFlags.dryRun,
       })
-      yield* Console.log(`\n✓ Pull complete: ${pullResult.applied.length} bookmarks synced`)
+      yield* Console.log(`\nPull complete: ${pullResult.applied.length} bookmarks synced`)
       break
     }
     case "sync": {
       const { flags: syncFlags } = parseArgs(args)
       const syncYamlPath = path.resolve(import.meta.dirname, "../../../..", "bookmarks/bookmarks.yaml")
-      const syncStateBasePath = path.resolve(import.meta.dirname, "../../../..", "bookmarks")
       const syncSafariPlistPath = path.resolve(
         process.env["HOME"] ?? "",
         "Library/Safari/Bookmarks.plist",
       )
       const syncResult = yield* SyncModule.sync({
         yamlPath: syncYamlPath,
-        stateBasePath: syncStateBasePath,
         safariPlistPath: syncSafariPlistPath,
         dryRun: syncFlags.dryRun,
       })
-      yield* Console.log(`\n✓ Sync complete: ${syncResult.applied.length} applied, ${syncResult.graveyarded.length} graveyarded`)
+      yield* Console.log(`\nSync complete: ${syncResult.applied.length} applied, ${syncResult.graveyarded.length} graveyarded`)
       break
     }
     case "status":
@@ -142,8 +134,8 @@ const program = Effect.gen(function* () {
     case "validate": {
       const yamlPath = path.resolve(import.meta.dirname, "../../../..", "bookmarks/bookmarks.yaml")
       yield* YamlModule.load(yamlPath).pipe(
-        Effect.flatMap(() => Console.log("✓ bookmarks.yaml is valid")),
-        Effect.catchAll((e) => Console.error(`✗ ${e.message}`)),
+        Effect.flatMap(() => Console.log("bookmarks.yaml is valid")),
+        Effect.catchAll((e) => Console.error(e.message)),
       )
       break
     }

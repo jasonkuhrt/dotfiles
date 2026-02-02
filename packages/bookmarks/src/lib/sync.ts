@@ -1,16 +1,19 @@
 /**
  * Core sync engine.
  *
- * Pipeline: diff -> detect conflicts -> resolve (newest-wins) -> apply.
+ * Pipeline: git baseline -> three-way diff -> resolve conflicts -> apply -> save -> auto-commit.
+ * Git is the state store: the committed bookmarks.yaml IS the baseline for both sides.
  * Produces graveyard entries for conflict losers.
  */
 
-import { Array as Arr, DateTime, Effect, HashMap, Order, Trie, pipe } from "effect"
+import { Array as Arr, DateTime, Effect, Order, Schema as EffectSchema, Trie, pipe } from "effect"
+import { execFile } from "node:child_process"
+import * as Path from "node:path"
+import * as Yaml from "yaml"
 import * as Patch from "./patch.js"
 import * as Safari from "./safari.js"
 import type * as SchemaModule from "./schema.js"
 import * as Schema from "./schema.js"
-import * as State from "./state.js"
 import * as YamlModule from "./yaml.js"
 
 export interface SyncResult {
@@ -22,6 +25,117 @@ export interface ConflictResolution {
   readonly apply: readonly Patch.BookmarkPatch[]
   readonly graveyard: readonly Patch.BookmarkPatch[]
 }
+
+// -- Git baseline --
+
+/**
+ * Read the last-committed version of bookmarks.yaml from git.
+ * Returns empty BookmarkTree if the file has never been committed.
+ */
+export const readGitBaseline = (yamlPath: string): Effect.Effect<SchemaModule.BookmarkTree, Error> =>
+  Effect.gen(function* () {
+    const repoRoot = yield* gitRepoRoot(yamlPath)
+    const relPath = Path.relative(repoRoot, yamlPath)
+
+    const raw = yield* Effect.tryPromise({
+      try: () =>
+        new Promise<string>((resolve, reject) => {
+          execFile("git", ["show", `HEAD:${relPath}`], { cwd: repoRoot }, (err, stdout) => {
+            if (err) reject(err)
+            else resolve(stdout)
+          })
+        }),
+      catch: () => new Error(`git show HEAD:${relPath} failed — treating as fresh sync`),
+    }).pipe(
+      Effect.catchAll(() => Effect.succeed(null as string | null)),
+    )
+
+    if (raw === null) {
+      yield* Effect.log("No committed bookmarks.yaml found — using empty baseline (fresh sync)")
+      return new Schema.BookmarkTree({})
+    }
+
+    // Parse and validate the committed YAML
+    const parsed: unknown = Yaml.parse(raw)
+    const config = yield* EffectSchema.decodeUnknown(Schema.BookmarksConfig)(parsed).pipe(
+      Effect.mapError((e) => new Error(`Failed to parse committed bookmarks.yaml: ${e.message}`)),
+    )
+    return config.base
+  })
+
+/** Resolve the git repo root for a given file path. */
+const gitRepoRoot = (filePath: string): Effect.Effect<string, Error> =>
+  Effect.tryPromise({
+    try: () =>
+      new Promise<string>((resolve, reject) => {
+        execFile(
+          "git",
+          ["rev-parse", "--show-toplevel"],
+          { cwd: Path.dirname(filePath) },
+          (err, stdout) => {
+            if (err) reject(err)
+            else resolve(stdout.trim())
+          },
+        )
+      }),
+    catch: (e) => new Error(`Failed to find git repo root: ${e}`),
+  })
+
+/** Auto-commit bookmarks.yaml so the committed version becomes the new baseline. */
+export const gitAutoCommit = (yamlPath: string): Effect.Effect<void, Error> =>
+  Effect.gen(function* () {
+    const repoRoot = yield* gitRepoRoot(yamlPath)
+    const relPath = Path.relative(repoRoot, yamlPath)
+
+    // Stage the file
+    yield* Effect.tryPromise({
+      try: () =>
+        new Promise<void>((resolve, reject) => {
+          execFile("git", ["add", relPath], { cwd: repoRoot }, (err) => {
+            if (err) reject(err)
+            else resolve()
+          })
+        }),
+      catch: (e) => new Error(`git add failed: ${e}`),
+    })
+
+    // Check if there are staged changes to commit
+    const hasStagedChanges = yield* Effect.tryPromise({
+      try: () =>
+        new Promise<boolean>((resolve, reject) => {
+          execFile("git", ["diff", "--cached", "--quiet", "--", relPath], { cwd: repoRoot }, (err) => {
+            if (err && "code" in err && err.code === 1) resolve(true) // exit code 1 = differences
+            else if (err) reject(err)
+            else resolve(false) // exit code 0 = no differences
+          })
+        }),
+      catch: (e) => new Error(`git diff --cached failed: ${e}`),
+    })
+
+    if (!hasStagedChanges) {
+      yield* Effect.log("No changes to commit (bookmarks.yaml unchanged)")
+      return
+    }
+
+    // Commit with auto-sync message
+    yield* Effect.tryPromise({
+      try: () =>
+        new Promise<void>((resolve, reject) => {
+          execFile(
+            "git",
+            ["commit", "-m", "chore(bookmarks): auto-sync bookmarks.yaml", "--", relPath],
+            { cwd: repoRoot },
+            (err) => {
+              if (err) reject(err)
+              else resolve()
+            },
+          )
+        }),
+      catch: (e) => new Error(`git commit failed: ${e}`),
+    })
+
+    yield* Effect.log("Auto-committed bookmarks.yaml (new baseline)")
+  })
 
 // -- resolveConflicts --
 
@@ -83,7 +197,7 @@ export const applyPatches = (
   Effect.gen(function* () {
     let trie = Patch.toTrie(tree)
 
-    // Sort patches: Remove → Move → Rename → Add
+    // Sort patches: Remove -> Move -> Rename -> Add
     const opPriority: Record<Patch.BookmarkPatch["_tag"], number> = { Remove: 0, Move: 1, Rename: 2, Add: 3 }
     const byOpOrder = Order.mapInput(Order.number, (p: Patch.BookmarkPatch) => opPriority[p._tag])
     const sorted = Arr.sort(patches, byOpOrder)
@@ -138,7 +252,6 @@ const applyOne = (trie: Trie.Trie<Schema.BookmarkLeaf>, patch: Patch.BookmarkPat
 
 export interface SyncConfig {
   readonly yamlPath: string
-  readonly stateBasePath: string
   readonly safariPlistPath: string
   readonly dryRun?: boolean
 }
@@ -146,11 +259,16 @@ export interface SyncConfig {
 /**
  * Run a full bidirectional sync.
  *
- * Fresh sync (no prior state): every Safari bookmark becomes an Add patch,
- * YAML is populated from scratch, state snapshot is saved.
+ * Git is the state store. The committed bookmarks.yaml is the baseline for
+ * three-way diff. After sync, bookmarks.yaml is auto-committed so the
+ * committed version becomes the new baseline.
  *
- * Incremental sync: three-way diff between last-sync baseline, current YAML,
- * and current Safari. Newest-wins conflict resolution, YAML tie-break.
+ * Fresh sync (no committed bookmarks.yaml): baseline is empty tree,
+ * every Safari bookmark becomes an Add patch, YAML is populated from scratch.
+ *
+ * Incremental sync: three-way diff between committed YAML (baseline),
+ * current YAML on disk (user edits), and current Safari (browser changes).
+ * Newest-wins conflict resolution, YAML tie-break.
  */
 export const sync = (config: SyncConfig): Effect.Effect<SyncResult, Error> =>
   Effect.gen(function* () {
@@ -158,12 +276,11 @@ export const sync = (config: SyncConfig): Effect.Effect<SyncResult, Error> =>
     yield* Effect.log("Reading Safari bookmarks...")
     const safariTree = yield* Safari.readBookmarks(config.safariPlistPath)
 
-    // 2. Load sync state (empty if first run)
-    const state = yield* State.load(config.stateBasePath)
-    const isFreshSync = state.last_sync === ""
-    yield* Effect.log(isFreshSync ? "Fresh sync (no prior state)" : `Last sync: ${state.last_sync}`)
+    // 2. Read git baseline (committed bookmarks.yaml, or empty tree if never committed)
+    yield* Effect.log("Reading git baseline...")
+    const baselineTree = yield* readGitBaseline(config.yamlPath)
 
-    // 3. Load YAML config (create default for fresh sync if file missing)
+    // 3. Load current YAML from disk (user's edits since last commit)
     const yamlConfig = yield* YamlModule.load(config.yamlPath).pipe(
       Effect.catchAll(() =>
         Effect.succeed(
@@ -180,24 +297,21 @@ export const sync = (config: SyncConfig): Effect.Effect<SyncResult, Error> =>
     )
     const yamlTree = yamlConfig.base
 
-    // 4. Baseline for three-way diff (empty tree on fresh sync)
-    const lastSyncTree = new Schema.BookmarkTree({})
-
-    // 5. Three-way diff: generate patches from each side against baseline
+    // 4. Three-way diff: generate patches from each side against baseline
     yield* Effect.log("Generating patches...")
-    const yamlPatches = yield* Patch.generatePatches(lastSyncTree, yamlTree, "yaml")
-    const browserPatches = yield* Patch.generatePatches(lastSyncTree, safariTree, "safari")
+    const yamlPatches = yield* Patch.generatePatches(baselineTree, yamlTree, "yaml")
+    const browserPatches = yield* Patch.generatePatches(baselineTree, safariTree, "safari")
     yield* Effect.log(`  YAML: ${yamlPatches.length} patches, Safari: ${browserPatches.length} patches`)
 
-    // 6. Resolve conflicts (newest-wins, YAML tie-break)
+    // 5. Resolve conflicts (newest-wins, YAML tie-break)
     const resolution = yield* resolveConflicts(yamlPatches, browserPatches)
-    yield* Effect.log(`  → ${resolution.apply.length} to apply, ${resolution.graveyard.length} to graveyard`)
+    yield* Effect.log(`  -> ${resolution.apply.length} to apply, ${resolution.graveyard.length} to graveyard`)
 
-    // 7. Apply resolved patches to baseline
-    const mergedTree = yield* applyPatches(lastSyncTree, resolution.apply)
+    // 6. Apply resolved patches to baseline
+    const mergedTree = yield* applyPatches(baselineTree, resolution.apply)
 
     if (!config.dryRun) {
-      // 8. Save YAML
+      // 7. Save merged YAML
       yield* Effect.log("Saving bookmarks.yaml...")
       const newConfig = new Schema.BookmarksConfig({
         targets: yamlConfig.targets,
@@ -206,25 +320,9 @@ export const sync = (config: SyncConfig): Effect.Effect<SyncResult, Error> =>
       })
       yield* YamlModule.save(config.yamlPath, newConfig)
 
-      // 9. Save state snapshot
-      yield* Effect.log("Saving sync state...")
-      const { index } = Patch.flatten(mergedTree)
-      const bookmarks: Record<string, { name: string; path: string; date_modified: string }> = {}
-      const now = new Date().toISOString()
-      HashMap.forEach(index, (entry, url) => {
-        bookmarks[url] = { name: entry.name, path: entry.path, date_modified: now }
-      })
-      yield* State.save(config.stateBasePath, {
-        version: 1,
-        last_sync: now,
-        profiles: {
-          default: {
-            yaml_hash: "",
-            browser_hash: "",
-            bookmarks,
-          },
-        },
-      })
+      // 8. Auto-commit bookmarks.yaml (committed version = new baseline)
+      yield* Effect.log("Auto-committing bookmarks.yaml...")
+      yield* gitAutoCommit(config.yamlPath)
     }
 
     yield* Effect.log(`Sync complete: ${resolution.apply.length} applied, ${resolution.graveyard.length} graveyarded`)

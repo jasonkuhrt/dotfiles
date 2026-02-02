@@ -4,7 +4,7 @@ import { copyFile, unlink } from "node:fs/promises"
 import { join } from "node:path"
 import * as Chrome from "./chrome.js"
 import * as Patch from "./patch.js"
-import * as Schema from "./schema/__.js"
+import { BookmarkFolder, BookmarkLeaf, BookmarkTree } from "./schema/__.js"
 
 // -- Test helpers --
 
@@ -68,9 +68,9 @@ describe("calculateChecksum", () => {
 // -- readBookmarks --
 
 describe("readBookmarks", () => {
-  test("reads actual Chrome bookmarks and produces a Schema.BookmarkTree", async () => {
+  test("reads actual Chrome bookmarks and produces a BookmarkTree", async () => {
     const tree = await run(Chrome.readBookmarks(BOOKMARKS_PATH))
-    expect(tree).toBeInstanceOf(Schema.BookmarkTree)
+    expect(tree).toBeInstanceOf(BookmarkTree)
   })
 
   test("favorites_bar contains bookmarks from bookmark_bar", async () => {
@@ -82,11 +82,11 @@ describe("readBookmarks", () => {
   test("leaf nodes have name and url", async () => {
     const tree = await run(Chrome.readBookmarks(BOOKMARKS_PATH))
     // Find a leaf somewhere in the tree
-    const findLeaf = (nodes: readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[]): Schema.BookmarkLeaf | undefined => {
+    const findLeaf = (nodes: readonly (BookmarkLeaf | BookmarkFolder)[]): BookmarkLeaf | undefined => {
       for (const n of nodes) {
-        if (Schema.BookmarkLeaf.is(n)) return n
-        if (Schema.BookmarkFolder.is(n)) {
-          const found = findLeaf(n.children as readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[])
+        if (BookmarkLeaf.is(n)) return n
+        if (BookmarkFolder.is(n)) {
+          const found = findLeaf(n.children as readonly (BookmarkLeaf | BookmarkFolder)[])
           if (found) return found
         }
       }
@@ -101,7 +101,7 @@ describe("readBookmarks", () => {
   test("folder nodes have name and children", async () => {
     const tree = await run(Chrome.readBookmarks(BOOKMARKS_PATH))
     const folder = tree.favorites_bar?.find(
-      (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n),
+      (n): n is BookmarkFolder => BookmarkFolder.is(n),
     )
     expect(folder).toBeDefined()
     expect(folder!.name).toBeTruthy()
@@ -144,7 +144,7 @@ describe("applyPatches", () => {
 
       const tree = await run(Chrome.readBookmarks(path))
       const found = (tree.favorites_bar ?? []).find(
-        (n): n is Schema.BookmarkLeaf => Schema.BookmarkLeaf.is(n) && n.url === testUrl,
+        (n): n is BookmarkLeaf => BookmarkLeaf.is(n) && n.url === testUrl,
       )
       expect(found).toBeDefined()
       expect(found!.name).toBe(testName)
@@ -182,12 +182,12 @@ describe("applyPatches", () => {
       const treeBefore = await run(Chrome.readBookmarks(path))
       // Find a leaf to remove
       const findLeaf = (
-        nodes: readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[],
-      ): Schema.BookmarkLeaf | undefined => {
+        nodes: readonly (BookmarkLeaf | BookmarkFolder)[],
+      ): BookmarkLeaf | undefined => {
         for (const n of nodes) {
-          if (Schema.BookmarkLeaf.is(n)) return n
-          if (Schema.BookmarkFolder.is(n)) {
-            const found = findLeaf(n.children as readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[])
+          if (BookmarkLeaf.is(n)) return n
+          if (BookmarkFolder.is(n)) {
+            const found = findLeaf(n.children as readonly (BookmarkLeaf | BookmarkFolder)[])
             if (found) return found
           }
         }
@@ -204,11 +204,11 @@ describe("applyPatches", () => {
 
       const treeAfter = await run(Chrome.readBookmarks(path))
       const allUrls: string[] = []
-      const collectUrls = (nodes: readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[]): void => {
+      const collectUrls = (nodes: readonly (BookmarkLeaf | BookmarkFolder)[]): void => {
         for (const n of nodes) {
-          if (Schema.BookmarkLeaf.is(n)) allUrls.push(n.url)
-          if (Schema.BookmarkFolder.is(n))
-            collectUrls(n.children as readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[])
+          if (BookmarkLeaf.is(n)) allUrls.push(n.url)
+          if (BookmarkFolder.is(n))
+            collectUrls(n.children as readonly (BookmarkLeaf | BookmarkFolder)[])
         }
       }
       collectUrls(treeAfter.favorites_bar ?? [])
@@ -223,12 +223,12 @@ describe("applyPatches", () => {
     try {
       const treeBefore = await run(Chrome.readBookmarks(path))
       const findLeaf = (
-        nodes: readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[],
-      ): Schema.BookmarkLeaf | undefined => {
+        nodes: readonly (BookmarkLeaf | BookmarkFolder)[],
+      ): BookmarkLeaf | undefined => {
         for (const n of nodes) {
-          if (Schema.BookmarkLeaf.is(n)) return n
-          if (Schema.BookmarkFolder.is(n)) {
-            const found = findLeaf(n.children as readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[])
+          if (BookmarkLeaf.is(n)) return n
+          if (BookmarkFolder.is(n)) {
+            const found = findLeaf(n.children as readonly (BookmarkLeaf | BookmarkFolder)[])
             if (found) return found
           }
         }
@@ -246,13 +246,13 @@ describe("applyPatches", () => {
 
       const treeAfter = await run(Chrome.readBookmarks(path))
       const findByUrl = (
-        nodes: readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[],
+        nodes: readonly (BookmarkLeaf | BookmarkFolder)[],
         url: string,
-      ): Schema.BookmarkLeaf | undefined => {
+      ): BookmarkLeaf | undefined => {
         for (const n of nodes) {
-          if (Schema.BookmarkLeaf.is(n) && n.url === url) return n
-          if (Schema.BookmarkFolder.is(n)) {
-            const found = findByUrl(n.children as readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[], url)
+          if (BookmarkLeaf.is(n) && n.url === url) return n
+          if (BookmarkFolder.is(n)) {
+            const found = findByUrl(n.children as readonly (BookmarkLeaf | BookmarkFolder)[], url)
             if (found) return found
           }
         }
@@ -271,12 +271,12 @@ describe("applyPatches", () => {
     try {
       const treeBefore = await run(Chrome.readBookmarks(path))
       const findLeaf = (
-        nodes: readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[],
-      ): Schema.BookmarkLeaf | undefined => {
+        nodes: readonly (BookmarkLeaf | BookmarkFolder)[],
+      ): BookmarkLeaf | undefined => {
         for (const n of nodes) {
-          if (Schema.BookmarkLeaf.is(n)) return n
-          if (Schema.BookmarkFolder.is(n)) {
-            const found = findLeaf(n.children as readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[])
+          if (BookmarkLeaf.is(n)) return n
+          if (BookmarkFolder.is(n)) {
+            const found = findLeaf(n.children as readonly (BookmarkLeaf | BookmarkFolder)[])
             if (found) return found
           }
         }
@@ -300,24 +300,24 @@ describe("applyPatches", () => {
 
       // Gone from favorites_bar
       const favUrls: string[] = []
-      const collectUrls = (nodes: readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[]): void => {
+      const collectUrls = (nodes: readonly (BookmarkLeaf | BookmarkFolder)[]): void => {
         for (const n of nodes) {
-          if (Schema.BookmarkLeaf.is(n)) favUrls.push(n.url)
-          if (Schema.BookmarkFolder.is(n))
-            collectUrls(n.children as readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[])
+          if (BookmarkLeaf.is(n)) favUrls.push(n.url)
+          if (BookmarkFolder.is(n))
+            collectUrls(n.children as readonly (BookmarkLeaf | BookmarkFolder)[])
         }
       }
       collectUrls(treeAfter.favorites_bar ?? [])
       expect(favUrls).not.toContain(target!.url)
 
       // Present in other
-      const collectOtherUrls = (nodes: readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[]): string[] => {
+      const collectOtherUrls = (nodes: readonly (BookmarkLeaf | BookmarkFolder)[]): string[] => {
         const urls: string[] = []
         for (const n of nodes) {
-          if (Schema.BookmarkLeaf.is(n)) urls.push(n.url)
-          if (Schema.BookmarkFolder.is(n))
+          if (BookmarkLeaf.is(n)) urls.push(n.url)
+          if (BookmarkFolder.is(n))
             urls.push(
-              ...collectOtherUrls(n.children as readonly (Schema.BookmarkLeaf | Schema.BookmarkFolder)[]),
+              ...collectOtherUrls(n.children as readonly (BookmarkLeaf | BookmarkFolder)[]),
             )
         }
         return urls
@@ -349,15 +349,15 @@ describe("applyPatches", () => {
       const tree = await run(Chrome.readBookmarks(path))
       // Navigate: other -> NewFolder -> SubFolder -> leaf
       const newFolder = (tree.other ?? []).find(
-        (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n) && n.name === "NewFolder",
+        (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "NewFolder",
       )
       expect(newFolder).toBeDefined()
       const subFolder = newFolder!.children.find(
-        (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n) && n.name === "SubFolder",
+        (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "SubFolder",
       )
       expect(subFolder).toBeDefined()
       const leaf = subFolder!.children.find(
-        (n): n is Schema.BookmarkLeaf => Schema.BookmarkLeaf.is(n) && n.url === testUrl,
+        (n): n is BookmarkLeaf => BookmarkLeaf.is(n) && n.url === testUrl,
       )
       expect(leaf).toBeDefined()
       expect(leaf!.name).toBe(testName)

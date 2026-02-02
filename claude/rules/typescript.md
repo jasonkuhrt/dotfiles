@@ -24,16 +24,30 @@ paths:
   const { ActivityStarted } = Flo       // Don't do this
   ```
 
-- **Lib modules use namespace imports matching filename**:
+- **Domain modules use namespace imports matching filename** — a domain module's name represents a domain concept. The namespace prefix adds semantic meaning at call sites:
 
   ```typescript
+  // GOOD - "Patch" carries domain meaning
+  import * as Patch from "./patch.js"
+  Patch.generatePatches(...)
+  Patch.$match(patch, { Add: ..., Remove: ... })
+
   // GOOD - alias matches filename
-  import * as AudioRecorder from "./AudioRecorder";
-  import * as MimeType from "./MimeType";
+  import * as AudioRecorder from "./AudioRecorder.js"
 
   // BAD - alias doesn't match filename
-  import * as Recorder from "./AudioRecorder";
-  import * as MT from "./MimeType";
+  import * as Recorder from "./AudioRecorder.js"
+  ```
+
+- **Grouping directories use named imports** — a directory that groups files by a non-domain criterion (implementation tool, file type, convention) is housekeeping, not a domain concept. Its barrel re-exports named exports; consumers import those directly:
+
+  ```typescript
+  // GOOD - "schema/" groups Schema-defined classes, not a domain concept
+  import { BookmarkLeaf, BookmarkTree } from "./schema/__.js"
+
+  // BAD - namespace import on a housekeeping directory
+  import * as Schema from "./schema/__.js"
+  Schema.BookmarkLeaf  // "Schema" describes the tool, not the domain
   ```
 
 - **No term mappings** - Use the same term everywhere for the same concept:

@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test"
 import { DateTime, Effect } from "effect"
-import * as Schema from "./schema/__.js"
+import { BookmarkFolder, BookmarkLeaf, BookmarkTree } from "./schema/__.js"
 import * as Patch from "./patch.js"
 import * as Sync from "./sync.js"
 
 // -- Test helpers --
 
-const leaf = (name: string, url: string) => new Schema.BookmarkLeaf({ name, url })
+const leaf = (name: string, url: string) => new BookmarkLeaf({ name, url })
 
-const emptyTree = () => new Schema.BookmarkTree({})
+const emptyTree = () => new BookmarkTree({})
 
 const run = <A>(effect: Effect.Effect<A, Error>) =>
   Effect.runPromise(effect)
@@ -94,7 +94,7 @@ describe("applyPatches", () => {
     const result = await run(Sync.applyPatches(tree, patches))
     expect(result.favorites_bar).toBeDefined()
     expect(result.favorites_bar!.length).toBe(1)
-    const node = result.favorites_bar![0] as Schema.BookmarkLeaf
+    const node = result.favorites_bar![0] as BookmarkLeaf
     expect(node.name).toBe("A")
     expect(node.url).toBe("https://a.com")
   })
@@ -108,24 +108,24 @@ describe("applyPatches", () => {
     expect(result.favorites_bar).toBeDefined()
 
     const aiFolder = result.favorites_bar!.find(
-      (n) => Schema.BookmarkFolder.is(n) && n.name === "AI",
-    ) as Schema.BookmarkFolder
+      (n) => BookmarkFolder.is(n) && n.name === "AI",
+    ) as BookmarkFolder
     expect(aiFolder).toBeDefined()
 
     const toolsFolder = aiFolder.children.find(
-      (n) => Schema.BookmarkFolder.is(n) && n.name === "Tools",
-    ) as Schema.BookmarkFolder
+      (n) => BookmarkFolder.is(n) && n.name === "Tools",
+    ) as BookmarkFolder
     expect(toolsFolder).toBeDefined()
 
     const gpt = toolsFolder.children.find(
-      (n) => Schema.BookmarkLeaf.is(n) && n.url === "https://gpt.com",
-    ) as Schema.BookmarkLeaf
+      (n) => BookmarkLeaf.is(n) && n.url === "https://gpt.com",
+    ) as BookmarkLeaf
     expect(gpt).toBeDefined()
     expect(gpt.name).toBe("ChatGPT")
   })
 
   test("remove deletes leaf from tree", async () => {
-    const tree = new Schema.BookmarkTree({
+    const tree = new BookmarkTree({
       favorites_bar: [leaf("A", "https://a.com"), leaf("B", "https://b.com")],
     })
     const patches = [
@@ -134,12 +134,12 @@ describe("applyPatches", () => {
     const result = await run(Sync.applyPatches(tree, patches))
     expect(result.favorites_bar).toBeDefined()
     expect(result.favorites_bar!.length).toBe(1)
-    const remaining = result.favorites_bar![0] as Schema.BookmarkLeaf
+    const remaining = result.favorites_bar![0] as BookmarkLeaf
     expect(remaining.url).toBe("https://b.com")
   })
 
   test("remove last leaf prunes empty section", async () => {
-    const tree = new Schema.BookmarkTree({
+    const tree = new BookmarkTree({
       favorites_bar: [leaf("A", "https://a.com")],
       other: [leaf("B", "https://b.com")],
     })
@@ -152,7 +152,7 @@ describe("applyPatches", () => {
   })
 
   test("rename changes leaf name, preserves URL and position", async () => {
-    const tree = new Schema.BookmarkTree({
+    const tree = new BookmarkTree({
       favorites_bar: [leaf("Old Name", "https://a.com")],
     })
     const patches = [
@@ -161,14 +161,14 @@ describe("applyPatches", () => {
     const result = await run(Sync.applyPatches(tree, patches))
     expect(result.favorites_bar).toBeDefined()
     const node = result.favorites_bar!.find(
-      (n) => Schema.BookmarkLeaf.is(n) && n.url === "https://a.com",
-    ) as Schema.BookmarkLeaf
+      (n) => BookmarkLeaf.is(n) && n.url === "https://a.com",
+    ) as BookmarkLeaf
     expect(node).toBeDefined()
     expect(node.name).toBe("New Name")
   })
 
   test("move relocates leaf between sections", async () => {
-    const tree = new Schema.BookmarkTree({
+    const tree = new BookmarkTree({
       favorites_bar: [leaf("A", "https://a.com")],
     })
     const patches = [
@@ -178,14 +178,14 @@ describe("applyPatches", () => {
     expect(result.favorites_bar).toBeUndefined()
     expect(result.other).toBeDefined()
     const node = result.other!.find(
-      (n) => Schema.BookmarkLeaf.is(n) && n.url === "https://a.com",
-    ) as Schema.BookmarkLeaf
+      (n) => BookmarkLeaf.is(n) && n.url === "https://a.com",
+    ) as BookmarkLeaf
     expect(node).toBeDefined()
     expect(node.name).toBe("A")
   })
 
   test("multiple patches applied in correct order", async () => {
-    const tree = new Schema.BookmarkTree({
+    const tree = new BookmarkTree({
       favorites_bar: [leaf("ToRemove", "https://remove.com"), leaf("ToRename", "https://rename.com")],
     })
     const patches = [
@@ -197,7 +197,7 @@ describe("applyPatches", () => {
     expect(result.favorites_bar).toBeDefined()
 
     const urls = result.favorites_bar!
-      .filter((n): n is Schema.BookmarkLeaf => Schema.BookmarkLeaf.is(n))
+      .filter((n): n is BookmarkLeaf => BookmarkLeaf.is(n))
       .map((n) => n.url)
 
     expect(urls).toContain("https://rename.com")
@@ -205,13 +205,13 @@ describe("applyPatches", () => {
     expect(urls).not.toContain("https://remove.com")
 
     const renamed = result.favorites_bar!.find(
-      (n) => Schema.BookmarkLeaf.is(n) && n.url === "https://rename.com",
-    ) as Schema.BookmarkLeaf
+      (n) => BookmarkLeaf.is(n) && n.url === "https://rename.com",
+    ) as BookmarkLeaf
     expect(renamed.name).toBe("Renamed")
   })
 
   test("empty patches returns tree unchanged", async () => {
-    const tree = new Schema.BookmarkTree({
+    const tree = new BookmarkTree({
       favorites_bar: [leaf("A", "https://a.com")],
     })
     const result = await run(Sync.applyPatches(tree, []))

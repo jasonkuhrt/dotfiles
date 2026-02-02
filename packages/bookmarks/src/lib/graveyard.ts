@@ -12,7 +12,7 @@
 
 import { DateTime, Duration, Effect, Option } from "effect"
 import * as Patch from "./patch.js"
-import * as Schema from "./schema/__.js"
+import { BookmarkFolder, BookmarkLeaf, BookmarkNode, BookmarkTree } from "./schema/__.js"
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -57,13 +57,13 @@ export const parseEventFolderName = (
  */
 const buildPathFolders = (
   pathSegments: readonly string[],
-  leaf: Schema.BookmarkNode,
-): Schema.BookmarkNode => {
+  leaf: BookmarkNode,
+): BookmarkNode => {
   if (pathSegments.length === 0) return leaf
 
-  let current: Schema.BookmarkNode = leaf
+  let current: BookmarkNode = leaf
   for (let i = pathSegments.length - 1; i >= 0; i--) {
-    current = Schema.BookmarkFolder.make({ name: pathSegments[i]!, children: [current] })
+    current = BookmarkFolder.make({ name: pathSegments[i]!, children: [current] })
   }
   return current
 }
@@ -85,15 +85,15 @@ const patchToBookmarkInfo = (patch: Patch.BookmarkPatch): { url: string; name: s
  * Returns the updated `other` array and the graveyard folder.
  */
 const ensureGraveyardFolder = (
-  other: readonly Schema.BookmarkNode[],
-): { other: readonly Schema.BookmarkNode[]; graveyardFolder: Schema.BookmarkFolder } => {
+  other: readonly BookmarkNode[],
+): { other: readonly BookmarkNode[]; graveyardFolder: BookmarkFolder } => {
   const existing = other.find(
-    (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n) && n.name === GRAVEYARD_FOLDER_NAME,
+    (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === GRAVEYARD_FOLDER_NAME,
   )
   if (existing) {
     return { other, graveyardFolder: existing }
   }
-  const folder = Schema.BookmarkFolder.make({ name: GRAVEYARD_FOLDER_NAME, children: [] })
+  const folder = BookmarkFolder.make({ name: GRAVEYARD_FOLDER_NAME, children: [] })
   return { other: [...other, folder], graveyardFolder: folder }
 }
 
@@ -102,17 +102,17 @@ const ensureGraveyardFolder = (
  * Returns the updated graveyard folder.
  */
 const ensureEventFolder = (
-  graveyardFolder: Schema.BookmarkFolder,
+  graveyardFolder: BookmarkFolder,
   eventFolderName: string,
-): { graveyardFolder: Schema.BookmarkFolder; eventFolder: Schema.BookmarkFolder } => {
+): { graveyardFolder: BookmarkFolder; eventFolder: BookmarkFolder } => {
   const existing = graveyardFolder.children.find(
-    (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n) && n.name === eventFolderName,
+    (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === eventFolderName,
   )
   if (existing) {
     return { graveyardFolder, eventFolder: existing }
   }
-  const folder = Schema.BookmarkFolder.make({ name: eventFolderName, children: [] })
-  const updated = Schema.BookmarkFolder.make({
+  const folder = BookmarkFolder.make({ name: eventFolderName, children: [] })
+  const updated = BookmarkFolder.make({
     name: graveyardFolder.name,
     children: [...graveyardFolder.children, folder],
   })
@@ -123,24 +123,24 @@ const ensureEventFolder = (
  * Replace the graveyard folder in the `other` array with an updated version.
  */
 const replaceGraveyardInOther = (
-  other: readonly Schema.BookmarkNode[],
-  graveyardFolder: Schema.BookmarkFolder,
-): readonly Schema.BookmarkNode[] =>
+  other: readonly BookmarkNode[],
+  graveyardFolder: BookmarkFolder,
+): readonly BookmarkNode[] =>
   other.map((n) =>
-    Schema.BookmarkFolder.is(n) && n.name === GRAVEYARD_FOLDER_NAME ? graveyardFolder : n,
+    BookmarkFolder.is(n) && n.name === GRAVEYARD_FOLDER_NAME ? graveyardFolder : n,
   )
 
 /**
  * Replace an event folder inside the graveyard folder.
  */
 const replaceEventInGraveyard = (
-  graveyardFolder: Schema.BookmarkFolder,
-  eventFolder: Schema.BookmarkFolder,
-): Schema.BookmarkFolder =>
-  Schema.BookmarkFolder.make({
+  graveyardFolder: BookmarkFolder,
+  eventFolder: BookmarkFolder,
+): BookmarkFolder =>
+  BookmarkFolder.make({
     name: graveyardFolder.name,
     children: graveyardFolder.children.map((n) =>
-      Schema.BookmarkFolder.is(n) && n.name === eventFolder.name ? eventFolder : n,
+      BookmarkFolder.is(n) && n.name === eventFolder.name ? eventFolder : n,
     ),
   })
 
@@ -150,18 +150,18 @@ const replaceEventInGraveyard = (
 
 /** Create a graveyard entry from a conflict-losing patch. */
 export const addToGraveyard = (
-  tree: Schema.BookmarkTree,
+  tree: BookmarkTree,
   patch: Patch.BookmarkPatch,
   source: string,
   reason: string,
-): Effect.Effect<Schema.BookmarkTree, Error> =>
+): Effect.Effect<BookmarkTree, Error> =>
   Effect.gen(function* () {
     const now = yield* DateTime.now
     const info = patchToBookmarkInfo(patch)
     const eventFolderName = makeEventFolderName(now, source, reason)
 
     // Create the leaf bookmark to store in graveyard
-    const graveyardLeaf = Schema.BookmarkLeaf.make({ name: info.name, url: info.url })
+    const graveyardLeaf = BookmarkLeaf.make({ name: info.name, url: info.url })
 
     // Build the nested path structure
     const entry = buildPathFolders(info.pathSegments, graveyardLeaf)
@@ -179,7 +179,7 @@ export const addToGraveyard = (
     )
 
     // Add the entry to the event folder
-    const updatedEventFolder = Schema.BookmarkFolder.make({
+    const updatedEventFolder = BookmarkFolder.make({
       name: eventFolder.name,
       children: [...eventFolder.children, entry],
     })
@@ -188,7 +188,7 @@ export const addToGraveyard = (
     const updatedGraveyard = replaceEventInGraveyard(graveyardWithEvent, updatedEventFolder)
     const updatedOther = replaceGraveyardInOther(otherWithGraveyard, updatedGraveyard)
 
-    return Schema.BookmarkTree.make({
+    return BookmarkTree.make({
       ...tree,
       other: updatedOther,
     })
@@ -196,11 +196,11 @@ export const addToGraveyard = (
 
 /** Batch version: add multiple patches to graveyard. */
 export const addGraveyardEntries = (
-  tree: Schema.BookmarkTree,
+  tree: BookmarkTree,
   patches: readonly Patch.BookmarkPatch[],
   source: string,
   reason: string,
-): Effect.Effect<Schema.BookmarkTree, Error> =>
+): Effect.Effect<BookmarkTree, Error> =>
   Effect.gen(function* () {
     let current = tree
     for (const patch of patches) {
@@ -211,15 +211,15 @@ export const addGraveyardEntries = (
 
 /** Remove graveyard entries older than maxAge. */
 export const gc = (
-  tree: Schema.BookmarkTree,
+  tree: BookmarkTree,
   maxAge: Duration.Duration,
-): Effect.Effect<Schema.BookmarkTree, Error> =>
+): Effect.Effect<BookmarkTree, Error> =>
   Effect.gen(function* () {
     const otherSection = tree.other
     if (!otherSection) return tree
 
     const graveyardFolder = otherSection.find(
-      (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n) && n.name === GRAVEYARD_FOLDER_NAME,
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === GRAVEYARD_FOLDER_NAME,
     )
     if (!graveyardFolder) return tree
 
@@ -228,7 +228,7 @@ export const gc = (
 
     // Filter event folders: keep those whose date is within maxAge
     const keptChildren = graveyardFolder.children.filter((child) => {
-      if (!Schema.BookmarkFolder.is(child)) return true // keep non-folder nodes (shouldn't exist, but safe)
+      if (!BookmarkFolder.is(child)) return true // keep non-folder nodes (shouldn't exist, but safe)
       const parsed = parseEventFolderName(child.name)
       if (Option.isNone(parsed)) return true // keep unparseable folders
       const ageMillis = DateTime.distance(parsed.value.date, now)
@@ -241,21 +241,21 @@ export const gc = (
     // If no children remain, remove the graveyard folder entirely
     if (keptChildren.length === 0) {
       const updatedOther = otherSection.filter(
-        (n) => !(Schema.BookmarkFolder.is(n) && n.name === GRAVEYARD_FOLDER_NAME),
+        (n) => !(BookmarkFolder.is(n) && n.name === GRAVEYARD_FOLDER_NAME),
       )
-      return Schema.BookmarkTree.make({
+      return BookmarkTree.make({
         ...tree,
         other: updatedOther,
       })
     }
 
     // Otherwise, update the graveyard folder with remaining children
-    const updatedGraveyard = Schema.BookmarkFolder.make({
+    const updatedGraveyard = BookmarkFolder.make({
       name: GRAVEYARD_FOLDER_NAME,
       children: keptChildren,
     })
     const updatedOther = replaceGraveyardInOther(otherSection, updatedGraveyard)
-    return Schema.BookmarkTree.make({
+    return BookmarkTree.make({
       ...tree,
       other: updatedOther,
     })

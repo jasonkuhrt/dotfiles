@@ -13,7 +13,7 @@ import * as Yaml from "yaml"
 import * as Graveyard from "./graveyard.js"
 import * as Patch from "./patch.js"
 import * as Safari from "./safari.js"
-import * as BookmarkSchema from "./schema/__.js"
+import { BookmarkLeaf, BookmarkTree, BookmarksConfig, TargetProfile } from "./schema/__.js"
 import * as YamlModule from "./yaml.js"
 
 export interface SyncResult {
@@ -32,7 +32,7 @@ export interface ConflictResolution {
  * Read the last-committed version of bookmarks.yaml from git.
  * Returns empty BookmarkTree if the file has never been committed.
  */
-export const readGitBaseline = (yamlPath: string): Effect.Effect<BookmarkSchema.BookmarkTree, Error> =>
+export const readGitBaseline = (yamlPath: string): Effect.Effect<BookmarkTree, Error> =>
   Effect.gen(function* () {
     const repoRoot = yield* gitRepoRoot(yamlPath)
     const relPath = Path.relative(repoRoot, yamlPath)
@@ -52,12 +52,12 @@ export const readGitBaseline = (yamlPath: string): Effect.Effect<BookmarkSchema.
 
     if (raw === null) {
       yield* Effect.log("No committed bookmarks.yaml found — using empty baseline (fresh sync)")
-      return BookmarkSchema.BookmarkTree.make({})
+      return BookmarkTree.make({})
     }
 
     // Parse and validate the committed YAML
     const parsed: unknown = Yaml.parse(raw)
-    const config = yield* Schema.decodeUnknown(BookmarkSchema.BookmarksConfig)(parsed).pipe(
+    const config = yield* Schema.decodeUnknown(BookmarksConfig)(parsed).pipe(
       Effect.mapError((e) => new Error(`Failed to parse committed bookmarks.yaml: ${e.message}`)),
     )
     return config.base
@@ -191,9 +191,9 @@ const maxDate = (patches: readonly Patch.BookmarkPatch[]): DateTime.Utc =>
 
 /** Apply a set of patches to a bookmark tree, producing the updated tree. */
 export const applyPatches = (
-  tree: BookmarkSchema.BookmarkTree,
+  tree: BookmarkTree,
   patches: readonly Patch.BookmarkPatch[],
-): Effect.Effect<BookmarkSchema.BookmarkTree, Error> =>
+): Effect.Effect<BookmarkTree, Error> =>
   Effect.gen(function* () {
     let trie = Patch.toTrie(tree)
 
@@ -210,11 +210,11 @@ export const applyPatches = (
   })
 
 /** Apply a single patch to the Trie via exhaustive Patch.$match. */
-const applyOne = (trie: Trie.Trie<BookmarkSchema.BookmarkLeaf>, patch: Patch.BookmarkPatch): Trie.Trie<BookmarkSchema.BookmarkLeaf> =>
+const applyOne = (trie: Trie.Trie<BookmarkLeaf>, patch: Patch.BookmarkPatch): Trie.Trie<BookmarkLeaf> =>
   Patch.$match(patch, {
     Add: ({ url, name, path }) => {
       const fullPath = `${path}/${name}`
-      return Trie.insert(trie, fullPath, BookmarkSchema.BookmarkLeaf.make({ name, url }))
+      return Trie.insert(trie, fullPath, BookmarkLeaf.make({ name, url }))
     },
 
     Remove: ({ url, path }) => {
@@ -232,7 +232,7 @@ const applyOne = (trie: Trie.Trie<BookmarkSchema.BookmarkLeaf>, patch: Patch.Boo
       const newKey = `${pathPrefix}/${newName}`
       return pipe(
         Trie.remove(trie, oldKey),
-        Trie.insert(newKey, BookmarkSchema.BookmarkLeaf.make({ name: newName, url })),
+        Trie.insert(newKey, BookmarkLeaf.make({ name: newName, url })),
       )
     },
 
@@ -286,13 +286,13 @@ export const sync = (config: SyncConfig): Effect.Effect<SyncResult, Error> =>
     const yamlConfig = yield* YamlModule.load(config.yamlPath).pipe(
       Effect.catchAll(() =>
         Effect.succeed(
-          BookmarkSchema.BookmarksConfig.make({
+          BookmarksConfig.make({
             targets: {
               safari: {
-                default: BookmarkSchema.TargetProfile.make({ path: config.safariPlistPath }),
+                default: TargetProfile.make({ path: config.safariPlistPath }),
               },
             },
-            base: BookmarkSchema.BookmarkTree.make({}),
+            base: BookmarkTree.make({}),
           }),
         ),
       ),
@@ -324,7 +324,7 @@ export const sync = (config: SyncConfig): Effect.Effect<SyncResult, Error> =>
     if (!config.dryRun) {
       // 7. Save merged YAML
       yield* Effect.log("Saving bookmarks.yaml...")
-      const newConfig = BookmarkSchema.BookmarksConfig.make({
+      const newConfig = BookmarksConfig.make({
         targets: yamlConfig.targets,
         base: finalTree,
         profiles: yamlConfig.profiles,

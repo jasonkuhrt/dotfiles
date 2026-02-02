@@ -10,7 +10,7 @@
  */
 
 import { Data, DateTime, Effect, HashMap, Option, Trie, pipe } from "effect"
-import * as Schema from "./schema/__.js"
+import { BookmarkFolder, BookmarkLeaf, BookmarkNode, BookmarkSection, BookmarkTree } from "./schema/__.js"
 
 // -- Patch types (Data.TaggedEnum) --
 
@@ -35,7 +35,7 @@ export type BookmarkIndex = HashMap.HashMap<string, BookmarkEntry>
 
 // -- BookmarkTrie (for path-keyed patch application) --
 
-export type BookmarkTrie = Trie.Trie<Schema.BookmarkLeaf>
+export type BookmarkTrie = Trie.Trie<BookmarkLeaf>
 
 // -- Section keys for tree traversal --
 
@@ -49,23 +49,23 @@ export interface FlattenResult {
 }
 
 /** Flatten a BookmarkTree into a URL-keyed HashMap for diffing. First occurrence wins on duplicates. */
-export const flatten = (tree: Schema.BookmarkTree): FlattenResult => {
+export const flatten = (tree: BookmarkTree): FlattenResult => {
   const entries: Array<readonly [string, BookmarkEntry]> = []
   const warnings: Array<string> = []
   const seen = new Set<string>()
 
-  const visit = (nodes: Schema.BookmarkSection | undefined, path: string): void => {
+  const visit = (nodes: BookmarkSection | undefined, path: string): void => {
     if (!nodes) return
     for (const node of nodes) {
-      if (Schema.BookmarkLeaf.is(node)) {
+      if (BookmarkLeaf.is(node)) {
         if (seen.has(node.url)) {
           warnings.push(`Duplicate URL "${node.url}" at path "${path}" — keeping first occurrence`)
         } else {
           seen.add(node.url)
           entries.push([node.url, { url: node.url, name: node.name, path }])
         }
-      } else if (Schema.BookmarkFolder.is(node)) {
-        visit(node.children as Schema.BookmarkSection, path === "" ? node.name : `${path}/${node.name}`)
+      } else if (BookmarkFolder.is(node)) {
+        visit(node.children as BookmarkSection, path === "" ? node.name : `${path}/${node.name}`)
       }
     }
   }
@@ -80,17 +80,17 @@ export const flatten = (tree: Schema.BookmarkTree): FlattenResult => {
 // -- toTrie: BookmarkTree → BookmarkTrie (path-keyed) --
 
 /** Convert a BookmarkTree to a path-keyed Trie. Key = "section/folder/.../leafName". */
-export const toTrie = (tree: Schema.BookmarkTree): BookmarkTrie => {
+export const toTrie = (tree: BookmarkTree): BookmarkTrie => {
   let trie: BookmarkTrie = Trie.empty()
 
-  const visit = (nodes: Schema.BookmarkSection | undefined, path: string): void => {
+  const visit = (nodes: BookmarkSection | undefined, path: string): void => {
     if (!nodes) return
     for (const node of nodes) {
-      if (Schema.BookmarkLeaf.is(node)) {
+      if (BookmarkLeaf.is(node)) {
         const fullPath = `${path}/${node.name}`
         trie = Trie.insert(trie, fullPath, node)
-      } else if (Schema.BookmarkFolder.is(node)) {
-        visit(node.children as Schema.BookmarkSection, `${path}/${node.name}`)
+      } else if (BookmarkFolder.is(node)) {
+        visit(node.children as BookmarkSection, `${path}/${node.name}`)
       }
     }
   }
@@ -105,9 +105,9 @@ export const toTrie = (tree: Schema.BookmarkTree): BookmarkTrie => {
 // -- fromTrie: BookmarkTrie → BookmarkTree --
 
 /** Reconstruct a BookmarkTree from a path-keyed Trie. */
-export const fromTrie = (trie: BookmarkTrie): Schema.BookmarkTree => {
+export const fromTrie = (trie: BookmarkTrie): BookmarkTree => {
   // Collect entries grouped by section
-  const sections: Record<string, Array<{ readonly segments: readonly string[]; readonly leaf: Schema.BookmarkLeaf }>> = {}
+  const sections: Record<string, Array<{ readonly segments: readonly string[]; readonly leaf: BookmarkLeaf }>> = {}
 
   Trie.forEach(trie, (leaf, key) => {
     // key format: "sectionKey/folder1/.../leafName"
@@ -119,11 +119,11 @@ export const fromTrie = (trie: BookmarkTrie): Schema.BookmarkTree => {
   })
 
   const buildNodes = (
-    items: Array<{ readonly segments: readonly string[]; readonly leaf: Schema.BookmarkLeaf }>,
-  ): Schema.BookmarkSection => {
+    items: Array<{ readonly segments: readonly string[]; readonly leaf: BookmarkLeaf }>,
+  ): BookmarkSection => {
     // Group by first segment
-    const direct: Schema.BookmarkLeaf[] = []
-    const grouped: Record<string, Array<{ readonly segments: readonly string[]; readonly leaf: Schema.BookmarkLeaf }>> = {}
+    const direct: BookmarkLeaf[] = []
+    const grouped: Record<string, Array<{ readonly segments: readonly string[]; readonly leaf: BookmarkLeaf }>> = {}
 
     for (const item of items) {
       if (item.segments.length === 1) {
@@ -135,11 +135,11 @@ export const fromTrie = (trie: BookmarkTrie): Schema.BookmarkTree => {
       }
     }
 
-    const result: Array<Schema.BookmarkNode> = []
+    const result: Array<BookmarkNode> = []
 
     // Add folders first (preserving order by first encounter)
     for (const [folderName, children] of Object.entries(grouped)) {
-      result.push(Schema.BookmarkFolder.make({ name: folderName, children: buildNodes(children) }))
+      result.push(BookmarkFolder.make({ name: folderName, children: buildNodes(children) }))
     }
 
     // Then leaves
@@ -150,13 +150,13 @@ export const fromTrie = (trie: BookmarkTrie): Schema.BookmarkTree => {
     return result
   }
 
-  const makeSection = (key: string): Schema.BookmarkSection | undefined => {
+  const makeSection = (key: string): BookmarkSection | undefined => {
     const items = sections[key]
     if (!items || items.length === 0) return undefined
     return buildNodes(items)
   }
 
-  return Schema.BookmarkTree.make({
+  return BookmarkTree.make({
     favorites_bar: makeSection("favorites_bar"),
     other: makeSection("other"),
     reading_list: makeSection("reading_list"),
@@ -168,8 +168,8 @@ export const fromTrie = (trie: BookmarkTrie): Schema.BookmarkTree => {
 
 /** Generate patches by diffing last-sync state against current state. */
 export const generatePatches = (
-  lastSync: Schema.BookmarkTree,
-  current: Schema.BookmarkTree,
+  lastSync: BookmarkTree,
+  current: BookmarkTree,
   _source: string,
   dates?: HashMap.HashMap<string, DateTime.Utc>,
 ): Effect.Effect<readonly BookmarkPatch[], Error> =>

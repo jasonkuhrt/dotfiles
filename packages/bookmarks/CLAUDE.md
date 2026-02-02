@@ -28,15 +28,23 @@ Discriminated unions MUST use `Data.TaggedEnum`, not raw TS unions with a manual
 
 ## Namespace Imports
 
-Import lib modules as `import * as <NS>` with qualified access at call sites.
+Import **domain modules** as `import * as <NS>` with qualified access at call sites. A domain module's name carries semantic meaning — the namespace prefix tells you something the bare symbol doesn't.
+
+Grouping directories (file housekeeping, not domain concepts) use named imports from their barrel.
 
 ```typescript
-// GOOD
+// GOOD - domain module: "Patch" is a domain concept
 import * as Patch from "./patch.js"
 Patch.generatePatches(...)
 Patch.$is("Add")
 Patch.$match(patch, { Add: ..., Remove: ... })
 
-// BAD
+// GOOD - grouping directory: "schema/" is housekeeping
+import { BookmarkLeaf, BookmarkTree } from "./schema/__.js"
+
+// BAD - destructured import from domain module
 import { generatePatches, $is, $match } from "./patch.js"
+
+// BAD - namespace import on grouping directory
+import * as Schema from "./schema/__.js"
 ```

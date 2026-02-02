@@ -2,15 +2,15 @@ import { describe, expect, test } from "bun:test"
 import { DateTime, Duration, Effect, Option, TestClock, TestContext } from "effect"
 import * as Graveyard from "./graveyard.js"
 import * as Patch from "./patch.js"
-import * as Schema from "./schema/__.js"
+import { BookmarkFolder, BookmarkLeaf, BookmarkTree } from "./schema/__.js"
 
 // -- Test helpers --
 
-const leaf = (name: string, url: string) => Schema.BookmarkLeaf.make({ name, url })
-const folder = (name: string, children: Array<Schema.BookmarkLeaf | Schema.BookmarkFolder>) =>
-  Schema.BookmarkFolder.make({ name, children })
+const leaf = (name: string, url: string) => BookmarkLeaf.make({ name, url })
+const folder = (name: string, children: Array<BookmarkLeaf | BookmarkFolder>) =>
+  BookmarkFolder.make({ name, children })
 
-const emptyTree = () => Schema.BookmarkTree.make({})
+const emptyTree = () => BookmarkTree.make({})
 
 const run = <A>(effect: Effect.Effect<A, Error>) =>
   Effect.runPromise(
@@ -84,7 +84,7 @@ describe("addToGraveyard", () => {
 
     expect(result.other).toBeDefined()
     const graveyardFolder = result.other!.find(
-      (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n) && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )
     expect(graveyardFolder).toBeDefined()
     expect(graveyardFolder!.children.length).toBe(1)
@@ -99,26 +99,26 @@ describe("addToGraveyard", () => {
     )
 
     const graveyardFolder = result.other!.find(
-      (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n) && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )!
     // Event folder is the first child
-    const eventFolder = graveyardFolder.children[0] as Schema.BookmarkFolder
+    const eventFolder = graveyardFolder.children[0] as BookmarkFolder
     expect(eventFolder.name).toMatch(/^\d{4}-\d{2}-\d{2}_safari_conflict$/)
 
     // Path should be: favorites_bar/AI/Tools/ChatGPT (leaf)
-    const pathRoot = eventFolder.children[0] as Schema.BookmarkFolder
+    const pathRoot = eventFolder.children[0] as BookmarkFolder
     expect(pathRoot.name).toBe("favorites_bar")
-    const aiFolder = pathRoot.children[0] as Schema.BookmarkFolder
+    const aiFolder = pathRoot.children[0] as BookmarkFolder
     expect(aiFolder.name).toBe("AI")
-    const toolsFolder = aiFolder.children[0] as Schema.BookmarkFolder
+    const toolsFolder = aiFolder.children[0] as BookmarkFolder
     expect(toolsFolder.name).toBe("Tools")
-    const leafNode = toolsFolder.children[0] as Schema.BookmarkLeaf
+    const leafNode = toolsFolder.children[0] as BookmarkLeaf
     expect(leafNode.name).toBe("ChatGPT")
     expect(leafNode.url).toBe("https://chat.openai.com")
   })
 
   test("preserves existing other content", async () => {
-    const tree = Schema.BookmarkTree.make({
+    const tree = BookmarkTree.make({
       other: [leaf("Existing", "https://existing.com")],
     })
     const patch = mkAddPatch("https://example.com", "Example", "other", mkDate("2025-01-01"))
@@ -129,7 +129,7 @@ describe("addToGraveyard", () => {
 
     expect(result.other!.length).toBe(2) // existing leaf + _graveyard folder
     const existingLeaf = result.other!.find(
-      (n): n is Schema.BookmarkLeaf => Schema.BookmarkLeaf.is(n) && n.name === "Existing",
+      (n): n is BookmarkLeaf => BookmarkLeaf.is(n) && n.name === "Existing",
     )
     expect(existingLeaf).toBeDefined()
   })
@@ -143,10 +143,10 @@ describe("addToGraveyard", () => {
     )
 
     const graveyardFolder = result.other!.find(
-      (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n) && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )!
     expect(graveyardFolder.children.length).toBe(1)
-    const eventFolder = graveyardFolder.children[0] as Schema.BookmarkFolder
+    const eventFolder = graveyardFolder.children[0] as BookmarkFolder
     expect(eventFolder.name).toMatch(/^\d{4}-\d{2}-\d{2}_safari_deleted$/)
   })
 })
@@ -166,10 +166,10 @@ describe("addGraveyardEntries", () => {
     )
 
     const graveyardFolder = result.other!.find(
-      (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n) && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )!
     // Both patches should share the same event folder (same date, source, reason)
-    const eventFolder = graveyardFolder.children[0] as Schema.BookmarkFolder
+    const eventFolder = graveyardFolder.children[0] as BookmarkFolder
     expect(eventFolder.children.length).toBe(2)
   })
 
@@ -185,12 +185,12 @@ describe("addGraveyardEntries", () => {
 // -- gc --
 
 describe("gc", () => {
-  const buildGraveyardTree = (eventFolderNames: string[]): Schema.BookmarkTree => {
+  const buildGraveyardTree = (eventFolderNames: string[]): BookmarkTree => {
     const eventFolders = eventFolderNames.map(
       (name) => folder(name, [leaf("bookmark", "https://example.com")]),
     )
     const graveyardFolder = folder("_graveyard", eventFolders)
-    return Schema.BookmarkTree.make({ other: [graveyardFolder] })
+    return BookmarkTree.make({ other: [graveyardFolder] })
   }
 
   test("removes entries older than maxAge", async () => {
@@ -208,10 +208,10 @@ describe("gc", () => {
     )
 
     const graveyardFolder = result.other!.find(
-      (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n) && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )!
     expect(graveyardFolder.children.length).toBe(1)
-    expect((graveyardFolder.children[0] as Schema.BookmarkFolder).name).toBe("2025-12-01_safari_conflict")
+    expect((graveyardFolder.children[0] as BookmarkFolder).name).toBe("2025-12-01_safari_conflict")
   })
 
   test("removes graveyard folder when all entries are expired", async () => {
@@ -229,7 +229,7 @@ describe("gc", () => {
 
     // Graveyard folder should be removed entirely
     const graveyardFolder = result.other!.find(
-      (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n) && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )
     expect(graveyardFolder).toBeUndefined()
   })
@@ -248,13 +248,13 @@ describe("gc", () => {
     )
 
     const graveyardFolder = result.other!.find(
-      (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n) && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )!
     expect(graveyardFolder.children.length).toBe(2)
   })
 
   test("returns tree unchanged when no graveyard folder exists", async () => {
-    const tree = Schema.BookmarkTree.make({ other: [leaf("A", "https://a.com")] })
+    const tree = BookmarkTree.make({ other: [leaf("A", "https://a.com")] })
 
     const result = await run(
       Effect.gen(function* () {
@@ -283,7 +283,7 @@ describe("gc", () => {
     const existingLeaf = leaf("MyBookmark", "https://keep.com")
     const eventFolders = [folder("2024-01-01_safari_conflict", [leaf("old", "https://old.com")])]
     const graveyardFolder = folder("_graveyard", eventFolders)
-    const tree = Schema.BookmarkTree.make({ other: [existingLeaf, graveyardFolder] })
+    const tree = BookmarkTree.make({ other: [existingLeaf, graveyardFolder] })
 
     const result = await run(
       Effect.gen(function* () {
@@ -294,13 +294,13 @@ describe("gc", () => {
 
     // Graveyard removed (all entries expired), but existing leaf kept
     expect(result.other!.length).toBe(1)
-    const kept = result.other![0] as Schema.BookmarkLeaf
+    const kept = result.other![0] as BookmarkLeaf
     expect(kept.name).toBe("MyBookmark")
     expect(kept.url).toBe("https://keep.com")
   })
 
   test("keeps unparseable folder names", async () => {
-    const tree = Schema.BookmarkTree.make({
+    const tree = BookmarkTree.make({
       other: [
         folder("_graveyard", [
           folder("not-a-valid-name", [leaf("x", "https://x.com")]),
@@ -317,10 +317,10 @@ describe("gc", () => {
     )
 
     const graveyardFolder = result.other!.find(
-      (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n) && n.name === "_graveyard",
+      (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "_graveyard",
     )!
     // Only the unparseable folder should remain
     expect(graveyardFolder.children.length).toBe(1)
-    expect((graveyardFolder.children[0] as Schema.BookmarkFolder).name).toBe("not-a-valid-name")
+    expect((graveyardFolder.children[0] as BookmarkFolder).name).toBe("not-a-valid-name")
   })
 })

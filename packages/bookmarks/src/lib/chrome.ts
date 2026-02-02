@@ -9,7 +9,7 @@
 import { Effect, Schema } from "effect"
 import { rename } from "node:fs/promises"
 import * as Patch from "./patch.js"
-import { BookmarkFolder, BookmarkLeaf, BookmarkTree, type BookmarkNode, type BookmarkSection } from "./schema.js"
+import { BookmarkFolder, BookmarkLeaf, BookmarkTree, type BookmarkNode, type BookmarkSection } from "./schema/__.js"
 
 // -- Chrome JSON type aliases --
 

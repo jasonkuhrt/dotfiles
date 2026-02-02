@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { DateTime, Effect } from "effect"
-import { BookmarkFolder, BookmarkLeaf, BookmarkTree } from "./schema.js"
+import { BookmarkFolder, BookmarkLeaf, BookmarkTree } from "./schema/__.js"
 import * as Patch from "./patch.js"
 import * as Sync from "./sync.js"
 

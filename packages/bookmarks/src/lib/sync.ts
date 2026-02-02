@@ -13,8 +13,8 @@ import * as Yaml from "yaml"
 import * as Graveyard from "./graveyard.js"
 import * as Patch from "./patch.js"
 import * as Safari from "./safari.js"
-import type * as SchemaModule from "./schema.js"
-import * as Schema from "./schema.js"
+import type * as SchemaModule from "./schema/__.js"
+import * as Schema from "./schema/__.js"
 import * as YamlModule from "./yaml.js"
 
 export interface SyncResult {

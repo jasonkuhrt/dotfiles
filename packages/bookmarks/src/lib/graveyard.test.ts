@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { DateTime, Duration, Effect, Option, TestClock, TestContext } from "effect"
 import * as Graveyard from "./graveyard.js"
 import * as Patch from "./patch.js"
-import { BookmarkFolder, BookmarkLeaf, BookmarkTree } from "./schema.js"
+import { BookmarkFolder, BookmarkLeaf, BookmarkTree } from "./schema/__.js"
 
 // -- Test helpers --
 

@@ -11,7 +11,7 @@ import { serialize } from "@plist/binary.serialize"
 import { Effect, Schema } from "effect"
 import { rename } from "node:fs/promises"
 import * as Patch from "./patch.js"
-import { BookmarkFolder, BookmarkLeaf, BookmarkTree, type BookmarkNode, type BookmarkSection } from "./schema.js"
+import { BookmarkFolder, BookmarkLeaf, BookmarkTree, type BookmarkNode, type BookmarkSection } from "./schema/__.js"
 
 // -- Plist type aliases (matches @plist/common; avoids direct dependency on internal package) --
 

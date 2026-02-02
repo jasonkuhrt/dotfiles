@@ -12,7 +12,7 @@
 
 import { DateTime, Duration, Effect, Option } from "effect"
 import * as Patch from "./patch.js"
-import { BookmarkFolder, BookmarkLeaf, BookmarkTree, type BookmarkNode } from "./schema.js"
+import { BookmarkFolder, BookmarkLeaf, BookmarkTree, type BookmarkNode } from "./schema/__.js"
 
 // ---------------------------------------------------------------------------
 // Constants

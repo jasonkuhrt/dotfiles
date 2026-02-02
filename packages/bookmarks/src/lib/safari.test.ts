@@ -3,7 +3,7 @@ import { DateTime, Effect } from "effect"
 import { copyFile, unlink } from "node:fs/promises"
 import { join } from "node:path"
 import * as Patch from "./patch.js"
-import { BookmarkFolder, BookmarkLeaf, BookmarkTree } from "./schema.js"
+import { BookmarkFolder, BookmarkLeaf, BookmarkTree } from "./schema/__.js"
 import * as Safari from "./safari.js"
 
 // -- Test helpers --

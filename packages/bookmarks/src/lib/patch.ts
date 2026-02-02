@@ -10,7 +10,7 @@
  */
 
 import { Data, DateTime, Effect, HashMap, Option, Trie, pipe } from "effect"
-import * as SchemaModule from "./schema.js"
+import * as SchemaModule from "./schema/__.js"
 
 // -- Patch types (Data.TaggedEnum) --
 

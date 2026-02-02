@@ -8,7 +8,7 @@
 import { Effect, Schema } from "effect"
 import * as Yaml from "yaml"
 import * as Fs from "node:fs/promises"
-import * as SchemaModule from "./schema.js"
+import * as SchemaModule from "./schema/__.js"
 
 /** Load and validate bookmarks.yaml from the given path. */
 export const load = (path: string): Effect.Effect<SchemaModule.BookmarksConfig, Error> =>

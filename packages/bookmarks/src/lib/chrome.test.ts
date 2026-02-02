@@ -4,7 +4,7 @@ import { copyFile, unlink } from "node:fs/promises"
 import { join } from "node:path"
 import * as Chrome from "./chrome.js"
 import * as Patch from "./patch.js"
-import { BookmarkFolder, BookmarkLeaf, BookmarkTree } from "./schema.js"
+import { BookmarkFolder, BookmarkLeaf, BookmarkTree } from "./schema/__.js"
 
 // -- Test helpers --
 

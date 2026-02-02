@@ -11,7 +11,7 @@
 import { JSONSchema } from "effect"
 import * as path from "node:path"
 import * as fs from "node:fs/promises"
-import { BookmarksConfig } from "./schema.js"
+import { BookmarksConfig } from "./schema/__.js"
 
 const jsonSchema = JSONSchema.make(BookmarksConfig)
 

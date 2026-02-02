@@ -95,12 +95,10 @@ export class BookmarkLeaf extends S.TaggedClass<BookmarkLeaf>('BookmarkLeaf')('B
 }
 ```
 
-What belongs on the class:
+What belongs on the class — anything intrinsic to the model's data:
 
 * `static is` — always, no exceptions (the class owns its own type guard)
-* Data-derived fields (e.g., `fullName` from `first`/`last`, `domain` from `url`)
-* `static order` / `static min` / `static max` when the model has a natural ordering
-* Static factory variants if the model has common construction patterns
+* Data-derived fields, orderings, comparisons, derivations of any kind over the model's own data
 
 What does NOT belong:
 
@@ -123,8 +121,7 @@ Always use `TaggedClass`, not `Class`. The `_tag` field provides:
 
 #### 6c. Construction and enums
 
-* Instances via `MyClass.make({ ... })` — the stable factory API that works across both class-mode and ESM-style schema declarations. Do not use `new MyClass({ ... })` — it works today on class-mode schemas but won't survive a move to ESM-style declarations, creating a migration liability.
-* Never raw object literals with manual `_tag` — use the factory
+* Instances via `MyClass.make({ ... })` — the stable factory API across both class-mode and ESM-style schema declarations. `new MyClass({ ... })` only works on class-mode and breaks on ESM-style.
 * Enums: `Schema.Enums({ active: "active", inactive: "inactive" } as const)` — without `as const`, literal types widen to `string` and type safety is lost. Access values via `MyEnum.enums.active`.
 
 #### 6d. File organization

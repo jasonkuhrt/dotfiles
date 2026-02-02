@@ -16,7 +16,8 @@
  *   validate    schema check only
  */
 
-import { Console, Effect } from "effect"
+import { Console, DateTime, Effect, Option } from "effect"
+import * as Daemon from "../lib/daemon.js"
 import * as SyncModule from "../lib/sync.js"
 import * as YamlModule from "../lib/yaml.js"
 import * as Fs from "node:fs/promises"
@@ -128,7 +129,30 @@ const program = Effect.gen(function* () {
         yield* Console.error("Usage: bookmarks daemon start|stop|status")
         return yield* Effect.fail(new Error("Invalid daemon subcommand"))
       }
-      yield* notImplemented(`daemon ${subcommand}`)
+      switch (subcommand) {
+        case "start": {
+          const config = yield* Daemon.defaultConfig()
+          yield* Daemon.start(config)
+          yield* Console.log(`Daemon started (interval: 1h, plist: ~/Library/LaunchAgents/com.jasonkuhrt.bookmarks-sync.plist)`)
+          break
+        }
+        case "stop": {
+          yield* Daemon.stop()
+          yield* Console.log("Daemon stopped and plist removed.")
+          break
+        }
+        case "status": {
+          const st = yield* Daemon.status()
+          const formatOptDate = (opt: Option.Option<DateTime.Utc>) =>
+            Option.isSome(opt) ? opt.value.toJSON() : "unknown"
+          yield* Console.log(`Daemon status:`)
+          yield* Console.log(`  Running:  ${st.running ? "yes" : "no"}`)
+          yield* Console.log(`  Last run: ${formatOptDate(st.lastRun)}`)
+          yield* Console.log(`  Next run: ${formatOptDate(st.nextRun)}`)
+          yield* Console.log(`  Plist:    ${st.plistPath}`)
+          break
+        }
+      }
       break
     }
     case "validate": {

@@ -40,7 +40,7 @@ __Exceptions (correct as-is):__
 
 ### 2. Tagged Union Discipline
 
-Discriminated unions MUST use `Data.TaggedEnum` — never raw TS unions with manual discriminants:
+For unions NOT already defined with `Schema.TaggedClass` + `Schema.Union` (see Section 6), discriminated unions MUST use `Data.TaggedEnum` — never raw TS unions with manual discriminants:
 
 * [ ] All domain unions defined via `Data.TaggedEnum<{ Variant: { ... } }>` — not `{ op: "x" } | { op: "y" }`
 * [ ] `Data.taggedEnum<T>()` destructured for constructors, `$is`, `$match`

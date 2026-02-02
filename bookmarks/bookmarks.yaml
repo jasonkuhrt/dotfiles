@@ -1,225 +1,594 @@
-# yaml-language-server: $schema=./bookmarks.schema.json
-
-# Browser targets with filesystem paths
 targets:
   safari:
-    path: ~/Library/Safari/Bookmarks.plist
-
-  chrome:
-    personal:
-      path: ~/Library/Application Support/Google/Chrome/Default
-    work:
-      path: ~/Library/Application Support/Google/Chrome/Profile 1
-      enabled: false
-
-# ============================================================
-# IMPORTED FROM SAFARI + CHROME - REVIEW AND REORGANIZE
-# ============================================================
-
+    default:
+      path: /Users/jasonkuhrt/Library/Safari/Bookmarks.plist
 base:
   favorites_bar:
-    # ─────────────────────────────────────────────────────────
-    # AI / Dev - from Safari
-    # ─────────────────────────────────────────────────────────
-    - name: AI
+    - name: AI Changelogs
       children:
-        - name: Claude Blog
+        - name: "(20) Morph (@morphllm) "
+          children:
+            - name: (20) Morph (@morphllm) / X
+              url: https://x.com/morphllm
+        - name: Releases · backnotprop
+          children:
+            - name: Releases · backnotprop/plannotator
+              url: https://github.com/backnotprop/plannotator/releases
+        - name: beads
+          children:
+            - name: CHANGELOG.md at main · steveyegge
+              children:
+                - name: beads/CHANGELOG.md at main · steveyegge/beads
+                  url: https://github.com/steveyegge/beads/blob/main/CHANGELOG.md
+        - name: claude-code
+          children:
+            - name: claude-code/CHANGELOG.md
+              url: https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md
+        - name: AI
+          url: https://blog.cloudflare.com/tag/ai/
+        - name: Blog | Claude
           url: https://claude.com/blog
-        - name: Claude Code Docs
-          url: https://code.claude.com/docs/en/overview
-        - name: Claude Code Changelog
-          url: https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md
-        - name: Superpowers Commits
-          url: https://github.com/obra/superpowers/commits/main/
-        - name: Simon Willison
-          url: https://simonwillison.net/
-        - name: Antirez
-          url: https://antirez.com/latest/0
-        - name: Matt Shumer
-          url: https://shumer.dev/blog
-        - name: OpenRouter
-          url: https://openrouter.ai/announcements
-        - name: Amp Chronicle
+        - name: Blog | Morph
+          url: https://www.morphllm.com/blog
+        - name: Blog — OpenClaw
+          url: https://openclaw.ai/blog
+        - name: Changelog – Linear
+          url: https://linear.app/changelog
+        - name: Chronicle - Amp
           url: https://ampcode.com/chronicle
-        - name: Conductor
-          url: https://www.conductor.build/
-
-    - name: Dev
+        - name: Conductor - Run a team of coding agents on your Mac
+          url: https://www.conductor.build/blog
+        - name: Firecrawl - The Web Data API for AI
+          url: https://www.firecrawl.dev/blog
+        - name: OpenCode | Changelog
+          url: https://opencode.ai/changelog
+        - name: OpenRouter Announcements and Blog | OpenRouter
+          url: https://openrouter.ai/announcements
+        - name: Ref - Blog
+          url: https://ref.tools/blog
+        - name: Release Notes - Install
+          url: https://ghostty.org/docs/install/release-notes
+        - name: Stable Releases — Zed
+          url: https://zed.dev/releases/stable
+    - name: AI Discourse
       children:
-        - name: Node Modules Inspector
-          url: https://node-modules.dev/
-        - name: Effect Playground
-          url: https://effect.kitlangton.com/
-        - name: Effect Institute
-          url: https://www.effect.institute/lessons
-        - name: Design Prompts
+        - name: "(20) Andrej Karpathy (@karpathy) "
+          children:
+            - name: (20) Andrej Karpathy (@karpathy) / X
+              url: https://x.com/karpathy
+        - name: "(21) Claude (@claudeai) "
+          children:
+            - name: (21) Claude (@claudeai) / X
+              url: https://x.com/claudeai
+        - name: "(21) Felix Rieseberg (@felixrieseberg) "
+          children:
+            - name: (21) Felix Rieseberg (@felixrieseberg) / X
+              url: https://x.com/felixrieseberg
+        - name: "(21) Jason Zhou (@jasonzhou1993) "
+          children:
+            - name: (21) Jason Zhou (@jasonzhou1993) / X
+              url: https://x.com/jasonzhou1993
+        - name: "(21) Thariq (@trq212) "
+          children:
+            - name: (21) Thariq (@trq212) / X
+              url: https://x.com/trq212
+        - name: "Aman Sanger (@amanrsanger) "
+          children:
+            - name: Aman Sanger (@amanrsanger) / X
+              url: https://x.com/amanrsanger
+        - name: "Boris Cherny (@bcherny) "
+          children:
+            - name: Boris Cherny (@bcherny) / X
+              url: https://x.com/bcherny
+        - name: Agentic Lab - YouTube
+          url: https://www.youtube.com/@AgenticLab1
+        - name: Andrej Karpathy
+          url: https://karpathy.ai/
+        - name: Blog - Eric J. Ma's Personal Site
+          url: https://ericmjl.github.io/blog/
+        - name: Claude Code Opus 4.5 Performance Tracker | Marginlab
+          url: https://marginlab.ai/trackers/claude-code/
+        - name: ClaudeCode
+          url: https://www.reddit.com/r/ClaudeCode/
+        - name: Drew Breunig
+          url: https://www.dbreunig.com/
+        - name: Fireship - YouTube
+          url: https://www.youtube.com/@Fireship/videos
+        - name: Han, Not Solo
+          url: https://leehanchung.github.io/
+        - name: Ian Bull
+          url: https://ianbull.com/
+        - name: Massively Parallel Procrastination
+          url: https://blog.fsck.com/
+        - name: My Writing
+          url: https://garyj.dev/posts/
+        - name: Posts · Laurent Charignon
+          url: https://blog.laurentcharignon.com/post/
+        - name: Shruggingface - Exploring the future with artificial intelligence
+          url: https://www.shruggingface.com/
+        - name: Simon Willison’s Weblog
+          url: https://simonwillison.net/
+        - name: Steve Yegge – Medium
+          url: https://steve-yegge.medium.com/
+        - name: The PrimeTime - YouTube
+          url: https://www.youtube.com/@ThePrimeTimeagen/videos
+        - name: antirez
+          url: https://antirez.com/latest/0
+        - name: blog — matt shumer
+          url: https://shumer.dev/blog
+        - name: embedding-shapes
+          url: https://emsh.cat/
+        - name: moltbook - the front page of the agent internet
+          url: https://www.moltbook.com/
+        - name: paddo.dev
+          url: https://paddo.dev/
+        - name: "{ Mario Zechner }"
+          url: https://mariozechner.at/
+    - name: AI Meh
+      children:
+        - name: Commits · obra
+          children:
+            - name: Commits · obra/superpowers
+              url: https://github.com/obra/superpowers/commits/main/
+        - name: Global Settings | jasonkuhrt
+          children:
+            - name: Global Settings | jasonkuhrt/kitz | DeepWiki
+              url: https://deepwiki.com/jasonkuhrt/kitz/8.1-global-settings
+        - name: hesreallyhim
+          children:
+            - name: "hesreallyhim/awesome-claude-code: A curated list of awesome skills,
+                hooks, slash-commands, agent orchestrators, applications, and
+                plugins for Claude Code by Anthropic"
+              url: https://github.com/hesreallyhim/awesome-claude-code
+        - name: AGENTS.md
+          url: https://agents.md/
+        - name: Agent Skills Directory for Claude, ChatGPT & Codex | MCP Market
+          url: https://mcpmarket.com/tools/skills
+        - name: Agent37
+          url: https://www.agent37.com/
+        - name: Aiden Bai
+          url: https://www.aidenybai.com/
+        - name: "Apify: Full-stack web scraping and data extraction platform"
+          url: https://apify.com/
+        - name: Claude
+          url: https://claude.ai/new
+        - name: Design Prompts - AI-Powered Design Style Explorer
           url: https://www.designprompts.dev/
-
-    # ─────────────────────────────────────────────────────────
-    # Work: Heartbeat - from Chrome
-    # ─────────────────────────────────────────────────────────
-    - name: Heartbeat
-      children:
-        - name: Repo
-          url: https://github.com/heartbeat-chat/Heartbeat
-        - name: App
-          url: https://team.heartbeat.chat/users
-        - name: Community
-          url: https://community.heartbeat.chat/t/ask%20the%20community
-        - name: Linear
-          url: https://linear.app/heartbeat-chat/welcome
-        - name: Notion
-          url: https://www.notion.so/heartbeatchat/Getting-Started-2ca2f1ee512e807ebe77eb1fdd0337df
-        - name: Figma
-          url: https://www.figma.com/files/team/950882969481502924/all-projects
-        - name: PostHog
-          url: https://us.posthog.com/project/69418/dashboard/170931
-        - name: Feedback
-          url: https://feedback.heartbeat.chat/
-        - name: Rippling
-          url: https://app.rippling.com/dashboard
-        - name: 1Password
-          url: https://team-heartbeat.1password.com/home
-        - name: Brex
-          url: https://dashboard.brex.com/onboarding
-        - name: Interval
-          url: https://interval-g00r.onrender.com/dashboard/heartbeat/actions
-        - name: Timetastic
-          url: https://app.timetastic.co.uk/wallchart
-
-    # ─────────────────────────────────────────────────────────
-    # Personal - from Safari
-    # ─────────────────────────────────────────────────────────
+        - name: Devin Review
+          url: https://app.devin.ai/review
+        - name: Discover Top MCP Servers | MCP Market
+          url: https://mcpmarket.com/
+        - name: Every
+          url: https://every.to/
+        - name: Get Cline - AI Coding, Open Source and Uncompromised
+          url: https://cline.bot/get-cline?utm_source=google&utm_medium=cpc&utm_campaign=22808605657&utm_content=cline%20ai&utm_term=engine:google%7Ccampaignid:22808605657%7Cadid:764554892819%7Cgclid:CjwKCAiAssfLBhBDEiwAcLpwfkBLCIWQIjbU2XM637SNkBiFR53C1Cpeb_bIgq8giR97deH8xyG5bBoCGq8QAvD_BwE&hsa_acc=5130063966&hsa_cam=22808605657&hsa_grp=180449404017&hsa_ad=764554892819&hsa_src=g&hsa_tgt=kwd-2430281883016&hsa_kw=cline%20ai&hsa_mt=p&hsa_net=adwords&hsa_ver=3&gad_source=1&gad_campaignid=22808605657&gbraid=0AAAAA-2etQhKjo8JLwni3AP8bApfwt_Cm&gclid=CjwKCAiAssfLBhBDEiwAcLpwfkBLCIWQIjbU2XM637SNkBiFR53C1Cpeb_bIgq8giR97deH8xyG5bBoCGq8QAvD_BwE
+        - name: Kilo - Cline vs Kilo Code - Multi-Surface AI Orchestration Comparison
+          url: https://kilo.ai/cline?utm_source=google&utm_medium=cpc&utm_campaign=ai-coding-tools-user&utm_content=cline&utm_term=cline%20ai&kcgid=CjwKCAiAssfLBhBDEiwAcLpwfiUH5RrfKsOJOjWZS-Pm68h8OdMjo9FOdmftqR8wNV04GjqMxa6M0BoC6PYQAvD_BwE&kcwbid=CkEKCQiAssfLBhD0ARIwAGav3oFyObLdLz5KQQNjruMX9qfC8yfuvjAsLGBGUD7uamYUwqZ-kXpM-D6fGGpVGgKEcA&kcgbid=0AAAAA_Xn2va4U3mAeaLkajLtK87rUHv4P&utm_term=cline%20ai&utm_campaign=Search+-+AI+Coding+Tools+-+User&utm_source=adwords&utm_medium=ppc&hsa_acc=8554739554&hsa_cam=23485791787&hsa_grp=190630569303&hsa_ad=793703592428&hsa_src=g&hsa_tgt=kwd-2352273772024&hsa_kw=cline%20ai&hsa_mt=e&hsa_net=adwords&hsa_ver=3&gad_source=1&gad_campaignid=23485791787&gbraid=0AAAAA_Xn2va4U3mAeaLkajLtK87rUHv4P&gclid=CjwKCAiAssfLBhBDEiwAcLpwfiUH5RrfKsOJOjWZS-Pm68h8OdMjo9FOdmftqR8wNV04GjqMxa6M0BoC6PYQAvD_BwE
+        - name: "Kiro: Agentic AI development from prototype to production"
+          url: https://kiro.dev/
+        - name: "Kling AI: Next-Generation AI Creative Studio"
+          url: https://klingai.com/global/
+        - name: Nordcraft — The Web Development Engine
+          url: https://nordcraft.com/
+        - name: Nori
+          url: https://tilework.tech/
+        - name: Oh My OpenCode - Orchestration Layer for OpenCode
+          url: https://ohmyopencode.com/
+        - name: OpenSpec — A lightweight spec‑driven framework
+          url: https://openspec.dev/
+        - name: Overview - Agent Skills
+          url: https://agentskills.io/home
+        - name: SkillsBench
+          url: https://www.skillsbench.ai/
+        - name: Superdesign
+          url: https://app.superdesign.dev/
+        - name: The Agent Skills Directory
+          url: https://skills.sh/
+        - name: What is the Model Context Protocol (MCP)? - Model Context Protocol
+          url: https://modelcontextprotocol.io/docs/getting-started/intro
+        - name: leehanchung (Han)
+          url: https://github.com/leehanchung
     - name: Accounting
       children:
-        - name: TD Bank
+        - name: Accounts Overview
           url: https://easyweb.td.com/waw/ezw/webbanking
-        - name: Revenu Québec
-          url: https://revenuquebec.ca/myaccount
-        - name: RVSQ (Medical)
-          url: https://rvsq.gouv.qc.ca/prendrerendezvous/Recherche.aspx#home
         - name: Communauto
           url: https://quebec.client.reservauto.net/
         - name: Fizz
           url: https://zone.fizz.ca/dce/customer-ui-prod/account/overview
-
+        - name: Québec Medical Appointment Scheduler
+          url: https://rvsq.gouv.qc.ca/prendrerendezvous/Recherche.aspx#home
+        - name: Revenu Québec
+          url: https://revenuquebec.ca/myaccount
+    - name: Dev
+      children:
+        - name: "(20) Jarred Sumner (@jarredsumner) "
+          children:
+            - name: (20) Jarred Sumner (@jarredsumner) / X
+              url: https://x.com/jarredsumner?ref_src=twsrc%5Etfw%7Ctwcamp%5Etweetembed%7Ctwterm%5E2002282245210484922%7Ctwgr%5E55ea540859a2b1233c558a7eba8f462f7389d9a3%7Ctwcon%5Es1_&ref_url=https%3A%2F%2Fbun.com%2Fblog%2Fbun-v1.3.6
+        - name: "justinmk (@justinmk) "
+          children:
+            - name: justinmk (@justinmk) / X
+              url: https://x.com/justinmk
+        - name: Better Stack - YouTube
+          url: https://www.youtube.com/@betterstack/videos
+        - name: Blog | Bun
+          url: https://bun.com/blog
+        - name: Blog — Toolbox Pro
+          url: https://toolboxpro.app/blog
+        - name: Bun — A fast all-in-one JavaScript runtime
+          url: https://bun.com/
+        - name: Keep a Changelog
+          url: https://keepachangelog.com/en/1.0.0/
+        - name: Langserver.org
+          url: https://langserver.org/
+        - name: Node Modules Inspector
+          url: https://node-modules.dev/
+        - name: "Search: @graffle - npmx"
+          url: https://npmx.dev/search?q=@graffle
+        - name: Sent Unified Messaging API for SMS, WhatsApp, iMessage, RCS
+          url: https://www.sent.dm/
+        - name: Weblog
+          url: https://asta.boserup.eu/forest/weblog/
+        - name: Zed — From The Blog
+          url: https://zed.dev/blog
+        - name: mxxn
+          url: https://mxxn.io/
+        - name: sink
+          url: https://sink.io/
+    - name: Heartbeat
+      children:
+        - name: Claude Code overview - Claude Code Docs
+          url: https://code.claude.com/docs/en/overview
+        - name: Rippling
+          url: https://app.rippling.com/profile?section=documents
+        - name: Welcome! - Ref
+          url: https://docs.ref.tools/
+        - name: supermemory console
+          url: https://console.supermemory.ai/dashboard/memory-graph
     - name: Kids
       children:
-        - name: Pluriportail
-          url: https://portail.ecolebuissonniere.ca/pluriportail/fr/MainExterne.srf?P=LoginReq
+        - name: Buissonnière | Collège Sainte-Anne
+          url: https://primaire.outremont.sainteanne.ca/
         - name: PGLO Parent Portal
           url: https://portailparents.ca/communications/27923633-dc01-4164-b9ec-0aa056e14e32
-        - name: Collège Sainte-Anne
-          url: https://primaire.outremont.sainteanne.ca/
-
+        - name: Pluriportail
+          url: https://portail.ecolebuissonniere.ca/pluriportail/fr/MainExterne.srf?P=LoginReq
     - name: Montréal
       children:
+        - name: Naada
+          children:
+            - name: Classes - Descriptions
+              url: https://www.naada.ca/schedule/class-descriptions/
+            - name: Classes - Sign Up
+              url: https://clients.mindbodyonline.com/classic/mainclass?fl=true&tabID=7
+            - name: Visual Effect - Interactive Effect Playground
+              url: https://effect.kitlangton.com/
+        - name: Bibliothèques Montréal - OverDrive
+          url: https://bibliomontreal.overdrive.com/
         - name: Cinéma Moderne
           url: https://www.cinemamoderne.com/en/
         - name: City Portal
           url: https://montreal.ca/
-        - name: URSA mtl
-          url: https://www.facebook.com/ursamtl/
-        - name: Bibliothèques (OverDrive)
-          url: https://bibliomontreal.overdrive.com/
-        - name: Bibliothèques (Nelligan)
+        - name: Encore
           url: https://nelligandecouverte.ville.montreal.qc.ca/iii/encore/?lang=frc&suite=cobalt
-
-    - name: Naada
-      children:
-        - name: Classes
-          url: https://clients.mindbodyonline.com/classic/mainclass?fl=true&tabID=7
-        - name: Class Descriptions
-          url: https://www.naada.ca/schedule/class-descriptions/
-
-  # ─────────────────────────────────────────────────────────
-  # Other bookmarks (not in favorites bar)
-  # ─────────────────────────────────────────────────────────
+        - name: Fizz Easy Connect
+          url: http://192.168.0.1/index.html#test
+        - name: Medical Appointment Scheduler
+          url: https://www.rvsq.gouv.qc.ca/accueil/index-en.html
+        - name: URSA mtl - Home
+          url: https://www.facebook.com/ursamtl/
   other:
-    - name: Board Games
-      children:
-        - name: Stores
-          children:
-            - name: Imaginaire
-              url: https://imaginaire.com/en/
-            - name: Brique & Braque
-              url: https://briquebraque.ca/
-            - name: Noble Knight
-              url: https://ca.nobleknight.com/
-            - name: Board Game Bandit
-              url: https://www.boardgamebandit.ca/
-            - name: Great Boardgames
-              url: https://www.greatboardgames.ca/
-            - name: Board Game Bliss
-              url: https://www.boardgamebliss.com/
-            - name: Boardgames.ca
-              url: https://www.boardgames.ca/
-            - name: 401 Games
-              url: https://store.401games.ca/collections/board-games
-            - name: Hobbiesville
-              url: https://hobbiesville.com/collections/games
-            - name: Le Valet d'Coeur
-              url: https://levalet.com/en/
-        - name: Publishers
-          children:
-            - name: Rebel
-              url: https://www.rebelstudio.eu/games
-            - name: Awaken Realms
-              url: https://awakenrealms.com/
-            - name: Stonemaier Games
-              url: https://stonemaiergames.com/
-            - name: Mindclash Games
-              url: https://mindclashgames.com/introducing-ironwood/
-            - name: Restoration Games
-              url: https://restorationgames.com/
-        - name: Content
-          children:
-            - name: Drive Thru Games
-              url: https://www.youtube.com/@DriveThruReview
-            - name: Shelfside
-              url: https://www.youtube.com/@Shelfside
-            - name: Rahdo
-              url: https://www.youtube.com/@rahdo
-            - name: Dice Tower
-              url: https://www.youtube.com/@thedicetower
-            - name: BoardGameCo
-              url: https://www.youtube.com/@BoardGameCo
-            - name: Board Game Quest
-              url: https://www.boardgamequest.com/
-            - name: Dicebreaker
-              url: https://www.dicebreaker.com/
-            - name: What Board Game
-              url: https://www.whatboardgame.com/
-
     - name: ADHD
       children:
-        - name: CHADD
+        - name: CHADD - Improving the lives of people affected by ADHD
           url: https://chadd.org/
-        - name: Gifted Kid Burnout
+        - name: "Gifted Kid Burnout: Support for Twice Exceptional (2e) Students"
           url: https://www.additudemag.com/gifted-kid-burnout-twice-exceptional-students/
-
-    - name: Research (Chrome)
+    - name: Board Games
       children:
-        - name: Flatfile
-          url: https://flatfile.com/demo/
-        - name: beezee
-          url: https://github.com/beezee
-        - name: Prisma Hacking
-          url: https://mayhul.com/posts/hacking-prisma/
-        - name: Circle
-          url: https://circle.so/brand
-        - name: Mighty Networks
-          url: https://www.mightynetworks.com/
-
-# Per-target overrides
-overrides: {}
-  # Future: Move Heartbeat to work profile
-  # chrome/work:
-  #   favorites_bar:
-  #     "+":
-  #       - name: Heartbeat
-  #         children: [...]
-  # chrome/personal:
-  #   favorites_bar:
-  #     "-":
-  #       - Heartbeat
+        - name: content creators
+          children:
+            - name: Board Game Hangover - YouTube
+              url: https://www.youtube.com/@BoardGameHangover
+            - name: BoardGameCo - YouTube
+              url: https://www.youtube.com/@BoardGameCo
+            - name: Drive Thru Games - YouTube
+              url: https://www.youtube.com/@DriveThruReview
+            - name: Rahdo - YouTube
+              url: https://www.youtube.com/@rahdo
+            - name: Shelfside - YouTube
+              url: https://www.youtube.com/@Shelfside
+            - name: The Cardboard Herald - YouTube
+              url: https://www.youtube.com/@TheCardboardHerald
+            - name: The Dice Tower - YouTube
+              url: https://www.youtube.com/@thedicetower
+        - name: publishers
+          children:
+            - name: Awaken Realms
+              url: https://awakenrealms.com/
+            - name: Games - Rebel
+              url: https://www.rebelstudio.eu/games
+            - name: Home - Restoration Games
+              url: https://restorationgames.com/
+            - name: Introducing Ironwood – Mindclash Games
+              url: https://mindclashgames.com/introducing-ironwood/
+            - name: News - Rebel
+              url: https://www.rebelstudio.eu/pages
+            - name: Stonemaier Games – We believe in creating memorable, beautiful, fun games.
+              url: https://stonemaiergames.com/
+        - name: stores
+          children:
+            - name: "Royal canadian mint, Pokemon & Magic the Gathering cards, DC "
+              children:
+                - name: Royal canadian mint, Pokemon & Magic the Gathering cards, DC / Marvel
+                    comics, board games and more...
+                  url: https://imaginaire.com/en/
+            - name: 401 Games is Canada's Source For Board Games!
+              url: https://store.401games.ca/collections/board-games
+            - name: Board Game Stores Canada | Board Game Oracle
+              url: https://www.boardgameoracle.com/en-CA/store
+            - name: Board Games and Card Games | Hobbiesville Canada
+              url: https://hobbiesville.com/collections/games
+            - name: Brique & Braque | Brique & Braque
+              url: https://briquebraque.ca/
+            - name: Buy Board Games & Card Games Online in Canada | Board Game Bandit
+              url: https://www.boardgamebandit.ca/
+            - name: Buy Board Games Online in Canada | Board Game | Board Game Bliss
+              url: https://www.boardgamebliss.com/
+            - name: Great Boardgames
+              url: https://www.greatboardgames.ca/
+            - name: Le Valet d'Coeur
+              url: https://levalet.com/en/
+            - name: "Mission: Fun & Games and Boardgames.ca - Boardgames.ca"
+              url: https://www.boardgames.ca/
+            - name: Noble Knight Games - RPGs, D&D, MtG, Board Games, Miniatures
+              url: https://ca.nobleknight.com/
+        - name: Board Game Quest - Board Game Reviews, News and More
+          url: https://www.boardgamequest.com/
+        - name: Dicebreaker
+          url: https://www.dicebreaker.com/
+        - name: "Evil Toymaker Studio: Readymade upgrades for your boardgames – Evil
+            Toymaker Studio"
+          url: https://eviltoymaker.com/
+        - name: Laserox | Board Game Accessories | Inserts, Tokens, Overlays
+          url: https://laserox.net/
+        - name: Painted gaming terrain | Talisman Sabre Terrain
+          url: https://www.talismansabreterrain.com/
+        - name: Tabletop Bellhop | Helping You Make Your Game Nights Better
+          url: https://tabletopbellhop.com/
+        - name: What Board Game
+          url: https://www.whatboardgame.com/
+    - name: Interesting Products
+      children:
+        - name: The Productivity Timer – EFFICANA
+          url: https://efficana.com/products/the-productivity-timer
+    - name: unorganized
+      children:
+        - name: "Property 'model' does not exist on type 'ObjectDefinitionBlock<\"User\">'
+            · Issue #337 · prisma"
+          children:
+            - name: "Property 'model' does not exist on type 'ObjectDefinitionBlock<\"User\">'
+                · Issue #337 · prisma/nexus-prisma"
+              url: https://github.com/prisma/nexus-prisma/issues/337#issuecomment-526732859
+        - name: "Switch to API v4 (GraphQL) · Issue #83 · terraform-providers"
+          children:
+            - name: "Switch to API v4 (GraphQL) · Issue #83 ·
+                terraform-providers/terraform-provider-github"
+              url: https://github.com/terraform-providers/terraform-provider-github/issues/83
+        - name: Using the Compiler API · microsoft
+          children:
+            - name: Using the Compiler API · microsoft/TypeScript Wiki
+              url: https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API
+        - name: "Amazon.com: JUMPING FOX DESIGN"
+          url: https://www.amazon.com/stores/JUMPINGFOXDESIGN/JUMPINGFOXDESIGN/page/ECD79DBB-686C-42E0-9686-00DFC40E3FBD
+        - name: Animated Knots by Grog | Learn how to tie knots with step-by-step
+            animation
+          url: https://www.animatedknots.com/
+        - name: Asynchronous Exceptions in Practice · Simon Marlow
+          url: https://simonmar.github.io/posts/2017-01-24-asynchronous-exceptions.html
+        - name: Designing GraphQL Mutations – Apollo GraphQL
+          url: https://dev-blog.apollodata.com/designing-graphql-mutations-e09de826ed97
+        - name: Drawing Matter – Exploring the role of drawing in architectural thought
+            and practice
+          url: https://drawingmatter.org/
+        - name: Everpen – The Endless Pencil
+          url: https://tryeverpen.com/products/everpen-the-timeless-pencil?rdt_cid=5850599990875272073
+        - name: Hack | A typeface designed for source code
+          url: http://sourcefoundry.org/hack/?utm_source=Unsupervised+Learning+Subscribers&utm_campaign=029437db86-Unsupervised+Learning+Newsletter&utm_medium=email&utm_term=0_49fdb7d723-029437db86-450842693&mc_cid=029437db86&mc_eid=4c6177dd5f
+        - name: Interior Clear Protective Finishes | Wood Products
+          url: https://www.minwax.ca/wood-products/interior-clear-protective-finishes/
+        - name: Is 2020 over?
+          url: https://is2020over.com/
+        - name: Kite - Internet-connected programming
+          url: https://kite.com/jobs/
+        - name: Native Directory
+          url: https://www.native.directory/
+        - name: "New Chapter: Dependent Types (part 1) + Extra Goodies | Sandy Maguire on
+            Patreon"
+          url: https://www.patreon.com/posts/new-chapter-part-20563552
+        - name: "Paul Chiusano: If Haskell is so great, why hasn't it taken over the
+            world? And the curious case of Go."
+          url: https://pchiusano.github.io/2017-01-20/why-not-haskell.html
+        - name: Raus | Smart, sustainable cabins close to your home
+          url: https://www.raus.life/
+        - name: Should I exchange US Dollars for Canadian Dollars
+          url: https://shouldiexchangenow.com/?home=CAD&exchange=USD&amount=4000&origin=2020-5-22
+        - name: Sqitch by theory
+          url: https://sqitch.org/
+        - name: "Testing Playground: screen.getByRole('button')"
+          url: https://testing-playground.com/#DwGwhgRgpiAEBmB7ATgXgEQFcDOVkDswBbKdAPgFVcDipgB6caEMgKGAEt8AHTAF1YcAJhhx5CJdKwlRR1GVO7gAxlAAWiEELwYNAd1jYNmLbACSsZWBBwAnokwB+KULB8wAWj5RsfYaIVWPz4QWXQofG9kWHtMaLEaSVZrPgwIqJiHePlaKQA3a0wwgCtENXwPIURSINtuMO8ADz4pejZgCH4+RHxYGQxsDgBzfExudFg+OrDsTAgiDhayQZGxhk6+bvwyIA&PTAEEUFcFMCcE9TwPaVqaAbaBbaA7AFwGdQALOaAGlAAdZoAzOAQwCNNEB3AS0LIBQIUAANiAYwYEAdAHNohAELxAZAQAKFQEoR00AElGSVKHEt8AckKhIxaKAlT8QsDbsjxyIix7440gI4wCADKWNDihMiwGtrSAs4mnoTevrABQfCh2BFRauY+tJCE5poCDtAy8krwAErI2HlsRZEWmkA
+        - name: VisuAlgo - visualising data structures and algorithms through animation
+          url: https://visualgo.net/en?utm_source=hackernewsletter&utm_medium=email&utm_term=fav
+        - name: We Evolved to Run—But We're Doing It All Wrong
+          url: http://news.nationalgeographic.com/2017/07/running-books-jogging-health-science/?utm_source=Unsupervised+Learning+Subscribers&utm_campaign=3a6b7fbaaf-Unsupervised+Learning+Newsletter&utm_medium=email&utm_term=0_49fdb7d723-3a6b7fbaaf-450842693&mc_cid=3a6b7fbaaf&mc_eid=4c6177dd5f
+        - name: pinboard
+          url: javascript:if(document.getSelection)%7Bs=document.getSelection();%7Delse%7Bs='';%7D;document.location='https://pinboard.in/add?next=same&url='+encodeURIComponent(location.href)+'&description='+encodeURIComponent(s)+'&title='+encodeURIComponent(document.title)
+        - name: vezwyo0qq4lz.png 2,560×1,440 pixels
+          url: https://i.redd.it/vezwyo0qq4lz.png?utm_source=reactdigest&utm_medium=email&utm_campaign=featured
+    - name: 1000lm Headlamp LED 230° - USB Fast Charging
+      url: https://fjallbris.com/en-ca/products/headlamp-pro-2
+    - name: Building Skills for Claude Code | Claude
+      url: https://claude.com/blog/building-skills-for-claude-code
+    - name: Canopy Labs
+      url: https://canopylabs.ai/model-releases
+    - name: Conix.ai
+      url: https://www.conix.ai/
+    - name: Explore
+      url: https://www.midjourney.com/explore?tab=top
+    - name: Fizz App
+      url: http://192.168.0.1/index.htm#status_overview/m/1/s/0
+    - name: How do arrays work?
+      url: https://nan-archive.vercel.app/how-arrays-work
+    - name: Lessons | Effect Institute
+      url: https://www.effect.institute/lessons
+    - name: Skyline Hikers of the Canadian Rockies - Skyline Hikers of the Canadian
+        Rockies
+      url: https://skylinehikers.ca/
+    - name: Stable Diffusion Online
+      url: https://stablediffusionweb.com/?utm_source=theneuron
+  reading_list:
+    - name: "Built a Claude Code skill that completely automates the annoying web
+        assets creation process we all hate : r"
+      children:
+        - name: "Built a Claude Code skill that completely automates the annoying web
+            assets creation process we all hate : r/ClaudeAI"
+          url: https://www.reddit.com/r/ClaudeAI/comments/1ocm1if/built_a_claude_code_skill_that_completely/
+    - name: "Claude Code creator Boris shares his setup with 13 detailed steps,full
+        details below : r"
+      children:
+        - name: "Claude Code creator Boris shares his setup with 13 detailed steps,full
+            details below : r/ClaudeAI"
+          url: https://www.reddit.com/r/ClaudeAI/comments/1q2c0ne/claude_code_creator_boris_shares_his_setup_with/
+    - name: "So I stumbled across this prompt hack a couple weeks back and honestly? I
+        wish I could unlearn it. : r"
+      children:
+        - name: "So I stumbled across this prompt hack a couple weeks back and honestly? I
+            wish I could unlearn it. : r/ClaudeAI"
+          url: https://www.reddit.com/r/ClaudeAI/comments/1q5a90l/so_i_stumbled_across_this_prompt_hack_a_couple/
+    - name: benchflow-ai
+      children:
+        - name: "benchflow-ai/skillsbench: SkillsBench evaluates how well skills work and
+            how effective agents are at using them"
+          url: https://github.com/benchflow-ai/skillsbench
+    - name: 'cogsec on X: "shipped '
+      children:
+        - name: 'cogsec on X: "shipped /skill-create Scan your git history and generate
+            skills + instincts from patterns you already use. Legacy codebases
+            already have years of: - commit conventions - architecture decisions
+            - testing pat'
+          url: https://x.com/affaanmustafa/status/2017125089058423117
+    - name: "https:"
+      children:
+        - name: ""
+          children:
+            - name: u16056974.ct.sendgrid.net
+              children:
+                - name: ls
+                  children:
+                    - name: https://u16056974.ct.sendgrid.net/ls/click?upn=u001.pwTvHHSwFJdb-2FOR5eUcFshUp6AIsYvYyPGQd-2BYeKW36E9h5vK0PdvuCAw-2FLdeVciypbyTl-2BrHTeXwcxcmOmh-2Bzih8oaGWdutUPaySk1Xt77FCdaV6zvvAI7KRPLuCIPNPmvFRufmfAq8EdeMf96l-2F1-2Fncc
+                      url: https://u16056974.ct.sendgrid.net/ls/click?upn=u001.pwTvHHSwFJdb-2FOR5eUcFshUp6AIsYvYyPGQd-2BYeKW36E9h5vK0PdvuCAw-2FLdeVciypbyTl-2BrHTeXwcxcmOmh-2Bzih8oaGWdutUPaySk1Xt77FCdaV6zvvAI7KRPLuCIPNPmvFRufmfAq8EdeMf96l-2F1-2Fncc1QjQLzhnSRUEz2-2B7gtjm-2Fkzq5NP7mIuOWrA56UVM34Aykv0gFAVqieIfkltG-2FqNjZINd3elKOJ5fSS5BA-3D7bnM_DpWy84LIQTKTd-2BKCOC64NgWXHv1NPYS8YtpK6CgAoDVlbXSL7gwoNtADYvZSNGbkrRsRnJHbPBGAEOW2xgE-2ByPGoScycEc1iHj363MXj7Jz88jFbBnHV1vLbBkLylVLQp5m5xYnotb0rt3tOSW18oDWGwT705sPJDiouGuiaaurevKuwlAM-2FJVrzk-2FoO7V-2Fya5EzEW6Q8sLop6Q1ew-2FZ9IIFY2ys9EqcEtsc65vW3ORep2rZ4j0Oe5iaHtezIfwytcDdXQ0Z5ygVYt44sPL7eUjOPDHotT2pd9j-2BLpIHZTTI08FXgXdKWCmdrtIcaAgT-2BtLrVHIL3uhur5sF-2FSsobksJLwBTJTDSxvDuiHBht5pStaqO5pEhdAU8H3-2BLdpaN21B7TS8c0JeRT-2FRx4zK7IqAdzkWbGNbrtvqVGyqLB2wNt5rYYJNvsbDGK2kxeliivP2z5mJDBpAm5g0xtTkHWbAdK68tW9tnZ-2FaLBQAadaRotJ4ML7HMz4JHBnefOzqaZfpKNMCQ5SP3M3qnL5lxtjEvM64F7-2BCjI2GNMM-2BKTkOEvQbWPb6DNgSKUcocuY0ki2tIwbIZRH-2BG8awE6CS0Wj6Ew-2FcalJ-2FPFhiB-2BlWo7knWX43E6b3QD00dro98A23SGgttI-2BOhlC9-2FdCWSFSIAfv-2BccbWEaDu1khDlSeJryEHVl-2Ba3bsnowQb0kZHa46V21p9qwT0ocoayMyEj8m5jA9p-2B0W9CKSS9ylKpqJxaaH7L3F4h5fT8KoGbpVabTpj9y7pvG-2FGypo4rlmgddWKljVSah92ojqyHuHZVzHj4XMgsAnhIYIYh7e49Y8L7u4h4j903-2BfOYq7LH-2F6xHu8chjgsai7DUrQLg3qUkmc70Ze0ZnrR2rsNC3ax-2F-2FXWCl-2FMy49kr5wqvCQw-2FFKklPeSpVg-3D-3D
+                    - name: https://u16056974.ct.sendgrid.net/ls/click?upn=u001.pwTvHHSwFJdb-2FOR5eUcFso7p3D3KGsP2JPaeG4YGcA5sx-2BDeg-2Fa-2BbqWpq0WwerWkR-2FGnVyujcuuCtKdX7Rma3-2BdwaK6vWe6PecTjaKVEtgAN0PXhrUnYMErvIHQ6xv7YjetbcPAXsW723R9gvD0qZOXRKJSA
+                      url: https://u16056974.ct.sendgrid.net/ls/click?upn=u001.pwTvHHSwFJdb-2FOR5eUcFso7p3D3KGsP2JPaeG4YGcA5sx-2BDeg-2Fa-2BbqWpq0WwerWkR-2FGnVyujcuuCtKdX7Rma3-2BdwaK6vWe6PecTjaKVEtgAN0PXhrUnYMErvIHQ6xv7YjetbcPAXsW723R9gvD0qZOXRKJSAw0vvhhrCGIja70A-3DRRsq_DpWy84LIQTKTd-2BKCOC64NgWXHv1NPYS8YtpK6CgAoDVlbXSL7gwoNtADYvZSNGbkrRsRnJHbPBGAEOW2xgE-2ByPGoScycEc1iHj363MXj7Jz88jFbBnHV1vLbBkLylVLQp5m5xYnotb0rt3tOSW18oDWGwT705sPJDiouGuiaaurevKuwlAM-2FJVrzk-2FoO7V-2Fya5EzEW6Q8sLop6Q1ew-2FZ9IIFY2ys9EqcEtsc65vW3ORep2rZ4j0Oe5iaHtezIfwytcDdXQ0Z5ygVYt44sPL7eUjOPDHotT2pd9j-2BLpIHZTTI08FXgXdKWCmdrtIcaAgT-2BtLrVHIL3uhur5sF-2FSsobksJLwBTJTDSxvDuiHBht5pStaqO5pEhdAU8H3-2BLdpaN21B7TS8c0JeRT-2FRx4zK7IqAdzkWbGNbrtvqVGyqLB2wNt5rYYJNvsbDGK2kxeliivP2z5mJDBpAm5g0xtTkHWbAdK68tW9tnZ-2FaLBQAadaRotJ4ML7HMz4JHBnefOzqaZfpKNMCQ5SP3M3qnL5lxtjEvM64F7-2BCjI2GNMM-2BKTkOEvQbWPb6DNgSKUcocuY0ki2tIwbIZRH-2BG8awE6CS0Wj6Ew-2FcalJ-2FPFhiB-2BlWo7knWX43E6b3QD00dro98A23SGgttI-2BOhlC9-2FdCWSFSIAfv-2BccbWEaDu1khDlSeJryEHVl-2Ba3bsnowQb0kZHa46V21p9qwT0ocoayMyEj8m5jA3wZ0y6vazH7m4zF7L9egIcn97b47Qm4qdKx86sdIzglLyPvNJ-2F4QcqdBRvywTuDKj083LDK6g3gqD6Ume4m5upd8hXulfUTR3klgPWU7ScrqzAKCvyOCITKfdpvD4WzkmmPfCjB-2FYBc-2Bds6vZ7D6Q7Qitf3drZPERUin5ZmfVHXsGo7S3x6VQsHzI61Iiz2UQ-3D-3D
+    - name: 10 Tips from Inside the Claude Code Team
+      url: https://paddo.dev/blog/claude-code-team-tips/
+    - name: 2026 Prediction - The Year Agents Get S#&t Done
+      url: https://ianbull.com/posts/agents-gsd
+    - name: A Software Library with No Code
+      url: https://www.dbreunig.com/2026/01/08/a-software-library-with-no-code.html
+    - name: A new way to extract detailed transcripts from Claude Code
+      url: https://simonwillison.net/2025/Dec/25/claude-code-transcripts/
+    - name: AI Tidbits | Sahar Mor | Substack
+      url: https://www.aitidbits.ai/
+    - name: Agent 37 Skills Collection
+      url: https://github.com/Agent-3-7/agent37-skills-collection
+    - name: Announcing ES Module Shims 2.0
+      url: https://guybedford.com/es-module-shims-2.0
+    - name: Beads - Memory for your Agent and The Best Damn Issue Tracker Your're Not
+        Using
+      url: https://ianbull.com/posts/beads/
+    - name: Best Practices for Claude Code - Claude Code Docs
+      url: https://code.claude.com/docs/en/best-practices
+    - name: Boost Node.js with V8 GC Optimization
+      url: https://blog.platformatic.dev/optimizing-nodejs-performance-v8-memory-management-and-gc-tuning
+    - name: Breadcrumbs
+      url: https://github.com/dubzzz/fast-check/blob/main/skills/javascript-testing-expert/SKILL.md
+    - name: Choosing the State Structure – React
+      url: https://react.dev/learn/choosing-the-state-structure
+    - name: "Claude Agent Skills: A First Principles Deep Dive"
+      url: https://leehanchung.github.io/blogs/2025/10/26/claude-skills-deep-dive/
+    - name: Claude Code MCPs & Add-ons | ClaudeLog
+      url: https://www.claudelog.com/addons/
+    - name: Claude's new constitution \ Anthropic
+      url: https://www.anthropic.com/news/claude-new-constitution
+    - name: Context Management
+      url: https://www.reddit.com/r/ClaudeAI/comments/1qgccgs/25_claude_code_tips_from_11_months_of_intense_use/
+    - name: Context Management in Amp - Amp
+      url: https://ampcode.com/guides/context-management
+    - name: Context7 Without Context Bloat | Upstash Blog
+      url: https://upstash.com/blog/new-context7
+    - name: Deep Dive into LLMs like ChatGPT - YouTube
+      url: https://www.youtube.com/watch?v=7xTGNNLPyMI
+    - name: Discover the real Transylvania on a new long-distance hiking trail
+      url: https://www.nationalgeographic.com/travel/article/via-transilvanica-trail-transylvania-romania
+    - name: Don't Sync State. Derive It!
+      url: https://kentcdodds.com/blog/dont-sync-state-derive-it
+    - name: Equipping agents for the real world with Agent Skills \ Anthropic
+      url: https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills
+    - name: GitHub Actions Runners | Depot
+      url: https://depot.dev/products/github-actions
+    - name: Hot Reloading with ES Module Shims 2.5
+      url: https://guybedford.com/hot-reloading-es-module-shims-2.5?utm_source=ECMAScript.news&utm_medium=Weekly+Newsletter&utm_campaign=2025-05-21
+    - name: How Long Contexts Fail
+      url: https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html
+    - name: How to Waterproof Wood With Oil, Sealant, or Stain and Sealer
+      url: https://www.bobvila.com/articles/how-to-waterproof-wood/
+    - name: Is Biome ready to replace Prettier & ESLint?
+      url: https://medium.com/ekino-france/is-biome-ready-to-replace-prettier-eslint-94d56d5aa33f
+    - name: "JavaScript's New Superpower: Explicit Resource Management"
+      url: https://v8.dev/features/explicit-resource-management
+    - name: L'histoire de Souleymane - Cinéma Moderne
+      url: https://www.cinemamoderne.com/films/details/lhistoire-de-souleymane/
+    - name: |
+        LUTZ STAUTNER
+        Earth Dying (ASMR)
+      url: https://www.nytimes.com/2025/07/08/opinion/climate-change-melting-glacier.html
+    - name: Measure Claude Code's impact with contribution metrics | Claude
+      url: https://claude.com/blog/contribution-metrics
+    - name: Notifications
+      url: https://github.com/notifications?query=is%3Aunread
+    - name: Pema Chödrön’s Wisdom to Wake Up to Your World
+      url: https://www.lionsroar.com/waking-up-to-your-world-pema-chodron/
+    - name: Playwright skill
+      url: https://github.com/lackeyjb/playwright-skill
+    - name: Projects | Jeffrey Emanuel
+      url: https://jeffreyemanuel.com/projects
+    - name: Rethinking Helix
+      url: https://asta.boserup.eu/forest/rethinking-helix/
+    - name: Studio Ghibli – Page 3 – TIFF Shop
+      url: https://shop.tiff.net/collections/studio-ghibli?page=3
+    - name: Supacode
+      url: https://supacode.sh/
+    - name: Supermemory — Universal Memory API for AI apps
+      url: https://supermemory.ai/
+    - name: TanStack AI Powered by Upstash | Upstash Blog
+      url: https://upstash.com/blog/tanstack-ai-and-upstash
+    - name: The Bitter Lesson
+      url: http://www.incompleteideas.net/IncIdeas/BitterLesson.html
+    - name: The Inner Workings of JavaScript Source Maps
+      url: https://www.polarsignals.com/blog/posts/2025/11/04/javascript-source-maps-internals?utm_source=ECMAScript.news&utm_medium=Weekly+Newsletter&utm_campaign=2025-11-12
+    - name: The System Skill Pattern
+      url: https://www.shruggingface.com/blog/the-system-skill-pattern
+    - name: "Understanding Claude Code: Skills vs Commands vs Subagents vs Plugins |
+        #95"
+      url: https://www.youngleaders.tech/p/claude-skills-commands-subagents-plugins
+    - name: Understanding useMemo and useCallback • Josh W. Comeau
+      url: https://www.joshwcomeau.com/react/usememo-and-usecallback/
+    - name: Useful patterns for building HTML tools
+      url: https://simonwillison.net/2025/Dec/10/html-tools/
+    - name: X
+      url: https://x.com/0xSero/status/2017239549714342010/mediaViewer?currentTweet=2017239549714342010&currentTweetUser=0xSero
+    - name: You Might Not Need an Effect – React
+      url: https://react.dev/learn/you-might-not-need-an-effect
+    - name: You're Using Ralph Wiggum Loops WRONG - YouTube
+      url: https://www.youtube.com/watch?app=desktop&v=I7azCAgoUHc

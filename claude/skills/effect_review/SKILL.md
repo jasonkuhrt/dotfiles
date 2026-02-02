@@ -68,161 +68,92 @@ Discriminated unions MUST use `Data.TaggedEnum` — never raw TS unions with man
 - [ ] No `Error` base class in Effect signatures — use domain-specific errors
 - [ ] `Effect.catchTag` for selective error recovery
 
-### 6. Schema Patterns
+### 6. Schema as Model Entity
 
-- [ ] **TaggedClass for discriminated unions**: Types participating in unions MUST use `Schema.TaggedClass`, not `Schema.Class` — `TaggedClass` adds `_tag` as a typed runtime field enabling derived predicates; `Class` only sets a Schema identifier
-- [ ] **static is on every class**: All Schema classes define `static is = Schema.is(ClassName)` — the class IS the namespace for its own type guard
-- [ ] **No instanceof on Schema types**: Always use `MyClass.is(value)` — never `value instanceof MyClass` (breaks across serialization boundaries, doesn't narrow structurally)
-- [ ] **No direct _tag access**: Never `value._tag === "Foo"` — use `MyClass.is(value)` instead
-- [ ] Instances created via `new MyClass({ ... })` or `Schema.make(MyClass)({ ... })` — never raw object literals with manual `_tag`
-- [ ] Enums inline values directly in `Schema.Enums({ ... })` — no separate const object
-- [ ] Runtime enum access via `MyEnum.enums.value` — not re-exporting the const
+**Core principle:** A Schema class is a **model entity** — it co-locates identity, predicates, and data-derived operations so the class IS the namespace for its domain concept. This is not OOP; it's co-location convenience. Everything below serves this principle.
+
+#### 6a. The class owns its operations
+
+The class body is where you put things intrinsic to the model: type predicates, data-derived fields, orderings over its own data. Not business logic — **data logic**.
 
 ```typescript
-// ✅ Class definition — TaggedClass with static is
-export class BookmarkLeaf extends Schema.TaggedClass<BookmarkLeaf>("BookmarkLeaf")("BookmarkLeaf", {
-  name: Schema.String,
-  url: Schema.String,
+export class BookmarkLeaf extends S.TaggedClass<BookmarkLeaf>("BookmarkLeaf")("BookmarkLeaf", {
+  name: S.String,
+  url: S.String,
 }) {
-  static is = Schema.is(BookmarkLeaf)
+  static is = S.is(BookmarkLeaf)            // predicate: intrinsic
+  get domain() { return new URL(this.url).hostname }  // derived data: OK
+  // ❌ NOT here: fetchPageTitle() — that's business logic, belongs in a service
 }
-
-// ✅ Type guard — class as namespace
-if (BookmarkLeaf.is(value)) { ... }
-
-// ❌ instanceof — fragile, breaks across serialization
-if (value instanceof BookmarkLeaf) { ... }
-
-// ❌ direct _tag check — bypasses schema validation
-if (value._tag === "BookmarkLeaf") { ... }
-
-// ❌ Schema.Class for union members — no _tag field, no derived predicates
-export class BookmarkLeaf extends Schema.Class<BookmarkLeaf>("BookmarkLeaf")({
-  name: Schema.String,
-  url: Schema.String,
-}) {}
-
-// ❌ Freestanding predicate — predicate belongs on the class
-const isLeaf = Schema.is(BookmarkLeaf)
-
-// ✅ Enum — inline values, access via .enums
-export const Status = Schema.Enums({
-  active: "active",
-  inactive: "inactive",
-})
-export type Status = typeof Status.Type
-// Runtime: Status.enums.active
 ```
 
-#### Schema.suspend() for Recursive/Cross-Module References
+What belongs on the class:
+- `static is` — always, no exceptions (the class owns its own type guard)
+- Data-derived fields (e.g., `fullName` from `first`/`last`, `domain` from `url`)
+- `static order` / `static min` / `static max` when the model has a natural ordering
+- Static factory variants if the model has common construction patterns
 
-Three cases, each with different rules:
+What does NOT belong:
+- Business logic, side effects, service calls
+- Freestanding predicates (`const isLeaf = Schema.is(BookmarkLeaf)` — put it on the class)
 
-**Case 1: Cross-module reference (no cycle in class definitions)**
+#### 6b. TaggedClass vs Class
 
-File A references a class defined in File B. No `as any` needed.
+`TaggedClass` adds `_tag` as a typed runtime discriminant field. `Class` only sets a Schema identifier (metadata, not data).
+
+- **Union members**: MUST use `TaggedClass` — the `_tag` is what makes the derived `.is()` predicate work at runtime and what `Schema.Union` dispatches on
+- **Standalone models** (not in any union): `Class` is fine — no discriminant needed
+- **Never** access `_tag` directly (`value._tag === "Foo"`) — use `MyClass.is(value)`, which the class co-locates
+- **Never** `instanceof` — breaks across serialization boundaries, doesn't narrow structurally
+
+#### 6c. Construction and enums
+
+- Instances via `new MyClass({ ... })` or `MyClass.make({ ... })` — never raw object literals with manual `_tag`
+- Enums: `Schema.Enums({ active: "active", inactive: "inactive" })` with values inline, accessed via `MyEnum.enums.active`
+
+#### 6d. File organization
+
+Schemas can live one-per-file, grouped under a directory, or in a single file — whatever matches the domain's natural boundaries. The principle: **co-locate what's mutually defined, separate what's independent.**
+
+Practical constraints:
+- **Mutually recursive types must share a file.** `Schema.Union()` eagerly evaluates its arguments at ESM module initialization. If type A and type B reference each other and one appears in a `Schema.Union()` call, ESM's Temporal Dead Zone will throw `ReferenceError` if they're in separate files. `Schema.suspend()` is lazy and survives circular imports, but the Union call itself is not.
+- **Independent models get their own files.** A type with no circular dependency on siblings (e.g., `BookmarkLeaf`) belongs in its own file.
+- **Consumers can import directly or through a barrel** — `from './schema/bookmark-leaf.js'` and `from './schema/__.js'` are both fine. The principle is that the model entity is self-contained regardless of import path.
+
+#### 6e. Schema.suspend() for recursive references
+
+`suspend()` defers schema evaluation to break circular references. Three cases:
+
+| Case | Example | `as any`? | Why |
+|------|---------|-----------|-----|
+| Cross-module | A.field → B's schema | No | B is fully defined by the time suspend resolves |
+| Self-reference | A.field → A itself | Yes | A isn't fully defined during its own class body evaluation |
+| Mixed union | A.field → Union(A, B, C) | Only on A | A is self-ref (needs `as any`), B and C are cross-module (don't) |
+
+Rules that apply to all cases:
+- Return type annotation: `S.Schema<Type, Encoded>` — always explicit both generics
+- Forward-declare `interface` with both Type and Encoded forms before the class (enables TS to resolve the circular type)
+- Cross-module references point at an exported `const Schema = ClassName` — stable reference name
 
 ```typescript
-// root.ts — Root.next references Type from type.ts
-import * as Type from './type.js'
+// Cross-module (no as any)
+children: S.Array(S.suspend((): S.Schema<Node, NodeEncoded> => NodeModule.Schema))
 
-export interface Root {
-  readonly _tag: 'Root'
-  readonly next?: Type.Type | undefined
-}
-export interface RootEncoded {
-  readonly _tag: 'Root'
-  readonly next?: Type.TypeEncoded | undefined
-}
+// Self-reference (as any required)
+children: S.Array(S.suspend((): S.Schema<Tree, TreeEncoded> => Tree as any))
 
-export class Root extends S.TaggedClass<Root>('Root')('Root', {
-  next: S.optional(S.suspend((): S.Schema<Type.Type, Type.TypeEncoded> => Type.Schema)),
-}) { static is = S.is(Root) }
-
-export const Schema = Root
+// Mixed union — outer suspend wraps union, inner suspend only for self-ref
+next: S.optional(S.suspend((): S.Schema<FieldNext, FieldNextEncoded> =>
+  S.Union(
+    S.suspend((): S.Schema<Field, FieldEncoded> => Field as any),  // self
+    Argument.Schema,                                                // cross
+  )
+))
 ```
 
-Rules:
-- Forward-declare `interface` with both Type and Encoded forms BEFORE the class
-- `suspend()` return type: `S.Schema<Type, Encoded>` — always explicit both generics
-- Arrow returns the **exported Schema const** from the other module (`Type.Schema`)
-- NO `as any` — the other module's Schema const is already fully defined
+Anti-patterns:
+- `S.suspend(() => Foo)` with no return type annotation — implicit any, loses round-trip safety
+- `as any` on a cross-module reference — unnecessary, masks real type errors
+- No interface forward-declaration — self-reference won't typecheck
 
-**Case 2: Self-reference (class references itself)**
-
-A class has a field that recursively contains itself. Requires `as any`.
-
-```typescript
-// versioned.ts — BranchPoint.schema references Versioned (same file)
-export interface Versioned { ... }
-export interface VersionedEncoded { ... }
-
-class BranchPointSchema extends S.Class<BranchPointSchema>('BranchPoint')({
-  schema: S.suspend((): S.Schema<Versioned, VersionedEncoded> => Versioned as any),
-}) { static is = S.is(BranchPointSchema) }
-
-export class Versioned extends S.TaggedClass<Versioned>('V')('V', {
-  branchPoint: S.NullOr(BranchPointSchema),
-}) { static is = S.is(Versioned) }
-```
-
-Rules:
-- `as any` is ONLY acceptable here because the class isn't fully defined when referenced
-- Still requires forward-declared interfaces with both Type and Encoded forms
-- Still requires explicit `S.Schema<Type, Encoded>` return type annotation
-
-**Case 3: Cross-module union with self-reference**
-
-A field's type is a union that includes the defining class itself plus other classes.
-
-```typescript
-// field.ts — Field.next can be Field | Argument | ResolvedType
-export type FieldNext = Field | Argument.Argument | ResolvedType.ResolvedType
-export type FieldNextEncoded = FieldEncoded | Argument.ArgumentEncoded | ResolvedType.ResolvedTypeEncoded
-
-export class Field extends S.TaggedClass<Field>('F')('F', {
-  next: S.optional(S.suspend((): S.Schema<FieldNext, FieldNextEncoded> =>
-    S.Union(
-      S.suspend((): S.Schema<Field, FieldEncoded> => Field as any),  // self-ref: as any
-      Argument.Schema,       // cross-module: no as any
-      ResolvedType.Schema,   // cross-module: no as any
-    )
-  )),
-}) {}
-```
-
-Rules:
-- Outer suspend wraps the whole union
-- Inner suspend with `as any` ONLY for the self-referential member
-- Cross-module members reference their exported Schema const directly — no `as any`
-
-**ESM constraint: mutually recursive types must co-locate**
-
-When two types are mutually recursive (A references B, B references A) and one appears as an eager argument to `Schema.Union()`, they MUST live in the same file. `Schema.Union()` evaluates its arguments at module initialization — ESM's Temporal Dead Zone will throw `ReferenceError` if the other module isn't fully initialized yet. `Schema.suspend()` is lazy and safe across circular imports, but `Schema.Union()` is not.
-
-**Anti-patterns to flag:**
-
-```typescript
-// ❌ Missing Encoded type parameter — loses round-trip type safety
-S.suspend((): S.Schema<BookmarkNode> => BookmarkNode)
-
-// ❌ as any on cross-module reference — unnecessary, masks real type errors
-S.suspend((): S.Schema<Type.Type, Type.TypeEncoded> => Type.Schema as any)
-
-// ❌ No interface forward-declaration — class self-reference won't typecheck
-export class Foo extends S.TaggedClass<Foo>('F')('F', {
-  child: S.optional(S.suspend(() => Foo)),  // Type error or implicit any
-})
-
-// ❌ Referencing the class directly instead of exported Schema const
-S.suspend((): S.Schema<Type.Type, Type.TypeEncoded> => Type.Type)
-// Should be: Type.Schema (which equals Type.Type, but is the idiomatic export name)
-```
-
-**Each module that participates in suspend MUST export:**
-- `interface Foo` — the decoded type (forward-declared, merges with class)
-- `interface FooEncoded` — the encoded type (forward-declared)
-- `class Foo` — the TaggedClass definition
-- `const Schema = Foo` — stable reference for cross-module suspend
-
-Reference implementation: `~/projects/jasonkuhrt/graphql-kit/src/graphql-schema-path/nodes/` (5 files showing all 3 cases)
+Reference: `~/projects/jasonkuhrt/graphql-kit/src/graphql-schema-path/nodes/` (5 files, all 3 cases)

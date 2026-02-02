@@ -7,13 +7,13 @@
  */
 
 import type { Effect } from "effect"
+import type * as Patch from "./patch.js"
 import type * as SchemaModule from "./schema.js"
-import type { BookmarkPatch } from "./patch.js"
 
 /** Create a graveyard entry from a conflict-losing patch. */
 export declare const addToGraveyard: (
   tree: SchemaModule.BookmarkTree,
-  patch: BookmarkPatch,
+  patch: Patch.BookmarkPatch,
   source: string,
   reason: string,
 ) => Effect.Effect<SchemaModule.BookmarkTree, Error>

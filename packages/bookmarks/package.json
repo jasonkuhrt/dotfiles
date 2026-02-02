@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.9.1",
+    "@plist/binary.parse": "^1.1.0",
+    "@plist/binary.serialize": "^1.1.0",
     "effect": "^3.12.0",
     "yaml": "^2.8.2"
   },

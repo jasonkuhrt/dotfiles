@@ -16,6 +16,8 @@
       },
       "dependencies": {
         "@clack/prompts": "^0.9.1",
+        "@plist/binary.parse": "^1.1.0",
+        "@plist/binary.serialize": "^1.1.0",
         "effect": "^3.12.0",
         "yaml": "^2.8.2",
       },
@@ -131,6 +133,12 @@
     "@parcel/watcher-win32-ia32": ["@parcel/watcher-win32-ia32@2.5.6", "", { "os": "win32", "cpu": "ia32" }, "sha512-k35yLp1ZMwwee3Ez/pxBi5cf4AoBKYXj00CZ80jUz5h8prpiaQsiRPKQMxoLstNuqe2vR4RNPEAEcjEFzhEz/g=="],
 
     "@parcel/watcher-win32-x64": ["@parcel/watcher-win32-x64@2.5.6", "", { "os": "win32", "cpu": "x64" }, "sha512-hbQlYcCq5dlAX9Qx+kFb0FHue6vbjlf0FrNzSKdYK2APUf7tGfGxQCk2ihEREmbR6ZMc0MVAD5RIX/41gpUzTw=="],
+
+    "@plist/binary.parse": ["@plist/binary.parse@1.1.0", "", { "dependencies": { "@plist/common": "^1.1.0" } }, "sha512-0Bkyt9rCZnlEHQghafWStePBMquIne+9Z9nFTns8OF3ku4QsQ2HMdSSM1MvQfc+6JOU0Q5JlGvAPEUtP9meFsw=="],
+
+    "@plist/binary.serialize": ["@plist/binary.serialize@1.1.0", "", { "dependencies": { "@plist/common": "^1.1.0" } }, "sha512-+CveX99bM1fqlxIaGyD7YbKLpK411qjAW8FHpCuigUyxLTgo28WOXEBxrYaUZGuMPEv6fsDI5e+E2pLvRfcdtA=="],
+
+    "@plist/common": ["@plist/common@1.1.0", "", {}, "sha512-zZAx3dLVsDaW/ulxCbHS3ptVUnO5XEPQ75UPyNJpwPdv9ViWLYXQmbYNmFR8thKpw067RAORuQpBWHvKPffvIg=="],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 

@@ -118,7 +118,8 @@ Schemas can live one-per-file, grouped under a directory, or in a single file �
 Practical constraints:
 - **Mutually recursive types must share a file.** `Schema.Union()` eagerly evaluates its arguments at ESM module initialization. If type A and type B reference each other and one appears in a `Schema.Union()` call, ESM's Temporal Dead Zone will throw `ReferenceError` if they're in separate files. `Schema.suspend()` is lazy and survives circular imports, but the Union call itself is not.
 - **Independent models get their own files.** A type with no circular dependency on siblings (e.g., `BookmarkLeaf`) belongs in its own file.
-- **Consumers can import directly or through a barrel** — `from './schema/bookmark-leaf.js'` and `from './schema/__.js'` are both fine. The principle is that the model entity is self-contained regardless of import path.
+- **Import path is flexible** — `from './schema/bookmark-leaf.js'` and `from './schema/__.js'` are both fine. The model entity is self-contained regardless of how you reach it.
+- **Import style follows the project's general rules** (typically `import * as <NS>` with qualified access). This skill does not override project or global import conventions — Section 6 is about what goes ON the class, not how consumers import it.
 
 #### 6e. Schema.suspend() for recursive references
 

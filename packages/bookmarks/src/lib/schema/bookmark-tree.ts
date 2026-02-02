@@ -1,5 +1,5 @@
 import * as Schema from "effect/Schema"
-import { BookmarkSection } from "./bookmark-node.js"
+import { BookmarkSection } from "./bookmark-structure.js"
 
 export class BookmarkTree extends Schema.Class<BookmarkTree>("BookmarkTree")({
   favorites_bar: Schema.optional(BookmarkSection),

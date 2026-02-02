@@ -1,15 +1,15 @@
 import { describe, expect, test } from "bun:test"
 import { DateTime, Effect, HashMap, Option } from "effect"
-import { BookmarkLeaf, BookmarkFolder, BookmarkTree } from "./schema/__.js"
+import * as Schema from "./schema/__.js"
 import * as Patch from "./patch.js"
 
 // -- Test helpers --
 
-const leaf = (name: string, url: string) => new BookmarkLeaf({ name, url })
-const folder = (name: string, children: Array<BookmarkLeaf | BookmarkFolder>) =>
-  new BookmarkFolder({ name, children })
+const leaf = (name: string, url: string) => new Schema.BookmarkLeaf({ name, url })
+const folder = (name: string, children: Array<Schema.BookmarkLeaf | Schema.BookmarkFolder>) =>
+  new Schema.BookmarkFolder({ name, children })
 
-const emptyTree = () => new BookmarkTree({})
+const emptyTree = () => new Schema.BookmarkTree({})
 
 const run = <A>(effect: Effect.Effect<A, Error>) =>
   Effect.runPromise(effect)
@@ -24,7 +24,7 @@ describe("flatten", () => {
   })
 
   test("flattens leaves across sections", () => {
-    const tree = new BookmarkTree({
+    const tree = new Schema.BookmarkTree({
       favorites_bar: [leaf("A", "https://a.com")],
       other: [leaf("B", "https://b.com")],
     })
@@ -40,7 +40,7 @@ describe("flatten", () => {
   })
 
   test("flattens nested folders with correct path", () => {
-    const tree = new BookmarkTree({
+    const tree = new Schema.BookmarkTree({
       favorites_bar: [
         folder("AI", [
           folder("Tools", [leaf("ChatGPT", "https://chat.openai.com")]),
@@ -56,7 +56,7 @@ describe("flatten", () => {
   })
 
   test("duplicate URLs: first wins, produces warning", () => {
-    const tree = new BookmarkTree({
+    const tree = new Schema.BookmarkTree({
       favorites_bar: [leaf("First", "https://dup.com")],
       other: [leaf("Second", "https://dup.com")],
     })
@@ -76,19 +76,19 @@ describe("flatten", () => {
 
 describe("toTrie / fromTrie", () => {
   test("round-trip preserves single leaf", () => {
-    const tree = new BookmarkTree({
+    const tree = new Schema.BookmarkTree({
       favorites_bar: [leaf("A", "https://a.com")],
     })
     const result = Patch.fromTrie(Patch.toTrie(tree))
     expect(result.favorites_bar).toBeDefined()
     expect(result.favorites_bar!.length).toBe(1)
-    const node = result.favorites_bar![0] as BookmarkLeaf
+    const node = result.favorites_bar![0] as Schema.BookmarkLeaf
     expect(node.name).toBe("A")
     expect(node.url).toBe("https://a.com")
   })
 
   test("round-trip preserves nested folders", () => {
-    const tree = new BookmarkTree({
+    const tree = new Schema.BookmarkTree({
       favorites_bar: [
         folder("AI", [
           leaf("GPT", "https://gpt.com"),
@@ -106,8 +106,8 @@ describe("toTrie / fromTrie", () => {
 
     // Check nested structure
     const aiFolder = result.favorites_bar!.find(
-      (n) => BookmarkFolder.is(n) && n.name === "AI",
-    ) as BookmarkFolder
+      (n) => Schema.BookmarkFolder.is(n) && n.name === "AI",
+    ) as Schema.BookmarkFolder
     expect(aiFolder).toBeDefined()
     expect(aiFolder.children.length).toBe(2)
   })
@@ -125,7 +125,7 @@ describe("toTrie / fromTrie", () => {
 describe("generatePatches", () => {
   test("first run (empty lastSync) produces only Add patches", async () => {
     const lastSync = emptyTree()
-    const current = new BookmarkTree({
+    const current = new Schema.BookmarkTree({
       favorites_bar: [leaf("A", "https://a.com"), leaf("B", "https://b.com")],
     })
     const patches = await run(Patch.generatePatches(lastSync, current, "yaml"))
@@ -134,10 +134,10 @@ describe("generatePatches", () => {
   })
 
   test("removed bookmarks produce Remove patches", async () => {
-    const lastSync = new BookmarkTree({
+    const lastSync = new Schema.BookmarkTree({
       favorites_bar: [leaf("A", "https://a.com"), leaf("B", "https://b.com")],
     })
-    const current = new BookmarkTree({
+    const current = new Schema.BookmarkTree({
       favorites_bar: [leaf("A", "https://a.com")],
     })
     const patches = await run(Patch.generatePatches(lastSync, current, "yaml"))
@@ -147,10 +147,10 @@ describe("generatePatches", () => {
   })
 
   test("renamed bookmark produces Rename patch", async () => {
-    const lastSync = new BookmarkTree({
+    const lastSync = new Schema.BookmarkTree({
       favorites_bar: [leaf("Old Name", "https://a.com")],
     })
-    const current = new BookmarkTree({
+    const current = new Schema.BookmarkTree({
       favorites_bar: [leaf("New Name", "https://a.com")],
     })
     const patches = await run(Patch.generatePatches(lastSync, current, "yaml"))
@@ -161,10 +161,10 @@ describe("generatePatches", () => {
   })
 
   test("moved bookmark produces Move patch", async () => {
-    const lastSync = new BookmarkTree({
+    const lastSync = new Schema.BookmarkTree({
       favorites_bar: [leaf("A", "https://a.com")],
     })
-    const current = new BookmarkTree({
+    const current = new Schema.BookmarkTree({
       other: [leaf("A", "https://a.com")],
     })
     const patches = await run(Patch.generatePatches(lastSync, current, "yaml"))
@@ -175,10 +175,10 @@ describe("generatePatches", () => {
   })
 
   test("moved + renamed in one produces both patches", async () => {
-    const lastSync = new BookmarkTree({
+    const lastSync = new Schema.BookmarkTree({
       favorites_bar: [leaf("Old", "https://a.com")],
     })
-    const current = new BookmarkTree({
+    const current = new Schema.BookmarkTree({
       other: [leaf("New", "https://a.com")],
     })
     const patches = await run(Patch.generatePatches(lastSync, current, "yaml"))
@@ -187,7 +187,7 @@ describe("generatePatches", () => {
   })
 
   test("no changes produces empty patches", async () => {
-    const tree = new BookmarkTree({
+    const tree = new Schema.BookmarkTree({
       favorites_bar: [leaf("A", "https://a.com")],
     })
     const patches = await run(Patch.generatePatches(tree, tree, "yaml"))
@@ -196,7 +196,7 @@ describe("generatePatches", () => {
 
   test("all patches have DateTime.Utc dates", async () => {
     const lastSync = emptyTree()
-    const current = new BookmarkTree({
+    const current = new Schema.BookmarkTree({
       favorites_bar: [leaf("A", "https://a.com")],
     })
     const patches = await run(Patch.generatePatches(lastSync, current, "yaml"))

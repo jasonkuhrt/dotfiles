@@ -1,15 +1,15 @@
 /**
  * Chrome JSON adapter.
  *
- * Reads Chrome's Bookmarks JSON and extracts a clean BookmarkTree (lossy -- discards Chrome metadata).
+ * Reads Chrome's Bookmarks JSON and extracts a clean BookmarkSchema.BookmarkTree (lossy -- discards Chrome metadata).
  * Applies BookmarkPatch[] surgically to the native JSON structure (preserves all metadata).
  * Handles Chrome's Windows-epoch timestamps, MD5 checksum recalculation, and atomic file writes.
  */
 
-import { Effect, Schema } from "effect"
+import { DateTime, Effect, Schema } from "effect"
 import { rename } from "node:fs/promises"
 import * as Patch from "./patch.js"
-import { BookmarkFolder, BookmarkLeaf, BookmarkTree, type BookmarkNode, type BookmarkSection } from "./schema/__.js"
+import * as BookmarkSchema from "./schema/__.js"
 
 // -- Chrome JSON type aliases --
 
@@ -60,7 +60,7 @@ export const unixMsToChromeTimestamp = (unixMs: number): string => {
 }
 
 /** Generate a Chrome timestamp for "now". */
-const nowChromeTimestamp = (): string => unixMsToChromeTimestamp(Date.now())
+const nowChromeTimestamp = (): string => unixMsToChromeTimestamp(DateTime.toEpochMillis(DateTime.unsafeNow()))
 
 // -- Chrome section key ↔ domain section key mappings --
 
@@ -84,7 +84,7 @@ const ChromeLeafTransform = Schema.transform(
     name: Schema.String,
     url: Schema.String,
   }),
-  BookmarkLeaf,
+  BookmarkSchema.BookmarkLeaf,
   {
     strict: false,
     decode: (chrome) => ({ _tag: "BookmarkLeaf" as const, url: chrome.url, name: chrome.name }),
@@ -102,7 +102,7 @@ const ChromeFolderTransform = Schema.transform(
     name: Schema.String,
     children: Schema.optional(Schema.Array(Schema.Unknown)),
   }),
-  BookmarkFolder,
+  BookmarkSchema.BookmarkFolder,
   {
     strict: false,
     decode: (chrome) => ({
@@ -176,8 +176,8 @@ export const calculateChecksum = (roots: ChromeRoot): string => {
 
 // -- readBookmarks --
 
-/** Read Chrome bookmarks from a Bookmarks JSON file path into a clean BookmarkTree. */
-export const readBookmarks = (bookmarksPath: string): Effect.Effect<BookmarkTree, Error> =>
+/** Read Chrome bookmarks from a Bookmarks JSON file path into a clean BookmarkSchema.BookmarkTree. */
+export const readBookmarks = (bookmarksPath: string): Effect.Effect<BookmarkSchema.BookmarkTree, Error> =>
   Effect.gen(function* () {
     const text = yield* Effect.tryPromise({
       try: () => Bun.file(bookmarksPath).text(),
@@ -187,7 +187,7 @@ export const readBookmarks = (bookmarksPath: string): Effect.Effect<BookmarkTree
     const file = JSON.parse(text) as ChromeBookmarksFile
     const { roots } = file
 
-    const sections: Partial<Record<"favorites_bar" | "other" | "mobile", BookmarkSection>> = {}
+    const sections: Partial<Record<"favorites_bar" | "other" | "mobile", BookmarkSchema.BookmarkSection>> = {}
 
     for (const [chromeKey, sectionKey] of Object.entries(CHROME_KEY_TO_SECTION)) {
       const rootNode = roots[chromeKey as keyof ChromeRoot]
@@ -196,7 +196,7 @@ export const readBookmarks = (bookmarksPath: string): Effect.Effect<BookmarkTree
       }
     }
 
-    return new BookmarkTree({
+    return BookmarkSchema.BookmarkTree.make({
       favorites_bar: sections.favorites_bar,
       other: sections.other,
       mobile: sections.mobile,
@@ -288,8 +288,8 @@ export const applyPatches = (
 
 // -- Read path helpers (Schema-driven decoding) --
 
-function decodeNodes(children: ChromeNode[]): BookmarkNode[] {
-  const nodes: BookmarkNode[] = []
+function decodeNodes(children: ChromeNode[]): BookmarkSchema.BookmarkNode[] {
+  const nodes: BookmarkSchema.BookmarkNode[] = []
   for (const child of children) {
     if (child.type === "url") {
       nodes.push(Schema.decodeUnknownSync(ChromeLeafTransform)(child))

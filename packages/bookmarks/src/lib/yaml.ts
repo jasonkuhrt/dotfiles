@@ -8,17 +8,17 @@
 import { Effect, Schema } from "effect"
 import * as Yaml from "yaml"
 import * as Fs from "node:fs/promises"
-import * as SchemaModule from "./schema/__.js"
+import * as BookmarkSchema from "./schema/__.js"
 
 /** Load and validate bookmarks.yaml from the given path. */
-export const load = (path: string): Effect.Effect<SchemaModule.BookmarksConfig, Error> =>
+export const load = (path: string): Effect.Effect<BookmarkSchema.BookmarksConfig, Error> =>
   Effect.gen(function* () {
     const raw = yield* Effect.tryPromise({
       try: () => Fs.readFile(path, "utf-8"),
       catch: (e) => new Error(`Failed to read ${path}: ${e}`),
     })
     const parsed: unknown = Yaml.parse(raw)
-    return yield* Schema.decodeUnknown(SchemaModule.BookmarksConfig)(parsed).pipe(
+    return yield* Schema.decodeUnknown(BookmarkSchema.BookmarksConfig)(parsed).pipe(
       Effect.mapError((e) => new Error(`Schema validation failed: ${e.message}`)),
     )
   })
@@ -26,9 +26,9 @@ export const load = (path: string): Effect.Effect<SchemaModule.BookmarksConfig, 
 const SCHEMA_MODELINE = "# yaml-language-server: $schema=../packages/bookmarks/src/lib/bookmarks.schema.json\n"
 
 /** Write a BookmarksConfig back to bookmarks.yaml. */
-export const save = (path: string, config: SchemaModule.BookmarksConfig): Effect.Effect<void, Error> =>
+export const save = (path: string, config: BookmarkSchema.BookmarksConfig): Effect.Effect<void, Error> =>
   Effect.gen(function* () {
-    const encoded = yield* Schema.encode(SchemaModule.BookmarksConfig)(config).pipe(
+    const encoded = yield* Schema.encode(BookmarkSchema.BookmarksConfig)(config).pipe(
       Effect.mapError((e) => new Error(`Schema encoding failed: ${e.message}`)),
     )
     const yamlStr = SCHEMA_MODELINE + Yaml.stringify(encoded, { indent: 2 })
@@ -40,15 +40,15 @@ export const save = (path: string, config: SchemaModule.BookmarksConfig): Effect
 
 /** Resolve a profile's effective bookmark tree (base + profile overlay). */
 export const resolveProfile = (
-  config: SchemaModule.BookmarksConfig,
+  config: BookmarkSchema.BookmarksConfig,
   profileKey: string,
-): Effect.Effect<SchemaModule.BookmarkTree, Error> =>
+): Effect.Effect<BookmarkSchema.BookmarkTree, Error> =>
   Effect.gen(function* () {
     const base = config.base
     const overlay = config.profiles?.[profileKey]
     if (!overlay) return base
 
-    return new SchemaModule.BookmarkTree({
+    return BookmarkSchema.BookmarkTree.make({
       favorites_bar: mergeSection(base.favorites_bar, overlay.favorites_bar),
       other: mergeSection(base.other, overlay.other),
       reading_list: mergeSection(base.reading_list, overlay.reading_list),
@@ -58,9 +58,9 @@ export const resolveProfile = (
 
 /** Append profile-specific items after base items in a section. */
 const mergeSection = (
-  base: SchemaModule.BookmarkSection | undefined,
-  overlay: SchemaModule.BookmarkSection | undefined,
-): SchemaModule.BookmarkSection | undefined => {
+  base: BookmarkSchema.BookmarkSection | undefined,
+  overlay: BookmarkSchema.BookmarkSection | undefined,
+): BookmarkSchema.BookmarkSection | undefined => {
   if (!base && !overlay) return undefined
   if (!overlay) return base
   if (!base) return overlay

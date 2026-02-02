@@ -16,7 +16,13 @@
  *   validate    schema check only
  */
 
-import { Console, DateTime, Effect, Option } from "effect"
+import { Console, Data, DateTime, Effect, Option } from "effect"
+
+/** Expected CLI exits where the user has already been informed. */
+class CliExitError extends Data.TaggedError("CliExitError")<{}> {
+  static is = (u: unknown): u is CliExitError =>
+    u != null && typeof u === "object" && "_tag" in u && u._tag === "CliExitError"
+}
 import * as Daemon from "../lib/daemon.js"
 import * as Doctor from "../lib/doctor.js"
 import * as SyncModule from "../lib/sync.js"
@@ -129,7 +135,7 @@ const program = Effect.gen(function* () {
       const subcommand = positional[0]
       if (!subcommand || !["start", "stop", "status"].includes(subcommand)) {
         yield* Console.error("Usage: bookmarks daemon start|stop|status")
-        return yield* Effect.fail(new Error("Invalid daemon subcommand"))
+        return yield* Effect.fail(new CliExitError())
       }
       switch (subcommand) {
         case "start": {
@@ -162,7 +168,7 @@ const program = Effect.gen(function* () {
       const doctorResult = yield* Doctor.runDiagnostics(doctorYamlPath)
       yield* Console.log(Doctor.formatReport(doctorResult))
       if (!doctorResult.allPassed) {
-        return yield* Effect.fail(new Error("Doctor checks failed"))
+        return yield* Effect.fail(new CliExitError())
       }
       break
     }
@@ -177,18 +183,11 @@ const program = Effect.gen(function* () {
     default:
       yield* Console.error(`Unknown command: ${command}`)
       yield* Console.log(USAGE)
-      return yield* Effect.fail(new Error("Unknown command"))
+      return yield* Effect.fail(new CliExitError())
   }
 })
 
 Effect.runPromise(program).catch((err: unknown) => {
-  if (
-    err instanceof Error &&
-    err.message !== "Unknown command" &&
-    err.message !== "Invalid daemon subcommand" &&
-    err.message !== "Doctor checks failed"
-  ) {
-    console.error(err)
-  }
+  if (!CliExitError.is(err)) console.error(err)
   process.exit(1)
 })

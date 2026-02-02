@@ -3,7 +3,7 @@ import { DateTime, Effect } from "effect"
 import { copyFile, unlink } from "node:fs/promises"
 import { join } from "node:path"
 import * as Patch from "./patch.js"
-import { BookmarkFolder, BookmarkLeaf, BookmarkTree } from "./schema/__.js"
+import * as Schema from "./schema/__.js"
 import * as Safari from "./safari.js"
 
 // -- Test helpers --
@@ -15,9 +15,9 @@ const now = DateTime.unsafeNow()
 // -- readBookmarks --
 
 describe("readBookmarks", () => {
-  test("reads actual Safari plist and produces a BookmarkTree", async () => {
+  test("reads actual Safari plist and produces a Schema.BookmarkTree", async () => {
     const tree = await run(Safari.readBookmarks(PLIST_PATH))
-    expect(tree).toBeInstanceOf(BookmarkTree)
+    expect(tree).toBeInstanceOf(Schema.BookmarkTree)
   })
 
   test("favorites_bar contains folders from BookmarksBar", async () => {
@@ -25,7 +25,7 @@ describe("readBookmarks", () => {
     expect(tree.favorites_bar).toBeDefined()
     expect(tree.favorites_bar!.length).toBeGreaterThan(0)
     const firstItem = tree.favorites_bar![0]!
-    expect(firstItem).toBeInstanceOf(BookmarkFolder)
+    expect(firstItem).toBeInstanceOf(Schema.BookmarkFolder)
   })
 
   test("reading_list contains leaves from com.apple.ReadingList", async () => {
@@ -33,8 +33,8 @@ describe("readBookmarks", () => {
     expect(tree.reading_list).toBeDefined()
     expect(tree.reading_list!.length).toBeGreaterThan(0)
     const firstItem = tree.reading_list![0]!
-    expect(firstItem).toBeInstanceOf(BookmarkLeaf)
-    expect((firstItem as BookmarkLeaf).url).toMatch(/^https?:\/\//)
+    expect(firstItem).toBeInstanceOf(Schema.BookmarkLeaf)
+    expect((firstItem as Schema.BookmarkLeaf).url).toMatch(/^https?:\/\//)
   })
 
   test("other section collects root-level folders and BookmarksMenu content", async () => {
@@ -55,7 +55,7 @@ describe("readBookmarks", () => {
 
   test("leaf nodes have name and url", async () => {
     const tree = await run(Safari.readBookmarks(PLIST_PATH))
-    const leaf = tree.reading_list![0]! as BookmarkLeaf
+    const leaf = tree.reading_list![0]! as Schema.BookmarkLeaf
     expect(leaf.name).toBeTruthy()
     expect(leaf.url).toBeTruthy()
     expect(leaf.url).toMatch(/^https?:\/\//)
@@ -63,7 +63,7 @@ describe("readBookmarks", () => {
 
   test("folder nodes have name and children", async () => {
     const tree = await run(Safari.readBookmarks(PLIST_PATH))
-    const folder = tree.favorites_bar![0]! as BookmarkFolder
+    const folder = tree.favorites_bar![0]! as Schema.BookmarkFolder
     expect(folder.name).toBeTruthy()
     expect(Array.isArray(folder.children)).toBe(true)
   })
@@ -95,7 +95,7 @@ describe("applyPatches", () => {
 
       const tree = await run(Safari.readBookmarks(path))
       const found = (tree.favorites_bar ?? []).find(
-        (n): n is BookmarkLeaf => BookmarkLeaf.is(n) && n.url === testUrl,
+        (n): n is Schema.BookmarkLeaf => Schema.BookmarkLeaf.is(n) && n.url === testUrl,
       )
       expect(found).toBeDefined()
       expect(found!.name).toBe(testName)
@@ -108,7 +108,7 @@ describe("applyPatches", () => {
     const path = await setupCopy()
     try {
       const treeBefore = await run(Safari.readBookmarks(path))
-      const target = treeBefore.reading_list![0]! as BookmarkLeaf
+      const target = treeBefore.reading_list![0]! as Schema.BookmarkLeaf
 
       await run(Safari.applyPatches(path, [
         Patch.Remove({ url: target.url, path: "reading_list", date: now }),
@@ -116,7 +116,7 @@ describe("applyPatches", () => {
 
       const treeAfter = await run(Safari.readBookmarks(path))
       const remainingUrls = (treeAfter.reading_list ?? [])
-        .filter((n): n is BookmarkLeaf => BookmarkLeaf.is(n))
+        .filter((n): n is Schema.BookmarkLeaf => Schema.BookmarkLeaf.is(n))
         .map((n) => n.url)
       expect(remainingUrls).not.toContain(target.url)
     } finally {
@@ -128,7 +128,7 @@ describe("applyPatches", () => {
     const path = await setupCopy()
     try {
       const treeBefore = await run(Safari.readBookmarks(path))
-      const target = treeBefore.reading_list![0]! as BookmarkLeaf
+      const target = treeBefore.reading_list![0]! as Schema.BookmarkLeaf
       const newName = "RENAMED_TEST_BOOKMARK"
 
       await run(Safari.applyPatches(path, [
@@ -137,7 +137,7 @@ describe("applyPatches", () => {
 
       const treeAfter = await run(Safari.readBookmarks(path))
       const found = (treeAfter.reading_list ?? []).find(
-        (n): n is BookmarkLeaf => BookmarkLeaf.is(n) && n.url === target.url,
+        (n): n is Schema.BookmarkLeaf => Schema.BookmarkLeaf.is(n) && n.url === target.url,
       )
       expect(found).toBeDefined()
       expect(found!.name).toBe(newName)
@@ -150,7 +150,7 @@ describe("applyPatches", () => {
     const path = await setupCopy()
     try {
       const treeBefore = await run(Safari.readBookmarks(path))
-      const target = treeBefore.reading_list![0]! as BookmarkLeaf
+      const target = treeBefore.reading_list![0]! as Schema.BookmarkLeaf
 
       await run(Safari.applyPatches(path, [
         Patch.Move({ url: target.url, fromPath: "reading_list", toPath: "favorites_bar", date: now }),
@@ -160,13 +160,13 @@ describe("applyPatches", () => {
 
       // Gone from reading_list
       const remainingUrls = (treeAfter.reading_list ?? [])
-        .filter((n): n is BookmarkLeaf => BookmarkLeaf.is(n))
+        .filter((n): n is Schema.BookmarkLeaf => Schema.BookmarkLeaf.is(n))
         .map((n) => n.url)
       expect(remainingUrls).not.toContain(target.url)
 
       // Present in favorites_bar
       const found = (treeAfter.favorites_bar ?? []).find(
-        (n): n is BookmarkLeaf => BookmarkLeaf.is(n) && n.url === target.url,
+        (n): n is Schema.BookmarkLeaf => Schema.BookmarkLeaf.is(n) && n.url === target.url,
       )
       expect(found).toBeDefined()
       expect(found!.name).toBe(target.name)
@@ -188,15 +188,15 @@ describe("applyPatches", () => {
       const tree = await run(Safari.readBookmarks(path))
       // Navigate: other → NewFolder → SubFolder → leaf
       const newFolder = (tree.other ?? []).find(
-        (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "NewFolder",
+        (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n) && n.name === "NewFolder",
       )
       expect(newFolder).toBeDefined()
       const subFolder = newFolder!.children.find(
-        (n): n is BookmarkFolder => BookmarkFolder.is(n) && n.name === "SubFolder",
+        (n): n is Schema.BookmarkFolder => Schema.BookmarkFolder.is(n) && n.name === "SubFolder",
       )
       expect(subFolder).toBeDefined()
       const leaf = subFolder!.children.find(
-        (n): n is BookmarkLeaf => BookmarkLeaf.is(n) && n.url === testUrl,
+        (n): n is Schema.BookmarkLeaf => Schema.BookmarkLeaf.is(n) && n.url === testUrl,
       )
       expect(leaf).toBeDefined()
       expect(leaf!.name).toBe(testName)

@@ -1,7 +1,7 @@
 /**
  * Safari plist adapter.
  *
- * Reads Safari's Bookmarks.plist and extracts a clean BookmarkTree (lossy — discards Safari metadata).
+ * Reads Safari's Bookmarks.plist and extracts a clean BookmarkSchema.BookmarkTree (lossy — discards Safari metadata).
  * Applies BookmarkPatch[] surgically to the native plist structure (preserves all metadata).
  * Handles binary plist parsing/serialization and atomic file writes.
  */
@@ -11,7 +11,7 @@ import { serialize } from "@plist/binary.serialize"
 import { Effect, Schema } from "effect"
 import { rename } from "node:fs/promises"
 import * as Patch from "./patch.js"
-import { BookmarkFolder, BookmarkLeaf, BookmarkTree, type BookmarkNode, type BookmarkSection } from "./schema/__.js"
+import * as BookmarkSchema from "./schema/__.js"
 
 // -- Plist type aliases (matches @plist/common; avoids direct dependency on internal package) --
 
@@ -54,7 +54,7 @@ const SafariLeafTransform = Schema.transform(
     URLString: Schema.String,
     URIDictionary: Schema.Struct({ title: Schema.String }),
   }),
-  BookmarkLeaf,
+  BookmarkSchema.BookmarkLeaf,
   {
     strict: true,
     decode: (plist) => ({ _tag: "BookmarkLeaf" as const, url: plist.URLString, name: plist.URIDictionary.title }),
@@ -72,7 +72,7 @@ const SafariFolderTransform = Schema.transform(
     Title: Schema.String,
     Children: Schema.optional(Schema.Array(Schema.Unknown)),
   }),
-  BookmarkFolder,
+  BookmarkSchema.BookmarkFolder,
   {
     strict: false,
     decode: (plist) => ({
@@ -90,7 +90,7 @@ const SafariFolderTransform = Schema.transform(
 
 // -- Safari section Title ↔ domain section key mappings --
 
-const SECTION_TITLE_TO_KEY: Record<string, keyof Omit<BookmarkTree, "_tag">> = {
+const SECTION_TITLE_TO_KEY: Record<string, keyof Omit<BookmarkSchema.BookmarkTree, "_tag">> = {
   BookmarksBar: "favorites_bar",
   "com.apple.ReadingList": "reading_list",
 }
@@ -103,8 +103,8 @@ const SECTION_KEY_TO_TITLE: Record<string, string> = {
 
 // -- readBookmarks --
 
-/** Read Safari bookmarks from a binary plist path into a clean BookmarkTree. */
-export const readBookmarks = (plistPath: string): Effect.Effect<BookmarkTree, Error> =>
+/** Read Safari bookmarks from a binary plist path into a clean BookmarkSchema.BookmarkTree. */
+export const readBookmarks = (plistPath: string): Effect.Effect<BookmarkSchema.BookmarkTree, Error> =>
   Effect.gen(function* () {
     const data = yield* Effect.tryPromise({
       try: () => Bun.file(plistPath).arrayBuffer(),
@@ -114,7 +114,7 @@ export const readBookmarks = (plistPath: string): Effect.Effect<BookmarkTree, Er
     const root = parse(data) as PlistDict
     const children = root["Children"] as PlistDict[]
 
-    const sections: Partial<Record<"favorites_bar" | "other" | "reading_list" | "mobile", BookmarkSection>> = {}
+    const sections: Partial<Record<"favorites_bar" | "other" | "reading_list" | "mobile", BookmarkSchema.BookmarkSection>> = {}
 
     for (const child of children) {
       const type = child["WebBookmarkType"] as string
@@ -144,7 +144,7 @@ export const readBookmarks = (plistPath: string): Effect.Effect<BookmarkTree, Er
       }
     }
 
-    return new BookmarkTree({
+    return BookmarkSchema.BookmarkTree.make({
       favorites_bar: sections.favorites_bar,
       other: sections.other,
       reading_list: sections.reading_list,
@@ -220,8 +220,8 @@ export const applyPatches = (
 
 // -- Read path helpers (Schema-driven decoding) --
 
-function decodeNodes(children: PlistDict[]): BookmarkNode[] {
-  const nodes: BookmarkNode[] = []
+function decodeNodes(children: PlistDict[]): BookmarkSchema.BookmarkNode[] {
+  const nodes: BookmarkSchema.BookmarkNode[] = []
   for (const child of children) {
     const type = child["WebBookmarkType"] as string
     if (type === "WebBookmarkTypeLeaf") {

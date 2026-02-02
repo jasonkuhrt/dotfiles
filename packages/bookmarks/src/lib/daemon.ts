@@ -51,7 +51,7 @@ const execFileEffect = (cmd: string, args: readonly string[]): Effect.Effect<str
           else resolve(stdout)
         })
       }),
-    catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+    catch: (e) => new Error(`${cmd} ${args.join(" ")} failed`, { cause: e }),
   })
 
 const writeFile = (filePath: string, content: string): Effect.Effect<void, Error> =>

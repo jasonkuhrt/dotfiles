@@ -11,9 +11,9 @@
 import { JSONSchema } from "effect"
 import * as path from "node:path"
 import * as fs from "node:fs/promises"
-import { BookmarksConfig } from "./schema/__.js"
+import * as Schema from "./schema/__.js"
 
-const jsonSchema = JSONSchema.make(BookmarksConfig)
+const jsonSchema = JSONSchema.make(Schema.BookmarksConfig)
 
 const outPath = path.resolve(import.meta.dirname, "bookmarks.schema.json")
 const content = JSON.stringify(jsonSchema, null, 2) + "\n"

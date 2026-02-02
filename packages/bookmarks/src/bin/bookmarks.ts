@@ -18,6 +18,7 @@
 
 import { Console, DateTime, Effect, Option } from "effect"
 import * as Daemon from "../lib/daemon.js"
+import * as Doctor from "../lib/doctor.js"
 import * as SyncModule from "../lib/sync.js"
 import * as YamlModule from "../lib/yaml.js"
 import * as Fs from "node:fs/promises"
@@ -37,6 +38,7 @@ Commands:
   bookmarks backup                       timestamped backups
   bookmarks gc [--max-age=90d]           clean graveyard
   bookmarks daemon start|stop|status     launchd lifecycle
+  bookmarks doctor                       pre-flight diagnostics
   bookmarks validate                     schema check only
 `.trim()
 
@@ -155,6 +157,15 @@ const program = Effect.gen(function* () {
       }
       break
     }
+    case "doctor": {
+      const doctorYamlPath = path.resolve(import.meta.dirname, "../../../..", "bookmarks/bookmarks.yaml")
+      const doctorResult = yield* Doctor.runDiagnostics(doctorYamlPath)
+      yield* Console.log(Doctor.formatReport(doctorResult))
+      if (!doctorResult.allPassed) {
+        return yield* Effect.fail(new Error("Doctor checks failed"))
+      }
+      break
+    }
     case "validate": {
       const yamlPath = path.resolve(import.meta.dirname, "../../../..", "bookmarks/bookmarks.yaml")
       yield* YamlModule.load(yamlPath).pipe(
@@ -171,7 +182,12 @@ const program = Effect.gen(function* () {
 })
 
 Effect.runPromise(program).catch((err: unknown) => {
-  if (err instanceof Error && err.message !== "Unknown command" && err.message !== "Invalid daemon subcommand") {
+  if (
+    err instanceof Error &&
+    err.message !== "Unknown command" &&
+    err.message !== "Invalid daemon subcommand" &&
+    err.message !== "Doctor checks failed"
+  ) {
     console.error(err)
   }
   process.exit(1)

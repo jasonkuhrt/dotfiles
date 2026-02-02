@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=./bookmarks.schema.json
+# yaml-language-server: $schema=../packages/bookmarks/src/lib/bookmarks.schema.json
 targets:
   safari:
     default:

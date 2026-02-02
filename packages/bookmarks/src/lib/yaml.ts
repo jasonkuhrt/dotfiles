@@ -23,7 +23,7 @@ export const load = (path: string): Effect.Effect<SchemaModule.BookmarksConfig, 
     )
   })
 
-const SCHEMA_MODELINE = "# yaml-language-server: $schema=./bookmarks.schema.json\n"
+const SCHEMA_MODELINE = "# yaml-language-server: $schema=../packages/bookmarks/src/lib/bookmarks.schema.json\n"
 
 /** Write a BookmarksConfig back to bookmarks.yaml. */
 export const save = (path: string, config: SchemaModule.BookmarksConfig): Effect.Effect<void, Error> =>

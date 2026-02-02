@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=~/.claude/schemas/beads-labels.schema.json
+# yaml-language-server: $schema=/Users/jasonkuhrt/.claude/schemas/beads-labels.schema.json
 
 # Directory-mapped: label → repo path
 directory:

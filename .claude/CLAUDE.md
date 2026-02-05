@@ -1,3 +1,10 @@
+---
+checks:
+  playwright:
+    paths:
+      - "claude/skills/playwright/**"
+---
+
 # Dotfiles Project Rules
 
 ## File Naming

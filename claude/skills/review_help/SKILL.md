@@ -1,142 +1,73 @@
 ---
 name: review:help
-description: Show review system status — discovered checks, applied config, and how to add new checks. Use when asked about review setup, what checks exist, or how to add checks.
+description: Show review system status — discovered checks, config, and how to add checks.
 ---
 
 # Review System Help
 
-Show the current state of the pluggable review system.
-
 ## Execution
 
-### 1. Run Discovery
+### 1. Run Scripts
 
 ```bash
 bun ~/.claude/skills/review/scripts/discover.ts
-```
-
-### 2. Run Config
-
-```bash
 bun ~/.claude/skills/review/scripts/config.ts
 ```
 
-### 3. Display Status
+### 2. Output Format
 
-Output in this format:
+Keep it compact. Example:
 
 ```
 # Review System Status
 
-## Discovered Checks
+## Checks (2)
 
-Found {N} checks across {M} skills:
+playwright:
+  - selector-priority (quality)
+  - no-hardcoded-waits (quality)
 
-### {skill} ({count} checks)
-| ID | Tier | Source |
-|----|------|--------|
-| {skill}#{slug} | {tier} | {source file} |
+## Config
 
-### {skill} ({count} checks)
-...
+playwright → claude/skills/playwright/**
+tier ceiling → all
 
-## Configuration
+## Disabled
 
-From: {source file(s) that had checks: block, or "No configuration found"}
+None
 
-### Paths
-| Skill | Paths |
-|-------|-------|
-| {skill} | {paths or "all files"} |
-
-### Disabled
-| Check | Reason |
-|-------|--------|
-| {check-id or skill} | {disabled entirely / specific check} |
-
-### Tier Ceiling
-{tier or "all (no ceiling)"}
-
-## Effective Checks
-
-After applying config, {N} checks will run:
-
-### Gate
-- {check-id}
-
-### Quality
-- {check-id}
-
-### Polish
-- {check-id}
-
-### Disabled/Skipped
-- {check-id} — {reason: no paths configured / explicitly disabled / above tier ceiling}
-```
-
-### 4. Show How to Add Checks
-
-Always include this section:
-
-```
 ---
 
-## Adding New Checks
+## How to Add Checks
 
-### Quick Start
+1. Create `CHECKS.md` or `CHECKS.{gate|quality|polish}.md` in a skill dir
+2. Add H2 sections — each is a check:
 
-Create `CHECKS.md` (or `CHECKS.{tier}.md`) in any skill directory:
+   ## my-check-name
 
-```markdown
-## check-slug-here
+   What this check verifies.
 
-Description of what this check verifies.
+   ### Correct
+   ```typescript
+   // good
+   ```
 
-### Correct
+   ### Incorrect
+   ```typescript
+   // bad
+   ```
 
-\`\`\`typescript
-// Good example
-\`\`\`
+3. Configure paths in CLAUDE.md frontmatter:
 
-### Incorrect
+   ---
+   checks:
+     skillname:
+       paths: ["src/**"]
+   ---
 
-\`\`\`typescript
-// Bad example
-\`\`\`
+Use /review:checks:add for guided creation.
 ```
 
-### Locations
+**Don't use tables.** Use simple lists and indentation.
 
-| Location | Namespace | Use For |
-|----------|-----------|---------|
-| `~/.claude/skills/{skill}/CHECKS.*.md` | `{skill}` | User-wide skill checks |
-| `~/.claude/checks/*.md` | `checks` | User-wide standalone checks |
-| `.claude/skills/{skill}/CHECKS.*.md` | `{skill}` | Project skill checks |
-| `.claude/checks/*.md` | `checks` | Project standalone checks |
-
-### Configuration
-
-Add to CLAUDE.md frontmatter:
-
-```yaml
----
-checks:
-  playwright:
-    paths:
-      - "apps/e2e/**"
-    disable:
-      flaky-check: true
-
-  tier: quality  # optional ceiling
----
-```
-
-### Tiers
-
-- `CHECKS.gate.md` — fast, mechanical (types pass, lint pass)
-- `CHECKS.quality.md` — structural, judgment-based (patterns)
-- `CHECKS.polish.md` — late-stage, edge cases
-- `CHECKS.md` — applies to all tiers
-
-Use `/review:checks:add` for guided check creation.
-```
+Show the check body/description only if user asks — default is just ID + tier.

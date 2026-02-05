@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-NOTIFY_SCRIPT="$HOME/.claude/skills/notify/send.sh"
+NOTIFY_SCRIPT="$HOME/.claude/skills/notify/scripts/send.sh"
 
 # Read hook input
 INPUT=$(cat)

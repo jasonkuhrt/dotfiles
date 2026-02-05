@@ -13,17 +13,17 @@ Send persistent macOS notifications via yo. Notifications stay visible until cli
 scripts/send.sh --title "Title" --subtitle "Message" --icon claude --bypass-focus
 ```
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--title` | `-t` | Main title (required) |
-| `--subtitle` | `-s` | Secondary text |
-| `--info` | `-n` | Third line (smaller) |
-| `--icon` | `-i` | Icon shortcut or path |
-| `--button` | `-b` | Action button label |
-| `--button-action` | `-a` | App to open on click |
-| `--button-script` | `-B` | Bash command on click |
-| `--sound` | `-z` | Sound name or "None" |
-| `--bypass-focus` | `-d` | Cut through DND |
+| Flag              | Short | Description           |
+| ----------------- | ----- | --------------------- |
+| `--title`         | `-t`  | Main title (required) |
+| `--subtitle`      | `-s`  | Secondary text        |
+| `--info`          | `-n`  | Third line (smaller)  |
+| `--icon`          | `-i`  | Icon shortcut or path |
+| `--button`        | `-b`  | Action button label   |
+| `--button-action` | `-a`  | App to open on click  |
+| `--button-script` | `-B`  | Bash command on click |
+| `--sound`         | `-z`  | Sound name or "None"  |
+| `--bypass-focus`  | `-d`  | Cut through DND       |
 
 ## Icons
 
@@ -50,5 +50,5 @@ scripts/send.sh --title "Server Down" --icon error --bypass-focus --sound Basso
 
 ## Requirements
 
-- yo installed at `~/Applications/yo.app` (via dotfiles sync)
-- For Focus Mode bypass: System Settings → Focus → Allowed Apps → Add "yo"
+* yo installed at `~/Applications/yo.app` (via dotfiles sync)
+* For Focus Mode bypass: System Settings → Focus → Allowed Apps → Add "yo"

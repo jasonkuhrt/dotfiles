@@ -13,31 +13,36 @@ set -euo pipefail
 
 YO_BIN="$HOME/Applications/yo.app/Contents/MacOS/yo"
 
+CORE_TYPES="/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources"
+
 # Icon shortcuts
 resolve_icon() {
   local icon="$1"
   case "$icon" in
-    claude)
-      echo "/Applications/Claude.app/Contents/Resources/electron.icns"
-      ;;
-    ghostty)
-      echo "/Applications/Ghostty.app/Contents/Resources/AppIcon.icns"
-      ;;
-    zed)
-      echo "/Applications/Zed.app/Contents/Resources/AppIcon.icns"
-      ;;
-    warning|alert)
-      echo "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/AlertNoteIcon.icns"
-      ;;
-    error|stop)
-      echo "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/AlertStopIcon.icns"
-      ;;
-    info)
-      echo "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/ToolbarInfo.icns"
-      ;;
-    success|check)
-      echo "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/ToolbarFavoritesIcon.icns"
-      ;;
+    # Apps
+    claude)      echo "/Applications/Claude.app/Contents/Resources/electron.icns" ;;
+    ghostty)     echo "/Applications/Ghostty.app/Contents/Resources/AppIcon.icns" ;;
+    zed)         echo "/Applications/Zed.app/Contents/Resources/AppIcon.icns" ;;
+    terminal)    echo "/System/Applications/Utilities/Terminal.app/Contents/Resources/Terminal.icns" ;;
+    finder)      echo "$CORE_TYPES/FinderIcon.icns" ;;
+    # Status
+    warning|alert)   echo "$CORE_TYPES/AlertNoteIcon.icns" ;;
+    error|stop)      echo "$CORE_TYPES/AlertStopIcon.icns" ;;
+    caution)         echo "$CORE_TYPES/AlertCautionBadgeIcon.icns" ;;
+    info)            echo "$CORE_TYPES/ToolbarInfo.icns" ;;
+    success|check)   echo "$CORE_TYPES/ToolbarFavoritesIcon.icns" ;;
+    # Actions
+    sync)        echo "$CORE_TYPES/Sync.icns" ;;
+    trash)       echo "$CORE_TYPES/FullTrashIcon.icns" ;;
+    clock)       echo "$CORE_TYPES/Clock.icns" ;;
+    gear)        echo "$CORE_TYPES/ToolbarAdvanced.icns" ;;
+    network)     echo "$CORE_TYPES/GenericNetworkIcon.icns" ;;
+    folder)      echo "$CORE_TYPES/GenericFolderIcon.icns" ;;
+    file)        echo "$CORE_TYPES/GenericDocumentIcon.icns" ;;
+    lock)        echo "$CORE_TYPES/LockedIcon.icns" ;;
+    unlock)      echo "$CORE_TYPES/UnlockedIcon.icns" ;;
+    user)        echo "$CORE_TYPES/UserIcon.icns" ;;
+    group)       echo "$CORE_TYPES/GroupIcon.icns" ;;
     *)
       # Assume it's a path
       echo "$icon"
@@ -45,11 +50,20 @@ resolve_icon() {
   esac
 }
 
+list_icons() {
+  cat <<'EOF'
+Apps:     claude, ghostty, zed, terminal, finder
+Status:   warning, error, caution, info, success
+Actions:  sync, trash, clock, gear, network, folder, file, lock, unlock, user, group
+Custom:   /path/to/icon.icns or /path/to/icon.png
+EOF
+}
+
 # Default values
 TITLE=""
 SUBTITLE=""
 INFO=""
-ICON=""
+ICON="claude"  # Default to Claude icon
 BUTTON=""
 BUTTON_ACTION=""
 BUTTON_SCRIPT=""
@@ -105,6 +119,10 @@ while [[ $# -gt 0 ]]; do
       CONTENT_IMAGE="$2"
       shift 2
       ;;
+    --list-icons)
+      list_icons
+      exit 0
+      ;;
     -*)
       echo "Unknown option: $1" >&2
       exit 1
@@ -143,9 +161,11 @@ YO_ARGS=(-t "$TITLE")
 [[ -n "$SUBTITLE" ]] && YO_ARGS+=(-s "$SUBTITLE")
 [[ -n "$INFO" ]] && YO_ARGS+=(-n "$INFO")
 
+# Use content-image (-c) for custom icon - appears on right side of notification
+# The -i flag only sets a secondary icon that yo displays, not the main visual
 if [[ -n "$ICON" ]]; then
   RESOLVED_ICON=$(resolve_icon "$ICON")
-  [[ -f "$RESOLVED_ICON" ]] && YO_ARGS+=(-i "$RESOLVED_ICON")
+  [[ -f "$RESOLVED_ICON" ]] && YO_ARGS+=(-c "$RESOLVED_ICON")
 fi
 
 [[ -n "$BUTTON" ]] && YO_ARGS+=(-b "$BUTTON")

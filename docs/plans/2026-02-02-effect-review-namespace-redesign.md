@@ -1,12 +1,6 @@
----
-name: effect-review
-description: >
-  Review Effect-based code for data structure exhaustiveness, Schema patterns, idiomatic
-  patterns, and best practices. Use when reviewing PRs, writing new Effect modules, creating
-  Schema classes, tagged unions, enums, type guards, or auditing existing code.
----
+# Effect Code Review — Full Rewrite
 
-# Effect Code Review
+> __For Claude:__ This replaces the entire content of `~/.claude/skills/effect_review/SKILL.md` (after the frontmatter).
 
 1. __Terminology__
 

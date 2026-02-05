@@ -364,6 +364,47 @@ else
 fi
 
 # ─────────────────────────────────────────────────────────────
+header "yo (Notification Tool)"
+
+# yo sends persistent macOS notifications from CLI
+# Not in Homebrew, so we download from GitHub releases
+# https://github.com/sheagcraig/yo
+YO_APP="$HOME/Applications/yo.app"
+YO_VERSION="2.0.1"
+
+if [ -d "$YO_APP" ]; then
+    skip "yo (persistent notifications)"
+else
+    info "Installing yo $YO_VERSION..."
+    mkdir -p "$HOME/Applications"
+
+    # Download and extract
+    YO_TMP="/tmp/yo-install-$$"
+    mkdir -p "$YO_TMP"
+
+    if curl -sL "https://github.com/sheagcraig/yo/releases/download/$YO_VERSION/yo-$YO_VERSION.pkg" -o "$YO_TMP/yo.pkg"; then
+        # Extract without sudo (pkg -> xar -> cpio)
+        pushd "$YO_TMP" > /dev/null
+        pkgutil --expand yo.pkg yo-expanded
+        gunzip -c yo-expanded/Payload > payload.cpio
+        mkdir extracted
+        pushd extracted > /dev/null
+        cpio -idm < ../payload.cpio 2>/dev/null
+        popd > /dev/null
+        popd > /dev/null
+
+        # Copy to ~/Applications
+        cp -R "$YO_TMP/extracted/Applications/Utilities/yo.app" "$YO_APP"
+        rm -rf "$YO_TMP"
+
+        task "yo installed to ~/Applications"
+    else
+        warn "Failed to download yo (see $LOG_FILE)"
+        rm -rf "$YO_TMP"
+    fi
+fi
+
+# ─────────────────────────────────────────────────────────────
 header "Node.js"
 
 # pnpm manages node versions; brew's node is just for bootstrapping pnpm

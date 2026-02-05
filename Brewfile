@@ -105,8 +105,14 @@ brew "awscli"        # AWS command line interface
 # ═══════════════════════════════════════════════════════════
 # System Tools (macOS)
 # ═══════════════════════════════════════════════════════════
-brew "dockutil"      # manage Dock items
-brew "mas"           # Mac App Store CLI
+brew "dockutil"           # manage Dock items
+brew "mas"                # Mac App Store CLI
+
+# Notification tools
+# - yo: Persistent notifications, custom icons - NOT in Homebrew, installed via sync script
+#   https://github.com/sheagcraig/yo
+# - terminal-notifier: Fallback (has issues on Sonoma+)
+brew "terminal-notifier"  # CLI notifications (fallback)
 
 # ═══════════════════════════════════════════════════════════
 # Email (CLI workflow)

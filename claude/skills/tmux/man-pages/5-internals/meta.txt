@@ -1,7 +1,0 @@
-SEE ALSO
-     pty(4)
-
-AUTHORS
-     Nicholas Marriott <nicholas.marriott@gmail.com>
-
-macOS 26.2		       January 25, 2026 		    macOS 26.2

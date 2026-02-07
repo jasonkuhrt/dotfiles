@@ -15,7 +15,7 @@ theme = tokyonight
 #
 
 font-family    = "Monaspace Neon"
-font-size      = 10
+font-size      = 14
 
 #
 # Window
@@ -37,6 +37,15 @@ cursor-opacity          = 0.3
 #
 
 clipboard-paste-protection = false
+
+#
+# Notifications & Bell
+#
+# OSC 777 notifications → macOS Notification Center (used by Claude Code hooks)
+# Bell features: dock bounce + badge for attention when unfocused
+#
+
+bell-features = attention
 
 #
 # Keybindings

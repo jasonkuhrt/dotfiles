@@ -30,7 +30,8 @@
     "**/dist",
     "**/build",
     "**/coverage",
-    "**/__snapshots__"
+    "**/__snapshots__",
+    "**/*.quality.md"
   ],
   "plugins": [
     "https://plugins.dprint.dev/typescript-0.95.13.wasm",

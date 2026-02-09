@@ -131,8 +131,12 @@ export const skillsOn = (targetInput: string, options: SkillsOnOptions) =>
 
     // ── Abort check ─────────────────────────────────────────────────
 
+    const toRow = (a: ValidatedInstall): Lib.ResultRow => ({
+      status: "ok", name: a.colonName, scope: options.scope, commitment: "pluggable",
+    })
+
     if (Lib.shouldAbort(batch, options.strict)) {
-      yield* Lib.reportBatch(batch, "on", (a) => a.colonName, { aborted: true })
+      yield* Lib.reportResults(Lib.batchToRows(batch, toRow, true))
       return yield* Effect.fail(new Error("Some targets failed"))
     }
 
@@ -195,5 +199,5 @@ export const skillsOn = (targetInput: string, options: SkillsOnOptions) =>
     yield* Lib.saveState(updatedState)
 
     // Report results
-    yield* Lib.reportBatch(batch, "on", (a) => a.colonName)
+    yield* Lib.reportResults(Lib.batchToRows(batch, toRow))
   })

@@ -138,25 +138,81 @@ export const emptyBatch = <$Action>(): BatchValidation<$Action> => ({
 export const shouldAbort = <$Action>(batch: BatchValidation<$Action>, strict: boolean): boolean =>
   batch.errors.length > 0 || (strict && batch.skips.length > 0)
 
-/** Log validation results using the standard output format. */
-export const reportBatch = <$Action>(
-  batch: BatchValidation<$Action>,
-  successLabel: string,
-  nameOf: (action: $Action) => string,
-  options?: { aborted?: boolean },
-) =>
+// ── ANSI helpers ──────────────────────────────────────────────────
+
+const ansi = {
+  green: (s: string) => `\x1b[32m${s}\x1b[0m`,
+  yellow: (s: string) => `\x1b[33m${s}\x1b[0m`,
+  red: (s: string) => `\x1b[31m${s}\x1b[0m`,
+  bold: (s: string) => `\x1b[1m${s}\x1b[0m`,
+  dim: (s: string) => `\x1b[2m${s}\x1b[0m`,
+}
+
+/** A structured result row for reporting batch operations. */
+export interface ResultRow {
+  readonly status: "ok" | "skip" | "error" | "abort"
+  readonly name: string
+  readonly scope?: string
+  readonly commitment?: string
+  readonly reason?: string
+}
+
+/** Convert a batch to structured result rows. */
+export const batchToRows = <A>(
+  batch: BatchValidation<A>,
+  actionToRow: (action: A) => ResultRow,
+  aborted?: boolean,
+): ResultRow[] => {
+  const rows: ResultRow[] = []
+  for (const action of batch.actions) {
+    if (aborted) {
+      const row = actionToRow(action)
+      rows.push({ ...row, status: "abort", reason: "not applied" })
+    } else {
+      rows.push(actionToRow(action))
+    }
+  }
+  for (const skip of batch.skips) {
+    rows.push({ status: "skip", name: skip.name, reason: skip.reason })
+  }
+  for (const err of batch.errors) {
+    rows.push({ status: "error", name: err.name, reason: err.reason })
+  }
+  return rows
+}
+
+/** Render result rows as a colored, column-aligned table. */
+export const reportResults = (rows: readonly ResultRow[]) =>
   Effect.gen(function* () {
-    if (batch.actions.length > 0 && !options?.aborted) {
-      yield* Console.log(`  ${successLabel}: ${batch.actions.map(nameOf).join(", ")}`)
+    if (rows.length === 0) return
+
+    const symbols: Record<ResultRow["status"], string> = {
+      ok: ansi.green("✓"),
+      skip: ansi.yellow("⊘"),
+      error: ansi.red("✗"),
+      abort: ansi.red("⊘"),
     }
-    if (batch.skips.length > 0) {
-      yield* Console.log(`  skip: ${batch.skips.map((s) => s.name).join(", ")} (${batch.skips[0]?.reason ?? "already"})`)
-    }
-    for (const err of batch.errors) {
-      yield* Console.error(`  error: ${err.name} (${err.reason})`)
-    }
-    if (options?.aborted && batch.actions.length > 0) {
-      yield* Console.error(`  abort: ${batch.actions.map(nameOf).join(", ")} (not applied)`)
+
+    const maxName = Math.max(...rows.map((r) => r.name.length))
+    const detailRows = rows.filter((r) => r.scope || r.commitment)
+    const maxScope = detailRows.length > 0
+      ? Math.max(...detailRows.map((r) => (r.scope ?? "").length))
+      : 0
+
+    for (const row of rows) {
+      const sym = symbols[row.status]
+      const name = ansi.bold(row.name.padEnd(maxName))
+
+      if ((row.scope || row.commitment) && row.status !== "skip" && row.status !== "error") {
+        const parts = [sym, name]
+        if (row.scope) parts.push(ansi.dim(row.scope.padEnd(maxScope)))
+        else if (maxScope > 0) parts.push("".padEnd(maxScope))
+        if (row.commitment) parts.push(ansi.dim(row.commitment))
+        if (row.status === "abort") parts.push(ansi.dim(row.reason ?? "not applied"))
+        yield* Console.log(`  ${parts.join("  ")}`)
+      } else {
+        yield* Console.log(`  ${sym}  ${name}  ${ansi.dim(row.reason ?? "")}`)
+      }
     }
   })
 
@@ -716,12 +772,28 @@ export const resolveLeaves = (relPath: string, libDir: string = LIBRARY_DIR): Ef
 /**
  * List all skills in the library (recursive tree walk).
  */
-export const listLibrary = () =>
+export const listLibrary = (dirs?: readonly string[]) =>
   Effect.gen(function* () {
-    const exists = yield* libraryExists()
-    if (!exists) return []
+    const searchDirs = dirs ?? [LIBRARY_DIR, projectLibraryDir()]
+    const seen = new Set<string>()
+    const results: SkillInfo[] = []
 
-    return yield* resolveLeaves("")
+    for (const dir of searchDirs) {
+      const exists = yield* Effect.tryPromise(async () => {
+        const s = await lstat(dir)
+        return s.isDirectory()
+      }).pipe(Effect.catchAll(() => Effect.succeed(false)))
+      if (!exists) continue
+
+      const leaves = yield* resolveLeaves("", dir)
+      for (const leaf of leaves) {
+        if (seen.has(leaf.libraryRelPath)) continue
+        seen.add(leaf.libraryRelPath)
+        results.push(leaf)
+      }
+    }
+
+    return results
   })
 
 // ── Outfit operations ──────────────────────────────────────────────

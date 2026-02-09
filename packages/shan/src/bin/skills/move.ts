@@ -62,9 +62,17 @@ export const skillsMove = (
 
     // ── Abort check ─────────────────────────────────────────────────
 
-    const label = `${axis} ${direction}`
+    const toRow = (a: ValidatedMove): Lib.ResultRow => {
+      if (axis === "scope") {
+        const scopeStr = direction === "up" ? "project → user" : "user → project"
+        return { status: "ok", name: a.colonName, scope: scopeStr }
+      }
+      const commitStr = direction === "up" ? "pluggable → core" : "core → pluggable"
+      return { status: "ok", name: a.colonName, commitment: commitStr }
+    }
+
     if (Lib.shouldAbort(batch, options.strict)) {
-      yield* Lib.reportBatch(batch, label, (a) => a.colonName, { aborted: true })
+      yield* Lib.reportResults(Lib.batchToRows(batch, toRow, true))
       return yield* Effect.fail(new Error("Some targets failed"))
     }
 
@@ -100,7 +108,7 @@ export const skillsMove = (
     yield* Lib.saveState(newState)
 
     // Report results
-    yield* Lib.reportBatch(batch, label, (a) => a.colonName)
+    yield* Lib.reportResults(Lib.batchToRows(batch, toRow))
 
     // Collateral notifications for cross-project uninstalls
     for (const sub of allSubActions) {

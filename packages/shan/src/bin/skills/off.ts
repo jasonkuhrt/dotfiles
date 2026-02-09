@@ -21,25 +21,25 @@ interface ValidatedUninstall {
   readonly flatName: string
   readonly colonName: string
   readonly linkPath: string
+  readonly scope: Lib.Scope
 }
 
 export const skillsOff = (targetInput: string, options: SkillsOffOptions) =>
   Effect.gen(function* () {
-    const exists = yield* Lib.libraryExists(options.scope)
+    const exists = yield* Lib.libraryExists()
     if (!exists) {
       yield* Console.error("No skills library found.")
       return yield* Effect.fail(new Error("Library not found"))
     }
 
-    const dir = Lib.outfitDir(options.scope)
-
     // No targets = reset all pluggable (non-atomic — always succeeds)
     if (!targetInput) {
-      yield* resetAll(dir, options.scope)
+      yield* resetAll(Lib.outfitDir(options.scope), options.scope)
       return
     }
 
     const targets = Lib.parseTargets(targetInput)
+    const searchScopes: Lib.Scope[] = ["project", "user"]
 
     // ── Phase 1: Validate all targets (no side effects) ─────────────
 
@@ -63,77 +63,100 @@ export const skillsOff = (targetInput: string, options: SkillsOffOptions) =>
 
       for (const leaf of resolved.leaves) {
         const flatName = Lib.flattenName(leaf.libraryRelPath)
-        const linkPath = path.join(dir, flatName)
 
-        const stat = yield* Effect.tryPromise(() => lstat(linkPath)).pipe(
-          Effect.catchAll(() => Effect.succeed(null)),
-        )
+        // Search both scopes for the symlink
+        let found = false
+        for (const checkScope of searchScopes) {
+          const checkDir = Lib.outfitDir(checkScope)
+          const linkPath = path.join(checkDir, flatName)
 
-        if (!stat) {
-          batch.skips.push({ name: leaf.colonName, reason: "already off" })
-          continue
+          const stat = yield* Effect.tryPromise(() => lstat(linkPath)).pipe(
+            Effect.catchAll(() => Effect.succeed(null)),
+          )
+          if (!stat) continue
+
+          found = true
+          if (stat.isSymbolicLink()) {
+            batch.actions.push({ flatName, colonName: leaf.colonName, linkPath, scope: checkScope })
+          } else if (stat.isDirectory()) {
+            batch.errors.push({ name: leaf.colonName, reason: "cannot turn off core skill" })
+          }
+          break
         }
 
-        if (stat.isSymbolicLink()) {
-          batch.actions.push({ flatName, colonName: leaf.colonName, linkPath })
-        } else if (stat.isDirectory()) {
-          batch.errors.push({ name: leaf.colonName, reason: "cannot turn off core skill" })
+        if (!found) {
+          batch.skips.push({ name: leaf.colonName, reason: "already off" })
         }
       }
     }
 
     // ── Abort check ─────────────────────────────────────────────────
 
+    const toRow = (a: ValidatedUninstall): Lib.ResultRow => ({
+      status: "ok", name: a.colonName, scope: a.scope, commitment: "pluggable",
+    })
+
     if (Lib.shouldAbort(batch, options.strict)) {
-      yield* Lib.reportBatch(batch, "off", (a) => a.colonName, { aborted: true })
+      yield* Lib.reportResults(Lib.batchToRows(batch, toRow, true))
       return yield* Effect.fail(new Error("Some targets failed"))
     }
 
     // ── Phase 2: Execute all mutations ──────────────────────────────
 
-    // Snapshot before mutations
-    const state = yield* Lib.loadState()
-    const config = yield* Lib.loadConfig()
-    const snapshotBefore = yield* Lib.snapshotOutfit(options.scope)
-    const routersBefore = yield* Lib.detectGeneratedRouters(options.scope)
+    const affectedScopes = new Set(batch.actions.map((a) => a.scope))
+
+    // Snapshot before mutations (per affected scope)
+    const snapshots = new Map<Lib.Scope, string[]>()
+    const routersBeforeMap = new Map<Lib.Scope, string[]>()
+    for (const scope of affectedScopes) {
+      snapshots.set(scope, yield* Lib.snapshotOutfit(scope))
+      routersBeforeMap.set(scope, yield* Lib.detectGeneratedRouters(scope))
+    }
 
     // Remove symlinks
     for (const action of batch.actions) {
       yield* Effect.tryPromise(() => unlink(action.linkPath))
     }
 
-    // Auto-router cleanup for top-level groups
-    for (const groupName of groupsToClean) {
-      yield* cleanupRouter(dir, groupName, options.scope)
+    // Auto-router cleanup for top-level groups (per affected scope)
+    for (const scope of affectedScopes) {
+      const scopeDir = Lib.outfitDir(scope)
+      for (const groupName of groupsToClean) {
+        yield* cleanupRouter(scopeDir, groupName, scope)
+      }
     }
 
     // Update current state
+    const state = yield* Lib.loadState()
+    const config = yield* Lib.loadConfig()
     let updatedState = state
     for (const action of batch.actions) {
-      updatedState = Lib.removeCurrentInstall(updatedState, options.scope, action.flatName)
+      updatedState = Lib.removeCurrentInstall(updatedState, action.scope, action.flatName)
     }
 
-    // Record history
-    const history = Lib.getProjectHistory(updatedState, options.scope)
-    if (history.undoneCount > 0) {
-      history.entries.splice(history.entries.length - history.undoneCount)
-      history.undoneCount = 0
+    // Record history per affected scope
+    for (const scope of affectedScopes) {
+      const history = Lib.getProjectHistory(updatedState, scope)
+      if (history.undoneCount > 0) {
+        history.entries.splice(history.entries.length - history.undoneCount)
+        history.undoneCount = 0
+      }
+      history.entries.push(Lib.OffOp({
+        targets,
+        scope,
+        timestamp: new Date().toISOString(),
+        snapshot: snapshots.get(scope)!,
+        generatedRouters: routersBeforeMap.get(scope)!,
+      }))
+      if (history.entries.length > config.skills.historyLimit) {
+        history.entries.splice(0, history.entries.length - config.skills.historyLimit)
+      }
+      updatedState = Lib.setProjectHistory(updatedState, scope, history)
     }
-    history.entries.push(Lib.OffOp({
-      targets,
-      scope: options.scope,
-      timestamp: new Date().toISOString(),
-      snapshot: snapshotBefore,
-      generatedRouters: routersBefore,
-    }))
-    if (history.entries.length > config.skills.historyLimit) {
-      history.entries.splice(0, history.entries.length - config.skills.historyLimit)
-    }
-    updatedState = Lib.setProjectHistory(updatedState, options.scope, history)
     yield* Lib.saveState(updatedState)
 
     // Report results
-    yield* Lib.reportBatch(batch, "off", (a) => a.colonName)
+    yield* Lib.reportResults(Lib.batchToRows(batch, toRow))
   })
 
 /** Reset all pluggable skills at the given scope. */

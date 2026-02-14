@@ -1,3 +1,16 @@
 {
-  "enabledPlugins": {}
+  "enabledPlugins": {},
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude/hooks/scripts/auto-approve-my-skills.sh"
+          }
+        ]
+      }
+    ]
+  }
 }

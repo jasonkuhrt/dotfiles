@@ -91,7 +91,12 @@
       "cmd-L": "agent::ToggleFocus",
       "cmd-h": "workspace::ToggleLeftDock",
       "cmd-j": "workspace::ToggleBottomDock",
-      "cmd-H": "project_panel::ToggleFocus"
+      "cmd-H": "project_panel::ToggleFocus",
+      // Split creation (symmetric with Ghostty)
+      "ctrl-cmd-h": "pane::SplitLeft",
+      "ctrl-cmd-j": "pane::SplitDown",
+      "ctrl-cmd-k": "pane::SplitUp",
+      "ctrl-cmd-l": "pane::SplitRight"
     }
   },
   {

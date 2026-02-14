@@ -53,3 +53,19 @@ bell-features = attention
 
 keybind = ctrl+apostrophe=clear_screen
 keybind = shift+enter=text:\n
+
+# Split navigation (symmetric with Zed pane navigation)
+keybind = ctrl+h=goto_split:left
+keybind = ctrl+j=goto_split:down
+keybind = ctrl+k=goto_split:up
+keybind = ctrl+l=goto_split:right
+
+# Split creation (symmetric with Zed)
+keybind = ctrl+cmd+h=new_split:left
+keybind = ctrl+cmd+j=new_split:down
+keybind = ctrl+cmd+k=new_split:up
+keybind = ctrl+cmd+l=new_split:right
+
+# Split management
+keybind = ctrl+cmd+z=toggle_split_zoom
+keybind = ctrl+cmd+0=equalize_splits

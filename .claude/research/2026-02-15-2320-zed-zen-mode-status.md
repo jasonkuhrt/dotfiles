@@ -2,13 +2,34 @@
 
 Research on Zed's zen mode / distraction-free editing capabilities.
 
+**Last verified**: 2026-02-15
+
+## Issue Status (Verified via `gh` CLI)
+
+| Issue/PR | State | Title |
+|----------|-------|-------|
+| [#4382](https://github.com/zed-industries/zed/issues/4382) | CLOSED | Zen mode |
+| [#5120](https://github.com/zed-industries/zed/issues/5120) | **OPEN** | Add options to hide title and status bar |
+| [PR #37428](https://github.com/zed-industries/zed/pull/37428) | MERGED | Add setting to show/hide title bar |
+| [PR #38756](https://github.com/zed-industries/zed/pull/38756) | MERGED | Revert "Add setting to show/hide title bar" |
+
 ## Current State (Feb 2026)
 
 Zed has **partial** zen mode support via profiles, but true distraction-free mode is blocked by title bar issues.
 
-## What's Available Now (v0.199+)
+### Title Bar Hiding: Added Then Reverted
 
-Via profiles, you can hide:
+- PR #37428 added title bar hiding
+- PR #38756 **reverted** it due to macOS rendering issues:
+  - Native tabs disappeared when title bar hidden
+  - Window control buttons overlapped with tabs
+  - Team planning UI redesign that requires title bar
+
+**Result**: Title bar cannot currently be hidden.
+
+## What's Available Now
+
+Via settings profiles, you can hide:
 - Tab bar, breadcrumbs, quick actions
 - Line numbers, folds, indent guides
 - Scrollbar elements (git diff, diagnostics)
@@ -17,27 +38,13 @@ Via profiles, you can hide:
 
 ## What's Still Missing
 
-1. **Title bar hiding** - PR #37428 was merged then **reverted** (Sep 2025) due to macOS rendering issues:
-   - Native tabs disappeared when title bar hidden
-   - Window control buttons overlapped with tabs
-   - Team planning UI redesign that requires title bar
-
-2. **Status bar hiding** - Still requested, no implementation
-
-3. **Single toggle command** - No unified "zen mode" keybinding that toggles everything at once
-
-## Key Issues to Watch
-
-| Issue | Status | Reactions | Description |
-|-------|--------|-----------|-------------|
-| [#4382](https://github.com/zed-industries/zed/issues/4382) | Closed | - | Original zen mode request |
-| [#5120](https://github.com/zed-industries/zed/issues/5120) | Open | 333+ | Hide title/status bar (main blocker) |
-| [#36882](https://github.com/zed-industries/zed/discussions/36882) | Active | - | Profile-based zen mode workaround |
-| [#37230](https://github.com/zed-industries/zed/discussions/37230) | Closed | - | "Full Zen" request, redirected to #36882 |
+1. **Title bar hiding** - Reverted, no current solution
+2. **Status bar hiding** - Still requested in #5120
+3. **Single toggle command** - No unified "zen mode" keybinding
 
 ## Workaround: Focus Profile
 
-Create a profile in `settings.json` that hides available elements:
+Create a profile in `settings.json`:
 
 ```json
 {
@@ -55,7 +62,9 @@ Create a profile in `settings.json` that hides available elements:
 }
 ```
 
-Then toggle with `workspace::ActivateProfile` command.
+Toggle with `settings_profile_selector::Toggle` action.
+
+**Limitation**: Title bar and status bar remain visible.
 
 ## Comparison with nvim
 
@@ -67,4 +76,6 @@ nvim's zen-mode.nvim (folke) provides superior zen mode:
 
 ## Conclusion
 
-For serious distraction-free writing/coding, nvim with zen-mode.nvim is currently better than Zed. Watch issue #5120 for title bar hiding progress.
+For true distraction-free editing, nvim with zen-mode.nvim is currently better than Zed.
+
+**Watch**: [#5120](https://github.com/zed-industries/zed/issues/5120) (OPEN) for title/status bar hiding progress.

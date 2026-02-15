@@ -96,7 +96,11 @@
       "ctrl-cmd-h": "pane::SplitLeft",
       "ctrl-cmd-j": "pane::SplitDown",
       "ctrl-cmd-k": "pane::SplitUp",
-      "ctrl-cmd-l": "pane::SplitRight"
+      "ctrl-cmd-l": "pane::SplitRight",
+      // Profile selector (for switching settings like hiding UI elements)
+      "ctrl-cmd-p": "settings_profile_selector::Toggle",
+      // Focus mode: centered layout + zoom in one toggle
+      "ctrl-cmd-f": ["action::Sequence", ["workspace::ToggleCenteredLayout", "workspace::ToggleZoom"]]
     }
   },
   {

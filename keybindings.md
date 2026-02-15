@@ -55,12 +55,22 @@ Create new splits with `ctrl+cmd+hjkl`.
 | `J` | Scroll down | `vim::ScrollDown` | `<C-d>` |
 | `K` | Scroll up | `vim::ScrollUp` | `<C-u>` |
 
-## Zen Mode
+## Zen Mode / Focus
 
 | Key | App | Action |
 |-----|-----|--------|
-| `space z` | Zed | `workspace::ToggleZoom` |
-| `space z` | nvim | `:ZenMode` (zen-mode.nvim) |
+| `space z` | nvim | `:ZenMode` (zen-mode.nvim) - single toggle |
+| `ctrl+cmd+f` | Zed | Centered + Zoom (via `action::Sequence`) |
+| `ctrl+cmd+p` | Zed | Profile selector (hide UI elements) |
+
+### Zed Focus Mode
+
+Two-step process (profile activation is async, can't be sequenced):
+
+1. `ctrl+cmd+p` → select "focus" profile (hides tab bar, gutter, etc.)
+2. `ctrl+cmd+f` → toggle centered layout + zoom together
+
+**Limitation**: Title bar and status bar remain visible ([#5120](https://github.com/zed-industries/zed/issues/5120) - OPEN).
 
 ## App-Specific Configs
 

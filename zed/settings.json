@@ -22,6 +22,26 @@
   "session": {
     "trust_all_worktrees": true
   },
+  //
+  // Profiles - toggle with settings_profile_selector::Toggle (ctrl+opt+cmd+P)
+  // Limitation: title bar and status bar remain visible (see #5120)
+  //
+  "profiles": {
+    "focus": {
+      "tab_bar": { "show": false, "show_nav_history_buttons": false },
+      "toolbar": { "breadcrumbs": false, "quick_actions": false },
+      "gutter": { "line_numbers": false, "folds": false },
+      "indent_guides": { "enabled": false },
+      "current_line_highlight": "none",
+      "scrollbar": { "show": "never" },
+      "centered_layout": { "left_padding": 0.3, "right_padding": 0.3 }
+    },
+    "presentation": {
+      "buffer_font_size": 20,
+      "ui_font_size": 18,
+      "theme": "One Light"
+    }
+  },
   "auto_install_extensions": {
     "astro": false,
     "catppuccin": true,

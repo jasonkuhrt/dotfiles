@@ -517,8 +517,7 @@
       "m r": "editor::FindAllReferences",
       "m j": "editor::GoToDiagnostic",
       "m K": "editor::GoToPreviousDiagnostic",
-      "space f": "workspace::ToggleCenteredLayout",
-      "space z": "workspace::ToggleZoom",
+      "space z": ["action::Sequence", ["workspace::ToggleCenteredLayout", "workspace::ToggleZoom"]],
       ///
       // ─ Unsure about these ones
       //

@@ -74,6 +74,28 @@ nvim's zen-mode.nvim (folke) provides superior zen mode:
 - Centers content with configurable width
 - Single toggle command
 
+## Community Solution (from #4382)
+
+The community uses **profiles** as the zen mode workaround. @gldtn's config:
+
+```json
+"profiles": {
+  "Focus": {
+    "ui_font_size": 16,
+    "buffer_font_size": 18,
+    "buffer_line_height": { "custom": 2.0 },
+    "tab_bar": { "show": false, "show_nav_history_buttons": false },
+    "toolbar": { "breadcrumbs": false, "quick_actions": false },
+    "gutter": { "line_numbers": false, "folds": false, "breakpoints": false, "runnables": false, "min_line_number_digits": 0 },
+    "indent_guides": { "enabled": false },
+    "current_line_highlight": "none",
+    "scrollbar": { "show": "never", "cursors": false, "git_diff": false, "diagnostics": "none", "search_results": false, "selected_symbol": false }
+  }
+}
+```
+
+**No single-keybind solution exists.** People accept using the profile picker (`settings_profile_selector::Toggle`).
+
 ## Conclusion
 
 For true distraction-free editing, nvim with zen-mode.nvim is currently better than Zed.

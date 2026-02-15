@@ -77,9 +77,31 @@ fi
 link_subdir "$HERE/claude/commands" "$HOME/.claude/commands" "claude/commands"
 link_subdir "$HERE/claude/rules" "$HOME/.claude/rules" "claude/rules"
 link_subdir "$HERE/claude/skills" "$HOME/.claude/skills" "claude/skills"
+link_subdir "$HERE/claude/skills-library" "$HOME/.claude/skills-library" "claude/skills-library"
 link_subdir "$HERE/claude/hooks/scripts" "$HOME/.claude/hooks/scripts" "claude/hooks/scripts"
 link_subdir "$HERE/claude/schemas" "$HOME/.claude/schemas" "claude/schemas"
 link_subdir "$HERE/claude/checks" "$HOME/.claude/checks" "claude/checks"
+
+# ─────────────────────────────────────────────────────────────
+header "Agents"
+
+mkdir -p "$HERE/agents/skills"
+# Seed Codex system skills once so they are preserved in the neutral agents tree.
+if [ ! -e "$HERE/agents/skills/.system" ] && [ -d "$HOME/.codex/skills/.system" ]; then
+    cp -a "$HOME/.codex/skills/.system" "$HERE/agents/skills/.system"
+    task "agents/skills/.system ${DIM}seeded from ~/.codex/skills/.system${RESET}"
+fi
+# Keep shared custom skills in lockstep with claude/skills without touching .system.
+sync_symlink_children_diff "$HERE/claude/skills" "$HERE/agents/skills" "../../claude/skills" ".system" "agents/skills"
+
+ensure_real_dir "$HOME/.agents" "$HERE/agents"
+link_subdir "$HERE/agents/skills" "$HOME/.agents/skills" "agents/skills"
+
+# ─────────────────────────────────────────────────────────────
+header "Codex"
+
+ensure_real_dir "$HOME/.codex" "$HERE/codex"
+link_subdir "$HERE/agents/skills" "$HOME/.codex/skills" "codex/skills"
 
 # ─────────────────────────────────────────────────────────────
 header "Zed"
@@ -530,6 +552,10 @@ if [ "$(uname)" = "Darwin" ]; then
     set_default "NSGlobalDomain" "NSAutomaticDashSubstitutionEnabled" "-bool" "false" "Disabled smart dashes"
     set_default "NSGlobalDomain" "NSAutomaticSpellingCorrectionEnabled" "-bool" "false" "Disabled auto-correct"
     set_default "NSGlobalDomain" "AppleKeyboardUIMode" "-int" "3" "Full keyboard access (Tab in dialogs)"
+
+    info "Configuring screenshots..."
+    mkdir -p "$HOME/Pictures/Screenshots"
+    set_default "com.apple.screencapture" "location" "-string" "$HOME/Pictures/Screenshots" "Screenshots save to ~/Pictures/Screenshots"
 
     info "Configuring Finder..."
     set_default "NSGlobalDomain" "AppleShowAllExtensions" "-bool" "true" "Show all file extensions"

@@ -1,6 +1,6 @@
-# Skill Scripts Use Bun
+# Skill Scripts: Correct Interpreter
 
-**Always use `bun` to run TypeScript scripts under `~/.claude/skills/`.**
+**TypeScript (`.ts`) scripts** under `~/.claude/skills/` must use `bun`:
 
 ```bash
 # Correct
@@ -12,4 +12,14 @@ npx tsx ~/.claude/skills/<skill>/scripts/<name>.ts
 node ~/.claude/skills/<skill>/scripts/<name>.ts
 ```
 
-A PreToolUse hook enforces this at runtime.
+**Bash (`.sh`) scripts** under `~/.claude/skills/` must use `bash`:
+
+```bash
+# Correct
+bash ~/.claude/skills/<skill>/scripts/<name>.sh [args]
+
+# Wrong - bun cannot parse bash syntax
+bun ~/.claude/skills/<skill>/scripts/<name>.sh [args]
+```
+
+PreToolUse hooks enforce both rules at runtime.

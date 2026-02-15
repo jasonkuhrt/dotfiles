@@ -58,15 +58,7 @@ The `export-state/` directory created by beads hooks contains machine-specific p
 
 ## CleanShot X Preferences Sync
 
-Explore syncing CleanShot settings across machines. Known locations:
-
-* `~/Library/Preferences/pl.maketheweb.cleanshotx.plist` (defaults)
-* `~/Library/Application Support/CleanShot X/` (possibly)
-
-Options to investigate:
-
-1. Export plist and restore via `defaults import` in sync script
-2. Symlink the plist (may cause issues if app is running)
+**Status:** In progress. Settings are in `IKPreferencesLast`, a JSON blob stored as binary data inside `~/Library/Preferences/pl.maketheweb.cleanshotx.plist`. The blob is deserializable (Python `plistlib` + `json.loads`). Working on a declarative JSON config approach for managing desired settings.
 
 ## Tools to Evaluate
 

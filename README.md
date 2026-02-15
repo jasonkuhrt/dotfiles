@@ -34,4 +34,5 @@
 | [Manual setup](docs/manual-setup.md) | Post-sync configuration steps |
 | [CLI tools](docs/cli-tools.md) | Reference for installed tools |
 | [Known limitations](docs/known-limitations.md) | Bugs, workarounds, TODOs |
+| [Decisions](DECISIONS.md) | Architecture decision records (the "why") |
 | [Inspiration](docs/inspiration.md) | Other dotfiles & resources |

@@ -28,9 +28,8 @@ bookmarks/.sync-state.json
 # flo skill state (machine-local epic context)
 .flo/
 
+# Temporary review/exploration clones
+tmp/
+
 # Node.js
 node_modules/
-
-# shan-managed (do not edit)
-.claude/skills/tips
-# end shan-managed

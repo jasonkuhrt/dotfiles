@@ -5,7 +5,7 @@ paths:
 
 # TypeScript
 
-Code conventions are defined as checks in `~/.claude/checks/typescript.quality.md`. Run `/review @checks` to evaluate.
+Code conventions are defined as checks in `~/.claude/checks/typescript.quality.md`. Run `/check @checks` to evaluate.
 
 ## Script Execution
 

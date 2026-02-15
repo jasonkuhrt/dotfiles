@@ -48,7 +48,22 @@ Create new splits with `ctrl+cmd+hjkl`.
 | `shift+enter` | Newline | `text:\n` | `terminal::SendText` |
 | `ctrl+'` | Clear screen | `clear_screen` | — |
 
+## Scrolling
+
+| Key | Action | Zed | nvim |
+|-----|--------|-----|------|
+| `J` | Scroll down | `vim::ScrollDown` | `<C-d>` |
+| `K` | Scroll up | `vim::ScrollUp` | `<C-u>` |
+
+## Zen Mode
+
+| Key | App | Action |
+|-----|-----|--------|
+| `space z` | Zed | `workspace::ToggleZoom` |
+| `space z` | nvim | `:ZenMode` (zen-mode.nvim) |
+
 ## App-Specific Configs
 
 - Ghostty: [`ghostty/config`](ghostty/config)
 - Zed: [`zed/keymap.json`](zed/keymap.json)
+- nvim: [`vim/vimrc`](vim/vimrc)

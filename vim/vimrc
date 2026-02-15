@@ -70,9 +70,10 @@ Plug 'folke/tokyonight.nvim'
 
 " Plug 'dietsche/vim-lastplace'
 
-" Distraction-free writing in Vim
+" Distraction-free writing (zen mode)
 
-" Plug 'junegunn/goyo.vim'
+Plug 'folke/zen-mode.nvim'
+Plug 'folke/twilight.nvim'
 
 " Git integration
 
@@ -429,9 +430,18 @@ hi NonText guifg=bg ctermfg=black
 "let g:syntastic_check_on_open = 1
 "let g:syntastic_check_on_wq = 0
 
-"nnoremap <space> :Goyo<CR>
-"let g:goyo_margin_top=2
-"let g:goyo_margin_bottom=0
+" Scrolling (aligns with Zed's J/K)
+nnoremap J <C-d>
+nnoremap K <C-u>
+vnoremap J <C-d>
+vnoremap K <C-u>
+
+" Zen mode (aligns with Zed's space z)
+lua << EOF
+require("zen-mode").setup({})
+require("twilight").setup({})
+EOF
+nnoremap <space>z :ZenMode<CR>
 
 "augroup pencil
 " autocmd!

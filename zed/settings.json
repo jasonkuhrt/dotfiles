@@ -113,9 +113,10 @@
   //
   "unnecessary_code_fade": 0.7,
   "centered_layout": {
-    "left_padding": 0,
-    "right_padding": 0
+    "left_padding": 0.25,
+    "right_padding": 0.25
   },
+  "preferred_line_length": 100,
   "active_pane_modifiers": {
     // "inactive_opacity": 0.6
   },

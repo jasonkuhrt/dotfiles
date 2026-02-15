@@ -35,6 +35,11 @@ set --export CLAUDE_CODE_MAX_OUTPUT_TOKENS 22000
 # Docs: https://code.claude.com/docs/en/skills#claude-doesnt-see-all-my-skills
 set --export SLASH_COMMAND_TOOL_CHAR_BUDGET 30000
 
+# Claude Code: enable agent teams (experimental)
+# Unlocks TeamCreate, TaskCreate, TaskUpdate, TaskList, SendMessage tools
+# Docs: https://code.claude.com/docs/en/agent-teams
+set --export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS 1
+
 # Direnv: lazy-load only when needed (saves ~130ms startup)
 # Auto-activates if .envrc exists in current dir, otherwise run `direnv-init`
 set -gx DIRENV_LOG_FORMAT ""  # Silence "loading" messages

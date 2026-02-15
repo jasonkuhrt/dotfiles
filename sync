@@ -147,14 +147,16 @@ fi
 # ─────────────────────────────────────────────────────────────
 header "Neovim"
 
-ensure_real_dir "$HOME/.config/nvim" "$HERE/nvim"
-link_file "$HERE/nvim/init.vim" "$HOME/.config/nvim/init.vim" "nvim/init.vim"
+# LazyVim: symlink entire nvim config directory
+# Runtime data goes to ~/.local/share/nvim (not config dir)
+# lazy-lock.json lives in config dir and is tracked in dotfiles for reproducibility
+link_subdir "$HERE/nvim" "$HOME/.config/nvim" "nvim"
 
-# Install vim-plug plugins headlessly
+# Bootstrap lazy.nvim plugins headlessly on fresh install
 if has_cmd nvim; then
-    if [ ! -d "$HOME/.vim/plugged/tokyonight.nvim" ]; then
-        info "Installing Neovim plugins..."
-        if run_logged "nvim PlugInstall" nvim --headless +PlugInstall +qall 2>/dev/null; then
+    if [ ! -d "$HOME/.local/share/nvim/lazy/lazy.nvim" ]; then
+        info "Installing Neovim plugins (LazyVim)..."
+        if run_logged "nvim lazy install" nvim --headless "+Lazy! sync" +qa 2>/dev/null; then
             task "Neovim plugins installed"
         else
             warn "Neovim plugin install failed (see $LOG_FILE)"

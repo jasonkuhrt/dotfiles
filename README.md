@@ -16,6 +16,16 @@ chezmoi apply
 #    See docs/manual-setup.md
 ```
 
+After initial setup, **`just` is the primary interface.** The bootstrap installs Homebrew → just, so from this point forward everything goes through the justfile:
+
+```sh
+cd ~/projects/jasonkuhrt/dotfiles
+just          # see all available recipes
+just sync     # commit + pull + push + apply (daily driver)
+just apply    # just apply without git sync
+just diff     # preview what apply would change
+```
+
 ---
 
 ## How This Repo Is Organized
@@ -96,70 +106,83 @@ Some files live inside `home/` but are **not deployed** to `$HOME`. They exist s
 
 ## Daily Workflows
 
-### Editing a Config
+### The Sync Loop
 
-You have two ways to edit any managed config file:
+The most common operation — edit something, deploy it, push it:
 
 ```sh
-# Option A: Edit the source file directly (you need to know where it is)
-nvim ~/projects/jasonkuhrt/dotfiles/home/dot_config/fish/config.fish
+# Edit a config (opens source file in $EDITOR from target path)
+just edit ~/.config/fish/config.fish
 
-# Option B: Let chezmoi find the source file from the target path
-chezmoi edit ~/.config/fish/config.fish   # opens the source file in $EDITOR
+# Preview what changed
+just diff
+
+# Commit + pull + push + apply (the daily driver)
+just sync
 ```
 
-After editing, deploy your change:
+Or if you just want to apply without git sync:
 
 ```sh
-chezmoi apply -v   # or: just apply
+just apply
+```
+
+### Editing a Config
+
+Two ways to find and edit a managed file:
+
+```sh
+# By target path (chezmoi resolves it to the source file)
+just edit ~/.config/fish/config.fish
+
+# By source path directly (you need to know where it is)
+nvim home/dot_config/fish/config.fish
 ```
 
 ### Adding a New Config File
 
-To bring a new file under chezmoi management:
-
 ```sh
+# Bring an existing file under management
 chezmoi add ~/.config/foo/bar.toml
-# This copies the file into home/ with proper naming (dot_config/foo/bar.toml)
-# and chezmoi will manage it from now on
+# → copies into home/dot_config/foo/bar.toml
 
-# For secrets:
+# For secrets (encrypted at rest)
 chezmoi add --encrypt ~/.config/fish/config.secrets.fish
 ```
 
 ### Capturing External Changes
 
-Some tools write to files that chezmoi also manages. When that happens, chezmoi detects the drift. To pull those changes back into source:
+Some tools write to files chezmoi manages. Pull those changes back into source:
 
 ```sh
 # Fisher modified fish_plugins
-chezmoi re-add ~/.config/fish/fish_plugins
+just re-add ~/.config/fish/fish_plugins
 
 # Lazy.nvim updated lazy-lock.json
-chezmoi re-add ~/.config/nvim/lazy-lock.json
+just re-add ~/.config/nvim/lazy-lock.json
 
 # Check for drift across all managed files
-chezmoi verify
+just verify
 ```
 
 ### Adding a Homebrew Package
 
-1. Edit `home/Brewfile` — add your `brew`, `cask`, or `mas` line
-2. Run `chezmoi apply` — the brew-bundle script re-runs automatically (it detects the Brewfile hash changed)
-3. Or run directly: `just brew`
+1. Edit `home/Brewfile`
+2. `just sync` — the brew-bundle script re-runs automatically (detects Brewfile hash changed)
+
+Or run brew directly: `just brew`
 
 ### Adding a Claude Code Skill/Rule/Command
 
-Global CC config (applies to all projects) lives in `home/dot_claude/`. The `exact_` prefix on subdirectories means chezmoi will **remove** any file at `~/.claude/skills/` (or `/rules/`, `/commands/`, etc.) that isn't present in source. This keeps deployed config clean.
+Global CC config lives in `home/dot_claude/`. The `exact_` prefix means chezmoi **removes** anything at `~/.claude/skills/` not present in source:
 
 ```sh
-# Add a new skill
 mkdir -p home/dot_claude/exact_skills/my-skill
 # Write SKILL.md
-chezmoi apply
+just apply
 ```
 
-Project-local CC config (only for the dotfiles repo) lives in `.claude/` at the repo root. This is standard git — chezmoi doesn't touch it.
+Project-local CC config (dotfiles repo only) lives in `.claude/` at the repo root — standard git, chezmoi doesn't touch it.
 
 ### Adding a macOS Default
 
@@ -168,8 +191,8 @@ Edit `home/.chezmoiscripts/run_onchange_after_08-macos-defaults.sh.tmpl`. The sc
 ### Previewing Before Applying
 
 ```sh
-chezmoi diff       # show what would change (unified diff format)
-chezmoi apply --dry-run   # simulate apply without writing
+just diff                    # unified diff of what would change
+just apply -- --dry-run      # simulate apply without writing
 ```
 
 ---
@@ -269,14 +292,23 @@ Claude Code skills are the source of truth at `~/.claude/skills/` (deployed by c
 ### justfile (from repo root)
 
 ```sh
-just apply          # chezmoi apply -v
+# Core workflow
+just sync           # commit + pull + push + apply (daily driver)
+just apply          # apply without git sync
 just diff           # preview changes
+
+# Inspection
 just doctor         # system health check
 just verify         # detect drift
-just re-add <file>  # capture external changes
-just edit <target>  # edit source by target path
 just managed        # list all managed files
+just unmanaged      # find unmanaged files in ~/.config
+
+# Editing
+just edit <target>  # edit source by target path
+just re-add <file>  # capture external changes
 just update         # git pull + apply
+
+# Brew
 just brew           # run brew bundle
 just brew-check     # show what's missing
 just brew-cleanup   # remove unlisted packages

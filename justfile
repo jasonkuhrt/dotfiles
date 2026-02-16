@@ -9,8 +9,23 @@ default:
     just --list
 
 # ─────────────────────────────────────────────────────────
-# Chezmoi
+# Core workflow
 # ─────────────────────────────────────────────────────────
+
+# Full sync: commit, pull, push, apply
+sync:
+    #!/usr/bin/env bash
+    set -e
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "── Committing changes ──"
+        git add -A
+        git commit -v
+    fi
+    echo "── Git sync ──"
+    git pull --rebase
+    git push
+    echo "── Applying dotfiles ──"
+    chezmoi apply -v
 
 # Apply dotfiles (preview with --dry-run)
 apply *args:
@@ -20,6 +35,10 @@ apply *args:
 diff:
     chezmoi diff
 
+# ─────────────────────────────────────────────────────────
+# Inspection
+# ─────────────────────────────────────────────────────────
+
 # Check system health
 doctor:
     chezmoi doctor
@@ -28,21 +47,29 @@ doctor:
 verify:
     chezmoi verify
 
-# Capture external changes back to source (e.g. after Fisher modifies fish_plugins)
-re-add *args:
-    chezmoi re-add {{ args }}
+# List all managed files
+managed:
+    chezmoi managed
+
+# Find files in ~/.config NOT managed by chezmoi
+unmanaged:
+    chezmoi unmanaged --path-style=absolute ~/.config
+
+# ─────────────────────────────────────────────────────────
+# Editing
+# ─────────────────────────────────────────────────────────
 
 # Edit a config's source file by its target path
 edit target:
     chezmoi edit {{ target }}
 
+# Capture external changes back to source (e.g. after Fisher modifies fish_plugins)
+re-add *args:
+    chezmoi re-add {{ args }}
+
 # Update from remote + apply
 update:
     chezmoi update
-
-# List all managed files
-managed:
-    chezmoi managed
 
 # ─────────────────────────────────────────────────────────
 # Brew
@@ -91,19 +118,3 @@ task-dump *args:
 # Open task list in editor
 task-open *args:
     bun packages/shan/src/bin/shan.ts task open {{ args }}
-
-# ─────────────────────────────────────────────────────────
-# Research
-# ─────────────────────────────────────────────────────────
-
-# List current research files
-research-list:
-    ./claude/skills/research/research.sh list
-
-# Create new research file
-research-new topic:
-    ./claude/skills/research/research.sh new {{ topic }}
-
-# Archive research files older than 30 days
-research-cleanup:
-    ./claude/skills/research/research.sh cleanup

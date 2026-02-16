@@ -151,7 +151,7 @@ This is what NOT to do. 5 headings, 3 visual styles (ASCII box, list, code block
 
 1. `brew install node pnpm` — initial node + pnpm
 2. `pnpm env use --global lts` — pnpm installs its own node
-3. `./sync` — installs npm globals to `~/.npm-global`
+3. `chezmoi apply` — installs npm globals to `~/.npm-global`
 
 After bootstrap, brew's node is effectively unused (pnpm's comes first in PATH).
 
@@ -198,7 +198,7 @@ This is why we use npm (not pnpm) for globals — `npx` checks npm's global dir.
 ```markdown
 1. `brew install node pnpm` — initial node + pnpm
 2. `pnpm env use --global lts` — pnpm installs its own node
-3. `./sync` — installs npm globals to ~/.npm-global
+3. `chezmoi apply` — installs npm globals to ~/.npm-global
 ```
 
 **After** (ASCII table with arrow icon for sequence):
@@ -209,7 +209,7 @@ This is why we use npm (not pnpm) for globals — `npx` checks npm's global dir.
 
 ↓ brew install node pnpm initial node + pnpm
 ↓ pnpm env use --global lts pnpm installs its own node
-↓ ./sync installs npm globals to ~/.npm-global
+↓ chezmoi apply installs npm globals to ~/.npm-global
 
 ```
 

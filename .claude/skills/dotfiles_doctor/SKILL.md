@@ -14,31 +14,30 @@ Audit the dotfiles setup for improvements, obsolete workarounds, and optimizatio
 
 ## Valid Scopes
 
-These are 1:1 with commit scopes:
+Source files live in `home/` with chezmoi naming conventions.
 
-| Scope      | Target      | Description                  |
-| ---------- | ----------- | ---------------------------- |
-| `aws`      | aws/        | AWS CLI configuration        |
-| `brew`     | Brewfile    | Homebrew packages and casks  |
-| `claude`   | claude/     | Claude Code configuration    |
-| `direnv`   | direnv/     | Directory environment loader |
-| `dock`     | dock/       | macOS Dock configuration     |
-| `dprint`   | dprint/     | Code formatter config        |
-| `fish`     | fish/       | Fish shell configuration     |
-| `gh`       | gh/         | GitHub CLI configuration     |
-| `ghostty`  | ghostty/    | Ghostty terminal config      |
-| `git`      | git/        | Git configuration            |
-| `gitmux`   | gitmux/     | Git info in tmux status      |
-| `lazygit`  | lazygit/    | Git TUI configuration        |
-| `libra`    | libra/      | Libra tool configuration     |
-| `npm`      | npm/, npmrc | npm configuration            |
-| `nvim`     | nvim/       | Neovim configuration         |
-| `ssh`      | ssh/        | SSH configuration            |
-| `starship` | starship/   | Starship prompt config       |
-| `sync`     | sync        | Sync script                  |
-| `tmux`     | tmux/       | tmux terminal multiplexer    |
-| `vim`      | vim/        | Vim configuration            |
-| `zed`      | zed/        | Zed editor configuration     |
+| Scope      | Source (in `home/`)            | Description                  |
+| ---------- | ------------------------------ | ---------------------------- |
+| `aws`      | private_dot_aws/               | AWS CLI configuration        |
+| `brew`     | Brewfile                       | Homebrew packages and casks  |
+| `chezmoi`  | .chezmoi*.toml*                | chezmoi configuration        |
+| `claude`   | dot_claude/                    | Claude Code configuration    |
+| `direnv`   | dot_config/direnv/             | Directory environment loader |
+| `dock`     | dock/                          | macOS Dock configuration     |
+| `dprint`   | dot_config/dprint/             | Code formatter config        |
+| `fish`     | dot_config/fish/               | Fish shell configuration     |
+| `gh`       | dot_config/gh/                 | GitHub CLI configuration     |
+| `ghostty`  | dot_config/ghostty/            | Ghostty terminal config      |
+| `git`      | dot_config/git/, dot_gitconfig | Git configuration            |
+| `gitmux`   | dot_config/gitmux/             | Git info in tmux status      |
+| `lazygit`  | dot_config/lazygit/            | Git TUI configuration        |
+| `npm`      | dot_npmrc, npm/                | npm configuration            |
+| `nvim`     | dot_config/nvim/               | Neovim configuration         |
+| `scripts`  | .chezmoiscripts/               | Lifecycle scripts            |
+| `ssh`      | private_dot_ssh/               | SSH configuration            |
+| `starship` | dot_config/starship*.toml      | Starship prompt config       |
+| `tmux`     | dot_config/tmux/               | tmux terminal multiplexer    |
+| `zed`      | dot_config/zed/                | Zed editor configuration     |
 
 ## Audit Process
 
@@ -77,9 +76,7 @@ After specific checks, discover something new:
    * Universal variables
    * Autoloading functions in ~/.config/fish/functions/
 
-3. __README accuracy__: Is fish/README.md accurate?
-
-4. __Obsolete workarounds__: Check for stale hacks:
+3. __Obsolete workarounds__: Check for stale hacks:
    * `fish_default_key_bindings` Zed vim conflict - still needed?
    * fnm workaround comments - still relevant?
    * Any `# TODO` or `# HACK` comments
@@ -110,18 +107,18 @@ After specific checks, discover something new:
 
 ### claude
 
-1. __Rule accuracy__: Are rules in claude/ still accurate?
+1. __Rule accuracy__: Are rules in `home/dot_claude/exact_rules/` still accurate?
 2. __Scope coverage__: Are there missing rules for common workflows?
 
-### sync
+### chezmoi
 
-1. __Idempotency__: Is the sync script fully idempotent?
-2. __Error handling__: Are failures handled gracefully?
-3. __Documentation__: Are all operations documented?
+1. __Script idempotency__: Are all lifecycle scripts fully idempotent?
+2. __Hash triggers__: Are `run_onchange_` scripts using correct hash comments?
+3. __Naming conventions__: Are `exact_`, `private_`, `encrypted_` prefixes used correctly?
 
 ### npm
 
-1. __Global packages__: Are packages in global-packages.txt still needed?
+1. __Global packages__: Are packages in npm/global-packages.txt still needed?
 2. __npmrc settings__: Are all settings still relevant?
 
 ### tmux

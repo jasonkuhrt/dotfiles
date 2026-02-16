@@ -2,7 +2,7 @@
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
-│  BOOTSTRAP (./sync)                                           │
+│  BOOTSTRAP (chezmoi apply)                                     │
 ├───────────────────────────────────────────────────────────────┤
 │                                                               │
 │  Homebrew ───▶ pnpm ───▶ npm ───▶ corepack                    │
@@ -46,7 +46,7 @@ Priority   Tool       Manages               Location
 
 ## Bootstrap Flow
 
-Handled by `./sync`:
+Handled by `chezmoi apply` (scripts 04-node-toolchain + 05-npm-globals):
 
 ```
 ↓   brew install node pnpm       initial node + pnpm
@@ -54,7 +54,7 @@ Handled by `./sync`:
 ↓   npm install -g ...           globals installed to ~/.npm-global
 ```
 
-After sync, brew's node is unused (pnpm's comes first in PATH).
+After apply, brew's node is unused (pnpm's comes first in PATH).
 
 ## npx Fallback Chain
 
@@ -82,9 +82,9 @@ Don't use `pnpm self-update` — it conflicts with Homebrew's version tracking.
 ## Project-Specific Versions
 
 * Projects may specify `"packageManager": "pnpm@9.x.x"` in package.json
-* Corepack handles this automatically (installed and enabled by sync)
+* Corepack handles this automatically (installed and enabled by chezmoi)
 * Corepack manages pnpm and yarn; npm is bundled with node separately
 
 ## Pitfall: Don't `brew install corepack`
 
-Brew's corepack conflicts with brew's pnpm (both install `pnpm` and `pnpx` binaries). Use npm global install instead (handled by sync).
+Brew's corepack conflicts with brew's pnpm (both install `pnpm` and `pnpx` binaries). Use npm global install instead (handled by chezmoi).

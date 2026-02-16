@@ -1,7 +1,0 @@
-# Commands hidden from the Snacks picker command palette.
-# Lua patterns matched against command names (case-sensitive).
-# Examples: "^Telescope" matches commands starting with Telescope,
-#           "Debug" matches any command containing Debug.
-#
-# - "^Telescope"
-# - "^Copilot"

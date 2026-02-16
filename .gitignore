@@ -1,18 +1,14 @@
+# Secrets (plain text — never commit; encrypted .age files are OK)
 *.secrets.*
-!*.secrets.*.example
-aws/credentials
-migrations/.marker
-
-# Claude Code runtime (convenience symlinks created by sync)
-claude/settings.json
-claude/tasks
-claude/.claude.json
+!*.secrets.*.age
 
 # macOS
 .DS_Store
 
 # Homebrew
 Brewfile.lock.json
+
+# Serena
 .serena/
 
 # Bookmarks sync

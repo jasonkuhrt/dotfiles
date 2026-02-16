@@ -5,40 +5,39 @@ description: Use when adding rules, commands, or skills to dotfiles - decides gl
 
 # CC Config Placement
 
-Decide whether Claude Code config belongs in global (`claude/`) or project-local (`.claude/`).
+Decide whether Claude Code config belongs in global (deployed to `~/.claude/`) or project-local (`.claude/`).
 
 ## The Two Levels
 
-| Path | Symlink Direction | Scope |
-|------|-------------------|-------|
-| `dotfiles/claude/` | `~/.claude/*` symlinks point here | All projects (global) |
-| `dotfiles/.claude/` | Not symlinked | Dotfiles repo only |
+| Path | Deployed by | Scope |
+|------|-------------|-------|
+| `home/dot_claude/` | chezmoi → `~/.claude/` | All projects (global) |
+| `.claude/` | Git checkout (local) | Dotfiles repo only |
 
-## Symlink Structure
+## How It Works
 
-`~/.claude/` contains symlinks pointing **into** `dotfiles/claude/`:
+chezmoi deploys files from `home/dot_claude/` to `~/.claude/` as real files (not symlinks). The `exact_` prefix on subdirectories ensures stale files are removed.
 
 ```
 ~/.claude/
-├── CLAUDE.md      → dotfiles/claude/CLAUDE.md
-├── commands/      → dotfiles/claude/commands/
-├── rules/         → dotfiles/claude/rules/
-├── hooks/scripts/ → dotfiles/claude/hooks/scripts/
-├── skills/        → dotfiles/claude/skills/
-└── settings.json  (real file, NOT symlinked)
+├── CLAUDE.md          (deployed by chezmoi from home/dot_claude/)
+├── commands/          (exact_ — stale commands auto-removed)
+├── rules/             (exact_ — stale rules auto-removed)
+├── hooks/scripts/     (exact_ — stale hooks auto-removed)
+├── skills/            (exact_ — stale skills auto-removed)
+├── checks/            (exact_ — stale checks auto-removed)
+└── settings.json      (NOT managed by chezmoi — CC owns this at runtime)
 ```
-
-**Exception:** `settings.json` - the real file lives at `~/.claude/settings.json`. For version control visibility, `dotfiles/claude/settings.json` symlinks TO it (reverse direction).
 
 ## Decision Guide
 
-**Global (`dotfiles/claude/`):**
+**Global (`home/dot_claude/`):**
 - Communication preferences, work style
 - Commit format, API rules
 - Skills/commands useful across all projects
-- Settings changes → edit `~/.claude/settings.json` directly
+- Edit source in `home/dot_claude/`, run `chezmoi apply`
 
-**Project-local (`dotfiles/.claude/`):**
+**Project-local (`.claude/`):**
 - Dotfiles-specific conventions
 - Commands like `/audit`
 - Rules scoped to specific dotfiles
@@ -47,27 +46,21 @@ Decide whether Claude Code config belongs in global (`claude/`) or project-local
 
 Ask: "Should this apply globally (all projects) or just to dotfiles?"
 
-Ambiguous examples:
-- "Add a rule about X" → which level?
-- "Create a command for Y" → global or local?
-- "Remember that I prefer Z" → sounds global, confirm
-
 ## File Structure
 
 ```
 dotfiles/
-├── claude/                    ← ~/.claude/* symlinks point here (GLOBAL)
+├── home/dot_claude/              ← chezmoi source → ~/.claude/ (GLOBAL)
 │   ├── CLAUDE.md
-│   ├── commands/
-│   ├── rules/
-│   ├── hooks/scripts/
-│   ├── skills/
-│   └── settings.json          → ~/.claude/settings.json (reverse symlink)
+│   ├── exact_commands/
+│   ├── exact_rules/
+│   ├── exact_hooks/exact_scripts/
+│   ├── exact_skills/
+│   ├── exact_checks/
+│   └── exact_schemas/
 │
-└── .claude/                   ← PROJECT-LOCAL (dotfiles repo only)
+└── .claude/                      ← PROJECT-LOCAL (dotfiles repo only)
     ├── CLAUDE.md
-    ├── settings.json
-    ├── settings.local.json
     ├── skills/
     └── rules/
 ```

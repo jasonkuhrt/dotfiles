@@ -78,6 +78,7 @@ token_count_estimator: CHAR_COUNT
 # the list of registered project paths (updated automatically).
 projects:
 - /Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat
+- /Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat-2
 - /Users/jasonkuhrt/projects/jasonkuhrt/dotfiles
 - /Users/jasonkuhrt/projects/jasonkuhrt/telescope
 
@@ -100,6 +101,10 @@ base_modes:
 default_modes:
 - interactive
 - editing
+
+# list of paths to ignore across all projects.
+# Same syntax as gitignore, so you can use * and **.
+# These patterns are merged additively with each project's own ignored_paths.
 
 # list of paths to ignore across all projects.
 # Same syntax as gitignore, so you can use * and **.

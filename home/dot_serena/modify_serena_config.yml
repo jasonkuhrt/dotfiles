@@ -1,0 +1,22 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- $data := dict -}}
+{{- if .chezmoi.stdin }}{{ $data = fromYaml .chezmoi.stdin }}{{ end -}}
+{{ $data
+  | setValueAtPath "language_backend" "LSP"
+  | setValueAtPath "gui_log_window" false
+  | setValueAtPath "web_dashboard" false
+  | setValueAtPath "web_dashboard_listen_address" "127.0.0.1"
+  | setValueAtPath "web_dashboard_open_on_launch" true
+  | setValueAtPath "log_level" 20
+  | setValueAtPath "trace_lsp_communication" false
+  | setValueAtPath "ls_specific_settings" (dict)
+  | setValueAtPath "tool_timeout" 240
+  | setValueAtPath "excluded_tools" (list)
+  | setValueAtPath "included_optional_tools" (list)
+  | setValueAtPath "default_max_tool_answer_chars" 150000
+  | setValueAtPath "token_count_estimator" "CHAR_COUNT"
+  | setValueAtPath "fixed_tools" (list)
+  | setValueAtPath "jetbrains_plugin_server_address" "127.0.0.1"
+  | setValueAtPath "default_modes" (list "interactive" "editing")
+  | setValueAtPath "ignored_paths" (list)
+  | toYaml -}}

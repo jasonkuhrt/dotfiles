@@ -137,7 +137,8 @@ cask "figma"
 
 # Development
 cask "zed"            # editor
-cask "ghostty"        # terminal
+cask "ghostty"        # terminal (secondary)
+cask "kitty"          # terminal (primary — hjkl nav via smart-splits)
 cask "docker-desktop"
 cask "ngrok"
 

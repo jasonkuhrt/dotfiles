@@ -143,6 +143,7 @@ abbr -a sed sd
 abbr -a dig dog
 abbr -a ping gping
 abbr -a diff difft
+abbr -a n nvim
 abbr -a vim nvim
 abbr -a vi nvim
 
@@ -253,21 +254,21 @@ fish_add_path /Users/jasonkuhrt/.codeium/windsurf/bin
 #
 #
 
-# Currently disabled to not conflict with vim inside Zed.
-# TODO: Can I conditionally enable the below when NOT in Zed?
-fish_default_key_bindings
+# Vi mode with hybrid insert (Ctrl+A/E still work in insert mode)
+# Conditional: skip in Zed's embedded terminal (conflicts with Zed keybindings)
+if test "$TERM_PROGRAM" != zed
+    fish_vi_key_bindings insert
+    bind -M insert -m default k,j cancel repaint-mode
+    set -g fish_sequence_key_delay_ms 200
 
-# To discover the avalable commands you can run this:
-#
-#   bind --function-names
-#
-
-# fish_vi_key_bindings
-# bind --mode insert -m default k,j cancel repaint-mode
-# set -g fish_sequence_key_delay_ms 200
-
-# bind -M default H beginning-of-line
-# bind -M default L end-of-line
+    # Cursor shapes per mode (visual feedback)
+    set -g fish_cursor_default block
+    set -g fish_cursor_insert line
+    set -g fish_cursor_replace_one underscore
+    set -g fish_cursor_visual block
+else
+    fish_default_key_bindings
+end
 
 # bun
 set --export BUN_INSTALL "$HOME/.bun"

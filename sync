@@ -120,6 +120,21 @@ ensure_real_dir "$HOME/.config/ghostty" "$HERE/ghostty"
 link_file "$HERE/ghostty/config" "$HOME/.config/ghostty/config" "ghostty/config"
 
 # ─────────────────────────────────────────────────────────────
+header "Kitty"
+
+ensure_real_dir "$HOME/.config/kitty" "$HERE/kitty"
+link_file "$HERE/kitty/kitty.conf" "$HOME/.config/kitty/kitty.conf" "kitty/kitty.conf"
+
+# Apply Tokyo Night theme if not already applied
+# NOTE: Don't use `kitty +kitten themes` — it appends a duplicate include to kitty.conf.
+# Our kitty.conf already has `include current-theme.conf`, so we just need the theme file.
+if has_cmd kitty && [ ! -f "$HOME/.config/kitty/current-theme.conf" ]; then
+    info "Applying Kitty Tokyo Night theme..."
+    kitty +kitten themes --dump-theme "Tokyo Night" > "$HOME/.config/kitty/current-theme.conf" 2>/dev/null || true
+    task "Kitty Tokyo Night theme applied"
+fi
+
+# ─────────────────────────────────────────────────────────────
 header "Serena"
 
 ensure_real_dir "$HOME/.serena" "$HERE/serena"

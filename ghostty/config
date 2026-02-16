@@ -1,4 +1,6 @@
 #
+# NOTE: Kitty is now the primary terminal (hjkl navigation via smart-splits.nvim).
+# This config is retained for standalone/fallback use.
 #
 #
 # Ghostty Config

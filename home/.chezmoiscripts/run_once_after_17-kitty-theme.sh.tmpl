@@ -1,0 +1,25 @@
+#!/bin/bash
+# chezmoi:template:left-delimiter="{{" right-delimiter="}}"
+set -e
+
+{{ template "helpers.sh" . }}
+
+header "Kitty Theme"
+
+# Ensure Homebrew is in PATH (Apple Silicon)
+if [ -f "/opt/homebrew/bin/brew" ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+# kitty.conf has `include current-theme.conf`
+# We just need to create the theme file if it doesn't exist
+# NOTE: Don't use `kitty +kitten themes` — it appends a duplicate include to kitty.conf
+if [ -f "$HOME/.config/kitty/current-theme.conf" ]; then
+    skip "Kitty Tokyo Night theme"
+elif has_cmd kitty; then
+    info "Applying Kitty Tokyo Night theme..."
+    kitty +kitten themes --dump-theme "Tokyo Night" > "$HOME/.config/kitty/current-theme.conf" 2>/dev/null || true
+    task "Kitty Tokyo Night theme applied"
+else
+    skip "Kitty (not installed)"
+fi

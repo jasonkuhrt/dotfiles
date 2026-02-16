@@ -1,0 +1,32 @@
+#!/bin/bash
+# chezmoi:template:left-delimiter="{{" right-delimiter="}}"
+set -e
+
+{{ template "helpers.sh" . }}
+
+{{ if eq .chezmoi.os "darwin" }}
+
+header "BetterDisplay"
+
+SETTINGS="{{ .chezmoi.sourceDir }}/betterdisplay/settings.plist"
+
+if [ ! -d "/Applications/BetterDisplay.app" ]; then
+    skip "BetterDisplay (not installed)"
+    exit 0
+fi
+
+if [ ! -f "$SETTINGS" ]; then
+    skip "BetterDisplay settings (no config)"
+    exit 0
+fi
+
+if pgrep -x "BetterDisplay" > /dev/null; then
+    skip "BetterDisplay (app running, quit to import)"
+else
+    defaults import pro.betterdisplay.BetterDisplay "$SETTINGS"
+    task "BetterDisplay settings imported"
+fi
+
+{{ else }}
+:
+{{ end }}

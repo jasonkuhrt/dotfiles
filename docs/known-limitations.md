@@ -34,9 +34,7 @@ Claude Code has multiple bugs that prevent symlinked `settings.json` from workin
 * Atomic writes replace symlinks with regular files
 * Performance degradation with symlinked settings
 
-**Workaround:** `settings.json` is not synced. CC owns `~/.claude/settings.json` at runtime. The sync script creates a local convenience symlink (gitignored) from `./claude/settings.json → ~/.claude/settings.json` for easy editing from the dotfiles workspace.
-
-See [claude/README.md](../claude/README.md) for details.
+**Workaround:** `settings.json` is excluded from chezmoi via `.chezmoiignore`. CC owns `~/.claude/settings.json` at runtime.
 
 **Tracking:**
 

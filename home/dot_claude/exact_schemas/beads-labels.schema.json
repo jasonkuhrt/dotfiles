@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Beads Label Taxonomy",
+  "description": "Canonical label definitions for beads issue tracking. Two tiers: directory-mapped (label → repo path) and cross-cutting (label → description).",
+  "type": "object",
+  "properties": {
+    "directory": {
+      "description": "Labels that map to repository directory paths.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "cross-cutting": {
+      "description": "Labels for work that doesn't map to a single directory.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

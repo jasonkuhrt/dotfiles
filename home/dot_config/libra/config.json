@@ -1,0 +1,9 @@
+{
+  "$schema": "https://jasonkuhrt.github.io/libra/schema/config.json",
+  "version": "1.0.0",
+  "visibility": false,
+  "cli": true,
+  "exports": {
+    "include": null
+  }
+}

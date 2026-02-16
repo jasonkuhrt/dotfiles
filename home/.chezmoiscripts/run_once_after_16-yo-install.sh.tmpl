@@ -1,0 +1,46 @@
+#!/bin/bash
+# chezmoi:template:left-delimiter="{{" right-delimiter="}}"
+set -e
+
+{{ template "helpers.sh" . }}
+
+{{ if eq .chezmoi.os "darwin" }}
+
+header "yo (Notification Tool)"
+
+YO_APP="$HOME/Applications/yo.app"
+YO_VERSION="2.0.1"
+
+if [ -d "$YO_APP" ]; then
+    skip "yo (persistent notifications)"
+else
+    info "Installing yo $YO_VERSION..."
+    mkdir -p "$HOME/Applications"
+
+    YO_TMP="/tmp/yo-install-$$"
+    mkdir -p "$YO_TMP"
+
+    if curl -sL "https://github.com/sheagcraig/yo/releases/download/$YO_VERSION/yo-$YO_VERSION.pkg" -o "$YO_TMP/yo.pkg"; then
+        # Extract without sudo (pkg -> xar -> cpio)
+        pushd "$YO_TMP" > /dev/null
+        pkgutil --expand yo.pkg yo-expanded
+        gunzip -c yo-expanded/Payload > payload.cpio
+        mkdir extracted
+        pushd extracted > /dev/null
+        cpio -idm < ../payload.cpio 2>/dev/null
+        popd > /dev/null
+        popd > /dev/null
+
+        cp -R "$YO_TMP/extracted/Applications/Utilities/yo.app" "$YO_APP"
+        rm -rf "$YO_TMP"
+
+        task "yo installed to ~/Applications"
+    else
+        warn "Failed to download yo"
+        rm -rf "$YO_TMP"
+    fi
+fi
+
+{{ else }}
+:
+{{ end }}

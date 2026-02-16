@@ -1,6 +1,6 @@
 # Manual Setup
 
-Steps to complete after running `./sync`.
+Steps to complete after running `chezmoi apply`.
 
 ## 1. Full Disk Access for Terminal
 
@@ -13,7 +13,7 @@ open "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Pri
 
 ## 2. Fish Secrets
 
-Edit `fish/config.secrets.fish` (created by sync, gitignored) with your tokens.
+Secrets are age-encrypted in the repo. Edit with `chezmoi edit ~/.config/fish/config.secrets.fish` (decrypts in-place for editing, re-encrypts on save). On first setup, paste your age key from your password manager to `~/.config/chezmoi/key.txt`, then `chezmoi apply` decrypts automatically.
 
 ## 3. macOS Settings
 

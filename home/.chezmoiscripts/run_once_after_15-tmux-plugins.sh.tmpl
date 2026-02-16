@@ -1,0 +1,24 @@
+#!/bin/bash
+# chezmoi:template:left-delimiter="{{" right-delimiter="}}"
+set -e
+
+{{ template "helpers.sh" . }}
+
+header "tmux Plugins"
+
+TPM_DIR="$HOME/.config/tmux/plugins/tpm"
+
+# tpm is installed via .chezmoiexternal.toml
+# This script just runs the plugin install
+
+if [ ! -x "$TPM_DIR/bin/install" ]; then
+    warn "tpm not available (expected via chezmoiexternal)"
+    exit 0
+fi
+
+info "Installing tmux plugins..."
+if "$TPM_DIR/bin/install"; then
+    task "tmux plugins installed"
+else
+    warn "tmux plugin install failed"
+fi

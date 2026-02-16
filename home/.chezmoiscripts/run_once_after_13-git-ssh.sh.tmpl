@@ -1,0 +1,54 @@
+#!/bin/bash
+# chezmoi:template:left-delimiter="{{" right-delimiter="}}"
+set -e
+
+{{ template "helpers.sh" . }}
+
+header "Git & SSH Setup"
+
+# Ensure Homebrew is in PATH (Apple Silicon)
+if [ -f "/opt/homebrew/bin/brew" ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+# SSH sockets directory for ControlMaster multiplexing
+mkdir -p "$HOME/.ssh/sockets"
+
+# Add GitHub's SSH host keys (avoid authenticity prompt)
+if grep -q "github.com" "$HOME/.ssh/known_hosts" 2>/dev/null; then
+    skip "GitHub known_hosts"
+else
+    ssh-keyscan -t ed25519,rsa github.com >> "$HOME/.ssh/known_hosts" 2>/dev/null
+    task "GitHub known_hosts"
+fi
+
+# GitHub CLI protocol
+if has_cmd gh; then
+    current_protocol=$(gh config get git_protocol 2>/dev/null || echo "")
+    if [ "$current_protocol" = "ssh" ]; then
+        skip "GitHub CLI protocol"
+    else
+        gh config set git_protocol ssh 2>/dev/null
+        task "GitHub CLI protocol set to SSH"
+    fi
+
+    # Fix dotfiles repo remote (may have been cloned via HTTPS)
+    DOTFILES_DIR="{{ .chezmoi.workingTree }}"
+    current_remote=$(git -C "$DOTFILES_DIR" remote get-url origin 2>/dev/null || echo "")
+    expected_remote="git@github.com:jasonkuhrt/dotfiles.git"
+    if [ "$current_remote" = "$expected_remote" ]; then
+        skip "Dotfiles remote"
+    else
+        git -C "$DOTFILES_DIR" remote set-url origin "$expected_remote" 2>/dev/null
+        task "Dotfiles remote set to SSH"
+    fi
+else
+    skip "GitHub CLI (not installed)"
+fi
+
+# Remind about SSH keys if missing
+if [ ! -f "$HOME/.ssh/id_ed25519" ] && [ ! -f "$HOME/.ssh/id_rsa" ]; then
+    warn "No SSH keys found. Generate with:"
+    printf "      ${CYAN}ssh-keygen -t ed25519 -C \"{{ .email }}\"${RESET}\n"
+    printf "      ${CYAN}gh ssh-key add ~/.ssh/id_ed25519.pub${RESET}\n"
+fi

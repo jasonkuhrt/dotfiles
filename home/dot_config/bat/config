@@ -1,0 +1,12 @@
+# bat configuration
+# https://github.com/sharkdp/bat
+#
+# Use 'ansi' theme to inherit terminal colors (Tokyo Night via Ghostty)
+# Alternative: TwoDark is visually similar if you want syntax-specific colors
+--theme="ansi"
+
+# Show line numbers
+--style="numbers,changes"
+
+# Use italic for comments (if terminal supports)
+--italic-text=always

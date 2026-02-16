@@ -68,79 +68,81 @@ Source: `config.fish:127-141`
 
 ---
 
-## Decision 3: Custom Sync Script Over Dotfiles Managers
-
-**Decision:**
-Use a custom `sync` script (bash) with a `sync-lib.sh` library of shared utilities.
-
-**What the sync script handles beyond symlinking:**
-- Homebrew packages (formulae, casks, MAS apps — each installed separately)
-- Fisher plugins (copy, not symlink — see Decision 5)
-- macOS defaults (keyboard, Finder, Dock, trackpad, screenshots, etc.)
-- SSH known_hosts seeding
-- Dock app layout (via dockutil)
-- App-specific plist manipulation (CleanShot X save path)
-- Node.js toolchain (pnpm → node → npm globals → corepack)
-- Migrations (one-time cleanup scripts for existing machines)
-
-**Properties:**
-- Idempotent: every operation checks current state before acting
-- Safe: warns on existing real files with content instead of silently overwriting
-- No external dependency beyond bash
-
-Source: `sync`, `sync-lib.sh`
-
----
-
-## Decision 4: Selective File Linking Over Whole-Directory Linking
-
-**Decision:**
-Symlink individual files. For subdirectories that should be fully synced, use `link_subdir` which symlinks the directory itself.
-
-**Implementation:**
-```bash
-# Individual files (Fish config, gitconfig, etc.)
-link_file "$HERE/fish/config.fish" "$HOME/.config/fish/config.fish"
-
-# Whole subdirectories (Claude commands, rules, skills)
-link_subdir "$HERE/claude/commands" "$HOME/.claude/commands"
-```
-
-**Rationale:**
-- Runtime-generated files (e.g., `fish_variables`, Fisher-managed files) don't pollute the dotfiles repo
-- `.gitignore` stays clean — no need to exclude generated content
-- Explicit about what's managed vs. what's local
-- `link_subdir` used where the whole directory IS the config (Claude commands, rules, skills)
-
-Source: `sync`, `sync-lib.sh`
-
----
-
-## Decision 5: fish_plugins as Copy, Not Symlink
+## Decision 3: chezmoi for Dotfiles Management
 
 **Context:**
-Fisher (the Fish plugin manager) both reads and writes `fish_plugins`. If symlinked to the dotfiles repo, Fisher's write operations modify the repo directly, creating unwanted git changes.
+Previously used a custom 1,200-line bash sync script with a helper library. This worked but lacked diff-before-apply, encrypted secrets, state tracking, and drift detection.
 
 **Decision:**
-Copy `fish_plugins` from dotfiles to the runtime location. Detect and warn on drift.
+Use [chezmoi](https://www.chezmoi.io/) for all dotfiles management. Source state lives in `home/` with chezmoi naming conventions. `.chezmoiroot` redirects chezmoi to use `home/` as its source directory.
+
+**What chezmoi handles:**
+- File deployment with symlink→file replacement
+- Permissions (private_, executable_ prefixes)
+- Encrypted secrets (age, built-in)
+- Lifecycle scripts (run_once_, run_onchange_ — replaces sync script sections)
+- External repos (.chezmoiexternal.toml — replaces manual git clone)
+- Drift detection (chezmoi verify, chezmoi re-add)
+- Content-hash triggers for script re-execution
+
+**Properties:**
+- Declarative: filename conventions encode intent
+- Diff-before-apply: `chezmoi diff` previews all changes
+- Idempotent: both file management and scripts check current state
+
+Source: `home/.chezmoi.toml.tmpl`, `home/.chezmoiscripts/`
+
+---
+
+## Decision 4: chezmoi Source State Naming Conventions
+
+**Decision:**
+Use chezmoi's filename prefix conventions to declaratively encode deployment behavior. No custom linking logic.
 
 **Implementation:**
-```bash
-# Copy dotfiles version (authoritative source)
-cp "$FISH_PLUGINS_SRC" "$FISH_PLUGINS_DST"
-
-# Warn if local copy has diverged (user added plugins outside dotfiles)
-if ! diff -q "$FISH_PLUGINS_SRC" "$FISH_PLUGINS_DST" >/dev/null 2>&1; then
-    warn "Local fish_plugins differs from dotfiles"
-fi
+```
+dot_config/fish/config.fish     → ~/.config/fish/config.fish
+exact_skills/                   → ~/.claude/skills/ (removes unmanaged files)
+private_dot_ssh/config          → ~/.ssh/config (mode 0700)
+encrypted_config.secrets.fish   → age-decrypted on deploy
+executable_toggle-chore-files.sh → chmod +x on deploy
 ```
 
 **Rationale:**
-- Fisher can freely write to its own copy without affecting the repo
-- Dotfiles version is the source of truth
-- Drift detection catches plugins added locally that should be committed
+- Intent is visible from the filename — no need to read a script to understand what happens
+- `exact_` directories clean up stale files (replaces manual symlink cleanup)
+- Directories without `exact_` allow runtime state from external tools (Fisher, LazyVim, etc.)
+- `private_` ensures sensitive files get correct permissions automatically
 
-Source: `sync:469-496`, comment: "copy, not symlink - protects dotfiles from fisher corruption"
+Source: `home/` directory structure
+
+---
+
+## Decision 5: fish_plugins as Regular File with re-add
+
+**Context:**
+Fisher both reads and writes `fish_plugins`. The dotfiles source must be authoritative, but Fisher's changes need to be capturable.
+
+**Decision:**
+Manage `fish_plugins` as a regular file (not symlinked). Use `chezmoi re-add` to capture Fisher's changes back to source state.
+
+**Workflow:**
+```bash
+# Fisher modifies ~/.config/fish/fish_plugins at runtime
+# Capture changes back to source:
+chezmoi re-add ~/.config/fish/fish_plugins
+# Or: just re-add ~/.config/fish/fish_plugins
+
+# Same pattern for lazy-lock.json (Lazy.nvim)
+chezmoi re-add ~/.config/nvim/lazy-lock.json
+```
+
+**Rationale:**
+- chezmoi deploys real files, not symlinks — Fisher writes don't touch the repo
+- `chezmoi verify` detects drift automatically
+- `chezmoi re-add` is the explicit capture step — intentional, not accidental
+
+Source: `home/dot_config/fish/fish_plugins`
 
 ---
 
@@ -260,87 +262,144 @@ Source: `claude/rules/no-branch-switching-in-shared-worktrees.md`, `claude/rules
 ## Decision 11: Shared Skills Across AI Tools (Claude/Codex/Agents)
 
 **Decision:**
-Claude Code skills are the source of truth. Sync them to other tools via symlinks.
+Claude Code skills are the source of truth. chezmoi deploys skills to `~/.claude/skills/`, then a lifecycle script mirrors them to `~/.agents/skills/` and `~/.codex/skills/` via relative symlinks.
 
 **Implementation:**
-```bash
-# Claude skills are authoritative
-link_subdir "$HERE/claude/skills" "$HOME/.claude/skills"
+- chezmoi `exact_skills/` deploys skill directories to `~/.claude/skills/`
+- `run_onchange_after_12-skills-sync.sh.tmpl` creates relative symlinks in agents/codex pointing back to `~/.claude/skills/<name>`
+- `.system` directory (Codex system skills) is preserved and excluded from sync
 
-# Mirror to agents (shared neutral tree), excluding .system
-sync_symlink_children_diff "$HERE/claude/skills" "$HERE/agents/skills" "../../claude/skills" ".system"
+**Properties:**
+- Single source of truth for skill content (chezmoi source state)
+- `exact_` prefix ensures stale skills are removed from `~/.claude/skills/`
+- Adding a skill to `home/dot_claude/exact_skills/` propagates to all tools on next apply
 
-# Agents tree is then linked to both ~/.agents and ~/.codex
-link_subdir "$HERE/agents/skills" "$HOME/.agents/skills"
-link_subdir "$HERE/agents/skills" "$HOME/.codex/skills"
+Source: `home/.chezmoiscripts/run_onchange_after_12-skills-sync.sh.tmpl`
+
+---
+
+## Decision 12: Flat Skills in chezmoi (replaces library architecture)
+
+**Context:**
+The skills-library symlink architecture (shan-managed, library → symlink → skill) created fragile chains. When any link broke, all skills backed by the library became dead symlinks (66 of them broke simultaneously).
+
+**Decision:**
+Flatten all skills into `home/dot_claude/exact_skills/<name>/`. No library indirection. No symlinks. chezmoi IS the state manager.
+
+**Properties:**
+- Skills are regular directories, directly editable
+- `exact_` prefix ensures stale skills are removed on apply
+- No intermediate symlink chains to break
+- Version-controlled directly in git (no separate library)
+- Skills can still be enabled/disabled by adding/removing from source state
+
+**Migration:**
+- 12 working local skills migrated directly
+- 66 dead library-backed skills require recovery from Time Machine or rebuilding
+
+Source: `home/dot_claude/exact_skills/`
+
+---
+
+## Decision 13: chezmoi run_once Scripts Replace Migrations
+
+**Context:**
+Previously used timestamp-based migration scripts in `migrations/` with a manual marker file and `--migrate` flag.
+
+**Decision:**
+Use chezmoi's built-in `run_once_` scripts. chezmoi tracks which scripts have been executed and only runs them once per machine.
+
+**Properties:**
+- No marker file needed — chezmoi tracks execution state internally
+- No opt-in flag — `run_once_` scripts run automatically on first `chezmoi apply`
+- Scripts are content-addressed — renaming or changing content triggers re-execution
+- Ordered by filename (numeric prefix: 00, 01, 02...)
+
+**Example:**
+```
+run_once_before_00-migrate-symlinks.sh.tmpl  # cleanup old infra on first apply
+run_once_after_14-neovim-plugins.sh.tmpl     # install plugins on first apply
 ```
 
-**Properties:**
-- Single source of truth for skill content
-- `.system` directory excluded from sync (Codex-specific system skills preserved)
-- Adding a skill to Claude automatically propagates to other tools on next sync
-
-Source: `sync:86-104`
+Source: `home/.chezmoiscripts/`
 
 ---
 
-## Decision 12: Skills Library-Backed Symlink Architecture (shan)
+## Decision 14: CC settings.json Excluded from chezmoi
 
 **Context:**
-Claude Code's autocomplete doesn't discover symlinks to subdirectories of already-symlinked parents.
+Both chezmoi and Claude Code use atomic writes (temp file + `os.Rename()`). Managing `settings.json` via chezmoi would create a race condition where either tool's write could be overwritten.
 
 **Decision:**
-Use a skills library (`claude/skills-library/`) as the backing store. Active skills are symlinks from `claude/skills/` pointing into the library. Managed by the `shan` tool.
-
-**Properties:**
-- Skills can be enabled/disabled without deletion (`shan skills on/off`)
-- Sub-skills use direct stub directories with one-line redirects (workaround for symlink discovery bug)
-
-**Trade-offs:**
-- Extra indirection (skill → symlink → library)
-- `shan` tool required for management operations
-
-Source: git history (`c60657a`), MEMORY.md notes on symlink bugs
-
----
-
-## Decision 13: Migrations for One-Time Cleanup on Existing Machines
-
-**Context:**
-The sync script is idempotent — it converges to the desired state. But some changes require destructive one-time actions on existing machines that shouldn't run on fresh installs.
-
-**Decision:**
-Timestamp-based migration scripts in `migrations/` with a marker file tracking what's been run.
-
-**Implementation:**
-```bash
-# Marker tracks last run date
-LAST_RUN=$(cat "$MARKER_FILE" 2>/dev/null || echo "0000-00-00")
-# Scripts with timestamps after LAST_RUN are pending
-```
-
-**Properties:**
-- Migrations are opt-in (`./sync --migrate`)
-- Each migration is a self-contained script
-- Marker file prevents re-running completed migrations
-
-Source: `sync:726-773`
-
----
-
-## Decision 14: Convenience Symlinks (Reverse Direction) for CC Settings
-
-**Context:**
-Claude Code's `settings.json` can't be symlinked due to bugs (atomic writes replace symlinks, permissions not recognized).
-
-**Decision:**
-Don't sync `settings.json`. Create a reverse convenience symlink: `dotfiles/claude/settings.json → ~/.claude/settings.json`. Gitignored.
+Exclude `~/.claude/settings.json` from chezmoi via `.chezmoiignore`. CC owns this file at runtime.
 
 **Rationale:**
-- CC owns its settings file at runtime (no symlink bugs)
-- Can still edit settings from the dotfiles workspace
-- Convenience symlink is gitignored — no accidental commits
+- No race condition between chezmoi and CC
+- CC's settings are runtime-specific and frequently modified by the tool itself
+- `chezmoi edit` is not needed — CC's own settings management is sufficient
 
 **Tracking:** [anthropics/claude-code#3575](https://github.com/anthropics/claude-code/issues/3575), [#764](https://github.com/anthropics/claude-code/issues/764), [#18160](https://github.com/anthropics/claude-code/issues/18160)
 
-Source: `sync:59-67`, [docs/known-limitations.md](docs/known-limitations.md)
+Source: `home/.chezmoiignore`
+
+---
+
+## Decision 15: Age Encryption for Secrets
+
+**Context:**
+Previously, secrets used `.example` template files. Users copied the template and filled in real values. The real files were gitignored. This meant secrets were never version-controlled and had to be manually recreated on new machines.
+
+**Decision:**
+Use age encryption (built into chezmoi) for secrets at rest. Encrypted files are committed to git with the `encrypted_` prefix.
+
+**Implementation:**
+```bash
+# Encrypt a secret file
+chezmoi add --encrypt ~/.config/fish/config.secrets.fish
+
+# Edit an encrypted file (decrypts → edit → re-encrypts)
+chezmoi edit ~/.config/fish/config.secrets.fish
+
+# Key stored in password manager, pasted on new machine
+~/.config/chezmoi/key.txt
+```
+
+**Properties:**
+- Secrets are version-controlled (encrypted) — available on `chezmoi apply` on any machine
+- age key is the single secret to transfer between machines (via password manager)
+- No `.example` files or manual copy steps
+- `chezmoi edit --encrypt` handles the decrypt→edit→re-encrypt lifecycle seamlessly
+
+Source: `home/.chezmoi.toml.tmpl` (age config)
+
+---
+
+## Decision 16: Data Files in Source State with chezmoiignore
+
+**Context:**
+chezmoi scripts need access to data files (Brewfile, dock/apps.txt, npm/global-packages.txt) for content-hash triggers and installation logic. But these files should NOT be deployed to `$HOME`.
+
+**Decision:**
+Place data files inside `home/` (the chezmoi source directory) and list them in `.chezmoiignore` to prevent deployment.
+
+**Implementation:**
+```
+# In .chezmoiignore:
+Brewfile
+dock
+dock/**
+npm
+npm/**
+```
+
+```bash
+# In scripts, use chezmoi's built-in include:
+# Brewfile hash: {{ "{{" }} include "Brewfile" | sha256sum {{ "}}" }}
+```
+
+**Rationale:**
+- `include` only works for files within the source directory — this is the only way to use chezmoi's built-in hash function
+- No external process (`shasum`) needed — `sha256sum` is a built-in sprig template function
+- Data files are version-controlled alongside the scripts that use them
+
+Source: `home/.chezmoiignore`, `home/Brewfile`

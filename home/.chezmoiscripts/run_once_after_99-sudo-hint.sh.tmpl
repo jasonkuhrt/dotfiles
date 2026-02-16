@@ -1,0 +1,48 @@
+#!/bin/bash
+# chezmoi:template:left-delimiter="{{" right-delimiter="}}"
+set -e
+
+{{ template "helpers.sh" . }}
+
+{{ if eq .chezmoi.os "darwin" }}
+
+# Check if any sudo operations are needed
+
+needed=false
+
+# Power management
+current_sleep=$(pmset -g 2>/dev/null | grep displaysleep | awk '{print $2}')
+if [ "$current_sleep" != "10" ]; then
+    needed=true
+fi
+
+# Touch ID for sudo
+if ! grep -q "pam_tid.so" /etc/pam.d/sudo_local 2>/dev/null; then
+    needed=true
+fi
+
+# Fish as default shell
+fish_path="/opt/homebrew/bin/fish"
+if [ -x "$fish_path" ]; then
+    if ! grep -q "$fish_path" /etc/shells 2>/dev/null; then
+        needed=true
+    fi
+    configured_shell=$(dscl . -read "/Users/$USER" UserShell 2>/dev/null | awk '{print $2}')
+    if [ "$configured_shell" != "$fish_path" ]; then
+        needed=true
+    fi
+fi
+
+if $needed; then
+    printf "\n"
+    printf "${BOLD}Next:${RESET} Run ${CYAN}sudo ./sync-sudo${RESET} for:\n"
+    [ "$current_sleep" != "10" ] && printf "  ${DIM}• Power management (display sleep)${RESET}\n"
+    grep -q "pam_tid.so" /etc/pam.d/sudo_local 2>/dev/null || printf "  ${DIM}• Touch ID for sudo${RESET}\n"
+    if [ -x "$fish_path" ]; then
+        grep -q "$fish_path" /etc/shells 2>/dev/null || printf "  ${DIM}• Add Fish to /etc/shells${RESET}\n"
+        [ "$configured_shell" != "$fish_path" ] && printf "  ${DIM}• Set Fish as default shell${RESET}\n"
+    fi
+    printf "\n"
+fi
+
+{{ end }}

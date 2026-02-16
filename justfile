@@ -9,24 +9,40 @@ default:
     just --list
 
 # ─────────────────────────────────────────────────────────
-# Sync
+# Chezmoi
 # ─────────────────────────────────────────────────────────
 
-# Sync dotfiles (symlinks, brew, configs)
-sync *args:
-    ./sync {{ args }}
+# Apply dotfiles (preview with --dry-run)
+apply *args:
+    chezmoi apply -v {{ args }}
 
-# Sync with verbose output
-sync-verbose:
-    ./sync --verbose
+# Preview changes without applying
+diff:
+    chezmoi diff
 
-# Run pending migrations then sync
-migrate:
-    ./sync --migrate
+# Check system health
+doctor:
+    chezmoi doctor
 
-# Run pending migrations only (no sync)
-migrate-only:
-    ./sync --migrate-only
+# Detect drift between source and target
+verify:
+    chezmoi verify
+
+# Capture external changes back to source (e.g. after Fisher modifies fish_plugins)
+re-add *args:
+    chezmoi re-add {{ args }}
+
+# Edit a config's source file by its target path
+edit target:
+    chezmoi edit {{ target }}
+
+# Update from remote + apply
+update:
+    chezmoi update
+
+# List all managed files
+managed:
+    chezmoi managed
 
 # ─────────────────────────────────────────────────────────
 # Brew
@@ -34,15 +50,15 @@ migrate-only:
 
 # Install/update Homebrew packages from Brewfile
 brew:
-    brew bundle --file=Brewfile
+    brew bundle --file=$(chezmoi source-path)/Brewfile
 
 # Show what's missing from Brewfile
 brew-check:
-    brew bundle check --file=Brewfile --verbose || true
+    brew bundle check --file=$(chezmoi source-path)/Brewfile --verbose || true
 
 # Clean up packages not in Brewfile
 brew-cleanup:
-    brew bundle cleanup --file=Brewfile
+    brew bundle cleanup --file=$(chezmoi source-path)/Brewfile
 
 # ─────────────────────────────────────────────────────────
 # Go tools (no Homebrew tap available)
@@ -91,35 +107,3 @@ research-new topic:
 # Archive research files older than 30 days
 research-cleanup:
     ./claude/skills/research/research.sh cleanup
-
-# ─────────────────────────────────────────────────────────
-# Edit
-# ─────────────────────────────────────────────────────────
-
-# Open Brewfile in editor
-edit-brew:
-    $EDITOR Brewfile
-
-# Open fish config in editor
-edit-fish:
-    $EDITOR fish/config.fish
-
-# Open git config in editor
-edit-git:
-    $EDITOR git/.gitconfig
-
-# Open Zed settings in editor
-edit-zed:
-    $EDITOR zed/settings.json
-
-# Open Ghostty config in editor
-edit-ghostty:
-    $EDITOR ghostty/config
-
-# Open starship config in editor
-edit-starship:
-    $EDITOR starship/starship.toml
-
-# Open tmux config in editor
-edit-tmux:
-    $EDITOR tmux/.tmux.conf

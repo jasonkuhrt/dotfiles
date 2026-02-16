@@ -1,0 +1,28 @@
+#!/bin/bash
+# chezmoi:template:left-delimiter="{{" right-delimiter="}}"
+set -e
+
+{{ template "helpers.sh" . }}
+
+header "Fisher Plugin Manager"
+
+# Ensure Homebrew is in PATH (Apple Silicon)
+if [ -f "/opt/homebrew/bin/brew" ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+if ! has_cmd fish; then
+    warn "Fish not installed, skipping Fisher setup"
+    exit 0
+fi
+
+if [ -f "$HOME/.config/fish/functions/fisher.fish" ]; then
+    skip "Fisher"
+else
+    info "Installing Fisher plugin manager..."
+    if fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'; then
+        task "Fisher installed"
+    else
+        warn "Fisher install failed"
+    fi
+fi

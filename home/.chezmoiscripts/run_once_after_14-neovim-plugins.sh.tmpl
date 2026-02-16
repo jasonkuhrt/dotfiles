@@ -1,0 +1,28 @@
+#!/bin/bash
+# chezmoi:template:left-delimiter="{{" right-delimiter="}}"
+set -e
+
+{{ template "helpers.sh" . }}
+
+header "Neovim Plugins"
+
+# Ensure Homebrew is in PATH (Apple Silicon)
+if [ -f "/opt/homebrew/bin/brew" ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+if ! has_cmd nvim; then
+    skip "Neovim (not installed)"
+    exit 0
+fi
+
+if [ -d "$HOME/.local/share/nvim/lazy/lazy.nvim" ]; then
+    skip "Neovim plugins (LazyVim)"
+else
+    info "Installing Neovim plugins (LazyVim)..."
+    if nvim --headless "+Lazy! sync" +qa 2>/dev/null; then
+        task "Neovim plugins installed"
+    else
+        warn "Neovim plugin install failed"
+    fi
+fi

@@ -1,0 +1,48 @@
+#!/bin/bash
+# chezmoi:template:left-delimiter="{{" right-delimiter="}}"
+set -e
+
+{{ template "helpers.sh" . }}
+
+header "Migration: Clean Up Old Infrastructure"
+
+# Remove old skills-library symlink/directory
+# chezmoi now manages skills directly via exact_skills/
+if [ -L "$HOME/.claude/skills-library" ]; then
+    rm "$HOME/.claude/skills-library"
+    task "Removed ~/.claude/skills-library symlink"
+elif [ -d "$HOME/.claude/skills-library" ]; then
+    rm -rf "$HOME/.claude/skills-library"
+    task "Removed ~/.claude/skills-library directory"
+else
+    skip "skills-library cleanup"
+fi
+
+# Remove old agents directory symlink (will be recreated as real dir)
+if [ -L "$HOME/.agents" ]; then
+    rm "$HOME/.agents"
+    task "Removed ~/.agents symlink"
+else
+    skip "agents symlink cleanup"
+fi
+
+# Remove old codex directory symlink
+if [ -L "$HOME/.codex" ]; then
+    rm "$HOME/.codex"
+    task "Removed ~/.codex symlink"
+else
+    skip "codex symlink cleanup"
+fi
+
+# Remove old serena directory symlink
+if [ -L "$HOME/.serena" ]; then
+    rm "$HOME/.serena"
+    task "Removed ~/.serena symlink"
+else
+    skip "serena symlink cleanup"
+fi
+
+# chezmoi natively handles individual symlink→file replacement via os.Rename()
+# No need to remove individual config file symlinks — chezmoi does that automatically.
+
+info "Migration complete. chezmoi will now manage all config files."

@@ -1,0 +1,16 @@
+# macOS metadata
+**/.DS_Store
+
+# Claude Code runtime (CC owns these via atomic writes)
+.claude/settings.json
+.claude/tasks
+.claude/tasks/**
+
+# Data files (in source state for `include` in scripts, not deployed)
+Brewfile
+dock
+dock/**
+npm
+npm/**
+betterdisplay
+betterdisplay/**

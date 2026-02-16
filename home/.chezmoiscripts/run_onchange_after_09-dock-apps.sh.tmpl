@@ -1,0 +1,83 @@
+#!/bin/bash
+# chezmoi:template:left-delimiter="{{" right-delimiter="}}"
+set -e
+
+# dock apps hash: {{ include "dock/apps.txt" | sha256sum }}
+
+{{ template "helpers.sh" . }}
+
+{{ if eq .chezmoi.os "darwin" }}
+
+header "Dock Apps"
+
+if ! has_cmd dockutil; then
+    warn "dockutil not installed, skipping Dock configuration"
+    exit 0
+fi
+
+DOCK_CONFIG="{{ .chezmoi.sourceDir }}/dock/apps.txt"
+
+if [ ! -f "$DOCK_CONFIG" ]; then
+    skip "Dock config (no apps.txt)"
+    exit 0
+fi
+
+# Get current dock apps
+current_dock=$(dockutil --list 2>/dev/null | awk -F$'\t' '{print $1}' | tr '\n' '|' | sed 's/|$//')
+
+# Build expected dock apps list
+expected_dock=""
+while IFS= read -r app || [ -n "$app" ]; do
+    [[ "$app" =~ ^#.*$ || -z "$app" || "$app" =~ ^[[:space:]]*$ ]] && continue
+    app=$(echo "$app" | xargs)
+    [ -n "$expected_dock" ] && expected_dock="$expected_dock|"
+    expected_dock="$expected_dock$app"
+done < "$DOCK_CONFIG"
+
+if [ "$current_dock" = "$expected_dock" ]; then
+    skip "Dock apps"
+else
+    info "Configuring Dock apps..."
+    DOCK_CHANGED=false
+
+    # Clear existing dock
+    dockutil --remove all --no-restart 2>/dev/null || true
+
+    # Add apps from config
+    while IFS= read -r app || [ -n "$app" ]; do
+        [[ "$app" =~ ^#.*$ || -z "$app" || "$app" =~ ^[[:space:]]*$ ]] && continue
+        app=$(echo "$app" | xargs)
+
+        app_path=""
+        for dir in "/Applications" "/System/Applications" "$HOME/Applications"; do
+            if [ -d "$dir/$app.app" ]; then
+                app_path="$dir/$app.app"
+                break
+            fi
+        done
+
+        if [ -n "$app_path" ]; then
+            dockutil --add "$app_path" --no-restart 2>/dev/null && DOCK_CHANGED=true || warn "Failed to add $app"
+        else
+            warn "App not found: $app"
+        fi
+    done < "$DOCK_CONFIG"
+
+    if $DOCK_CHANGED; then
+        task "Dock apps configured"
+    fi
+fi
+
+# Add Downloads folder to "others" section
+if dockutil --list | grep -q "Downloads"; then
+    skip "Downloads in Dock"
+else
+    dockutil --add "$HOME/Downloads" --section others --view fan --display folder --no-restart 2>/dev/null
+    task "Downloads added to Dock"
+fi
+
+info "Dock changes apply on login, or run: killall Dock"
+
+{{ else }}
+:
+{{ end }}

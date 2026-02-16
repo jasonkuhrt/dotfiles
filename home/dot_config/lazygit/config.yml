@@ -1,0 +1,37 @@
+os:
+  editPreset: zed
+
+gui:
+  scrollHeight: 10
+  # Tokyo Night theme
+  # Source: https://github.com/folke/tokyonight.nvim/blob/main/extras/lazygit/tokyonight_night.yml
+  theme:
+    activeBorderColor:
+      - '#7aa2f7'  # blue
+      - bold
+    inactiveBorderColor:
+      - '#565f89'  # comment
+    searchingActiveBorderColor:
+      - '#e0af68'  # yellow
+      - bold
+    optionsTextColor:
+      - '#7aa2f7'  # blue
+    selectedLineBgColor:
+      - '#283457'  # visual selection
+    cherryPickedCommitFgColor:
+      - '#7aa2f7'  # blue
+    cherryPickedCommitBgColor:
+      - '#bb9af7'  # magenta
+    markedBaseCommitFgColor:
+      - '#7aa2f7'  # blue
+    markedBaseCommitBgColor:
+      - '#e0af68'  # yellow
+    unstagedChangesColor:
+      - '#f7768e'  # red
+    defaultFgColor:
+      - '#c0caf5'  # fg
+
+keybinding:
+  universal:
+    scrollUpMain: K
+    scrollDownMain: J

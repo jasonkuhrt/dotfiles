@@ -1,0 +1,39 @@
+{
+  //
+  //
+  //
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Zed Configuration Files
+  //
+  // Snippets designed for:
+  // - snippets/*.json,
+  // - keymap.json,
+  // - settings.json
+  //
+  //
+  "zed:keymap:context": {
+    // I wanted 0zk but k is used in a key sequence (e.g. "space k": "...") and if
+    // accepting a snippet suggest before sequence timer runs out (1s)
+    // then the "k" would not be stripped.
+    // TODO: make gh issue about this and link here.
+    "prefix": "0zb",
+    "description": "Zed Keymap Context Entry.",
+    "body": [
+      "{",
+      "\t\"context\": \"${1:Editor}\",",
+      "\t\"bindings\": {\n\t\"${2:key}\":\"${3:command}\"\n}",
+      "},$0"
+    ]
+  },
+  "zed:snippet": {
+    "prefix": "0zs",
+    "body": [
+      "\"${1:a:b:c}\": {",
+      "\t\"prefix\": \"0${2:abc}\",",
+      "\t\"description\": \"${3:Does this thing.}\",",
+      "\t\"body\": [\"${4:...}\"]",
+      "},"
+    ],
+    "description": "JSON key-value pair."
+  }
+}

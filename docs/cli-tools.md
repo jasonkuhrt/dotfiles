@@ -2,6 +2,25 @@
 
 Quick reference for all the tools installed via Brewfile. Forget what something does? Check here.
 
+## Shell Abbreviations
+
+Interactive Fish abbreviations expand classic commands to modern replacements. Scripts are unaffected (abbreviations only fire in interactive mode):
+
+| Type | Expands to | Why |
+|---|---|---|
+| `ls` | `lsd` | Icons, git integration |
+| `cat` | `bat` | Syntax highlighting, paging |
+| `grep` | `rg` | Fast, .gitignore-aware |
+| `find` | `fd` | Simpler syntax, fast |
+| `top` | `btm` | Graphical resource monitor |
+| `du` | `dust` | Visual disk usage bars |
+| `diff` | `difft` | Structural diff (understands syntax) |
+| `vim` | `nvim` | Neovim |
+
+Full list in `home/dot_config/fish/config.fish`.
+
+## Tools Reference
+
 | Category    | Tool         | What it does                          | Example                                         |
 | ----------- | ------------ | ------------------------------------- | ----------------------------------------------- |
 | **Files**   | `bat`        | Cat with syntax highlighting          | `bat file.ts`                                   |

@@ -33,32 +33,83 @@ dotfiles/                     # git repo root
 
 Chezmoi uses filename prefixes to control deployment behavior:
 
-| Prefix | Effect |
-|---|---|
-| `dot_` | Target starts with `.` |
-| `exact_` | Remove unmanaged files in target dir |
-| `private_` | Mode 0700/0600 |
-| `encrypted_` | age-encrypted at rest |
-| `executable_` | Set execute bit |
-| `symlink_` | Create symlink (file contents = target path) |
+| Prefix | Effect | Example |
+|---|---|---|
+| `dot_` | Target starts with `.` | `dot_gitconfig` → `.gitconfig` |
+| `exact_` | Remove unmanaged files in target dir | `exact_skills/` cleans stale skills |
+| `private_` | Mode 0700/0600 | `private_dot_ssh/` → `.ssh/` |
+| `encrypted_` | age-encrypted at rest | `encrypted_credentials.age` → `credentials` |
+| `executable_` | Set execute bit | `executable_toggle-chore-files.sh` |
+| `symlink_` | Create symlink (file contents = target path) | `symlink_skills.tmpl` |
+| `empty_` | Create a 0-byte file | `empty_dot_hushlogin` → `.hushlogin` |
+
+Multiple prefixes compose: `private_dot_aws/encrypted_credentials.age` → `~/.aws/credentials` (private dir + encrypted file).
+
+Note: `exact_` is NOT recursive — it only enforces exactness on immediate children of the directory, not subdirectories.
 
 ## Lifecycle Scripts
 
-Scripts in `.chezmoiscripts/` run during `chezmoi apply`:
+Scripts in `.chezmoiscripts/` run during `chezmoi apply`. The filename determines when and how often:
 
-- **`run_once_before_*`** — Run once on first apply (xcode, homebrew, migration)
-- **`run_onchange_before_*`** — Re-run when content hash changes (brew bundle)
-- **`run_onchange_after_*`** — Re-run when content changes (defaults, dock, npm globals)
-- **`run_once_after_*`** — Run once after files are deployed (fisher, neovim plugins, tmux)
+| Pattern | Behavior |
+|---|---|
+| `run_once_before_*` | Runs once on first apply, before file deployment |
+| `run_onchange_before_*` | Re-runs before file deployment when content/hash changes |
+| `run_onchange_after_*` | Re-runs after file deployment when content/hash changes |
+| `run_once_after_*` | Runs once after file deployment |
 
-Hash triggers use chezmoi's built-in `include` + `sha256sum`:
+The number in the filename (`00`, `03`, `08`, etc.) controls ordering. `before_` scripts run before chezmoi writes files; `after_` scripts run after.
+
+### Script Inventory
+
+**Bootstrap (run once on new machines):**
+
+| # | Script | What |
+|---|---|---|
+| 00 | migrate-symlinks | Clean up old sync infrastructure |
+| 01 | xcode-cli | Install Xcode command line tools |
+| 02 | homebrew | Install Homebrew |
+| 06 | fisher | Install Fisher plugin manager |
+| 13 | git-ssh | SSH known_hosts, gh protocol, remote fix |
+| 14 | neovim-plugins | Install vim-plug plugins |
+| 15 | tmux-plugins | Install tpm plugins |
+| 16 | yo-install | Install yo notification app |
+| 17 | kitty-theme | Bootstrap Kitty Tokyo Night theme |
+| 99 | sudo-hint | Print `sync-sudo` instructions |
+
+**Ongoing (re-run when content changes):**
+
+| # | Script | Trigger |
+|---|---|---|
+| 03 | brew-bundle | `Brewfile` hash changes |
+| 04 | node-toolchain | Script content changes |
+| 05 | npm-globals | `npm/global-packages.txt` hash changes |
+| 07 | fisher-plugins | `fish_plugins` hash changes |
+| 08 | macos-defaults | Script content changes |
+| 09 | dock-apps | `dock/apps.txt` hash changes |
+| 10 | betterdisplay | Script content changes |
+| 11 | dprint-update | `dprint.json` hash changes |
+| 12 | skills-sync | Script content changes |
+
+### Hash Trigger Pattern
+
+The `run_onchange_` scripts use a comment with a hash to detect changes:
+
+```bash
+# Brewfile hash: {{ include "Brewfile" | sha256sum }}
 ```
-# Brewfile hash: {{ "{{" }} include "Brewfile" | sha256sum {{ "}}" }}
-```
+
+chezmoi evaluates this template on each run. If `Brewfile` has changed since last apply, the hash is different, and chezmoi re-runs the script. This is the idiomatic chezmoi pattern — `sha256sum` is a built-in sprig template function, no external process needed.
 
 ## Data Files
 
-Some files exist in `home/` for script access but are NOT deployed to `$HOME` (listed in `.chezmoiignore`): `Brewfile`, `dock/apps.txt`, `npm/global-packages.txt`.
+Some files exist in `home/` for script access but are NOT deployed to `$HOME`. They're listed in `.chezmoiignore`:
+
+- `Brewfile` — Homebrew packages, casks, and Mac App Store apps
+- `dock/apps.txt` — Dock layout
+- `npm/global-packages.txt` — npm global packages
+
+These must be inside `home/` (the source directory) because chezmoi's `include` function can only read files within the source directory. The hash-trigger pattern (`{{ include "Brewfile" | sha256sum }}`) wouldn't work if these files were at the repo root.
 
 ## Encryption
 
@@ -67,23 +118,40 @@ Secrets use age encryption (built into chezmoi). Encrypted files have the `encry
 ## Drift Detection
 
 ```bash
-chezmoi verify    # check for drift
-chezmoi re-add    # capture external changes back to source
-chezmoi diff      # preview what apply would change
+just verify      # check for drift (exits non-zero if any)
+just diff        # preview what apply would change
+just re-add      # capture external changes back to source
 ```
 
-Use `chezmoi re-add` when external tools modify managed files (e.g., Fisher updates `fish_plugins`, Lazy.nvim updates `lazy-lock.json`).
+Use `just re-add <file>` when external tools modify managed files (e.g., Fisher updates `fish_plugins`, Lazy.nvim updates `lazy-lock.json`).
 
-## Common Commands
+## Commands
+
+Run `just` from the repo root to see all available recipes. The key ones:
 
 ```bash
-just apply            # chezmoi apply -v
-just diff             # preview changes
-just doctor           # system health check
-just edit <target>    # edit source file by target path
-just verify           # detect drift
-just re-add           # capture external changes
+# Core workflow
+just sync           # commit + pull + push + apply (daily driver)
+just apply          # apply without git sync
+just diff           # preview changes
+
+# Inspection
+just doctor         # system health check
+just verify         # detect drift
+just managed        # list all managed files
+just unmanaged      # find unmanaged files in ~/.config
+
+# Editing
+just edit <target>  # edit source by target path
+just re-add <file>  # capture external changes
+
+# Brew
+just brew           # run brew bundle
+just brew-check     # show what's missing
+just brew-cleanup   # remove unlisted packages
 ```
+
+For operations beyond what the justfile wraps, use `chezmoi` directly — see `chezmoi --help`.
 
 ## Notes
 

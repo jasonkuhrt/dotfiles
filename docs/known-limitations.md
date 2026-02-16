@@ -50,6 +50,14 @@ The `export-state/` directory created by beads hooks contains machine-specific p
 
 **Tracking:** [steveyegge/beads#1319](https://github.com/steveyegge/beads/issues/1319)
 
+## Manual Intervention Required
+
+These items require manual action and can't be fully automated:
+
+- **`sync-sudo`** — sudo operations (power management, Touch ID, Fish as default shell). Run `sudo ./sync-sudo` when prompted after apply.
+- **Fisher plugin removals** — `fisher update` handles removals, but some plugins leave behind universal variables in `~/.config/fish/fish_variables` that need manual cleanup.
+- **Keyboard repeat rate** — set by the macOS defaults script, but requires logout/login to take effect.
+
 ---
 
 # TODO

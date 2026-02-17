@@ -50,6 +50,14 @@ The `export-state/` directory created by beads hooks contains machine-specific p
 
 **Tracking:** [steveyegge/beads#1319](https://github.com/steveyegge/beads/issues/1319)
 
+## Homebrew Tap: kilar Checksum Mismatch
+
+`polidog/kilar/kilar` v0.2.4 currently fails checksum verification on Apple Silicon. Homebrew correctly refuses to install/upgrade it.
+
+**Workaround:** The `kilar` formula is commented out in `home/Brewfile` until upstream fixes the release artifact or tap checksum.
+
+**What to do when fixed:** Re-enable the `brew "polidog/kilar/kilar"` line and run `chezmoi apply`.
+
 ## Manual Intervention Required
 
 These items require manual action and can't be fully automated:

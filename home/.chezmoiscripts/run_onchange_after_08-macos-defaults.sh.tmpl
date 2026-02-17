@@ -9,6 +9,7 @@ set -e
 header "macOS Defaults"
 
 info "Configuring keyboard..."
+set_default "NSGlobalDomain" "com.apple.keyboard.fnState" "-bool" "true" "Use F1, F2, etc. as standard function keys"
 set_default "NSGlobalDomain" "ApplePressAndHoldEnabled" "-bool" "false" "Key repeat enabled"
 set_default "NSGlobalDomain" "KeyRepeat" "-int" "2" "Fast key repeat rate"
 set_default "NSGlobalDomain" "InitialKeyRepeat" "-int" "15" "Short initial key repeat delay"

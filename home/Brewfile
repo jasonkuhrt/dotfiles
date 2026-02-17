@@ -163,6 +163,7 @@ cask "transmission"   # torrent client
 cask "betterdisplay"  # display management (brightness, HiDPI, DDC)
 cask "caffeine"       # prevent sleep
 cask "dropbox"
+cask "karabiner-elements"  # keyboard remapping (Fn sticky/toggle mode)
 cask "keyboardcleantool"  # disable keyboard for cleaning
 
 # ═══════════════════════════════════════════════════════════

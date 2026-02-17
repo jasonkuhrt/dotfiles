@@ -31,6 +31,17 @@ Free Cmd+Space for Raycast:
 
 * Same pref pane → Keyboard Shortcuts → Spotlight → uncheck "Show Spotlight search"
 
+### Karabiner (Fn Toggle)
+
+`karabiner.json` is managed by chezmoi and includes: tap `Fn` to toggle sticky `Fn`; hold `Fn` for normal `Fn`.
+
+```sh
+open -a "Karabiner-Elements"
+```
+
+* Grant required permissions when prompted (Input Monitoring, Accessibility)
+* In Karabiner-Elements, ensure profile "Default profile" is selected
+
 ## 4. GitHub
 
 ### Authenticate CLI

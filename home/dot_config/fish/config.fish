@@ -162,6 +162,11 @@ alias ccusage 'npx ccusage@latest'
 alias ccmonitor 'claude-monitor --plan max20'
 
 # GitHub CLI
+function dr --description "Devin Review for current branch's PR"
+    set -l pr_url (gh pr view --json url -q .url 2>/dev/null)
+    or begin; echo "No PR found for current branch"; return 1; end
+    npx devin-review $pr_url
+end
 alias ghil="gh issue list"
 alias gpr="gh pr"
 alias gprc="gh pr create"

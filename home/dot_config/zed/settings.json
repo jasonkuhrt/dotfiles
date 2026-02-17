@@ -306,6 +306,7 @@
   //
   //
 
+  "file_scan_inclusions": [".env*", ".claude/**", ".tmp/**"],
   "autosave": "on_focus_change",
   "format_on_save": "on",
   // "close_on_file_delete": true,

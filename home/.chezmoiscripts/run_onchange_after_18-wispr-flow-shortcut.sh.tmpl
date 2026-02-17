@@ -1,0 +1,70 @@
+#!/bin/bash
+# chezmoi:template:left-delimiter="{{" right-delimiter="}}"
+set -e
+
+{{ template "helpers.sh" . }}
+
+{{ if eq .chezmoi.os "darwin" }}
+
+header "Wispr Flow Shortcut"
+
+CONFIG="$HOME/Library/Application Support/Wispr Flow/config.json"
+
+if [ ! -f "$CONFIG" ]; then
+    skip "Wispr Flow config (not found)"
+    exit 0
+fi
+
+if pgrep -f "/Applications/Wispr Flow.app/Contents/MacOS/Wispr Flow" > /dev/null; then
+    skip "Wispr Flow shortcut (app running, quit app then apply)"
+    exit 0
+fi
+
+if ! has_cmd jq; then
+    warn "jq not installed; skipping Wispr Flow shortcut update"
+    exit 0
+fi
+
+current_ptt=$(
+    jq -r '.prefs.user.shortcuts // {} | to_entries[]? | select(.value == "ptt") | .key' "$CONFIG" \
+        | head -n 1
+)
+current_split=$(
+    jq -r '.prefs.cache.splitKeybinds // [] | map(select(.value == "ptt") | .shortcut[0]) | .[0] // empty' "$CONFIG"
+)
+
+if [ "$current_ptt" = "100" ] && [ "$current_split" = "100" ]; then
+    skip "Wispr Flow PTT hotkey (F8)"
+    exit 0
+fi
+
+tmp=$(mktemp "${TMPDIR:-/tmp}/wispr-flow-config.XXXXXX")
+
+jq '
+  .prefs.user.shortcuts =
+    (
+      ((.prefs.user.shortcuts // {})
+        | to_entries
+        | map(select(.value != "ptt"))
+        | from_entries
+      ) + {"100":"ptt"}
+    )
+  | .prefs.cache.splitKeybinds =
+    (
+      (.prefs.cache.splitKeybinds // [])
+      | map(if .value == "ptt" then .shortcut = [100] else . end)
+    )
+' "$CONFIG" > "$tmp"
+
+if jq empty "$tmp" > /dev/null 2>&1; then
+    mv "$tmp" "$CONFIG"
+    task "Wispr Flow PTT hotkey set to F8"
+else
+    rm -f "$tmp"
+    warn "Failed to update Wispr Flow shortcut"
+    exit 1
+fi
+
+{{ else }}
+:
+{{ end }}

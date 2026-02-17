@@ -72,6 +72,7 @@ open -a Raycast
 * Launch and sign in (settings sync automatically)
 * Grant Accessibility permission when prompted
 * Grant Microphone permission when prompted
+* Hotkey is managed by chezmoi: push-to-talk is set to `F8` (run `chezmoi apply` with Wispr Flow closed)
 
 ## 7. Email Password
 

@@ -30,7 +30,7 @@
                     ]
                   }
                 },
-                "to": [
+                "to_if_held_down": [
                   {
                     "key_code": "fn"
                   }

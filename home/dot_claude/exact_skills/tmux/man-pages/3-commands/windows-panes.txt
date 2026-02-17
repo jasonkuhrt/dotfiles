@@ -1,0 +1,952 @@
+WINDOWS AND PANES
+     Each window displayed by tmux may be split into one or more panes; each
+     pane takes up a certain area of the display and is a separate terminal.
+     A window may be split into panes using the split-window command.  Windows
+     may be split horizontally (with the -h flag) or vertically.  Panes may be
+     resized with the resize-pane command (bound to ‘C-Up’, ‘C-Down’ ‘C-Left’
+     and ‘C-Right’ by default), the current pane may be changed with the
+     select-pane command and the rotate-window and swap-pane commands may be
+     used to swap panes without changing their position.  Panes are numbered
+     beginning from zero in the order they are created.
+
+     By default, a tmux pane permits direct access to the terminal contained
+     in the pane.  A pane may also be put into one of several modes:
+
+	   -   Copy mode, which permits a section of a window or its history
+	       to be copied to a paste buffer for later insertion into another
+	       window.	This mode is entered with the copy-mode command, bound
+	       to ‘[’ by default.  Copied text can be pasted with the
+	       paste-buffer command, bound to ‘]’.
+
+	   -   View mode, which is like copy mode but is entered when a
+	       command that produces output, such as list-keys, is executed
+	       from a key binding.
+
+	   -   Choose mode, which allows an item to be chosen from a list.
+	       This may be a client, a session or window or pane, or a buffer.
+	       This mode is entered with the choose-buffer, choose-client and
+	       choose-tree commands.
+
+     In copy mode an indicator is displayed in the top-right corner of the
+     pane with the current position and the number of lines in the history.
+
+     Commands are sent to copy mode using the -X flag to the send-keys
+     command.  When a key is pressed, copy mode automatically uses one of two
+     key tables, depending on the mode-keys option: copy-mode for emacs, or
+     copy-mode-vi for vi.  Key tables may be viewed with the list-keys
+     command.
+
+     The following commands are supported in copy mode:
+
+     append-selection
+	     Append the selection to the top paste buffer.
+
+     append-selection-and-cancel (vi: A)
+	     Append the selection to the top paste buffer and exit copy mode.
+
+     back-to-indentation (vi: ^) (emacs: M-m)
+	     Move the cursor back to the indentation.
+
+     begin-selection (vi: Space) (emacs: C-Space)
+	     Begin selection.
+
+     bottom-line (vi: L)
+	     Move to the bottom line.
+
+     cancel (vi: q) (emacs: Escape)
+	     Exit copy mode.
+
+     clear-selection (vi: Escape) (emacs: C-g)
+	     Clear the current selection.
+
+     copy-end-of-line [-CP] [prefix]
+	     Copy from the cursor position to the end of the line.  prefix is
+	     used to name the new paste buffer.
+
+     copy-end-of-line-and-cancel [-CP] [prefix]
+	     Copy from the cursor position and exit copy mode.
+
+     copy-pipe-end-of-line [-CP] [command] [prefix]
+	     Copy from the cursor position to the end of the line and pipe the
+	     text to command.  prefix is used to name the new paste buffer.
+
+     copy-pipe-end-of-line-and-cancel [-CP] [command] [prefix]
+	     Same as copy-pipe-end-of-line but also exit copy mode.
+
+     copy-line [-CP] [prefix]
+	     Copy the entire line.
+
+     copy-line-and-cancel [-CP] [prefix]
+	     Copy the entire line and exit copy mode.
+
+     copy-pipe-line [-CP] [command] [prefix]
+	     Copy the entire line and pipe the text to command.  prefix is
+	     used to name the new paste buffer.
+
+     copy-pipe-line-and-cancel [-CP] [command] [prefix]
+	     Same as copy-pipe-line but also exit copy mode.
+
+     copy-pipe [-CP] [command] [prefix]
+	     Copy the selection, clear it and pipe its text to command.
+	     prefix is used to name the new paste buffer.
+
+     copy-pipe-no-clear [-CP] [command] [prefix]
+	     Same as copy-pipe but do not clear the selection.
+
+     copy-pipe-and-cancel [-CP] [command] [prefix]
+	     Same as copy-pipe but also exit copy mode.
+
+     copy-selection [-CP] [prefix]
+	     Copies the current selection.
+
+     copy-selection-no-clear [-CP] [prefix]
+	     Same as copy-selection but do not clear the selection.
+
+     copy-selection-and-cancel [-CP] [prefix] (vi: Enter) (emacs: M-w)
+	     Copy the current selection and exit copy mode.
+
+     cursor-down (vi: j) (emacs: Down)
+	     Move the cursor down.
+
+     cursor-down-and-cancel
+	     Same as cursor-down but also exit copy mode if reaching the
+	     bottom.
+
+     cursor-left (vi: h) (emacs: Left)
+	     Move the cursor left.
+
+     cursor-right (vi: l) (emacs: Right)
+	     Move the cursor right.
+
+     cursor-up (vi: k) (emacs: Up)
+	     Move the cursor up.
+
+     cursor-centre-vertical (emacs: C-l)
+	     Moves the cursor to the vertical centre of the pane.
+
+     cursor-centre-horizontal (emacs: M-l)
+	     Moves the cursor to the horizontal centre of the pane.
+
+     end-of-line (vi: $) (emacs: C-e)
+	     Move the cursor to the end of the line.
+
+     goto-line line (vi: :) (emacs: g)
+	     Move the cursor to a specific line.
+
+     halfpage-down (vi: C-d) (emacs: M-Down)
+	     Scroll down by half a page.
+
+     halfpage-down-and-cancel
+	     Same as halfpage-down but also exit copy mode if reaching the
+	     bottom.
+
+     halfpage-up (vi: C-u) (emacs: M-Up)
+	     Scroll up by half a page.
+
+     history-bottom (vi: G) (emacs: M->)
+	     Scroll to the bottom of the history.
+
+     history-top (vi: g) (emacs: M-<)
+	     Scroll to the top of the history.
+
+     jump-again (vi: ;) (emacs: ;)
+	     Repeat the last jump.
+
+     jump-backward to (vi: F) (emacs: F)
+	     Jump backwards to the specified text.
+
+     jump-forward to (vi: f) (emacs: f)
+	     Jump forward to the specified text.
+
+     jump-reverse (vi: ,) (emacs: ,)
+	     Repeat the last jump in the reverse direction (forward becomes
+	     backward and backward becomes forward).
+
+     jump-to-backward to (vi: T)
+	     Jump backwards, but one character less, placing the cursor on the
+	     character after the target.
+
+     jump-to-forward to (vi: t)
+	     Jump forward, but one character less, placing the cursor on the
+	     character before the target.
+
+     jump-to-mark (vi: M-x) (emacs: M-x)
+	     Jump to the last mark.
+
+     middle-line (vi: M) (emacs: M-r)
+	     Move to the middle line.
+
+     next-matching-bracket (vi: %) (emacs: M-C-f)
+	     Move to the next matching bracket.
+
+     next-paragraph (vi: }) (emacs: M-})
+	     Move to the next paragraph.
+
+     next-prompt [-o]
+	     Move to the next prompt.
+
+     next-word (vi: w)
+	     Move to the next word.
+
+     next-word-end (vi: e) (emacs: M-f)
+	     Move to the end of the next word.
+
+     next-space (vi: W)
+	     Same as next-word but use a space alone as the word separator.
+
+     next-space-end (vi: E)
+	     Same as next-word-end but use a space alone as the word
+	     separator.
+
+     other-end (vi: o)
+	     Switch at which end of the selection the cursor sits.
+
+     page-down (vi: C-f) (emacs: PageDown)
+	     Scroll down by one page.
+
+     page-down-and-cancel
+	     Same as page-down but also exit copy mode if reaching the bottom.
+
+     page-up (vi: C-b) (emacs: PageUp)
+	     Scroll up by one page.
+
+     pipe [command]
+	     Pipe the selected text to command and clear the selection.
+
+     pipe-no-clear [command]
+	     Same as pipe but do not clear the selection.
+
+     pipe-and-cancel [command] [prefix]
+	     Same as pipe but also exit copy mode.
+
+     previous-matching-bracket (emacs: M-C-b)
+	     Move to the previous matching bracket.
+
+     previous-paragraph (vi: {) (emacs: M-{)
+	     Move to the previous paragraph.
+
+     previous-prompt [-o]
+	     Move to the previous prompt.
+
+     previous-word (vi: b) (emacs: M-b)
+	     Move to the previous word.
+
+     previous-space (vi: B)
+	     Same as previous-word but use a space alone as the word
+	     separator.
+
+     rectangle-on
+	     Turn on rectangle selection mode.
+
+     rectangle-off
+	     Turn off rectangle selection mode.
+
+     rectangle-toggle (vi: v) (emacs: R)
+	     Toggle rectangle selection mode.
+
+     refresh-from-pane (vi: r) (emacs: r)
+	     Refresh the content from the pane.
+
+     scroll-bottom
+	     Scroll up until the current line is at the bottom while keeping
+	     the cursor on that line.
+
+     scroll-down (vi: C-e) (emacs: C-Down)
+	     Scroll down.
+
+     scroll-down-and-cancel
+	     Same as scroll-down but also exit copy mode if the cursor reaches
+	     the bottom.
+
+     scroll-middle (vi: z)
+	     Scroll so that the current line becomes the middle one while
+	     keeping the cursor on that line.
+
+     scroll-top
+	     Scroll down until the current line is at the top while keeping
+	     the cursor on that line.
+
+     scroll-up (vi: C-y) (emacs: C-Up)
+	     Scroll up.
+
+     search-again (vi: n) (emacs: n)
+	     Repeat the last search.
+
+     search-backward text (vi: ?)
+	     Search backwards for the specified text.
+
+     search-backward-incremental text (emacs: C-r)
+	     Search backwards incrementally for the specified text.  Is
+	     expected to be used with the -i flag to the command-prompt
+	     command.
+
+     search-backward-text text
+	     Search backwards for the specified plain text.
+
+     search-forward text (vi: /)
+	     Search forward for the specified text.
+
+     search-forward-incremental text (emacs: C-s)
+	     Search forward incrementally for the specified text.  Is expected
+	     to be used with the -i flag to the command-prompt command.
+
+     search-forward-text text
+	     Search forward for the specified plain text.
+
+     search-reverse (vi: N) (emacs: N)
+	     Repeat the last search in the reverse direction (forward becomes
+	     backward and backward becomes forward).
+
+     select-line (vi: V)
+	     Select the current line.
+
+     select-word
+	     Select the current word.
+
+     selection-mode [char | word | line]
+	     Change the selection mode.
+
+     set-mark (vi: X) (emacs: X)
+	     Mark the current line.
+
+     start-of-line (vi: 0) (emacs: C-a)
+	     Move the cursor to the start of the line.
+
+     stop-selection
+	     Stop selecting without clearing the current selection.
+
+     toggle-position (vi: P) (emacs: P)
+	     Toggle the visibility of the position indicator in the top right.
+
+     top-line (vi: H) (emacs: M-R)
+	     Move to the top line.
+
+     The search commands come in several varieties: ‘search-forward’ and
+     ‘search-backward’ search for a regular expression; the ‘-text’ variants
+     search for a plain text string rather than a regular expression;
+     ‘-incremental’ perform an incremental search and expect to be used with
+     the -i flag to the command-prompt command.  ‘search-again’ repeats the
+     last search and ‘search-reverse’ does the same but reverses the direction
+     (forward becomes backward and backward becomes forward).
+
+     The default incremental search key bindings, ‘C-r’ and ‘C-s’, are
+     designed to emulate emacs(1).  When first pressed they allow a new search
+     term to be entered; if pressed with an empty search term they repeat the
+     previously used search term.
+
+     The ‘next-prompt’ and ‘previous-prompt’ move between shell prompts, but
+     require the shell to emit an escape sequence (\033]133;A\033\\) to tell
+     tmux where the prompts are located; if the shell does not do this, these
+     commands will do nothing.	The -o flag jumps to the beginning of the
+     command output instead of the shell prompt.  Finding the beginning of
+     command output requires the shell to emit an escape sequence
+     (\033]133;C\033\\) to tell tmux where the output begins.  If the shell
+     does not send these escape sequences, these commands do nothing.
+
+     Copy commands may take an optional buffer prefix argument which is used
+     to generate the buffer name (the default is ‘buffer’ so buffers are named
+     ‘buffer0’, ‘buffer1’ and so on).  Pipe commands take a command argument
+     which is the command to which the selected text is piped.	‘copy-pipe’
+     variants also copy the selection.	The ‘-and-cancel’ variants of some
+     commands exit copy mode after they have completed (for copy commands) or
+     when the cursor reaches the bottom (for scrolling commands).  ‘-no-clear’
+     variants do not clear the selection.  All the copy commands can take the
+     -C and -P flags.  The -C flag suppresses setting the terminal clipboard
+     when copying, while the -P flag suppresses adding a paste buffer with the
+     text.
+
+     The next and previous word keys skip over whitespace and treat
+     consecutive runs of either word separators or other letters as words.
+     Word separators can be customized with the word-separators session
+     option.  Next word moves to the start of the next word, next word end to
+     the end of the next word and previous word to the start of the previous
+     word.  The three next and previous space keys work similarly but use a
+     space alone as the word separator.  Setting word-separators to the empty
+     string makes next/previous word equivalent to next/previous space.
+
+     The jump commands enable quick movement within a line.  For instance,
+     typing ‘f’ followed by ‘/’ will move the cursor to the next ‘/’ character
+     on the current line.  A ‘;’ will then jump to the next occurrence.
+
+     Commands in copy mode may be prefaced by an optional repeat count.  With
+     vi key bindings, a prefix is entered using the number keys; with emacs,
+     the Alt (meta) key and a number begins prefix entry.
+
+     The synopsis for the copy-mode command is:
+
+     copy-mode [-deHMqSu] [-s src-pane] [-t target-pane]
+	     Enter copy mode.
+
+	     -u enters copy mode and scrolls one page up and -d one page down.
+	     -H hides the position indicator in the top right.	-q cancels
+	     copy mode and any other modes.
+
+	     -M begins a mouse drag (only valid if bound to a mouse key
+	     binding, see MOUSE SUPPORT).  -S scrolls when bound to a mouse
+	     drag event; for example, copy-mode -Se is bound to
+	     MouseDrag1ScrollbarSlider by default.
+
+	     -s copies from src-pane instead of target-pane.
+
+	     -e specifies that scrolling to the bottom of the history (to the
+	     visible screen) should exit copy mode.  While in copy mode,
+	     pressing a key other than those used for scrolling will disable
+	     this behaviour.  This is intended to allow fast scrolling through
+	     a pane's history, for example with:
+
+		   bind PageUp copy-mode -eu
+		   bind PageDown copy-mode -ed
+
+     A number of preset arrangements of panes are available, these are called
+     layouts.  These may be selected with the select-layout command or cycled
+     with next-layout (bound to ‘Space’ by default); once a layout is chosen,
+     panes within it may be moved and resized as normal.
+
+     The following layouts are supported:
+
+     even-horizontal
+	     Panes are spread out evenly from left to right across the window.
+
+     even-vertical
+	     Panes are spread evenly from top to bottom.
+
+     main-horizontal
+	     A large (main) pane is shown at the top of the window and the
+	     remaining panes are spread from left to right in the leftover
+	     space at the bottom.  Use the main-pane-height window option to
+	     specify the height of the top pane.
+
+     main-horizontal-mirrored
+	     The same as main-horizontal but mirrored so the main pane is at
+	     the bottom of the window.
+
+     main-vertical
+	     A large (main) pane is shown on the left of the window and the
+	     remaining panes are spread from top to bottom in the leftover
+	     space on the right.  Use the main-pane-width window option to
+	     specify the width of the left pane.
+
+     main-vertical-mirrored
+	     The same as main-vertical but mirrored so the main pane is on the
+	     right of the window.
+
+     tiled   Panes are spread out as evenly as possible over the window in
+	     both rows and columns.
+
+     In addition, select-layout may be used to apply a previously used layout
+     - the list-windows command displays the layout of each window in a form
+     suitable for use with select-layout.  For example:
+
+	   $ tmux list-windows
+	   0: ksh [159x48]
+	       layout: bb62,159x48,0,0{79x48,0,0,79x48,80,0}
+	   $ tmux select-layout 'bb62,159x48,0,0{79x48,0,0,79x48,80,0}'
+
+     tmux automatically adjusts the size of the layout for the current window
+     size.  Note that a layout cannot be applied to a window with more panes
+     than that from which the layout was originally defined.
+
+     Commands related to windows and panes are as follows:
+
+     break-pane [-abdP] [-F format] [-n window-name] [-s src-pane] [-t
+	     dst-window]
+		   (alias: breakp)
+	     Break src-pane off from its containing window to make it the only
+	     pane in dst-window.  With -a or -b, the window is moved to the
+	     next index after or before (existing windows are moved if
+	     necessary).  If -d is given, the new window does not become the
+	     current window.  The -P option prints information about the new
+	     window after it has been created.	By default, it uses the format
+	     ‘#{session_name}:#{window_index}.#{pane_index}’ but a different
+	     format may be specified with -F.
+
+     capture-pane [-aepPqCJMN] [-b buffer-name] [-E end-line] [-S start-line]
+	     [-t target-pane]
+		   (alias: capturep)
+	     Capture the contents of a pane.  If -p is given, the output goes
+	     to stdout, otherwise to the buffer specified with -b or a new
+	     buffer if omitted.  If -a is given, the alternate screen is used,
+	     and the history is not accessible.  If no alternate screen
+	     exists, an error will be returned unless -q is given.  Similarly,
+	     if the pane is in a mode, -M uses the screen for the mode.  If -e
+	     is given, the output includes escape sequences for text and
+	     background attributes.  -C also escapes non-printable characters
+	     as octal \xxx.  -T ignores trailing positions that do not contain
+	     a character.  -N preserves trailing spaces at each line's end and
+	     -J preserves trailing spaces and joins any wrapped lines; -J
+	     implies -T.  -P captures only any output that the pane has
+	     received that is the beginning of an as-yet incomplete escape
+	     sequence.
+
+	     -S and -E specify the starting and ending line numbers, zero is
+	     the first line of the visible pane and negative numbers are lines
+	     in the history.  ‘-’ to -S is the start of the history and to -E
+	     the end of the visible pane.  The default is to capture only the
+	     visible contents of the pane.
+
+     choose-client [-NryZ] [-F format] [-f filter] [-K key-format] [-O
+	     sort-order] [-t target-pane] [template]
+	     Put a pane into client mode, allowing a client to be selected
+	     interactively from a list.  Each client is shown on one line.  A
+	     shortcut key is shown on the left in brackets allowing for
+	     immediate choice, or the list may be navigated and an item chosen
+	     or otherwise manipulated using the keys below.  -Z zooms the
+	     pane.  -y disables any confirmation prompts.  The following keys
+	     may be used in client mode:
+
+		   Key	  Function
+		   Enter  Choose selected client
+		   Up	  Select previous client
+		   Down   Select next client
+		   C-s	  Search by name
+		   n	  Repeat last search forwards
+		   N	  Repeat last search backwards
+		   t	  Toggle if client is tagged
+		   T	  Tag no clients
+		   C-t	  Tag all clients
+		   d	  Detach selected client
+		   D	  Detach tagged clients
+		   x	  Detach and HUP selected client
+		   X	  Detach and HUP tagged clients
+		   z	  Suspend selected client
+		   Z	  Suspend tagged clients
+		   f	  Enter a format to filter items
+		   O	  Change sort field
+		   r	  Reverse sort order
+		   v	  Toggle preview
+		   q	  Exit mode
+
+	     After a client is chosen, ‘%%’ is replaced by the client name in
+	     template and the result executed as a command.  If template is
+	     not given, "detach-client -t '%%'" is used.
+
+	     -O specifies the initial sort field: one of ‘name’, ‘size’,
+	     ‘creation’ (time), or ‘activity’ (time).  -r reverses the sort
+	     order.  -f specifies an initial filter: the filter is a format -
+	     if it evaluates to zero, the item in the list is not shown,
+	     otherwise it is shown.  If a filter would lead to an empty list,
+	     it is ignored.  -F specifies the format for each item in the list
+	     and -K a format for each shortcut key; both are evaluated once
+	     for each line.  -N starts without the preview or if given twice
+	     with the larger preview.  This command works only if at least one
+	     client is attached.
+
+     choose-tree [-GNrswyZ] [-F format] [-f filter] [-K key-format] [-O
+	     sort-order] [-t target-pane] [template]
+	     Put a pane into tree mode, where a session, window or pane may be
+	     chosen interactively from a tree.	Each session, window or pane
+	     is shown on one line.  A shortcut key is shown on the left in
+	     brackets allowing for immediate choice, or the tree may be
+	     navigated and an item chosen or otherwise manipulated using the
+	     keys below.  -s starts with sessions collapsed and -w with
+	     windows collapsed.  -Z zooms the pane.  -y disables any
+	     confirmation prompts.  The following keys may be used in tree
+	     mode:
+
+		   Key	  Function
+		   Enter  Choose selected item
+		   Up	  Select previous item
+		   Down   Select next item
+		   S-Up   Swap the current window with the previous one
+		   S-Down Swap the current window with the next one
+		   +	  Expand selected item
+		   -	  Collapse selected item
+		   M-+	  Expand all items
+		   M--	  Collapse all items
+		   x	  Kill selected item
+		   X	  Kill tagged items
+		   <	  Scroll list of previews left
+		   >	  Scroll list of previews right
+		   C-s	  Search by name
+		   m	  Set the marked pane
+		   M	  Clear the marked pane
+		   n	  Repeat last search forwards
+		   N	  Repeat last search backwards
+		   t	  Toggle if item is tagged
+		   T	  Tag no items
+		   C-t	  Tag all items
+		   :	  Run a command for each tagged item
+		   f	  Enter a format to filter items
+		   H	  Jump to the starting pane
+		   O	  Change sort field
+		   r	  Reverse sort order
+		   v	  Toggle preview
+		   q	  Exit mode
+
+	     After a session, window or pane is chosen, the first instance of
+	     ‘%%’ and all instances of ‘%1’ are replaced by the target in
+	     template and the result executed as a command.  If template is
+	     not given, "switch-client -t '%%'" is used.
+
+	     -O specifies the initial sort field: one of ‘index’, ‘name’, or
+	     ‘time’ (activity).  -r reverses the sort order.  -f specifies an
+	     initial filter: the filter is a format - if it evaluates to zero,
+	     the item in the list is not shown, otherwise it is shown.	If a
+	     filter would lead to an empty list, it is ignored.  -F specifies
+	     the format for each item in the tree and -K a format for each
+	     shortcut key; both are evaluated once for each line.  -N starts
+	     without the preview or if given twice with the larger preview.
+	     -G includes all sessions in any session groups in the tree rather
+	     than only the first.  This command works only if at least one
+	     client is attached.
+
+     customize-mode [-NZ] [-F format] [-f filter] [-t target-pane] [template]
+	     Put a pane into customize mode, where options and key bindings
+	     may be browsed and modified from a list.  Option values in the
+	     list are shown for the active pane in the current window.	-Z
+	     zooms the pane.  The following keys may be used in customize
+	     mode:
+
+		   Key	  Function
+		   Enter  Set pane, window, session or global option value
+		   Up	  Select previous item
+		   Down   Select next item
+		   +	  Expand selected item
+		   -	  Collapse selected item
+		   M-+	  Expand all items
+		   M--	  Collapse all items
+		   s	  Set option value or key attribute
+		   S	  Set global option value
+		   w	  Set window option value, if option is for pane and
+			  window
+		   d	  Set an option or key to the default
+		   D	  Set tagged options and tagged keys to the default
+		   u	  Unset an option (set to default value if global) or
+			  unbind a key
+		   U	  Unset tagged options and unbind tagged keys
+		   C-s	  Search by name
+		   n	  Repeat last search forwards
+		   N	  Repeat last search backwards
+		   t	  Toggle if item is tagged
+		   T	  Tag no items
+		   C-t	  Tag all items
+		   f	  Enter a format to filter items
+		   v	  Toggle option information
+		   q	  Exit mode
+
+	     -f specifies an initial filter: the filter is a format - if it
+	     evaluates to zero, the item in the list is not shown, otherwise
+	     it is shown.  If a filter would lead to an empty list, it is
+	     ignored.  -F specifies the format for each item in the tree.  -N
+	     starts without the option information.  This command works only
+	     if at least one client is attached.
+
+     display-panes [-bN] [-d duration] [-t target-client] [template]
+		   (alias: displayp)
+	     Display a visible indicator of each pane shown by target-client.
+	     See the display-panes-colour and display-panes-active-colour
+	     session options.  The indicator is closed when a key is pressed
+	     (unless -N is given) or duration milliseconds have passed.  If -d
+	     is not given, display-panes-time is used.	A duration of zero
+	     means the indicator stays until a key is pressed.	While the
+	     indicator is on screen, a pane may be chosen with the ‘0’ to ‘9’
+	     keys, which will cause template to be executed as a command with
+	     ‘%%’ substituted by the pane ID.  The default template is
+	     "select-pane -t '%%'".  With -b, other commands are not blocked
+	     from running until the indicator is closed.
+
+     find-window [-iCNrTZ] [-t target-pane] match-string
+		   (alias: findw)
+	     Search for a glob(7) pattern or, with -r, regular expression
+	     match-string in window names, titles, and visible content (but
+	     not history).  The flags control matching behavior: -C matches
+	     only visible window contents, -N matches only the window name and
+	     -T matches only the window title.	-i makes the search ignore
+	     case.  The default is -CNT.  -Z zooms the pane.
+
+	     This command works only if at least one client is attached.
+
+     join-pane [-bdfhv] [-l size] [-s src-pane] [-t dst-pane]
+		   (alias: joinp)
+	     Like split-window, but instead of splitting dst-pane and creating
+	     a new pane, split it and move src-pane into the space.  This can
+	     be used to reverse break-pane.  The -b option causes src-pane to
+	     be joined to left of or above dst-pane.
+
+	     If -s is omitted and a marked pane is present (see select-pane
+	     -m), the marked pane is used rather than the current pane.
+
+     kill-pane [-a] [-t target-pane]
+		   (alias: killp)
+	     Destroy the given pane.  If no panes remain in the containing
+	     window, it is also destroyed.  The -a option kills all but the
+	     pane given with -t.
+
+     kill-window [-a] [-t target-window]
+		   (alias: killw)
+	     Kill the current window or the window at target-window, removing
+	     it from any sessions to which it is linked.  The -a option kills
+	     all but the window given with -t.
+
+     last-pane [-deZ] [-t target-window]
+		   (alias: lastp)
+	     Select the last (previously selected) pane.  -Z keeps the window
+	     zoomed if it was zoomed.  -e enables or -d disables input to the
+	     pane.
+
+     last-window [-t target-session]
+		   (alias: last)
+	     Select the last (previously selected) window.  If no
+	     target-session is specified, select the last window of the
+	     current session.
+
+     link-window [-abdk] [-s src-window] [-t dst-window]
+		   (alias: linkw)
+	     Link the window at src-window to the specified dst-window.  If
+	     dst-window is specified and no such window exists, the src-window
+	     is linked there.  With -a or -b the window is moved to the next
+	     index after or before dst-window (existing windows are moved if
+	     necessary).  If -k is given and dst-window exists, it is killed,
+	     otherwise an error is generated.  If -d is given, the newly
+	     linked window is not selected.
+
+     list-panes [-as] [-F format] [-f filter] [-t target]
+		   (alias: lsp)
+	     If -a is given, target is ignored and all panes on the server are
+	     listed.  If -s is given, target is a session (or the current
+	     session).	If neither is given, target is a window (or the
+	     current window).  -F specifies the format of each line and -f a
+	     filter.  Only panes for which the filter is true are shown.  See
+	     the FORMATS section.
+
+     list-windows [-a] [-F format] [-f filter] [-t target-session]
+		   (alias: lsw)
+	     If -a is given, list all windows on the server.  Otherwise, list
+	     windows in the current session or in target-session.  -F
+	     specifies the format of each line and -f a filter.  Only windows
+	     for which the filter is true are shown.  See the FORMATS section.
+
+     move-pane [-bdfhv] [-l size] [-s src-pane] [-t dst-pane]
+		   (alias: movep)
+	     Does the same as join-pane.
+
+     move-window [-abrdk] [-s src-window] [-t dst-window]
+		   (alias: movew)
+	     This is similar to link-window, except the window at src-window
+	     is moved to dst-window.  With -r, all windows in the session are
+	     renumbered in sequential order, respecting the base-index option.
+
+     new-window [-abdkPS] [-c start-directory] [-e environment] [-F format]
+	     [-n window-name] [-t target-window] [shell-command [argument
+	     ...]]
+		   (alias: neww)
+	     Create a new window.  With -a or -b, the new window is inserted
+	     at the next index after or before the specified target-window,
+	     moving windows up if necessary; otherwise target-window is the
+	     new window location.
+
+	     If -d is given, the session does not make the new window the
+	     current window.  target-window represents the window to be
+	     created; if the target already exists an error is shown, unless
+	     the -k flag is used, in which case it is destroyed.  If -S is
+	     given and a window named window-name already exists, it is
+	     selected (unless -d is also given in which case the command does
+	     nothing).
+
+	     shell-command is the command to execute.  If shell-command is not
+	     specified, the value of the default-command option is used.  -c
+	     specifies the working directory in which the new window is
+	     created.
+
+	     When the shell command completes, the window closes.  See the
+	     remain-on-exit option to change this behaviour.
+
+	     -e takes the form ‘VARIABLE=value’ and sets an environment
+	     variable for the newly created window; it may be specified
+	     multiple times.
+
+	     The TERM environment variable must be set to ‘screen’ or ‘tmux’
+	     for all programs running inside tmux.  New windows will
+	     automatically have ‘TERM=screen’ added to their environment, but
+	     care must be taken not to reset this in shell start-up files or
+	     by the -e option.
+
+	     The -P option prints information about the new window after it
+	     has been created.	By default, it uses the format
+	     ‘#{session_name}:#{window_index}’ but a different format may be
+	     specified with -F.
+
+     next-layout [-t target-window]
+		   (alias: nextl)
+	     Move a window to the next layout and rearrange the panes to fit.
+
+     next-window [-a] [-t target-session]
+		   (alias: next)
+	     Move to the next window in the session.  If -a is used, move to
+	     the next window with an alert.
+
+     pipe-pane [-IOo] [-t target-pane] [shell-command]
+		   (alias: pipep)
+	     Pipe output sent by the program in target-pane to a shell command
+	     or vice versa.  A pane may only be connected to one command at a
+	     time, any existing pipe is closed before shell-command is
+	     executed.	The shell-command string may contain the special
+	     character sequences supported by the status-left option.  If no
+	     shell-command is given, the current pipe (if any) is closed.
+
+	     -I and -O specify which of the shell-command output streams are
+	     connected to the pane: with -I stdout is connected (so anything
+	     shell-command prints is written to the pane as if it were typed);
+	     with -O stdin is connected (so any output in the pane is piped to
+	     shell-command).  Both may be used together and if neither are
+	     specified, -O is used.
+
+	     The -o option only opens a new pipe if no previous pipe exists,
+	     allowing a pipe to be toggled with a single key, for example:
+
+		   bind-key C-p pipe-pane -o 'cat >>~/output.#I-#P'
+
+     previous-layout [-t target-window]
+		   (alias: prevl)
+	     Move to the previous layout in the session.
+
+     previous-window [-a] [-t target-session]
+		   (alias: prev)
+	     Move to the previous window in the session.  With -a, move to the
+	     previous window with an alert.
+
+     rename-window [-t target-window] new-name
+		   (alias: renamew)
+	     Rename the current window, or the window at target-window if
+	     specified, to new-name.
+
+     resize-pane [-DLMRTUZ] [-t target-pane] [-x width] [-y height]
+	     [adjustment]
+		   (alias: resizep)
+	     Resize a pane, up, down, left or right by adjustment with -U, -D,
+	     -L or -R, or to an absolute size with -x or -y.  The adjustment
+	     is given in lines or columns (the default is 1); -x and -y may be
+	     a given as a number of lines or columns or followed by ‘%’ for a
+	     percentage of the window size (for example ‘-x 10%’).  With -Z,
+	     the active pane is toggled between zoomed (occupying the whole of
+	     the window) and unzoomed (its normal position in the layout).
+
+	     -M begins mouse resizing (only valid if bound to a mouse key
+	     binding, see MOUSE SUPPORT).
+
+	     -T trims all lines below the current cursor position and moves
+	     lines out of the history to replace them.
+
+     resize-window [-aADLRU] [-t target-window] [-x width] [-y height]
+	     [adjustment]
+		   (alias: resizew)
+	     Resize a window, up, down, left or right by adjustment with -U,
+	     -D, -L or -R, or to an absolute size with -x or -y.  The
+	     adjustment is given in lines or cells (the default is 1).	-A
+	     sets the size of the largest session containing the window; -a
+	     the size of the smallest.	This command will automatically set
+	     window-size to manual in the window options.
+
+     respawn-pane [-k] [-c start-directory] [-e environment] [-t target-pane]
+	     [shell-command [argument ...]]
+		   (alias: respawnp)
+	     Reactivate a pane in which the command has exited (see the
+	     remain-on-exit window option).  If shell-command is not given,
+	     the command used when the pane was created or last respawned is
+	     executed.	The pane must be already inactive, unless -k is given,
+	     in which case any existing command is killed.  -c specifies a new
+	     working directory for the pane.  The -e option has the same
+	     meaning as for the new-window command.
+
+     respawn-window [-k] [-c start-directory] [-e environment] [-t
+	     target-window] [shell-command [argument ...]]
+		   (alias: respawnw)
+	     Reactivate a window in which the command has exited (see the
+	     remain-on-exit window option).  If shell-command is not given,
+	     the command used when the window was created or last respawned is
+	     executed.	The window must be already inactive, unless -k is
+	     given, in which case any existing command is killed.  -c
+	     specifies a new working directory for the window.	The -e option
+	     has the same meaning as for the new-window command.
+
+     rotate-window [-DUZ] [-t target-window]
+		   (alias: rotatew)
+	     Rotate the positions of the panes within a window, either upward
+	     (numerically lower) with -U or downward (numerically higher).  -Z
+	     keeps the window zoomed if it was zoomed.
+
+     select-layout [-Enop] [-t target-pane] [layout-name]
+		   (alias: selectl)
+	     Choose a specific layout for a window.  If layout-name is not
+	     given, the last preset layout used (if any) is reapplied.	-n and
+	     -p are equivalent to the next-layout and previous-layout
+	     commands.	-o applies the last set layout if possible (undoes the
+	     most recent layout change).  -E spreads the current pane and any
+	     panes next to it out evenly.
+
+     select-pane [-DdeLlMmRUZ] [-T title] [-t target-pane]
+		   (alias: selectp)
+	     Make pane target-pane the active pane in its window.  If one of
+	     -D, -L, -R, or -U is used, respectively the pane below, to the
+	     left, to the right, or above the target pane is used.  -Z keeps
+	     the window zoomed if it was zoomed.  -l is the same as using the
+	     last-pane command.  -e enables or -d disables input to the pane.
+	     -T sets the pane title.
+
+	     -m and -M are used to set and clear the marked pane.  There is
+	     one marked pane at a time, setting a new marked pane clears the
+	     last.  The marked pane is the default target for -s to join-pane,
+	     move-pane, swap-pane and swap-window.
+
+     select-window [-lnpT] [-t target-window]
+		   (alias: selectw)
+	     Select the window at target-window.  -l, -n and -p are equivalent
+	     to the last-window, next-window and previous-window commands.  If
+	     -T is given and the selected window is already the current
+	     window, the command behaves like last-window.
+
+     split-window [-bdfhIvPZ] [-c start-directory] [-e environment] [-F
+	     format] [-l size] [-t target-pane] [shell-command [argument ...]]
+		   (alias: splitw)
+	     Create a new pane by splitting target-pane: -h does a horizontal
+	     split and -v a vertical split; if neither is specified, -v is
+	     assumed.  The -l option specifies the size of the new pane in
+	     lines (for vertical split) or in columns (for horizontal split);
+	     size may be followed by ‘%’ to specify a percentage of the
+	     available space.  The -b option causes the new pane to be created
+	     to the left of or above target-pane.  The -f option creates a new
+	     pane spanning the full window height (with -h) or full window
+	     width (with -v), instead of splitting the active pane.  -Z zooms
+	     if the window is not zoomed, or keeps it zoomed if already
+	     zoomed.
+
+	     An empty shell-command ('') will create a pane with no command
+	     running in it.  Output can be sent to such a pane with the
+	     display-message command.  The -I flag (if shell-command is not
+	     specified or empty) will create an empty pane and forward any
+	     output from stdin to it.  For example:
+
+		   $ make 2>&1|tmux splitw -dI &
+
+	     All other options have the same meaning as for the new-window
+	     command.
+
+     swap-pane [-dDUZ] [-s src-pane] [-t dst-pane]
+		   (alias: swapp)
+	     Swap two panes.  If -U is used and no source pane is specified
+	     with -s, dst-pane is swapped with the previous pane (before it
+	     numerically); -D swaps with the next pane (after it numerically).
+	     -d instructs tmux not to change the active pane and -Z keeps the
+	     window zoomed if it was zoomed.
+
+	     If -s is omitted and a marked pane is present (see select-pane
+	     -m), the marked pane is used rather than the current pane.
+
+     swap-window [-d] [-s src-window] [-t dst-window]
+		   (alias: swapw)
+	     This is similar to link-window, except the source and destination
+	     windows are swapped.  It is an error if no window exists at
+	     src-window.  If -d is given, the new window does not become the
+	     current window.
+
+	     If -s is omitted and a marked pane is present (see select-pane
+	     -m), the window containing the marked pane is used rather than
+	     the current window.
+
+     unlink-window [-k] [-t target-window]
+		   (alias: unlinkw)
+	     Unlink target-window.  Unless -k is given, a window may be
+	     unlinked only if it is linked to multiple sessions - windows may
+	     not be linked to no sessions; if -k is specified and the window
+	     is linked to only one session, it is unlinked and destroyed.
+

@@ -1,0 +1,38 @@
+GLOBAL AND SESSION ENVIRONMENT
+     When the server is started, tmux copies the environment into the global
+     environment; in addition, each session has a session environment.	When a
+     window is created, the session and global environments are merged.  If a
+     variable exists in both, the value from the session environment is used.
+     The result is the initial environment passed to the new process.
+
+     The update-environment session option may be used to update the session
+     environment from the client when a new session is created or an old
+     reattached.  tmux also initialises the TMUX variable with some internal
+     information to allow commands to be executed from inside, and the TERM
+     variable with the correct terminal setting of ‘screen’.
+
+     Variables in both session and global environments may be marked as
+     hidden.  Hidden variables are not passed into the environment of new
+     processes and instead can only be used by tmux itself (for example in
+     formats, see the FORMATS section).
+
+     Commands to alter and view the environment are:
+
+     set-environment [-Fhgru] [-t target-session] variable [value]
+		   (alias: setenv)
+	     Set or unset an environment variable.  If -g is used, the change
+	     is made in the global environment; otherwise, it is applied to
+	     the session environment for target-session.  If -F is present,
+	     then value is expanded as a format.  The -u flag unsets a
+	     variable.	-r indicates the variable is to be removed from the
+	     environment before starting a new process.  -h marks the variable
+	     as hidden.
+
+     show-environment [-hgs] [-t target-session] [variable]
+		   (alias: showenv)
+	     Display the environment for target-session or the global
+	     environment with -g.  If variable is omitted, all variables are
+	     shown.  Variables removed from the environment are prefixed with
+	     ‘-’.  If -s is used, the output is formatted as a set of Bourne
+	     shell commands.  -h shows hidden variables (omitted by default).
+

@@ -1,0 +1,306 @@
+CLIENTS AND SESSIONS
+     The tmux server manages clients, sessions, windows and panes.  Clients
+     are attached to sessions to interact with them, either when they are
+     created with the new-session command, or later with the attach-session
+     command.  Each session has one or more windows linked into it.  Windows
+     may be linked to multiple sessions and are made up of one or more panes,
+     each of which contains a pseudo terminal.	Commands for creating, linking
+     and otherwise manipulating windows are covered in the WINDOWS AND PANES
+     section.
+
+     The following commands are available to manage clients and sessions:
+
+     attach-session [-dErx] [-c working-directory] [-f flags] [-t
+	     target-session]
+		   (alias: attach)
+	     If run from outside tmux, attach to target-session in the current
+	     terminal.	target-session must already exist - to create a new
+	     session, see the new-session command (with -A to create or
+	     attach).  If used from inside, switch the currently attached
+	     session to target-session.  If -d is specified, any other clients
+	     attached to the session are detached.  If -x is given, send
+	     SIGHUP to the parent process of the client as well as detaching
+	     the client, typically causing it to exit.	-f sets a comma-
+	     separated list of client flags.  The flags are:
+
+	     active-pane
+		     the client has an independent active pane
+
+	     ignore-size
+		     the client does not affect the size of other clients
+
+	     no-detach-on-destroy
+		     do not detach the client when the session it is attached
+		     to is destroyed if there are any other sessions
+
+	     no-output
+		     the client does not receive pane output in control mode
+
+	     pause-after=seconds
+		     output is paused once the pane is seconds behind in
+		     control mode
+
+	     read-only
+		     the client is read-only
+
+	     wait-exit
+		     wait for an empty line input before exiting in control
+		     mode
+
+	     A leading ‘!’ turns a flag off if the client is already attached.
+	     -r is an alias for -f read-only,ignore-size.  When a client is
+	     read-only, only keys bound to the detach-client or switch-client
+	     commands have any effect.	A client with the active-pane flag
+	     allows the active pane to be selected independently of the
+	     window's active pane used by clients without the flag.  This only
+	     affects the cursor position and commands issued from the client;
+	     other features such as hooks and styles continue to use the
+	     window's active pane.
+
+	     If no server is started, attach-session will attempt to start it;
+	     this will fail unless sessions are created in the configuration
+	     file.
+
+	     The target-session rules for attach-session are slightly
+	     adjusted: if tmux needs to select the most recently used session,
+	     it will prefer the most recently used unattached session.
+
+	     -c will set the session working directory (used for new windows)
+	     to working-directory.
+
+	     If -E is used, the update-environment option will not be applied.
+
+     detach-client [-aP] [-E shell-command] [-s target-session] [-t
+	     target-client]
+		   (alias: detach)
+	     Detach the current client if bound to a key, the client specified
+	     with -t, or all clients currently attached to the session
+	     specified by -s.  The -a option kills all but the client given
+	     with -t.  If -P is given, send SIGHUP to the parent process of
+	     the client, typically causing it to exit.	With -E, run
+	     shell-command to replace the client.
+
+     has-session [-t target-session]
+		   (alias: has)
+	     Report an error and exit with 1 if the specified session does not
+	     exist.  If it does exist, exit with 0.
+
+     kill-server
+	     Kill the tmux server and clients and destroy all sessions.
+
+     kill-session [-aC] [-t target-session]
+	     Destroy the given session, closing any windows linked to it and
+	     no other sessions, and detaching all clients attached to it.  If
+	     -a is given, all sessions but the specified one is killed.  The
+	     -C flag clears alerts (bell, activity, or silence) in all windows
+	     linked to the session.
+
+     list-clients [-F format] [-f filter] [-t target-session]
+		   (alias: lsc)
+	     List all clients attached to the server.  -F specifies the format
+	     of each line and -f a filter.  Only clients for which the filter
+	     is true are shown.  See the FORMATS section.  If target-session
+	     is specified, list only clients connected to that session.
+
+     list-commands [-F format] [command]
+		   (alias: lscm)
+	     List the syntax of command or - if omitted - of all commands
+	     supported by tmux.
+
+     list-sessions [-F format] [-f filter]
+		   (alias: ls)
+	     List all sessions managed by the server.  -F specifies the format
+	     of each line and -f a filter.  Only sessions for which the filter
+	     is true are shown.  See the FORMATS section.
+
+     lock-client [-t target-client]
+		   (alias: lockc)
+	     Lock target-client, see the lock-server command.
+
+     lock-session [-t target-session]
+		   (alias: locks)
+	     Lock all clients attached to target-session.
+
+     new-session [-AdDEPX] [-c start-directory] [-e environment] [-f flags]
+	     [-F format] [-n window-name] [-s session-name] [-t group-name]
+	     [-x width] [-y height] [shell-command [argument ...]]
+		   (alias: new)
+	     Create a new session with name session-name.
+
+	     The new session is attached to the current terminal unless -d is
+	     given.  window-name and shell-command are the name of and shell
+	     command to execute in the initial window.	With -d, the initial
+	     size comes from the global default-size option; -x and -y can be
+	     used to specify a different size.	‘-’ uses the size of the
+	     current client if any.  If -x or -y is given, the default-size
+	     option is set for the session.  -f sets a comma-separated list of
+	     client flags (see attach-session).
+
+	     If run from a terminal, any termios(4) special characters are
+	     saved and used for new windows in the new session.
+
+	     The -A flag makes new-session behave like attach-session if
+	     session-name already exists; if -A is given, -D behaves like -d
+	     to attach-session, and -X behaves like -x to attach-session.
+
+	     If -t is given, it specifies a session group.  Sessions in the
+	     same group share the same set of windows - new windows are linked
+	     to all sessions in the group and any windows closed removed from
+	     all sessions.  The current and previous window and any session
+	     options remain independent and any session in a group may be
+	     killed without affecting the others.  The group-name argument may
+	     be:
+
+	     1.      the name of an existing group, in which case the new
+		     session is added to that group;
+
+	     2.      the name of an existing session - the new session is
+		     added to the same group as that session, creating a new
+		     group if necessary;
+
+	     3.      the name for a new group containing only the new session.
+
+	     -n and shell-command are invalid if -t is used.
+
+	     The -P option prints information about the new session after it
+	     has been created.	By default, it uses the format
+	     ‘#{session_name}:’ but a different format may be specified with
+	     -F.
+
+	     If -E is used, the update-environment option will not be applied.
+	     -e takes the form ‘VARIABLE=value’ and sets an environment
+	     variable for the newly created session; it may be specified
+	     multiple times.
+
+     refresh-client [-cDLRSU] [-A pane:state] [-B name:what:format] [-C size]
+	     [-f flags] [-l [target-pane]] [-r pane:report] [-t target-client]
+	     [adjustment]
+		   (alias: refresh)
+	     Refresh the current client if bound to a key, or a single client
+	     if one is given with -t.  If -S is specified, only update the
+	     client's status line.
+
+	     The -U, -D, -L -R, and -c flags allow the visible portion of a
+	     window which is larger than the client to be changed.  -U moves
+	     the visible part up by adjustment rows and -D down, -L left by
+	     adjustment columns and -R right.  -c returns to tracking the
+	     cursor automatically.  If adjustment is omitted, 1 is used.  Note
+	     that the visible position is a property of the client not of the
+	     window, changing the current window in the attached session will
+	     reset it.
+
+	     -C sets the width and height of a control mode client or of a
+	     window for a control mode client, size must be one of
+	     ‘widthxheight’ or ‘window ID:widthxheight’, for example ‘80x24’
+	     or ‘@0:80x24’.  -A allows a control mode client to trigger
+	     actions on a pane.  The argument is a pane ID (with leading ‘%’),
+	     a colon, then one of ‘on’, ‘off’, ‘continue’ or ‘pause’.  If
+	     ‘off’, tmux will not send output from the pane to the client and
+	     if all clients have turned the pane off, will stop reading from
+	     the pane.	If ‘continue’, tmux will return to sending output to
+	     the pane if it was paused (manually or with the pause-after
+	     flag).  If ‘pause’, tmux will pause the pane.  -A may be given
+	     multiple times for different panes.
+
+	     -B sets a subscription to a format for a control mode client.
+	     The argument is split into three items by colons: name is a name
+	     for the subscription; what is a type of item to subscribe to;
+	     format is the format.  After a subscription is added, changes to
+	     the format are reported with the %subscription-changed
+	     notification, at most once a second.  If only the name is given,
+	     the subscription is removed.  what may be empty to check the
+	     format only for the attached session, or one of: a pane ID such
+	     as ‘%0’; ‘%*’ for all panes in the attached session; a window ID
+	     such as ‘@0’; or ‘@*’ for all windows in the attached session.
+
+	     -f sets a comma-separated list of client flags, see
+	     attach-session.  -r allows a control mode client to provide
+	     information about a pane via a report (such as the response to
+	     OSC 10).  The argument is a pane ID (with a leading ‘%’), a
+	     colon, then a report escape sequence.
+
+	     -l requests the clipboard from the client using the xterm(1)
+	     escape sequence.  If target-pane is given, the clipboard is sent
+	     (in encoded form), otherwise it is stored in a new paste buffer.
+
+	     -L, -R, -U and -D move the visible portion of the window left,
+	     right, up or down by adjustment, if the window is larger than the
+	     client.  -c resets so that the position follows the cursor.  See
+	     the window-size option.
+
+     rename-session [-t target-session] new-name
+		   (alias: rename)
+	     Rename the session to new-name.
+
+     server-access [-adlrw] [user]
+	     Change the access or read/write permission of user.  The user
+	     running the tmux server (its owner) and the root user cannot be
+	     changed and are always permitted access.
+
+	     -a and -d are used to give or revoke access for the specified
+	     user.  If the user is already attached, the -d flag causes their
+	     clients to be detached.
+
+	     -r and -w change the permissions for user: -r makes their clients
+	     read-only and -w writable.  -l lists current access permissions.
+
+	     By default, the access list is empty and tmux creates sockets
+	     with file system permissions preventing access by any user other
+	     than the owner (and root).  These permissions must be changed
+	     manually.	Great care should be taken not to allow access to
+	     untrusted users even read-only.
+
+     show-messages [-JT] [-t target-client]
+		   (alias: showmsgs)
+	     Show server messages or information.  Messages are stored, up to
+	     a maximum of the limit set by the message-limit server option.
+	     -J and -T show debugging information about jobs and terminals.
+
+     source-file [-Fnqv] [-t target-pane] path ...
+		   (alias: source)
+	     Execute commands from one or more files specified by path (which
+	     may be glob(7) patterns).	If -F is present, then path is
+	     expanded as a format.  If -q is given, no error will be returned
+	     if path does not exist.  With -n, the file is parsed but no
+	     commands are executed.  -v shows the parsed commands and line
+	     numbers if possible.
+
+     start-server
+		   (alias: start)
+	     Start the tmux server, if not already running, without creating
+	     any sessions.
+
+	     Note that as by default the tmux server will exit with no
+	     sessions, this is only useful if a session is created in
+	     ~/.tmux.conf, exit-empty is turned off, or another command is run
+	     as part of the same command sequence.  For example:
+
+		   $ tmux start \; show -g
+
+     suspend-client [-t target-client]
+		   (alias: suspendc)
+	     Suspend a client by sending SIGTSTP (tty stop).
+
+     switch-client [-ElnprZ] [-c target-client] [-t target-session] [-T
+	     key-table]
+		   (alias: switchc)
+	     Switch the current session for client target-client to
+	     target-session.  As a special case, -t may refer to a pane (a
+	     target that contains ‘:’, ‘.’ or ‘%’), to change session, window
+	     and pane.	In that case, -Z keeps the window zoomed if it was
+	     zoomed.  If -l, -n or -p is used, the client is moved to the
+	     last, next or previous session respectively.  -r toggles the
+	     client read-only and ignore-size flags (see the attach-session
+	     command).
+
+	     If -E is used, update-environment option will not be applied.
+
+	     -T sets the client's key table; the next key from the client will
+	     be interpreted from key-table.  This may be used to configure
+	     multiple prefix keys, or to bind commands to sequences of keys.
+	     For example, to make typing ‘abc’ run the list-keys command:
+
+		   bind-key -Ttable2 c list-keys
+		   bind-key -Ttable1 b switch-client -Ttable2
+		   bind-key -Troot   a switch-client -Ttable1
+

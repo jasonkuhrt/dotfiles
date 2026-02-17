@@ -1,0 +1,88 @@
+TERMINFO EXTENSIONS
+     tmux understands some unofficial extensions to terminfo(5).  It is not
+     normally necessary to set these manually, instead the terminal-features
+     option should be used.
+
+     AX      An existing extension that tells tmux the terminal supports
+	     default colours.
+
+     Bidi    Tell tmux that the terminal supports the VTE bidirectional text
+	     extensions.
+
+     Cs, Cr  Set the cursor colour.  The first takes a single string argument
+	     and is used to set the colour; the second takes no arguments and
+	     restores the default cursor colour.  If set, a sequence such as
+	     this may be used to change the cursor colour from inside tmux:
+
+		   $ printf '\033]12;red\033\\'
+
+	     The colour is an X(7) colour, see XParseColor(3).
+
+     Cmg, Clmg, Dsmg, Enmg
+	     Set, clear, disable or enable DECSLRM margins.  These are set
+	     automatically if the terminal reports it is VT420 compatible.
+
+     Dsbp, Enbp
+	     Disable and enable bracketed paste.  These are set automatically
+	     if the XT capability is present.
+
+     Dseks, Eneks
+	     Disable and enable extended keys.
+
+     Dsfcs, Enfcs
+	     Disable and enable focus reporting.  These are set automatically
+	     if the XT capability is present.
+
+     Hls     Set or clear a hyperlink annotation.
+
+     Nobr    Tell tmux that the terminal does not use bright colors for bold
+	     display.
+
+     Rect    Tell tmux that the terminal supports rectangle operations.
+
+     Smol    Enable the overline attribute.
+
+     Smulx   Set a styled underscore.  The single parameter is one of: 0 for
+	     no underscore, 1 for normal underscore, 2 for double underscore,
+	     3 for curly underscore, 4 for dotted underscore and 5 for dashed
+	     underscore.
+
+     Setulc, Setulc1, ol
+	     Set the underscore colour or reset to the default.  Setulc is for
+	     RGB colours and Setulc1 for ANSI or 256 colours.  The Setulc
+	     argument is (red * 65536) + (green * 256) + blue where each is
+	     between 0 and 255.
+
+     Ss, Se  Set or reset the cursor style.  If set, a sequence such as this
+	     may be used to change the cursor to an underline:
+
+		   $ printf '\033[4 q'
+
+	     If Se is not set, Ss with argument 0 will be used to reset the
+	     cursor style instead.
+
+     Swd     Set the opening sequence for the working directory notification.
+	     The sequence is terminated using the standard fsl capability.
+
+     Sxl     Indicates that the terminal supports SIXEL.
+
+     Sync    Start (parameter is 1) or end (parameter is 2) a synchronized
+	     update.
+
+     Tc      Indicate that the terminal supports the ‘direct colour’ RGB
+	     escape sequence (for example, \e[38;2;255;255;255m).
+
+	     If supported, this is used for the initialize colour escape
+	     sequence (which may be enabled by adding the ‘initc’ and ‘ccc’
+	     capabilities to the tmux terminfo(5) entry).
+
+	     This is equivalent to the RGB terminfo(5) capability.
+
+     Ms      Store the current buffer in the host terminal's selection
+	     (clipboard).  See the set-clipboard option above and the xterm(1)
+	     man page.
+
+     XT      This is an existing extension capability that tmux uses to mean
+	     that the terminal supports the xterm(1) title set sequences and
+	     to automatically set some of the capabilities above.
+

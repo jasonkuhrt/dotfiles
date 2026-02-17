@@ -1,0 +1,247 @@
+# Git Sync Flow
+# Render: d2 flow.d2 flow.svg (or flow.txt for ASCII)
+
+direction: down
+
+# ─── Plan ───────────────────────────────────────────────
+
+plan: Plan {
+  check_trunk -> gather_state: clean
+  check_trunk -> halt: dirty/unpushed {
+    style.stroke-dash: 3
+  }
+
+  check_trunk: Check trunk clean? {
+    shape: diamond
+  }
+  halt: HALT — show trunk-dirty
+  gather_state: Run gather.sh → RepositoryState
+
+  gather_state -> tag_loop
+
+  tag_loop: For each tag conflict {
+    show_conflict: Show conflict
+    resolution: Resolution? {
+      shape: diamond
+    }
+    keep_local: push
+    keep_remote: pull
+    skip_tag: skip
+
+    show_conflict -> resolution
+    resolution -> keep_local
+    resolution -> keep_remote
+    resolution -> skip_tag
+  }
+
+  tag_loop -> assign_actions
+
+  assign_actions: Assign branch actions {
+    mid_rebase_merge: midRebase / midMerge → skip
+    pr_merged_closed: PR MERGED / CLOSED → cleanup
+    otherwise: otherwise → sync
+  }
+
+  assign_actions -> analyze_complexity
+
+  analyze_complexity: Analyze diff complexity {
+    none: no conflicts → none
+    simple: few conflicts → simple
+    complex_: many conflicts → complex
+  }
+
+  analyze_complexity -> complex_loop
+
+  complex_loop: For each complex branch {
+    show_conflicts: Show conflicts
+    merge_choice: Strategy? {
+      shape: diamond
+    }
+    solve: Solve → record, set simple
+    defer: Defer → keep complex
+    skip_branch: Skip → set action=skip
+
+    show_conflicts -> merge_choice
+    merge_choice -> solve
+    merge_choice -> defer
+    merge_choice -> skip_branch
+  }
+
+  complex_loop -> show_preview
+  show_preview: Show plan preview
+  show_preview -> write_plan
+  write_plan: Write plan.json
+}
+
+plan -> execute: full sync
+plan -> end_plan: plan only
+
+end_plan: END — plan ready
+
+# ─── Execute ────────────────────────────────────────────
+
+execute: Execute {
+  read_plan: Read plan.json (skip if from Plan)
+
+  read_plan -> setup
+
+  setup: Setup {
+    cd_main: cd mainWorktree
+    on_trunk: On trunk? {
+      shape: diamond
+    }
+    preserve: preserve_dirty_state
+    checkout_trunk: checkout trunk
+    pull_trunk: git pull --rebase origin trunk
+
+    cd_main -> on_trunk
+    on_trunk -> pull_trunk: yes
+    on_trunk -> preserve: no
+    preserve -> checkout_trunk
+    checkout_trunk -> pull_trunk
+  }
+
+  setup -> tag_tasks
+
+  tag_tasks: For each tag task {
+    push: push → git push origin tag --force
+    pull: pull → git tag -d + fetch
+    skip: skip → no-op
+  }
+
+  tag_tasks -> branch_tasks
+
+  branch_tasks: For each branch task {
+    action: Action? {
+      shape: diamond
+    }
+    skip_branch: skip → record
+    sync: sync → execute_sync_task
+    cleanup: cleanup → execute_cleanup_task
+
+    action -> skip_branch
+    action -> sync
+    action -> cleanup
+  }
+
+  branch_tasks -> finalize
+
+  finalize: Finalize {
+    push_tags: git push --tags
+    restore: Restore original dir + branch
+    show_results: Show results
+
+    push_tags -> restore
+    restore -> show_results
+  }
+}
+
+execute -> end_exec: done
+end_exec: END
+
+# ─── Procedures ─────────────────────────────────────────
+
+procedures: Procedures {
+  execute_sync_task: execute_sync_task {
+    move: move_to_branch
+    preserve: preserve_dirty_state
+    complexity: Complexity? {
+      shape: diamond
+    }
+    merge_none: none → git merge
+    merge_simple: simple → apply + merge
+    merge_complex: complex → collaborate {
+      approve: Approve? {
+        shape: diamond
+      }
+      apply: apply plan
+      discuss: iterate
+      abort: abort
+
+      approve -> apply
+      approve -> discuss: revise
+      approve -> abort
+      discuss -> approve
+    }
+    restore: restore_dirty_state
+    push_check: Has remote? {
+      shape: diamond
+    }
+    push: git push
+    done: END — synced
+
+    move -> preserve
+    preserve -> complexity
+    complexity -> merge_none
+    complexity -> merge_simple
+    complexity -> merge_complex
+    merge_none -> restore
+    merge_simple -> restore
+    merge_complex -> restore
+    restore -> push_check
+    push_check -> push: yes
+    push_check -> done: no
+    push -> done
+  }
+
+  execute_cleanup_task: execute_cleanup_task {
+    rescue: Needs rescue? {
+      shape: diamond
+    }
+    create_rescue: git branch rescue/name
+    warn: Show rescue warning
+    type_check: Linked worktree? {
+      shape: diamond
+    }
+    remove_wt: git worktree remove
+    delete_branch: git branch -D
+    done: END — deleted
+
+    rescue -> create_rescue: yes
+    rescue -> type_check: no
+    create_rescue -> warn
+    warn -> type_check
+    type_check -> remove_wt: yes
+    type_check -> delete_branch: no
+    remove_wt -> delete_branch
+    delete_branch -> done
+  }
+
+  preserve_dirty_state: preserve_dirty_state {
+    dirty: Dirty? {
+      shape: diamond
+    }
+    commit: git add -A && commit WIP
+    done: END
+
+    dirty -> commit: yes
+    dirty -> done: no
+    commit -> done
+  }
+
+  restore_dirty_state: restore_dirty_state {
+    had_wip: Had temp commit? {
+      shape: diamond
+    }
+    reset: git reset HEAD~1
+    done: END
+
+    had_wip -> reset: yes
+    had_wip -> done: no
+    reset -> done
+  }
+
+  move_to_branch: move_to_branch {
+    linked: Linked worktree? {
+      shape: diamond
+    }
+    cd_wt: cd worktree path
+    cd_main: cd mainWorktree + checkout
+    done: END
+
+    linked -> cd_wt: yes
+    linked -> cd_main: no
+    cd_wt -> done
+    cd_main -> done
+  }
+}

@@ -1,0 +1,6 @@
+FILES
+     ~/.tmux.conf
+     $XDG_CONFIG_HOME/tmux/tmux.conf
+     ~/.config/tmux/tmux.conf	     Default tmux configuration file.
+     /opt/homebrew/etc/tmux.conf     System-wide configuration file.
+

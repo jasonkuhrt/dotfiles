@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Pre-trust a directory in Claude Code so the trust dialog is skipped.
+#
+# Usage: pre-trust <directory-path>
+
+set -euo pipefail
+
+WORKTREE_PATH="${1:?Usage: pre-trust <directory-path>}"
+
+python3 -c "
+import json, os
+
+config_path = os.path.expanduser('~/.claude.json')
+with open(config_path, 'r') as f:
+    config = json.load(f)
+
+if 'projects' not in config:
+    config['projects'] = {}
+
+config['projects']['$WORKTREE_PATH'] = {
+    'allowedTools': [],
+    'mcpContextUris': [],
+    'mcpServers': {},
+    'enabledMcpjsonServers': [],
+    'disabledMcpjsonServers': [],
+    'hasTrustDialogAccepted': True,
+    'hasClaudeMdExternalIncludesApproved': False,
+    'hasClaudeMdExternalIncludesWarningShown': False
+}
+
+with open(config_path, 'w') as f:
+    json.dump(config, f, indent=2)
+
+print('Pre-trusted $WORKTREE_PATH in Claude Code')
+"

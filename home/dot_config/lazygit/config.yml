@@ -1,5 +1,7 @@
 os:
   editPreset: zed
+  openFile: "zed {{filename}}"
+  openDirInEditor: "zed ."
 
 gui:
   scrollHeight: 10

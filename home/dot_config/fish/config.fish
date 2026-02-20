@@ -115,6 +115,7 @@ abbr -a tf terraform
 abbr -a p pnpm
 abbr -a c claude
 abbr -a cx 'claude --print'
+abbr -a cr 'claude --resume'
 abbr -a clp 'claude plugin'
 abbr -a clpi 'claude plugin install'
 abbr -a clpr 'claude plugin uninstall'

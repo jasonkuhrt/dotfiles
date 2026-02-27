@@ -314,79 +314,160 @@ show_help_book() {
   cat <<'HELP'
 git-agent — Control agent git access permissions.
 
-Usage:
-  git agent              Show current status
-  git agent r            Read-only mode (block all writes)
-  git agent off          Alias for r
-  git agent w            Read-write mode (allow all writes)
-  git agent on           Alias for w
-  git agent on commit    Allow commits
-  git agent on push      Allow pushes (also enables commit)
-  git agent off commit   Block commits (also blocks push)
-  git agent off push     Block pushes
-  git agent install      Set up hooks (auto-runs on first use)
-  git agent uninstall    Remove all traces from this repository
+THE PROBLEM
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  You're pair-programming with an AI agent. It can run git commands.
+  Sometimes you want it to commit for you. Sometimes you absolutely
+  don't. There's no built-in way to control this per-session, and
+  agents don't always respect "please don't push yet."
 
-WHAT IT DOES
+  git-agent gives you a physical switch.
 
-  Prevents AI agents from committing or pushing unless you say so.
-  Humans are never affected — only processes with CLAUDE_CODE set.
+THE IDEA
 
-QUICK START
+  Two gates: commit and push. Each is on or off. When a gate is off,
+  the agent's git operation fails hard — a git hook blocks it before
+  anything happens. You flip the gates from your terminal. The agent
+  cannot flip them itself.
 
-  git agent r              Block agent writes (default after install)
-  git agent w              Allow agent writes
-  git agent                Show current status
+  Your own git commands are never affected. Only processes running
+  inside Claude Code (identified by the CLAUDE_CODE env var) hit
+  the gates.
 
-CASCADES
+DAILY USE
 
-  Turning push on automatically turns commit on.
-  Turning commit off automatically turns push off.
-  You can't push what you can't commit.
+  You start a session. The agent is in read-only mode by default:
+
+    $ git agent r
+
+  The agent can read code, explore, search — but if it tries to
+  commit, it gets a wall of text telling it to stop. You review its
+  work, decide it's good, and open the commit gate:
+
+    $ git agent on commit
+
+  Now it can commit but not push. You review the commits, then:
+
+    $ git agent on push
+
+  Or just open everything at once:
+
+    $ git agent w
+
+  When you're done, lock it back down:
+
+    $ git agent r
+
+  Check where things stand at any time:
+
+    $ git agent
+    git-agent (installed)
+      commit: on
+      push:   off
+
+MODES VS FINE-GRAINED CONTROL
+
+  The shorthand commands set both gates at once:
+
+    r / off      Both gates off
+    w / on       Both gates on
+
+  The targeted commands control one gate:
+
+    on commit    Just commit
+    on push      Just push (also opens commit — can't push without it)
+    off commit   Just commit (also closes push — can't push without it)
+    off push     Just push
+
+  The cascades are automatic and follow one rule: you can't push
+  what you can't commit.
+
+SETUP
+
+  There is none. The first time you run any command (other than
+  uninstall), git-agent installs itself into the current repo. To
+  remove it completely:
+
+    $ git agent uninstall
+
+  This restores the original hook configuration and removes all
+  traces from the repository.
+
+WHAT THE AGENT SEES
+
+  When a gate blocks an operation, the agent gets a message designed
+  to make it stop — not retry, not work around, not ask for
+  permission. The message tells it exactly what command you need to
+  run to change the setting.
+
+  When any gate is closed, git-agent also writes rules into
+  CLAUDE.local.md (a gitignored file Claude Code reads automatically).
+  This gives the agent advance notice before it even attempts the
+  operation. When all gates are open, those rules are removed.
 
 TAB COMPLETION
 
-  Fish completions are installed for both `git agent` and `git-agent`.
-  Tab complete works at every level: commands and targets.
-
-  Note: `git agent --help` opens git's man page lookup (not this text).
-  Use `git agent help` or `git-agent --help` instead.
+  Fish completions work for both `git agent` and `git-agent` at
+  every level. One caveat: `git agent --help` triggers git's man
+  page lookup instead of this text. Use `git agent help` instead.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HOW IT WORKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-INTERNALS
+  git-agent is a bash script on your PATH named `git-agent`. Git's
+  custom command convention means `git agent <args>` just calls
+  `git-agent <args>`.
 
-  Agent detection:
-    Hooks check the CLAUDE_CODE environment variable. If unset, the
-    caller is human and passes straight through to original hooks.
+AGENT DETECTION
 
-  State file:
-    .git/agent-state contains two lines: commit=on|off, push=on|off.
-    Located inside .git/ so it's never committed or shared.
+  Every git hook generated by git-agent checks one thing: is the
+  CLAUDE_CODE environment variable set? Claude Code sets this in
+  every session. If it's not set, you're a human — the hook passes
+  through immediately to whatever hooks were there before (husky,
+  lint-staged, etc).
 
-  Hook chaining:
-    Install saves the current core.hooksPath (e.g. .husky/) and
-    redirects to .git/agent-hooks/. Wrapper hooks run the gate check,
-    then exec the original hook. Uninstall restores the original path.
+STATE
 
-  Worktree isolation:
-    Uses `git config --worktree` so installing in one worktree does
-    not affect others. Each worktree has independent gate state.
+  A two-line file at .git/agent-state:
 
-  CLAUDE.local.md:
-    When any gate is closed, a managed section (between HTML comment
-    markers) is written to CLAUDE.local.md with current rules. This
-    gives the agent soft enforcement before it even tries git.
-    When all gates open, the section is removed. If that empties the
-    file, the file is deleted.
+    commit=off
+    push=off
 
-  Files created (all inside .git/, never committed):
-    .git/agent-state              Gate state
-    .git/agent-hooks/pre-commit   Hook wrapper
-    .git/agent-hooks/pre-push     Hook wrapper
-    .git/agent-original-hookspath Saved core.hooksPath for restore
+  That's it. Inside .git/ so it's never committed, never shared,
+  never shows up in git status.
+
+HOOK CHAINING
+
+  Your repo probably already has hooks (husky, pre-commit, etc).
+  git-agent doesn't replace them. On install, it:
+
+    1. Reads your current core.hooksPath (e.g. .husky/)
+    2. Saves that path to .git/agent-original-hookspath
+    3. Creates .git/agent-hooks/ with wrapper scripts
+    4. Points core.hooksPath at .git/agent-hooks/
+
+  Each wrapper: check the gate → if blocked, print the wall and
+  exit 1 → if open, exec the original hook. Your existing hooks
+  run exactly as before.
+
+  Uninstall reverses this: restores the saved path, deletes the
+  wrappers.
+
+WORKTREE ISOLATION
+
+  If you use git worktrees, each one gets independent gate state.
+  git-agent uses `git config --worktree` so installing in one
+  worktree doesn't touch the shared config or other worktrees.
+
+FILES
+
+  Everything lives inside .git/ — nothing is committed or shared:
+
+    .git/agent-state              The two gate values
+    .git/agent-hooks/pre-commit   Wrapper hook
+    .git/agent-hooks/pre-push     Wrapper hook
+    .git/agent-original-hookspath Original core.hooksPath for restore
 HELP
 }
 

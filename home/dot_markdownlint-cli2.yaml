@@ -1,0 +1,4 @@
+# Disable all rules globally.
+# Per-project .markdownlint-cli2.yaml can re-enable as needed.
+config:
+  default: false

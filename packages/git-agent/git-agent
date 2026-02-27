@@ -293,21 +293,80 @@ show_help() {
   cat <<'HELP'
 git-agent — Control agent git access permissions.
 
-Usage:
-  git agent              Show current status
-  git agent r            Read-only mode (block all writes)
-  git agent off          Alias for r
-  git agent w            Read-write mode (allow all writes)
-  git agent on           Alias for w
-  git agent on commit    Allow commits
-  git agent on push      Allow pushes (also enables commit)
-  git agent off commit   Block commits (also blocks push)
-  git agent off push     Block pushes
-  git agent install      Set up hooks (auto-runs on first use)
-  git agent uninstall    Remove all traces from this repository
+WHAT IT DOES
 
-State is stored in .git/agent-state (local, not committed).
-Rules are written to CLAUDE.local.md (gitignored).
+  Prevents AI agents from committing or pushing unless you say so.
+  Humans are never affected — only processes with CLAUDE_CODE set.
+
+QUICK START
+
+  git agent r              Block agent writes (default after install)
+  git agent w              Allow agent writes
+  git agent                Show current status
+
+COMMANDS
+
+  Modes (set both gates at once):
+    git agent r            Read-only — block commit and push
+    git agent w            Read-write — allow commit and push
+    git agent off          Alias for r
+    git agent on           Alias for w
+
+  Fine-grained control:
+    git agent on commit    Allow commits only
+    git agent on push      Allow pushes (auto-enables commit)
+    git agent off commit   Block commits (auto-blocks push)
+    git agent off push     Block pushes only
+
+  Setup:
+    git agent install      Install hooks (auto-runs on first use)
+    git agent uninstall    Remove all traces from this repository
+
+CASCADES
+
+  Turning push on automatically turns commit on.
+  Turning commit off automatically turns push off.
+  You can't push what you can't commit.
+
+TAB COMPLETION
+
+  Fish completions are installed for both `git agent` and `git-agent`.
+  Tab complete works at every level: commands and targets.
+
+  Note: `git agent --help` opens git's man page lookup (not this text).
+  Use `git agent help` or `git-agent --help` instead.
+
+INTERNALS
+
+  Agent detection:
+    Hooks check the CLAUDE_CODE environment variable. If unset, the
+    caller is human and passes straight through to original hooks.
+
+  State file:
+    .git/agent-state contains two lines: commit=on|off, push=on|off.
+    Located inside .git/ so it's never committed or shared.
+
+  Hook chaining:
+    Install saves the current core.hooksPath (e.g. .husky/) and
+    redirects to .git/agent-hooks/. Wrapper hooks run the gate check,
+    then exec the original hook. Uninstall restores the original path.
+
+  Worktree isolation:
+    Uses `git config --worktree` so installing in one worktree does
+    not affect others. Each worktree has independent gate state.
+
+  CLAUDE.local.md:
+    When any gate is closed, a managed section (between HTML comment
+    markers) is written to CLAUDE.local.md with current rules. This
+    gives the agent soft enforcement before it even tries git.
+    When all gates open, the section is removed. If that empties the
+    file, the file is deleted.
+
+  Files created (all inside .git/, never committed):
+    .git/agent-state              Gate state
+    .git/agent-hooks/pre-commit   Hook wrapper
+    .git/agent-hooks/pre-push     Hook wrapper
+    .git/agent-original-hookspath Saved core.hooksPath for restore
 HELP
 }
 

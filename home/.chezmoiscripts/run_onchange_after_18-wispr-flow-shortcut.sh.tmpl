@@ -6,7 +6,7 @@ set -e
 
 {{ if eq .chezmoi.os "darwin" }}
 
-header "Wispr Flow Shortcut"
+header "Wispr Flow Hotkeys"
 
 CONFIG="$HOME/Library/Application Support/Wispr Flow/config.json"
 
@@ -15,8 +15,8 @@ if [ ! -f "$CONFIG" ]; then
     exit 0
 fi
 
-if pgrep -f "/Applications/Wispr Flow.app/Contents/MacOS/Wispr Flow" > /dev/null; then
-    skip "Wispr Flow shortcut (app running, quit app then apply)"
+if pgrep -f "Wispr Flow\\.app/Contents/MacOS/Wispr Flow" > /dev/null; then
+    skip "Wispr Flow hotkeys (app running, quit app then apply)"
     exit 0
 fi
 
@@ -25,16 +25,23 @@ if ! has_cmd jq; then
     exit 0
 fi
 
+current_popo=$(
+    jq -r '.prefs.user.shortcuts // {} | to_entries[]? | select(.value == "popo") | .key' "$CONFIG" \
+        | head -n 1
+)
 current_ptt=$(
     jq -r '.prefs.user.shortcuts // {} | to_entries[]? | select(.value == "ptt") | .key' "$CONFIG" \
         | head -n 1
 )
-current_split=$(
+current_split_popo=$(
+    jq -r '.prefs.cache.splitKeybinds // [] | map(select(.value == "popo") | .shortcut[0]) | .[0] // empty' "$CONFIG"
+)
+current_split_ptt=$(
     jq -r '.prefs.cache.splitKeybinds // [] | map(select(.value == "ptt") | .shortcut[0]) | .[0] // empty' "$CONFIG"
 )
 
-if [ "$current_ptt" = "100" ] && [ "$current_split" = "100" ]; then
-    skip "Wispr Flow PTT hotkey (F8)"
+if [ "$current_popo" = "100" ] && [ "$current_ptt" = "101" ] && [ "$current_split_popo" = "100" ] && [ "$current_split_ptt" = "101" ]; then
+    skip "Wispr Flow hotkeys (F8 toggle, F9 press/hold)"
     exit 0
 fi
 
@@ -45,20 +52,24 @@ jq '
     (
       ((.prefs.user.shortcuts // {})
         | to_entries
-        | map(select(.value != "ptt"))
+        | map(select((.value != "ptt") and (.value != "popo")))
         | from_entries
-      ) + {"100":"ptt"}
+      ) + {"100":"popo","101":"ptt"}
     )
   | .prefs.cache.splitKeybinds =
     (
-      (.prefs.cache.splitKeybinds // [])
-      | map(if .value == "ptt" then .shortcut = [100] else . end)
+      ((.prefs.cache.splitKeybinds // [])
+      | map(select((.value != "ptt") and (.value != "popo"))))
+      + [
+        {"shortcut":[100],"value":"popo"},
+        {"shortcut":[101],"value":"ptt"}
+      ]
     )
 ' "$CONFIG" > "$tmp"
 
 if jq empty "$tmp" > /dev/null 2>&1; then
     mv "$tmp" "$CONFIG"
-    task "Wispr Flow PTT hotkey set to F8"
+    task "Wispr Flow hotkeys set: F8=toggle, F9=press/hold"
 else
     rm -f "$tmp"
     warn "Failed to update Wispr Flow shortcut"

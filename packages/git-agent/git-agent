@@ -293,6 +293,42 @@ show_help() {
   cat <<'HELP'
 git-agent — Control agent git access permissions.
 
+Usage:
+  git agent              Show current status
+  git agent r            Read-only mode (block all writes)
+  git agent off          Alias for r
+  git agent w            Read-write mode (allow all writes)
+  git agent on           Alias for w
+  git agent on commit    Allow commits
+  git agent on push      Allow pushes (also enables commit)
+  git agent off commit   Block commits (also blocks push)
+  git agent off push     Block pushes
+  git agent install      Set up hooks (auto-runs on first use)
+  git agent uninstall    Remove all traces from this repository
+
+Run `git agent help book` for the full reference.
+HELP
+}
+
+show_help_book() {
+  cat <<'HELP'
+git-agent — Control agent git access permissions.
+
+Usage:
+  git agent              Show current status
+  git agent r            Read-only mode (block all writes)
+  git agent off          Alias for r
+  git agent w            Read-write mode (allow all writes)
+  git agent on           Alias for w
+  git agent on commit    Allow commits
+  git agent on push      Allow pushes (also enables commit)
+  git agent off commit   Block commits (also blocks push)
+  git agent off push     Block pushes
+  git agent install      Set up hooks (auto-runs on first use)
+  git agent uninstall    Remove all traces from this repository
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 WHAT IT DOES
 
   Prevents AI agents from committing or pushing unless you say so.
@@ -303,24 +339,6 @@ QUICK START
   git agent r              Block agent writes (default after install)
   git agent w              Allow agent writes
   git agent                Show current status
-
-COMMANDS
-
-  Modes (set both gates at once):
-    git agent r            Read-only — block commit and push
-    git agent w            Read-write — allow commit and push
-    git agent off          Alias for r
-    git agent on           Alias for w
-
-  Fine-grained control:
-    git agent on commit    Allow commits only
-    git agent on push      Allow pushes (auto-enables commit)
-    git agent off commit   Block commits (auto-blocks push)
-    git agent off push     Block pushes only
-
-  Setup:
-    git agent install      Install hooks (auto-runs on first use)
-    git agent uninstall    Remove all traces from this repository
 
 CASCADES
 
@@ -335,6 +353,8 @@ TAB COMPLETION
 
   Note: `git agent --help` opens git's man page lookup (not this text).
   Use `git agent help` or `git-agent --help` instead.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 INTERNALS
 
@@ -377,7 +397,9 @@ target="${2:-}"
 
 # Help doesn't need a git repo
 case "$cmd" in
-  --help|help|-h) show_help; exit 0 ;;
+  --help|help|-h)
+    if [ "${2:-}" = "book" ]; then show_help_book; else show_help; fi
+    exit 0 ;;
   --version) echo "git-agent $VERSION"; exit 0 ;;
 esac
 

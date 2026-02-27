@@ -29,3 +29,4 @@ vim.opt.undofile = true
 
 -- Cursor
 vim.opt.guicursor:append("a:blinkon0")
+vim.opt.cursorline = false

@@ -26,6 +26,10 @@ map("n", "G", "Gzz", { desc = "Go to bottom (centered)" })
 -- Close buffer (Cmd+W passthrough from Kitty when nvim focused)
 map("n", "<D-w>", function() Snacks.bufdelete() end, { desc = "Close buffer" })
 
+-- Start/end of line
+map({ "n", "v" }, "H", "^", { desc = "Start of line" })
+map({ "n", "v" }, "L", "$", { desc = "End of line" })
+
 -- External command shortcut
 map("n", "!", ":!", { desc = "External command" })
 

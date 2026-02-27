@@ -28,7 +28,7 @@ set --export RIPGREP_CONFIG_PATH ~/.config/ripgrep/config
 # Trade-off: max response length 22k (vs 32k default)
 # Formula: buffer = 13k + maxOutputTokens
 # Source: https://x.com/bcherny/status/2012670336362492296
-set --export CLAUDE_CODE_MAX_OUTPUT_TOKENS 22000
+set --export CLAUDE_CODE_MAX_OUTPUT_TOKENS 50000
 
 # Claude Code: double skill description budget from 15k→30k chars
 # Prevents skills silently disappearing when you have many installed
@@ -282,6 +282,7 @@ set --export PATH $BUN_INSTALL/bin $PATH
 
 # cargo (rust)
 fish_add_path "$HOME/.cargo/bin"
+alias octorus="command or" # octorus CLI binary is "or", which collides with fish builtin
 
 # go
 fish_add_path "$HOME/go/bin"

@@ -19,6 +19,9 @@
   //
   //
   //
+  "minimap": {
+    "max_width_columns": 101
+  },
   "session": {
     "trust_all_worktrees": true
   },
@@ -83,6 +86,9 @@
     // "provider": "zed.dev",
     // "model": "zed-dev-2.0"
     // },
+    "tool_permissions": {
+      "default": "allow"
+    },
     "default_model": {
       "provider": "zed.dev",
       "model": "claude-opus-4-thinking"
@@ -92,7 +98,6 @@
     //   "provider": "zed.dev"
     // },
     "model_parameters": [],
-    "always_allow_tool_actions": true,
     // -- UI
     "enable_feedback": false,
     "button": false
@@ -100,11 +105,9 @@
   //
   // ─ UI
   //
-  "features": {
-    "edit_prediction_provider": "copilot"
-  },
   "show_completions_on_input": true,
   "edit_predictions": {
+    "provider": "copilot",
     "enabled_in_text_threads": true,
     "mode": "eager"
   },
@@ -121,7 +124,7 @@
   //
   "vim_mode": true,
   "vim": {
-    "toggle_relative_line_numbers": true,
+    "toggle_relative_line_numbers": false,
     "use_smartcase_find": true
   },
   //
@@ -601,8 +604,8 @@
       // - https://github.com/microsoft/typescript-go/issues/2230 (should block renaming stdlib)
       //
       // Swap these lines to toggle:
-      "language_servers": ["vtsls", "!tsgo", "!eslint", "oxc", "..."],
-      // "language_servers": ["tsgo", "!vtsls", "!eslint", "oxc", "..."],
+      "language_servers": ["vtsls", "!tsgo", "!eslint", "oxlint", "..."],
+      // "language_servers": ["tsgo", "!vtsls", "!eslint", "oxlint", "..."],
       "prettier": { "allowed": false },
       // "completions": {
       //   "lsp_fetch_timeout_ms": 5000
@@ -633,8 +636,8 @@
       // NOTE: Rename issues - see TypeScript section above for links
       //
       // Swap these lines to toggle:
-      "language_servers": ["vtsls", "!tsgo", "!eslint", "oxc", "..."],
-      // "language_servers": ["tsgo", "!vtsls", "!eslint", "oxc", "..."],
+      "language_servers": ["vtsls", "!tsgo", "!eslint", "oxlint", "..."],
+      // "language_servers": ["tsgo", "!vtsls", "!eslint", "oxlint", "..."],
       "prettier": { "allowed": false },
       "formatter": [
         {
@@ -651,7 +654,7 @@
   }
   // @see https://zed.dev/docs/languages/javascript
   // "JavaScript": {
-  //   "language_servers": ["vtsls", "!eslint", "oxc"],
+  //   "language_servers": ["vtsls", "!eslint", "oxlint"],
   //   "prettier": { "allowed": false },
   //   "formatter": [
   //     {

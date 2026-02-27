@@ -53,6 +53,17 @@ return {
     end,
   },
 
+  -- Disable markdownlint globally (too noisy for casual markdown / Claude Code prompts).
+  -- Re-enable per-project via .nvim.lua if needed.
+  {
+    "mfussenegger/nvim-lint",
+    opts = {
+      linters_by_ft = {
+        markdown = {},
+      },
+    },
+  },
+
   -- Mason: ensure useful tools are installed
   {
     "mason-org/mason.nvim",

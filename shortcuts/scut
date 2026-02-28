@@ -22,6 +22,7 @@ SHORTCUTS_DB="$HOME/Library/Shortcuts/Shortcuts.sqlite"
 # ─── Helpers ─────────────────────────────────────────────────────────
 
 _die() { printf "error: %s\n" "$1" >&2; exit 1; }
+_sq() { echo "${1//\'/\'\'}"; }
 
 _require_db() {
     DB=$(find ~/Library/Shortcuts/ToolKit -name "Tools-prod.*.sqlite" 2>/dev/null | head -1)
@@ -895,7 +896,7 @@ dump() {
     _sdb "SELECT writefile('$tmp_plist', ZDATA)
           FROM ZSHORTCUTACTIONS
           WHERE ZSHORTCUT = (
-              SELECT Z_PK FROM ZSHORTCUT WHERE ZNAME = '$(echo "$name" | sed "s/'/''/g")'
+              SELECT Z_PK FROM ZSHORTCUT WHERE ZNAME = '$(_sq "$name")'
           );" > /dev/null
 
     if [[ ! -s "$tmp_plist" ]]; then
@@ -904,7 +905,7 @@ dump() {
         _sdb "SELECT writefile('$tmp_plist', ZDATA)
               FROM ZSHORTCUTACTIONS
               WHERE ZSHORTCUT = (
-                  SELECT Z_PK FROM ZSHORTCUT WHERE ZNAME LIKE '$(echo "$name" | sed "s/'/''/g")' LIMIT 1
+                  SELECT Z_PK FROM ZSHORTCUT WHERE ZNAME LIKE '$(_sq "$name")' LIMIT 1
               );" > /dev/null
     fi
 
@@ -1108,7 +1109,7 @@ manage::list() {
                         datetime(ZMODIFICATIONDATE + 978307200, 'unixepoch'),
                         ZWORKFLOWID
                  FROM ZSHORTCUT
-                 WHERE ZNAME = '$(echo "$sname" | sed "s/'/''/g")'
+                 WHERE ZNAME = '$(_sq "$sname")'
                    AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL)
                  LIMIT 1;")
             local pk actions phrase created modified wfid
@@ -1140,7 +1141,7 @@ manage::delete() {
 
     local pk
     pk=$(_sdb "SELECT Z_PK FROM ZSHORTCUT
-               WHERE ZNAME = '$(echo "$name" | sed "s/'/''/g")'
+               WHERE ZNAME = '$(_sq "$name")'
                  AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL)
                LIMIT 1;")
     if [[ -z "$pk" ]]; then
@@ -1167,7 +1168,7 @@ manage::delete-matching() {
 
     local matches
     matches=$(_sdb "SELECT ZNAME FROM ZSHORTCUT
-                    WHERE ZNAME LIKE '$(echo "$pattern" | sed "s/'/''/g")'
+                    WHERE ZNAME LIKE '$(_sq "$pattern")'
                       AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL)
                     ORDER BY ZNAME;")
 
@@ -1196,7 +1197,7 @@ manage::delete-matching() {
     fi
 
     _sdb "UPDATE ZSHORTCUT SET ZTOMBSTONED = 1
-          WHERE ZNAME LIKE '$(echo "$pattern" | sed "s/'/''/g")'
+          WHERE ZNAME LIKE '$(_sq "$pattern")'
             AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL);"
     echo "Deleted $count shortcuts"
 }
@@ -1211,14 +1212,14 @@ manage::rename() {
 
     local pk
     pk=$(_sdb "SELECT Z_PK FROM ZSHORTCUT
-               WHERE ZNAME = '$(echo "$name" | sed "s/'/''/g")'
+               WHERE ZNAME = '$(_sq "$name")'
                  AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL)
                LIMIT 1;")
     if [[ -z "$pk" ]]; then
         _die "Shortcut '$name' not found"
     fi
 
-    _sdb "UPDATE ZSHORTCUT SET ZNAME = '$(echo "$new_name" | sed "s/'/''/g")' WHERE Z_PK = $pk;"
+    _sdb "UPDATE ZSHORTCUT SET ZNAME = '$(_sq "$new_name")' WHERE Z_PK = $pk;"
     echo "Renamed '$name' → '$new_name'"
 }
 
@@ -1233,7 +1234,7 @@ manage::icon() {
     local icon_pk
     icon_pk=$(_sdb "SELECT si.Z_PK FROM ZSHORTCUTICON si
                     JOIN ZSHORTCUT s ON s.ZICON = si.Z_PK
-                    WHERE s.ZNAME = '$(echo "$name" | sed "s/'/''/g")'
+                    WHERE s.ZNAME = '$(_sq "$name")'
                       AND (s.ZTOMBSTONED = 0 OR s.ZTOMBSTONED IS NULL)
                     LIMIT 1;")
     if [[ -z "$icon_pk" ]]; then
@@ -1280,7 +1281,7 @@ manage::phrase() {
 
     local pk
     pk=$(_sdb "SELECT Z_PK FROM ZSHORTCUT
-               WHERE ZNAME = '$(echo "$name" | sed "s/'/''/g")'
+               WHERE ZNAME = '$(_sq "$name")'
                  AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL)
                LIMIT 1;")
     if [[ -z "$pk" ]]; then
@@ -1291,7 +1292,7 @@ manage::phrase() {
         _sdb "UPDATE ZSHORTCUT SET ZPHRASE = NULL WHERE Z_PK = $pk;"
         echo "Cleared Siri phrase for '$name'"
     else
-        _sdb "UPDATE ZSHORTCUT SET ZPHRASE = '$(echo "$phrase" | sed "s/'/''/g")' WHERE Z_PK = $pk;"
+        _sdb "UPDATE ZSHORTCUT SET ZPHRASE = '$(_sq "$phrase")' WHERE Z_PK = $pk;"
         echo "Set Siri phrase for '$name' to '$phrase'"
     fi
 }
@@ -1327,7 +1328,7 @@ manage::inject() {
 
     local pk
     pk=$(_sdb "SELECT Z_PK FROM ZSHORTCUT
-               WHERE ZNAME = '$(echo "$name" | sed "s/'/''/g")'
+               WHERE ZNAME = '$(_sq "$name")'
                  AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL)
                LIMIT 1;")
     if [[ -z "$pk" ]]; then

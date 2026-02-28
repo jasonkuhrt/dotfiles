@@ -19,6 +19,13 @@ return {
         },
       },
       picker = {
+        layout = {
+          layout = {
+            width = 0.7,
+            height = 0.7,
+            min_width = 80,
+          },
+        },
         win = {
           input = {
             keys = {

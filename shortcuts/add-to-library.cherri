@@ -1,0 +1,21 @@
+// Add to Library — search Apple Music catalog and add to library
+// Called by dj CLI: shortcuts run "Add to Library" -i /dev/stdin <<< "Artist - Album"
+
+#define name Add to Library
+#define color pink
+#define glyph musicNote
+#define inputs text
+
+@query = ShortcutInput
+
+// Search the Apple Music catalog for albums matching the query
+rawAction("is.workflow.actions.searchiTunesStore", {
+    "WFSearchTerm": "{query}",
+    "WFMediaType": "Albums",
+    "WFItemCount": 1
+})
+
+// Add the found album to the user's library
+rawAction("is.workflow.actions.addmusic", {
+    "placeholder": "unused"
+})

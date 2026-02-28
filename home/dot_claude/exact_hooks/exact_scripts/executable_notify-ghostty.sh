@@ -23,7 +23,7 @@ fi
 
 # Sound-only mode: play audio cue and exit
 if [[ "$MODE" == "sound" ]]; then
-  afplay /System/Library/Sounds/Tink.aiff &
+  afplay /System/Library/Sounds/Bottle.aiff &
   exit 0
 fi
 

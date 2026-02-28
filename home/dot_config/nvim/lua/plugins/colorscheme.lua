@@ -52,6 +52,8 @@ return {
       on_highlights = function(hl, c)
         -- Dim trail dots: 75% toward fg_gutter from bg
         hl.Whitespace = { fg = "#333852" }
+        -- Dim indent guides: 50% toward fg_gutter from bg
+        hl.SnacksIndent = { fg = "#2a2e43", nocombine = true }
       end,
     },
   },

@@ -452,6 +452,108 @@ demo() {
     echo "All systems operational."
 }
 
+# ─── Sessions ────────────────────────────────────────────
+
+DJ_SESSIONS="${HOME}/.config/dj/sessions.jsonl"
+
+_session_fmt='select(.vibe) | "\(.date | split("T")[0])  \(.time_of_day[:3])  \(.vibe)  \(.tracks_added) tracks  \(.artists[:3] | join(", "))  \(if .rating then "[\(.rating)/5]" else "" end)"'
+
+# @cmd Show recent sessions
+# @option --count=10 Number of sessions to show
+session() {
+    if [[ ! -f "$DJ_SESSIONS" ]]; then
+        echo "No sessions yet."
+        return
+    fi
+    jq -r "$_session_fmt" "$DJ_SESSIONS" | tail -"${argc_count:-10}"
+}
+
+# @cmd Add a session entry
+# @arg entry! JSON session entry
+session_add() {
+    local entry="${argc_entry:-${1:-}}"
+    mkdir -p "$(dirname "$DJ_SESSIONS")"
+    echo "$entry" >> "$DJ_SESSIONS"
+    echo "Session logged."
+}
+
+# @cmd Search session history
+# @arg query+ Search terms
+session_search() {
+    local query
+    if [[ -n "${argc_query+x}" ]]; then
+        query="${argc_query[*]}"
+    else
+        query="$*"
+    fi
+    if [[ ! -f "$DJ_SESSIONS" ]]; then
+        echo "No sessions yet."
+        return
+    fi
+    grep -i "$query" "$DJ_SESSIONS" | jq -r "$_session_fmt" 2>/dev/null
+}
+
+# @cmd Show full details of a session
+# @arg index=1 How far back (1 = most recent)
+session_show() {
+    local idx="${argc_index:-${1:-1}}"
+    if [[ ! -f "$DJ_SESSIONS" ]]; then
+        echo "No sessions yet."
+        return
+    fi
+    local line
+    line=$(jq -c 'select(.vibe)' "$DJ_SESSIONS" | tail -"$idx" | head -1)
+    if [[ -z "$line" ]]; then
+        echo "Session not found."
+        return
+    fi
+    echo "$line" | jq .
+}
+
+# @cmd Rate the most recent session (1-5)
+# @arg score! Rating (1-5)
+# @arg note* Optional note about what worked or didn't
+session_rate() {
+    local score="${argc_score:-${1:-}}"
+    local note=""
+    if [[ -n "${argc_note+x}" ]]; then
+        note="${argc_note[*]}"
+    else
+        shift 2>/dev/null || true
+        note="$*"
+    fi
+
+    if [[ "$score" -lt 1 || "$score" -gt 5 ]] 2>/dev/null; then
+        echo "Score must be 1-5."
+        return 1
+    fi
+
+    if [[ ! -f "$DJ_SESSIONS" ]]; then
+        echo "No sessions to rate."
+        return 1
+    fi
+
+    local session_date
+    session_date=$(jq -r 'select(.vibe) | .date' "$DJ_SESSIONS" | tail -1)
+
+    if [[ -z "$session_date" ]]; then
+        echo "No sessions to rate."
+        return 1
+    fi
+
+    mkdir -p "$(dirname "$DJ_SESSIONS")"
+    jq -n -c \
+        --arg session "$session_date" \
+        --argjson score "$score" \
+        --arg note "$note" \
+        --arg date "$(date +%Y-%m-%dT%H:%M:%S)" \
+        '{type: "rating", date: $date, session: $session, score: $score, note: $note}' >> "$DJ_SESSIONS"
+
+    local stars=""
+    for ((i=0; i<score; i++)); do stars+="*"; done
+    echo "Rated: $stars ($score/5)${note:+ — $note}"
+}
+
 # ─── Window ───────────────────────────────────────────────
 
 # @cmd Minimize Music.app

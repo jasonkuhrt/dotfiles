@@ -1253,8 +1253,8 @@ manage::rename() {
 
 # @cmd Change a shortcut's icon color and/or glyph
 # @arg name! Shortcut name
-# @option --color Icon background color (red, orange, yellow, green, blue, purple, pink, gray, or integer)
-# @option --glyph Glyph number (SF Symbol code point as integer)
+# @option --color Icon background color (name or integer; see reference/icon-colors.md)
+# @option --glyph Glyph name or number (see reference/icon-colors.md)
 manage::icon() {
     _require_shortcuts_db
     local name="${argc_name}"
@@ -1271,31 +1271,49 @@ manage::icon() {
 
     if [[ -n "${argc_color:-}" ]]; then
         local color_val
+        # Color values from Cherri (authoritative): https://glyphs.cherrilang.org/
         case "${argc_color}" in
-            red)       color_val=4294901760 ;;
-            orange)    color_val=4294944000 ;;
-            yellow)    color_val=4294957056 ;;
-            green)     color_val=4283215696 ;;
-            teal)      color_val=1440408063 ;;
-            lightblue) color_val=463140863 ;;
-            blue)      color_val=4282601983 ;;
-            darkblue)  color_val=946986751 ;;
-            indigo)    color_val=2071128575 ;;
-            purple)    color_val=2846468607 ;;
-            magenta)   color_val=3679049983 ;;
-            pink)      color_val=4293591295 ;;
-            rose)      color_val=3980825855 ;;
-            amber)     color_val=4274264319 ;;
-            gray)      color_val=2240066815 ;;
-            *)         color_val="${argc_color}" ;;
+            red)        color_val=4282601983 ;;
+            darkorange) color_val=4251333119 ;;
+            orange)     color_val=4271458815 ;;
+            yellow)     color_val=4274264319 ;;
+            green)      color_val=4292093695 ;;
+            teal)       color_val=431817727 ;;
+            lightblue)  color_val=1440408063 ;;
+            blue)       color_val=463140863 ;;
+            darkblue)   color_val=946986751 ;;
+            violet)     color_val=2071128575 ;;
+            purple)     color_val=3679049983 ;;
+            pink)       color_val=3980825855 ;;
+            taupe)      color_val=2846468607 ;;
+            gray)       color_val=3031607807 ;;
+            darkgray)   color_val=255 ;;
+            *)          color_val="${argc_color}" ;;
         esac
         _sdb "UPDATE ZSHORTCUTICON SET ZBACKGROUNDCOLORVALUE = $color_val WHERE Z_PK = $icon_pk;"
         echo "Set color of '$name' to ${argc_color}"
     fi
 
     if [[ -n "${argc_glyph:-}" ]]; then
-        _sdb "UPDATE ZSHORTCUTICON SET ZGLYPHNUMBER = ${argc_glyph} WHERE Z_PK = $icon_pk;"
-        echo "Set glyph of '$name' to ${argc_glyph}"
+        local glyph_val="${argc_glyph}"
+        # If not a number, look up in glyphs.json
+        if ! [[ "$glyph_val" =~ ^[0-9]+$ ]]; then
+            local glyphs_file="$SCRIPT_DIR/glyphs.json"
+            if [[ -f "$glyphs_file" ]]; then
+                local resolved
+                resolved=$(jq -r --arg name "$glyph_val" '.[$name] // empty' "$glyphs_file")
+                if [[ -n "$resolved" ]]; then
+                    echo "Resolved glyph '$glyph_val' → $resolved"
+                    glyph_val="$resolved"
+                else
+                    _die "Unknown glyph name '$glyph_val'. Use a number or a name from glyphs.json (507 available)."
+                fi
+            else
+                _die "glyphs.json not found at $glyphs_file. Pass a numeric glyph code point instead."
+            fi
+        fi
+        _sdb "UPDATE ZSHORTCUTICON SET ZGLYPHNUMBER = $glyph_val WHERE Z_PK = $icon_pk;"
+        echo "Set glyph of '$name' to ${argc_glyph}${glyph_val:+ ($glyph_val)}"
     fi
 
     if [[ -z "${argc_color:-}" && -z "${argc_glyph:-}" ]]; then
@@ -1536,12 +1554,12 @@ manage::demo() {
     fi
 
     # 4. Change icon
-    _step "Change icon (color=blue, glyph=59790)"
+    _step "Change icon (color=blue, glyph=musicNote)"
     local icon_pk
     icon_pk=$(_sdb "SELECT si.Z_PK FROM ZSHORTCUTICON si JOIN ZSHORTCUT s ON s.ZICON = si.Z_PK WHERE s.ZNAME = '$(_sq "$demo_renamed")' AND (s.ZTOMBSTONED = 0 OR s.ZTOMBSTONED IS NULL) LIMIT 1;")
     if [[ -n "$icon_pk" ]]; then
-        _sdb "UPDATE ZSHORTCUTICON SET ZBACKGROUNDCOLORVALUE = 4282601983, ZGLYPHNUMBER = 59790 WHERE Z_PK = $icon_pk;"
-        _ok "Set icon: blue background, glyph 59790"
+        _sdb "UPDATE ZSHORTCUTICON SET ZBACKGROUNDCOLORVALUE = 463140863, ZGLYPHNUMBER = 59790 WHERE Z_PK = $icon_pk;"  # blue + musicNote
+        _ok "Set icon: blue (463140863), glyph musicNote (59790)"
     else
         _fail "Icon row not found"
     fi

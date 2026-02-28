@@ -25,13 +25,46 @@ scut try <identifier> --param k=v   # Quick-test an action
 
 All commands support `--json` for machine-readable output.
 
-## Running Shortcuts from CLI
+## Managing Installed Shortcuts
+
+`scut manage` provides full lifecycle management. Uses AppleScript for folder/create operations (correctly manages Apple's CRDT sync blob) and SQLite for everything else.
 
 ```bash
-shortcuts list                      # List all shortcuts
-shortcuts run "My Shortcut"         # Run by name
-shortcuts run "My Shortcut" <<< "input"  # Run with input
+# List & inspect
+scut manage list                    # List installed shortcuts
+scut manage list --folders          # List folders
+scut manage list -f "My Folder"    # Filter by folder
+scut manage list --json             # Machine-readable output
+scut manage history                 # Show run history
+
+# Create & modify
+scut manage create "Name"           # Create empty shortcut (AppleScript)
+scut manage rename "Old" "New"      # Rename (SQLite)
+scut manage icon "Name" --color blue --glyph 59790  # Change icon
+scut manage phrase "Name" "Hey Siri, do X"  # Set Siri phrase
+scut manage phrase "Name"           # Clear Siri phrase
+scut manage inject "Name" actions.plist     # Inject actions from plist
+
+# Organize
+scut manage move "Name" "Folder"    # Move to folder (AppleScript)
+scut manage folder create "Name"    # Create folder (AppleScript)
+scut manage folder delete "Name"    # Delete folder (AppleScript)
+scut manage folder list             # List folders
+
+# Delete & cleanup
+scut manage delete "Name"           # Tombstone a shortcut
+scut manage delete-matching "Test%" # Batch delete by pattern (SQL LIKE)
+scut manage cleanup                 # Purge tombstoned + orphaned rows
 ```
+
+### Running installed shortcuts
+
+```bash
+shortcuts run "My Shortcut"             # Run by name (macOS built-in)
+shortcuts run "My Shortcut" <<< "input" # Run with stdin input
+```
+
+Note: `scut run` compiles `.cherri` files — use the macOS `shortcuts` command for running installed shortcuts by name.
 
 ## Shortcuts Storage
 

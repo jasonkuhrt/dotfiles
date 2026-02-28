@@ -1,0 +1,153 @@
+#!/bin/bash
+# Merge managed keys into settings.json, preserving CC runtime state.
+#
+# Managed (overwritten on chezmoi apply):
+#   hooks, statusLine, cleanupPeriodDays, includeCoAuthoredBy,
+#   syntaxHighlightingDisabled, alwaysThinkingEnabled, autoUpdatesChannel,
+#   skipDangerousModePermissionPrompt, extraKnownMarketplaces
+#
+# Preserved (CC runtime, never touched):
+#   permissions, enabledPlugins
+
+set -euo pipefail
+
+MANAGED='
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline-command.sh"
+  },
+  "cleanupPeriodDays": 999999,
+  "includeCoAuthoredBy": false,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/flo-orphan-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/bead-label-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/skill-scripts-bun-only.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/skill-scripts-no-bun-on-sh.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/git-worktree-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/chezmoi-guard.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/check-template-dsl.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "Skill|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/approve-and-persist-permissions.sh"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/notify-ghostty.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "idle_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/notify-ghostty.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/rename-terminal-tab.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/session-start-resume-info.sh"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/skills/flo_next/scripts/compact-recovery.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  },
+  "extraKnownMarketplaces": {},
+  "syntaxHighlightingDisabled": false,
+  "alwaysThinkingEnabled": true,
+  "autoUpdatesChannel": "latest",
+  "skipDangerousModePermissionPrompt": true
+}
+'
+
+# Read current settings from stdin (chezmoi pipes the existing file)
+CURRENT=$(cat)
+
+# If file doesn't exist yet, start with empty object
+if [ -z "$CURRENT" ]; then
+  CURRENT='{}'
+fi
+
+# Recursive merge: managed keys overwrite, runtime keys preserved
+echo "$CURRENT" | jq --argjson managed "$MANAGED" '. * $managed'

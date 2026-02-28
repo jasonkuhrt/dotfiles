@@ -2,7 +2,6 @@
 **/.DS_Store
 
 # Claude Code runtime (CC owns these via atomic writes)
-.claude/settings.json
 .claude/tasks
 .claude/tasks/**
 

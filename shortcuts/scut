@@ -17,6 +17,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CHERRI="${SCUT_CHERRI:-cherri}"
 KNOWLEDGE_DIR="$SCRIPT_DIR/knowledge"
 DB=""
+SHORTCUTS_DB="$HOME/Library/Shortcuts/Shortcuts.sqlite"
 
 # ─── Helpers ─────────────────────────────────────────────────────────
 
@@ -34,8 +35,17 @@ _require_db() {
 _require_yq() { command -v yq &>/dev/null || _die "yq required: brew install yq"; }
 _require_jq() { command -v jq &>/dev/null || _die "jq required: brew install jq"; }
 
+_require_shortcuts_db() {
+    if [[ ! -r "$SHORTCUTS_DB" ]]; then
+        _die "Cannot read Shortcuts database. Grant Full Disk Access to your terminal.
+  System Settings → Privacy & Security → Full Disk Access"
+    fi
+}
+
 _sql() { sqlite3 -separator '|' "$DB" "$1"; }
 _sql_header() { sqlite3 -header -separator '|' "$DB" "$1"; }
+_sdb() { sqlite3 -separator '|' "$SHORTCUTS_DB" "$1"; }
+_sdb_header() { sqlite3 -header -separator '|' "$SHORTCUTS_DB" "$1"; }
 
 # Get app display name from container metadata
 _app_name() {
@@ -876,43 +886,34 @@ EOF
 # @arg name! Shortcut name
 # @flag --json Output as JSON instead of plist
 dump() {
-    # The Shortcuts database is TCC-protected
-    local shortcuts_db="$HOME/Library/Shortcuts/Shortcuts.sqlite"
-    if [[ ! -r "$shortcuts_db" ]]; then
-        _die "Cannot read Shortcuts database. Grant Full Disk Access to your terminal.
-  System Settings → Privacy & Security → Full Disk Access"
-    fi
-
+    _require_shortcuts_db
     local name="${argc_name}"
 
-    # Try to find and extract the shortcut data
-    # Shortcuts stores action data as binary plist in the database
     local tmp_plist
     tmp_plist=$(mktemp /tmp/scut-dump-XXXXXX.plist)
 
-    # Extract the shortcut actions blob
-    sqlite3 "$shortcuts_db" \
-        "SELECT writefile('$tmp_plist', ZDATA)
-         FROM ZSHORTCUTACTIONS
-         WHERE ZSHORTCUT = (
-             SELECT Z_PK FROM ZSHORTCUT WHERE ZNAME = '$name'
-         );" 2>/dev/null
+    _sdb "SELECT writefile('$tmp_plist', ZDATA)
+          FROM ZSHORTCUTACTIONS
+          WHERE ZSHORTCUT = (
+              SELECT Z_PK FROM ZSHORTCUT WHERE ZNAME = '$(echo "$name" | sed "s/'/''/g")'
+          );" > /dev/null
 
     if [[ ! -s "$tmp_plist" ]]; then
         rm -f "$tmp_plist"
         # Try case-insensitive match
-        sqlite3 "$shortcuts_db" \
-            "SELECT writefile('$tmp_plist', ZDATA)
-             FROM ZSHORTCUTACTIONS
-             WHERE ZSHORTCUT = (
-                 SELECT Z_PK FROM ZSHORTCUT WHERE ZNAME LIKE '$name' LIMIT 1
-             );" 2>/dev/null
+        _sdb "SELECT writefile('$tmp_plist', ZDATA)
+              FROM ZSHORTCUTACTIONS
+              WHERE ZSHORTCUT = (
+                  SELECT Z_PK FROM ZSHORTCUT WHERE ZNAME LIKE '$(echo "$name" | sed "s/'/''/g")' LIMIT 1
+              );" > /dev/null
     fi
 
     if [[ ! -s "$tmp_plist" ]]; then
         rm -f "$tmp_plist"
         echo "Shortcut '$name' not found. Available shortcuts:"
-        sqlite3 "$shortcuts_db" "SELECT ZNAME FROM ZSHORTCUT ORDER BY ZNAME;" 2>/dev/null | while read -r n; do
+        _sdb "SELECT ZNAME FROM ZSHORTCUT
+              WHERE ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL
+              ORDER BY ZNAME;" | while read -r n; do
             echo "  $n"
         done
         exit 1
@@ -1042,6 +1043,436 @@ Identifier Format Conventions:
   Third-party:       {bundleId}.{IntentName}Intent
   Apple system:      com.apple.{framework}.{IntentName}
 COMMUNITY
+}
+
+# ─── Phase 5: Library Management ─────────────────────────────────────
+# Hybrid backend: AppleScript for folder/create ops, SQLite for everything else.
+
+# @cmd Manage installed shortcuts: list, delete, rename, organize, inspect
+# @meta default-subcommand list
+manage() { :; }
+
+# @cmd List installed shortcuts
+# @option -f --folder-name Filter by folder name, or "none" for unfoldered
+# @flag --folders List folders instead of shortcuts
+# @flag --ids Show workflow IDs
+# @flag --json Machine-readable JSON output
+manage::list() {
+    _require_shortcuts_db
+
+    if [[ "${argc_folders:-}" == "1" ]]; then
+        if [[ "${argc_json:-}" == "1" ]]; then
+            _require_jq
+            local json="[]"
+            while IFS= read -r fname; do
+                [[ -z "$fname" ]] && continue
+                local count
+                count=$(shortcuts list --folder-name "$fname" 2>/dev/null | wc -l | tr -d ' ')
+                json=$(echo "$json" | jq --arg name "$fname" --arg count "$count" \
+                    '. + [{name: $name, shortcut_count: ($count|tonumber)}]')
+            done < <(shortcuts list --folders 2>/dev/null)
+            echo "$json" | jq .
+        else
+            echo "Folders:"
+            local has_folders=0
+            while IFS= read -r fname; do
+                [[ -z "$fname" ]] && continue
+                has_folders=1
+                local count
+                count=$(shortcuts list --folder-name "$fname" 2>/dev/null | wc -l | tr -d ' ')
+                printf "  %-30s %s shortcuts\n" "$fname" "$count"
+            done < <(shortcuts list --folders 2>/dev/null)
+            if [[ $has_folders -eq 0 ]]; then
+                echo "  (no folders)"
+            fi
+        fi
+        return
+    fi
+
+    local cmd="shortcuts list"
+    if [[ -n "${argc_folder_name:-}" ]]; then
+        cmd+=" --folder-name '${argc_folder_name}'"
+    fi
+    if [[ "${argc_ids:-}" == "1" ]]; then
+        cmd+=" --show-identifiers"
+    fi
+
+    if [[ "${argc_json:-}" == "1" ]]; then
+        _require_jq
+        local json="[]"
+        while IFS= read -r sname; do
+            [[ -z "$sname" ]] && continue
+            local row
+            row=$(_sdb "SELECT Z_PK, ZACTIONCOUNT, ZPHRASE,
+                        datetime(ZCREATIONDATE + 978307200, 'unixepoch'),
+                        datetime(ZMODIFICATIONDATE + 978307200, 'unixepoch'),
+                        ZWORKFLOWID
+                 FROM ZSHORTCUT
+                 WHERE ZNAME = '$(echo "$sname" | sed "s/'/''/g")'
+                   AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL)
+                 LIMIT 1;")
+            local pk actions phrase created modified wfid
+            IFS='|' read -r pk actions phrase created modified wfid <<< "$row"
+            json=$(echo "$json" | jq \
+                --arg name "$sname" \
+                --arg pk "${pk:-}" \
+                --arg actions "${actions:-0}" \
+                --arg phrase "${phrase:-}" \
+                --arg created "${created:-}" \
+                --arg modified "${modified:-}" \
+                --arg wfid "${wfid:-}" \
+                '. + [{name: $name, pk: ($pk|tonumber? // null), action_count: ($actions|tonumber? // 0),
+                        siri_phrase: (if $phrase == "" then null else $phrase end),
+                        created: $created, modified: $modified, workflow_id: $wfid}]')
+        done < <(eval "$cmd" 2>/dev/null)
+        echo "$json" | jq .
+    else
+        eval "$cmd" 2>/dev/null
+    fi
+}
+
+# @cmd Delete a shortcut (tombstone in database)
+# @arg name! Shortcut name (exact match)
+# @flag --force Skip confirmation
+manage::delete() {
+    _require_shortcuts_db
+    local name="${argc_name}"
+
+    local pk
+    pk=$(_sdb "SELECT Z_PK FROM ZSHORTCUT
+               WHERE ZNAME = '$(echo "$name" | sed "s/'/''/g")'
+                 AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL)
+               LIMIT 1;")
+    if [[ -z "$pk" ]]; then
+        _die "Shortcut '$name' not found"
+    fi
+
+    if [[ "${argc_force:-}" != "1" ]]; then
+        printf "Delete shortcut '%s'? [y/N] " "$name"
+        read -r confirm
+        [[ "$confirm" =~ ^[Yy] ]] || { echo "Cancelled."; return; }
+    fi
+
+    _sdb "UPDATE ZSHORTCUT SET ZTOMBSTONED = 1 WHERE Z_PK = $pk;"
+    echo "Deleted '$name'"
+}
+
+# @cmd Batch delete shortcuts matching a pattern
+# @arg pattern! Glob pattern (SQL LIKE: % for wildcard)
+# @flag --force Skip confirmation
+# @flag --dry-run Show what would be deleted without deleting
+manage::delete-matching() {
+    _require_shortcuts_db
+    local pattern="${argc_pattern}"
+
+    local matches
+    matches=$(_sdb "SELECT ZNAME FROM ZSHORTCUT
+                    WHERE ZNAME LIKE '$(echo "$pattern" | sed "s/'/''/g")'
+                      AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL)
+                    ORDER BY ZNAME;")
+
+    if [[ -z "$matches" ]]; then
+        echo "No shortcuts matching '$pattern'"
+        return
+    fi
+
+    local count
+    count=$(echo "$matches" | wc -l | tr -d ' ')
+
+    echo "Matching shortcuts ($count):"
+    while IFS= read -r m; do
+        echo "  $m"
+    done <<< "$matches"
+
+    if [[ "${argc_dry_run:-}" == "1" ]]; then
+        echo "(dry run — nothing deleted)"
+        return
+    fi
+
+    if [[ "${argc_force:-}" != "1" ]]; then
+        printf "Delete all %s shortcuts? [y/N] " "$count"
+        read -r confirm
+        [[ "$confirm" =~ ^[Yy] ]] || { echo "Cancelled."; return; }
+    fi
+
+    _sdb "UPDATE ZSHORTCUT SET ZTOMBSTONED = 1
+          WHERE ZNAME LIKE '$(echo "$pattern" | sed "s/'/''/g")'
+            AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL);"
+    echo "Deleted $count shortcuts"
+}
+
+# @cmd Rename a shortcut
+# @arg name! Current shortcut name
+# @arg new_name! New name
+manage::rename() {
+    _require_shortcuts_db
+    local name="${argc_name}"
+    local new_name="${argc_new_name}"
+
+    local pk
+    pk=$(_sdb "SELECT Z_PK FROM ZSHORTCUT
+               WHERE ZNAME = '$(echo "$name" | sed "s/'/''/g")'
+                 AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL)
+               LIMIT 1;")
+    if [[ -z "$pk" ]]; then
+        _die "Shortcut '$name' not found"
+    fi
+
+    _sdb "UPDATE ZSHORTCUT SET ZNAME = '$(echo "$new_name" | sed "s/'/''/g")' WHERE Z_PK = $pk;"
+    echo "Renamed '$name' → '$new_name'"
+}
+
+# @cmd Change a shortcut's icon color and/or glyph
+# @arg name! Shortcut name
+# @option --color Icon background color (red, orange, yellow, green, blue, purple, pink, gray, or integer)
+# @option --glyph Glyph number (SF Symbol code point as integer)
+manage::icon() {
+    _require_shortcuts_db
+    local name="${argc_name}"
+
+    local icon_pk
+    icon_pk=$(_sdb "SELECT si.Z_PK FROM ZSHORTCUTICON si
+                    JOIN ZSHORTCUT s ON s.ZICON = si.Z_PK
+                    WHERE s.ZNAME = '$(echo "$name" | sed "s/'/''/g")'
+                      AND (s.ZTOMBSTONED = 0 OR s.ZTOMBSTONED IS NULL)
+                    LIMIT 1;")
+    if [[ -z "$icon_pk" ]]; then
+        _die "Shortcut '$name' not found or has no icon"
+    fi
+
+    if [[ -n "${argc_color:-}" ]]; then
+        local color_val
+        case "${argc_color}" in
+            red)     color_val=4294901760 ;;
+            orange)  color_val=4294944000 ;;
+            yellow)  color_val=4294957056 ;;
+            green)   color_val=4283215696 ;;
+            blue)    color_val=4282601983 ;;
+            purple)  color_val=2846468607 ;;
+            pink)    color_val=4293591295 ;;
+            gray)    color_val=2240066815 ;;
+            *)       color_val="${argc_color}" ;;
+        esac
+        _sdb "UPDATE ZSHORTCUTICON SET ZBACKGROUNDCOLORVALUE = $color_val WHERE Z_PK = $icon_pk;"
+        echo "Set color of '$name' to ${argc_color}"
+    fi
+
+    if [[ -n "${argc_glyph:-}" ]]; then
+        _sdb "UPDATE ZSHORTCUTICON SET ZGLYPHNUMBER = ${argc_glyph} WHERE Z_PK = $icon_pk;"
+        echo "Set glyph of '$name' to ${argc_glyph}"
+    fi
+
+    if [[ -z "${argc_color:-}" && -z "${argc_glyph:-}" ]]; then
+        # Show current icon info
+        local color glyph
+        IFS='|' read -r color glyph < <(_sdb "SELECT ZBACKGROUNDCOLORVALUE, ZGLYPHNUMBER FROM ZSHORTCUTICON WHERE Z_PK = $icon_pk;")
+        echo "Icon for '$name': color=$color glyph=$glyph"
+    fi
+}
+
+# @cmd Set or clear Siri phrase for a shortcut
+# @arg name! Shortcut name
+# @arg phrase Siri phrase (omit to clear)
+manage::phrase() {
+    _require_shortcuts_db
+    local name="${argc_name}"
+    local phrase="${argc_phrase:-}"
+
+    local pk
+    pk=$(_sdb "SELECT Z_PK FROM ZSHORTCUT
+               WHERE ZNAME = '$(echo "$name" | sed "s/'/''/g")'
+                 AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL)
+               LIMIT 1;")
+    if [[ -z "$pk" ]]; then
+        _die "Shortcut '$name' not found"
+    fi
+
+    if [[ -z "$phrase" ]]; then
+        _sdb "UPDATE ZSHORTCUT SET ZPHRASE = NULL WHERE Z_PK = $pk;"
+        echo "Cleared Siri phrase for '$name'"
+    else
+        _sdb "UPDATE ZSHORTCUT SET ZPHRASE = '$(echo "$phrase" | sed "s/'/''/g")' WHERE Z_PK = $pk;"
+        echo "Set Siri phrase for '$name' to '$phrase'"
+    fi
+}
+
+# @cmd Move a shortcut into a folder (via AppleScript)
+# @arg name! Shortcut name
+# @arg folder! Target folder name
+manage::move() {
+    local name="${argc_name}"
+    local folder="${argc_folder}"
+    osascript -e "tell application \"Shortcuts Events\" to move shortcut \"$name\" to folder \"$folder\"" 2>&1 \
+        || _die "Failed to move '$name' to folder '$folder'"
+    echo "Moved '$name' → folder '$folder'"
+}
+
+# @cmd Create an empty shortcut (via AppleScript)
+# @arg name! Shortcut name
+manage::create() {
+    osascript -e "tell application \"Shortcuts Events\" to make new shortcut with properties {name:\"${argc_name}\"}" 2>&1 \
+        || _die "Failed to create shortcut '${argc_name}'"
+    echo "Created empty shortcut '${argc_name}'"
+}
+
+# @cmd Inject actions into a shortcut from a plist file
+# @arg name! Shortcut name
+# @arg plist! Path to XML or binary plist with action array
+manage::inject() {
+    _require_shortcuts_db
+    local name="${argc_name}"
+    local plist="${argc_plist}"
+
+    [[ -f "$plist" ]] || _die "File not found: $plist"
+
+    local pk
+    pk=$(_sdb "SELECT Z_PK FROM ZSHORTCUT
+               WHERE ZNAME = '$(echo "$name" | sed "s/'/''/g")'
+                 AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL)
+               LIMIT 1;")
+    if [[ -z "$pk" ]]; then
+        _die "Shortcut '$name' not found"
+    fi
+
+    local tmp_bplist
+    tmp_bplist=$(mktemp /tmp/scut-inject-XXXX.bplist)
+
+    # Convert to binary plist if needed
+    if file "$plist" | grep -q "XML"; then
+        plutil -convert binary1 -o "$tmp_bplist" "$plist" || _die "Failed to convert plist"
+    elif file "$plist" | grep -q "binary"; then
+        cp "$plist" "$tmp_bplist"
+    else
+        # Try converting anyway
+        plutil -convert binary1 -o "$tmp_bplist" "$plist" || _die "Not a valid plist: $plist"
+    fi
+
+    local hex
+    hex=$(xxd -p "$tmp_bplist" | tr -d '\n')
+    _sdb "UPDATE ZSHORTCUTACTIONS SET ZDATA = x'$hex' WHERE ZSHORTCUT = $pk;"
+    rm -f "$tmp_bplist"
+
+    echo "Injected actions into '$name'"
+}
+
+# @cmd Show run history for shortcuts
+# @option --limit <int> Max results (default: 20)
+# @flag --json Machine-readable JSON output
+manage::history() {
+    _require_shortcuts_db
+    local limit="${argc_limit:-20}"
+
+    if [[ "${argc_json:-}" == "1" ]]; then
+        _require_jq
+        local json="[]"
+        while IFS='|' read -r sname runs last_run; do
+            json=$(echo "$json" | jq \
+                --arg name "$sname" \
+                --arg runs "$runs" \
+                --arg last "$last_run" \
+                '. + [{name: $name, run_count: ($runs|tonumber), last_run: $last}]')
+        done < <(_sdb "
+            SELECT s.ZNAME, COUNT(re.Z_PK) as runs,
+                   datetime(MAX(re.ZDATE) + 978307200, 'unixepoch') as last_run
+            FROM ZSHORTCUTRUNEVENT re
+            JOIN ZSHORTCUT s ON re.ZSHORTCUT = s.Z_PK
+            GROUP BY s.ZNAME
+            ORDER BY runs DESC
+            LIMIT $limit;
+        ")
+        echo "$json" | jq .
+    else
+        echo "Run history (top $limit):"
+        echo ""
+        printf "  %-35s %6s  %s\n" "Shortcut" "Runs" "Last Run"
+        printf "  %-35s %6s  %s\n" "─────────────────────────────────" "─────" "───────────────────"
+        while IFS='|' read -r sname runs last_run; do
+            printf "  %-35s %6s  %s\n" "$sname" "$runs" "$last_run"
+        done < <(_sdb "
+            SELECT s.ZNAME, COUNT(re.Z_PK) as runs,
+                   datetime(MAX(re.ZDATE) + 978307200, 'unixepoch') as last_run
+            FROM ZSHORTCUTRUNEVENT re
+            JOIN ZSHORTCUT s ON re.ZSHORTCUT = s.Z_PK
+            GROUP BY s.ZNAME
+            ORDER BY runs DESC
+            LIMIT $limit;
+        ")
+    fi
+}
+
+# @cmd Manage folders
+manage::folder() { :; }
+
+# @cmd Create a new folder (via AppleScript)
+# @arg name! Folder name
+manage::folder::create() {
+    osascript -e "tell application \"Shortcuts Events\" to make new folder with properties {name:\"${argc_name}\"}" 2>&1 \
+        || _die "Failed to create folder '${argc_name}'"
+    echo "Created folder '${argc_name}'"
+}
+
+# @cmd Delete a folder (via AppleScript)
+# @arg name! Folder name
+# @flag --force Skip confirmation
+manage::folder::delete() {
+    local name="${argc_name}"
+
+    if [[ "${argc_force:-}" != "1" ]]; then
+        local count
+        count=$(shortcuts list --folder-name "$name" 2>/dev/null | wc -l | tr -d ' ')
+        if [[ "$count" -gt 0 ]]; then
+            printf "Folder '%s' contains %s shortcuts. Delete anyway? [y/N] " "$name" "$count"
+            read -r confirm
+            [[ "$confirm" =~ ^[Yy] ]] || { echo "Cancelled."; return; }
+        fi
+    fi
+
+    osascript -e "tell application \"Shortcuts Events\" to delete folder \"$name\"" 2>&1 \
+        || _die "Failed to delete folder '$name'"
+    echo "Deleted folder '$name'"
+}
+
+# @cmd List folders
+# @flag --json Machine-readable JSON output
+manage::folder::list() {
+    # Route to manage list --folders; re-export json flag
+    local argc_folders=1
+    manage::list
+}
+
+# @cmd Purge tombstoned shortcuts and orphaned icon rows
+manage::cleanup() {
+    _require_shortcuts_db
+
+    local tombstoned
+    tombstoned=$(_sdb "SELECT COUNT(*) FROM ZSHORTCUT WHERE ZTOMBSTONED = 1;")
+
+    if [[ "$tombstoned" -eq 0 ]]; then
+        echo "Nothing to clean up."
+        return
+    fi
+
+    echo "Tombstoned shortcuts: $tombstoned"
+
+    # Show what will be purged
+    while IFS= read -r sname; do
+        echo "  - $sname"
+    done < <(_sdb "SELECT ZNAME FROM ZSHORTCUT WHERE ZTOMBSTONED = 1 ORDER BY ZNAME;")
+
+    printf "Permanently purge these from the database? [y/N] "
+    read -r confirm
+    [[ "$confirm" =~ ^[Yy] ]] || { echo "Cancelled."; return; }
+
+    # Delete orphaned icons, actions, then the shortcuts
+    _sdb "DELETE FROM ZSHORTCUTICON WHERE Z_PK IN (
+              SELECT ZICON FROM ZSHORTCUT WHERE ZTOMBSTONED = 1);"
+    _sdb "DELETE FROM ZSHORTCUTACTIONS WHERE ZSHORTCUT IN (
+              SELECT Z_PK FROM ZSHORTCUT WHERE ZTOMBSTONED = 1);"
+    _sdb "DELETE FROM ZSHORTCUTRUNEVENT WHERE ZSHORTCUT IN (
+              SELECT Z_PK FROM ZSHORTCUT WHERE ZTOMBSTONED = 1);"
+    _sdb "DELETE FROM ZSHORTCUT WHERE ZTOMBSTONED = 1;"
+
+    echo "Purged $tombstoned shortcuts and associated data"
 }
 
 # ─── Dispatcher ──────────────────────────────────────────────────────

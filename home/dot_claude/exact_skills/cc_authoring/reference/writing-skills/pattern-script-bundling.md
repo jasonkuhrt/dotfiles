@@ -74,6 +74,10 @@ Transform CSV to JSON:
 python scripts/csv_to_json.py input.csv > output.json
 ```
 
+## Bash CLIs with Argument Parsing
+
+For bash scripts that accept arguments, use **argc** — a comment-based CLI framework. See `~/.claude/rules/cli.md` for the annotation pattern. argc generates help, validation, and shell completions from `@cmd`/`@flag`/`@option`/`@arg` comments above functions.
+
 ## Links
 
 - Docs: https://code.claude.com/docs/en/skills.md (Script bundling section)

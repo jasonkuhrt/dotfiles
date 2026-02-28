@@ -54,6 +54,7 @@ brew "starship"      # cross-shell prompt
 brew "direnv"        # per-directory env vars
 brew "shellcheck"    # shell script linter
 brew "shfmt"         # shell formatter
+brew "argc"          # bash CLI framework (comment-based arg parsing)
 brew "gum"           # shell script UI components
 brew "just"          # command runner (modern make alternative)
 brew "up"            # interactive piping (Ultimate Plumber)

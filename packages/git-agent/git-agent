@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# git-agent — Control agent git access permissions.
+# @describe git-agent — Control agent git access permissions.
+# @meta version 1.0.0
 # https://git-scm.com/docs/git#_low_level_commands_plumbing (custom command convention)
-
-VERSION="1.0.0"
 
 # ── Helpers ────────────────────────────────────────────────
 
@@ -270,9 +269,19 @@ do_uninstall() {
   printf "git-agent: uninstalled\n"
 }
 
-# ── Status ────────────────────────────────────────────────
+# ── Subcommand Helpers ───────────────────────────────────
 
-show_status() {
+_ensure_installed() {
+  require_git
+  do_install
+}
+
+# ── Subcommands ──────────────────────────────────────────
+
+# @cmd Show current status
+# @meta default-subcommand
+status() {
+  require_git
   local commit push
   commit="$(read_gate commit)"
   push="$(read_gate push)"
@@ -287,30 +296,73 @@ show_status() {
   printf "  push:   %s\n" "$push"
 }
 
-# ── Help ──────────────────────────────────────────────────
-
-show_help() {
-  cat <<'HELP'
-git-agent — Control agent git access permissions.
-
-Usage:
-  git agent              Show current status
-  git agent r            Read-only mode (block all writes)
-  git agent off          Alias for r
-  git agent w            Read-write mode (allow all writes)
-  git agent on           Alias for w
-  git agent on commit    Allow commits
-  git agent on push      Allow pushes (also enables commit)
-  git agent off commit   Block commits (also blocks push)
-  git agent off push     Block pushes
-  git agent install      Set up hooks (auto-runs on first use)
-  git agent uninstall    Remove all traces from this repository
-
-Run `git agent help book` for the full reference.
-HELP
+# @cmd Allow operations (read-write mode)
+# @alias w
+# @arg gate[commit|push] Specific gate to open (omit for all)
+on() {
+  _ensure_installed
+  if [[ -z "${argc_gate:-}" ]]; then
+    write_gates "on" "on"
+    update_claude_local
+    printf "commit: on, push: on\n"
+  else
+    case "$argc_gate" in
+      commit)
+        write_gates "on" "$(read_gate push)"
+        update_claude_local
+        printf "commit: on, push: %s\n" "$(read_gate push)"
+        ;;
+      push)
+        # on push → also on commit (cascade)
+        write_gates "on" "on"
+        update_claude_local
+        printf "commit: on, push: on (cascade)\n"
+        ;;
+    esac
+  fi
 }
 
-show_help_book() {
+# @cmd Block operations (read-only mode)
+# @alias r
+# @arg gate[commit|push] Specific gate to close (omit for all)
+off() {
+  _ensure_installed
+  if [[ -z "${argc_gate:-}" ]]; then
+    write_gates "off" "off"
+    update_claude_local
+    printf "commit: off, push: off\n"
+  else
+    case "$argc_gate" in
+      commit)
+        # off commit → also off push (cascade)
+        write_gates "off" "off"
+        update_claude_local
+        printf "commit: off, push: off (cascade)\n"
+        ;;
+      push)
+        write_gates "$(read_gate commit)" "off"
+        update_claude_local
+        printf "commit: %s, push: off\n" "$(read_gate commit)"
+        ;;
+    esac
+  fi
+}
+
+# @cmd Set up hooks (auto-runs on first use)
+install() {
+  require_git
+  do_install
+  status
+}
+
+# @cmd Remove all traces from this repository
+uninstall() {
+  require_git
+  do_uninstall
+}
+
+# @cmd Full reference documentation
+book() {
   cat <<'HELP'
 git-agent — Control agent git access permissions.
 
@@ -471,96 +523,4 @@ FILES
 HELP
 }
 
-# ── Main ──────────────────────────────────────────────────
-
-cmd="${1:-}"
-target="${2:-}"
-
-# Help doesn't need a git repo
-case "$cmd" in
-  --help|help|-h)
-    if [ "${2:-}" = "book" ]; then show_help_book; else show_help; fi
-    exit 0 ;;
-  --version) echo "git-agent $VERSION"; exit 0 ;;
-esac
-
-require_git
-
-# Auto-install for all commands except uninstall and status
-case "$cmd" in
-  ""|uninstall) ;;
-  *) do_install ;;
-esac
-
-case "$cmd" in
-  "")
-    show_status
-    ;;
-
-  install)
-    # do_install already ran above
-    show_status
-    ;;
-
-  uninstall)
-    do_uninstall
-    ;;
-
-  r|off)
-    if [ -n "$target" ]; then
-      case "$cmd" in
-        off) ;; # off commit / off push is valid
-        r) die "'r' does not take arguments (did you mean: git agent off $target?)" ;;
-      esac
-      case "$target" in
-        commit)
-          # off commit → also off push (cascade)
-          write_gates "off" "off"
-          update_claude_local
-          printf "commit: off, push: off (cascade)\n"
-          ;;
-        push)
-          write_gates "$(read_gate commit)" "off"
-          update_claude_local
-          printf "commit: %s, push: off\n" "$(read_gate commit)"
-          ;;
-        *) die "unknown target: $target (expected: commit, push)" ;;
-      esac
-    else
-      write_gates "off" "off"
-      update_claude_local
-      printf "commit: off, push: off\n"
-    fi
-    ;;
-
-  w|on)
-    if [ -n "$target" ]; then
-      case "$cmd" in
-        on) ;; # on commit / on push is valid
-        w) die "'w' does not take arguments (did you mean: git agent on $target?)" ;;
-      esac
-      case "$target" in
-        commit)
-          write_gates "on" "$(read_gate push)"
-          update_claude_local
-          printf "commit: on, push: %s\n" "$(read_gate push)"
-          ;;
-        push)
-          # on push → also on commit (cascade)
-          write_gates "on" "on"
-          update_claude_local
-          printf "commit: on, push: on (cascade)\n"
-          ;;
-        *) die "unknown target: $target (expected: commit, push)" ;;
-      esac
-    else
-      write_gates "on" "on"
-      update_claude_local
-      printf "commit: on, push: on\n"
-    fi
-    ;;
-
-  *)
-    die "unknown command: $cmd (try: git agent --help)"
-    ;;
-esac
+eval "$(argc --argc-eval "$0" "$@")"

@@ -1,0 +1,415 @@
+#!/bin/bash
+# @describe dj — Apple Music CLI for humans and AI
+
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# ─── Helpers ──────────────────────────────────────────────
+
+_osa() { osascript -e "$1" 2>/dev/null; }
+
+_music() { _osa "tell application \"Music\" to $1"; }
+
+# ─── Playback ─────────────────────────────────────────────
+
+# @cmd Play a playlist (or resume current)
+# @alias p
+# @arg playlist Playlist name
+play() {
+    local name="${argc_playlist:-$1}"
+    if [[ -z "${name:-}" ]]; then
+        _music "play"
+    else
+        _osa "tell application \"Music\"
+            set pl to (first playlist whose name is \"$name\")
+            play pl
+        end tell"
+    fi
+    echo "Playing."
+}
+
+# @cmd Pause playback
+# @alias stop
+pause() {
+    _music "pause"
+    echo "Paused."
+}
+
+# @cmd Skip to next track
+# @alias skip
+next() {
+    _music "next track"
+    sleep 0.3
+    now
+}
+
+# @cmd Previous track
+# @alias back
+prev() {
+    _music "previous track"
+    sleep 0.3
+    now
+}
+
+# @cmd Get or set shuffle
+# @arg state[on|off] Shuffle state
+shuffle() {
+    local state="${argc_state:-$1}"
+    if [[ -z "${state:-}" ]]; then
+        _music "return shuffle enabled"
+    else
+        case "$state" in
+            on)  _music "set shuffle enabled to true"; echo "Shuffle on." ;;
+            off) _music "set shuffle enabled to false"; echo "Shuffle off." ;;
+        esac
+    fi
+}
+
+# @cmd What's playing right now
+# @alias np
+now() {
+    _osa 'tell application "Music"
+        if player state is playing then
+            set t to name of current track
+            set a to artist of current track
+            set al to album of current track
+            return t & " — " & a & " (" & al & ")"
+        else
+            return "Not playing."
+        end if
+    end tell'
+}
+
+# ─── Volume ───────────────────────────────────────────────
+
+# @cmd Get or set volume (0-100)
+# @alias vol,v
+# @arg level Volume level (0-100)
+volume() {
+    local level="${argc_level:-$1}"
+    if [[ -z "${level:-}" ]]; then
+        _music "return sound volume"
+    else
+        _music "set sound volume to $level"
+        echo "Volume: $level"
+    fi
+}
+
+# @cmd Increase volume
+# @arg amount=5 Amount to increase
+volume::up() {
+    local amt="${argc_amount:-${1:-5}}"
+    _osa "tell application \"Music\"
+        set v to sound volume
+        set sound volume to (v + $amt)
+        return sound volume
+    end tell"
+}
+
+# @cmd Decrease volume
+# @arg amount=5 Amount to decrease
+volume::down() {
+    local amt="${argc_amount:-${1:-5}}"
+    _osa "tell application \"Music\"
+        set v to sound volume
+        if v - $amt < 0 then
+            set sound volume to 0
+        else
+            set sound volume to (v - $amt)
+        end if
+        return sound volume
+    end tell"
+}
+
+# ─── AirPlay ──────────────────────────────────────────────
+
+# @cmd Show AirPlay device status
+# @alias ap
+airplay() {
+    _osa 'tell application "Music"
+        set output to ""
+        repeat with d in (every AirPlay device)
+            set sel to ""
+            if selected of d then set sel to " *"
+            set output to output & (name of d) & " (" & (kind of d) & ")" & sel & linefeed
+        end repeat
+        return output
+    end tell'
+}
+
+# @cmd Route to specified devices
+# @arg devices+ Device names
+airplay::set() {
+    # Support both argc dispatch and direct call
+    local -a devs
+    if [[ -n "${argc_devices+x}" ]]; then
+        devs=("${argc_devices[@]}")
+    else
+        devs=("$@")
+    fi
+    # Deselect all first
+    _osa 'tell application "Music"
+        repeat with d in (every AirPlay device)
+            set selected of d to false
+        end repeat
+    end tell'
+    # Select specified devices
+    for dev in "${devs[@]}"; do
+        _osa "tell application \"Music\"
+            set selected of AirPlay device \"$dev\" to true
+        end tell" || echo "Warning: '$dev' not found"
+    done
+    echo "AirPlay set to: ${devs[*]}"
+}
+
+# @cmd Route to all HomePods
+airplay::all() {
+    _osa 'tell application "Music"
+        repeat with d in (every AirPlay device)
+            if (kind of d) is not computer then
+                set selected of d to true
+            else
+                set selected of d to false
+            end if
+        end repeat
+    end tell'
+    echo "AirPlay: all HomePods"
+}
+
+# @cmd Deselect all, select computer
+airplay::off() {
+    _osa 'tell application "Music"
+        repeat with d in (every AirPlay device)
+            if (kind of d) is computer then
+                set selected of d to true
+            else
+                set selected of d to false
+            end if
+        end repeat
+    end tell'
+    echo "AirPlay: computer only"
+}
+
+# ─── Library ──────────────────────────────────────────────
+
+# @cmd Search library, show results
+# @alias s
+# @arg query+ Search query
+search() {
+    local query
+    if [[ -n "${argc_query+x}" ]]; then
+        query="${argc_query[*]}"
+    else
+        query="$*"
+    fi
+    _osa "tell application \"Music\"
+        set r to (search playlist \"Library\" for \"$query\" only songs)
+        set output to (count of r) & \" results:\" & linefeed
+        set mx to 20
+        if (count of r) < mx then set mx to (count of r)
+        repeat with i from 1 to mx
+            set t to item i of r
+            set output to output & (name of t) & \" — \" & (artist of t) & linefeed
+        end repeat
+        return output
+    end tell"
+}
+
+# @cmd Search artists in library
+# @arg query+ Search query
+artists() {
+    local query
+    if [[ -n "${argc_query+x}" ]]; then
+        query="${argc_query[*]}"
+    else
+        query="$*"
+    fi
+    _osa "tell application \"Music\"
+        set r to (search playlist \"Library\" for \"$query\" only songs)
+        return (count of r) & \" tracks found for: $query\"
+    end tell"
+}
+
+# ─── Playlists ────────────────────────────────────────────
+
+# @cmd List all playlists
+# @alias pl
+# @meta default-subcommand
+playlist() {
+    _osa 'tell application "Music"
+        set output to ""
+        repeat with p in (every user playlist)
+            set output to output & (name of p) & " (" & (count of tracks of p) & " tracks)" & linefeed
+        end repeat
+        return output
+    end tell'
+}
+
+# @cmd Create empty playlist
+# @arg name! Playlist name
+playlist::create() {
+    local name="${argc_name:-$1}"
+    _osa "tell application \"Music\"
+        make new playlist with properties {name:\"$name\"}
+    end tell"
+    echo "Created: $name"
+}
+
+# @cmd Add artist's tracks to playlist
+# @arg playlist! Playlist name
+# @arg artist! Artist name
+# @option --max=6 Maximum tracks to add
+playlist::add() {
+    local pl="${argc_playlist:-$1}"
+    local art="${argc_artist:-$2}"
+    local mx="${argc_max:-${3:-6}}"
+    _osa "tell application \"Music\"
+        set djPL to (first playlist whose name is \"$pl\")
+        set r to (search playlist \"Library\" for \"$art\" only songs)
+        set t to 0
+        if (count of r) > 0 then
+            set mx to $mx
+            if (count of r) < mx then set mx to (count of r)
+            repeat with i from 1 to mx
+                try
+                    duplicate (item i of r) to djPL
+                    set t to t + 1
+                end try
+            end repeat
+        end if
+        return t & \" tracks added from $art\"
+    end tell"
+}
+
+# @cmd Delete a playlist
+# @arg name! Playlist name
+playlist::delete() {
+    local name="${argc_name:-$1}"
+    _osa "tell application \"Music\"
+        try
+            delete (first playlist whose name is \"$name\")
+        end try
+    end tell"
+    echo "Deleted: $name"
+}
+
+# ─── Orchestration ────────────────────────────────────────
+
+# @cmd Full DJ flow from JSON config
+# @arg config! JSON config string
+mix() {
+    local CONFIG="${argc_config:-$1}"
+    local PLAYLIST_NAME; PLAYLIST_NAME=$(echo "$CONFIG" | jq -r '.name')
+    local VOLUME; VOLUME=$(echo "$CONFIG" | jq -r '.volume // 25')
+    local SHUFFLE; SHUFFLE=$(echo "$CONFIG" | jq -r '.shuffle // true')
+    local AIRPLAY_JSON; AIRPLAY_JSON=$(echo "$CONFIG" | jq -c '.airplay // ["Living","Kids","Kitchen"]')
+
+    # Clean up existing playlist with same name
+    playlist::delete "$PLAYLIST_NAME" 2>/dev/null || true
+
+    # Create playlist
+    playlist::create "$PLAYLIST_NAME"
+
+    # Add artists in batches of 3
+    local artist_count; artist_count=$(echo "$CONFIG" | jq '.artists | length')
+    local total_added=0 total_skipped=0 not_found=""
+    local batch_size=3
+
+    for ((batch_start=0; batch_start<artist_count; batch_start+=batch_size)); do
+        local script='tell application "Music"
+    set djPL to (first playlist whose name is "'"$PLAYLIST_NAME"'")
+    set t to 0
+    set s to 0
+    set nf to ""
+'
+        local batch_end=$((batch_start + batch_size))
+        [ "$batch_end" -gt "$artist_count" ] && batch_end=$artist_count
+
+        for ((i=batch_start; i<batch_end; i++)); do
+            local artist_name; artist_name=$(echo "$CONFIG" | jq -r ".artists[$i].name")
+            local artist_max; artist_max=$(echo "$CONFIG" | jq -r ".artists[$i].max // 6")
+
+            script+='
+    set r to (search playlist "Library" for "'"$artist_name"'" only songs)
+    if (count of r) > 0 then
+        set mx to '"$artist_max"'
+        if (count of r) < mx then set mx to (count of r)
+        repeat with i from 1 to mx
+            try
+                duplicate (item i of r) to djPL
+                set t to t + 1
+            on error
+                set s to s + 1
+            end try
+        end repeat
+    else
+        set nf to nf & "'"$artist_name"',"
+    end if
+'
+        done
+
+        script+='
+    return (t as text) & "|" & (s as text) & "|" & nf
+end tell'
+
+        local result; result=$(osascript -e "$script" 2>&1) || true
+        local batch_added; batch_added=$(echo "$result" | cut -d'|' -f1)
+        local batch_skipped; batch_skipped=$(echo "$result" | cut -d'|' -f2)
+        local batch_nf; batch_nf=$(echo "$result" | cut -d'|' -f3)
+
+        total_added=$((total_added + ${batch_added:-0}))
+        total_skipped=$((total_skipped + ${batch_skipped:-0}))
+        [ -n "${batch_nf:-}" ] && not_found+="$batch_nf"
+    done
+
+    # AirPlay
+    airplay::set $(echo "$AIRPLAY_JSON" | jq -r '.[]') 2>/dev/null
+
+    # Play
+    volume "$VOLUME"
+    play "$PLAYLIST_NAME"
+    shuffle "$( [ "$SHUFFLE" = "true" ] && echo on || echo off )"
+    minimize 2>/dev/null || true
+
+    echo "{\"added\":$total_added,\"skipped\":$total_skipped,\"notFound\":\"${not_found%,}\"}"
+}
+
+# ─── Window ───────────────────────────────────────────────
+
+# @cmd Minimize Music.app
+# @alias min
+minimize() {
+    _osa 'tell application "Music"
+        try
+            set miniaturized of window 1 to true
+        end try
+    end tell'
+    echo "Minimized."
+}
+
+# @cmd Full status dump (JSON)
+status() {
+    _osa 'tell application "Music"
+        set state to player state as text
+        set vol to sound volume
+        set shuf to shuffle enabled
+
+        set nowPlaying to "nothing"
+        if player state is playing then
+            set nowPlaying to (name of current track) & " — " & (artist of current track)
+        end if
+
+        set apDevices to ""
+        repeat with d in (every AirPlay device)
+            if selected of d then
+                set apDevices to apDevices & (name of d) & ", "
+            end if
+        end repeat
+
+        return "{\"state\":\"" & state & "\",\"volume\":" & vol & ",\"shuffle\":" & shuf & ",\"now\":\"" & nowPlaying & "\",\"airplay\":\"" & apDevices & "\"}"
+    end tell'
+}
+
+# ─── argc dispatch ────────────────────────────────────────
+
+eval "$(argc --argc-eval "$0" "$@")"

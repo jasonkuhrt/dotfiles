@@ -145,6 +145,10 @@
   },
   // TODO: change fish prompt to not duplicate breadcrumbs (when in zed context)
   "terminal": {
+    // Default 45 uses APCA to boost dark colors for readability, which clamps
+    // subtle nvim highlight differences (e.g. dim Whitespace vs fg_gutter).
+    // 0 = exact colors. See https://github.com/zed-industries/zed/issues/21330
+    "minimum_contrast": 0,
     "button": false,
     "copy_on_select": true,
     "cursor_shape": "bar", // keep this in sync with editor, e.g. don't confuse what "insert" mode (only mode in terminal) looks like.

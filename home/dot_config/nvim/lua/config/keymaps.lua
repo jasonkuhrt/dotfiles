@@ -30,6 +30,11 @@ map("n", "<D-w>", function() Snacks.bufdelete() end, { desc = "Close buffer" })
 map({ "n", "v" }, "H", "^", { desc = "Start of line" })
 map({ "n", "v" }, "L", "$", { desc = "End of line" })
 
+-- Command palette / command line (swapped: : = palette, ; = ex command)
+map("n", ":", "<cmd>lua Snacks.picker.commands()<cr>", { desc = "Command palette" })
+map("n", ";", ":", { desc = "Command line" })
+map("c", ";", "<C-c>", { desc = "Close command line" })
+
 -- External command shortcut
 map("n", "!", ":!", { desc = "External command" })
 

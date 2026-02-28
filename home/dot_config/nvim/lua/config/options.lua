@@ -27,6 +27,9 @@ vim.opt.backup = false
 vim.opt.swapfile = false
 vim.opt.undofile = true
 
+-- Whitespace indicators
+vim.opt.listchars = { tab = "→ ", trail = "·", nbsp = "␣" }
+
 -- Cursor
 vim.opt.guicursor:append("a:blinkon0")
 vim.opt.cursorline = false

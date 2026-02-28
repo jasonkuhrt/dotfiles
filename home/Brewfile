@@ -5,6 +5,7 @@ tap "electrikmilk/cherri"
 tap "planetscale/tap"
 tap "polidog/kilar"
 tap "assimelha/tap"
+tap "manaflow-ai/cmux"
 tap "zjrosen/perles"
 
 # ═══════════════════════════════════════════════════════════
@@ -151,6 +152,7 @@ cask "ngrok"
 # AI
 cask "claude"
 cask "chatgpt"
+cask "cmux"           # Claude session multiplexer
 
 # Communication
 cask "discord"

@@ -1,7 +1,563 @@
-# Commands hidden from the Snacks picker command palette.
-# Lua patterns matched against command names (case-sensitive).
-# Examples: "^Telescope" matches commands starting with Telescope,
-#           "Debug" matches any command containing Debug.
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Command Blocklist
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #
-# - "^Telescope"
-# - "^Copilot"
+# Neovim exposes ~620 commands. Most are internal plumbing
+# you'll never invoke directly. This file hides them from
+# two surfaces:
+#
+#   ;   Snacks picker command palette  (fuzzy browse)
+#   :   blink.cmp cmdline completion   (tab-complete)
+#
+# Both read this single file through the shared module at
+# lua/config/command-blocklist.lua, which lazy-loads and
+# caches the patterns on first use.
+#
+# ── Syntax ───────────────────────────────────────────────
+#
+# Each entry is a Lua pattern (not regex) matched against
+# the full command name via string.find(). Case-sensitive.
+#
+#   Anchors    ^  start of string    $  end of string
+#   Classes    %u uppercase  %l lowercase  %d digit  %a letter
+#   Wildcards  .  any char   .*  greedy     .-  non-greedy
+#   Escapes    %. literal dot   %[ literal bracket
+#
+# ── Auditing ─────────────────────────────────────────────
+#
+# To see the full unfiltered command list (for finding names
+# to block or verifying your patterns aren't over-matching):
+#
+#   :lua for _, c in ipairs(vim.fn.getcompletion("", "command")) do print(c) end
+#
+# Or in a scratch buffer for easier searching:
+#
+#   :enew | put =execute('command')
+#
+# ── Linting ──────────────────────────────────────────────
+#
+# A lint script validates this file on nvim startup:
+#   lua/config/command-blocklist.lua
+#
+# It checks for:
+#   - Invalid Lua patterns (syntax errors)
+#   - Dead patterns (match zero commands)
+#
+# Warnings appear in :messages after startup. Search for
+# "blocklist" to find them.
+#
+# ── How it works ─────────────────────────────────────────
+#
+# The loader (lua/config/command-blocklist.lua) reads this
+# file line by line, extracting quoted strings after "- ".
+# Comments and blank lines are ignored. The patterns are
+# cached for the session — restart nvim to pick up changes.
+#
+# Snacks picker: transform() returns false for blocked items
+# blink.cmp:    transform_items() filters the CompletionItem[]
+#
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# ── Netrw file explorer (replaced by Snacks/Telescope) ──
+- "^Explore$"
+- "^Hexplore$"
+- "^Lexplore$"
+- "^Nexplore$"
+- "^Pexplore$"
+- "^Sexplore$"
+- "^Texplore$"
+- "^Vexplore$"
+- "^Netrw"
+- "^NetUserPass$"
+- "^Nread$"
+- "^Nsource$"
+- "^Ntree$"
+- "^Nwrite$"
+
+# ── Match paren internals ───────────────────────────────
+- "^DoMatchParen$"
+- "^NoMatchParen$"
+- "^Match%u"
+
+# ── Plenary test harness (dev-only) ─────────────────────
+- "^Plenary"
+
+# ── SmartSplits (bound to keys, never invoked by name) ──
+- "^Smart%u"
+
+# ── TreeSitter install/update (use :Lazy instead) ───────
+- "^TS%u"
+
+# ── Telescope (use Snacks picker instead) ────────────────
+- "^Telescope$"
+- "^TodoTelescope$"
+
+# ── DAP install/uninstall (use :Mason instead) ──────────
+- "^Dap%u"
+
+# ── Lazy internals (keep :Lazy itself) ──────────────────
+- "^LazyDev$"
+
+# ── Remote plugins (auto-managed) ───────────────────────
+- "^UpdateRemotePlugins$"
+
+# ── Scripting languages you don't use from cmdline ──────
+- "^ruby"
+- "^rubydo$"
+- "^rubyfile$"
+- "^perl"
+- "^perldo$"
+- "^perlfile$"
+- "^python"
+- "^py%d"
+- "^pydo$"
+- "^pyfile$"
+- "^pyx"
+- "^mz"
+- "^tcl"
+
+# ── Mapping/abbreviation plumbing ───────────────────────
+# (you set mappings in Lua, not :nmap/:imap)
+- "^%l?map$"
+- "^%l?mapclear$"
+- "^%l?noremap$"
+- "^%l?unmap$"
+- "^%l?noreabbrev$"
+- "^%l?abbreviate$"
+- "^%l?abclear$"
+- "^unabbreviate$"
+- "^%l?menu$"
+- "^%l?noremenu$"
+- "^%l?unmenu$"
+- "^menutranslate$"
+- "^emenu$"
+- "^amenu$"
+- "^anoremenu$"
+- "^aunmenu$"
+- "^comclear$"
+- "^delcommand$"
+
+# ── Ex mode / vi compat (archaic) ───────────────────────
+- "^ex$"
+- "^exusage$"
+- "^viusage$"
+- "^visual$"
+- "^gui$"
+- "^gvim$"
+- "^simalt$"
+- "^intro$"
+
+# ── Vimscript-only flow control (you write Lua) ─────────
+- "^if$"
+- "^else$"
+- "^elseif$"
+- "^endif$"
+- "^for$"
+- "^endfor$"
+- "^while$"
+- "^endwhile$"
+- "^try$"
+- "^catch$"
+- "^finally$"
+- "^endtry$"
+- "^throw$"
+- "^return$"
+- "^break$"
+- "^continue$"
+- "^function$"
+- "^endfunction$"
+- "^call$"
+- "^eval$"
+- "^execute$"
+- "^let$"
+- "^unlet$"
+- "^const$"
+- "^lockvar$"
+- "^unlockvar$"
+- "^echo$"
+- "^echon$"
+- "^echoerr$"
+- "^echohl$"
+- "^echomsg$"
+
+# ── Debug/profile (rarely used interactively) ───────────
+- "^debug$"
+- "^debuggreedy$"
+- "^breakadd$"
+- "^breakdel$"
+- "^breaklist$"
+- "^profile$"
+- "^profdel$"
+- "^verbose$"
+
+# ── Vimscript file sourcing (you use Lua) ───────────────
+- "^scriptencoding$"
+- "^scriptnames$"
+- "^runtime$"
+- "^source$"
+- "^packadd$"
+- "^packloadall$"
+- "^loadkeymap$"
+
+# ── Shada/viminfo (auto-managed) ────────────────────────
+- "^rshada$"
+- "^wshada$"
+- "^rviminfo$"
+- "^wviminfo$"
+
+# ── Session internals (you use LazyVim sessions) ────────
+- "^mkexrc$"
+- "^mkvimrc$"
+- "^mkview$"
+- "^loadview$"
+- "^mksession$"
+
+# ── Quickfix list (replaced by :Trouble diagnostics) ────
+# Trouble wraps quickfix with grouping, previews, and
+# filtering. No reason to use the raw qf commands.
+- "^cNext$"
+- "^cNfile$"
+- "^cabove$"
+- "^caddbuffer$"
+- "^caddexpr$"
+- "^caddfile$"
+- "^cafter$"
+- "^cbefore$"
+- "^cbelow$"
+- "^cbottom$"
+- "^cbuffer$"
+- "^cc$"
+- "^cclose$"
+- "^cdo$"
+- "^cexpr$"
+- "^cfdo$"
+- "^cfile$"
+- "^cfirst$"
+- "^cgetbuffer$"
+- "^cgetexpr$"
+- "^cgetfile$"
+- "^chistory$"
+- "^clast$"
+- "^clist$"
+- "^cnewer$"
+- "^cnext$"
+- "^cnfile$"
+- "^colder$"
+- "^copen$"
+- "^cpfile$"
+- "^cprevious$"
+- "^cquit$"
+- "^crewind$"
+- "^cwindow$"
+
+# ── Location list (replaced by :Trouble diagnostics) ────
+# Same as quickfix but per-window. Trouble handles both.
+- "^lNext$"
+- "^lNfile$"
+- "^labove$"
+- "^laddbuffer$"
+- "^laddexpr$"
+- "^laddfile$"
+- "^lafter$"
+- "^lbefore$"
+- "^lbelow$"
+- "^lbottom$"
+- "^lbuffer$"
+- "^lcd$"
+- "^lchdir$"
+- "^lclose$"
+- "^ldo$"
+- "^lexpr$"
+- "^lfdo$"
+- "^lfile$"
+- "^lfirst$"
+- "^lgetbuffer$"
+- "^lgetexpr$"
+- "^lgetfile$"
+- "^lgrep$"
+- "^lgrepadd$"
+- "^lhelpgrep$"
+- "^lhistory$"
+- "^list$"
+- "^ll$"
+- "^llast$"
+- "^llist$"
+- "^lmake$"
+- "^lnewer$"
+- "^lnext$"
+- "^lnfile$"
+- "^lolder$"
+- "^lopen$"
+- "^lpfile$"
+- "^lprevious$"
+- "^lrewind$"
+- "^ltag$"
+- "^lvimgrep$"
+- "^lvimgrepadd$"
+- "^lwindow$"
+
+# ── Argument list (you use picker, not :args) ───────────
+- "^arg%l"
+- "^args$"
+- "^argument$"
+
+# ── Buffer cycling (you use picker/tabs, not :bnext) ────
+- "^bNext$"
+- "^badd$"
+- "^ball$"
+- "^balt$"
+- "^bfirst$"
+- "^blast$"
+- "^bmodified$"
+- "^bnext$"
+- "^bprevious$"
+- "^brewind$"
+- "^bunload$"
+- "^bwipeout$"
+- "^bufdo$"
+
+# ── Split/window commands (you use keybindings) ─────────
+- "^split$"
+- "^vsplit$"
+- "^new$"
+- "^vnew$"
+- "^sall$"
+- "^sargument$"
+- "^sball$"
+- "^sbfirst$"
+- "^sblast$"
+- "^sbmodified$"
+- "^sbnext$"
+- "^sbNext$"
+- "^sbprevious$"
+- "^sbrewind$"
+- "^sbuffer$"
+- "^sfind$"
+- "^sfirst$"
+- "^slast$"
+- "^smagic$"
+- "^snext$"
+- "^sNext$"
+- "^snomagic$"
+- "^sprevious$"
+- "^srewind$"
+- "^stag$"
+- "^stjump$"
+- "^stselect$"
+- "^sunhide$"
+- "^sview$"
+- "^wincmd$"
+- "^windo$"
+- "^winpos$"
+- "^winsize$"
+
+# ── Diff commands (you use lazygit) ─────────────────────
+- "^diff%l"
+
+# ── Digraphs (special character input, rarely used) ─────
+- "^digraphs$"
+
+# ── Sign column plumbing (managed by gitsigns/LSP) ──────
+- "^sign$"
+
+# ── Syntax/highlighting internals ───────────────────────
+# (treesitter handles highlighting, not :syntax)
+- "^syntax$"
+- "^syntime$"
+- "^ownsyntax$"
+- "^highlight$"
+
+# ── Compiler framework (you use LSP, not :compiler) ─────
+- "^compiler$"
+
+# ── Spell-check making (keep spellgood/spellwrong) ──────
+- "^mkspell$"
+- "^spelldump$"
+
+# ── Misc plumbing ───────────────────────────────────────
+- "^mode$"
+- "^preserve$"
+- "^recover$"
+- "^redir$"
+- "^sandbox$"
+- "^silent$"
+- "^unsilent$"
+- "^noautocmd$"
+- "^noswapfile$"
+- "^swapname$"
+- "^syncbind$"
+- "^defer$"
+- "^detach$"
+- "^fclose$"
+- "^language$"
+- "^trust$"
+
+# ── :insert/:append (ex mode input, not normal editing) ─
+- "^insert$"
+- "^append$"
+- "^change$"
+
+# ── Printing (hardcopy-era commands) ────────────────────
+- "^number$"
+- "^print$"
+- "^list$"
+- "^z$"
+
+# ── Preview window (LSP hover replaces this) ────────────
+- "^pbuffer$"
+- "^pclose$"
+- "^pedit$"
+- "^popup$"
+- "^ppop$"
+- "^psearch$"
+- "^ptNext$"
+- "^ptag$"
+- "^ptfirst$"
+- "^ptjump$"
+- "^ptlast$"
+- "^ptnext$"
+- "^ptprevious$"
+- "^ptrewind$"
+- "^ptselect$"
+
+# ── :grep/:make (you use GrugFar and LSP) ──────────────
+- "^grep$"
+- "^grepadd$"
+- "^vimgrep$"
+- "^vimgrepadd$"
+- "^make$"
+
+# ── :include/:define search (ctags-era, replaced by LSP) ─
+- "^djump$"
+- "^dlist$"
+- "^dsearch$"
+- "^dsplit$"
+- "^ijump$"
+- "^ilist$"
+- "^isearch$"
+- "^isplit$"
+
+# ── Layout modifiers (rarely typed, usually via keys) ───
+- "^aboveleft$"
+- "^belowright$"
+- "^botright$"
+- "^leftabove$"
+- "^rightbelow$"
+- "^topleft$"
+- "^horizontal$"
+- "^vertical$"
+- "^tab$"
+
+# ── Aliases for :quit/:write you'd never pick ───────────
+- "^exit$"
+- "^xit$"
+- "^xall$"
+- "^wqall$"
+- "^stop$"
+- "^suspend$"
+
+# ── Misc rarely-typed builtins ──────────────────────────
+- "^browse$"
+- "^confirm$"
+- "^doautoall$"
+- "^doautocmd$"
+- "^augroup$"
+- "^autocmd$"
+- "^keepalt$"
+- "^keepjumps$"
+- "^keepmarks$"
+- "^keeppatterns$"
+- "^lockmarks$"
+- "^filter$"
+- "^rundo$"
+- "^wundo$"
+- "^earlier$"
+- "^later$"
+- "^oldfiles$"
+- "^options$"
+
+# ── Tag navigation (LSP go-to-definition replaces this) ─
+- "^tag$"
+- "^tags$"
+- "^tfirst$"
+- "^tjump$"
+- "^tlast$"
+- "^tnext$"
+- "^tNext$"
+- "^tprevious$"
+- "^trewind$"
+- "^tselect$"
+- "^pop$"
+
+# ── Tab page commands (you use buffer tabs, not :tabnew) ─
+- "^tab%l"
+- "^tabN"
+- "^tabs$"
+
+# ── Terminal menu mappings (GUI-only) ────────────────────
+- "^tlmenu$"
+- "^tlnoremenu$"
+- "^tlunmenu$"
+
+# ── More rarely-typed builtins ──────────────────────────
+- "^abbreviate$"
+- "^cabbrev$"
+- "^cunabbrev$"
+- "^iabbrev$"
+- "^iunabbrev$"
+- "^all$"
+- "^ascii$"
+- "^center$"
+- "^checkpath$"
+- "^checktime$"
+- "^copy$"
+- "^delfunction$"
+- "^display$"
+- "^drop$"
+- "^finish$"
+- "^first$"
+- "^global$"
+- "^goto$"
+- "^hide$"
+- "^join$"
+- "^k$"
+- "^last$"
+- "^left$"
+- "^luado$"
+- "^luafile$"
+- "^mark$"
+- "^match$"
+- "^move$"
+- "^next$"
+- "^Next$"
+- "^normal$"
+- "^only$"
+- "^previous$"
+- "^put$"
+- "^read$"
+- "^redraw$"
+- "^redrawstatus$"
+- "^redrawtabline$"
+- "^resize$"
+- "^retab$"
+- "^rewind$"
+- "^right$"
+- "^sleep$"
+- "^startgreplace$"
+- "^startinsert$"
+- "^startreplace$"
+- "^stopinsert$"
+- "^substitute$"
+- "^t$"
+- "^tcd$"
+- "^tchdir$"
+- "^unhide$"
+- "^undojoin$"
+- "^update$"
+- "^vglobal$"
+- "^view$"
+- "^wNext$"
+- "^wnext$"
+- "^wprevious$"
+- "^yank$"
+- "^~$"

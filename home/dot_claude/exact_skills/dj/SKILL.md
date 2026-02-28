@@ -46,7 +46,9 @@ JSON config shape:
 ```bash
 dj now                          # What's playing
 dj volume 20                    # Set volume
-dj volume up                    # +5
+dj volume-up                    # +5
+dj volume-up 10                 # +10
+dj volume-down                  # -5
 dj airplay set Kitchen          # Route to one device
 dj airplay all                  # All HomePods
 dj search "Nils Frahm"         # Search library

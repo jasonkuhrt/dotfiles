@@ -1244,15 +1244,22 @@ manage::icon() {
     if [[ -n "${argc_color:-}" ]]; then
         local color_val
         case "${argc_color}" in
-            red)     color_val=4294901760 ;;
-            orange)  color_val=4294944000 ;;
-            yellow)  color_val=4294957056 ;;
-            green)   color_val=4283215696 ;;
-            blue)    color_val=4282601983 ;;
-            purple)  color_val=2846468607 ;;
-            pink)    color_val=4293591295 ;;
-            gray)    color_val=2240066815 ;;
-            *)       color_val="${argc_color}" ;;
+            red)       color_val=4294901760 ;;
+            orange)    color_val=4294944000 ;;
+            yellow)    color_val=4294957056 ;;
+            green)     color_val=4283215696 ;;
+            teal)      color_val=1440408063 ;;
+            lightblue) color_val=463140863 ;;
+            blue)      color_val=4282601983 ;;
+            darkblue)  color_val=946986751 ;;
+            indigo)    color_val=2071128575 ;;
+            purple)    color_val=2846468607 ;;
+            magenta)   color_val=3679049983 ;;
+            pink)      color_val=4293591295 ;;
+            rose)      color_val=3980825855 ;;
+            amber)     color_val=4274264319 ;;
+            gray)      color_val=2240066815 ;;
+            *)         color_val="${argc_color}" ;;
         esac
         _sdb "UPDATE ZSHORTCUTICON SET ZBACKGROUNDCOLORVALUE = $color_val WHERE Z_PK = $icon_pk;"
         echo "Set color of '$name' to ${argc_color}"

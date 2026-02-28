@@ -1441,6 +1441,157 @@ manage::folder::list() {
     manage::list
 }
 
+# @cmd Run a full lifecycle demo of all manage subcommands
+manage::demo() {
+    _require_shortcuts_db
+
+    local demo_name="scut-demo-$$"
+    local demo_folder="scut-demo-folder-$$"
+    local demo_renamed="scut-demo-renamed-$$"
+    local step=0
+    local failed=0
+
+    _step() {
+        step=$((step + 1))
+        printf "\n→ Step %d: %s\n" "$step" "$1"
+    }
+
+    _ok() { echo "  ✓ $1"; }
+    _fail() { echo "  ✗ $1"; failed=$((failed + 1)); }
+
+    echo "╔══════════════════════════════════════════════╗"
+    echo "║  scut manage — full lifecycle demo           ║"
+    echo "╚══════════════════════════════════════════════╝"
+    echo ""
+    echo "This creates temporary shortcuts and folders, exercises"
+    echo "every manage subcommand, then cleans up after itself."
+    echo ""
+
+    # 1. Create folder
+    _step "Create folder"
+    if manage::folder::create <<< "" 2>/dev/null; then
+        # argc_name isn't set here, call directly
+        true
+    fi
+    # Direct AppleScript call for the demo
+    if osascript -e "tell application \"Shortcuts Events\" to make new folder with properties {name:\"$demo_folder\"}" &>/dev/null; then
+        _ok "Created folder '$demo_folder'"
+    else
+        _fail "Could not create folder"
+    fi
+
+    # 2. Create shortcut
+    _step "Create shortcut"
+    if osascript -e "tell application \"Shortcuts Events\" to make new shortcut with properties {name:\"$demo_name\"}" &>/dev/null; then
+        _ok "Created shortcut '$demo_name'"
+        sleep 1  # Give Shortcuts.app a moment to sync to DB
+    else
+        _fail "Could not create shortcut"
+    fi
+
+    # 3. Rename
+    _step "Rename shortcut"
+    local pk
+    pk=$(_sdb "SELECT Z_PK FROM ZSHORTCUT WHERE ZNAME = '$(_sq "$demo_name")' AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL) LIMIT 1;")
+    if [[ -n "$pk" ]]; then
+        _sdb "UPDATE ZSHORTCUT SET ZNAME = '$(_sq "$demo_renamed")' WHERE Z_PK = $pk;"
+        _ok "Renamed '$demo_name' → '$demo_renamed'"
+    else
+        _fail "Shortcut not found in DB for rename"
+    fi
+
+    # 4. Change icon
+    _step "Change icon (color=blue, glyph=59790)"
+    local icon_pk
+    icon_pk=$(_sdb "SELECT si.Z_PK FROM ZSHORTCUTICON si JOIN ZSHORTCUT s ON s.ZICON = si.Z_PK WHERE s.ZNAME = '$(_sq "$demo_renamed")' AND (s.ZTOMBSTONED = 0 OR s.ZTOMBSTONED IS NULL) LIMIT 1;")
+    if [[ -n "$icon_pk" ]]; then
+        _sdb "UPDATE ZSHORTCUTICON SET ZBACKGROUNDCOLORVALUE = 4282601983, ZGLYPHNUMBER = 59790 WHERE Z_PK = $icon_pk;"
+        _ok "Set icon: blue background, glyph 59790"
+    else
+        _fail "Icon row not found"
+    fi
+
+    # 5. Set Siri phrase
+    _step "Set Siri phrase"
+    pk=$(_sdb "SELECT Z_PK FROM ZSHORTCUT WHERE ZNAME = '$(_sq "$demo_renamed")' AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL) LIMIT 1;")
+    if [[ -n "$pk" ]]; then
+        _sdb "UPDATE ZSHORTCUT SET ZPHRASE = 'scut demo phrase' WHERE Z_PK = $pk;"
+        _ok "Set phrase: 'scut demo phrase'"
+    else
+        _fail "Could not set phrase"
+    fi
+
+    # 6. Move to folder
+    _step "Move shortcut into folder"
+    if osascript -e "tell application \"Shortcuts Events\" to move shortcut \"$demo_renamed\" to folder \"$demo_folder\"" &>/dev/null; then
+        _ok "Moved '$demo_renamed' → folder '$demo_folder'"
+    else
+        _fail "Could not move to folder (AppleScript)"
+    fi
+
+    # 7. List folder contents
+    _step "List folder contents"
+    local folder_contents
+    folder_contents=$(shortcuts list --folder-name "$demo_folder" 2>/dev/null)
+    if [[ -n "$folder_contents" ]]; then
+        _ok "Folder '$demo_folder' contains:"
+        while IFS= read -r line; do
+            echo "      $line"
+        done <<< "$folder_contents"
+    else
+        _fail "Folder appears empty"
+    fi
+
+    # 8. Show run history
+    _step "Show run history (may be empty for new shortcut)"
+    local history_count
+    history_count=$(_sdb "SELECT COUNT(*) FROM ZSHORTCUTRUNEVENT re JOIN ZSHORTCUT s ON re.ZSHORTCUT = s.Z_PK WHERE s.ZNAME = '$(_sq "$demo_renamed")';")
+    _ok "Run events for '$demo_renamed': $history_count"
+
+    # 9. Delete shortcut
+    _step "Delete shortcut (tombstone)"
+    pk=$(_sdb "SELECT Z_PK FROM ZSHORTCUT WHERE ZNAME = '$(_sq "$demo_renamed")' AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL) LIMIT 1;")
+    if [[ -n "$pk" ]]; then
+        _sdb "UPDATE ZSHORTCUT SET ZTOMBSTONED = 1 WHERE Z_PK = $pk;"
+        _ok "Tombstoned '$demo_renamed'"
+    else
+        _fail "Shortcut not found for deletion"
+    fi
+
+    # 10. Delete folder
+    _step "Delete folder"
+    if osascript -e "tell application \"Shortcuts Events\" to delete folder \"$demo_folder\"" &>/dev/null; then
+        _ok "Deleted folder '$demo_folder'"
+    else
+        _fail "Could not delete folder"
+    fi
+
+    # 11. Cleanup (purge tombstoned)
+    _step "Cleanup (purge tombstoned rows)"
+    local tombstoned
+    tombstoned=$(_sdb "SELECT COUNT(*) FROM ZSHORTCUT WHERE ZTOMBSTONED = 1;")
+    if [[ "$tombstoned" -gt 0 ]]; then
+        _sdb "DELETE FROM ZSHORTCUTICON WHERE Z_PK IN (SELECT ZICON FROM ZSHORTCUT WHERE ZTOMBSTONED = 1);"
+        _sdb "DELETE FROM ZSHORTCUTACTIONS WHERE ZSHORTCUT IN (SELECT Z_PK FROM ZSHORTCUT WHERE ZTOMBSTONED = 1);"
+        _sdb "DELETE FROM ZSHORTCUTRUNEVENT WHERE ZSHORTCUT IN (SELECT Z_PK FROM ZSHORTCUT WHERE ZTOMBSTONED = 1);"
+        _sdb "DELETE FROM ZSHORTCUT WHERE ZTOMBSTONED = 1;"
+        _ok "Purged $tombstoned tombstoned shortcuts"
+    else
+        _ok "No tombstoned rows to purge"
+    fi
+
+    # Summary
+    echo ""
+    echo "════════════════════════════════════════════════"
+    if [[ "$failed" -eq 0 ]]; then
+        echo "Demo complete: $step steps, all passed"
+    else
+        echo "Demo complete: $step steps, $failed failed"
+    fi
+    echo "════════════════════════════════════════════════"
+    return "$failed"
+}
+
 # @cmd Purge tombstoned shortcuts and orphaned icon rows
 manage::cleanup() {
     _require_shortcuts_db

@@ -1019,13 +1019,23 @@ People:
   Matthew Cassinelli                Former Apple Shortcuts team member
     matthewcassinelli.com           Deepest public knowledge of action internals
   Federico Viticci (MacStories)     Most thorough published Shortcuts writing
-  Alex Hay                          Toolbox Pro dev — knows extension app internals
-    Toolbox Pro support/Discord     Fastest path for extension app bugs
+  Rosemary Orchard                  Automators podcast host, Shortcuts internals expert
+    rosemaryorchard.com             Active on Mastodon/Twitter — very responsive to questions
+  Alex Hay (1990–2023)              Toolbox Pro creator, extension app pioneer
+    MacStories memorial article     Community context and key people overview
+  snailedit.dev                     Team continuing Alex Hay's work (FocusCuts, etc.)
 
 Communities:
   r/shortcuts                       Search: "plist", "rawAction", "WFWorkflowAction"
-  Automators.fm forums              Rosemary Orchard + David Sparks community
+  talk.automators.fm                Rosemary + David Sparks — best for deep technical Q&A
   RoutineHub Discord                Shortcut devs hang out here
+  toolboxpro.app                    Toolbox Pro support and extension app community
+
+Apple Developer Docs (App Intents framework):
+  App Intents documentation         Official framework reference
+  "Creating Your First App Intent"  Step-by-step tutorial
+  WWDC25 "Explore New Advances"     Latest App Intents session
+  Apple Developer Forums            Search: "App Intents", "file handling"
 
 Identifier Format Conventions:
   Apple built-in:    is.workflow.actions.{name}

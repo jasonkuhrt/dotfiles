@@ -18,7 +18,7 @@
 
 set -euo pipefail
 
-COMMAND=$(jq -r '.command // empty' < /dev/stdin)
+COMMAND=$(jq -r '.tool_input.command // empty')
 if [ -z "$COMMAND" ]; then exit 0; fi
 
 # Only inspect chezmoi commands

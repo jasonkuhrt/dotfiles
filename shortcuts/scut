@@ -1100,33 +1100,61 @@ manage::list() {
 
     if [[ "${argc_json:-}" == "1" ]]; then
         _require_jq
-        local json="[]"
-        while IFS= read -r sname; do
-            [[ -z "$sname" ]] && continue
-            local row
-            row=$(_sdb "SELECT Z_PK, ZACTIONCOUNT, ZPHRASE,
-                        datetime(ZCREATIONDATE + 978307200, 'unixepoch'),
-                        datetime(ZMODIFICATIONDATE + 978307200, 'unixepoch'),
-                        ZWORKFLOWID
-                 FROM ZSHORTCUT
-                 WHERE ZNAME = '$(_sq "$sname")'
-                   AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL)
-                 LIMIT 1;")
-            local pk actions phrase created modified wfid
-            IFS='|' read -r pk actions phrase created modified wfid <<< "$row"
-            json=$(echo "$json" | jq \
-                --arg name "$sname" \
-                --arg pk "${pk:-}" \
-                --arg actions "${actions:-0}" \
-                --arg phrase "${phrase:-}" \
-                --arg created "${created:-}" \
-                --arg modified "${modified:-}" \
-                --arg wfid "${wfid:-}" \
-                '. + [{name: $name, pk: ($pk|tonumber? // null), action_count: ($actions|tonumber? // 0),
-                        siri_phrase: (if $phrase == "" then null else $phrase end),
-                        created: $created, modified: $modified, workflow_id: $wfid}]')
-        done < <(eval "$cmd" 2>/dev/null)
-        echo "$json" | jq .
+        if [[ -z "${argc_folder_name:-}" ]]; then
+            # Single SQL query for all shortcuts (no N+1)
+            _sdb_header "SELECT s.Z_PK as pk, s.ZNAME as name, COALESCE(s.ZACTIONCOUNT, 0) as action_count,
+                         s.ZPHRASE as siri_phrase,
+                         datetime(s.ZCREATIONDATE + 978307200, 'unixepoch') as created,
+                         datetime(s.ZMODIFICATIONDATE + 978307200, 'unixepoch') as modified,
+                         s.ZWORKFLOWID as workflow_id
+                  FROM ZSHORTCUT s
+                  WHERE (s.ZTOMBSTONED = 0 OR s.ZTOMBSTONED IS NULL)
+                  ORDER BY s.ZNAME;" | jq -Rs '
+                split("\n") | .[:-1] |
+                (.[0] | split("|")) as $headers |
+                .[1:] | map(
+                    split("|") | to_entries | map({key: $headers[.key], value: .value}) | from_entries |
+                    .pk = (.pk | tonumber? // null) |
+                    .action_count = (.action_count | tonumber? // 0) |
+                    .siri_phrase = (if .siri_phrase == "" then null else .siri_phrase end)
+                )'
+        else
+            # Folder-filtered: need `shortcuts list` for folder membership (CRDT-based),
+            # then single SQL enrichment for all matched names
+            local names=()
+            while IFS= read -r sname; do
+                [[ -z "$sname" ]] && continue
+                names+=("$sname")
+            done < <(eval "$cmd" 2>/dev/null)
+
+            if [[ ${#names[@]} -eq 0 ]]; then
+                echo "[]"
+            else
+                # Build SQL IN clause
+                local in_clause=""
+                for n in "${names[@]}"; do
+                    [[ -n "$in_clause" ]] && in_clause+=","
+                    in_clause+="'$(_sq "$n")'"
+                done
+                _sdb_header "SELECT s.Z_PK as pk, s.ZNAME as name, COALESCE(s.ZACTIONCOUNT, 0) as action_count,
+                             s.ZPHRASE as siri_phrase,
+                             datetime(s.ZCREATIONDATE + 978307200, 'unixepoch') as created,
+                             datetime(s.ZMODIFICATIONDATE + 978307200, 'unixepoch') as modified,
+                             s.ZWORKFLOWID as workflow_id
+                      FROM ZSHORTCUT s
+                      WHERE s.ZNAME IN ($in_clause)
+                        AND (s.ZTOMBSTONED = 0 OR s.ZTOMBSTONED IS NULL)
+                      ORDER BY s.ZNAME;" | jq -Rs '
+                    split("\n") | .[:-1] |
+                    (.[0] | split("|")) as $headers |
+                    .[1:] | map(
+                        split("|") | to_entries | map({key: $headers[.key], value: .value}) | from_entries |
+                        .pk = (.pk | tonumber? // null) |
+                        .action_count = (.action_count | tonumber? // 0) |
+                        .siri_phrase = (if .siri_phrase == "" then null else .siri_phrase end)
+                    )'
+            fi
+        fi
     else
         eval "$cmd" 2>/dev/null
     fi

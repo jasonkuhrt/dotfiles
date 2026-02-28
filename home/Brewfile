@@ -165,7 +165,6 @@ cask "steam"
 cask "transmission"   # torrent client
 
 # Utilities
-cask "betterdisplay"  # display management (brightness, HiDPI, DDC)
 cask "caffeine"       # prevent sleep
 cask "dropbox"
 cask "karabiner-elements"  # keyboard remapping (Fn sticky/toggle mode)

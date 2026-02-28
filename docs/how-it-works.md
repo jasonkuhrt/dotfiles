@@ -87,9 +87,8 @@ The number in the filename (`00`, `03`, `08`, etc.) controls ordering. `before_`
 | 07 | fisher-plugins | `fish_plugins` hash changes |
 | 08 | macos-defaults | Script content changes |
 | 09 | dock-apps | `dock/apps.txt` hash changes |
-| 10 | betterdisplay | Script content changes |
-| 11 | dprint-update | `dprint.json` hash changes |
-| 12 | skills-sync | Script content changes |
+| 10 | dprint-update | `dprint.json` hash changes |
+| 11 | skills-sync | Script content changes |
 
 ### Hash Trigger Pattern
 

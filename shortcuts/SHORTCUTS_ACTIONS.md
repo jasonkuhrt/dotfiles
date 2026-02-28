@@ -666,49 +666,6 @@ Machine: Jasons-MacBook-Pro-M5.local
 |--------|-------------------|
 | msg | \`ph.telegra.Telegraph.msg\` |
 
-### pro.betterdisplay.BetterDisplay
-
-| Action | Cherri Identifier |
-|--------|-------------------|
-| ApplyCustomEDIDIntent | \`pro.betterdisplay.BetterDisplay.ApplyCustomEDIDIntent\` |
-| ApplyFactoryEDIDIntent | \`pro.betterdisplay.BetterDisplay.ApplyFactoryEDIDIntent\` |
-| AutoBrightnessIntent | \`pro.betterdisplay.BetterDisplay.AutoBrightnessIntent\` |
-| BrightnessUpscalingIntent | \`pro.betterdisplay.BetterDisplay.BrightnessUpscalingIntent\` |
-| ColorModeIntent | \`pro.betterdisplay.BetterDisplay.ColorModeIntent\` |
-| ColorProfileIntent | \`pro.betterdisplay.BetterDisplay.ColorProfileIntent\` |
-| ConnectedIntent | \`pro.betterdisplay.BetterDisplay.ConnectedIntent\` |
-| CustomEDIDIntent | \`pro.betterdisplay.BetterDisplay.CustomEDIDIntent\` |
-| DisplayModeIntent | \`pro.betterdisplay.BetterDisplay.DisplayModeIntent\` |
-| FramebufferModeIntent | \`pro.betterdisplay.BetterDisplay.FramebufferModeIntent\` |
-| GetCustomDDCCommandIntent | \`pro.betterdisplay.BetterDisplay.GetCustomDDCCommandIntent\` |
-| GetDDCCommandIntent | \`pro.betterdisplay.BetterDisplay.GetDDCCommandIntent\` |
-| GetRangedControlIntent | \`pro.betterdisplay.BetterDisplay.GetRangedControlIntent\` |
-| HdrIntent | \`pro.betterdisplay.BetterDisplay.HdrIntent\` |
-| IncreaseBrightnessAllDisplaysIntent | \`pro.betterdisplay.BetterDisplay.IncreaseBrightnessAllDisplaysIntent\` |
-| InvertedIntent | \`pro.betterdisplay.BetterDisplay.InvertedIntent\` |
-| LowerBrightnessAllDisplaysIntent | \`pro.betterdisplay.BetterDisplay.LowerBrightnessAllDisplaysIntent\` |
-| MainIntent | \`pro.betterdisplay.BetterDisplay.MainIntent\` |
-| MirrorIntent | \`pro.betterdisplay.BetterDisplay.MirrorIntent\` |
-| MirrorOffIntent | \`pro.betterdisplay.BetterDisplay.MirrorOffIntent\` |
-| MoveToIntent | \`pro.betterdisplay.BetterDisplay.MoveToIntent\` |
-| MuteIntent | \`pro.betterdisplay.BetterDisplay.MuteIntent\` |
-| NativeBrightnessUpscalingIntent | \`pro.betterdisplay.BetterDisplay.NativeBrightnessUpscalingIntent\` |
-| PipIntent | \`pro.betterdisplay.BetterDisplay.PipIntent\` |
-| ReinitializeIntent | \`pro.betterdisplay.BetterDisplay.ReinitializeIntent\` |
-| ResetColorAdjustmentsIntent | \`pro.betterdisplay.BetterDisplay.ResetColorAdjustmentsIntent\` |
-| RotationIntent | \`pro.betterdisplay.BetterDisplay.RotationIntent\` |
-| SendCustomDDCCommandIntent | \`pro.betterdisplay.BetterDisplay.SendCustomDDCCommandIntent\` |
-| SendDDCCommandIntent | \`pro.betterdisplay.BetterDisplay.SendDDCCommandIntent\` |
-| SetBrightnessAllDisplaysIntent | \`pro.betterdisplay.BetterDisplay.SetBrightnessAllDisplaysIntent\` |
-| SetBrightnessIntent | \`pro.betterdisplay.BetterDisplay.SetBrightnessIntent\` |
-| SetRangedControlAllDisplaysIntent | \`pro.betterdisplay.BetterDisplay.SetRangedControlAllDisplaysIntent\` |
-| SetRangedControlIntent | \`pro.betterdisplay.BetterDisplay.SetRangedControlIntent\` |
-| SetRangedControlOffsetIntent | \`pro.betterdisplay.BetterDisplay.SetRangedControlOffsetIntent\` |
-| SetVolumeIntent | \`pro.betterdisplay.BetterDisplay.SetVolumeIntent\` |
-| StreamIntent | \`pro.betterdisplay.BetterDisplay.StreamIntent\` |
-| ToggleImageAdjustmentsIntent | \`pro.betterdisplay.BetterDisplay.ToggleImageAdjustmentsIntent\` |
-| XdrPresetIntent | \`pro.betterdisplay.BetterDisplay.XdrPresetIntent\` |
-
 ### squibner.AmazonLinker.convert
 
 | Action | Cherri Identifier |

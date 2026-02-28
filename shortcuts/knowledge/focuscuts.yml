@@ -1,0 +1,25 @@
+name: FocusCuts
+bundle_id: dev.snailedit.FocusCuts
+notes: |
+  macOS only. Focus Mode awareness with 3 actions + status bar menu.
+actions:
+  GetCurrentFocusModeIntent:
+    verified: true
+    gotchas:
+      - "Returns the currently active Focus Mode name, or empty if none"
+    examples:
+      - label: Get current focus
+        params:
+          ShowWhenRun: "false"
+  IsFocusModeActiveIntent:
+    verified: true
+    examples:
+      - label: Check if Work focus is active
+        params:
+          focusMode: Work
+  ListFocusModesIntent:
+    verified: true
+    examples:
+      - label: List all focus modes
+        params:
+          ShowWhenRun: "false"

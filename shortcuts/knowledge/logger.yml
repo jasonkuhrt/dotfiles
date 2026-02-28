@@ -1,0 +1,83 @@
+name: Logger
+bundle_id: com.alexhay.Console
+notes: |
+  Real-time debugging console with log levels, tags, and iCloud sync.
+  Much better than alert() spam for debugging shortcuts.
+actions:
+  LogMessageIntent:
+    verified: true
+    gotchas:
+      - "category: info/success/warning/error"
+      - "tag: free-text for filtering"
+    examples:
+      - label: Log a success message
+        params:
+          title: API Response
+          messages: Got 200 OK
+          category: success
+          tag: api
+      - label: Log with error fallback
+        params:
+          title: User Input
+          errorIfEmpty: "true"
+          errorMessage: No input provided!
+  StartLoggingIntent:
+    verified: true
+    gotchas:
+      - "mode: start/stop — wrap your shortcut logic between these"
+    examples:
+      - label: Start logging session
+        params:
+          mode: start
+      - label: Stop logging session
+        params:
+          mode: stop
+  LogItemsIntent:
+    verified: true
+    gotchas:
+      - "items param takes a Shortcuts variable reference"
+    examples:
+      - label: Log a file
+        params:
+          title: Downloaded File
+          message: Processing complete
+  LogConditionalMessageIntent:
+    verified: true
+    gotchas:
+      - "Branches logging based on a condition — avoids if/else wrappers"
+    examples:
+      - label: Conditional API status logging
+        params:
+          condition: equals
+          query: "200"
+          trueTitle: Success
+          trueMessage: Request completed
+          trueCategory: success
+          falseTitle: Failed
+          falseMessage: Request failed
+          falseCategory: error
+          tag: api
+  OutputMessagesIntent:
+    verified: true
+    examples:
+      - label: Export as markdown
+        params:
+          outputMode: markdown
+  ClearMessagesIntent:
+    verified: true
+    examples:
+      - label: Clear console
+        params:
+          ShowWhenRun: "false"
+  LogDeviceDetailsIntent:
+    verified: true
+    examples:
+      - label: Log device info
+        params:
+          tag: system
+  LogInternetConnectionIntent:
+    verified: true
+    examples:
+      - label: Log network info
+        params:
+          tag: network

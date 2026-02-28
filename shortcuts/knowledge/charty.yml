@@ -1,0 +1,48 @@
+name: Charty
+bundle_id: com.brogrammers.charty
+notes: |
+  Generate charts and graphs. 24 actions for 7 chart types:
+  bar, line, pie, donut, scatter, area, rings.
+actions:
+  NewChartIntent:
+    verified: true
+    gotchas:
+      - "Returns chart ID — store in variable for AddSeries and Export"
+    examples:
+      - label: Create new chart
+        params:
+          title: Monthly Stats
+          automaticId: "true"
+  AddSeriesToChartIntent:
+    verified: true
+    gotchas:
+      - "type determines which *Values params are used: bar→barXValues/barYValues, line→lineXValues/lineYValues, pie→pieLabels/pieValues"
+    examples:
+      - label: Add bar series
+        params:
+          label: Revenue
+          type: bar
+      - label: Add line series
+        params:
+          label: Trend
+          type: line
+      - label: Add pie series
+        params:
+          label: Distribution
+          type: pie
+  ExportChartAsImageIntent:
+    verified: true
+    gotchas:
+      - "chartId must match what NewChartIntent returned"
+  StyleChartIntent:
+    verified: false
+  StyleAxisIntent:
+    verified: false
+  AddAverageIntent:
+    verified: false
+  FilterDataIntent:
+    verified: false
+  GroupDataIntent:
+    verified: false
+  AddSeriesFromCSVIntent:
+    verified: false

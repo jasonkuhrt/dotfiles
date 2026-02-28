@@ -1,0 +1,54 @@
+name: Menu Box
+bundle_id: dev.alexhay.MenuBox
+notes: |
+  Beautiful custom menus with SF Symbols, colors, and hidden data fields.
+  Fully CLI-driven — no GUI needed.
+actions:
+  QuickMenuIntent:
+    verified: true
+    gotchas:
+      - "Text format: one item per line, 'Title | symbol'"
+    examples:
+      - label: Simple menu with SF Symbols
+        params:
+          text: "Settings | gear\nProfile | person.circle\nHelp | questionmark.circle"
+  CreateSymbolItemIntent:
+    verified: true
+    gotchas:
+      - "Creates a single menu item with SF Symbol"
+      - "Supports weights, scales, masks for styling"
+    examples:
+      - label: Styled menu item
+        params:
+          title: Settings
+          subtitle: Configure options
+          symbol: gear
+          symbolColourHex: "#FFFFFF"
+          bgColourHex: "#007AFF"
+          mask: circle
+  CreateEmojiItemIntent:
+    verified: true
+    examples:
+      - label: Emoji menu item
+        params:
+          title: Coffee Break
+          emoji: coffee
+  CreateImageItemIntent:
+    verified: true
+    gotchas:
+      - "image param takes a Shortcuts variable reference"
+  CreateMenuSetIntent:
+    verified: true
+    gotchas:
+      - "Hidden data: each item supports field1 through field4"
+    examples:
+      - label: Save menu set
+        params:
+          setType: new
+          setName: My Project Menu
+  ChooseMenuSetIntent:
+    verified: true
+    examples:
+      - label: Choose from saved set
+        params:
+          menuSet: My Project Menu

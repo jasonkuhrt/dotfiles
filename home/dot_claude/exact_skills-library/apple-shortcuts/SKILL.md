@@ -5,110 +5,55 @@ description: Use when working with Apple Shortcuts on macOS/iOS - discovering ac
 
 # Apple Shortcuts
 
-Automation platform for macOS and iOS. Shortcuts can be created via GUI, Cherri (code), or imported.
+Use `scut` for all Shortcuts development. Run `scut --help` for the full command list.
+
+## Quick Reference
+
+```bash
+scut apps                           # List apps with action counts
+scut actions [app]                  # List actions (filter by app)
+scut search <term>                  # Full-text search actions
+scut params <action>                # Show parameters + knowledge
+scut identifier <display-name>     # Display name → action ID
+scut cherri <action>                # Generate rawAction() snippet
+scut dump <shortcut-name>           # Export installed shortcut as plist
+scut scan                           # Coverage report: verified vs uncurated
+scut community                      # Dev community resources + references
+scut build <file.cherri>            # Compile (routes to cherri)
+scut try <identifier> --param k=v   # Quick-test an action
+```
+
+All commands support `--json` for machine-readable output.
 
 ## Running Shortcuts from CLI
 
 ```bash
-# List all shortcuts
-shortcuts list
-
-# Run a shortcut by name
-shortcuts run "My Shortcut"
-
-# Run with text input
-shortcuts run "My Shortcut" <<< "input text"
-
-# Via URL scheme (works from any app)
-open "shortcuts://run-shortcut?name=My%20Shortcut&input=text&text=Hello"
-```
-
-URL scheme parameters:
-- `name`: Shortcut name (URL encoded)
-- `input`: `text` or `clipboard`
-- `text`: Actual input string
-
-## Discovering Available Actions
-
-macOS stores all Shortcuts actions in a ToolKit database:
-
-```
-~/Library/Shortcuts/ToolKit/Tools-prod.*.sqlite
-```
-
-Use the dotfiles script to explore:
-
-```bash
-cd ~/projects/jasonkuhrt/dotfiles/shortcuts
-
-./analyze-shortcuts-actions.fish stats      # Action counts
-./analyze-shortcuts-actions.fish vendors    # Third-party apps
-./analyze-shortcuts-actions.fish actions raycast  # Actions for an app
-./analyze-shortcuts-actions.fish search clipboard # Search by keyword
-./analyze-shortcuts-actions.fish doc        # Generate reference doc
+shortcuts list                      # List all shortcuts
+shortcuts run "My Shortcut"         # Run by name
+shortcuts run "My Shortcut" <<< "input"  # Run with input
 ```
 
 ## Shortcuts Storage
 
 ```
 ~/Library/Shortcuts/Shortcuts.sqlite     # Shortcut definitions
-~/Library/Shortcuts/ToolKit/             # Action database
+~/Library/Shortcuts/ToolKit/             # Action database (queried by scut)
 ```
 
-Shortcuts are stored in SQLite with actions as binary plist blobs. Not meant for direct editing -- use Cherri for code-based shortcuts.
-
-## Persistent Config
-
-Use JSON in iCloud Drive instead of extension apps for config storage:
-
-**Location:** `~/Library/Mobile Documents/com~apple~CloudDocs/dotfiles/shortcuts/config.json`
-
-```bash
-# CLI (fish)
-shortcuts-config get                    # View all
-shortcuts-config set currentProject foo # Set key
-shortcuts-config get currentProject     # Get key
-```
-
-**In Shortcuts:** Use "Get File" / "Save File" pointing to `/dotfiles/shortcuts/config.json`
-
-Prefer JSON over Data Jar -- gives CLI access (`jq`, `shortcuts-config`), version control, and no app dependency. See [DESIGN.md](./DESIGN.md) for full rationale.
-
-## Extension Apps
-
-See [reference/extension-apps.md](./reference/extension-apps.md) for the full table, installation instructions, and post-install steps.
+Requires **Full Disk Access** for your terminal app.
 
 ## macOS Signing Requirement
 
-**macOS will not import unsigned shortcuts.**
-
-```bash
-# Unsigned - syntax check only, won't import on macOS
-cherri myshortcut.cherri --skip-sign
-
-# Signed via macOS/AppleID (default)
-cherri myshortcut.cherri
-
-# Signed via RoutineHub service (if macOS signing fails)
-cherri myshortcut.cherri --hubsign
-```
-
-Signed shortcuts contain `AppleIDValidationRecord` and `SigningPublicKey` in an AEA1 archive format (different from code signing - `codesign -dv` won't recognize them).
-
-## Wrapped iOS Apps on Mac
-
-See [reference/wrapped-ios-apps.md](./reference/wrapped-ios-apps.md) for details on iOS compatibility mode on Apple Silicon.
-
-## Shortcuts Database Schema
-
-See [reference/database-schema.md](./reference/database-schema.md) for advanced SQL queries against the ToolKit database.
+macOS will not import unsigned shortcuts. Use `scut build` (default signs via macOS/AppleID).
 
 ## Integration with Cherri
 
-REQUIRED SUB-SKILL: cherri -- for writing shortcuts as code, raw action syntax, and extension app patterns.
+REQUIRED SUB-SKILL: cherri — for writing shortcuts as code.
 
-## Resources
+## Database Schema Reference
 
-- [Cherri](https://cherrilang.org) - Shortcuts programming language
-- [Toolbox Pro](https://toolboxpro.app) - Global variables, menus, device info
-- [Actions](https://sindresorhus.com/actions) - 180+ extra actions (free)
+See [reference/database-schema.md](./reference/database-schema.md) for advanced SQL queries.
+
+## Wrapped iOS Apps on Mac
+
+See [reference/wrapped-ios-apps.md](./reference/wrapped-ios-apps.md) for iOS compatibility mode on Apple Silicon.

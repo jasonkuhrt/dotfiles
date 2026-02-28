@@ -1,0 +1,1038 @@
+#!/bin/bash
+# @describe scut — Apple Shortcuts development toolkit
+# @describe
+# @describe Unified CLI for Shortcuts action discovery, code generation, debugging,
+# @describe and workflow routing. Queries the macOS ToolKit database for structural
+# @describe data and merges curated behavioral knowledge from YAML overlays.
+# @describe
+# @describe Requires: Full Disk Access for your terminal app
+# @describe   System Settings → Privacy & Security → Full Disk Access → add terminal
+# @describe
+# @describe Community & Resources: scut community
+
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# ─── Config ──────────────────────────────────────────────────────────
+CHERRI="${SCUT_CHERRI:-cherri}"
+KNOWLEDGE_DIR="$SCRIPT_DIR/knowledge"
+DB=""
+
+# ─── Helpers ─────────────────────────────────────────────────────────
+
+_die() { printf "error: %s\n" "$1" >&2; exit 1; }
+
+_require_db() {
+    DB=$(find ~/Library/Shortcuts/ToolKit -name "Tools-prod.*.sqlite" 2>/dev/null | head -1)
+    if [[ -z "$DB" ]]; then
+        _die "ToolKit database not found.
+  Grant Full Disk Access: System Settings → Privacy & Security → Full Disk Access
+  Add your terminal app, then restart it."
+    fi
+}
+
+_require_yq() { command -v yq &>/dev/null || _die "yq required: brew install yq"; }
+_require_jq() { command -v jq &>/dev/null || _die "jq required: brew install jq"; }
+
+_sql() { sqlite3 -separator '|' "$DB" "$1"; }
+_sql_header() { sqlite3 -header -separator '|' "$DB" "$1"; }
+
+# Get app display name from container metadata
+_app_name() {
+    local bundle_id="$1"
+    _sql "SELECT COALESCE(cml.name, cm.id)
+          FROM ContainerMetadata cm
+          LEFT JOIN ContainerMetadataLocalizations cml
+            ON cm.rowId = cml.containerId AND cml.locale = 'en'
+          WHERE cm.id = '$bundle_id'
+          LIMIT 1;" 2>/dev/null || echo "$bundle_id"
+}
+
+# Extract bundle ID from a full action identifier
+_bundle_from_id() {
+    local id="$1"
+    # Third-party: com.foo.bar.ActionName → com.foo.bar
+    # Apple: is.workflow.actions.name → is.workflow
+    if [[ "$id" == is.workflow.* ]]; then
+        echo "is.workflow"
+    elif [[ "$id" == com.apple.* ]]; then
+        # com.apple.Something.ActionName → extract up to container
+        _sql "SELECT cm.id FROM Tools t
+              JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
+              WHERE t.id = '$id' LIMIT 1;" 2>/dev/null || echo "${id%.*}"
+    else
+        _sql "SELECT cm.id FROM Tools t
+              JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
+              WHERE t.id = '$id' LIMIT 1;" 2>/dev/null || echo "${id%.*}"
+    fi
+}
+
+# Find knowledge file for a bundle ID
+_knowledge_file() {
+    local bundle_id="$1"
+    if [[ ! -d "$KNOWLEDGE_DIR" ]]; then return 1; fi
+    for f in "$KNOWLEDGE_DIR"/*.yml; do
+        [[ -f "$f" ]] || continue
+        local file_bundle
+        file_bundle=$(yq -r '.bundle_id // ""' "$f" 2>/dev/null)
+        if [[ "$file_bundle" == "$bundle_id" ]]; then
+            echo "$f"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Get knowledge for a specific action
+_knowledge_action() {
+    local action_name="$1"
+    local knowledge_file="$2"
+    if [[ -f "$knowledge_file" ]]; then
+        yq -r ".actions.\"$action_name\" // \"\"" "$knowledge_file" 2>/dev/null
+    fi
+}
+
+# Resolve action: substring match, return full ID(s)
+_resolve_action() {
+    local filter="$1"
+    _sql "SELECT id FROM Tools WHERE id LIKE '%${filter}%' ORDER BY id;"
+}
+
+# ─── Phase 1: Discovery ─────────────────────────────────────────────
+
+# @cmd Show ToolKit database statistics
+stats() {
+    _require_db
+
+    local total apple workflow thirdparty
+    total=$(_sql "SELECT COUNT(*) FROM Tools;")
+    apple=$(_sql "SELECT COUNT(*) FROM Tools WHERE id LIKE 'com.apple.%';")
+    workflow=$(_sql "SELECT COUNT(*) FROM Tools WHERE id LIKE 'is.workflow.%';")
+    thirdparty=$(_sql "SELECT COUNT(*) FROM Tools
+                       WHERE id NOT LIKE 'com.apple.%' AND id NOT LIKE 'is.workflow.%';")
+
+    if [[ "${argc_json:-}" == "1" ]]; then
+        _require_jq
+        jq -n \
+            --arg total "$total" \
+            --arg apple "$apple" \
+            --arg workflow "$workflow" \
+            --arg thirdparty "$thirdparty" \
+            --arg db "$DB" \
+            '{database: $db, total: ($total|tonumber), apple: ($apple|tonumber),
+              workflow: ($workflow|tonumber), thirdparty: ($thirdparty|tonumber)}'
+        return
+    fi
+
+    echo "Shortcuts ToolKit Database"
+    echo "=========================="
+    echo ""
+    echo "Database: $DB"
+    echo ""
+    printf "  %-22s %s\n" "Total actions:" "$total"
+    printf "  %-22s %s\n" "Apple actions:" "$apple"
+    printf "  %-22s %s\n" "Shortcuts built-in:" "$workflow"
+    printf "  %-22s %s\n" "Third-party actions:" "$thirdparty"
+}
+
+# @cmd List apps providing Shortcuts actions
+# @flag --json Machine-readable JSON output
+apps() {
+    _require_db
+
+    if [[ "${argc_json:-}" == "1" ]]; then
+        _require_jq
+        local json="[]"
+        while IFS='|' read -r container_id count; do
+            local name
+            name=$(_app_name "$container_id")
+            json=$(echo "$json" | jq \
+                --arg id "$container_id" \
+                --arg name "$name" \
+                --arg count "$count" \
+                '. + [{bundle_id: $id, name: $name, action_count: ($count|tonumber)}]')
+        done < <(_sql "
+            SELECT cm.id, COUNT(*) as cnt
+            FROM Tools t
+            JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
+            WHERE t.id NOT LIKE 'com.apple.%'
+            GROUP BY cm.id
+            ORDER BY cnt DESC;
+        ")
+        echo "$json" | jq .
+        return
+    fi
+
+    echo "Apps with Shortcuts actions:"
+    echo ""
+    while IFS='|' read -r container_id count; do
+        local name
+        name=$(_app_name "$container_id")
+        if [[ "$name" != "$container_id" ]]; then
+            printf "  %-30s %-40s %s actions\n" "$name" "($container_id)" "$count"
+        else
+            printf "  %-72s %s actions\n" "$container_id" "$count"
+        fi
+    done < <(_sql "
+        SELECT cm.id, COUNT(*) as cnt
+        FROM Tools t
+        JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
+        WHERE t.id NOT LIKE 'com.apple.%'
+        GROUP BY cm.id
+        ORDER BY cnt DESC;
+    ")
+}
+
+# @cmd List actions, optionally filtered by app
+# @arg app Filter by app name or bundle ID (substring match)
+# @flag --json Machine-readable JSON output
+actions() {
+    _require_db
+    local filter="${argc_app:-}"
+
+    local where="1=1"
+    if [[ -n "$filter" ]]; then
+        where="(t.id LIKE '%${filter}%' OR cm.id LIKE '%${filter}%' OR COALESCE(cml.name,'') LIKE '%${filter}%')"
+    fi
+
+    if [[ "${argc_json:-}" == "1" ]]; then
+        _require_jq
+        local json="[]"
+        while IFS='|' read -r action_id name desc app_name; do
+            json=$(echo "$json" | jq \
+                --arg id "$action_id" \
+                --arg name "$name" \
+                --arg desc "$desc" \
+                --arg app "$app_name" \
+                '. + [{identifier: $id, name: $name, description: $desc, app: $app}]')
+        done < <(_sql "
+            SELECT t.id,
+                   COALESCE(tl.name, ''),
+                   COALESCE(tl.descriptionSummary, ''),
+                   COALESCE(cml.name, cm.id)
+            FROM Tools t
+            JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
+            LEFT JOIN ContainerMetadataLocalizations cml ON cm.rowId = cml.containerId AND cml.locale = 'en'
+            LEFT JOIN ToolLocalizations tl ON t.rowId = tl.toolId AND tl.locale = 'en' AND tl.localizationUsage = 'display'
+            WHERE $where
+            ORDER BY t.id;
+        ")
+        echo "$json" | jq .
+        return
+    fi
+
+    if [[ -n "$filter" ]]; then
+        echo "Actions matching '$filter':"
+    else
+        echo "All third-party actions:"
+    fi
+    echo ""
+
+    while IFS='|' read -r action_id name desc app_name; do
+        if [[ -n "$name" ]]; then
+            printf "  %-60s %s (%s)\n" "$action_id" "$name" "$app_name"
+        else
+            printf "  %s\n" "$action_id"
+        fi
+    done < <(_sql "
+        SELECT t.id,
+               COALESCE(tl.name, ''),
+               COALESCE(tl.descriptionSummary, ''),
+               COALESCE(cml.name, cm.id)
+        FROM Tools t
+        JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
+        LEFT JOIN ContainerMetadataLocalizations cml ON cm.rowId = cml.containerId AND cml.locale = 'en'
+        LEFT JOIN ToolLocalizations tl ON t.rowId = tl.toolId AND tl.locale = 'en' AND tl.localizationUsage = 'display'
+        WHERE $where
+        ORDER BY t.id
+        LIMIT 200;
+    ")
+}
+
+# @cmd Full-text search across action names, descriptions, and keywords
+# @arg term! Search term
+# @flag --json Machine-readable JSON output
+search() {
+    _require_db
+    local term="${argc_term}"
+
+    if [[ "${argc_json:-}" == "1" ]]; then
+        _require_jq
+        local json="[]"
+        while IFS='|' read -r action_id name desc app_name; do
+            json=$(echo "$json" | jq \
+                --arg id "$action_id" \
+                --arg name "$name" \
+                --arg desc "$desc" \
+                --arg app "$app_name" \
+                '. + [{identifier: $id, name: $name, description: $desc, app: $app}]')
+        done < <(_sql "
+            SELECT DISTINCT t.id,
+                   COALESCE(tl.name, ''),
+                   COALESCE(tl.descriptionSummary, ''),
+                   COALESCE(cml.name, cm.id)
+            FROM Tools t
+            JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
+            LEFT JOIN ContainerMetadataLocalizations cml ON cm.rowId = cml.containerId AND cml.locale = 'en'
+            LEFT JOIN ToolLocalizations tl ON t.rowId = tl.toolId AND tl.locale = 'en' AND tl.localizationUsage = 'display'
+            LEFT JOIN SearchKeywords sk ON t.rowId = sk.toolId AND sk.locale = 'en'
+            WHERE (t.id LIKE '%${term}%'
+               OR tl.name LIKE '%${term}%'
+               OR tl.descriptionSummary LIKE '%${term}%'
+               OR sk.keyword LIKE '%${term}%')
+            ORDER BY t.id
+            LIMIT 50;
+        ")
+        echo "$json" | jq .
+        return
+    fi
+
+    echo "Actions matching '$term':"
+    echo ""
+    while IFS='|' read -r action_id name desc app_name; do
+        printf "  %-60s %s\n" "$action_id" "$name"
+        if [[ -n "$desc" ]]; then
+            printf "  %-60s   %s\n" "" "$desc"
+        fi
+    done < <(_sql "
+        SELECT DISTINCT t.id,
+               COALESCE(tl.name, ''),
+               COALESCE(tl.descriptionSummary, ''),
+               COALESCE(cml.name, cm.id)
+        FROM Tools t
+        JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
+        LEFT JOIN ContainerMetadataLocalizations cml ON cm.rowId = cml.containerId AND cml.locale = 'en'
+        LEFT JOIN ToolLocalizations tl ON t.rowId = tl.toolId AND tl.locale = 'en' AND tl.localizationUsage = 'display'
+        LEFT JOIN SearchKeywords sk ON t.rowId = sk.toolId AND sk.locale = 'en'
+        WHERE t.id LIKE '%${term}%'
+           OR tl.name LIKE '%${term}%'
+           OR tl.descriptionSummary LIKE '%${term}%'
+           OR sk.keyword LIKE '%${term}%'
+        ORDER BY t.id
+        LIMIT 50;
+    ")
+}
+
+# @cmd Show action parameters with types, descriptions, and enum values
+# @arg action! Action name or identifier (substring match)
+# @flag --json Machine-readable JSON output
+params() {
+    _require_db
+    local filter="${argc_action}"
+
+    local matching
+    matching=$(_resolve_action "$filter")
+    if [[ -z "$matching" ]]; then
+        _die "No actions found matching '$filter'"
+    fi
+
+    if [[ "${argc_json:-}" == "1" ]]; then
+        _require_jq
+        _require_yq
+        local json="[]"
+        while IFS= read -r action_id; do
+            local action_json
+            action_json=$(_params_json "$action_id")
+            json=$(echo "$json" | jq --argjson item "$action_json" '. + [$item]')
+        done <<< "$matching"
+        echo "$json" | jq .
+        return
+    fi
+
+    _require_yq
+    while IFS= read -r action_id; do
+        _params_display "$action_id"
+    done <<< "$matching"
+}
+
+_params_json() {
+    local action_id="$1"
+    local name desc app_name
+    IFS='|' read -r name desc app_name < <(_sql "
+        SELECT COALESCE(tl.name, ''),
+               COALESCE(tl.descriptionSummary, ''),
+               COALESCE(cml.name, cm.id)
+        FROM Tools t
+        JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
+        LEFT JOIN ContainerMetadataLocalizations cml ON cm.rowId = cml.containerId AND cml.locale = 'en'
+        LEFT JOIN ToolLocalizations tl ON t.rowId = tl.toolId AND tl.locale = 'en' AND tl.localizationUsage = 'display'
+        WHERE t.id = '$action_id'
+        LIMIT 1;
+    ")
+
+    local params_json="[]"
+    while IFS='|' read -r key param_name param_desc; do
+        params_json=$(echo "$params_json" | jq \
+            --arg key "$key" \
+            --arg name "$param_name" \
+            --arg desc "$param_desc" \
+            '. + [{key: $key, name: $name, description: $desc}]')
+    done < <(_sql "
+        SELECT p.key, COALESCE(pl.name, p.key), COALESCE(pl.description, '')
+        FROM Parameters p
+        LEFT JOIN ParameterLocalizations pl
+            ON p.toolId = pl.toolId AND p.key = pl.key AND pl.locale = 'en'
+        WHERE p.toolId = (SELECT rowId FROM Tools WHERE id = '$action_id')
+        ORDER BY p.sortOrder;
+    ")
+
+    # Check knowledge overlay
+    local bundle_id verified="false" gotchas="[]" examples="[]"
+    bundle_id=$(_bundle_from_id "$action_id")
+    local kfile
+    if kfile=$(_knowledge_file "$bundle_id"); then
+        local action_short="${action_id##*.}"
+        local kdata
+        kdata=$(yq -r ".actions.\"$action_short\" // \"\"" "$kfile" 2>/dev/null || true)
+        if [[ -n "$kdata" ]]; then
+            verified=$(echo "$kdata" | yq -r '.verified // false' 2>/dev/null || echo "false")
+            gotchas=$(echo "$kdata" | yq -o=json '.gotchas // []' 2>/dev/null || echo "[]")
+            examples=$(echo "$kdata" | yq -o=json '.examples // []' 2>/dev/null || echo "[]")
+        fi
+    fi
+
+    jq -n \
+        --arg id "$action_id" \
+        --arg name "$name" \
+        --arg desc "$desc" \
+        --arg app "$app_name" \
+        --arg verified "$verified" \
+        --argjson params "$params_json" \
+        --argjson gotchas "$gotchas" \
+        --argjson examples "$examples" \
+        '{identifier: $id, name: $name, description: $desc, app: $app,
+          verified: ($verified == "true"), parameters: $params,
+          gotchas: $gotchas, examples: $examples}'
+}
+
+_params_display() {
+    local action_id="$1"
+
+    echo "═══════════════════════════════════════════════════════════"
+    echo "Action: $action_id"
+
+    # Get localized name and description
+    local name desc app_name
+    IFS='|' read -r name desc app_name < <(_sql "
+        SELECT COALESCE(tl.name, ''),
+               COALESCE(tl.descriptionSummary, ''),
+               COALESCE(cml.name, cm.id)
+        FROM Tools t
+        JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
+        LEFT JOIN ContainerMetadataLocalizations cml ON cm.rowId = cml.containerId AND cml.locale = 'en'
+        LEFT JOIN ToolLocalizations tl ON t.rowId = tl.toolId AND tl.locale = 'en' AND tl.localizationUsage = 'display'
+        WHERE t.id = '$action_id'
+        LIMIT 1;
+    ")
+
+    [[ -n "$name" ]] && echo "  Name: $name"
+    [[ -n "$app_name" ]] && echo "  App: $app_name"
+    [[ -n "$desc" ]] && echo "  Description: $desc"
+
+    # Check knowledge overlay
+    local bundle_id
+    bundle_id=$(_bundle_from_id "$action_id")
+    local kfile
+    if kfile=$(_knowledge_file "$bundle_id"); then
+        local action_short="${action_id##*.}"
+        local verified
+        verified=$(yq -r ".actions.\"$action_short\".verified // false" "$kfile" 2>/dev/null)
+        if [[ "$verified" == "true" ]]; then
+            echo "  Status: verified"
+        fi
+
+        local gotchas
+        gotchas=$(yq -r ".actions.\"$action_short\".gotchas[]? // \"\"" "$kfile" 2>/dev/null || true)
+        if [[ -n "$gotchas" ]]; then
+            echo ""
+            echo "  Gotchas:"
+            while IFS= read -r gotcha; do
+                echo "    - $gotcha"
+            done <<< "$gotchas"
+        fi
+    fi
+
+    echo ""
+    echo "Parameters:"
+    echo "───────────────────────────────────────────────────────────"
+
+    local has_params=0
+    while IFS='|' read -r key param_name param_desc; do
+        has_params=1
+        printf "  %-25s %s\n" "$key" "$param_name"
+        if [[ -n "$param_desc" ]]; then
+            printf "  %-25s   %s\n" "" "$param_desc"
+        fi
+    done < <(_sql "
+        SELECT p.key, COALESCE(pl.name, p.key), COALESCE(pl.description, '')
+        FROM Parameters p
+        LEFT JOIN ParameterLocalizations pl
+            ON p.toolId = pl.toolId AND p.key = pl.key AND pl.locale = 'en'
+        WHERE p.toolId = (SELECT rowId FROM Tools WHERE id = '$action_id')
+        ORDER BY p.sortOrder;
+    ")
+
+    if [[ $has_params -eq 0 ]]; then
+        echo "  (no parameters)"
+    fi
+    echo ""
+}
+
+# @cmd Reverse lookup: display name → action identifier
+# @arg name! Display name to look up (substring match)
+# @flag --json Machine-readable JSON output
+identifier() {
+    _require_db
+    local name="${argc_name}"
+
+    if [[ "${argc_json:-}" == "1" ]]; then
+        _require_jq
+        local json="[]"
+        while IFS='|' read -r action_id display_name app_name; do
+            json=$(echo "$json" | jq \
+                --arg id "$action_id" \
+                --arg name "$display_name" \
+                --arg app "$app_name" \
+                '. + [{identifier: $id, name: $name, app: $app}]')
+        done < <(_sql "
+            SELECT t.id, tl.name, COALESCE(cml.name, cm.id)
+            FROM ToolLocalizations tl
+            JOIN Tools t ON tl.toolId = t.rowId
+            JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
+            LEFT JOIN ContainerMetadataLocalizations cml ON cm.rowId = cml.containerId AND cml.locale = 'en'
+            WHERE tl.locale = 'en' AND tl.localizationUsage = 'display'
+              AND tl.name LIKE '%${name}%'
+            ORDER BY t.id
+            LIMIT 20;
+        ")
+        echo "$json" | jq .
+        return
+    fi
+
+    echo "Actions matching display name '$name':"
+    echo ""
+    while IFS='|' read -r action_id display_name app_name; do
+        printf "  %-40s → %s (%s)\n" "$display_name" "$action_id" "$app_name"
+    done < <(_sql "
+        SELECT t.id, tl.name, COALESCE(cml.name, cm.id)
+        FROM ToolLocalizations tl
+        JOIN Tools t ON tl.toolId = t.rowId
+        JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
+        LEFT JOIN ContainerMetadataLocalizations cml ON cm.rowId = cml.containerId AND cml.locale = 'en'
+        WHERE tl.locale = 'en' AND tl.localizationUsage = 'display'
+          AND tl.name LIKE '%${name}%'
+        ORDER BY t.id
+        LIMIT 20;
+    ")
+}
+
+# ─── Phase 2: Code Generation + Knowledge ────────────────────────────
+
+# @cmd Generate rawAction() Cherri snippet for an action
+# @arg action! Action name or identifier (substring match)
+# @flag --json Machine-readable JSON output
+cherri() {
+    _require_db
+    _require_yq
+    local filter="${argc_action}"
+
+    local matching
+    matching=$(_resolve_action "$filter")
+    if [[ -z "$matching" ]]; then
+        _die "No actions found matching '$filter'"
+    fi
+
+    while IFS= read -r action_id; do
+        local bundle_id action_short app_name
+        bundle_id=$(_bundle_from_id "$action_id")
+        action_short="${action_id##*.}"
+        app_name=$(_app_name "$bundle_id")
+
+        # Check knowledge overlay for verified examples
+        local has_knowledge=false
+        local kfile
+        if kfile=$(_knowledge_file "$bundle_id"); then
+            local verified
+            verified=$(yq -r ".actions.\"$action_short\".verified // false" "$kfile" 2>/dev/null)
+            if [[ "$verified" == "true" ]]; then
+                has_knowledge=true
+            fi
+        fi
+
+        if [[ "$has_knowledge" == "true" ]]; then
+            # Render from knowledge examples
+            echo "// ${app_name}: ${action_short} ✓"
+
+            # Show gotchas as comments
+            local gotchas
+            gotchas=$(yq -r ".actions.\"$action_short\".gotchas[]? // \"\"" "$kfile" 2>/dev/null || true)
+            if [[ -n "$gotchas" ]]; then
+                while IFS= read -r gotcha; do
+                    echo "// Gotcha: $gotcha"
+                done <<< "$gotchas"
+            fi
+            echo ""
+
+            # Render each example
+            local example_count
+            example_count=$(yq -r ".actions.\"$action_short\".examples | length" "$kfile" 2>/dev/null || echo "0")
+            for ((i = 0; i < example_count; i++)); do
+                local label
+                label=$(yq -r ".actions.\"$action_short\".examples[$i].label // \"Example $((i+1))\"" "$kfile" 2>/dev/null || echo "Example $((i+1))")
+                echo "// $label"
+
+                echo "rawAction(\"$action_id\", {"
+                # Get params as key-value pairs
+                local params_json
+                params_json=$(yq -o=json ".actions.\"$action_short\".examples[$i].params" "$kfile" 2>/dev/null || echo "{}")
+                local keys
+                keys=$(echo "$params_json" | jq -r 'keys[]' 2>/dev/null || true)
+                local first=true
+                while IFS= read -r key; do
+                    [[ -z "$key" ]] && continue
+                    local val
+                    val=$(echo "$params_json" | jq -r ".\"$key\"" 2>/dev/null || echo "")
+                    if [[ "$first" == "true" ]]; then
+                        first=false
+                    else
+                        printf ",\n"
+                    fi
+                    printf "    \"%s\": \"%s\"" "$key" "$val"
+                done <<< "$keys"
+                echo ""
+                echo "})"
+                echo ""
+            done
+        else
+            # Generate stub from DB params
+            echo "// ${action_id} ⚠ unverified"
+            echo "// Parameters from ToolKit DB:"
+
+            local param_lines=""
+            while IFS='|' read -r key param_name param_desc; do
+                if [[ -n "$param_desc" ]]; then
+                    param_lines+="    // $param_name: $param_desc"$'\n'
+                fi
+                param_lines+="    \"$key\": \"\""$'\n'
+            done < <(_sql "
+                SELECT p.key, COALESCE(pl.name, p.key), COALESCE(pl.description, '')
+                FROM Parameters p
+                LEFT JOIN ParameterLocalizations pl
+                    ON p.toolId = pl.toolId AND p.key = pl.key AND pl.locale = 'en'
+                WHERE p.toolId = (SELECT rowId FROM Tools WHERE id = '$action_id')
+                ORDER BY p.sortOrder;
+            ")
+
+            echo "rawAction(\"$action_id\", {"
+            if [[ -n "$param_lines" ]]; then
+                echo -n "$param_lines" | sed '$ s/$//'
+            else
+                echo "    \"placeholder\": \"unused\"  // rawAction requires at least one param"
+            fi
+            echo "})"
+            echo ""
+        fi
+    done <<< "$matching"
+}
+
+# @cmd Diff ToolKit DB vs knowledge overlay — show what's verified, new, uncurated
+scan() {
+    _require_db
+    _require_yq
+
+    echo "Shortcuts Action Coverage"
+    echo "========================="
+    echo ""
+
+    # Get all third-party apps from DB
+    while IFS='|' read -r bundle_id count; do
+        local app_name
+        app_name=$(_app_name "$bundle_id")
+
+        local kfile verified_count=0
+        if kfile=$(_knowledge_file "$bundle_id"); then
+            verified_count=$(yq -r '[.actions // {} | to_entries[] | select(.value.verified == true)] | length' "$kfile" 2>/dev/null)
+            local total_in_knowledge
+            total_in_knowledge=$(yq -r '.actions // {} | length' "$kfile" 2>/dev/null)
+            printf "  ✓ %-25s %3s actions  (%s verified, %s documented)\n" \
+                "$app_name" "$count" "$verified_count" "$total_in_knowledge"
+        else
+            printf "  ⚠ %-25s %3s actions  (no knowledge file)\n" \
+                "$app_name" "$count"
+        fi
+    done < <(_sql "
+        SELECT cm.id, COUNT(*) as cnt
+        FROM Tools t
+        JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
+        WHERE t.id NOT LIKE 'com.apple.%'
+          AND t.id NOT LIKE 'is.workflow.%'
+        GROUP BY cm.id
+        ORDER BY cnt DESC;
+    ")
+
+    echo ""
+
+    # Summary
+    local total_third_party
+    total_third_party=$(_sql "SELECT COUNT(*) FROM Tools
+                              WHERE id NOT LIKE 'com.apple.%' AND id NOT LIKE 'is.workflow.%';")
+    local total_workflow
+    total_workflow=$(_sql "SELECT COUNT(*) FROM Tools WHERE id LIKE 'is.workflow.%';")
+
+    echo "Third-party: $total_third_party actions"
+    echo "Shortcuts built-in: $total_workflow actions"
+}
+
+# @cmd Mark an action as verified in its knowledge YAML file
+# @arg action! Action identifier (must be exact short name, e.g. IsDarkModeOnIntent)
+verify() {
+    _require_db
+    _require_yq
+    local action_name="${argc_action}"
+
+    # Find the action in DB
+    local action_id
+    action_id=$(_resolve_action "$action_name" | head -1)
+    if [[ -z "$action_id" ]]; then
+        _die "No action found matching '$action_name'"
+    fi
+
+    local bundle_id action_short
+    bundle_id=$(_bundle_from_id "$action_id")
+    action_short="${action_id##*.}"
+
+    local kfile
+    if ! kfile=$(_knowledge_file "$bundle_id"); then
+        _die "No knowledge file for bundle '$bundle_id'. Create one first."
+    fi
+
+    yq -i ".actions.\"$action_short\".verified = true" "$kfile"
+    echo "Marked $action_short as verified in $(basename "$kfile")"
+}
+
+# @cmd Add a gotcha note to an action's knowledge
+# @arg action! Action identifier (short name)
+# @arg text! The gotcha text
+note() {
+    _require_db
+    _require_yq
+    local action_name="${argc_action}"
+    local text="${argc_text}"
+
+    local action_id
+    action_id=$(_resolve_action "$action_name" | head -1)
+    if [[ -z "$action_id" ]]; then
+        _die "No action found matching '$action_name'"
+    fi
+
+    local bundle_id action_short
+    bundle_id=$(_bundle_from_id "$action_id")
+    action_short="${action_id##*.}"
+
+    local kfile
+    if ! kfile=$(_knowledge_file "$bundle_id"); then
+        _die "No knowledge file for bundle '$bundle_id'. Create one first."
+    fi
+
+    yq -i ".actions.\"$action_short\".gotchas += [\"$text\"]" "$kfile"
+    echo "Added gotcha to $action_short in $(basename "$kfile")"
+}
+
+# @cmd Add an example to an action's knowledge from a successful test
+# @arg action! Action identifier (short name)
+# @option --label! Example label
+# @option --params! JSON params string
+learn() {
+    _require_db
+    _require_yq
+    _require_jq
+    local action_name="${argc_action}"
+    local label="${argc_label}"
+    local params_str="${argc_params}"
+
+    local action_id
+    action_id=$(_resolve_action "$action_name" | head -1)
+    if [[ -z "$action_id" ]]; then
+        _die "No action found matching '$action_name'"
+    fi
+
+    local bundle_id action_short
+    bundle_id=$(_bundle_from_id "$action_id")
+    action_short="${action_id##*.}"
+
+    local kfile
+    if ! kfile=$(_knowledge_file "$bundle_id"); then
+        _die "No knowledge file for bundle '$bundle_id'. Create one first."
+    fi
+
+    # Validate JSON params
+    echo "$params_str" | jq . > /dev/null 2>&1 || _die "Invalid JSON params: $params_str"
+
+    # Convert JSON params to YAML and append
+    local tmp
+    tmp=$(mktemp)
+    echo "$params_str" | yq -P '.' > "$tmp"
+    local yaml_params
+    yaml_params=$(cat "$tmp")
+    rm -f "$tmp"
+
+    yq -i ".actions.\"$action_short\".examples += [{\"label\": \"$label\", \"params\": $params_str}]" "$kfile"
+    echo "Added example '$label' to $action_short in $(basename "$kfile")"
+}
+
+# ─── Phase 3: Workflow Routing + Debugging ────────────────────────────
+
+# @cmd Compile a .cherri file (routes to cherri compiler)
+# @arg file! Path to .cherri file
+# @flag --skip-sign Skip signing (syntax check only)
+# @flag --hubsign Sign via RoutineHub instead of macOS
+build() {
+    command -v "$CHERRI" &>/dev/null || _die "cherri not found. Install: brew tap electrikmilk/cherri && brew install electrikmilk/cherri/cherri
+  Or set SCUT_CHERRI to point to your fork."
+
+    local args=("${argc_file}")
+    [[ "${argc_skip_sign:-}" == "1" ]] && args+=("--skip-sign")
+    [[ "${argc_hubsign:-}" == "1" ]] && args+=("--hubsign")
+
+    "$CHERRI" "${args[@]}"
+}
+
+# @cmd Compile and run a shortcut
+# @arg file! Path to .cherri file
+run() {
+    build
+    # Extract shortcut name from #define name in the file
+    local name
+    name=$(grep -E '^#define name ' "${argc_file}" | sed 's/^#define name //')
+    if [[ -z "$name" ]]; then
+        name=$(basename "${argc_file}" .cherri)
+    fi
+    echo "Importing and running '$name'..."
+    open "${name}.shortcut" 2>/dev/null
+    sleep 2
+    shortcuts run "$name"
+}
+
+# @cmd Quick-test an action: generate tmp .cherri, compile, run, cleanup
+# @arg identifier! Full action identifier
+# @option --param* key=value parameters
+try() {
+    command -v "$CHERRI" &>/dev/null || _die "cherri not found"
+
+    local action_id="${argc_identifier}"
+    local tmp_dir
+    tmp_dir=$(mktemp -d)
+    local cherri_file="$tmp_dir/scut-test.cherri"
+
+    # Build params
+    local params=""
+    if [[ -n "${argc_param+x}" ]]; then
+        for p in "${argc_param[@]}"; do
+            local key="${p%%=*}"
+            local val="${p#*=}"
+            if [[ -n "$params" ]]; then
+                params+=","$'\n'
+            fi
+            params+="    \"$key\": \"$val\""
+        done
+    fi
+    if [[ -z "$params" ]]; then
+        params='    "placeholder": "unused"'
+    fi
+
+    cat > "$cherri_file" << EOF
+#define name scut-test
+#define color gray
+#define glyph wrench
+
+rawAction("$action_id", {
+$params
+})
+EOF
+
+    echo "Testing: $action_id"
+    echo "─────────────────────"
+    cat "$cherri_file"
+    echo "─────────────────────"
+
+    if "$CHERRI" "$cherri_file" 2>&1; then
+        local shortcut_file="$tmp_dir/scut-test.shortcut"
+        if [[ -f "scut-test.shortcut" ]]; then
+            mv "scut-test.shortcut" "$shortcut_file"
+        fi
+        if [[ -f "$shortcut_file" ]]; then
+            open "$shortcut_file"
+            sleep 2
+            shortcuts run "scut-test" 2>&1 || true
+        fi
+    fi
+
+    rm -rf "$tmp_dir"
+    echo ""
+    echo "Cleanup complete."
+}
+
+# @cmd Export installed shortcut as readable plist
+# @arg name! Shortcut name
+# @flag --json Output as JSON instead of plist
+dump() {
+    # The Shortcuts database is TCC-protected
+    local shortcuts_db="$HOME/Library/Shortcuts/Shortcuts.sqlite"
+    if [[ ! -r "$shortcuts_db" ]]; then
+        _die "Cannot read Shortcuts database. Grant Full Disk Access to your terminal.
+  System Settings → Privacy & Security → Full Disk Access"
+    fi
+
+    local name="${argc_name}"
+
+    # Try to find and extract the shortcut data
+    # Shortcuts stores action data as binary plist in the database
+    local tmp_plist
+    tmp_plist=$(mktemp /tmp/scut-dump-XXXXXX.plist)
+
+    # Extract the shortcut actions blob
+    sqlite3 "$shortcuts_db" \
+        "SELECT writefile('$tmp_plist', ZDATA)
+         FROM ZSHORTCUTACTIONS
+         WHERE ZSHORTCUT = (
+             SELECT Z_PK FROM ZSHORTCUT WHERE ZNAME = '$name'
+         );" 2>/dev/null
+
+    if [[ ! -s "$tmp_plist" ]]; then
+        rm -f "$tmp_plist"
+        # Try case-insensitive match
+        sqlite3 "$shortcuts_db" \
+            "SELECT writefile('$tmp_plist', ZDATA)
+             FROM ZSHORTCUTACTIONS
+             WHERE ZSHORTCUT = (
+                 SELECT Z_PK FROM ZSHORTCUT WHERE ZNAME LIKE '$name' LIMIT 1
+             );" 2>/dev/null
+    fi
+
+    if [[ ! -s "$tmp_plist" ]]; then
+        rm -f "$tmp_plist"
+        echo "Shortcut '$name' not found. Available shortcuts:"
+        sqlite3 "$shortcuts_db" "SELECT ZNAME FROM ZSHORTCUT ORDER BY ZNAME;" 2>/dev/null | while read -r n; do
+            echo "  $n"
+        done
+        exit 1
+    fi
+
+    if [[ "${argc_json:-}" == "1" ]]; then
+        plutil -convert json -o - "$tmp_plist" 2>/dev/null || \
+            plutil -p "$tmp_plist"
+    else
+        plutil -p "$tmp_plist"
+    fi
+
+    rm -f "$tmp_plist"
+}
+
+# @cmd Import a .shortcut file (opens Shortcuts.app import dialog)
+# @arg file! Path to .shortcut file
+import() {
+    local file="${argc_file}"
+    [[ -f "$file" ]] || _die "File not found: $file"
+    echo "Opening Shortcuts import dialog..."
+    open "$file"
+}
+
+# ─── Phase 4: Reference ──────────────────────────────────────────────
+
+# @cmd Generate full markdown action reference document
+# @arg file Output file path (default: stdout)
+doc() {
+    _require_db
+
+    local output="${argc_file:-/dev/stdout}"
+
+    {
+        echo "# Available Shortcuts Actions"
+        echo ""
+        echo "Generated: $(date)"
+        echo ""
+
+        local total apple thirdparty
+        total=$(_sql "SELECT COUNT(*) FROM Tools;")
+        apple=$(_sql "SELECT COUNT(*) FROM Tools WHERE id LIKE 'com.apple.%';")
+        thirdparty=$(_sql "SELECT COUNT(*) FROM Tools
+                           WHERE id NOT LIKE 'com.apple.%' AND id NOT LIKE 'is.workflow.%';")
+
+        echo "| Category | Count |"
+        echo "|----------|-------|"
+        echo "| Total actions | $total |"
+        echo "| Apple actions | $apple |"
+        echo "| Third-party actions | $thirdparty |"
+        echo ""
+
+        echo "## Third-Party Actions by App"
+        echo ""
+
+        local current_app=""
+        while IFS='|' read -r action_id name app_name; do
+            local bundle_id
+            bundle_id=$(_bundle_from_id "$action_id")
+            if [[ "$bundle_id" != "$current_app" ]]; then
+                current_app="$bundle_id"
+                echo ""
+                echo "### $app_name ($bundle_id)"
+                echo ""
+                echo "| Action | Identifier |"
+                echo "|--------|------------|"
+            fi
+            local action_short="${action_id##*.}"
+            echo "| ${name:-$action_short} | \`$action_id\` |"
+        done < <(_sql "
+            SELECT t.id, COALESCE(tl.name, ''), COALESCE(cml.name, cm.id)
+            FROM Tools t
+            JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
+            LEFT JOIN ContainerMetadataLocalizations cml ON cm.rowId = cml.containerId AND cml.locale = 'en'
+            LEFT JOIN ToolLocalizations tl ON t.rowId = tl.toolId AND tl.locale = 'en' AND tl.localizationUsage = 'display'
+            WHERE t.id NOT LIKE 'com.apple.%' AND t.id NOT LIKE 'is.workflow.%'
+            ORDER BY cm.id, t.id;
+        ")
+
+        echo ""
+        echo "---"
+        echo ""
+        echo "*Generated by \`scut doc\`. Use \`scut params <action>\` for parameter details.*"
+    } > "$output"
+
+    if [[ "$output" != "/dev/stdout" ]]; then
+        echo "Generated: $output"
+    fi
+}
+
+# @cmd Show Shortcuts development community resources and references
+community() {
+    cat << 'COMMUNITY'
+Shortcuts Development Community & Resources
+============================================
+
+GitHub Repos (source code is the real docs):
+  sebj/iOS-Shortcuts-Reference     Plist format, action IDs, parameter types
+  joshfarrant/shortcuts-js          JS lib for programmatic shortcut generation
+  electrikmilk/cherri               Cherri compiler source
+  Shortcuts File Format wiki        Plist ↔ JSON tooling
+
+People:
+  Matthew Cassinelli                Former Apple Shortcuts team member
+    matthewcassinelli.com           Deepest public knowledge of action internals
+  Federico Viticci (MacStories)     Most thorough published Shortcuts writing
+  Alex Hay                          Toolbox Pro dev — knows extension app internals
+    Toolbox Pro support/Discord     Fastest path for extension app bugs
+
+Communities:
+  r/shortcuts                       Search: "plist", "rawAction", "WFWorkflowAction"
+  Automators.fm forums              Rosemary Orchard + David Sparks community
+  RoutineHub Discord                Shortcut devs hang out here
+
+Identifier Format Conventions:
+  Apple built-in:    is.workflow.actions.{name}
+  Third-party:       {bundleId}.{IntentName}Intent
+  Apple system:      com.apple.{framework}.{IntentName}
+COMMUNITY
+}
+
+# ─── Dispatcher ──────────────────────────────────────────────────────
+eval "$(argc --argc-eval "$0" "$@")"

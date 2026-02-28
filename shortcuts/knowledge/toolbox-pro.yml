@@ -1,0 +1,44 @@
+name: Toolbox Pro
+bundle_id: com.alexhay.ToolboxProForShortcuts
+notes: |
+  Wrapped iOS app on Apple Silicon (Designed for iPhone/iPad). 282 actions
+  covering global variables, OCR, device info, menus, and more.
+actions:
+  GlobalVariablesIntent:
+    verified: true
+    gotchas:
+      - "mode param controls behavior: get/set/delete"
+    examples:
+      - label: Set a variable
+        params:
+          mode: set
+          setVariableKey: myVariable
+          setVariableValue: myValue
+      - label: Get a variable
+        params:
+          mode: get
+          getVariableKey: myVariable
+      - label: Delete a variable
+        params:
+          mode: delete
+          deleteVariableKey: myVariable
+  IsDarkModeOnIntent:
+    verified: true
+    examples:
+      - label: Check dark mode
+        params:
+          ShowWhenRun: "true"
+  CheckGVIntent:
+    verified: false
+    gotchas:
+      - "Check if global variable exists"
+  DeviceDetailsIntent:
+    verified: false
+  GetTextFromImageIntent:
+    verified: false
+    gotchas:
+      - "OCR — extract text from images"
+  CreateMenuIntent:
+    verified: false
+  SmartMenuIntent:
+    verified: false

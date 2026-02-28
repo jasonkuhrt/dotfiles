@@ -1,0 +1,28 @@
+name: Actions
+bundle_id: com.sindresorhus.Actions
+notes: |
+  199 utility actions by Sindre Sorhus. Free.
+  Run `scut actions sindre` for the full list.
+actions:
+  GenerateUUIDIntent:
+    verified: true
+    gotchas:
+      - "rawAction requires placeholder param even when action takes none"
+    examples:
+      - label: Generate UUID
+        params:
+          placeholder: unused
+  FormatDurationIntent:
+    verified: true
+    examples:
+      - label: Format duration
+        params:
+          placeholder: unused
+  DebugIntent:
+    verified: true
+    gotchas:
+      - "Shows variables in console — useful for debugging"
+    examples:
+      - label: Debug output
+        params:
+          placeholder: unused

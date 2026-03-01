@@ -25,7 +25,7 @@ Override compiler: `SCUT_CHERRI=/path/to/fork scut dev build file.cherri`
 ```bash
 scut search "music library"         # Find actions by keyword
 scut params AddMusicToLibrary       # Show parameters + knowledge
-scut cherri AddMusicToLibrary       # Generate rawAction() snippet
+scut dev gen snippet AddMusicToLibrary       # Generate rawAction() snippet
 scut identifier "Global Variables"  # Display name → action ID
 scut dev try <identifier> --param k=v   # Quick-test an action
 ```
@@ -49,7 +49,7 @@ alert("Hello World!", "Greeting")
 ### Raw Actions (for third-party / unsupported actions)
 
 ```cherri
-// Use scut cherri <action> to generate these snippets
+// Use scut dev gen snippet <action> to generate these snippets
 rawAction("com.alexhay.ToolboxProForShortcuts.GlobalVariablesIntent", {
     "mode": "set",
     "setVariableKey": "myVariable",

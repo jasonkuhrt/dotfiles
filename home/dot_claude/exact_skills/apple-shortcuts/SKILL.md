@@ -15,23 +15,33 @@ scut actions [app]                  # List actions (filter by app)
 scut search <term>                  # Full-text search actions
 scut params <action>                # Show parameters + knowledge
 scut identifier <display-name>     # Display name → action ID
-scut cherri <action>                # Generate rawAction() snippet
-scut scan                           # Coverage report: verified vs uncurated
-scut community                      # Dev community resources + references
 ```
 
 All commands support `--json` for machine-readable output.
 
 ## Development Commands
 
-`scut dev` groups all authoring/debugging commands for building shortcuts from code.
+`scut dev` groups all authoring, testing, and knowledge capture commands.
 
 ```bash
-scut dev build <file.cherri>            # Compile (routes to cherri)
-scut dev run <file.cherri>              # Compile and run
-scut dev try <identifier> --param k=v   # Quick-test an action
-scut dev dump <shortcut-name>           # Export installed shortcut as plist
-scut dev import <file.shortcut>         # Import a .shortcut file
+# Code generation
+scut dev gen snippet <action>               # Generate rawAction() Cherri snippet
+scut dev gen ref [output-file]              # Generate full action reference doc
+
+# Compile + test
+scut dev build <file.cherri>                # Compile (routes to cherri)
+scut dev run <file.cherri>                  # Compile and run
+scut dev try <identifier> --param k=v       # Quick-test an action
+
+# Shortcut transfer
+scut dev export <shortcut-name>             # Export installed shortcut as plist
+scut dev import <file.shortcut>             # Import a .shortcut file
+
+# Knowledge overlay
+scut dev learnings status                   # Coverage report: verified vs uncurated
+scut dev learnings mark-verified <action>   # Mark action as verified
+scut dev learnings add-note <action> "text" # Add a gotcha note
+scut dev learnings add-example <action>     # Add example from successful test
 ```
 
 ## Managing Installed Shortcuts
@@ -65,6 +75,31 @@ scut manage delete "Name"           # Tombstone a shortcut
 scut manage delete-matching "Test%" # Batch delete by pattern (SQL LIKE)
 scut manage cleanup                 # Purge tombstoned + orphaned rows
 ```
+
+## Automations (Triggers)
+
+`scut auto` manages automation triggers — the schedules that run shortcuts automatically.
+
+```bash
+scut auto list                      # List all automations
+scut auto list --json               # Machine-readable output
+scut auto show "Name"               # Full decoded trigger details
+scut auto enable "Name"             # Enable trigger(s) for shortcut
+scut auto disable "Name"            # Disable trigger(s)
+scut auto delete "Name"             # Delete trigger(s) (with confirmation)
+scut auto delete "Name" --force     # Delete without confirmation
+
+# Create time-of-day trigger
+scut auto create "Name" --time 08:30                    # Daily at 8:30
+scut auto create "Name" --time 09:00 --days weekdays    # Weekdays only
+scut auto create "Name" --time 22:00 --days mon,fri     # Specific days
+scut auto create "Name" --time 10:00 --prompt           # Ask before running
+scut auto create "Name" --time 06:00 --no-repeat        # Run once only
+```
+
+**Day options**: `daily` (default), `weekdays`, `weekends`, or comma-separated: `mon,tue,wed,thu,fri,sat,sun`
+
+**Technical note**: Automations use NSKeyedArchiver binary plists in ZTRIGGER.ZDATA. CoreData triggers on the table call runtime-only functions, so `scut auto create/delete` temporarily drops and recreates them.
 
 ### Running installed shortcuts
 

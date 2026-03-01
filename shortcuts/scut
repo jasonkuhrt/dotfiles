@@ -8,7 +8,9 @@
 # @describe Requires: Full Disk Access for your terminal app
 # @describe   System Settings → Privacy & Security → Full Disk Access → add terminal
 # @describe
-# @describe Community & Resources: scut community
+# @describe Community: r/shortcuts, talk.automators.fm, RoutineHub Discord
+# @describe People: matthewcassinelli.com, rosemaryorchard.com, snailedit.dev
+# @describe Code: github.com/electrikmilk/cherri, sebj/iOS-Shortcuts-Reference
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -537,12 +539,18 @@ identifier() {
     ")
 }
 
-# ─── Phase 2: Code Generation + Knowledge ────────────────────────────
+# ─── Phase 2: Development ─────────────────────────────────────────────
+
+# @cmd Development: codegen, compile, test, knowledge capture
+dev() { :; }
+
+# @cmd Generate code and reference artifacts
+dev::gen() { :; }
 
 # @cmd Generate rawAction() Cherri snippet for an action
 # @arg action! Action name or identifier (substring match)
 # @flag --json Machine-readable JSON output
-cherri() {
+dev::gen::snippet() {
     _require_db
     _require_yq
     local filter="${argc_action}"
@@ -646,156 +654,6 @@ cherri() {
     done <<< "$matching"
 }
 
-# @cmd Diff ToolKit DB vs knowledge overlay — show what's verified, new, uncurated
-scan() {
-    _require_db
-    _require_yq
-
-    echo "Shortcuts Action Coverage"
-    echo "========================="
-    echo ""
-
-    # Get all third-party apps from DB
-    while IFS='|' read -r bundle_id count; do
-        local app_name
-        app_name=$(_app_name "$bundle_id")
-
-        local kfile verified_count=0
-        if kfile=$(_knowledge_file "$bundle_id"); then
-            verified_count=$(yq -r '[.actions // {} | to_entries[] | select(.value.verified == true)] | length' "$kfile" 2>/dev/null)
-            local total_in_knowledge
-            total_in_knowledge=$(yq -r '.actions // {} | length' "$kfile" 2>/dev/null)
-            printf "  ✓ %-25s %3s actions  (%s verified, %s documented)\n" \
-                "$app_name" "$count" "$verified_count" "$total_in_knowledge"
-        else
-            printf "  ⚠ %-25s %3s actions  (no knowledge file)\n" \
-                "$app_name" "$count"
-        fi
-    done < <(_sql "
-        SELECT cm.id, COUNT(*) as cnt
-        FROM Tools t
-        JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
-        WHERE t.id NOT LIKE 'com.apple.%'
-          AND t.id NOT LIKE 'is.workflow.%'
-        GROUP BY cm.id
-        ORDER BY cnt DESC;
-    ")
-
-    echo ""
-
-    # Summary
-    local total_third_party
-    total_third_party=$(_sql "SELECT COUNT(*) FROM Tools
-                              WHERE id NOT LIKE 'com.apple.%' AND id NOT LIKE 'is.workflow.%';")
-    local total_workflow
-    total_workflow=$(_sql "SELECT COUNT(*) FROM Tools WHERE id LIKE 'is.workflow.%';")
-
-    echo "Third-party: $total_third_party actions"
-    echo "Shortcuts built-in: $total_workflow actions"
-}
-
-# @cmd Mark an action as verified in its knowledge YAML file
-# @arg action! Action identifier (must be exact short name, e.g. IsDarkModeOnIntent)
-verify() {
-    _require_db
-    _require_yq
-    local action_name="${argc_action}"
-
-    # Find the action in DB
-    local action_id
-    action_id=$(_resolve_action "$action_name" | head -1)
-    if [[ -z "$action_id" ]]; then
-        _die "No action found matching '$action_name'"
-    fi
-
-    local bundle_id action_short
-    bundle_id=$(_bundle_from_id "$action_id")
-    action_short="${action_id##*.}"
-
-    local kfile
-    if ! kfile=$(_knowledge_file "$bundle_id"); then
-        _die "No knowledge file for bundle '$bundle_id'. Create one first."
-    fi
-
-    yq -i ".actions.\"$action_short\".verified = true" "$kfile"
-    echo "Marked $action_short as verified in $(basename "$kfile")"
-}
-
-# @cmd Add a gotcha note to an action's knowledge
-# @arg action! Action identifier (short name)
-# @arg text! The gotcha text
-note() {
-    _require_db
-    _require_yq
-    local action_name="${argc_action}"
-    local text="${argc_text}"
-
-    local action_id
-    action_id=$(_resolve_action "$action_name" | head -1)
-    if [[ -z "$action_id" ]]; then
-        _die "No action found matching '$action_name'"
-    fi
-
-    local bundle_id action_short
-    bundle_id=$(_bundle_from_id "$action_id")
-    action_short="${action_id##*.}"
-
-    local kfile
-    if ! kfile=$(_knowledge_file "$bundle_id"); then
-        _die "No knowledge file for bundle '$bundle_id'. Create one first."
-    fi
-
-    yq -i ".actions.\"$action_short\".gotchas += [\"$text\"]" "$kfile"
-    echo "Added gotcha to $action_short in $(basename "$kfile")"
-}
-
-# @cmd Add an example to an action's knowledge from a successful test
-# @arg action! Action identifier (short name)
-# @option --label! Example label
-# @option --params! JSON params string
-learn() {
-    _require_db
-    _require_yq
-    _require_jq
-    local action_name="${argc_action}"
-    local label="${argc_label}"
-    local params_str="${argc_params}"
-
-    local action_id
-    action_id=$(_resolve_action "$action_name" | head -1)
-    if [[ -z "$action_id" ]]; then
-        _die "No action found matching '$action_name'"
-    fi
-
-    local bundle_id action_short
-    bundle_id=$(_bundle_from_id "$action_id")
-    action_short="${action_id##*.}"
-
-    local kfile
-    if ! kfile=$(_knowledge_file "$bundle_id"); then
-        _die "No knowledge file for bundle '$bundle_id'. Create one first."
-    fi
-
-    # Validate JSON params
-    echo "$params_str" | jq . > /dev/null 2>&1 || _die "Invalid JSON params: $params_str"
-
-    # Convert JSON params to YAML and append
-    local tmp
-    tmp=$(mktemp)
-    echo "$params_str" | yq -P '.' > "$tmp"
-    local yaml_params
-    yaml_params=$(cat "$tmp")
-    rm -f "$tmp"
-
-    yq -i ".actions.\"$action_short\".examples += [{\"label\": \"$label\", \"params\": $params_str}]" "$kfile"
-    echo "Added example '$label' to $action_short in $(basename "$kfile")"
-}
-
-# ─── Phase 3: Development ─────────────────────────────────────────────
-
-# @cmd Development commands: compile, run, test, dump, import
-dev() { :; }
-
 # @cmd Compile a .cherri file (routes to cherri compiler)
 # @arg file! Path to .cherri file
 # @flag --skip-sign Skip signing (syntax check only)
@@ -889,7 +747,7 @@ EOF
 # @cmd Export installed shortcut as readable plist
 # @arg name! Shortcut name
 # @flag --json Output as JSON instead of plist
-dev::dump() {
+dev::export() {
     _require_shortcuts_db
     local name="${argc_name}"
 
@@ -942,11 +800,9 @@ dev::import() {
     open "$file"
 }
 
-# ─── Phase 4: Reference ──────────────────────────────────────────────
-
 # @cmd Generate full markdown action reference document
 # @arg file Output file path (default: stdout)
-doc() {
+dev::gen::ref() {
     _require_db
 
     local output="${argc_file:-/dev/stdout}"
@@ -1000,7 +856,7 @@ doc() {
         echo ""
         echo "---"
         echo ""
-        echo "*Generated by \`scut doc\`. Use \`scut params <action>\` for parameter details.*"
+        echo "*Generated by \`scut dev gen ref\`. Use \`scut params <action>\` for parameter details.*"
     } > "$output"
 
     if [[ "$output" != "/dev/stdout" ]]; then
@@ -1008,48 +864,155 @@ doc() {
     fi
 }
 
-# @cmd Show Shortcuts development community resources and references
-community() {
-    cat << 'COMMUNITY'
-Shortcuts Development Community & Resources
-============================================
+# @cmd Knowledge overlay: status, verification, notes, examples
+dev::learnings() { :; }
 
-GitHub Repos (source code is the real docs):
-  sebj/iOS-Shortcuts-Reference     Plist format, action IDs, parameter types
-  joshfarrant/shortcuts-js          JS lib for programmatic shortcut generation
-  electrikmilk/cherri               Cherri compiler source
-  Shortcuts File Format wiki        Plist ↔ JSON tooling
+# @cmd Show knowledge coverage — what's verified vs uncurated
+dev::learnings::status() {
+    _require_db
+    _require_yq
 
-People:
-  Matthew Cassinelli                Former Apple Shortcuts team member
-    matthewcassinelli.com           Deepest public knowledge of action internals
-  Federico Viticci (MacStories)     Most thorough published Shortcuts writing
-  Rosemary Orchard                  Automators podcast host, Shortcuts internals expert
-    rosemaryorchard.com             Active on Mastodon/Twitter — very responsive to questions
-  Alex Hay (1990–2023)              Toolbox Pro creator, extension app pioneer
-    MacStories memorial article     Community context and key people overview
-  snailedit.dev                     Team continuing Alex Hay's work (FocusCuts, etc.)
+    echo "Shortcuts Action Coverage"
+    echo "========================="
+    echo ""
 
-Communities:
-  r/shortcuts                       Search: "plist", "rawAction", "WFWorkflowAction"
-  talk.automators.fm                Rosemary + David Sparks — best for deep technical Q&A
-  RoutineHub Discord                Shortcut devs hang out here
-  toolboxpro.app                    Toolbox Pro support and extension app community
+    # Get all third-party apps from DB
+    while IFS='|' read -r bundle_id count; do
+        local app_name
+        app_name=$(_app_name "$bundle_id")
 
-Apple Developer Docs (App Intents framework):
-  App Intents documentation         Official framework reference
-  "Creating Your First App Intent"  Step-by-step tutorial
-  WWDC25 "Explore New Advances"     Latest App Intents session
-  Apple Developer Forums            Search: "App Intents", "file handling"
+        local kfile verified_count=0
+        if kfile=$(_knowledge_file "$bundle_id"); then
+            verified_count=$(yq -r '[.actions // {} | to_entries[] | select(.value.verified == true)] | length' "$kfile" 2>/dev/null)
+            local total_in_knowledge
+            total_in_knowledge=$(yq -r '.actions // {} | length' "$kfile" 2>/dev/null)
+            printf "  ✓ %-25s %3s actions  (%s verified, %s documented)\n" \
+                "$app_name" "$count" "$verified_count" "$total_in_knowledge"
+        else
+            printf "  ⚠ %-25s %3s actions  (no knowledge file)\n" \
+                "$app_name" "$count"
+        fi
+    done < <(_sql "
+        SELECT cm.id, COUNT(*) as cnt
+        FROM Tools t
+        JOIN ContainerMetadata cm ON t.sourceContainerId = cm.rowId
+        WHERE t.id NOT LIKE 'com.apple.%'
+          AND t.id NOT LIKE 'is.workflow.%'
+        GROUP BY cm.id
+        ORDER BY cnt DESC;
+    ")
 
-Identifier Format Conventions:
-  Apple built-in:    is.workflow.actions.{name}
-  Third-party:       {bundleId}.{IntentName}Intent
-  Apple system:      com.apple.{framework}.{IntentName}
-COMMUNITY
+    echo ""
+
+    # Summary
+    local total_third_party
+    total_third_party=$(_sql "SELECT COUNT(*) FROM Tools
+                              WHERE id NOT LIKE 'com.apple.%' AND id NOT LIKE 'is.workflow.%';")
+    local total_workflow
+    total_workflow=$(_sql "SELECT COUNT(*) FROM Tools WHERE id LIKE 'is.workflow.%';")
+
+    echo "Third-party: $total_third_party actions"
+    echo "Shortcuts built-in: $total_workflow actions"
 }
 
-# ─── Phase 5: Library Management ─────────────────────────────────────
+# @cmd Mark an action as verified in its knowledge YAML file
+# @arg action! Action identifier (must be exact short name, e.g. IsDarkModeOnIntent)
+dev::learnings::mark_verified() {
+    _require_db
+    _require_yq
+    local action_name="${argc_action}"
+
+    # Find the action in DB
+    local action_id
+    action_id=$(_resolve_action "$action_name" | head -1)
+    if [[ -z "$action_id" ]]; then
+        _die "No action found matching '$action_name'"
+    fi
+
+    local bundle_id action_short
+    bundle_id=$(_bundle_from_id "$action_id")
+    action_short="${action_id##*.}"
+
+    local kfile
+    if ! kfile=$(_knowledge_file "$bundle_id"); then
+        _die "No knowledge file for bundle '$bundle_id'. Create one first."
+    fi
+
+    yq -i ".actions.\"$action_short\".verified = true" "$kfile"
+    echo "Marked $action_short as verified in $(basename "$kfile")"
+}
+
+# @cmd Add a gotcha note to an action's knowledge
+# @arg action! Action identifier (short name)
+# @arg text! The gotcha text
+dev::learnings::add_note() {
+    _require_db
+    _require_yq
+    local action_name="${argc_action}"
+    local text="${argc_text}"
+
+    local action_id
+    action_id=$(_resolve_action "$action_name" | head -1)
+    if [[ -z "$action_id" ]]; then
+        _die "No action found matching '$action_name'"
+    fi
+
+    local bundle_id action_short
+    bundle_id=$(_bundle_from_id "$action_id")
+    action_short="${action_id##*.}"
+
+    local kfile
+    if ! kfile=$(_knowledge_file "$bundle_id"); then
+        _die "No knowledge file for bundle '$bundle_id'. Create one first."
+    fi
+
+    yq -i ".actions.\"$action_short\".gotchas += [\"$text\"]" "$kfile"
+    echo "Added gotcha to $action_short in $(basename "$kfile")"
+}
+
+# @cmd Add an example to an action's knowledge from a successful test
+# @arg action! Action identifier (short name)
+# @option --label! Example label
+# @option --params! JSON params string
+dev::learnings::add_example() {
+    _require_db
+    _require_yq
+    _require_jq
+    local action_name="${argc_action}"
+    local label="${argc_label}"
+    local params_str="${argc_params}"
+
+    local action_id
+    action_id=$(_resolve_action "$action_name" | head -1)
+    if [[ -z "$action_id" ]]; then
+        _die "No action found matching '$action_name'"
+    fi
+
+    local bundle_id action_short
+    bundle_id=$(_bundle_from_id "$action_id")
+    action_short="${action_id##*.}"
+
+    local kfile
+    if ! kfile=$(_knowledge_file "$bundle_id"); then
+        _die "No knowledge file for bundle '$bundle_id'. Create one first."
+    fi
+
+    # Validate JSON params
+    echo "$params_str" | jq . > /dev/null 2>&1 || _die "Invalid JSON params: $params_str"
+
+    # Convert JSON params to YAML and append
+    local tmp
+    tmp=$(mktemp)
+    echo "$params_str" | yq -P '.' > "$tmp"
+    local yaml_params
+    yaml_params=$(cat "$tmp")
+    rm -f "$tmp"
+
+    yq -i ".actions.\"$action_short\".examples += [{\"label\": \"$label\", \"params\": $params_str}]" "$kfile"
+    echo "Added example '$label' to $action_short in $(basename "$kfile")"
+}
+
+# ─── Phase 3: Library Management ─────────────────────────────────────
 # Hybrid backend: AppleScript for folder/create ops, SQLite for everything else.
 
 # @cmd Manage installed shortcuts: list, delete, rename, organize, inspect
@@ -1681,6 +1644,620 @@ manage::cleanup() {
     _sdb "DELETE FROM ZSHORTCUT WHERE ZTOMBSTONED = 1;"
 
     echo "Purged $tombstoned shortcuts and associated data"
+}
+
+# ─── Phase 6: Automations ────────────────────────────────────────────
+
+# Decode trigger blob via Python's plistlib (only reliable NSKeyedArchiver parser)
+# Output: classname|hour|minute|day1,day2,... (or classname||| for non-time triggers)
+_trigger_decode() {
+    local blob_file="$1"
+    python3 -c "
+import plistlib, sys
+with open('$blob_file', 'rb') as f:
+    data = plistlib.load(f)
+objs = data['\$objects']
+root = objs[1]
+def u(x): return x.data if hasattr(x, 'data') else int(x)
+cls = objs[u(root['\$class'])]['\$classname']
+try:
+    t = objs[u(root['time'])]
+    h, m = t['NS.hour'], t['NS.minute']
+    da = objs[u(root['daysOfWeek'])]
+    days = sorted([objs[u(x)] for x in da['NS.objects']])
+    print(f'{cls}|{h}|{m}|{\",\".join(map(str, days))}')
+except (KeyError, IndexError):
+    print(f'{cls}|||')
+" 2>/dev/null || echo "Unknown|||"
+}
+
+# Extract just the class name from a trigger blob
+_trigger_classname() {
+    local blob_file="$1"
+    _trigger_decode "$blob_file" | cut -d'|' -f1
+}
+
+# Format trigger schedule as "HH:MM [days]"
+_trigger_schedule() {
+    local blob_file="$1"
+    local decoded
+    decoded=$(_trigger_decode "$blob_file")
+
+    local hour minute days_csv
+    IFS='|' read -r _ hour minute days_csv <<< "$decoded"
+
+    if [[ -z "$hour" || -z "$minute" ]]; then
+        echo "(unknown schedule)"
+        return
+    fi
+
+    printf "%02d:%02d" "$hour" "$minute"
+
+    if [[ -z "$days_csv" ]]; then
+        return
+    fi
+
+    IFS=',' read -ra days <<< "$days_csv"
+
+    if [[ ${#days[@]} -eq 7 ]]; then
+        echo " daily"
+    elif [[ "${days[*]}" == "2 3 4 5 6" ]]; then
+        echo " weekdays"
+    elif [[ "${days[*]}" == "1 7" ]]; then
+        echo " weekends"
+    else
+        local names=()
+        for d in "${days[@]}"; do
+            names+=("$(_day_short "$d")")
+        done
+        echo " $(IFS=,; echo "${names[*]}")"
+    fi
+}
+
+# Map day number (1=Sun..7=Sat) to short name
+_day_short() {
+    case "$1" in
+        1) echo "Sun";; 2) echo "Mon";; 3) echo "Tue";; 4) echo "Wed";;
+        5) echo "Thu";; 6) echo "Fri";; 7) echo "Sat";; *) echo "?$1";;
+    esac
+}
+
+# Parse day name to number
+_day_num() {
+    case "$(echo "$1" | tr '[:upper:]' '[:lower:]')" in
+        sun|sunday) echo 1;; mon|monday) echo 2;; tue|tuesday) echo 3;;
+        wed|wednesday) echo 4;; thu|thursday) echo 5;; fri|friday) echo 6;;
+        sat|saturday) echo 7;; *) echo "";;
+    esac
+}
+
+# Resolve shortcut name to Z_PK
+_resolve_shortcut() {
+    local name="$1"
+    _sdb "SELECT Z_PK FROM ZSHORTCUT
+          WHERE ZNAME = '$(_sq "$name")'
+            AND (ZTOMBSTONED = 0 OR ZTOMBSTONED IS NULL)
+          LIMIT 1;"
+}
+
+# Build a WFTimeOfDayTrigger binary plist and output its hex
+# Usage: _build_time_trigger_hex <hour> <minute> <day1> [day2 ...]
+_build_time_trigger_hex() {
+    local hour="$1" minute="$2"
+    shift 2
+    local days=("$@")
+
+    local tmpxml
+    tmpxml=$(mktemp /tmp/scut-trigger-XXXXXX.plist)
+    trap "rm -f '$tmpxml'" RETURN
+
+    # Build $objects array with these indices:
+    # 0: $null
+    # 1: root dict (WFTimeOfDayTrigger)
+    # 2: NSDateComponents dict  ($class → 3)
+    # 3: NSDateComponents class descriptor
+    # 4: NSArray dict           ($class → 5)
+    # 5: NSArray class descriptor
+    # 6: WFTimeOfDayTrigger class descriptor
+    # 7: timeOfDay value (2 = specific time)
+    # 8: timeOfDayTimeConfiguration value (7)
+    # 9: mode value (0)
+    # 10+: day integers
+
+    # Build days CF$UID entries for the NSArray
+    local days_entries=""
+    for i in "${!days[@]}"; do
+        local uid=$((10 + i))
+        days_entries+="				<dict><key>CF\$UID</key><integer>${uid}</integer></dict>
+"
+    done
+
+    # Build days integer entries in $objects
+    local days_objects=""
+    for d in "${days[@]}"; do
+        days_objects+="		<integer>${d}</integer>
+"
+    done
+
+    cat > "$tmpxml" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>\$archiver</key>
+	<string>NSKeyedArchiver</string>
+	<key>\$objects</key>
+	<array>
+		<string>\$null</string>
+		<dict>
+			<key>\$class</key>
+			<dict><key>CF\$UID</key><integer>6</integer></dict>
+			<key>dayOfMonth</key>
+			<dict><key>CF\$UID</key><integer>0</integer></dict>
+			<key>daysOfWeek</key>
+			<dict><key>CF\$UID</key><integer>4</integer></dict>
+			<key>mode</key>
+			<dict><key>CF\$UID</key><integer>9</integer></dict>
+			<key>time</key>
+			<dict><key>CF\$UID</key><integer>2</integer></dict>
+			<key>timeOfDay</key>
+			<dict><key>CF\$UID</key><integer>7</integer></dict>
+			<key>timeOfDayTimeConfiguration</key>
+			<dict><key>CF\$UID</key><integer>8</integer></dict>
+		</dict>
+		<dict>
+			<key>\$class</key>
+			<dict><key>CF\$UID</key><integer>3</integer></dict>
+			<key>NS.hour</key>
+			<integer>${hour}</integer>
+			<key>NS.leapMonth</key>
+			<integer>0</integer>
+			<key>NS.minute</key>
+			<integer>${minute}</integer>
+			<key>NS.repeatedDay</key>
+			<false/>
+		</dict>
+		<dict>
+			<key>\$classes</key>
+			<array>
+				<string>NSDateComponents</string>
+				<string>NSObject</string>
+			</array>
+			<key>\$classname</key>
+			<string>NSDateComponents</string>
+		</dict>
+		<dict>
+			<key>\$class</key>
+			<dict><key>CF\$UID</key><integer>5</integer></dict>
+			<key>NS.objects</key>
+			<array>
+${days_entries}			</array>
+		</dict>
+		<dict>
+			<key>\$classes</key>
+			<array>
+				<string>NSArray</string>
+				<string>NSObject</string>
+			</array>
+			<key>\$classname</key>
+			<string>NSArray</string>
+		</dict>
+		<dict>
+			<key>\$classes</key>
+			<array>
+				<string>WFTimeOfDayTrigger</string>
+				<string>WFTrigger</string>
+				<string>NSObject</string>
+			</array>
+			<key>\$classname</key>
+			<string>WFTimeOfDayTrigger</string>
+		</dict>
+		<integer>2</integer>
+		<integer>7</integer>
+		<integer>0</integer>
+${days_objects}	</array>
+	<key>\$top</key>
+	<dict>
+		<key>root</key>
+		<dict><key>CF\$UID</key><integer>1</integer></dict>
+	</dict>
+	<key>\$version</key>
+	<integer>100000</integer>
+</dict>
+</plist>
+PLIST
+
+    # Convert to binary plist, then to hex
+    plutil -convert binary1 "$tmpxml" || _die "Failed to create binary plist"
+    xxd -p "$tmpxml" | tr -d '\n'
+}
+
+# @cmd Manage automations (triggers)
+auto() { :; }
+
+# @cmd List all automations
+# @flag --json Machine-readable JSON output
+auto::list() {
+    _require_shortcuts_db
+
+    local count
+    count=$(_sdb "SELECT COUNT(*) FROM ZTRIGGER;")
+    if [[ "$count" -eq 0 ]]; then
+        echo "No automations found."
+        return
+    fi
+
+    if [[ "${argc_json:-}" == "1" ]]; then
+        _require_jq
+        local json="[]"
+        while IFS='|' read -r pk sname enabled prompt recur identifier shortcut_pk; do
+            local tmpblob
+            tmpblob=$(mktemp /tmp/scut-blob-XXXXXX.plist)
+            _sdb "SELECT writefile('$tmpblob', ZDATA) FROM ZTRIGGER WHERE Z_PK = $pk;" >/dev/null
+            local classname schedule
+            classname=$(_trigger_classname "$tmpblob")
+            schedule=$(_trigger_schedule "$tmpblob")
+            rm -f "$tmpblob"
+
+            json=$(echo "$json" | jq \
+                --arg pk "$pk" \
+                --arg shortcut "$sname" \
+                --arg enabled "$enabled" \
+                --arg prompt "$prompt" \
+                --arg recur "$recur" \
+                --arg type "$classname" \
+                --arg schedule "$schedule" \
+                --arg id "$identifier" \
+                '. + [{
+                    z_pk: ($pk|tonumber),
+                    shortcut: $shortcut,
+                    enabled: ($enabled == "1"),
+                    prompt: ($prompt == "1"),
+                    recur: ($recur == "1"),
+                    trigger_type: $type,
+                    schedule: ($schedule|ltrimstr(" ")),
+                    identifier: $id
+                }]')
+        done < <(_sdb "SELECT T.Z_PK, S.ZNAME, T.ZENABLED, T.ZSHOULDPROMPT,
+                        T.ZSHOULDRECUR, T.ZIDENTIFIER, T.ZSHORTCUT
+                 FROM ZTRIGGER T
+                 LEFT JOIN ZSHORTCUT S ON T.ZSHORTCUT = S.Z_PK
+                 ORDER BY S.ZNAME;")
+        echo "$json" | jq .
+        return
+    fi
+
+    echo "Automations ($count):"
+    echo ""
+    while IFS='|' read -r pk sname enabled prompt recur identifier; do
+        local tmpblob
+        tmpblob=$(mktemp /tmp/scut-blob-XXXXXX.plist)
+        _sdb "SELECT writefile('$tmpblob', ZDATA) FROM ZTRIGGER WHERE Z_PK = $pk;" >/dev/null
+        local classname schedule
+        classname=$(_trigger_classname "$tmpblob")
+        schedule=$(_trigger_schedule "$tmpblob")
+        rm -f "$tmpblob"
+
+        local status_icon="●"
+        [[ "$enabled" == "1" ]] || status_icon="○"
+
+        local trigger_type="${classname#WF}"
+        trigger_type="${trigger_type%Trigger}"
+
+        local flags=""
+        [[ "$prompt" == "1" ]] && flags+=" [ask]"
+        [[ "$recur" == "1" ]] && flags+=" [repeat]"
+
+        printf "  %s %-25s %-15s %s%s\n" "$status_icon" "$sname" "$trigger_type" "$schedule" "$flags"
+    done < <(_sdb "SELECT T.Z_PK, S.ZNAME, T.ZENABLED, T.ZSHOULDPROMPT,
+                    T.ZSHOULDRECUR, T.ZIDENTIFIER
+             FROM ZTRIGGER T
+             LEFT JOIN ZSHORTCUT S ON T.ZSHORTCUT = S.Z_PK
+             ORDER BY S.ZNAME;")
+}
+
+# @cmd Show full automation details for a shortcut
+# @arg name! Shortcut name
+# @flag --json Machine-readable JSON output
+auto::show() {
+    _require_shortcuts_db
+    local name="${argc_name}"
+
+    local shortcut_pk
+    shortcut_pk=$(_resolve_shortcut "$name")
+    if [[ -z "$shortcut_pk" ]]; then
+        _die "Shortcut '$name' not found"
+    fi
+
+    local triggers
+    triggers=$(_sdb "SELECT Z_PK FROM ZTRIGGER WHERE ZSHORTCUT = $shortcut_pk;")
+    if [[ -z "$triggers" ]]; then
+        _die "No automations found for '$name'"
+    fi
+
+    while IFS= read -r pk; do
+        IFS='|' read -r ent opt editable enabled notify_level loop_detect \
+            should_notify prompt recur source shortcut_fk \
+            disable_reason identifier \
+            < <(_sdb "SELECT Z_ENT, Z_OPT, ZEDITABLESHORTCUT, ZENABLED,
+                       ZNOTIFICATIONLEVEL, ZPOTENTIALLOOPDETECTED, ZSHOULDNOTIFY,
+                       ZSHOULDPROMPT, ZSHOULDRECUR, ZSOURCE, ZSHORTCUT,
+                       COALESCE(ZDISABLEMENTREASON,''), ZIDENTIFIER
+                FROM ZTRIGGER WHERE Z_PK = $pk;")
+
+        local tmpblob
+        tmpblob=$(mktemp /tmp/scut-blob-XXXXXX.plist)
+        _sdb "SELECT writefile('$tmpblob', ZDATA) FROM ZTRIGGER WHERE Z_PK = $pk;" >/dev/null
+
+        if [[ "${argc_json:-}" == "1" ]]; then
+            _require_jq
+            local classname schedule decoded
+            classname=$(_trigger_classname "$tmpblob")
+            schedule=$(_trigger_schedule "$tmpblob")
+            decoded=$(plutil -p "$tmpblob" 2>/dev/null)
+            rm -f "$tmpblob"
+
+            jq -n \
+                --arg pk "$pk" \
+                --arg shortcut "$name" \
+                --arg enabled "$enabled" \
+                --arg prompt "$prompt" \
+                --arg recur "$recur" \
+                --arg type "$classname" \
+                --arg schedule "$schedule" \
+                --arg id "$identifier" \
+                --arg editable "$editable" \
+                --arg source "$source" \
+                --arg disable_reason "$disable_reason" \
+                --arg decoded "$decoded" \
+                '{
+                    z_pk: ($pk|tonumber),
+                    shortcut: $shortcut,
+                    enabled: ($enabled == "1"),
+                    prompt: ($prompt == "1"),
+                    recur: ($recur == "1"),
+                    editable: ($editable == "1"),
+                    trigger_type: $type,
+                    schedule: ($schedule|ltrimstr(" ")),
+                    identifier: $id,
+                    source: ($source|tonumber),
+                    disable_reason: (if $disable_reason == "" then null else $disable_reason end),
+                    decoded_data: $decoded
+                }'
+        else
+            local classname schedule
+            classname=$(_trigger_classname "$tmpblob")
+            schedule=$(_trigger_schedule "$tmpblob")
+
+            echo "═══════════════════════════════════════════════════════════"
+            echo "Automation for: $name"
+            echo "───────────────────────────────────────────────────────────"
+            echo "  Z_PK:           $pk"
+            echo "  Identifier:     $identifier"
+            echo "  Trigger type:   $classname"
+            echo "  Schedule:       $schedule"
+            echo "  Enabled:        $([ "$enabled" == "1" ] && echo "yes" || echo "no")"
+            echo "  Ask before run: $([ "$prompt" == "1" ] && echo "yes" || echo "no")"
+            echo "  Repeat:         $([ "$recur" == "1" ] && echo "yes" || echo "no")"
+            echo "  Editable:       $([ "$editable" == "1" ] && echo "yes" || echo "no")"
+            echo "  Source:         $source"
+            [[ -n "$disable_reason" ]] && echo "  Disabled reason: $disable_reason"
+            echo ""
+            echo "  Decoded ZDATA:"
+            plutil -p "$tmpblob" 2>/dev/null | sed 's/^/    /'
+            rm -f "$tmpblob"
+            echo "═══════════════════════════════════════════════════════════"
+        fi
+    done <<< "$triggers"
+}
+
+# @cmd Enable automation(s) for a shortcut
+# @arg name! Shortcut name
+auto::enable() {
+    _require_shortcuts_db
+    local name="${argc_name}"
+
+    local shortcut_pk
+    shortcut_pk=$(_resolve_shortcut "$name")
+    if [[ -z "$shortcut_pk" ]]; then
+        _die "Shortcut '$name' not found"
+    fi
+
+    local count
+    count=$(_sdb "SELECT COUNT(*) FROM ZTRIGGER WHERE ZSHORTCUT = $shortcut_pk;")
+    if [[ "$count" -eq 0 ]]; then
+        _die "No automations found for '$name'"
+    fi
+
+    _sdb "UPDATE ZTRIGGER SET ZENABLED = 1 WHERE ZSHORTCUT = $shortcut_pk;"
+    echo "Enabled $count automation(s) for '$name'"
+}
+
+# @cmd Disable automation(s) for a shortcut
+# @arg name! Shortcut name
+auto::disable() {
+    _require_shortcuts_db
+    local name="${argc_name}"
+
+    local shortcut_pk
+    shortcut_pk=$(_resolve_shortcut "$name")
+    if [[ -z "$shortcut_pk" ]]; then
+        _die "Shortcut '$name' not found"
+    fi
+
+    local count
+    count=$(_sdb "SELECT COUNT(*) FROM ZTRIGGER WHERE ZSHORTCUT = $shortcut_pk;")
+    if [[ "$count" -eq 0 ]]; then
+        _die "No automations found for '$name'"
+    fi
+
+    _sdb "UPDATE ZTRIGGER SET ZENABLED = 0 WHERE ZSHORTCUT = $shortcut_pk;"
+    echo "Disabled $count automation(s) for '$name'"
+}
+
+# @cmd Delete automation(s) for a shortcut
+# @arg name! Shortcut name
+# @flag --force Skip confirmation
+auto::delete() {
+    _require_shortcuts_db
+    local name="${argc_name}"
+
+    local shortcut_pk
+    shortcut_pk=$(_resolve_shortcut "$name")
+    if [[ -z "$shortcut_pk" ]]; then
+        _die "Shortcut '$name' not found"
+    fi
+
+    local count
+    count=$(_sdb "SELECT COUNT(*) FROM ZTRIGGER WHERE ZSHORTCUT = $shortcut_pk;")
+    if [[ "$count" -eq 0 ]]; then
+        _die "No automations found for '$name'"
+    fi
+
+    if [[ "${argc_force:-}" != "1" ]]; then
+        echo "Automations for '$name' ($count):"
+        while IFS='|' read -r pk; do
+            local tmpblob
+            tmpblob=$(mktemp /tmp/scut-blob-XXXXXX.plist)
+            _sdb "SELECT writefile('$tmpblob', ZDATA) FROM ZTRIGGER WHERE Z_PK = $pk;" >/dev/null
+            local classname schedule
+            classname=$(_trigger_classname "$tmpblob")
+            schedule=$(_trigger_schedule "$tmpblob")
+            rm -f "$tmpblob"
+            echo "  - ${classname#WF}: $schedule"
+        done < <(_sdb "SELECT Z_PK FROM ZTRIGGER WHERE ZSHORTCUT = $shortcut_pk;")
+        printf "Delete all? [y/N] "
+        read -r confirm
+        [[ "$confirm" =~ ^[Yy] ]] || { echo "Cancelled."; return; }
+    fi
+
+    # CoreData's AFTER DELETE trigger calls a runtime-only function — drop/recreate around DELETE
+    local cd_trigger_sql
+    cd_trigger_sql=$(_sdb "SELECT sql FROM sqlite_master
+                           WHERE name='Z_DA_ZTRIGGER_Shortcut_triggerCount_PARAMETER_DELETE';")
+
+    _sdb "DROP TRIGGER IF EXISTS Z_DA_ZTRIGGER_Shortcut_triggerCount_PARAMETER_DELETE;
+          BEGIN TRANSACTION;
+          DELETE FROM ZTRIGGER WHERE ZSHORTCUT = $shortcut_pk;
+          UPDATE ZSHORTCUT SET ZTRIGGERCOUNT = IFNULL(ZTRIGGERCOUNT, 0) - $count
+              WHERE Z_PK = $shortcut_pk;
+          COMMIT;
+          $cd_trigger_sql;"
+    echo "Deleted $count automation(s) for '$name'"
+}
+
+# @cmd Create a time-of-day automation for a shortcut
+# @arg name! Shortcut name
+# @option --time! <HH:MM> Time to trigger (24h format)
+# @option --days Comma-separated days (mon,tue,...,sun or "daily" or "weekdays" or "weekends")
+# @flag --prompt Ask before running
+# @flag --no-repeat Run only once (default: repeat)
+auto::create() {
+    _require_shortcuts_db
+    local name="${argc_name}"
+    local time_str="${argc_time}"
+
+    # Parse time
+    if [[ ! "$time_str" =~ ^([0-9]{1,2}):([0-9]{2})$ ]]; then
+        _die "Invalid time format '$time_str' — use HH:MM (24h)"
+    fi
+    local hour=$((10#${BASH_REMATCH[1]}))
+    local minute=$((10#${BASH_REMATCH[2]}))
+    if [[ "$hour" -gt 23 || "$minute" -gt 59 ]]; then
+        _die "Invalid time '$time_str' — hour 0-23, minute 0-59"
+    fi
+
+    # Parse days
+    local days_input="${argc_days:-daily}"
+    local days=()
+    case "$days_input" in
+        daily)    days=(1 2 3 4 5 6 7);;
+        weekdays) days=(2 3 4 5 6);;
+        weekends) days=(1 7);;
+        *)
+            IFS=',' read -ra day_names <<< "$days_input"
+            for dn in "${day_names[@]}"; do
+                local num
+                num=$(_day_num "$dn")
+                if [[ -z "$num" ]]; then
+                    _die "Unknown day '$dn' — use mon,tue,wed,thu,fri,sat,sun"
+                fi
+                days+=("$num")
+            done
+            ;;
+    esac
+
+    if [[ ${#days[@]} -eq 0 ]]; then
+        _die "No days specified"
+    fi
+
+    # Resolve shortcut
+    local shortcut_pk
+    shortcut_pk=$(_resolve_shortcut "$name")
+    if [[ -z "$shortcut_pk" ]]; then
+        _die "Shortcut '$name' not found"
+    fi
+
+    # Generate UUID
+    local uuid
+    uuid=$(uuidgen)
+
+    # Build plist hex
+    local hex
+    hex=$(_build_time_trigger_hex "$hour" "$minute" "${days[@]}")
+
+    # Determine settings
+    local enabled=1
+    local prompt=0
+    local recur=1
+    [[ "${argc_prompt:-}" == "1" ]] && prompt=1
+    [[ "${argc_no_repeat:-}" == "1" ]] && recur=0
+
+    # Get next Z_PK
+    local next_pk
+    next_pk=$(_sdb "SELECT Z_MAX + 1 FROM Z_PRIMARYKEY WHERE Z_ENT = 16;")
+
+    # CoreData's AFTER INSERT trigger calls NSCoreDataDATriggerUpdatedAffectedObjectValue()
+    # which only exists inside the Shortcuts app runtime. We must temporarily drop it,
+    # do our insert + manual ZTRIGGERCOUNT update, then recreate the trigger.
+    local cd_trigger_sql
+    cd_trigger_sql=$(_sdb "SELECT sql FROM sqlite_master
+                           WHERE name='Z_DA_ZTRIGGER_Shortcut_triggerCount_PARAMETER_INSERT';")
+
+    _sdb "DROP TRIGGER IF EXISTS Z_DA_ZTRIGGER_Shortcut_triggerCount_PARAMETER_INSERT;
+          BEGIN TRANSACTION;
+          UPDATE Z_PRIMARYKEY SET Z_MAX = $next_pk WHERE Z_ENT = 16;
+          INSERT INTO ZTRIGGER (Z_PK, Z_ENT, Z_OPT, ZEDITABLESHORTCUT, ZENABLED,
+              ZNOTIFICATIONLEVEL, ZPOTENTIALLOOPDETECTED, ZSHOULDNOTIFY,
+              ZSHOULDPROMPT, ZSHOULDRECUR, ZSOURCE, ZSHORTCUT,
+              ZDISABLEMENTREASON, ZIDENTIFIER, ZDATA)
+          VALUES ($next_pk, 16, 1, 1, $enabled, 0, 0, 0, $prompt, $recur, 0,
+                  $shortcut_pk, NULL, '$uuid', x'$hex');
+          UPDATE ZSHORTCUT SET ZTRIGGERCOUNT = IFNULL(ZTRIGGERCOUNT, 0) + 1
+              WHERE Z_PK = $shortcut_pk;
+          COMMIT;
+          $cd_trigger_sql;"
+
+    # Format days for display
+    local days_display
+    if [[ ${#days[@]} -eq 7 ]]; then
+        days_display="daily"
+    elif [[ "${days[*]}" == "2 3 4 5 6" ]]; then
+        days_display="weekdays"
+    elif [[ "${days[*]}" == "1 7" ]]; then
+        days_display="weekends"
+    else
+        local names=()
+        for d in "${days[@]}"; do
+            names+=("$(_day_short "$d")")
+        done
+        days_display=$(IFS=,; echo "${names[*]}")
+    fi
+
+    printf "Created automation: %s at %02d:%02d %s\n" "$name" "$hour" "$minute" "$days_display"
+    echo "  UUID: $uuid"
+    [[ "$prompt" == "1" ]] && echo "  Ask before running: yes" || true
+    [[ "$recur" == "0" ]] && echo "  Repeat: no" || true
 }
 
 # ─── Dispatcher ──────────────────────────────────────────────────────

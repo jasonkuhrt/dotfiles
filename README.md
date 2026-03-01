@@ -66,6 +66,7 @@ Project-local CC config for this repo lives in `.claude/` at the repo root, mana
 - [How it works](docs/how-it-works.md) — naming conventions, script inventory, commands reference
 - [Manual setup](docs/manual-setup.md) — post-apply steps (GitHub auth, email, macOS settings)
 - [CLI tools](docs/cli-tools.md) — reference for installed tools and shell abbreviations
+- [Neovim](docs/neovim.md) — LazyExtras strategy, AI stack, plugin decisions, skip list
 - [Node setup](docs/node-setup.md) — Node/pnpm/npm toolchain
 - [Known limitations](docs/known-limitations.md) — bugs, workarounds, manual intervention
 - [Decisions](DECISIONS.md) — architecture decision records

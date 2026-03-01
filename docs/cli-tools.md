@@ -31,6 +31,8 @@ Full list in `home/dot_config/fish/config.fish`.
 | Files       | `sd`         | Simpler sed                           | `sd 'foo' 'bar' file.txt`                       |
 | Files       | `tree`       | Directory tree view                   | `tree -L 2`                                     |
 | Files       | `unar`       | Universal archive extractor           | `unar file.zip`, `unar file.tar.gz`             |
+| Files       | `yazi`       | Terminal file manager (Rust, previews)| `yazi`, `yazi /path/to/dir`                      |
+| Files       | `7z`         | 7-Zip archive tool                    | `7z x archive.7z`, `7z a out.7z dir/`           |
 | **Logs**    | `lnav`       | Log navigator (search, filter, SQL)   | `lnav app.log`, `less +F` for quick             |
 | Logs        | `multitail`  | Tail multiple files in split view     | `multitail file1.log file2.log`                 |
 | **Monitor** | `btm`        | Modern system monitor (replaces top)  | `btm`                                           |
@@ -49,7 +51,7 @@ Full list in `home/dot_config/fish/config.fish`.
 | Data        | `yj`         | Convert between YAML/JSON/TOML        | `yj < config.yaml > config.json`                |
 | **Search**  | `fzf`        | Fuzzy finder for anything             | `ctrl+r` (history), `vim $(fzf)`                |
 | Search      | `tldr`       | Simplified man pages with examples    | `tldr tar`, `tldr git rebase`                   |
-| Search      | `z`          | Jump to frecent directories           | `z proj` → `~/projects`                         |
+| Search      | `z` (zoxide) | Jump to frecent directories           | `z proj` → `~/projects`                         |
 | **Git**     | `gh`         | GitHub CLI (PRs, issues, repos)       | `gh pr create`, `gh issue list`                 |
 | Git         | `git-crypt`  | Encrypt files in git transparently    | `git-crypt init`                                |
 | Git         | `git-delta`  | Better git diffs                      | (auto via gitconfig)                            |
@@ -75,6 +77,7 @@ Full list in `home/dot_config/fish/config.fish`.
 | Shell       | `shfmt`      | Format shell scripts                  | `shfmt -w script.sh`                            |
 | Shell       | `starship`   | Cross-shell prompt                    | config: `~/.config/starship.toml`               |
 | Shell       | `up`         | Interactive piping (Ultimate Plumber) | `cat file \| up`                                |
+| **Media**   | `ffmpeg`     | Audio/video processing Swiss Army knife | `ffmpeg -i in.mp4 out.gif`                    |
 | **Docs**    | `glow`       | Render markdown in terminal           | `glow README.md`                                |
 | Docs        | `mdcat`      | Render markdown (alternative)         | `mdcat README.md`                               |
 | Docs        | `pandoc`     | Convert between doc formats           | `pandoc doc.md -o doc.pdf`                      |

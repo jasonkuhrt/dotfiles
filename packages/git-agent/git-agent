@@ -280,14 +280,21 @@ _ensure_installed() {
 
 # @cmd Show current status
 # @meta default-subcommand
+# @flag --json Output as JSON
 status() {
   require_git
-  local commit push
+  local commit push installed
   commit="$(read_gate commit)"
   push="$(read_gate push)"
+  is_installed && installed=true || installed=false
+
+  if [[ "${argc_json:-}" -eq 1 ]]; then
+    printf '{"installed":%s,"commit":"%s","push":"%s"}\n' "$installed" "$commit" "$push"
+    return
+  fi
 
   printf "git-agent"
-  if is_installed; then
+  if "$installed"; then
     printf " (installed)\n"
   else
     printf " (not installed)\n"

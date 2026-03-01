@@ -126,6 +126,15 @@ MANAGED='
         "hooks": [
           {
             "type": "command",
+            "command": "~/.claude/hooks/scripts/compact-name-restore.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "~/.claude/skills/flo_next/scripts/compact-recovery.sh",
             "timeout": 30
           }

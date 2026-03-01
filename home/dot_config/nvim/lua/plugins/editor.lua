@@ -1,15 +1,5 @@
 return {
-  -- Telescope: use horizontal layout with prompt at top
-  {
-    "nvim-telescope/telescope.nvim",
-    opts = {
-      defaults = {
-        layout_strategy = "horizontal",
-        layout_config = { prompt_position = "top" },
-        sorting_strategy = "ascending",
-      },
-    },
-  },
+  { "nvim-telescope/telescope.nvim", enabled = false },
 
   -- Disable lualine (replaced by mini.statusline)
   { "nvim-lualine/lualine.nvim", enabled = false },

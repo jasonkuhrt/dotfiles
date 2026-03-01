@@ -267,6 +267,10 @@ if test "$TERM_PROGRAM" != zed
     bind -M insert -m default k,j cancel repaint-mode
     set -g fish_sequence_key_delay_ms 200
 
+    # Ctrl+J/K navigate the tab-completion pager like arrow keys
+    bind -M pager \ck up-or-search
+    bind -M pager \cj down-or-search
+
     # Cursor shapes per mode (visual feedback)
     set -g fish_cursor_default block
     set -g fish_cursor_insert line

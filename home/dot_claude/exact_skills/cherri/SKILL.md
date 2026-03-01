@@ -12,13 +12,13 @@ REQUIRED SUB-SKILL: apple-shortcuts — for discovering actions, persistent conf
 ## Compilation
 
 ```bash
-scut build file.cherri              # Compile + sign via macOS/AppleID
-scut build file.cherri --hubsign    # Sign via RoutineHub (fallback)
-scut build file.cherri --skip-sign  # Unsigned (won't import on macOS)
-scut run file.cherri                # Compile, sign, and run
+scut dev build file.cherri              # Compile + sign via macOS/AppleID
+scut dev build file.cherri --hubsign    # Sign via RoutineHub (fallback)
+scut dev build file.cherri --skip-sign  # Unsigned (won't import on macOS)
+scut dev run file.cherri                # Compile, sign, and run
 ```
 
-Override compiler: `SCUT_CHERRI=/path/to/fork scut build file.cherri`
+Override compiler: `SCUT_CHERRI=/path/to/fork scut dev build file.cherri`
 
 ## Action Discovery
 
@@ -27,7 +27,7 @@ scut search "music library"         # Find actions by keyword
 scut params AddMusicToLibrary       # Show parameters + knowledge
 scut cherri AddMusicToLibrary       # Generate rawAction() snippet
 scut identifier "Global Variables"  # Display name → action ID
-scut try <identifier> --param k=v   # Quick-test an action
+scut dev try <identifier> --param k=v   # Quick-test an action
 ```
 
 ## Syntax Reference

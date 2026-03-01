@@ -16,14 +16,23 @@ scut search <term>                  # Full-text search actions
 scut params <action>                # Show parameters + knowledge
 scut identifier <display-name>     # Display name → action ID
 scut cherri <action>                # Generate rawAction() snippet
-scut dump <shortcut-name>           # Export installed shortcut as plist
 scut scan                           # Coverage report: verified vs uncurated
 scut community                      # Dev community resources + references
-scut build <file.cherri>            # Compile (routes to cherri)
-scut try <identifier> --param k=v   # Quick-test an action
 ```
 
 All commands support `--json` for machine-readable output.
+
+## Development Commands
+
+`scut dev` groups all authoring/debugging commands for building shortcuts from code.
+
+```bash
+scut dev build <file.cherri>            # Compile (routes to cherri)
+scut dev run <file.cherri>              # Compile and run
+scut dev try <identifier> --param k=v   # Quick-test an action
+scut dev dump <shortcut-name>           # Export installed shortcut as plist
+scut dev import <file.shortcut>         # Import a .shortcut file
+```
 
 ## Managing Installed Shortcuts
 
@@ -64,7 +73,7 @@ shortcuts run "My Shortcut"             # Run by name (macOS built-in)
 shortcuts run "My Shortcut" <<< "input" # Run with stdin input
 ```
 
-Note: `scut run` compiles `.cherri` files — use the macOS `shortcuts` command for running installed shortcuts by name.
+Note: `scut dev run` compiles `.cherri` files — use the macOS `shortcuts` command for running installed shortcuts by name.
 
 ## Shortcuts Storage
 
@@ -77,7 +86,7 @@ Requires **Full Disk Access** for your terminal app.
 
 ## macOS Signing Requirement
 
-macOS will not import unsigned shortcuts. Use `scut build` (default signs via macOS/AppleID).
+macOS will not import unsigned shortcuts. Use `scut dev build` (default signs via macOS/AppleID).
 
 ## Integration with Cherri
 

@@ -791,13 +791,16 @@ learn() {
     echo "Added example '$label' to $action_short in $(basename "$kfile")"
 }
 
-# ─── Phase 3: Workflow Routing + Debugging ────────────────────────────
+# ─── Phase 3: Development ─────────────────────────────────────────────
+
+# @cmd Development commands: compile, run, test, dump, import
+dev() { :; }
 
 # @cmd Compile a .cherri file (routes to cherri compiler)
 # @arg file! Path to .cherri file
 # @flag --skip-sign Skip signing (syntax check only)
 # @flag --hubsign Sign via RoutineHub instead of macOS
-build() {
+dev::build() {
     command -v "$CHERRI" &>/dev/null || _die "cherri not found. Install: brew tap electrikmilk/cherri && brew install electrikmilk/cherri/cherri
   Or set SCUT_CHERRI to point to your fork."
 
@@ -810,8 +813,8 @@ build() {
 
 # @cmd Compile and run a shortcut
 # @arg file! Path to .cherri file
-run() {
-    build
+dev::run() {
+    dev::build
     # Extract shortcut name from #define name in the file
     local name
     name=$(grep -E '^#define name ' "${argc_file}" | sed 's/^#define name //')
@@ -827,7 +830,7 @@ run() {
 # @cmd Quick-test an action: generate tmp .cherri, compile, run, cleanup
 # @arg identifier! Full action identifier
 # @option --param* key=value parameters
-try() {
+dev::try() {
     command -v "$CHERRI" &>/dev/null || _die "cherri not found"
 
     local action_id="${argc_identifier}"
@@ -886,7 +889,7 @@ EOF
 # @cmd Export installed shortcut as readable plist
 # @arg name! Shortcut name
 # @flag --json Output as JSON instead of plist
-dump() {
+dev::dump() {
     _require_shortcuts_db
     local name="${argc_name}"
 
@@ -932,7 +935,7 @@ dump() {
 
 # @cmd Import a .shortcut file (opens Shortcuts.app import dialog)
 # @arg file! Path to .shortcut file
-import() {
+dev::import() {
     local file="${argc_file}"
     [[ -f "$file" ]] || _die "File not found: $file"
     echo "Opening Shortcuts import dialog..."

@@ -1,13 +1,8 @@
 #
-# NOTE: Kitty is now the primary terminal (hjkl navigation via smart-splits.nvim).
-# This config is retained for standalone/fallback use.
-#
-#
-# Ghostty Config
+# Ghostty Config (read by cmux — primary terminal)
 #
 # Reference:
 # https://ghostty.org/docs/config/reference
-#
 #
 
 theme = tokyonight
@@ -56,18 +51,6 @@ bell-features = attention
 keybind = ctrl+apostrophe=clear_screen
 keybind = shift+enter=text:\n
 
-# Split navigation (symmetric with Zed pane navigation)
-keybind = ctrl+h=goto_split:left
-keybind = ctrl+j=goto_split:down
-keybind = ctrl+k=goto_split:up
-keybind = ctrl+l=goto_split:right
-
-# Split creation (symmetric with Zed)
-keybind = ctrl+cmd+h=new_split:left
-keybind = ctrl+cmd+j=new_split:down
-keybind = ctrl+cmd+k=new_split:up
-keybind = ctrl+cmd+l=new_split:right
-
-# Split management
-keybind = ctrl+cmd+z=toggle_split_zoom
-keybind = ctrl+cmd+0=equalize_splits
+# Split navigation/creation/management removed — cmux handles natively (⌥⌘+Arrows).
+# Ctrl+H/J/K/L freed for passthrough to apps (Neovim, fish, etc.).
+# See dotfiles-8sx epic for the full layered keybinding vision.

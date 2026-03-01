@@ -39,6 +39,8 @@ brew "fzf"           # fuzzy finder
 brew "television"    # fuzzy finder (Telescope-style, Rust)
 brew "tree"          # directory tree view
 brew "tldr"          # simplified man pages
+brew "zoxide"        # smart cd (frecency-based, z/cd replacement)
+brew "yazi"          # terminal file manager (Rust, image previews, plugins)
 
 # Data processing
 brew "jq"            # JSON processor
@@ -100,6 +102,7 @@ brew "watch"         # run command repeatedly
 brew "watchman"      # file watcher
 brew "wget"
 brew "unar"          # universal archive extractor
+brew "sevenzip"      # 7-Zip (yazi archive preview)
 # TEMPORARILY DISABLED (2026-02-17): upstream v0.2.4 asset checksum
 # does not match tap formula checksum; re-enable when fixed upstream.
 # brew "polidog/kilar/kilar"  # interactive port/process manager
@@ -180,6 +183,7 @@ cask "aerial"         # Apple TV aerials
 # ═══════════════════════════════════════════════════════════
 cask "font-fira-code"
 cask "font-monaspace"
+cask "font-symbols-only-nerd-font"  # icon glyphs (yazi, terminal)
 
 # ═══════════════════════════════════════════════════════════
 # Mac App Store
@@ -199,6 +203,9 @@ mas "Actions", id: 1586435171          # 180+ utility actions (Sindre Sorhus)
 # - Scriptable: https://apps.apple.com/app/id1405459188 (iOS only)
 
 # ═══════════════════════════════════════════════════════════
-# CLI Tools (overflow)
+# Media & rendering (yazi preview deps + general use)
 # ═══════════════════════════════════════════════════════════
-brew "imagemagick"
+brew "ffmpeg"        # media processing (yazi video previews)
+brew "imagemagick"   # image processing
+brew "poppler"       # PDF rendering (yazi PDF previews)
+brew "resvg"         # SVG rendering (yazi SVG previews)

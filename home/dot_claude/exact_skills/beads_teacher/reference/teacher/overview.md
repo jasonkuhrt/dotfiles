@@ -149,8 +149,8 @@ Practical patterns for getting value from beads once set up. Sourced from commun
 
 ### Session Discipline
 
-- **Start** — `bd ready` → pick issue → `bd update <id> --status=in_progress`
-- **End** — close completed issues → `bd sync` → `git push`
+- **Start** — `bd dolt pull` → `bd ready` → pick issue → `bd update <id> --status=in_progress`
+- **End** — close completed issues → `bd dolt push` → `git push`
 - **"Land the plane"** — work isn't done until `git push` succeeds. Run quality gates, file discovered work, close issues, sync, push.
 - **Kill sessions early** — if CC starts forgetting beads mid-session, end it. Fresh session > fighting context rot. Yegge's guidance: "kill agents after completing each issue."
 
@@ -182,7 +182,7 @@ Use `bd close --reason="..."` to capture what changed from the original spec. Fu
 
 ## Architecture
 
-See [architecture.md](architecture.md) for storage model (SQLite + JSONL dual-store), sync mechanics, conflict resolution, and closure semantics.
+See [architecture.md](architecture.md) for the Dolt storage model, remote sync mechanics, conflict resolution, and closure semantics.
 
 ## Beads vs CC Tasks
 

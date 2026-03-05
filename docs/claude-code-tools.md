@@ -7,7 +7,7 @@ Quick reference for all Claude Code plugins, MCP servers, and hooks in this setu
 | Category         | Plugin                       | What it does                                           | Key skills / commands                                  |
 | ---------------- | ---------------------------- | ------------------------------------------------------ | ------------------------------------------------------ |
 | **Workflow**      | `superpowers`               | Structured dev workflows — planning, TDD, debugging    | brainstorming, writing-plans, systematic-debugging, TDD |
-| Workflow          | `beads`                     | Git-backed issue tracker with cross-session persistence | create, close, ready, sync, epic, dep                  |
+| Workflow          | `beads`                     | Git-backed issue tracker with cross-session persistence | create, close, ready, dolt pull/push, epic, dep         |
 | **Code Quality**  | `code-review`               | PR code review                                         | `/code-review`                                         |
 | Code Quality      | `plannotator`               | Interactive visual code review UI                      | `/plannotator-review`                                  |
 | Code Quality      | `typescript-lsp`            | TypeScript language server integration                 | Type checking, go-to-definition                        |

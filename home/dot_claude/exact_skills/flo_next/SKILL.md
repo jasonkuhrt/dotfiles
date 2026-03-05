@@ -78,11 +78,11 @@ Work through an epic one bead at a time with full chain awareness. Additive to b
 If you just completed a bead and are taking the next one **without clearing context**, use the lighter hot path. Epic fields and design docs are already in your window.
 
 ```
-bd sync --import 2>/dev/null
+bd dolt pull 2>/dev/null
 bash ~/.claude/skills/flo_next/scripts/context.sh --hot
 ```
 
-**Always sync before hot next.** Other agents may have closed beads, added comments, or changed dependencies since you started working. `bd sync --import` pulls their changes so the context dump reflects current state.
+**Always refresh before hot next.** Other agents may have closed beads, added comments, or changed dependencies since you started working. `bd dolt pull` pulls the latest shared bead state so the context dump reflects current data.
 
 The hot output includes: recently closed beads (with timestamps), dependency graph, ready list, claimed list, and blocked list — all fetched fresh from `bd`. Then jump to **step 4** (choose bead).
 
@@ -203,7 +203,7 @@ bd comments add <epic-id> "Session: <what was learned or decided>"
 ```
 git add <files> && git commit -m "..."
 bd close <id> --reason "..." --session <full-session-id> --suggest-next
-bd sync
+bd dolt push
 git push
 ```
 
@@ -218,7 +218,7 @@ git push
 | Skipping the dependency graph            | Always show `bd graph` output — the user needs the visual map       |
 | Hand-rolling a ready list                | Use `bd ready --parent` — it is authoritative; never reimplement it |
 | Assuming hot path = skip chain trace     | Other agents may have closed beads — check for new predecessors     |
-| Skipping sync before hot next            | Always `bd sync --import` before hot path — state may have changed  |
+| Skipping refresh before hot next         | Always `bd dolt pull` before hot path — state may have changed |
 | Skipping chain trace                     | Always read predecessor's close reason before starting              |
 | Closing without downstream check         | The CRITICAL section is non-negotiable — do it every time           |
 | Using stale terminology                  | Design docs are authority over bead body text                       |
@@ -233,7 +233,7 @@ A `SessionStart` hook (`compact-recovery.sh`) automatically fires after context 
 
 1. Detects that the session was compacted (source=`compact`)
 2. Resolves the epic from the git branch
-3. Syncs with remote (`bd sync --import`)
+3. Pulls latest shared bead state (`bd dolt pull`)
 4. Finds the in_progress bead claimed by this session (matches session prefix in assignee)
 5. Outputs the bead body and recovery instructions as a system message
 
@@ -245,7 +245,7 @@ A `SessionStart` hook (`compact-recovery.sh`) automatically fires after context 
 
 ## Notes
 
-- This skill layers on top of the beads session protocol. It does not replace `bd ready`, `bd sync`, or the session close checklist — it adds chain tracing and plan integrity checking.
+- This skill layers on top of the beads session protocol. It does not replace `bd ready` or the session close checklist — it adds chain tracing and plan integrity checking.
 - Git commit/push permissions come from the beads session protocol, not this skill's `allowed-tools`.
 - The context script is zero-token when the agent reads the stdout. The script source is never loaded.
 - For parallel agent sessions (1-3 concurrent), each agent runs its own `flo:next` entry. The `--claim --actor` flag is the concurrency primitive — it atomically sets assignee + status and fails if another agent already claimed the bead. Each agent uses its session ID (from the conversation start message) to form a unique actor identity: `<git user.name>/<session-id-first-8-chars>`.

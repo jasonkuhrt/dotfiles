@@ -193,7 +193,7 @@ You are completing bead <BEAD_ID> (part of epic <EPIC_ID>) in <REPO_PATH>.
 
 ## Constraints
 - Only modify files relevant to this bead. Other agents are running concurrently.
-- Do NOT run bd sync, git push, or any session close protocol — the orchestrator handles that.
+- Do NOT run `bd dolt pull`, `bd dolt push`, `git push`, or any session close protocol — the orchestrator handles that.
 ```
 
 ### Briefing Notes
@@ -259,7 +259,7 @@ After all tasks complete:
 5. **Commit** (if `--commit false`): `git add <files> && git commit -m "feat: <epic summary>"`
 6. **Epic status**: `bd epic status`
 7. **Close-eligible**: if all children done: `bd epic close-eligible`
-8. **Sync + push**: `bd sync && git push`
+8. **Persist + push**: `bd dolt push && git push`
 
 ## Common Mistakes
 
@@ -268,7 +268,7 @@ After all tasks complete:
 | Skipping bead body loading | Load ALL bodies upfront — enables briefings and overlap detection |
 | Overlapping files in same wave | Warn user, suggest sequential for those beads |
 | Not mirroring bead deps as task deps | Use addBlockedBy on CC tasks — CC handles execution ordering |
-| Subagent running bd sync / git push | Briefing says "skip session close protocol — orchestrator handles" |
+| Subagent running bd dolt pull/push or git push | Briefing says "skip session close protocol — orchestrator handles" |
 | Skipping downstream integrity check | Non-negotiable — same rule as flo:next, runs once at wrap-up |
 | Using bd prime in subagent briefing | Subagents don't get SessionStart hooks — briefing IS the instruction |
 | Dispatching wave 2 before wave 1 completes | Check TaskList for completed blockers before dispatching next wave |

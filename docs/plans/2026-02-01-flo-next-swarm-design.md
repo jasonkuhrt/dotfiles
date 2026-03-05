@@ -166,7 +166,7 @@ Key implications:
 
 **Tested empirically:** `SessionStart` hooks do NOT fire inside Task subagents. The beads plugin's `bd prime` hook (which injects session close protocol) does not run in subagents.
 
-This is desirable for swarm — the `bd prime` session close protocol tells agents to `git commit`, `git push`, `bd sync` before finishing, which would conflict with the orchestrator-managed wrap-up. Subagents instead receive only the orchestrator's focused briefing as their sole instruction source.
+This is desirable for swarm — the `bd prime` session close protocol tells agents to `git commit` and `git push` before finishing, which would conflict with the orchestrator-managed wrap-up. Subagents instead receive only the orchestrator's focused briefing as their sole instruction source.
 
 Subagents DO receive:
 - Standard CC system prompt
@@ -229,7 +229,7 @@ After all tasks complete:
 4. If `--commit false`: stage all changes and commit as one (`git add <files> && git commit -m "feat: <epic summary>"`)
 5. Check epic completion: `bd epic status`
 6. If all children done: `bd epic close-eligible`
-7. `bd sync`
+7. `bd dolt push`
 8. `git push`
 
 ## Relationship to Flo Suite

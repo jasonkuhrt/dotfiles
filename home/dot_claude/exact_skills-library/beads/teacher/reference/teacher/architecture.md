@@ -8,40 +8,48 @@ See [architecture.d2](architecture.d2) for the data flow diagram.
 
 __Git-tracked__ (shared with team):
 
-| File                 | Purpose                  |
-| -------------------- | ------------------------ |
-| `issues.jsonl`       | Portable issue database  |
-| `interactions.jsonl` | Audit log                |
-| `config.yaml`        | Project config           |
-| `README.md`          | Project readme           |
-| `.gitignore`         | Tracks what's local-only |
+| File                 | Purpose                                              |
+| -------------------- | ---------------------------------------------------- |
+| `config.yaml`        | Project-level beads config                           |
+| `README.md`          | Local project notes for beads                        |
+| `.gitignore`         | Defines local-only beads artifacts                   |
+| `issues.jsonl`       | Optional export snapshot for portability/audits      |
+| `interactions.jsonl` | Optional audit/event export (if enabled)             |
 
 __Git-ignored__ (local per machine):
 
-| File                                                        | Purpose                    |
-| ----------------------------------------------------------- | -------------------------- |
-| `beads.db`, `*.db-wal`, `*.db-shm`                          | SQLite runtime store       |
-| `daemon.lock`, `daemon.pid`, `daemon.log`                   | Daemon runtime             |
-| `bd.sock`                                                   | Unix socket for daemon IPC |
-| `export-state/`, `sync-state.json`                          | Sync bookkeeping           |
-| `beads.base.jsonl`, `beads.left.jsonl`, `beads.right.jsonl` | 3-way merge artifacts      |
+| File / directory                    | Purpose                                  |
+| ----------------------------------- | ---------------------------------------- |
+| `dolt/`                             | Local Dolt database data                 |
+| `dolt-server.*`, `dolt-monitor.pid` | Local Dolt server runtime                |
+| `bd.sock`, `daemon.*`               | Runtime IPC/locks/logs                   |
+| `export-state/`, `sync-state.json`  | Local sync bookkeeping                   |
+| `*.lock`, `last-touched`            | Local process coordination and metadata  |
+
+## Sync Model
+
+Modern beads sync uses Dolt remotes directly:
+
+* `bd dolt pull` to fetch latest issue state
+* `bd dolt push` to publish local issue updates
+* one-time remote setup per clone: `bd dolt remote add origin "$(git remote get-url origin)"`
+
+`git pull` / `git push` remain code sync operations; bead issue state sync is handled by Dolt.
 
 ## Conflict Resolution
 
-When both sides change beads between syncs, `bd sync` performs a __3-way merge__:
+Dolt maintains its own commit graph for issue data. If push is rejected:
 
-* `beads.base.jsonl` — last common synced state
-* `beads.left.jsonl` — your local changes
-* `beads.right.jsonl` — their remote changes
-
-Conflict strategy is configurable (default: `newest` wins). Check with `bd sync --status`.
+1. `bd dolt pull`
+2. resolve any reported Dolt conflicts
+3. `bd dolt push` again
 
 ## Closure Semantics
 
-`bd close --reason="..."` writes the reason into the JSONL record. This is how beads bridge sessions:
+`bd close --reason="..."` writes the closure result into the issue record. This is how beads bridge sessions:
 
-> When a future session reads a dependent bead and follows its `DEPENDS ON → <closed-bead>` link, it can `bd show <closed-bead>` and see the full close reason — which might contain an entire aligned spec. The conclusion captures _what changed_ from the original description, so future CC doesn't have to re-derive the design evolution.
+> When a future session reads a dependent bead and follows its `DEPENDS ON -> <closed-bead>` link, it can `bd show <closed-bead>` and see the full close reason — which might contain an entire aligned spec. The conclusion captures what changed from the original description, so future sessions do not need to re-derive design evolution.
 >
-> If the dependency is already satisfied (closed), the dependent bead is immediately workable — it shows `→ ✓ <closed-bead>` in its depends-on section.
+> If the dependency is already satisfied (closed), the dependent bead is immediately workable — it shows `-> closed` in depends-on output.
 
-__Example:__ A design bead proposes a standalone CLI. During review, the spec evolves to augment an existing CLI instead. The close reason captures the _final_ aligned spec — not the original description. A follow-up execution bead depends on the design bead and says "read its conclusion for the complete aligned design." Future CC follows the link, gets the evolved spec, and builds the right thing.
+__Example:__ A design bead proposes a standalone CLI. During review, the spec evolves to augment an existing CLI instead. The close reason captures the final aligned spec (not the stale original body). A follow-up execution bead depends on that design bead, reads the close reason, and implements the correct version.

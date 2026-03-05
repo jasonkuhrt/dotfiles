@@ -181,7 +181,7 @@ Use beads (`bd`) as the canonical task tracker. Prohibit TodoWrite, TaskCreate, 
 - Git-backed: tasks persist across sessions and machines
 - Dependencies: tasks can block/be-blocked-by other tasks
 - Labels: categorical organization (see `.beads/labels.yml`)
-- Sync: `bd sync` pushes state to remote
+- Sync: `bd dolt pull` / `bd dolt push` replicate state via Dolt remote
 - CLI interface works from any AI coding tool
 
 Source: `AGENTS.md`, system prompt configuration

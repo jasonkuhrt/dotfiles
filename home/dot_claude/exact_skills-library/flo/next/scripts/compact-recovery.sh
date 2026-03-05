@@ -35,8 +35,8 @@ if [[ -z "$epic_id" ]]; then
   exit 0
 fi
 
-# Sync to pick up any changes from concurrent agents
-bd sync --import 2>/dev/null || true
+# Pull latest shared bead state (no-op if already current)
+bd dolt pull 2>/dev/null || true
 
 # Find non-closed bead connected to this session (full session ID in comments).
 # Comments are the canonical session identity store — assignee is just a short label.

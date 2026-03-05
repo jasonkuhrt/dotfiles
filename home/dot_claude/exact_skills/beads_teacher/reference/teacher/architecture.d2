@@ -1,31 +1,33 @@
 direction: down
 
-jsonl: "issues.jsonl\n(source of truth, git-tracked)" {
-  shape: document
-}
-
-sqlite: "beads.db (SQLite)\n(local cache, git-ignored)" {
-  shape: cylinder
-}
-
-daemon: "bd daemon\n(WAL, IPC via bd.sock)" {
+cli: "bd CLI\n(create/close/update)" {
   shape: hexagon
 }
 
-cli: bd create / close / update
-
-git: git push / pull
-
-remote: remote_repo {
-  shape: cloud
-  label: Remote repo
+dolt_server: "Dolt SQL server\n(local process)" {
+  shape: hexagon
 }
 
-cli -> daemon: IPC {style.stroke-dash: 3}
-daemon -> sqlite: read/write
-sqlite -> jsonl: bd sync (export)
-jsonl -> sqlite: bd sync (import)
-jsonl -> git
-git -> remote
-remote -> git: pull
-git -> jsonl: updated JSONL
+dolt_db: "Dolt DB\n(.beads/dolt, git-ignored)" {
+  shape: cylinder
+}
+
+dolt_remote: "Dolt remote\n(origin)" {
+  shape: cloud
+}
+
+git_local: "git repo\n(code + docs)" {
+  shape: hexagon
+}
+
+git_remote: "git origin\n(code remote)" {
+  shape: cloud
+}
+
+cli -> dolt_server: commands
+dolt_server -> dolt_db: read/write
+dolt_db -> dolt_remote: bd dolt push
+dolt_remote -> dolt_db: bd dolt pull
+
+git_local -> git_remote: git push
+git_remote -> git_local: git pull

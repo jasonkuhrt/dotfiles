@@ -1,45 +1,18 @@
-                                       ┌───────────────────────────┐
-                                       │bd create / close / update │
-                                       │                           │
-                                       └───────────────────────────┘
-                                                  │
-                                                 IPC
-                                                  │
-                                                  ▼
-        ┌───────────────────────┐     ╱‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾╲
-        │                       │    ╱                        ╲
-        │                       │ bd daemon
-(WAL, IPC via bd.sock)
-        │           .-`âââââ`-. │    ╲                        ╱
-         `-._____.-`           ┌───────────────────────______╱
-                               │
-             │    ▲         ▲  │           │
-             │    │         │  │           │
-     ┌───────┘    │         └──│────────┐  │
-     │            │            │        │  │
-     │         ┌──┘            │        │  │
-     │         │       bd sync (import) │  │
-     │         │               │      read/write
-     │         │               │bd sync (export)
-     │         │               │        │  │
-     │   updated JSONL         │        │  │
-     │         │               │        │  │
-     │         │               │        │  ▼
-     │         │           .-‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾-.
-     │         │          │╲-________________________________________-╱│
-     ▼         │          │                                            │
-  ┌────────────────┐      │                                            │
-  │git push / pull │      │beads.db (SQLite)
-(local cache, git-ignored)│
-  │                │      │                                            │
-  └────────────────┘       ╲-________________________________________-╱
-       │     ▲
-       │     │
-       │   pull
-       │     │
-       ▼     │
- ┌☁───────────────┐
- │                │
- │  Remote repo   │
- │                │
- └────────────────┘
+Beads data flow (Dolt mode)
+
+Issue state flow:
+
+bd CLI
+  -> local Dolt SQL server
+  -> local Dolt database (.beads/dolt, git-ignored)
+  --bd dolt push--> Dolt remote (origin)
+  <--bd dolt pull-- Dolt remote (origin)
+
+Code flow (separate channel):
+
+git working tree --git push/pull--> origin
+
+Notes:
+- `bd dolt pull/push` syncs issue data.
+- `git pull/push` syncs code and docs.
+- Optional JSONL exports are snapshots, not the primary sync mechanism.

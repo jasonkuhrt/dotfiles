@@ -134,7 +134,7 @@ Install [television](https://github.com/alexpasmantier/television), then:
 }
 ```
 
-## Auto-Attach to Project tmux Session
+## Auto-Attach to Project zmx Session
 
 `settings.json`:
 ```json
@@ -142,13 +142,13 @@ Install [television](https://github.com/alexpasmantier/television), then:
   "shell": {
     "with_arguments": {
       "program": "/bin/zsh",
-      "args": ["-c", "tmux new-session -A -s \"$(basename \"$PWD\")\""]
+      "args": ["-c", "zmx attach \"$(basename \"$PWD\")\""]
     }
   }
 }
 ```
 
-Terminal auto-attaches to tmux session named after project directory. `-A` creates if missing.
+Terminal auto-attaches to a zmx session named after the project directory, creating it when missing.
 
 ## Map Unknown File Extensions to Languages
 

@@ -23,7 +23,7 @@ That covers config files. But managing a system also means installing packages, 
 
 ## Lifecycle Scripts
 
-`home/.chezmoiscripts/` has 19 shell scripts that run during `chezmoi apply`. Their filenames encode when and how often they run. `run_once_before_02-homebrew.sh.tmpl` runs once, on a new machine, before chezmoi deploys files — it installs Homebrew. `run_onchange_after_08-macos-defaults.sh.tmpl` re-runs after file deployment whenever the script's content changes — it sets keyboard repeat rate, trackpad speed, and so on.
+`home/.chezmoiscripts/` has 18 shell scripts that run during `chezmoi apply`. Their filenames encode when and how often they run. `run_once_before_02-homebrew.sh.tmpl` runs once, on a new machine, before chezmoi deploys files — it installs Homebrew. `run_onchange_after_08-macos-defaults.sh.tmpl` re-runs after file deployment whenever the script's content changes — it sets keyboard repeat rate, trackpad speed, and so on.
 
 The interesting ones are scripts that re-run when a *data file* changes, not when the script itself changes. For example, the brew-bundle script has this line in it:
 

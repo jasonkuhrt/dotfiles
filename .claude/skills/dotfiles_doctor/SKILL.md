@@ -29,14 +29,14 @@ Source files live in `home/` with chezmoi naming conventions.
 | `gh`       | dot_config/gh/                 | GitHub CLI configuration     |
 | `ghostty`  | dot_config/ghostty/            | Ghostty terminal config      |
 | `git`      | dot_config/git/, dot_gitconfig | Git configuration            |
-| `gitmux`   | dot_config/gitmux/             | Git info in tmux status      |
 | `lazygit`  | dot_config/lazygit/            | Git TUI configuration        |
 | `npm`      | dot_npmrc, npm/                | npm configuration            |
 | `nvim`     | dot_config/nvim/               | Neovim configuration         |
 | `scripts`  | .chezmoiscripts/               | Lifecycle scripts            |
 | `ssh`      | private_dot_ssh/               | SSH configuration            |
 | `starship` | dot_config/starship*.toml      | Starship prompt config       |
-| `tmux`     | dot_config/tmux/               | tmux terminal multiplexer    |
+| `zmx`      | dot_config/fish/, dot_config/starship.toml | zmx workflow + prompt context |
+| `zsm`      | Brewfile                       | zmx session manager install  |
 | `zed`      | dot_config/zed/                | Zed editor configuration     |
 
 ## Audit Process
@@ -121,23 +121,16 @@ After specific checks, discover something new:
 1. __Global packages__: Are packages in npm/global-packages.txt still needed?
 2. __npmrc settings__: Are all settings still relevant?
 
-### tmux
+### zmx
 
-1. __Plugin audit__: Are all plugins (resurrect, continuum, sessionx, etc.) still used?
-2. __Keybinding conflicts__: Any keybindings that conflict with Zed, Ghostty, or system?
-3. __Performance__: Are plugins slowing down tmux startup?
-4. __Integration check__: Is gitmux displaying correctly in status bar?
-5. __Session management__: Are resurrect/continuum saving and restoring properly?
+1. __Workflow consistency__: Are session attach helpers still aligned across fish/zed docs?
+2. __Prompt context__: Is `ZMX_SESSION` shown correctly in Starship when attached?
+3. __Failure modes__: Is behavior documented for detached sessions and stale names?
 
 ### lazygit
 
 1. __Keybinding audit__: Any custom keybindings that conflict or are unused?
 2. __Theme consistency__: Does theme match terminal aesthetic?
-
-### gitmux
-
-1. __Format accuracy__: Is the status bar format still useful?
-2. __Integration__: Is it loading correctly in tmux.conf?
 
 ### (other scopes)
 

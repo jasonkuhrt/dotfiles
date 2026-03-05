@@ -89,7 +89,7 @@ Fish has built-in vim mode via `fish_vi_key_bindings`.
 ### Fixed Issues (Good News)
 
 These common complaints have been resolved:
-- Escape delay in tmux (#5894) — fixed 2019
+- Escape delay in terminal multiplexers (#5894) — fixed 2019
 - Mode switching re-executes prompt (#5783) — fixed 2019
 - Block cursor in insert mode (#8635) — fixed 2023
 - Inner word motion (#11109) — fixed Jan 2025

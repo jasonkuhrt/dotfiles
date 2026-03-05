@@ -35,7 +35,7 @@ These files exist at HEAD but had uncommitted modifications. The diffs are gone.
 | File                                     | What was likely changed                     |
 | ---------------------------------------- | ------------------------------------------- |
 | `fish/config.fish`                       | Many incremental edits (100+ across sessions), no full Write found |
-| `zed/settings.json`                      | tmux shell config added to terminal section |
+| `zed/settings.json`                      | terminal shell config added to terminal section |
 | `serena/serena_config.yml`               | Unknown                                     |
 | `npmrc`                                  | Already on disk, intact                     |
 | `sync-lib.sh`                            | Already on disk, matches recovered version  |

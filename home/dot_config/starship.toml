@@ -10,6 +10,7 @@
 
 # Minimal prompt - git details handled by `git` dashboard command
 format = """
+${env_var.ZMX_SESSION}\
 $directory\
 $git_branch\
 $git_status\
@@ -26,6 +27,12 @@ error_symbol = '[❯](#f7768e)'        # Tokyo Night red
 truncation_length = 3
 truncate_to_repo = true
 style = 'bold #7aa2f7'               # Tokyo Night blue
+
+[env_var.ZMX_SESSION]
+symbol = " "
+format = "[$symbol$env_value]($style) "
+description = "zmx session name"
+style = "bold #7dcfff"
 
 [git_branch]
 format = '[$branch]($style) '

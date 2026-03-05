@@ -15,23 +15,19 @@ Cross-shell prompt with modules for git, languages, cloud, and more.
 | Path | Purpose |
 |------|---------|
 | `~/.config/starship.toml` | Default config |
-| `~/.config/starship-tmux.toml` | Minimal config for tmux sessions |
 | `STARSHIP_CONFIG` env var | Override config path |
 
 ## Context-Specific Configs
 
-**Current setup:** Fish detects tmux and switches config:
+**Current setup:** Single config with optional zmx session segment:
 
-```fish
-# In config.fish
-if set -q TMUX
-    set -gx STARSHIP_CONFIG ~/.config/starship-tmux.toml
-end
-starship init fish | source
+```toml
+[env_var.ZMX_SESSION]
+symbol = " "
+format = "[$symbol$env_value]($style) "
 ```
 
 **When to use multiple configs:**
-- tmux (git info in status bar) -> minimal prompt
 - SSH sessions -> show hostname
 - Work vs personal -> different themes
 
@@ -76,8 +72,7 @@ Current: **Tokyo Night** (colors defined in config files).
 
 | File | Purpose |
 |------|---------|
-| `starship/starship.toml` | Full config (outside tmux) |
-| `starship/starship-tmux.toml` | Minimal config (in tmux) |
+| `starship/starship.toml` | Main config |
 
 ## Reference
 

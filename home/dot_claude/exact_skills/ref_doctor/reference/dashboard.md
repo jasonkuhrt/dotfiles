@@ -82,7 +82,7 @@ Note: <any special notes about docs structure, size, format>
 ```
 
 **Common doc URLs:**
-- tmux: `https://man.openbsd.org/tmux`
+- zmx: `https://zmx.sh`
 - git: `https://git-scm.com/docs`
 
 **Submission:** REQUIRED SUB-SKILL: tally

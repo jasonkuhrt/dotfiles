@@ -16,7 +16,6 @@ dotfiles/                     # git repo root
 └── home/                     # CHEZMOI SOURCE STATE
     ├── .chezmoi.toml.tmpl    # chezmoi config (sourceDir, encryption)
     ├── .chezmoiignore        # files to exclude from deployment
-    ├── .chezmoiexternal.toml # external repos (tpm-redux)
     ├── .chezmoitemplates/    # shared script helpers
     ├── .chezmoiscripts/      # lifecycle scripts (brew, defaults, etc.)
     │
@@ -72,7 +71,6 @@ The number in the filename (`00`, `03`, `08`, etc.) controls ordering. `before_`
 | 06 | fisher | Install Fisher plugin manager |
 | 13 | git-ssh | SSH known_hosts, gh protocol, remote fix |
 | 14 | neovim-plugins | Install vim-plug plugins |
-| 15 | tmux-plugins | Install tpm plugins |
 | 16 | yo-install | Install yo notification app |
 | 17 | kitty-theme | Bootstrap Kitty Tokyo Night theme |
 | 99 | sudo-hint | Print `sync-sudo` instructions |

@@ -6,7 +6,7 @@ Research into project-level context switching: apps, windows, terminals, browser
 
 "Switch to project X" should:
 - Open Zed with the project
-- Open Ghostty with tmux session attached
+- Open Ghostty with zmx session attached
 - Position windows (Zed left, Ghostty right)
 - Open relevant browser tabs
 - All driven by dotfiles, not GUI config
@@ -73,51 +73,45 @@ function project --description "Switch to project context"
 end
 ```
 
-## Tmux Integration
+## zmx Integration
 
-Current setup auto-attaches tmux on `cd` into git repos:
+Optional setup auto-attaches zmx on `cd` into git repos:
 
 ```fish
 # In config.fish
-set -q TMUX_AUTO_ON_GIT_CD; or set -gx TMUX_AUTO_ON_GIT_CD 1
+set -q ZMX_AUTO_ON_GIT_CD; or set -gx ZMX_AUTO_ON_GIT_CD 1
 
-function __auto_tmux_on_cd --on-variable PWD
-    test "$TMUX_AUTO_ON_GIT_CD" = 1; or return
-    if not set -q TMUX; and test -d .git
-        tt  # attach/create session named after directory
+function __auto_zmx_on_cd --on-variable PWD
+    test "$ZMX_AUTO_ON_GIT_CD" = 1; or return
+    if not set -q ZMX_SESSION; and test -d .git
+        zmx attach (basename $PWD)
     end
 end
 ```
 
-## Tmux Tips
+## zmx Tips
 
-### Layout cycling
-- `prefix + space` cycles built-in layouts
-- `prefix + z` zooms current pane (toggle)
+### Session browser
+- `zsm` gives a TUI for selecting, attaching, and killing sessions.
 
 ### Session templates
-Fish functions that create pane layouts:
+Fish functions that open tool-specific sessions:
 
 ```fish
-function tdev
-    set -l name (basename $PWD)
-    tmux new-session -d -s $name -c $PWD
-    tmux split-window -v -t $name -p 30 -c $PWD
-    tmux split-window -h -t $name -p 50 -c $PWD
-    tmux select-pane -t $name:1.0
-    tmux attach -t $name
+function zdev
+    zmx attach (basename $PWD) nvim .
 end
 ```
 
-### Multi-monitor (linked sessions)
-Two terminals showing different windows of same session:
+### Multi-window (shared session)
+Two terminals attached to the same session:
 
 ```bash
 # Terminal 1
-tmux new-session -s work
+zmx attach work
 
-# Terminal 2 - linked but independent window focus
-tmux new-session -t work -s work-monitor2
+# Terminal 2 - same session, same process
+zmx attach work
 ```
 
 ## Next Steps

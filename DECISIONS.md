@@ -188,24 +188,30 @@ Source: `AGENTS.md`, system prompt configuration
 
 ---
 
-## Decision 8: Starship Prompt with tmux-Aware Config
+## Decision 8: Starship Prompt with zmx Session Context
 
 **Context:**
-When running inside tmux, gitmux already shows branch, status, and ahead/behind in the status bar.
+The shell now uses zmx for session persistence. Session identity should be visible in prompt without maintaining multiple Starship configs.
 
 **Decision:**
-Use a minimal Starship config inside tmux sessions, full config outside.
+Use one Starship config and render `ZMX_SESSION` in the prompt when present.
 
 **Implementation:**
-```fish
-# Use minimal config in tmux (git info is in status bar via gitmux)
-if set -q TMUX
-    set -gx STARSHIP_CONFIG ~/.config/starship-tmux.toml
-end
-starship init fish | source
+```toml
+format = """
+${env_var.ZMX_SESSION}\
+$directory\
+$git_branch\
+$git_status\
+$character"""
+
+[env_var.ZMX_SESSION]
+symbol = " "
+format = "[$symbol$env_value]($style) "
+style = "bold #7dcfff"
 ```
 
-Source: `config.fish:9-13`
+Source: `starship.toml`
 
 ---
 

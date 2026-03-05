@@ -28,7 +28,7 @@ Rationale: faster, lower RAM, native macOS feel, active maintenance (v0.45.0 Dec
 ### Kitty
 - **Performance**: Fastest throughput (2x next best), GPU-accelerated, SIMD vector instructions
 - **Graphics Protocol**: Industry-leading, adopted by Ghostty and others
-- **Built-in multiplexing**: Native splits without tmux
+- **Built-in multiplexing**: Native splits without external mux
 - **Resource usage**: CPU peaks 8.7%, memory 1.0% during heavy scrolling
 - **Active maintenance**: Kovid Goyal, also maintains Calibre, consistent release cadence
 
@@ -41,7 +41,7 @@ Rationale: faster, lower RAM, native macOS feel, active maintenance (v0.45.0 Dec
 ## The Case Against Each
 
 ### Against Kitty
-- **Maintainer personality**: Most-cited reason for switching away (terse, dismissive, anti-tmux stance)
+- **Maintainer personality**: Most-cited reason for switching away (terse, dismissive, anti-mux stance)
 - **Terminfo on remote**: `xterm-kitty` not standard, must copy to every SSH target
 - **macOS bugs**: M2 crashes with ctrl+d, system freeze on hibernation wake
 - **Not programmable**: Declarative config only (no scripting)

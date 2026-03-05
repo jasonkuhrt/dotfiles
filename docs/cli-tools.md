@@ -56,7 +56,6 @@ Full list in `home/dot_config/fish/config.fish`.
 | Git         | `git-crypt`  | Encrypt files in git transparently    | `git-crypt init`                                |
 | Git         | `git-delta`  | Better git diffs                      | (auto via gitconfig)                            |
 | Git         | `lazygit`    | Terminal UI for git                   | `lazygit`                                       |
-| Git         | `gitmux`     | Git status in tmux status bar         | (auto via tmux config)                          |
 | Git         | `onefetch`   | Git repo stats (neofetch for repos)   | `onefetch` (run in any repo)                    |
 | Git         | `pre-commit` | Git hooks framework                   | `pre-commit install`                            |
 | **Beads**   | `bdui`       | TUI for beads (kanban, tree, graph)   | `bdui`                                          |
@@ -77,6 +76,8 @@ Full list in `home/dot_config/fish/config.fish`.
 | Shell       | `shfmt`      | Format shell scripts                  | `shfmt -w script.sh`                            |
 | Shell       | `starship`   | Cross-shell prompt                    | config: `~/.config/starship.toml`               |
 | Shell       | `up`         | Interactive piping (Ultimate Plumber) | `cat file \| up`                                |
+| Shell       | `zmx`        | Persistent terminal sessions          | `zmx attach dotfiles`                           |
+| Shell       | `zsm`        | TUI manager for zmx sessions          | `zsm`                                           |
 | **Media**   | `ffmpeg`     | Audio/video processing Swiss Army knife | `ffmpeg -i in.mp4 out.gif`                    |
 | **Docs**    | `glow`       | Render markdown in terminal           | `glow README.md`                                |
 | Docs        | `mdcat`      | Render markdown (alternative)         | `mdcat README.md`                               |

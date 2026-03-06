@@ -101,7 +101,7 @@ function M.handoff_to_picker()
   vim.api.nvim_feedkeys(esc, "n", false)
 
   vim.schedule(function()
-    require("cmd_ux.adapters.snacks").open({ line = line })
+    require("cmd_ux.adapters.fzf").open({ line = line })
   end)
 end
 

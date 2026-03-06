@@ -61,6 +61,36 @@ function M.create_optional_structured_test_command(name)
   M.create_structured_test_command(name, { nargs = "?" })
 end
 
+function M.create_deep_structured_test_command(name)
+  M.drop_user_command(name)
+  vim.api.nvim_create_user_command(name, function() end, {
+    nargs = "*",
+    desc = "Deep structured custom completion command for cmd-ux tests",
+    complete = function(arglead, line, _)
+      local rest = line:match("^" .. vim.pesc(name) .. "%s*(.*)$") or ""
+      local trailing_space = rest:match("%s$") ~= nil
+      local tokens = strings.split_words(rest)
+
+      local items = {}
+      if #tokens == 0 or (#tokens == 1 and not trailing_space) then
+        items = { "alpha", "beta" }
+      elseif tokens[1] == "alpha" and (#tokens == 1 or (#tokens == 2 and not trailing_space)) then
+        items = { "branch", "solo" }
+      elseif
+        tokens[1] == "alpha"
+        and tokens[2] == "branch"
+        and (#tokens == 2 or (#tokens == 3 and not trailing_space))
+      then
+        items = { "leaf", "twig" }
+      end
+
+      return vim.tbl_filter(function(item)
+        return item:find("^" .. vim.pesc(arglead)) ~= nil
+      end, items)
+    end,
+  })
+end
+
 function M.create_trailing_space_structured_command(name)
   M.drop_user_command(name)
   vim.api.nvim_create_user_command(name, function() end, {
@@ -92,6 +122,65 @@ function M.create_repeatable_named_enum_command(name)
     desc = "Repeatable named-enum command for cmd-ux tests",
     complete = function(arglead)
       local items = { "alpha", "beta", "gamma", "delta" }
+      return vim.tbl_filter(function(item)
+        return item:find("^" .. vim.pesc(arglead)) ~= nil
+      end, items)
+    end,
+  })
+end
+
+function M.create_nested_repeatable_value_command(name)
+  M.drop_user_command(name)
+  vim.api.nvim_create_user_command(name, function() end, {
+    nargs = "*",
+    desc = "Nested repeatable named-value command for cmd-ux tests",
+    complete = function(arglead, line, _)
+      local rest = line:match("^" .. vim.pesc(name) .. "%s*(.*)$") or ""
+      local trailing_space = rest:match("%s$") ~= nil
+      local tokens = strings.split_words(rest)
+
+      local items = {}
+      if #tokens == 0 or (#tokens == 1 and not trailing_space) then
+        items = { "alpha", "beta" }
+      elseif tokens[1] == "alpha" then
+        items = { "red", "blue" }
+      end
+
+      return vim.tbl_filter(function(item)
+        return item:find("^" .. vim.pesc(arglead)) ~= nil
+      end, items)
+    end,
+  })
+end
+
+function M.create_cyclic_structured_test_command(name)
+  M.drop_user_command(name)
+  vim.api.nvim_create_user_command(name, function() end, {
+    nargs = "*",
+    desc = "Cyclic structured custom completion command for cmd-ux tests",
+    complete = function(arglead, line, _)
+      local rest = line:match("^" .. vim.pesc(name) .. "%s*(.*)$") or ""
+      local trailing_space = rest:match("%s$") ~= nil
+      local tokens = strings.split_words(rest)
+
+      local items = {}
+      if #tokens == 0 or (#tokens == 1 and not trailing_space) then
+        items = { "alpha" }
+      else
+        local alternating = true
+        for index, token in ipairs(tokens) do
+          local expected = index % 2 == 1 and "alpha" or "branch"
+          if token ~= expected then
+            alternating = false
+            break
+          end
+        end
+
+        if alternating then
+          items = { #tokens % 2 == 1 and "branch" or "alpha" }
+        end
+      end
+
       return vim.tbl_filter(function(item)
         return item:find("^" .. vim.pesc(arglead)) ~= nil
       end, items)

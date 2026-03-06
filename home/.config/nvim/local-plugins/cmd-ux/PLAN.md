@@ -86,7 +86,8 @@ Current generic enrichment now includes:
 - inferring named subcommand structure from custom completion callbacks when the live frontier is a bounded set of short named tokens
 - treating `nargs = "?"` roots with inferred named subcommands as likely `hybrid`
 - treating required or variadic roots with inferred named subcommands as likely `namespace`
-- probing one level deeper to decide whether each inferred token is a leaf or another namespace
+- recursively walking named completion frontiers until a terminal case decides whether each inferred token stays a `namespace` or collapses to a `leaf`
+- terminating recursive inference on empty or non-named frontiers, path-like/buffer-like/tag-like/value frontiers, repeatable named-value frontiers, and repeated ancestor frontier shapes
 - rejecting path-like, buffer-like, tag-like, and broad enum/value frontiers as namespace evidence
 
 This keeps the common "command hub with named subcommands" case generic while preserving dedicated providers for families that need richer help, execution behavior, or argument semantics than the heuristic can safely infer.

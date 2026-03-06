@@ -136,9 +136,10 @@ require("cmd_ux").register("File", require("cmd_ux_fs.provider"))
 
 Providers enrich command families whose semantics are richer than what Neovim can prove generically.
 
-`cmd-ux` also performs conservative generic inference for some custom completion callbacks.
-If the live completion frontier at a command position looks like a bounded set of short named tokens, `cmd-ux` treats those matches as likely subcommands and probes one level deeper to decide whether each token is a leaf or another namespace.
-If the frontier instead looks like files, buffers, tags, large enums, or other value arguments, `cmd-ux` keeps the command generic and argument-oriented.
+`cmd-ux` also performs conservative recursive generic inference for some custom completion callbacks.
+If the live completion frontier at a command position looks like a bounded set of short named tokens, `cmd-ux` treats those matches as a candidate subcommand frontier and recursively descends child frontiers until it reaches a terminal case.
+Immediate children are marked as `namespace` only when that recursive descent still finds another trustworthy named frontier; otherwise they collapse to `leaf`.
+If the frontier instead looks like files, buffers, tags, large enums, repeatable named values, or another value-oriented terminal case, `cmd-ux` keeps the command generic and argument-oriented.
 
 They are not an admission gate. A command does not disappear merely because it lacks a dedicated provider.
 
@@ -181,12 +182,13 @@ Unknown richness is not a reason to exclude the command. It is a reason to impro
 
 The current generic inference contract is:
 
-- root frontier looks like a small set of short named tokens: infer named subcommands
-- `nargs = "?"` with inferred named subcommands: root may remain a `hybrid`
-- `nargs = "*"`, `"+"`, or required-arg forms with inferred named subcommands: root becomes a `namespace`
-- descendant frontier that still looks like named tokens: descendant stays a `namespace`
-- descendant frontier with no deeper named tokens: descendant becomes a `leaf`
-- path-like matches, buffer-like matches, tag-like matches, and broad enum/value frontiers remain plain argument completions
+- a frontier only enters named-subcommand inference when it looks like a small set of short named tokens
+- once a frontier qualifies, `cmd-ux` recursively walks each child branch until it hits a terminal case
+- a child stays `namespace` only if its recursive branch still exposes another trustworthy named frontier
+- a child becomes `leaf` when recursion bottoms out in a terminal case
+- `nargs = "?"` with inferred named subcommands may keep the root as a `hybrid`
+- `nargs = "*"`, `"+"`, or required-arg forms with inferred named subcommands make the root a `namespace`
+- terminal cases include empty or non-named frontiers, path-like matches, buffer-like matches, tag-like matches, broad enum/value frontiers, repeatable named-value frontiers, and repeated ancestor frontier shapes
 
 ## Surface behavior
 

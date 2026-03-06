@@ -23,6 +23,9 @@ local optional_named_root_limit = 12
 local repeatable_overlap_threshold = 0.75
 local repeatable_probe_limit = 4
 
+---@type fun(summary: GenericCommandSummary, accepted: string[], seen_signatures?: table<string, boolean>): CommandFrontierItem[]?
+local infer_named_frontier
+
 function M.invalidate()
   summary_cache = {}
 end
@@ -156,6 +159,14 @@ local function overlap_ratio(left, right)
   return overlap / math.max(#left, #right)
 end
 
+---@param matches string[]
+---@return string
+local function frontier_signature(matches)
+  local signature = vim.deepcopy(matches)
+  table.sort(signature)
+  return table.concat(signature, "\31")
+end
+
 ---@param accepted string[]
 ---@return string
 local function frontier_cache_key(accepted)
@@ -222,8 +233,10 @@ end
 
 ---@param summary GenericCommandSummary
 ---@param accepted string[]
+---@param seen_signatures? table<string, boolean>
 ---@return CommandFrontierItem[]?
-local function infer_named_frontier(summary, accepted)
+infer_named_frontier = function(summary, accepted, seen_signatures)
+  seen_signatures = seen_signatures or {}
   local key = frontier_cache_key(accepted)
   local cached = summary.named_frontier_cache[key]
   if cached ~= nil then
@@ -247,10 +260,18 @@ local function infer_named_frontier(summary, accepted)
     return nil
   end
 
+  -- A repeated named frontier shape is a self-similar loop, not deeper structure.
+  local signature = frontier_signature(matches)
+  if seen_signatures[signature] then
+    summary.named_frontier_cache[key] = false
+    return nil
+  end
+  seen_signatures[signature] = true
+
   local items = {}
   for _, match in ipairs(matches) do
     local child_accepted = append_token(accepted, match)
-    local child_named = looks_like_named_frontier(probe_named_matches(summary, child_accepted))
+    local child_named = infer_named_frontier(summary, child_accepted, seen_signatures) ~= nil
     items[#items + 1] = types.frontier_item({
       token = match,
       label = match,
@@ -265,6 +286,7 @@ local function infer_named_frontier(summary, accepted)
   end
 
   items = util.sort_by_label(items)
+  seen_signatures[signature] = nil
   summary.named_frontier_cache[key] = items
   return items
 end

@@ -21,8 +21,11 @@ describe("cmd_ux semantic decisions", function()
     helpers.drop_user_command("NeedArgCmd")
     helpers.drop_user_command("TestCmdSpace")
     helpers.drop_user_command("OptionalTestCmd")
+    helpers.drop_user_command("DeepStructuredCmd")
     helpers.drop_user_command("TrailingSpaceCmd")
     helpers.drop_user_command("RepeatEnumCmd")
+    helpers.drop_user_command("NestedRepeatCmd")
+    helpers.drop_user_command("CyclicStructuredCmd")
     helpers.drop_user_command("PrefixFamilyCmd")
     helpers.drop_user_command("EnumChoiceCmd")
     helpers.drop_user_command("IndexVisibleCmd")
@@ -34,8 +37,11 @@ describe("cmd_ux semantic decisions", function()
     helpers.drop_user_command("NeedArgCmd")
     helpers.drop_user_command("TestCmdSpace")
     helpers.drop_user_command("OptionalTestCmd")
+    helpers.drop_user_command("DeepStructuredCmd")
     helpers.drop_user_command("TrailingSpaceCmd")
     helpers.drop_user_command("RepeatEnumCmd")
+    helpers.drop_user_command("NestedRepeatCmd")
+    helpers.drop_user_command("CyclicStructuredCmd")
     helpers.drop_user_command("PrefixFamilyCmd")
     helpers.drop_user_command("EnumChoiceCmd")
     helpers.drop_user_command("IndexVisibleCmd")
@@ -144,6 +150,39 @@ describe("cmd_ux semantic decisions", function()
     eq({ type = "advance", line = "TestCmdSpace alpha " }, action(state, "space"))
   end)
 
+  it("recurses through deeper named branches until terminal leaves", function()
+    helpers.create_deep_structured_test_command("DeepStructuredCmd")
+    helpers.sync_cmd_ux()
+
+    local state = core.resolve_line("DeepStructuredCmd alpha")
+
+    eq("generic", state.provider)
+    eq("namespace", state.kind)
+    eq(
+      {
+        { label = "branch", kind = "namespace" },
+        { label = "solo", kind = "leaf" },
+      },
+      vim.tbl_map(function(item)
+        return { label = item.label, kind = item.kind }
+      end, state.frontier)
+    )
+
+    local deeper_state = core.resolve_line("DeepStructuredCmd alpha branch")
+
+    eq("generic", deeper_state.provider)
+    eq("namespace", deeper_state.kind)
+    eq(
+      {
+        { label = "leaf", kind = "leaf" },
+        { label = "twig", kind = "leaf" },
+      },
+      vim.tbl_map(function(item)
+        return { label = item.label, kind = item.kind }
+      end, deeper_state.frontier)
+    )
+  end)
+
   it("keeps accepted inferred tokens valid when the callback only exposes children after a space", function()
     helpers.create_trailing_space_structured_command("TrailingSpaceCmd")
     helpers.sync_cmd_ux()
@@ -178,6 +217,53 @@ describe("cmd_ux semantic decisions", function()
     eq("arg", state.frontier[1].kind)
     eq({ type = "execute", line = "RepeatEnumCmd alpha" }, action(state, "enter"))
     assert.is_false(core.should_intercept_space(state))
+  end)
+
+  it("stops recursive inference at nested repeatable named-value frontiers", function()
+    helpers.create_nested_repeatable_value_command("NestedRepeatCmd")
+    helpers.sync_cmd_ux()
+
+    local root_state = core.resolve_line("NestedRepeatCmd")
+    eq("generic", root_state.provider)
+    eq("namespace", root_state.kind)
+    eq(
+      {
+        { label = "alpha", kind = "leaf" },
+        { label = "beta", kind = "leaf" },
+      },
+      vim.tbl_map(function(item)
+        return { label = item.label, kind = item.kind }
+      end, root_state.frontier)
+    )
+
+    local state = core.resolve_line("NestedRepeatCmd alpha")
+    eq("generic", state.provider)
+    eq("leaf", state.kind)
+    assert.is_true(state.executable)
+    assert.is_false(state.requires_more)
+    eq("arg", state.frontier[1].kind)
+  end)
+
+  it("stops recursive inference when a branch re-enters an ancestor frontier shape", function()
+    helpers.create_cyclic_structured_test_command("CyclicStructuredCmd")
+    helpers.sync_cmd_ux()
+
+    local root_state = core.resolve_line("CyclicStructuredCmd")
+    eq("generic", root_state.provider)
+    eq("namespace", root_state.kind)
+    eq("namespace", root_state.frontier[1].kind)
+
+    local state = core.resolve_line("CyclicStructuredCmd alpha")
+    eq("generic", state.provider)
+    eq("namespace", state.kind)
+    eq(
+      {
+        { label = "branch", kind = "leaf" },
+      },
+      vim.tbl_map(function(item)
+        return { label = item.label, kind = item.kind }
+      end, state.frontier)
+    )
   end)
 
   it("keeps narrowed prefix families inferred as namespaces", function()

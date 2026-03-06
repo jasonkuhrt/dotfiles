@@ -32,7 +32,15 @@ local function apply_action(action)
     vim.schedule(function()
       local ok, blink = pcall(require, "blink.cmp")
       if ok then
-        blink.show({ initial_selected_item_idx = 1 })
+        local reopen = function()
+          blink.show({ initial_selected_item_idx = 1 })
+        end
+
+        if blink.is_menu_visible and blink.is_menu_visible() then
+          blink.hide({ callback = reopen })
+        else
+          reopen()
+        end
       end
     end)
     return true

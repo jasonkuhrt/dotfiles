@@ -28,6 +28,10 @@ end
 
 ---@param entries CmdUxBlocklistEntry[]
 local function schedule_live_validation(entries)
+  if vim.g.cmd_ux_disable_blocklist_live_validation == true or vim.env.CMD_UX_TEST == "1" then
+    return
+  end
+
   vim.defer_fn(function()
     local available = {}
     for _, name in ipairs(vim.fn.getcompletion("", "command")) do

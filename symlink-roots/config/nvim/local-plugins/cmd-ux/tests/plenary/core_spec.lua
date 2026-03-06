@@ -2,58 +2,94 @@
 
 local eq = assert.are.same
 
-local cmd_ux = require("cmd_ux")
 local core = require("cmd_ux.core")
 local index = require("cmd_ux.index")
+local helpers = require("tests.plenary.helpers")
 
-local function ensure_setup()
-  cmd_ux.setup()
+local function action(state, intent)
+  return core.decide_current(state, intent)
 end
 
-local function drop_user_command(name)
-  pcall(vim.api.nvim_del_user_command, name)
+local function choice(state, token, intent)
+  return core.decide_choice(state, token, intent)
 end
 
-local function sync_cmd_ux()
-  cmd_ux.reload()
-end
-
-local function create_structured_test_command(name)
-  drop_user_command(name)
-  vim.api.nvim_create_user_command(name, function() end, {
-    nargs = "*",
-    desc = "Structured custom completion command for cmd-ux tests",
-    complete = function(arglead, line, _)
-      if line:match("^" .. name .. "%s+alpha%s+") then
-        return vim.tbl_filter(function(item)
-          return item:find("^" .. vim.pesc(arglead)) ~= nil
-        end, { "one", "two" })
-      end
-
-      return vim.tbl_filter(function(item)
-        return item:find("^" .. vim.pesc(arglead)) ~= nil
-      end, { "alpha", "beta" })
-    end,
-  })
-end
-
-describe("cmd_ux generic command behavior", function()
+describe("cmd_ux semantic decisions", function()
   before_each(function()
-    ensure_setup()
-    drop_user_command("TestCmdSpace")
-    drop_user_command("IndexVisibleCmd")
-    sync_cmd_ux()
+    helpers.ensure_setup()
+    helpers.drop_user_command("LeafCmd")
+    helpers.drop_user_command("NeedArgCmd")
+    helpers.drop_user_command("TestCmdSpace")
+    helpers.drop_user_command("IndexVisibleCmd")
+    helpers.sync_cmd_ux()
   end)
 
   after_each(function()
-    drop_user_command("TestCmdSpace")
-    drop_user_command("IndexVisibleCmd")
-    sync_cmd_ux()
+    helpers.drop_user_command("LeafCmd")
+    helpers.drop_user_command("NeedArgCmd")
+    helpers.drop_user_command("TestCmdSpace")
+    helpers.drop_user_command("IndexVisibleCmd")
+    helpers.sync_cmd_ux()
   end)
 
-  it("uses semantic space for structured generic custom completions", function()
-    create_structured_test_command("TestCmdSpace")
-    sync_cmd_ux()
+  it("advances exact namespace roots on enter tab and space", function()
+    local state = core.resolve_line("Config")
+
+    eq("namespace", state.kind)
+    eq({ type = "advance", line = "Config " }, action(state, "enter"))
+    eq({ type = "advance", line = "Config " }, action(state, "tab"))
+    eq({ type = "advance", line = "Config " }, action(state, "space"))
+  end)
+
+  it("accepts partial namespace roots then advances on enter tab and space", function()
+    local state = core.resolve_line("Con")
+
+    eq("root", state.kind)
+    eq({ type = "advance", line = "Config " }, choice(state, "Config", "enter"))
+    eq({ type = "advance", line = "Config " }, choice(state, "Config", "tab"))
+    eq({ type = "advance", line = "Config " }, choice(state, "Config", "space"))
+  end)
+
+  it("executes exact leaf commands on enter and noops on tab", function()
+    helpers.create_noarg_command("LeafCmd")
+    helpers.sync_cmd_ux()
+
+    local state = core.resolve_line("LeafCmd")
+
+    eq("leaf", state.kind)
+    eq({ type = "execute", line = "LeafCmd" }, action(state, "enter"))
+    eq({ type = "noop" }, action(state, "tab"))
+    assert.is_false(core.should_intercept_space(state))
+  end)
+
+  it("treats generic structured roots as hybrids", function()
+    helpers.create_structured_test_command("TestCmdSpace")
+    helpers.sync_cmd_ux()
+
+    local state = core.resolve_line("TestCmdSpace")
+
+    eq("generic", state.provider)
+    eq("hybrid", state.kind)
+    eq({ type = "execute", line = "TestCmdSpace" }, action(state, "enter"))
+    eq({ type = "advance", line = "TestCmdSpace " }, action(state, "tab"))
+    eq({ type = "advance", line = "TestCmdSpace " }, action(state, "space"))
+  end)
+
+  it("advances incomplete required-arg commands on enter tab and space", function()
+    helpers.create_needarg_command("NeedArgCmd")
+    helpers.sync_cmd_ux()
+
+    local state = core.resolve_line("NeedArgCmd")
+
+    assert.is_true(state.requires_more)
+    eq({ type = "advance", line = "NeedArgCmd " }, action(state, "enter"))
+    eq({ type = "advance", line = "NeedArgCmd " }, action(state, "tab"))
+    eq({ type = "advance", line = "NeedArgCmd " }, action(state, "space"))
+  end)
+
+  it("uses semantic space for structured generic descendants", function()
+    helpers.create_structured_test_command("TestCmdSpace")
+    helpers.sync_cmd_ux()
 
     local state = core.resolve_line("TestCmdSpace al")
 
@@ -61,9 +97,22 @@ describe("cmd_ux generic command behavior", function()
     assert.is_true(state.pending_is_named)
     assert.is_true(core.should_intercept_space(state))
 
-    local action = core.decide_choice(state, "alpha", "space")
-    eq("advance", action.type)
-    eq("TestCmdSpace alpha ", action.line)
+    eq({ type = "advance", line = "TestCmdSpace alpha " }, choice(state, "alpha", "enter"))
+    eq({ type = "advance", line = "TestCmdSpace alpha " }, choice(state, "alpha", "tab"))
+    eq({ type = "advance", line = "TestCmdSpace alpha " }, choice(state, "alpha", "space"))
+  end)
+
+  it("executes the final structured generic leaf when the path is complete", function()
+    helpers.create_structured_test_command("TestCmdSpace")
+    helpers.sync_cmd_ux()
+
+    local state = core.resolve_line("TestCmdSpace alpha o")
+
+    eq("generic", state.provider)
+    assert.is_true(state.pending_is_named)
+    eq({ type = "execute", line = "TestCmdSpace alpha one" }, choice(state, "one", "enter"))
+    eq({ type = "set", line = "TestCmdSpace alpha one" }, choice(state, "one", "tab"))
+    eq({ type = "advance", line = "TestCmdSpace alpha one " }, choice(state, "one", "space"))
   end)
 
   it("keeps literal space for generic free-form file arguments", function()

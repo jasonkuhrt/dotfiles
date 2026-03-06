@@ -88,11 +88,11 @@ cmd-ux-test:
         exit 1
     fi
 
-    XDG_CONFIG_HOME="$PWD/symlink-roots/config" XDG_CACHE_HOME="$cache_dir" nvim --headless -u NONE \
+    CMD_UX_TEST=1 XDG_CONFIG_HOME="$PWD/symlink-roots/config" XDG_CACHE_HOME="$cache_dir" nvim --headless -u NONE \
         --cmd "set runtimepath^=$plenary" \
         -c "lua require('plenary.test_harness').test_directory('$plugin_root/tests/plenary', { minimal_init = '$plugin_root/tests/minimal_init.lua', sequential = true })"
 
-    bash "$plugin_root/tests/bin/stale_cache_smoke.sh"
+    CMD_UX_TEST=1 bash "$plugin_root/tests/bin/stale_cache_smoke.sh"
 
 hooks-install:
     bash scripts/git-hooks/install-pre-commit.sh

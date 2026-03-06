@@ -1,9 +1,12 @@
 import { existsSync } from "node:fs"
 import path from "node:path"
+import { fileURLToPath } from "node:url"
 
-import { HEAL_INTERVAL_SECONDS } from "./config.js"
 import type { RuntimeContext } from "./env.js"
 import { runCommand } from "./shell.js"
+
+/** Resolve the absolute path to the dotctl CLI entrypoint from this module's location. */
+const dotctlBinPath = (): string => fileURLToPath(new URL("../bin/dotctl.ts", import.meta.url))
 
 export interface LaunchdStatus {
   readonly available: boolean
@@ -18,11 +21,11 @@ export const renderHealPlist = (ctx: RuntimeContext): string => `<?xml version="
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>${ctx.healLabel}</string>
+  <string>${ctx.config.heal.label}</string>
   <key>ProgramArguments</key>
   <array>
     <string>${ctx.bunBin}</string>
-    <string>${path.join(ctx.repoRoot, "packages", "dotctl", "src", "bin", "dotctl.ts")}</string>
+    <string>${dotctlBinPath()}</string>
     <string>heal</string>
     <string>--background</string>
   </array>
@@ -36,7 +39,7 @@ export const renderHealPlist = (ctx: RuntimeContext): string => `<?xml version="
   <key>RunAtLoad</key>
   <true/>
   <key>StartInterval</key>
-  <integer>${HEAL_INTERVAL_SECONDS}</integer>
+  <integer>${ctx.config.heal.intervalSeconds}</integer>
   <key>StandardOutPath</key>
   <string>${ctx.healLaunchdStdoutPath}</string>
   <key>StandardErrorPath</key>
@@ -51,7 +54,7 @@ export const getLaunchdStatus = (ctx: RuntimeContext): LaunchdStatus => {
     return { available: false, loaded: false, state: null, lastExitCode: null, raw: "launchctl unavailable" }
   }
 
-  const result = runCommand(["launchctl", "print", `gui/${ctx.userId}/${ctx.healLabel}`], { allowFailure: true })
+  const result = runCommand(["launchctl", "print", `gui/${ctx.userId}/${ctx.config.heal.label}`], { allowFailure: true })
   if (result.exitCode !== 0) {
     return { available: true, loaded: false, state: null, lastExitCode: null, raw: result.stderr || result.stdout }
   }
@@ -69,7 +72,7 @@ export const getLaunchdStatus = (ctx: RuntimeContext): LaunchdStatus => {
 
 export const ensureHealAgentLoaded = (ctx: RuntimeContext): void => {
   if (!existsSync(ctx.healPlistPath)) {
-    throw new Error(`missing launchd plist at ${ctx.healPlistPath}; run chezmoi apply`)
+    throw new Error(`missing launchd plist at ${ctx.healPlistPath}; run dotctl up`)
   }
   runCommand(["launchctl", "unload", ctx.healPlistPath], { allowFailure: true })
   runCommand(["launchctl", "load", "-w", ctx.healPlistPath])

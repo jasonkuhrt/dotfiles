@@ -1,5 +1,6 @@
 set quiet
 
+dotctl := "DOTFILES_REPO_ROOT=" + justfile_directory() + " bun " + justfile_directory() + "/node_modules/dotctl/src/bin/dotctl.ts"
 lua_paths := "home/.config/nvim/lua home/.config/nvim/local-plugins/cmd-ux/lua home/.config/nvim/local-plugins/cmd-ux/tests"
 cmd_ux_blocklist_path := "home/.config/nvim/cmd-ux-command-blocklist.txt"
 cmd_ux_plugin_path := "home/.config/nvim/local-plugins/cmd-ux"
@@ -9,19 +10,19 @@ default:
     just --list
 
 up:
-    bun packages/dotctl/src/bin/dotctl.ts up
+    {{ dotctl }} up
 
 edit target:
-    bun packages/dotctl/src/bin/dotctl.ts edit {{ target }}
+    {{ dotctl }} edit {{ target }}
 
 status:
-    bun packages/dotctl/src/bin/dotctl.ts status
+    {{ dotctl }} status
 
 doctor:
-    bun packages/dotctl/src/bin/dotctl.ts doctor
+    {{ dotctl }} doctor
 
 explain target:
-    bun packages/dotctl/src/bin/dotctl.ts explain {{ target }}
+    {{ dotctl }} explain {{ target }}
 
 lua-check: lua-lint lua-lsp-check lua-fmt-check
 

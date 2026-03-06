@@ -33,8 +33,8 @@ When adding a new convenience view symlink:
    <view-path>
    ```
 5. **Verify it stays out of dotctl lanes**
-   - Do not put convenience views under `symlink-roots/`
-   - Do not add them to `packages/dotctl/src/lib/config.ts`
+   - Do not put convenience views under managed source directories
+   - Do not add them to `dotctl.config.json` trueDirs
    - They are repo-local browsing aids, not managed source-of-truth paths
 
 ## Key Principles

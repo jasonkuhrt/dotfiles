@@ -7,7 +7,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>__HOME__/.bun/bin/bun</string>
-        <string>__HOME__/projects/jasonkuhrt/dotfiles/packages/dotctl/src/bin/dotctl.ts</string>
+        <string>__HOME__/projects/jasonkuhrt/dotfiles/node_modules/dotctl/src/bin/dotctl.ts</string>
         <string>heal</string>
         <string>--background</string>
     </array>

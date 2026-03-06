@@ -13,9 +13,11 @@ When making system configuration changes:
 
    | Case | Location | Notes |
    |-------------|----------|----------|
-   | Pure config directory that should behave like a live repo tree | `symlink-roots/config/<tool>/` or `symlink-roots/claude/<tool>/` | Add a matching `symlink_*.tmpl` file under `home/` and update `packages/dotctl/src/lib/config.ts` |
-   | Single config file or mixed directory | `home/...` with normal chezmoi naming | Global symlink mode makes ordinary files live immediately; new files still need `just up` |
-   | Secret, template, permission-sensitive path, `exact_` subtree, executable script | `home/...` with the right prefixes | This is the `special` lane; keep using raw chezmoi semantics |
+   | Pure config directory (whole-dir symlink) | `home/<path>/` | Add to `trueDirs` in `dotctl.config.json` |
+   | Mixed directory (config + runtime state) | `home/<path>/` with `.spread` marker | Add `.spread` file; dotctl creates per-file symlinks |
+   | Single config file | `home/<path>` | File symlink created automatically by `just up` |
+   | File needing merge with runtime state | `home/<path>` + `home/<path>.modify` | Sidecar script merges managed + live content |
+   | Encrypted secret | `home/<path>.age` | Decrypted via age on deploy |
    | Data file that only drives lifecycle scripts | `home/Brewfile`, `home/npm/global-packages.txt`, `home/dock/apps.txt` | Ignored from deploy, hashed by scripts |
 
 3. **Resolve the target path before editing**

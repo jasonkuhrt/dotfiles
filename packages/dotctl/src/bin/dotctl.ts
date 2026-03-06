@@ -10,11 +10,13 @@ import { runEdit } from "../lib/edit.js"
 import { generateAndWriteManifest, resolveManifest } from "../lib/manifest.js"
 import { buildDeploymentPlan, formatPlan } from "../lib/conventions.js"
 import { executeDeploy, formatDeploySummary } from "../lib/deploy.js"
+import { buildScriptPlan, formatScriptPlan, formatRunSummary, runScripts } from "../lib/scripts.js"
 
 const USAGE = `dotctl
 
 Usage:
   dotctl up
+  dotctl scripts [--dry-run]
   dotctl deploy [--dry-run] [--verbose]
   dotctl heal [--background]
   dotctl status
@@ -36,6 +38,20 @@ const main = async (): Promise<number> => {
   if (command === "up") {
     console.log(runUp(ctx))
     return 0
+  }
+
+  if (command === "scripts") {
+    const dryRun = args.includes("--dry-run")
+    const plan = buildScriptPlan(ctx)
+
+    if (dryRun) {
+      console.log(formatScriptPlan(plan))
+      return 0
+    }
+
+    const summary = await runScripts(ctx, plan)
+    console.log(formatRunSummary(summary))
+    return summary.failed === 0 ? 0 : 1
   }
 
   if (command === "deploy") {

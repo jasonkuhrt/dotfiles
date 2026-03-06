@@ -1,0 +1,23 @@
+#!/bin/bash
+set -e
+
+source "$DOTFILES_ROOT/scripts/lib/helpers.sh"
+
+header "Homebrew"
+
+# Ensure Homebrew is in PATH (Apple Silicon)
+if [ -f "/opt/homebrew/bin/brew" ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+if has_cmd brew; then
+    skip "Homebrew"
+else
+    info "Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    if [ -f "/opt/homebrew/bin/brew" ]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    fi
+    task "Homebrew installed"
+fi

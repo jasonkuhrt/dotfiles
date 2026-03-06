@@ -1,0 +1,78 @@
+#!/bin/bash
+set -e
+
+source "$DOTFILES_ROOT/scripts/lib/helpers.sh"
+
+if [[ "$OSTYPE" != darwin* ]]; then
+    exit 0
+fi
+
+header "Wispr Flow Hotkeys"
+
+CONFIG="$HOME/Library/Application Support/Wispr Flow/config.json"
+
+if [ ! -f "$CONFIG" ]; then
+    skip "Wispr Flow config (not found)"
+    exit 0
+fi
+
+if pgrep -f "Wispr Flow\\.app/Contents/MacOS/Wispr Flow" > /dev/null; then
+    skip "Wispr Flow hotkeys (app running, quit app then apply)"
+    exit 0
+fi
+
+if ! has_cmd jq; then
+    warn "jq not installed; skipping Wispr Flow shortcut update"
+    exit 0
+fi
+
+current_popo=$(
+    jq -r '.prefs.user.shortcuts // {} | to_entries[]? | select(.value == "popo") | .key' "$CONFIG" \
+        | head -n 1
+)
+current_ptt=$(
+    jq -r '.prefs.user.shortcuts // {} | to_entries[]? | select(.value == "ptt") | .key' "$CONFIG" \
+        | head -n 1
+)
+current_split_popo=$(
+    jq -r '.prefs.cache.splitKeybinds // [] | map(select(.value == "popo") | .shortcut[0]) | .[0] // empty' "$CONFIG"
+)
+current_split_ptt=$(
+    jq -r '.prefs.cache.splitKeybinds // [] | map(select(.value == "ptt") | .shortcut[0]) | .[0] // empty' "$CONFIG"
+)
+
+if [ "$current_popo" = "100" ] && [ "$current_ptt" = "101" ] && [ "$current_split_popo" = "100" ] && [ "$current_split_ptt" = "101" ]; then
+    skip "Wispr Flow hotkeys (F8 toggle, F9 press/hold)"
+    exit 0
+fi
+
+tmp=$(mktemp "${TMPDIR:-/tmp}/wispr-flow-config.XXXXXX")
+
+jq '
+  .prefs.user.shortcuts =
+    (
+      ((.prefs.user.shortcuts // {})
+        | to_entries
+        | map(select((.value != "ptt") and (.value != "popo")))
+        | from_entries
+      ) + {"100":"popo","101":"ptt"}
+    )
+  | .prefs.cache.splitKeybinds =
+    (
+      ((.prefs.cache.splitKeybinds // [])
+      | map(select((.value != "ptt") and (.value != "popo"))))
+      + [
+        {"shortcut":[100],"value":"popo"},
+        {"shortcut":[101],"value":"ptt"}
+      ]
+    )
+' "$CONFIG" > "$tmp"
+
+if jq empty "$tmp" > /dev/null 2>&1; then
+    mv "$tmp" "$CONFIG"
+    task "Wispr Flow hotkeys set: F8=toggle, F9=press/hold"
+else
+    rm -f "$tmp"
+    warn "Failed to update Wispr Flow shortcut"
+    exit 1
+fi

@@ -1,0 +1,46 @@
+#!/bin/bash
+set -e
+
+source "$DOTFILES_ROOT/scripts/lib/helpers.sh"
+
+header "Skills Sync (codex)"
+
+# Mirror ~/.claude/skills/ to ~/.codex/skills/ via per-skill symlinks.
+# Preserves .system directory (Codex system skills).
+#
+# Note: ~/.agents/skills is a whole-directory symlink to ~/.claude/skills
+# (managed by chezmoi's symlink_skills.tmpl), so it doesn't need mirroring.
+
+SKILLS_SRC="$HOME/.claude/skills"
+target_dir="$HOME/.codex/skills"
+mkdir -p "$target_dir"
+
+# Remove stale symlinks (skills that no longer exist in source)
+for link in "$target_dir"/*; do
+    [ -e "$link" ] || [ -L "$link" ] || continue
+    name=$(basename "$link")
+    [ "$name" = ".system" ] && continue
+    if [ ! -d "$SKILLS_SRC/$name" ]; then
+        rm -rf "$link"
+        info "Removed stale codex/skills/$name"
+    fi
+done
+
+# Create/update symlinks for each skill
+for skill_dir in "$SKILLS_SRC"/*/; do
+    [ -d "$skill_dir" ] || continue
+    name=$(basename "$skill_dir")
+    [ "$name" = ".system" ] && continue
+
+    dest="$target_dir/$name"
+    rel_target="../../.claude/skills/$name"
+
+    if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$rel_target" ]; then
+        continue  # Already correct
+    fi
+
+    [ -e "$dest" ] || [ -L "$dest" ] && rm -rf "$dest"
+    ln -s "$rel_target" "$dest"
+done
+
+task "codex/skills synced"

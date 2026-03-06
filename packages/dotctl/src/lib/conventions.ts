@@ -236,6 +236,9 @@ const walkSourceDir = (
       // Regular directory: recurse to discover children
       walkSourceDir(ctx, sourcePath, targetPath, targetRel, entries, warnings)
     } else if (entry.isFile()) {
+      // .spread markers are metadata only — never deploy them
+      if (entry.name === ".spread") continue
+
       // Symlink templates: chezmoi convention for directory symlinks into symlink-roots/
       if (entry.name.startsWith("symlink_") && entry.name.endsWith(".tmpl")) {
         const cleanName = stripChezmoiFileName(entry.name)

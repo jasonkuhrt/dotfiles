@@ -20,6 +20,8 @@ local summary_cache = {}
 
 local max_named_frontier_items = 32
 local optional_named_root_limit = 12
+local repeatable_overlap_threshold = 0.75
+local repeatable_probe_limit = 4
 
 function M.invalidate()
   summary_cache = {}
@@ -125,6 +127,35 @@ local function looks_like_named_frontier(matches)
   return true
 end
 
+---@param matches string[]
+---@return table<string, boolean>
+local function match_set(matches)
+  local set = {}
+  for _, match in ipairs(matches) do
+    set[match] = true
+  end
+  return set
+end
+
+---@param left string[]
+---@param right string[]
+---@return number
+local function overlap_ratio(left, right)
+  if #left == 0 or #right == 0 then
+    return 0
+  end
+
+  local right_set = match_set(right)
+  local overlap = 0
+  for _, item in ipairs(left) do
+    if right_set[item] then
+      overlap = overlap + 1
+    end
+  end
+
+  return overlap / math.max(#left, #right)
+end
+
 ---@param accepted string[]
 ---@return string
 local function frontier_cache_key(accepted)
@@ -167,6 +198,30 @@ end
 
 ---@param summary GenericCommandSummary
 ---@param accepted string[]
+---@param matches string[]
+---@return boolean
+local function looks_like_repeatable_named_values(summary, accepted, matches)
+  if #matches <= 1 then
+    return false
+  end
+
+  local probe_count = math.min(#matches, repeatable_probe_limit)
+  local repeated = 0
+  for index = 1, probe_count do
+    local child_matches = probe_named_matches(summary, append_token(accepted, matches[index]))
+    if
+      looks_like_named_frontier(child_matches)
+      and overlap_ratio(matches, child_matches) >= repeatable_overlap_threshold
+    then
+      repeated = repeated + 1
+    end
+  end
+
+  return repeated == probe_count
+end
+
+---@param summary GenericCommandSummary
+---@param accepted string[]
 ---@return CommandFrontierItem[]?
 local function infer_named_frontier(summary, accepted)
   local key = frontier_cache_key(accepted)
@@ -177,6 +232,11 @@ local function infer_named_frontier(summary, accepted)
 
   local matches = probe_named_matches(summary, accepted)
   if not looks_like_named_frontier(matches) then
+    summary.named_frontier_cache[key] = false
+    return nil
+  end
+
+  if looks_like_repeatable_named_values(summary, accepted, matches) then
     summary.named_frontier_cache[key] = false
     return nil
   end

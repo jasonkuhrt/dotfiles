@@ -14,6 +14,19 @@ DOTFILES_HEAL_LOCK_DIR="$DOTFILES_STATE_DIR/heal.lock"
 DOTFILES_CHEZMOI_CONFIG="$HOME/.config/chezmoi/chezmoi.toml"
 DOTFILES_CHEZMOI_TEMPLATE="$DOTFILES_REPO_ROOT/home/.chezmoi.toml.tmpl"
 
+if command -v chezmoi >/dev/null 2>&1; then
+    DOTFILES_CHEZMOI_BIN="${DOTFILES_CHEZMOI_BIN:-$(command -v chezmoi)}"
+elif [[ -x /opt/homebrew/bin/chezmoi ]]; then
+    DOTFILES_CHEZMOI_BIN="${DOTFILES_CHEZMOI_BIN:-/opt/homebrew/bin/chezmoi}"
+elif [[ -x /usr/local/bin/chezmoi ]]; then
+    DOTFILES_CHEZMOI_BIN="${DOTFILES_CHEZMOI_BIN:-/usr/local/bin/chezmoi}"
+else
+    DOTFILES_CHEZMOI_BIN="${DOTFILES_CHEZMOI_BIN:-chezmoi}"
+fi
+
+export DOTFILES_CHEZMOI_BIN
+export PATH="$(dirname "$DOTFILES_CHEZMOI_BIN"):/opt/homebrew/bin:/usr/local/bin:$PATH"
+
 ensure_runtime_dirs() {
     mkdir -p "$DOTFILES_STATE_DIR" "$DOTFILES_BACKUP_ROOT" "$DOTFILES_LOG_DIR"
 }
@@ -50,7 +63,7 @@ sync_chezmoi_config() {
     local template_sha
     rendered=$(
         cd "$DOTFILES_REPO_ROOT"
-        chezmoi execute-template <"$DOTFILES_CHEZMOI_TEMPLATE"
+        "$DOTFILES_CHEZMOI_BIN" execute-template <"$DOTFILES_CHEZMOI_TEMPLATE"
     )
     template_sha=$(shasum -a 256 "$DOTFILES_CHEZMOI_TEMPLATE" | awk '{print $1}')
 
@@ -62,7 +75,7 @@ sync_chezmoi_config() {
         printf '%s\n' "$rendered" >"$DOTFILES_CHEZMOI_CONFIG"
     fi
 
-    chezmoi state set \
+    "$DOTFILES_CHEZMOI_BIN" state set \
         --bucket=configState \
         --key=configState \
         --value="{\"configTemplateContentsSHA256\":\"$template_sha\"}" \
@@ -73,7 +86,7 @@ run_chezmoi() {
     (
         cd "$DOTFILES_REPO_ROOT"
         sync_chezmoi_config
-        chezmoi "$@"
+        "$DOTFILES_CHEZMOI_BIN" "$@"
     )
 }
 

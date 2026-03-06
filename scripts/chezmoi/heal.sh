@@ -12,11 +12,12 @@ append_log() {
 managed_file_entries() {
     python3 - <<'PY'
 import json
+import os
 import subprocess
 
 raw = subprocess.check_output(
     [
-        "chezmoi",
+        os.environ["DOTFILES_CHEZMOI_BIN"],
         "managed",
         "--mode",
         "file",

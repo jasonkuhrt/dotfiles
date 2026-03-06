@@ -27,7 +27,8 @@ main() {
     target_abs=$(expand_target_path "$target")
     log_info "opening chezmoi-managed target $target_abs"
     cd "$DOTFILES_REPO_ROOT"
-    exec chezmoi edit "$target_abs"
+    sync_chezmoi_config
+    exec "$DOTFILES_CHEZMOI_BIN" edit "$target_abs"
 }
 
 main "$@"

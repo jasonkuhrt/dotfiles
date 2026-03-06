@@ -3,7 +3,7 @@ set -e
 
 # ─────────────────────────────────────────────────────────────
 # Dotfiles sudo operations
-# Run after ./sync completes: sudo ./scripts/sync-sudo
+# Run after ./sync completes: sudo ./scripts/sync-sudo.sh
 # ─────────────────────────────────────────────────────────────
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -22,7 +22,7 @@ if [ "$(id -u)" -ne 0 ]; then
     printf "\n"
     printf "Run with sudo to apply these settings:\n"
     printf "\n"
-    printf "  ${CYAN}sudo ./scripts/sync-sudo${RESET}\n"
+    printf "  ${CYAN}sudo ./scripts/sync-sudo.sh${RESET}\n"
     printf "\n"
     printf "Or run these commands manually:\n"
     printf "\n"

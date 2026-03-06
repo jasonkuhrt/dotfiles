@@ -53,7 +53,7 @@ Full dotfiles sync: commit, rebase, converge with `just up`, then push.
    ```
 
 8. **Relay sudo reminder if shown**
-   - If output shows `sudo ./scripts/sync-sudo`, tell the user exactly that
+   - If output shows `sudo ./scripts/sync-sudo.sh`, tell the user exactly that
 
 ## What `just up` Does
 
@@ -65,7 +65,7 @@ Full dotfiles sync: commit, rebase, converge with `just up`, then push.
 - installs or reloads the launchd healer
 - leaves read-only inspection to `just status`, `just doctor`, and `just explain`
 
-**`./scripts/sync-sudo`** (user runs manually, only if needed):
+**`./scripts/sync-sudo.sh`** (user runs manually, only if needed):
 - Power management (display sleep)
 - Touch ID for sudo
 - Fish as default shell (/etc/shells + chsh)

@@ -65,7 +65,7 @@ export const generateManifest = (ctx: RuntimeContext): Manifest => {
   const plan = buildDeploymentPlan(ctx)
 
   const fileEntries: ManifestFileEntry[] = plan.entries
-    .filter((e) => e.kind === "symlinkFile" || e.kind === "symlinkDir")
+    .filter((e) => e.kind === "symlinkFile")
     .map((entry) => {
       const lane: Exclude<Lane, "trueDir"> = "fileSymlink"
       return {
@@ -73,9 +73,9 @@ export const generateManifest = (ctx: RuntimeContext): Manifest => {
         targetAbs: entry.targetAbs,
         targetRel: entry.targetRel,
         targetDisplay: displayHomePath(entry.targetAbs, ctx.homeDir),
-        sourceAbs: entry.symlinkTarget ?? entry.sourceAbs,
+        sourceAbs: entry.sourceAbs,
         sourceRel: toRepoRelative(entry.sourceAbs, ctx.repoRoot),
-        expectedShape: (entry.kind === "symlinkDir" ? "symlinkDir" : "symlinkFile") as ExpectedShape,
+        expectedShape: "symlinkFile" as ExpectedShape,
         capturePolicy: resolveCapturePolicy(entry.targetRel, lane),
       }
     })

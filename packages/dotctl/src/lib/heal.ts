@@ -81,7 +81,7 @@ const healSymlinkEntry = (
   ctx: RuntimeContext,
   entry: PlanEntry,
 ): { readonly action: "healed" | "skipped"; readonly broken: boolean } => {
-  const linkTarget = entry.symlinkTarget ?? entry.sourceAbs
+  const linkTarget = entry.sourceAbs
 
   if (isCorrectSymlink(entry.targetAbs, linkTarget)) {
     return { action: "skipped", broken: false }
@@ -137,9 +137,9 @@ export const healOnce = (ctx: RuntimeContext, options: HealOptions): HealSummary
 
   try {
     const plan = buildDeploymentPlan(ctx)
-    // Only heal symlink entries (symlinkDir and symlinkFile)
+    // Only heal symlink entries
     const symlinkEntries = plan.entries.filter(
-      (e) => e.kind === "symlinkDir" || e.kind === "symlinkFile",
+      (e) => e.kind === "symlinkFile",
     )
 
     for (const entry of symlinkEntries) {

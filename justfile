@@ -1,8 +1,8 @@
 set quiet
 
-lua_paths := "symlink-roots/config/nvim/lua symlink-roots/config/nvim/local-plugins/cmd-ux/lua symlink-roots/config/nvim/local-plugins/cmd-ux/tests"
-cmd_ux_blocklist_path := "symlink-roots/config/nvim/cmd-ux-command-blocklist.txt"
-cmd_ux_plugin_path := "symlink-roots/config/nvim/local-plugins/cmd-ux"
+lua_paths := "home/.config/nvim/lua home/.config/nvim/local-plugins/cmd-ux/lua home/.config/nvim/local-plugins/cmd-ux/tests"
+cmd_ux_blocklist_path := "home/.config/nvim/cmd-ux-command-blocklist.txt"
+cmd_ux_plugin_path := "home/.config/nvim/local-plugins/cmd-ux"
 
 [private]
 default:
@@ -88,7 +88,7 @@ cmd-ux-test:
         exit 1
     fi
 
-    CMD_UX_TEST=1 XDG_CONFIG_HOME="$PWD/symlink-roots/config" XDG_CACHE_HOME="$cache_dir" nvim --headless -u NONE \
+    CMD_UX_TEST=1 XDG_CONFIG_HOME="$PWD/home/.config" XDG_CACHE_HOME="$cache_dir" nvim --headless -u NONE \
         --cmd "set runtimepath^=$plenary" \
         -c "lua require('plenary.test_harness').test_directory('$plugin_root/tests/plenary', { minimal_init = '$plugin_root/tests/minimal_init.lua', sequential = true })"
 

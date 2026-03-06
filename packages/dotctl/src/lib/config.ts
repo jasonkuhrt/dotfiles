@@ -30,22 +30,22 @@ export const HEAL_INTERVAL_SECONDS = 300
 export const LOG_ROTATE_MAX_BYTES = 256 * 1024
 
 export const TRUE_DIRS: readonly TrueDirEntry[] = [
-  { targetRel: ".bookmarks", repoRel: "symlink-roots/bookmarks" },
-  { targetRel: ".config/bat", repoRel: "symlink-roots/config/bat" },
-  { targetRel: ".config/direnv", repoRel: "symlink-roots/config/direnv" },
-  { targetRel: ".config/dprint", repoRel: "symlink-roots/config/dprint", note: "Promoted in dotctl wave" },
-  { targetRel: ".config/ghostty", repoRel: "symlink-roots/config/ghostty" },
-  { targetRel: ".config/git", repoRel: "symlink-roots/config/git" },
-  { targetRel: ".config/lazygit", repoRel: "symlink-roots/config/lazygit" },
-  { targetRel: ".config/libra", repoRel: "symlink-roots/config/libra" },
-  { targetRel: ".config/lsd", repoRel: "symlink-roots/config/lsd" },
-  { targetRel: ".config/nvim", repoRel: "symlink-roots/config/nvim", note: "Single repo-backed Neovim config tree." },
-  { targetRel: ".config/perles", repoRel: "symlink-roots/config/perles" },
-  { targetRel: ".config/ripgrep", repoRel: "symlink-roots/config/ripgrep" },
-  { targetRel: ".claude/checks", repoRel: "symlink-roots/claude/checks" },
-  { targetRel: ".claude/commands", repoRel: "symlink-roots/claude/commands" },
-  { targetRel: ".claude/rules", repoRel: "symlink-roots/claude/rules" },
-  { targetRel: ".claude/schemas", repoRel: "symlink-roots/claude/schemas" },
+  { targetRel: ".bookmarks", repoRel: "home/.bookmarks" },
+  { targetRel: ".config/bat", repoRel: "home/.config/bat" },
+  { targetRel: ".config/direnv", repoRel: "home/.config/direnv" },
+  { targetRel: ".config/dprint", repoRel: "home/.config/dprint", note: "Promoted in dotctl wave" },
+  { targetRel: ".config/ghostty", repoRel: "home/.config/ghostty" },
+  { targetRel: ".config/git", repoRel: "home/.config/git" },
+  { targetRel: ".config/lazygit", repoRel: "home/.config/lazygit" },
+  { targetRel: ".config/libra", repoRel: "home/.config/libra" },
+  { targetRel: ".config/lsd", repoRel: "home/.config/lsd" },
+  { targetRel: ".config/nvim", repoRel: "home/.config/nvim", note: "Single repo-backed Neovim config tree." },
+  { targetRel: ".config/perles", repoRel: "home/.config/perles" },
+  { targetRel: ".config/ripgrep", repoRel: "home/.config/ripgrep" },
+  { targetRel: ".claude/checks", repoRel: "home/.claude/checks" },
+  { targetRel: ".claude/commands", repoRel: "home/.claude/commands" },
+  { targetRel: ".claude/rules", repoRel: "home/.claude/rules" },
+  { targetRel: ".claude/schemas", repoRel: "home/.claude/schemas" },
 ] as const
 
 export const FILE_SYMLINK_ROOTS = [

@@ -101,7 +101,6 @@ const removeExistingSymlink = (targetPath: string): void => {
 
 /** Kinds that the deploy engine can handle today. */
 const DEPLOYABLE_KINDS = new Set<ConventionKind>([
-  "symlinkDir",
   "symlinkFile",
   "modify",
   "encrypted",
@@ -111,9 +110,7 @@ const deploySymlink = (
   entry: PlanEntry,
   options: DeployOptions,
 ): DeployResult => {
-  // For symlinkDir entries with a symlinkTarget, use that as the link source.
-  // Otherwise, link directly to the source file in the repo.
-  const linkTarget = entry.symlinkTarget ?? entry.sourceAbs
+  const linkTarget = entry.sourceAbs
 
   // Already correct?
   if (isCorrectSymlink(entry.targetAbs, linkTarget)) {

@@ -14,8 +14,9 @@ Brewfile.lock.json
 !.serena/project.yml
 
 # Bookmarks sync
-bookmarks/backups/
-bookmarks/.sync-state.json
+home/.bookmarks/backups/
+home/.bookmarks/runtime/
+home/.bookmarks/.sync-state.json
 
 # Claude transcripts (generated output)
 **/.claude/transcripts/

@@ -1,0 +1,8 @@
+#!/bin/bash
+# Generate the launchd plist with the correct HOME path.
+# Reads template from DOTCTL_SOURCE, substitutes __HOME__, writes to stdout.
+# Stdin (current target content) is ignored — always regenerate from template.
+
+set -euo pipefail
+
+sed "s|__HOME__|$HOME|g" "$DOTCTL_SOURCE"

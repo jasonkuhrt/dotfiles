@@ -1,27 +1,28 @@
+local dir = require("pl.dir")
+local pathx = require("pl.path")
+
 local M = {}
-local uv = vim.uv or vim.loop
 
----@param path string
+---@param file_path string
 ---@return integer
-function M.mtime_sec(path)
-  local stat = uv.fs_stat(path)
-  if not stat or not stat.mtime then
-    return 0
-  end
-  return stat.mtime.sec or 0
+function M.mtime_sec(file_path)
+  return pathx.getmtime(file_path) or 0
 end
 
----@param path string
+---@param file_path string
 ---@param text string
-function M.write_text(path, text)
-  vim.fn.mkdir(vim.fn.fnamemodify(path, ":h"), "p")
-  vim.fn.writefile({ text }, path)
+function M.write_text(file_path, text)
+  local parent = pathx.dirname(file_path)
+  if parent ~= "" and parent ~= "." then
+    dir.makepath(parent)
+  end
+  vim.fn.writefile({ text }, file_path)
 end
 
----@param path string
+---@param file_path string
 ---@return string?
-function M.read_text(path)
-  local ok, lines = pcall(vim.fn.readfile, path)
+function M.read_text(file_path)
+  local ok, lines = pcall(vim.fn.readfile, file_path)
   if not ok or not lines[1] then
     return nil
   end

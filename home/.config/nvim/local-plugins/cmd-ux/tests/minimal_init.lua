@@ -3,11 +3,20 @@ local tests_dir = vim.fn.fnamemodify(source, ":p:h")
 local plugin_root = vim.fn.fnamemodify(tests_dir, ":h")
 local local_plugins_dir = vim.fn.fnamemodify(plugin_root, ":h")
 local stdlib_root = local_plugins_dir .. "/stdlib"
+local penlight_root = vim.fn.expand("~/.local/share/nvim/lazy/penlight")
+local penlight_rocks_root = vim.fn.expand("~/.local/share/nvim/lazy-rocks/penlight")
 
 vim.g.cmd_ux_disable_blocklist_live_validation = true
+vim.opt.runtimepath:prepend(penlight_root)
 vim.opt.runtimepath:prepend(stdlib_root)
 vim.opt.runtimepath:prepend(plugin_root)
 package.path = table.concat({
   plugin_root .. "/?.lua",
+  penlight_root .. "/lua/?.lua",
+  penlight_root .. "/lua/?/init.lua",
   package.path,
+}, ";")
+package.cpath = table.concat({
+  penlight_rocks_root .. "/lib/lua/5.1/?.so",
+  package.cpath,
 }, ";")

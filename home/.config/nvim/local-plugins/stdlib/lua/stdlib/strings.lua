@@ -1,19 +1,27 @@
+local stringx = require("pl.stringx")
+
 local M = {}
+
+---@param values table
+---@return table
+local function to_plain_list(values)
+  local result = {}
+  for index = 1, #values do
+    result[index] = values[index]
+  end
+  return result
+end
 
 ---@param text any
 ---@return string
 function M.trim(text)
-  return (tostring(text or ""):gsub("^%s+", ""):gsub("%s+$", ""))
+  return stringx.strip(tostring(text or ""))
 end
 
 ---@param text any
 ---@return string[]
 function M.split_words(text)
-  local result = {}
-  for token in tostring(text or ""):gmatch("%S+") do
-    result[#result + 1] = token
-  end
-  return result
+  return to_plain_list(stringx.split(tostring(text or "")))
 end
 
 ---@param lines string[]

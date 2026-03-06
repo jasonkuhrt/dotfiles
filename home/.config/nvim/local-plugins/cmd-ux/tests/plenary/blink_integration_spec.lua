@@ -8,11 +8,15 @@ end
 local function run_blink_smoke(key)
   local root = plugin_root()
   local stdlib_root = vim.fn.fnamemodify(root, ":h") .. "/stdlib"
+  local penlight_root = vim.fn.expand("~/.local/share/nvim/lazy/penlight")
+  local penlight_rocks_root = vim.fn.expand("~/.local/share/nvim/lazy-rocks/penlight")
   local blink_root = vim.fn.expand("~/.local/share/nvim/lazy/blink.cmp")
   local script_path = vim.fn.tempname() .. ".lua"
 
   local script = ([[local plugin_root = %q
 local stdlib_root = %q
+local penlight_root = %q
+local penlight_rocks_root = %q
 local blink_root = %q
 
 local function termcodes(keys)
@@ -36,10 +40,20 @@ local function has(items, expected)
   return false
 end
 
+vim.opt.runtimepath:prepend(penlight_root)
 vim.opt.runtimepath:prepend(stdlib_root)
 vim.opt.runtimepath:prepend(plugin_root)
 vim.opt.runtimepath:prepend(blink_root)
-package.path = table.concat({ plugin_root .. "/lua/?.lua", package.path }, ";")
+package.path = table.concat({
+  plugin_root .. "/lua/?.lua",
+  penlight_root .. "/lua/?.lua",
+  penlight_root .. "/lua/?/init.lua",
+  package.path,
+}, ";")
+package.cpath = table.concat({
+  penlight_rocks_root .. "/lib/lua/5.1/?.so",
+  package.cpath,
+}, ";")
 vim.g.cmd_ux_disable_blocklist_live_validation = true
 
 require("cmd_ux").setup()
@@ -116,7 +130,7 @@ vim.schedule(function()
     end, 150)
   end, 100)
 end)
-]]):format(root, stdlib_root, blink_root, key)
+]]):format(root, stdlib_root, penlight_root, penlight_rocks_root, blink_root, key)
 
   vim.fn.writefile(vim.split(script, "\n", { plain = true }), script_path)
 

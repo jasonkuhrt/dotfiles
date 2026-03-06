@@ -1,4 +1,5 @@
 local M = {}
+local strings = require("stdlib.strings")
 
 local default_path = vim.fn.stdpath("config") .. "/cmd-ux-command-blocklist.txt"
 
@@ -14,12 +15,6 @@ local default_path = vim.fn.stdpath("config") .. "/cmd-ux-command-blocklist.txt"
 
 ---@type CmdUxBlocklistState?
 local state = nil
-
----@param text string?
----@return string
-local function trim(text)
-  return (tostring(text or ""):gsub("^%s+", ""):gsub("%s+$", ""))
-end
 
 ---@param message string
 local function warn(message)
@@ -53,7 +48,7 @@ local function parse_lines(lines)
   local seen = {}
 
   for line_nr, raw_line in ipairs(lines) do
-    local line = trim(raw_line)
+    local line = strings.trim(raw_line)
     if line ~= "" and not line:match("^#") then
       if line:find("%s") ~= nil then
         warn(("blocklist:%d: invalid entry %q — expected one exact command per line"):format(line_nr, raw_line))

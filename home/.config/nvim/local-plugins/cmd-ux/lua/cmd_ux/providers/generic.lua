@@ -1,5 +1,6 @@
 local util = require("cmd_ux.util")
 local types = require("cmd_ux.types")
+local nvim_commands = require("stdlib.nvim.commands")
 
 local M = {
   id = "generic",
@@ -47,10 +48,10 @@ local function command_summary(root)
     return summary_cache[root]
   end
 
-  local user_command = util.get_user_command(root)
-  local buffer_command = util.get_buffer_command(root)
-  local parsed = util.parse_command(root)
-  local completion_type = util.get_completion_type(root .. " ")
+  local user_command = nvim_commands.get_user_command(root)
+  local buffer_command = nvim_commands.get_buffer_command(root)
+  local parsed = nvim_commands.parse_command(root)
+  local completion_type = nvim_commands.get_completion_type(root .. " ")
 
   ---@type GenericCommandSummary
   local summary = {
@@ -94,7 +95,7 @@ local function completion_matches(summary, line, arglead)
     end
     return {}
   end
-  return util.get_cmdline_matches(line)
+  return nvim_commands.get_cmdline_matches(line)
 end
 
 ---@param line string

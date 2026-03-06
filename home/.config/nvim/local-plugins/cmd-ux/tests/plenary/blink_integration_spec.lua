@@ -7,10 +7,12 @@ end
 
 local function run_blink_smoke(key)
   local root = plugin_root()
+  local stdlib_root = vim.fn.fnamemodify(root, ":h") .. "/stdlib"
   local blink_root = vim.fn.expand("~/.local/share/nvim/lazy/blink.cmp")
   local script_path = vim.fn.tempname() .. ".lua"
 
   local script = ([[local plugin_root = %q
+local stdlib_root = %q
 local blink_root = %q
 
 local function termcodes(keys)
@@ -34,6 +36,7 @@ local function has(items, expected)
   return false
 end
 
+vim.opt.runtimepath:prepend(stdlib_root)
 vim.opt.runtimepath:prepend(plugin_root)
 vim.opt.runtimepath:prepend(blink_root)
 package.path = table.concat({ plugin_root .. "/lua/?.lua", package.path }, ";")
@@ -113,7 +116,7 @@ vim.schedule(function()
     end, 150)
   end, 100)
 end)
-]]):format(root, blink_root, key)
+]]):format(root, stdlib_root, blink_root, key)
 
   vim.fn.writefile(vim.split(script, "\n", { plain = true }), script_path)
 

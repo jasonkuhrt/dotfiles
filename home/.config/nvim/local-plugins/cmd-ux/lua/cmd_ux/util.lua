@@ -1,6 +1,7 @@
 local M = {}
 
 local blocklist = require("cmd_ux.blocklist")
+local nvim_commands = require("stdlib.nvim.commands")
 
 M.denied_completion_types = {
   expression = true,
@@ -38,78 +39,9 @@ M.enumerable_completion_types = {
   user = true,
 }
 
-function M.trim(text)
-  return (tostring(text or ""):gsub("^%s+", ""):gsub("%s+$", ""))
-end
-
-function M.split_words(text)
-  local result = {}
-  for token in tostring(text or ""):gmatch("%S+") do
-    result[#result + 1] = token
-  end
-  return result
-end
-
-function M.slice(list, start_index)
-  local result = {}
-  for index = start_index, #list do
-    result[#result + 1] = list[index]
-  end
-  return result
-end
-
 ---@return string[]
 function M.discover_command_names()
-  local names = blocklist.filter_commands(vim.fn.getcompletion("", "command"))
-  table.sort(names)
-  return names
-end
-
----@return table<string, table>
-function M.get_user_commands()
-  return vim.api.nvim_get_commands({})
-end
-
----@param bufnr? integer
----@return table<string, table>
-function M.get_buffer_commands(bufnr)
-  return vim.api.nvim_buf_get_commands(bufnr or 0, {})
-end
-
-function M.get_user_command(name)
-  local commands = M.get_user_commands()
-  return commands[name]
-end
-
----@param name string
----@param bufnr? integer
-function M.get_buffer_command(name, bufnr)
-  local commands = M.get_buffer_commands(bufnr)
-  return commands[name]
-end
-
-function M.parse_command(name)
-  local ok, parsed = pcall(vim.api.nvim_parse_cmd, name, {})
-  if not ok then
-    return nil
-  end
-  return parsed
-end
-
-function M.get_completion_type(line)
-  local ok, completion_type = pcall(vim.fn.getcompletiontype, line)
-  if not ok then
-    return ""
-  end
-  return completion_type or ""
-end
-
-function M.get_cmdline_matches(line)
-  local ok, matches = pcall(vim.fn.getcompletion, line, "cmdline")
-  if not ok then
-    return {}
-  end
-  return matches or {}
+  return blocklist.filter_commands(nvim_commands.discover_command_names())
 end
 
 function M.sort_by_label(items)
@@ -184,18 +116,6 @@ function M.synthetic_desc(root, parsed, completion_type)
     parts[#parts + 1] = "completes " .. completion_type
   end
   return table.concat(parts, "; ")
-end
-
-function M.bool_text(value)
-  return value and "yes" or "no"
-end
-
-function M.indent(lines, prefix)
-  local result = {}
-  for _, line in ipairs(lines) do
-    result[#result + 1] = prefix .. line
-  end
-  return result
 end
 
 return M

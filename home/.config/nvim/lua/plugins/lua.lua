@@ -5,20 +5,29 @@ return {
     opts = function(_, opts)
       opts.library = opts.library or {}
 
-      local cmd_ux_path = vim.fn.stdpath("config") .. "/local-plugins/cmd-ux"
-      local has_cmd_ux = false
-      for _, entry in ipairs(opts.library) do
-        if type(entry) == "table" and entry.path == cmd_ux_path then
-          has_cmd_ux = true
-          break
-        end
-      end
-
-      if not has_cmd_ux then
-        table.insert(opts.library, {
-          path = cmd_ux_path,
+      local libraries = {
+        {
+          path = vim.fn.stdpath("config") .. "/local-plugins/cmd-ux",
           words = { "cmd_ux" },
-        })
+        },
+        {
+          path = vim.fn.stdpath("config") .. "/local-plugins/stdlib",
+          words = { "stdlib" },
+        },
+      }
+
+      for _, library in ipairs(libraries) do
+        local present = false
+        for _, entry in ipairs(opts.library) do
+          if type(entry) == "table" and entry.path == library.path then
+            present = true
+            break
+          end
+        end
+
+        if not present then
+          table.insert(opts.library, library)
+        end
       end
     end,
   },

@@ -2,9 +2,10 @@ local blocklist = require("cmd_ux.blocklist")
 local providers = require("cmd_ux.providers")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
+local cache = require("stdlib.cache")
+local fs = require("stdlib.fs")
 
 local M = {}
-local uv = vim.uv or vim.loop
 
 ---@param left string[]
 ---@param right string[]
@@ -47,11 +48,7 @@ end
 
 ---@return integer
 local function blocklist_mtime()
-  local stat = uv.fs_stat(blocklist.path())
-  if not stat or not stat.mtime then
-    return 0
-  end
-  return stat.mtime.sec or 0
+  return fs.mtime_sec(blocklist.path())
 end
 
 ---@param cache_path string
@@ -67,9 +64,7 @@ function M.write(cache_path, cache_version, index)
     entries = index.entries,
   }
 
-  local encoded = vim.json.encode(payload)
-  vim.fn.mkdir(vim.fn.fnamemodify(cache_path, ":h"), "p")
-  vim.fn.writefile({ encoded }, cache_path)
+  cache.write_json(cache_path, payload)
 end
 
 ---@param payload table
@@ -93,18 +88,8 @@ end
 ---@param cache_version integer
 ---@return CommandIndex?
 function M.load(cache_path, cache_version)
-  local stat = uv.fs_stat(cache_path)
-  if not stat then
-    return nil
-  end
-
-  local ok, lines = pcall(vim.fn.readfile, cache_path)
-  if not ok or not lines[1] or lines[1] == "" then
-    return nil
-  end
-
-  local decode_ok, payload = pcall(vim.json.decode, table.concat(lines, "\n"))
-  if not decode_ok or type(payload) ~= "table" then
+  local payload = cache.read_json(cache_path)
+  if not payload then
     return nil
   end
 

@@ -1,4 +1,4 @@
-local util = require("cmd_ux.util")
+local strings = require("stdlib.strings")
 
 local M = {}
 
@@ -13,7 +13,7 @@ function M.build(state)
   end
 
   lines[#lines + 1] = "Kind: " .. (state.kind or "unknown")
-  lines[#lines + 1] = "Executable now: " .. util.bool_text(state.executable == true)
+  lines[#lines + 1] = "Executable now: " .. strings.bool_text(state.executable == true)
 
   if state.refusal_reason and state.refusal_reason ~= "" then
     lines[#lines + 1] = "Refusal: " .. state.refusal_reason

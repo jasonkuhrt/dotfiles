@@ -1,6 +1,7 @@
 local providers = require("cmd_ux.providers")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
+local nvim_commands = require("stdlib.nvim.commands")
 
 local M = {}
 
@@ -20,8 +21,8 @@ end
 
 ---@return CommandIndexEntry[]
 function M.build_entries()
-  local user_commands = util.get_user_commands()
-  local buffer_commands = util.get_buffer_commands(0)
+  local user_commands = nvim_commands.get_user_commands()
+  local buffer_commands = nvim_commands.get_buffer_commands(0)
   local entries = {}
 
   for _, root in ipairs(util.discover_command_names()) do

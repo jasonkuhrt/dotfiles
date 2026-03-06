@@ -2,6 +2,8 @@ local index = require("cmd_ux.index")
 local providers = require("cmd_ux.providers")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
+local collections = require("stdlib.collections")
+local strings = require("stdlib.strings")
 
 local M = {}
 
@@ -29,7 +31,7 @@ local M = {}
 ---@param line string
 ---@return ParsedLine?
 local function parse_line(line)
-  local trimmed = util.trim(line)
+  local trimmed = strings.trim(line)
   if trimmed == "" then
     return {
       raw = line,
@@ -58,7 +60,7 @@ local function parse_line(line)
     blank = false,
     trailing_space = line:match("%s$") ~= nil,
     root_input = root_input,
-    tokens = util.split_words(trimmed),
+    tokens = strings.split_words(trimmed),
   }
 end
 
@@ -133,7 +135,7 @@ function M.resolve_line(line)
   end
 
   local root = parsed.root_input
-  local tokens = util.slice(parsed.tokens, 2)
+  local tokens = collections.slice(parsed.tokens, 2)
   local pending = ""
   if not parsed.trailing_space and #tokens > 0 then
     pending = table.remove(tokens)

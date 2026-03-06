@@ -3,6 +3,13 @@
 
 local map = vim.keymap.set
 
+local function cmdline_backspace_or_noop()
+  if vim.fn.getcmdline() == "" then
+    return ""
+  end
+  return "<BS>"
+end
+
 -- Escape
 map("i", "kj", "<Esc>", { desc = "Escape" })
 map("c", "kj", "<Esc>", { desc = "Escape" })
@@ -44,6 +51,8 @@ map("c", ";", function()
   require("cmd_ux").handoff_from_cmdline()
 end, { desc = "Escalate to command palette" })
 map("c", ":", "<C-c>", { desc = "Back to normal" })
+map("c", "<BS>", cmdline_backspace_or_noop, { expr = true, desc = "Keep empty cmdline open" })
+map("c", "<C-h>", cmdline_backspace_or_noop, { expr = true, desc = "Keep empty cmdline open" })
 
 -- External command shortcut
 map("n", "!", ":!", { desc = "External command" })

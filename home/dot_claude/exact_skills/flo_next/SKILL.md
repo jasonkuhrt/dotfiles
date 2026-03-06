@@ -210,6 +210,12 @@ git push
 - `--session` records which Claude Code session closed this bead (first-class field, separate from comments)
 - `--suggest-next` shows newly unblocked beads after closing — feeds directly into hot path if continuing
 
+If this was the last bead and the epic is now fully closed, delete `.flo/state.yml` so the next flo invocation auto-bootstraps fresh:
+
+```bash
+rm -f "$(git rev-parse --show-toplevel)/.flo/state.yml"
+```
+
 ## Common Mistakes
 
 | Mistake                                  | Fix                                                                 |

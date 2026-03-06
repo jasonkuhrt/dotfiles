@@ -259,7 +259,11 @@ After all tasks complete:
 5. **Commit** (if `--commit false`): `git add <files> && git commit -m "feat: <epic summary>"`
 6. **Epic status**: `bd epic status`
 7. **Close-eligible**: if all children done: `bd epic close-eligible`
-8. **Persist + push**: `bd dolt push && git push`
+8. **Clean up flo state**: if epic is closed, delete `.flo/state.yml` so the next swarm/flo:next auto-bootstraps fresh
+   ```bash
+   rm -f "$(git rev-parse --show-toplevel)/.flo/state.yml"
+   ```
+9. **Persist + push**: `bd dolt push && git push`
 
 ## Common Mistakes
 

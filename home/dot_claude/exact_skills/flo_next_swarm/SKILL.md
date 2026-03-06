@@ -9,13 +9,22 @@ allowed-tools:
   - Bash(bd:*)
   - Bash(bash:*)
   - Bash(git:*)
+  - TeamCreate
+  - TeamDelete
+  - TaskCreate
+  - TaskUpdate
+  - TaskList
+  - TaskGet
+  - Agent
+  - SendMessage
+  - AskUserQuestion
 ---
 
 # flo:next:swarm
 
-Autopilot execution through an epic, wave by wave. Each wave's beads run as parallel subagents; when a wave completes, the next wave's beads are dispatched. The orchestrator drives the full sequence hands-off — the user invokes once and the epic progresses until all selected waves are done.
+Autopilot execution through an epic using **Agent Teams**. The orchestrator creates a team, sets up tasks mirroring bead dependencies, spawns named teammates, and lets CC's team coordination drive wave progression. Teammates self-serve from the shared task list — completing one task, checking for the next unblocked one, and continuing until the epic is done.
 
-Parallelism within waves is a bonus, not the point. A wave with 1 bead runs that bead as a single subagent. A wave with 5 beads runs all 5 in parallel. Either way, the swarm keeps advancing.
+Parallelism within waves is a bonus, not the point. A wave with 1 bead runs that bead as a single teammate. A wave with 5 beads runs all 5 in parallel. Either way, the swarm keeps advancing.
 
 ## CRITICAL — Never Push Back
 
@@ -25,7 +34,7 @@ Parallelism within waves is a bonus, not the point. A wave with 1 bead runs that
 - Say "there's nothing to parallelize" because wave 1 has a single bead
 - Recommend waiting until more beads unblock
 
-Single-bead waves are normal in any dependency DAG. The value of swarming is the **full autopilot execution across all waves**, not just within-wave parallelism. Run wave 1 (even if it's 1 bead), then wave 2 unlocks, then wave 3, etc.
+Single-bead waves are normal in any dependency DAG. The value of swarming is the **full autopilot execution across all waves**, not just within-wave parallelism.
 
 ## When to Use
 
@@ -47,7 +56,7 @@ Single-bead waves are normal in any dependency DAG. The value of swarming is the
 | Flag | Accepts | Default | Description |
 |------|---------|---------|-------------|
 | `--waves` | `all` or positive integer | *(prompt)* | Wave depth to swarm |
-| `--commit` | `true` or `false` | `true` | Whether subagents commit independently |
+| `--commit` | `true` or `false` | `true` | Whether teammates commit independently |
 | `--epic` | bead ID | *(auto-detect)* | Override epic resolution |
 
 ## Quick Reference
@@ -56,12 +65,12 @@ Single-bead waves are normal in any dependency DAG. The value of swarming is the
 |-------|-------|
 | Entry | context.sh → epic fields → design docs → waves.sh → wave selection |
 | Prepare | Load bead bodies → build briefings → warn on file overlap |
-| Execute | TaskCreate per bead (with addBlockedBy) → dispatch background agents |
-| Wrap-up | Check failures → read close reasons → downstream integrity → commit (if --commit false) → epic status → sync → push |
+| Execute | TeamCreate → TaskCreate per bead → spawn teammates → teammates self-serve |
+| Wrap-up | Check failures → read close reasons → downstream integrity → shutdown teammates → TeamDelete → commit (if --commit false) → epic status → sync → push |
 
 ## Orchestrator Protocol
 
-The orchestrator (this session) should be thin: epic context + task management. Invoke this skill early in a session or as a fresh session, not after heavy exploration.
+The orchestrator (this session) should be thin: epic context + team management. Invoke this skill early in a session or as a fresh session, not after heavy exploration.
 
 ### 1. Load context
 
@@ -106,7 +115,7 @@ Otherwise, present waves to the user:
    - "Waves 1–2 (N beads)"
    - "All K waves (N beads)"
 
-### 4. Load bead bodies
+### 5. Load bead bodies
 
 For each bead in the selected waves, read its full body:
 
@@ -116,24 +125,35 @@ bd show <id>
 
 This upfront loading enables:
 
-- Building focused per-agent briefings with sibling awareness
+- Building focused per-teammate briefings with sibling awareness
 - Warning about potential file overlaps between beads
 - Having context for the wrap-up integrity check
 
 **File overlap check**: If two beads in the same wave might touch the same files (inferred from their descriptions — same source directory, same module, etc.), warn the user and suggest running those sequentially.
 
-### 5. Create CC tasks
+### 6. Create team and tasks
+
+#### Create the team
+
+```
+TeamCreate:
+  team_name: <epic-id>
+  description: "Epic: <epic title>"
+```
+
+This creates the team and its shared task list.
+
+#### Create tasks
 
 One **TaskCreate** per bead in the selected waves. Mirror bead dependencies with **addBlockedBy**:
 
 ```
 TaskCreate:
-  subject: <bead title>
-  description: "Bead <BEAD_ID> (epic <EPIC_ID>)"
-  activeForm: "Working on <bead title>"
+  subject: "[<BEAD_ID>] <bead title>"
+  description: <full bead body — inline from step 5>
 ```
 
-For beads that depend on other beads also in the swarm, add:
+For beads that depend on other beads also in the swarm:
 
 ```
 TaskUpdate:
@@ -141,40 +161,42 @@ TaskUpdate:
   addBlockedBy: [<blocker-task-id>]
 ```
 
-CC's task system handles execution ordering — only unblocked tasks are dispatched.
+CC's task system handles execution ordering — only unblocked tasks are available to claim.
 
-### 6. Dispatch subagents
+**Task-to-bead mapping**: Include the bead ID in the task subject (e.g., `[dotfiles-vbfc.1] Convention engine`). This lets teammates identify which bead they're working on.
 
-For each unblocked task (wave 1 beads), dispatch a background agent:
+### 7. Spawn teammates
 
-```
-Task(subagent_type: "general-purpose", run_in_background: true)
-```
-
-Use the briefing template below. When a wave completes, check TaskList for newly unblocked tasks and dispatch those.
-
-**All dispatch calls for a wave should be sent in a single message** (parallel tool calls) for maximum concurrency.
-
-## Subagent Briefing Template
-
-Build a focused briefing per agent. Include ONLY what the agent needs:
+Spawn one named teammate per **wave-1 bead** (unblocked tasks). Each teammate joins the team and self-serves from the shared task list.
 
 ```
-You are completing bead <BEAD_ID> (part of epic <EPIC_ID>) in <REPO_PATH>.
+Agent:
+  team_name: <epic-id>
+  name: <bead-slug>            # e.g., "convention-engine", "script-runner"
+  subagent_type: "general-purpose"
+  prompt: <teammate briefing>  # see template below
+```
 
-## Your Task
-<Inline the full bead body here — no bd show round-trip needed>
+**Spawn all wave-1 teammates in a single message** (parallel tool calls) for maximum concurrency.
 
-## Context
-<Predecessor close reason, if relevant — what was built before this bead>
-<Relevant design doc excerpt, if applicable>
+**Do NOT spawn teammates for later waves upfront.** Teammates self-serve — when a wave-1 teammate completes its task, it checks `TaskList` and claims the next unblocked task automatically. The team scales naturally through the dependency graph.
 
-## Instructions
-1. Read the code contract: check existing files/interfaces your task builds on
-2. Do the work described in the bead body
+**Teammate count**: Spawn one teammate per wave-1 bead. If wave-1 has 1 bead, spawn 1 teammate. If it has 4, spawn 4. Teammates persist across waves — they claim new tasks as they become unblocked.
 
+## Teammate Briefing Template
+
+Build a focused briefing per teammate. This is their sole instruction source — teammates don't receive SessionStart hooks or bd prime.
+
+```
+You are a teammate on team "<TEAM_NAME>" completing beads for epic <EPIC_ID> in <REPO_PATH>.
+
+## How You Work
+
+1. Your first task is already assigned: [<BEAD_ID>] <bead title>
+2. Read the task description (TaskGet) for the full bead body
+3. Do the work described in the bead
 <IF --commit true>
-3. Commit using parallel-safe pathspec mode:
+4. Commit using parallel-safe pathspec mode:
    ```bash
    git add <new-files>                           # only untracked files
    git commit -m "<bead title>: <summary>" -- <all changed files>
@@ -182,69 +204,77 @@ You are completing bead <BEAD_ID> (part of epic <EPIC_ID>) in <REPO_PATH>.
    If commit fails with index.lock error, sleep 1 and retry (up to 3 times).
 <END IF>
 <IF --commit false>
-3. Do NOT commit. Leave changes in the working directory.
+4. Do NOT commit. Leave changes in the working directory.
 <END IF>
-
-4. Close the bead:
+5. Close the bead:
    ```bash
    bd close <BEAD_ID> --reason="<what was actually built>"
    ```
    Follow beads-close-discipline: describe actual result, name artifacts, note divergence.
+6. Mark your task completed: TaskUpdate(taskId: <id>, status: "completed")
+7. Check TaskList for the next unblocked, unowned task
+8. If one exists: claim it (TaskUpdate with owner: "<your-name>"), read its description, and repeat from step 3
+9. If none exist: send a message to the orchestrator saying you're done, then go idle
+
+## Context
+<Predecessor close reason, if relevant — what was built before this bead>
+<Relevant design doc excerpt, if applicable>
 
 ## Constraints
-- Only modify files relevant to this bead. Other agents are running concurrently.
+- Only modify files relevant to your current bead. Other teammates are running concurrently.
 - Do NOT run `bd dolt pull`, `bd dolt push`, `git push`, or any session close protocol — the orchestrator handles that.
+- Refer to teammates by NAME when messaging.
+- After completing each task, always check TaskList before going idle.
 ```
 
 ### Briefing Notes
 
-- **Inline bead body**: Saves subagent a `bd show` round-trip. Orchestrator already loaded it.
+- **First task pre-assigned**: The orchestrator assigns the wave-1 task to each teammate via TaskUpdate(owner) before spawning. The briefing tells the teammate what to start on.
+- **Self-serve continuation**: After completing their first task, teammates check TaskList autonomously. No orchestrator dispatch needed for subsequent waves.
 - **Predecessor context**: Include the close reason of the most relevant predecessor. Helps the agent understand the code it builds on.
 - **Design doc excerpt**: If the bead references a design doc, include the relevant section (not the whole doc).
 - **Commit instructions**: Only when `--commit true`. The `-- <paths>` suffix triggers git's `--only` mode — critical for parallel safety.
-- **No bd prime**: Subagents don't receive SessionStart hooks, so no bd prime output. The briefing IS their sole instruction source.
 
 ## Communication Model
 
-Beads are the communication channel, not Task return values:
+Teams provide bidirectional communication via SendMessage:
 
-- **Subagent's job**: Do the work → commit (if --commit true) → `bd close <id> --reason="..."`. That's it.
-- **Orchestrator's job at wrap-up**: Read close reasons via `bd show` for each bead.
-- **Task return value**: Just a success/failure signal. The meaningful content lives in the bead's close reason.
+- **Teammate → orchestrator**: Teammates send messages when done or when hitting blockers. Delivered automatically.
+- **Orchestrator → teammate**: Use `SendMessage(type: "message", recipient: "<name>")` for targeted instructions.
+- **Broadcast**: Use `SendMessage(type: "broadcast")` only for critical team-wide issues (e.g., "stop all work, blocking bug found"). Expensive — costs scale with team size.
+- **Beads remain the record**: Close reasons via `bd close --reason` are the durable output. Messages are ephemeral coordination.
 
 ## Git Commit Mode
 
 ### --commit true (default)
 
-Each subagent commits its own work using pathspec mode (see `git:parallel-commit` skill):
+Each teammate commits its own work using pathspec mode:
 
 ```bash
 git add <new-files>
 git commit -m "<bead title>: <summary>" -- <all changed files>
 ```
 
-**Required sub-skill**: `git:parallel-commit`
-
-**Non-overlapping files required**: Parallel commits are safe only when agents touch disjoint file sets. If overlap is detected during bead body loading (step 4), warn user and suggest running those beads sequentially.
+**Non-overlapping files required**: Parallel commits are safe only when teammates touch disjoint file sets. If overlap is detected during bead body loading (step 5), warn user and suggest running those beads sequentially.
 
 ### --commit false
 
-Subagents skip commits. All changes accumulate as a dirty working directory. The orchestrator handles a single commit at wrap-up.
+Teammates skip commits. All changes accumulate as a dirty working directory. The orchestrator handles a single commit at wrap-up.
 
-## Subagent Failure Handling
+## Failure Handling
 
-Subagents do not compact — they hit the 200k token wall and exit non-zero. No recovery, no compaction cycle.
+Teammates don't compact — they hit the context limit and exit. The orchestrator detects this via unclosed beads.
 
-1. **Detection**: Subagent exits non-zero → bead not closed (no --reason). Detect unclosed beads at wrap-up.
-2. **Report**: Tell user: "Bead X's agent hit context limit. Bead stays in_progress (claimed, unclosed). Downstream beads remain blocked."
+1. **Detection**: Teammate exits → bead not closed (no --reason). Detect unclosed beads at wrap-up.
+2. **Report**: Tell user: "Bead X's teammate hit context limit. Bead stays in_progress. Downstream beads remain blocked."
 3. **User decides**: Decompose with flo:add and re-swarm, or handle sequentially with flo:next (which has compaction recovery).
 
 ## Wrap-Up Protocol
 
-After all tasks complete:
+The orchestrator monitors team activity. When all teammates are idle and no unblocked tasks remain:
 
-1. **Check failures** — identify unclosed beads (subagent exited non-zero)
-2. **Surface interactive beads** — if any beads were filtered out due to `flo/interactive` label (step 3), report them now:
+1. **Check failures** — identify unclosed beads (teammate exited or timed out)
+2. **Surface interactive beads** — if any beads were filtered out due to `flo/interactive` label, report them:
    ```
    ## Needs Interactive Session
    - <bead-id>: <title> — flo/interactive (requires human-in-the-loop)
@@ -256,14 +286,16 @@ After all tasks complete:
    - **Divergence?** Check downstream beads: `bd dep tree <id> --direction=up --status open`
    - Report findings to user
    - If downstream beads are in later (unexecuted) waves: update them or flag for user decision
-5. **Commit** (if `--commit false`): `git add <files> && git commit -m "feat: <epic summary>"`
-6. **Epic status**: `bd epic status`
-7. **Close-eligible**: if all children done: `bd epic close-eligible`
-8. **Clean up flo state**: if epic is closed, delete `.flo/state.yml` so the next swarm/flo:next auto-bootstraps fresh
-   ```bash
-   rm -f "$(git rev-parse --show-toplevel)/.flo/state.yml"
-   ```
-9. **Persist + push**: `bd dolt push && git push`
+5. **Shutdown teammates** — `SendMessage(type: "shutdown_request")` to each active teammate. Wait for shutdown responses.
+6. **Delete team** — `TeamDelete` (removes team + task dirs)
+7. **Commit** (if `--commit false`): `git add <files> && git commit -m "feat: <epic summary>"`
+8. **Epic status**: `bd epic status`
+9. **Close-eligible**: if all children done: `bd epic close-eligible`
+10. **Clean up flo state**: if epic is closed, delete `.flo/state.yml` so the next swarm/flo:next auto-bootstraps fresh
+    ```bash
+    rm -f "$(git rev-parse --show-toplevel)/.flo/state.yml"
+    ```
+11. **Persist + push**: `bd dolt push && git push`
 
 ## Common Mistakes
 
@@ -271,13 +303,15 @@ After all tasks complete:
 |---------|-----|
 | Skipping bead body loading | Load ALL bodies upfront — enables briefings and overlap detection |
 | Overlapping files in same wave | Warn user, suggest sequential for those beads |
-| Not mirroring bead deps as task deps | Use addBlockedBy on CC tasks — CC handles execution ordering |
-| Subagent running bd dolt pull/push or git push | Briefing says "skip session close protocol — orchestrator handles" |
-| Skipping downstream integrity check | Non-negotiable — same rule as flo:next, runs once at wrap-up |
-| Using bd prime in subagent briefing | Subagents don't get SessionStart hooks — briefing IS the instruction |
-| Dispatching wave 2 before wave 1 completes | Check TaskList for completed blockers before dispatching next wave |
-| Skipping wave computation for small epics | Always compute waves — even 3 beads may have dependencies |
-| Suggesting flo:next for single-bead waves | **Never.** Single-bead waves are normal. The value is autopilot across all waves, not within-wave parallelism. Execute it. |
-| Pushing back when "nothing to parallelize" | **Never.** The user chose swarm for autopilot execution. Run wave 1 (even 1 bead), then wave 2 unlocks, etc. |
-| Dispatching flo/interactive beads to subagents | Filter them out at step 3. Surface them in wrap-up as "needs interactive session." |
-| Ignoring interactive beads that block downstream | If a flo/interactive bead is the only blocker for autonomous beads, flag it explicitly in the summary. |
+| Not mirroring bead deps as task deps | Use addBlockedBy on CC tasks — teammates need this for self-serve ordering |
+| Teammate running bd dolt pull/push or git push | Briefing says "orchestrator handles that" |
+| Skipping downstream integrity check | Non-negotiable — runs once at wrap-up |
+| Spawning teammates for all waves upfront | Only spawn wave-1 teammates. They self-serve into later waves via TaskList |
+| Spawning more teammates than wave-1 beads | One teammate per wave-1 bead. They persist and pick up later work |
+| Forgetting to shutdown teammates before TeamDelete | TeamDelete fails with active members. Send shutdown_request first |
+| Skipping TeamDelete | Always clean up — team + task dirs persist otherwise |
+| Suggesting flo:next for single-bead waves | **Never.** Single-bead waves are normal. Execute it. |
+| Pushing back when "nothing to parallelize" | **Never.** The user chose swarm for autopilot. Run it. |
+| Dispatching flo/interactive beads to teammates | Filter them out at step 3. Surface in wrap-up. |
+| Using broadcast for routine updates | Only broadcast for critical team-wide issues. Use targeted messages otherwise. |
+| Not pre-assigning wave-1 tasks | Assign each wave-1 task to its teammate via TaskUpdate(owner) before spawning |

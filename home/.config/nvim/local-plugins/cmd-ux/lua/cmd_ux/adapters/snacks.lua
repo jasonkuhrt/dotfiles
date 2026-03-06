@@ -3,11 +3,47 @@ local util = require("cmd_ux.util")
 
 local M = {}
 
+---@class CmdUxSnacksPickerInput
+---@field get fun(self: CmdUxSnacksPickerInput): string
+---@field set fun(self: CmdUxSnacksPickerInput, value: string, match?: string)
+
+---@class CmdUxSnacksPickerPreview
+---@field reset fun(self: CmdUxSnacksPickerPreview)
+---@field minimal fun(self: CmdUxSnacksPickerPreview)
+---@field wo fun(self: CmdUxSnacksPickerPreview, opts: table<string, unknown>)
+---@field set_title fun(self: CmdUxSnacksPickerPreview, title: string)
+---@field set_lines fun(self: CmdUxSnacksPickerPreview, lines: string[])
+
+---@class CmdUxSnacksPickerOptions
+---@field title string
+
+---@class CmdUxSnacksPicker
+---@field closed boolean
+---@field input CmdUxSnacksPickerInput
+---@field opts CmdUxSnacksPickerOptions
+---@field refresh fun(self: CmdUxSnacksPicker)
+---@field close fun(self: CmdUxSnacksPicker)
+
+---@class CmdUxSnacksPreviewContext
+---@field item? CmdUxPickerItem
+---@field preview CmdUxSnacksPickerPreview
+
+---@class CmdUxSnacksOpenOpts
+---@field line? string
+
+---@class CmdUxSnacksApi
+---@field picker { pick: fun(opts: table<string, unknown>): unknown }
+
+---@class CmdUxSnacksModule
+---@field session CmdUxSession
+---@field open fun(opts?: CmdUxSnacksOpenOpts): unknown
+
 ---@class CmdUxSession
 ---@field prefix string
 ---@field pending string
 ---@field trailing_space boolean
 ---@field ignore_next_change boolean
+---@type CmdUxSession
 M.session = {
   prefix = "",
   pending = "",
@@ -28,20 +64,29 @@ M.session = {
 ---@class CmdUxStateCache
 ---@field line string?
 ---@field state ResolutionState?
+---@type CmdUxStateCache
 local state_cache = {
   line = nil,
   state = nil,
 }
 
+---@return CmdUxExModule
+local function ex_adapter()
+  return require("cmd_ux.adapters.ex")
+end
+
+---@return string
 local function render_session()
   return util.render_line(M.session)
 end
 
+---@return nil
 local function invalidate_state()
   state_cache.line = nil
   state_cache.state = nil
 end
 
+---@param line? string
 local function set_session_from_line(line)
   local state = core.resolve_line(line or "")
   invalidate_state()
@@ -86,6 +131,7 @@ end
 ---@return CmdUxPickerItem[]
 local function current_items()
   local state = current_state()
+  ---@type CmdUxPickerItem[]
   local items = {}
   for _, item in ipairs(state.frontier) do
     items[#items + 1] = {
@@ -101,6 +147,7 @@ local function current_items()
   return items
 end
 
+---@return string
 local function current_title()
   local state = current_state()
   local label = "Commands"
@@ -110,6 +157,7 @@ local function current_title()
   return "Cmd UX: " .. label
 end
 
+---@param picker? CmdUxSnacksPicker
 local function update_input(picker)
   if not picker or picker.closed then
     return
@@ -121,6 +169,7 @@ local function update_input(picker)
   picker.input:set(M.session.pending, M.session.pending)
 end
 
+---@param picker? CmdUxSnacksPicker
 local function refresh_picker(picker)
   if not picker or picker.closed then
     return
@@ -131,9 +180,12 @@ local function refresh_picker(picker)
 end
 
 local function handoff_to_cmdline()
-  require("cmd_ux.adapters.ex").open_cmdline(render_session())
+  ex_adapter().open_cmdline(render_session())
 end
 
+---@param picker CmdUxSnacksPicker
+---@param item? CmdUxPickerItem
+---@return boolean?
 local function apply_choice(picker, item)
   if not item then
     return
@@ -173,6 +225,7 @@ local function apply_choice(picker, item)
   return true
 end
 
+---@return table<string, unknown>
 local function picker_opts()
   return {
     source = "cmd_ux",
@@ -196,6 +249,7 @@ local function picker_opts()
         { item.desc and ("  " .. item.desc) or "", "Comment" },
       }
     end,
+    ---@param ctx CmdUxSnacksPreviewContext
     preview = function(ctx)
       local state = item_state(ctx.item)
       local title = state.current_label
@@ -218,6 +272,7 @@ local function picker_opts()
       input = {
         keys = {
           [";"] = {
+            ---@param picker CmdUxSnacksPicker
             function(picker)
               picker:close()
               handoff_to_cmdline()
@@ -248,9 +303,11 @@ local function picker_opts()
         },
       },
     },
+    ---@param picker CmdUxSnacksPicker
     on_show = function(picker)
       update_input(picker)
     end,
+    ---@param picker CmdUxSnacksPicker
     on_change = function(picker)
       if M.session.ignore_next_change then
         M.session.ignore_next_change = false
@@ -266,17 +323,23 @@ local function picker_opts()
       picker.opts.title = current_title()
       picker:refresh()
     end,
+    ---@param picker CmdUxSnacksPicker
+    ---@param item? CmdUxPickerItem
     confirm = function(picker, item)
       return apply_choice(picker, item)
     end,
   }
 end
 
+---@param opts? CmdUxSnacksOpenOpts
 function M.open(opts)
   opts = opts or {}
   set_session_from_line(opts.line or render_session())
   invalidate_state()
-  return Snacks.picker.pick(picker_opts())
+  ---@type CmdUxSnacksApi
+  local snacks = Snacks
+  return snacks.picker.pick(picker_opts())
 end
 
+---@cast M CmdUxSnacksModule
 return M

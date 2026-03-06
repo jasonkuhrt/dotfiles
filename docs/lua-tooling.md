@@ -70,12 +70,10 @@ What is strict now:
 What is intentionally relaxed right now in [selene.toml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/selene.toml):
 
 - `mixed_table = "allow"`
-- `multiple_statements = "allow"`
 
 Why:
 
 - `mixed_table` is common enough in Neovim/plugin-style Lua that banning it immediately would create low-signal churn.
-- `multiple_statements` was noisy for normal callback-heavy Neovim code.
 
 Important distinction: Lua does not become truly type-safe here. The closest equivalent is:
 
@@ -84,7 +82,15 @@ Important distinction: Lua does not become truly type-safe here. The closest equ
 - repo-owned linting
 - keeping the warning surface at zero
 
-Those relaxations were re-tested after the cleanup pass that introduced this guide. Turning them back on immediately produced a large amount of low-signal churn across normal Lazy.nvim spec tables and callback literals, so they remain intentionally relaxed for now.
+Those relaxations were re-tested again on March 6, 2026 after the Lua QA/typing pass:
+
+- Re-enabling `multiple_statements` produced 0 Selene findings, so that relaxation was removed.
+- Re-enabling `mixed_table` still produced 34 warnings across normal Lazy.nvim plugin specs and keymap-style tables, including files like `plugins/editor.lua`, `plugins/lang.lua`, `plugins/smart-splits.lua`, and `cmd_ux/adapters/snacks.lua`.
+
+So the current posture is intentional, not stale:
+
+- `multiple_statements` is back on
+- `mixed_table` stays relaxed because the current signal is still poor for this codebase shape
 
 The stricter move that did land is not "more Selene noise". It is a repo-owned LuaLS config plus a native LuaLS check workflow.
 

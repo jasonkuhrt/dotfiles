@@ -22,17 +22,19 @@ Machine-managed installs live in [home/Brewfile](/Users/jasonkuhrt/projects/jaso
 |------|---------|
 | [home/dot_config/nvim/lua/plugins/lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/dot_config/nvim/lua/plugins/lua.lua) | Lua-specific Neovim tooling glue |
 | [selene.toml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/selene.toml) | Selene lint policy |
-| [vim.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/vim.yml) | Selene stdlib/global definitions for Neovim-style Lua |
+| [nvim.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/nvim.yml) | Selene stdlib/global definitions for Neovim-style Lua |
 | [home/dot_config/nvim/stylua.toml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/dot_config/nvim/stylua.toml) | StyLua formatting rules |
 | [home/dot_config/nvim/dot_neoconf.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/dot_config/nvim/dot_neoconf.json) | Enables Lua library support for Neovim config work |
 
-## What `vim.yml` Is
+## What `nvim.yml` Is
 
-`vim.yml` is a Selene standard library definition, not a Neovim config file.
+`nvim.yml` is a Selene standard library definition, not a Neovim config file.
 
-Selene is a linter. By default it does not know that globals like `vim`, `Snacks`, or `LazyVim` are legitimate in this repo. [vim.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/vim.yml) declares those globals so Neovim plugin/config code is linted accurately instead of being drowned in false positives.
+Selene is a linter. By default it does not know that globals like `vim`, `Snacks`, or `LazyVim` are legitimate in this repo. [nvim.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/nvim.yml) declares those globals so Neovim plugin/config code is linted accurately instead of being drowned in false positives.
 
 Without it, Neovim Lua code would look much noisier to the linter than it actually is.
+
+The old `vim.yml` name was technically valid but too ambiguous for humans. `nvim.yml` is clearer.
 
 ## What `lua/plugins/lua.lua` Does
 

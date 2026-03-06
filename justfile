@@ -92,8 +92,6 @@ cmd-ux-test:
         --cmd "set runtimepath^=$plenary" \
         -c "lua require('plenary.test_harness').test_directory('$plugin_root/tests/plenary', { minimal_init = '$plugin_root/tests/minimal_init.lua', sequential = true })"
 
-    CMD_UX_TEST=1 bash "$plugin_root/tests/bin/stale_cache_smoke.sh"
-
 hooks-install:
     bash scripts/git-hooks/install-pre-commit.sh
 

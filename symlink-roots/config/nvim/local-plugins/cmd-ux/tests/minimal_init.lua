@@ -4,4 +4,7 @@ local plugin_root = vim.fn.fnamemodify(tests_dir, ":h")
 
 vim.g.cmd_ux_disable_blocklist_live_validation = true
 vim.opt.runtimepath:prepend(plugin_root)
-package.path = plugin_root .. "/?.lua;" .. package.path
+package.path = table.concat({
+  plugin_root .. "/?.lua",
+  package.path,
+}, ";")

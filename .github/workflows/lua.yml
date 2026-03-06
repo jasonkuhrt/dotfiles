@@ -1,0 +1,73 @@
+name: Lua QA
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/lua.yml"
+      - ".luarc.json"
+      - "selene.toml"
+      - "selene.nvim.yml"
+      - "justfile"
+      - "scripts/ci/lua-ci.sh"
+      - "scripts/git-hooks/check-staged-lua.sh"
+      - "home/.config/nvim/**/*.lua"
+      - "home/.config/nvim/stylua.toml"
+      - "home/.config/nvim/local-plugins/cmd-ux/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/lua.yml"
+      - ".luarc.json"
+      - "selene.toml"
+      - "selene.nvim.yml"
+      - "justfile"
+      - "scripts/ci/lua-ci.sh"
+      - "scripts/git-hooks/check-staged-lua.sh"
+      - "home/.config/nvim/**/*.lua"
+      - "home/.config/nvim/stylua.toml"
+      - "home/.config/nvim/local-plugins/cmd-ux/**"
+
+permissions:
+  contents: read
+
+jobs:
+  lua-qa:
+    runs-on: macos-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Lua QA toolchain
+        run: |
+          brew update
+          brew install just lua lua-language-server luajit neovim selene stylua
+
+      - name: Check tool versions
+        run: |
+          just --version
+          lua-language-server --version
+          selene --version
+          stylua --version
+          nvim --version | head -n 1
+
+      - name: Clone plenary.nvim for cmd-ux tests
+        run: git clone --depth=1 https://github.com/nvim-lua/plenary.nvim.git "$RUNNER_TEMP/plenary.nvim"
+
+      - name: Run Lua QA for pull requests
+        if: github.event_name == 'pull_request'
+        env:
+          LUA_CI_BASE_REF: origin/${{ github.base_ref }}
+          PLENARY_PATH: ${{ runner.temp }}/plenary.nvim
+        run: just lua-ci
+
+      - name: Run Lua QA for pushes
+        if: github.event_name == 'push'
+        env:
+          LUA_CI_DIFF_RANGE: ${{ github.event.before }}...${{ github.sha }}
+          PLENARY_PATH: ${{ runner.temp }}/plenary.nvim
+        run: just lua-ci

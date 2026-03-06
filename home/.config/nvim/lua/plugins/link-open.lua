@@ -1,3 +1,14 @@
+---@class LinkOpenKeySpec
+---@field [1] string
+---@field [2] fun()
+---@field mode string
+---@field desc string
+
+---@class LinkOpenLazyPluginSpec
+---@field [1] string
+---@field keys LinkOpenKeySpec[]
+
+---@type LinkOpenLazyPluginSpec[]
 return {
   {
     "LazyVim/LazyVim",

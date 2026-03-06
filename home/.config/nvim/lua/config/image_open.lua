@@ -1,5 +1,14 @@
+---@class ImageTerminalViewer
+---@field argv string[]
+---@field shell string
+
+---@class ImageOpenModule
+---@field open_image fun(path: string): boolean
+---@field setup fun()
+
 local M = {}
 
+---@type string[]
 local image_patterns = {
   "*.png",
   "*.jpg",
@@ -11,6 +20,8 @@ local image_patterns = {
   "*.svg",
 }
 
+---@param abs_path string
+---@return ImageTerminalViewer?
 local function get_terminal_viewer(abs_path)
   if vim.fn.executable("viu") == 1 then
     return {
@@ -29,10 +40,17 @@ local function get_terminal_viewer(abs_path)
   return nil
 end
 
+---@return boolean
 local function in_cmux()
   return vim.env.CMUX_WORKSPACE_ID ~= nil and vim.env.CMUX_WORKSPACE_ID ~= "" and vim.fn.executable("cmux") == 1
 end
 
+---@class CmuxCreatePanePayload
+---@field surface_ref? string|integer
+---@field surface_id? string|integer
+
+---@param abs_path string
+---@return boolean
 local function open_in_cmux(abs_path)
   local viewer = get_terminal_viewer(abs_path)
   if not viewer then
@@ -60,6 +78,7 @@ local function open_in_cmux(abs_path)
     return false
   end
 
+  ---@cast payload CmuxCreatePanePayload
   local surface = payload.surface_ref or payload.surface_id
   if surface == nil or surface == vim.NIL or surface == "" then
     return false
@@ -78,6 +97,8 @@ local function open_in_cmux(abs_path)
   return send.code == 0
 end
 
+---@param abs_path string
+---@return boolean
 local function open_in_nvim_terminal(abs_path)
   local viewer = get_terminal_viewer(abs_path)
   if not viewer then
@@ -102,6 +123,8 @@ local function open_in_nvim_terminal(abs_path)
   return true
 end
 
+---@param abs_path string
+---@return boolean
 local function open_in_preview(abs_path)
   if vim.fn.executable("open") == 1 then
     vim.system({ "open", "-a", "Preview", abs_path }, { detach = true })
@@ -111,6 +134,8 @@ local function open_in_preview(abs_path)
   return false
 end
 
+---@param path string
+---@return boolean
 function M.open_image(path)
   local abs_path = vim.fn.fnamemodify(path, ":p")
 
@@ -131,6 +156,7 @@ function M.setup()
   vim.api.nvim_create_autocmd("BufReadCmd", {
     group = group,
     pattern = image_patterns,
+    ---@param args { buf: integer, match: string }
     callback = function(args)
       local opened = M.open_image(args.match)
       if not opened then
@@ -146,4 +172,5 @@ function M.setup()
   })
 end
 
+---@cast M ImageOpenModule
 return M

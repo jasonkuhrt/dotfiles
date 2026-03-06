@@ -88,6 +88,16 @@ Those relaxations were re-tested after the cleanup pass that introduced this gui
 
 The stricter move that did land is not "more Selene noise". It is a repo-owned LuaLS config plus a native LuaLS check workflow.
 
+## Annotation Standard
+
+Use LuaLS annotations to make real shapes explicit, not to wallpaper over unclear code.
+
+- Reuse shared contracts when they already exist. In `cmd-ux`, prefer the domain types in [types.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/local-plugins/cmd-ux/lua/cmd_ux/types.lua) over inventing duplicate local schemas.
+- Add local `---@class` and `---@alias` blocks for file-local boundary shapes and string unions. Good examples already exist in [config.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/local-plugins/cmd-ux/lua/cmd_ux/providers/config.lua) and other `cmd-ux` modules.
+- Add `---@param` and `---@return` on helpers when LuaLS inference is weak or the function boundary is non-obvious.
+- Prefer narrow concrete shapes over `table` and avoid `any` unless the boundary is truly dynamic and cannot be modeled cleanly.
+- In plugin-spec files, keep annotations lightweight and local. Annotate the returned table or callback shape; do not invent a fake repo-local schema for all of Lazy.nvim just to satisfy one file.
+
 ## Agent Workflow
 
 Agents should not rely on Neovim UI state to judge Lua quality. They should run the actual tools.
@@ -95,24 +105,33 @@ Agents should not rely on Neovim UI state to judge Lua quality. They should run 
 Primary commands:
 
 ```sh
+just lua-ci
 just lua-check
 just lua-check-staged
 just lua-fmt
+just cmd-ux-test
 just hooks-install
 ```
 
 Expected workflow:
 
-1. Run `just lua-check`.
-2. If formatting drift is the only failure, run `just lua-fmt`.
-3. Patch code to resolve Selene or LuaLS findings.
-4. Re-run `just lua-check` until clean.
+1. Run `just lua-ci` when working from a branch or CI-style diff and you want automatic skipping for non-Lua work.
+2. Run `just lua-check` when you want the full Lua gate regardless of diff detection.
+3. If formatting drift is the only failure, run `just lua-fmt`.
+4. Patch code to resolve Selene or LuaLS findings.
+5. Re-run the relevant Lua gate until clean.
 
 `just lua-check` currently runs:
 
 - `selene`
 - `lua-language-server --check . --configpath .luarc.json --checklevel=Warning`
 - `stylua --check`
+
+`just lua-ci` is the path-aware wrapper:
+
+- It exits cleanly when the current change set has no Lua or Lua-tooling changes.
+- It runs `just lua-check` for Lua-relevant changes.
+- It only runs `just cmd-ux-test` when the change set touches `cmd-ux` paths.
 
 For local commits, `just hooks-install` installs a staged-only pre-commit hook. That hook checks only staged Lua blobs from:
 

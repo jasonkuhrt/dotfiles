@@ -1,3 +1,11 @@
+---@class CmdUxLazyPluginSpec
+---@field name string
+---@field dir string
+---@field lazy boolean
+---@field priority integer
+---@field config fun()
+
+---@type CmdUxLazyPluginSpec[]
 return {
   {
     name = "cmd-ux",

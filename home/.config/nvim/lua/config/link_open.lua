@@ -1,13 +1,26 @@
+---@class LinkOpenModule
+---@field extract_at fun(line: string, col1: integer): string?
+---@field open_under_cursor fun(): boolean
+---@field open_under_cursor_or_jump_older fun()
+
 local M = {}
 
+---@param col1 integer
+---@param start_col integer
+---@param end_col integer
+---@return boolean
 local function cursor_in_range(col1, start_col, end_col)
   return col1 >= start_col and col1 <= end_col
 end
 
+---@param text string
+---@return string
 local function trim(text)
   return (text:gsub("^%s+", ""):gsub("%s+$", ""))
 end
 
+---@param text string
+---@return string
 local function strip_trailing_punctuation(text)
   while #text > 0 do
     local last = text:sub(-1)
@@ -45,14 +58,20 @@ local function strip_trailing_punctuation(text)
   return text
 end
 
+---@param target string
+---@return boolean
 local function is_uri(target)
   return target:match("^https?://") ~= nil or target:match("^mailto:") ~= nil or target:match("^file://") ~= nil
 end
 
+---@param target string
+---@return boolean
 local function is_web_uri(target)
   return target:match("^https?://") ~= nil
 end
 
+---@param target string
+---@return boolean
 local function is_localish_target(target)
   return target:sub(1, 1) == "#"
     or target:sub(1, 1) == "/"
@@ -61,6 +80,8 @@ local function is_localish_target(target)
     or target:find("/") ~= nil
 end
 
+---@param match string
+---@return string?
 local function parse_markdown_target(match)
   if match:sub(1, 1) == "!" then
     match = match:sub(2)
@@ -83,6 +104,9 @@ local function parse_markdown_target(match)
   return raw_target:match("^([^%s]+)")
 end
 
+---@param line string
+---@param col1 integer
+---@return string?
 local function extract_markdown_link(line, col1)
   local from = 1
 
@@ -91,6 +115,7 @@ local function extract_markdown_link(line, col1)
     if not start_col then
       return nil
     end
+    ---@cast end_col integer
 
     if cursor_in_range(col1, start_col, end_col) then
       return parse_markdown_target(line:sub(start_col, end_col))
@@ -100,9 +125,14 @@ local function extract_markdown_link(line, col1)
   end
 end
 
+---@param line string
+---@param col1 integer
+---@return string?
 local function extract_angle_uri(line, col1)
   for start_col, match, end_exclusive in line:gmatch("()(<[%a][%w+.-]*:[^>]+>)()") do
-    if cursor_in_range(col1, start_col, end_exclusive - 1) then
+    local start_col_num = tonumber(start_col)
+    local end_exclusive_num = tonumber(end_exclusive)
+    if start_col_num and end_exclusive_num and cursor_in_range(col1, start_col_num, end_exclusive_num - 1) then
       return match:sub(2, -2)
     end
   end
@@ -110,9 +140,14 @@ local function extract_angle_uri(line, col1)
   return nil
 end
 
+---@param line string
+---@param col1 integer
+---@return string?
 local function extract_jsdoc_link(line, col1)
   for start_col, match, end_exclusive in line:gmatch("()({@link[%a]*%s+[^}]+})()") do
-    if cursor_in_range(col1, start_col, end_exclusive - 1) then
+    local start_col_num = tonumber(start_col)
+    local end_exclusive_num = tonumber(end_exclusive)
+    if start_col_num and end_exclusive_num and cursor_in_range(col1, start_col_num, end_exclusive_num - 1) then
       local raw_target = match:match("{@link[%a]*%s+([^}]+)}")
       if not raw_target then
         return nil
@@ -128,6 +163,9 @@ local function extract_jsdoc_link(line, col1)
   return nil
 end
 
+---@param line string
+---@param col1 integer
+---@return string?
 local function extract_raw_uri(line, col1)
   local patterns = {
     "https://%S+",
@@ -138,10 +176,13 @@ local function extract_raw_uri(line, col1)
 
   for _, pattern in ipairs(patterns) do
     for start_col, match, _ in line:gmatch("()(" .. pattern .. ")()") do
+      local start_col_num = tonumber(start_col)
       local target = strip_trailing_punctuation(match)
-      local target_end_col = start_col + #target - 1
-      if cursor_in_range(col1, start_col, target_end_col) then
-        return target
+      if start_col_num then
+        local target_end_col = start_col_num + #target - 1
+        if cursor_in_range(col1, start_col_num, target_end_col) then
+          return target
+        end
       end
     end
   end
@@ -149,17 +190,16 @@ local function extract_raw_uri(line, col1)
   return nil
 end
 
+---@param text string
+---@return string
 local function heading_slug(text)
-  return text
-    :lower()
-    :gsub("`", "")
-    :gsub("[^%w%s-]", "")
-    :gsub("%s+", "-")
-    :gsub("%-+", "-")
-    :gsub("^%-+", "")
-    :gsub("%-+$", "")
+  return (
+    text:lower():gsub("`", ""):gsub("[^%w%s-]", ""):gsub("%s+", "-"):gsub("%-+", "-"):gsub("^%-+", ""):gsub("%-+$", "")
+  )
 end
 
+---@param fragment string
+---@return boolean
 local function jump_to_heading(fragment)
   local wanted = heading_slug(fragment)
   if wanted == "" then
@@ -178,6 +218,8 @@ local function jump_to_heading(fragment)
   return false
 end
 
+---@param target string
+---@return string?, string?
 local function resolve_local_target(target)
   if target:sub(1, 1) == "#" then
     return vim.api.nvim_buf_get_name(0), target:sub(2)
@@ -200,10 +242,13 @@ local function resolve_local_target(target)
   return absolute_path, fragment ~= "" and fragment or nil
 end
 
+---@return boolean
 local function in_cmux()
   return vim.env.CMUX_WORKSPACE_ID ~= nil and vim.env.CMUX_WORKSPACE_ID ~= "" and vim.fn.executable("cmux") == 1
 end
 
+---@param target string
+---@return boolean, string?
 local function open_in_cmux_browser(target)
   local result = vim
     .system({
@@ -217,6 +262,8 @@ local function open_in_cmux_browser(target)
   return result.code == 0, result.stderr
 end
 
+---@param target string
+---@return boolean, string?
 local function open_external(target)
   if is_web_uri(target) and in_cmux() then
     local opened, err = open_in_cmux_browser(target)
@@ -246,6 +293,9 @@ local function open_external(target)
   return vim.fn.jobstart(opener, { detach = true }) > 0, nil
 end
 
+---@param line string
+---@param col1 integer
+---@return string?
 function M.extract_at(line, col1)
   return extract_markdown_link(line, col1)
     or extract_angle_uri(line, col1)
@@ -253,6 +303,7 @@ function M.extract_at(line, col1)
     or extract_raw_uri(line, col1)
 end
 
+---@return boolean
 function M.open_under_cursor()
   local line = vim.api.nvim_get_current_line()
   local col1 = vim.api.nvim_win_get_cursor(0)[2] + 1
@@ -301,4 +352,5 @@ function M.open_under_cursor_or_jump_older()
   vim.cmd.normal({ bang = true, args = { keys } })
 end
 
+---@cast M LinkOpenModule
 return M

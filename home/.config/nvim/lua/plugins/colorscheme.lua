@@ -44,11 +44,21 @@
 --   magenta2   #ff007c  hot pink (rare accents)
 --   purple     #9d7cd8  types, decorators
 
+---@class ColorschemeHighlightSpec
+---@field fg? string
+---@field nocombine? boolean
+
+---@class ColorschemePluginSpec
+---@field [1] string
+---@field opts table<string, unknown>
+
+---@type ColorschemePluginSpec[]
 return {
   {
     "folke/tokyonight.nvim",
     opts = {
       style = "night",
+      ---@param hl table<string, ColorschemeHighlightSpec>
       on_highlights = function(hl, _)
         -- Dim trail dots: 75% toward fg_gutter from bg
         hl.Whitespace = { fg = "#333852" }

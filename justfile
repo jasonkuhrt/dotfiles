@@ -29,6 +29,9 @@ lua-check: lua-lint lua-lsp-check lua-fmt-check
 lua-lint:
     selene {{ lua_paths }}
 
+lua-ci:
+    bash scripts/ci/lua-ci.sh
+
 lua-check-staged:
     bash scripts/git-hooks/check-staged-lua.sh
 

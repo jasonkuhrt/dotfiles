@@ -1,11 +1,26 @@
 local core = require("cmd_ux.core")
 
+---@class CmdUxBlinkCmp
+---@field show fun(opts?: { initial_selected_item_idx?: integer })
+---@field hide fun(opts?: { callback?: fun() })
+---@field is_menu_visible? fun(): boolean
+
+---@class CmdUxExModule
+---@field handle_enter fun(cmp: unknown): boolean?
+---@field handle_tab fun(cmp: unknown): boolean?
+---@field handle_space fun(cmp: unknown): boolean?
+---@field handoff_to_picker fun()
+---@field open_cmdline fun(line?: string)
+
 local M = {}
 
+---@param keys string
 local function feed(keys)
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "n", false)
 end
 
+---@param action CmdUxAction?
+---@return boolean?
 local function apply_action(action)
   if not action or action.type == "fallback" then
     return
@@ -32,6 +47,7 @@ local function apply_action(action)
     vim.schedule(function()
       local ok, blink = pcall(require, "blink.cmp")
       if ok then
+        ---@cast blink CmdUxBlinkCmp
         local reopen = function()
           blink.show({ initial_selected_item_idx = 1 })
         end
@@ -52,6 +68,9 @@ local function apply_action(action)
   end
 end
 
+---@param cmp unknown
+---@param intent CmdUxIntent
+---@return boolean?
 local function handle(cmp, intent)
   if vim.fn.getcmdtype() ~= ":" then
     return
@@ -78,14 +97,20 @@ local function handle(cmp, intent)
   return apply_action(core.decide_current(state, intent))
 end
 
+---@param cmp unknown
+---@return boolean?
 function M.handle_enter(cmp)
   return handle(cmp, "enter")
 end
 
+---@param cmp unknown
+---@return boolean?
 function M.handle_tab(cmp)
   return handle(cmp, "tab")
 end
 
+---@param cmp unknown
+---@return boolean?
 function M.handle_space(cmp)
   if vim.fn.getcmdtype() ~= ":" then
     return
@@ -113,6 +138,7 @@ function M.handoff_to_picker()
   end)
 end
 
+---@param line? string
 function M.open_cmdline(line)
   vim.schedule(function()
     vim.api.nvim_feedkeys(":", "n", false)
@@ -122,4 +148,5 @@ function M.open_cmdline(line)
   end)
 end
 
+---@cast M CmdUxExModule
 return M

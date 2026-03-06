@@ -9,6 +9,10 @@ M.by_root = {
   Lazy = lazy_provider,
 }
 
+config_provider.id = "config"
+lazy_provider.id = "lazy"
+generic_provider.id = "generic"
+
 function M.get(root)
   return M.by_root[root] or generic_provider
 end
@@ -20,7 +24,9 @@ end
 
 function M.resolve(root, ctx)
   local provider = M.get(root)
-  return provider.resolve(ctx)
+  local result = provider.resolve(ctx)
+  result.provider = provider.id or "generic"
+  return result
 end
 
 function M.config()

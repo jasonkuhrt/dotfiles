@@ -28,6 +28,10 @@ return {
             function(cmp) return require("cmd_ux").handle_tab(cmp) end,
             "fallback",
           },
+          ["<Space>"] = {
+            function(cmp) return require("cmd_ux").handle_space(cmp) end,
+            "fallback",
+          },
         },
       },
       sources = {

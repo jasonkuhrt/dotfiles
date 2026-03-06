@@ -79,6 +79,19 @@ function M.handle_tab(cmp)
   return handle(cmp, "tab")
 end
 
+function M.handle_space(cmp)
+  if vim.fn.getcmdtype() ~= ":" then
+    return
+  end
+
+  local state = core.resolve_line(vim.fn.getcmdline())
+  if not core.should_intercept_space(state) then
+    return
+  end
+
+  return handle(cmp, "space")
+end
+
 function M.handoff_to_picker()
   if vim.fn.getcmdtype() ~= ":" then
     return

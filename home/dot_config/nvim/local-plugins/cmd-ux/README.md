@@ -25,7 +25,7 @@ That does not mean it is the preferred manual typing surface for everything. It 
 
 `cmd-ux` has one semantic core and two adapters:
 
-- Ex adapter: powers `<CR>` and `<Tab>` in the native Ex cmdline
+- Ex adapter: powers `<CR>`, `<Tab>`, and semantic `<Space>` in the native Ex cmdline
 - Snacks adapter: powers the semantic picker opened from `:`
 
 Both surfaces are different UIs over the same command model.
@@ -74,6 +74,7 @@ These are hard rules, not preferences.
 - never execute a known-incomplete command
 - `<Tab>` never executes
 - `<Tab>` never cycles completion selection
+- `<Space>` only acts semantically in named slots; otherwise it remains a literal space
 - `<C-j>` and `<C-k>` are the selection keys
 - open-ended command families are denied by default unless a provider exists
 
@@ -137,7 +138,7 @@ Unknown richness is not guessed.
 
 ### `;` native Ex cmdline
 
-`cmd-ux` changes the meaning of `<CR>` and `<Tab>` in the native Ex cmdline.
+`cmd-ux` changes the meaning of `<CR>`, `<Tab>`, and contextual `<Space>` in the native Ex cmdline.
 
 #### `<CR>`
 
@@ -162,6 +163,18 @@ Unknown richness is not guessed.
 - incomplete command: accept and advance
 
 Repeated `<Tab>` must never become menu cycling.
+
+#### `<Space>`
+
+`<Space>` is a semantic separator, but only in structured named slots.
+
+- partial named root like `config`: accept top match and advance to `Config `
+- partial provider-owned descendant like `Lazy re`: accept top match and advance to `Lazy reload `
+- exact `namespace`, `hybrid`, or known-incomplete command: advance with trailing space
+- generic free-form argument positions: remain literal space
+- open-ended denied families: remain literal space
+
+This prevents invalid descended states like `config ` while preserving normal argument typing for commands such as `Open README.md`.
 
 ### `:` Snacks semantic picker
 
@@ -216,6 +229,7 @@ State progression:
 
 - `La` + `<CR>` -> `Lazy` executes bare root
 - `La` + `<Tab>` -> `Lazy ` advances into subcommands
+- `Lazy re` + `<Space>` -> `Lazy reload `
 - `Lazy reload` + `<CR>` -> blocked, because plugin argument is required
 - `Lazy reload lazy.nvim` + `<CR>` -> executes
 
@@ -229,6 +243,7 @@ Semantic classification:
 State progression:
 
 - `Con` + `<CR>` -> `Config ` advances, never executes bare root
+- `config` + `<Space>` -> `Config `
 - `Config reload` + `<CR>` -> executes
 - `Config help` + `<CR>` -> executes
 

@@ -275,6 +275,26 @@ function M.selected_token(cmp, state)
   end
 end
 
+function M.should_intercept_space(state)
+  if state.kind == "unsupported" then
+    return false
+  end
+
+  if not state.root then
+    return state.pending ~= "" and #(state.frontier or {}) > 0
+  end
+
+  if state.pending ~= "" then
+    return state.provider ~= "generic"
+  end
+
+  if state.kind == "namespace" or state.kind == "hybrid" or state.requires_more then
+    return true
+  end
+
+  return false
+end
+
 local function with_trailing_space(state)
   local line = state.rendered
   if line ~= "" and line:sub(-1) ~= " " then
@@ -285,6 +305,13 @@ end
 
 function M.decide_current(state, intent)
   if state.kind == "unsupported" then
+    return { type = "fallback" }
+  end
+
+  if intent == "space" then
+    if state.kind == "namespace" or state.kind == "hybrid" or state.requires_more then
+      return { type = "advance", line = with_trailing_space(state) }
+    end
     return { type = "fallback" }
   end
 
@@ -323,6 +350,10 @@ end
 
 function M.decide_choice(state, token, intent)
   local next_state = M.accept_token(state, token)
+
+  if intent == "space" then
+    return { type = "advance", line = with_trailing_space(next_state) }
+  end
 
   if intent == "tab" then
     if next_state.kind == "namespace" or next_state.kind == "hybrid" or next_state.requires_more then

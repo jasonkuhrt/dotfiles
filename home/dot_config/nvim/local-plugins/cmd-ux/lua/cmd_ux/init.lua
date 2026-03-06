@@ -38,4 +38,8 @@ function M.handle_tab(cmp)
   return require("cmd_ux.adapters.ex").handle_tab(cmp)
 end
 
+function M.handle_space(cmp)
+  return require("cmd_ux.adapters.ex").handle_space(cmp)
+end
+
 return M

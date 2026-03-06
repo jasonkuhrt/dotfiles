@@ -81,6 +81,16 @@ The index is complete first, then enriched.
 - explicit providers for command families like `Config`, `Lazy`, and plugin command families that deserve first-class behavior
 - generic command analysis for commands without a dedicated provider
 
+Current generic enrichment now includes:
+
+- inferring named subcommand structure from custom completion callbacks when the live frontier is a bounded set of short named tokens
+- treating `nargs = "?"` roots with inferred named subcommands as likely `hybrid`
+- treating required or variadic roots with inferred named subcommands as likely `namespace`
+- probing one level deeper to decide whether each inferred token is a leaf or another namespace
+- rejecting path-like, buffer-like, tag-like, and broad enum/value frontiers as namespace evidence
+
+This keeps the common "command hub with named subcommands" case generic while preserving dedicated providers for families that need richer help, execution behavior, or argument semantics than the heuristic can safely infer.
+
 If a command family is not yet richly modeled:
 
 - it still appears in the index

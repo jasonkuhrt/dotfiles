@@ -115,6 +115,7 @@ What Neovim can give:
 - command parsing
 - completion types such as `file`, `help`, `lua`, `shellcmd`
 - user-command completion callbacks
+- live completion frontiers for partially entered command paths
 
 What Neovim does not give as a first-class concept:
 
@@ -122,6 +123,7 @@ What Neovim does not give as a first-class concept:
 - `hybrid`
 - required semantic subcommand paths
 - execution safety for custom command families
+- whether a custom completion frontier represents named subcommands or argument values
 
 Because of that, `cmd-ux` uses a provider registry.
 
@@ -133,6 +135,10 @@ require("cmd_ux").register("File", require("cmd_ux_fs.provider"))
 ```
 
 Providers enrich command families whose semantics are richer than what Neovim can prove generically.
+
+`cmd-ux` also performs conservative generic inference for some custom completion callbacks.
+If the live completion frontier at a command position looks like a bounded set of short named tokens, `cmd-ux` treats those matches as likely subcommands and probes one level deeper to decide whether each token is a leaf or another namespace.
+If the frontier instead looks like files, buffers, tags, large enums, or other value arguments, `cmd-ux` keeps the command generic and argument-oriented.
 
 They are not an admission gate. A command does not disappear merely because it lacks a dedicated provider.
 
@@ -167,9 +173,20 @@ It is responsible for:
 - surfacing the command in the index
 - attaching the best available metadata from Neovim
 - modeling argument/frontier behavior when Neovim exposes enough structure
+- inferring named subcommand frontiers from custom completion callbacks when the frontier shape is conservative enough to trust
+- classifying inferred roots as `namespace` or `hybrid` from `nargs` and descendant probes
 - representing open or weakly modeled families honestly instead of hiding them
 
 Unknown richness is not a reason to exclude the command. It is a reason to improve the model.
+
+The current generic inference contract is:
+
+- root frontier looks like a small set of short named tokens: infer named subcommands
+- `nargs = "?"` with inferred named subcommands: root may remain a `hybrid`
+- `nargs = "*"`, `"+"`, or required-arg forms with inferred named subcommands: root becomes a `namespace`
+- descendant frontier that still looks like named tokens: descendant stays a `namespace`
+- descendant frontier with no deeper named tokens: descendant becomes a `leaf`
+- path-like matches, buffer-like matches, tag-like matches, and broad enum/value frontiers remain plain argument completions
 
 ## Surface behavior
 

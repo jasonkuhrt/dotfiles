@@ -1,4 +1,5 @@
 local blocklist = require("cmd_ux.blocklist")
+local providers = require("cmd_ux.providers")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
 
@@ -15,6 +16,28 @@ local function same_roots(left, right)
 
   for i = 1, #left do
     if left[i] ~= right[i] then
+      return false
+    end
+  end
+
+  return true
+end
+
+---@param roots string[]
+---@param payload table
+---@return boolean
+local function same_provider_ids(roots, payload)
+  local by_root = {}
+
+  for _, entry in ipairs(payload.entries or {}) do
+    if type(entry) == "table" and type(entry.root) == "string" and entry.root ~= "" then
+      by_root[entry.root] = entry.provider or "generic"
+    end
+  end
+
+  for _, root in ipairs(roots) do
+    local provider = providers.get(root)
+    if by_root[root] ~= (provider.id or "generic") then
       return false
     end
   end
@@ -93,7 +116,12 @@ function M.load(cache_path, cache_version)
     return nil
   end
 
-  if not same_roots(util.discover_command_names(), payload_roots(payload)) then
+  local roots = util.discover_command_names()
+  if not same_roots(roots, payload_roots(payload)) then
+    return nil
+  end
+
+  if not same_provider_ids(roots, payload) then
     return nil
   end
 

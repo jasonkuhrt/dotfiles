@@ -2,7 +2,8 @@ local blocklist = require("cmd_ux.blocklist")
 local index = require("cmd_ux.index")
 local providers = require("cmd_ux.providers")
 local cmdux_provider = require("cmd_ux.providers.cmdux")
-local config_provider = providers.config()
+local config_provider = require("cmd_ux.providers.config")
+local lazy_provider = require("cmd_ux.providers.lazy")
 
 local M = {}
 
@@ -19,6 +20,10 @@ function M.setup()
     return
   end
   did_setup = true
+
+  providers.register("Cmdux", cmdux_provider)
+  providers.register("Config", config_provider)
+  providers.register("Lazy", lazy_provider)
 
   index.install_hooks()
 
@@ -85,6 +90,13 @@ end
 
 function M.handle_space(cmp)
   return require("cmd_ux.adapters.ex").handle_space(cmp)
+end
+
+---@param root string
+---@param provider ProviderSpec|Provider
+---@return Provider
+function M.register(root, provider)
+  return providers.register(root, provider)
 end
 
 return M

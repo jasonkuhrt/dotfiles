@@ -191,11 +191,16 @@ function M.resolve(ctx)
   })
 end
 
----@type ProviderSpec
-local provider = {
+local provider = types.provider({
   id = M.id,
   describe_root = M.describe_root,
   resolve = M.resolve,
-}
+  complete = function()
+    return {}
+  end,
+  execute = function()
+    vim.cmd("Lazy")
+  end,
+})
 
-return types.provider(provider)
+return provider

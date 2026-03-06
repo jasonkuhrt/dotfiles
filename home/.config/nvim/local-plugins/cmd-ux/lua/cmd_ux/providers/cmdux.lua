@@ -161,13 +161,12 @@ function M.execute(args)
   node.execute()
 end
 
----@type ProviderSpec
-local provider = {
+local provider = types.provider({
   id = M.id,
   describe_root = M.describe_root,
   resolve = M.resolve,
   complete = M.complete,
   execute = M.execute,
-}
+})
 
-return types.provider(provider)
+return provider

@@ -1,17 +1,45 @@
-local cmdux_provider = require("cmd_ux.providers.cmdux")
-local config_provider = require("cmd_ux.providers.config")
 local generic_provider = require("cmd_ux.providers.generic")
-local lazy_provider = require("cmd_ux.providers.lazy")
 local types = require("cmd_ux.types")
 
 local M = {}
 
+vim.__cmd_ux_provider_registry = vim.__cmd_ux_provider_registry or {}
+
 ---@type table<string, Provider>
-M.by_root = {
-  Cmdux = cmdux_provider,
-  Config = config_provider,
-  Lazy = lazy_provider,
-}
+M.by_root = vim.__cmd_ux_provider_registry
+
+---@param root string
+---@return string
+local function normalize_root(root)
+  if type(root) ~= "string" then
+    error(("cmd_ux.providers: expected root string, got %s"):format(type(root)))
+  end
+
+  root = vim.trim(root)
+  if root == "" then
+    error("cmd_ux.providers: root is required")
+  end
+
+  return root
+end
+
+local function invalidate_index()
+  local index = package.loaded["cmd_ux.index"]
+  if type(index) == "table" and type(index.invalidate) == "function" then
+    index.invalidate()
+  end
+end
+
+---@param root string
+---@param provider ProviderSpec|Provider
+---@return Provider
+function M.register(root, provider)
+  local normalized_root = normalize_root(root)
+  local normalized_provider = types.provider(provider)
+  M.by_root[normalized_root] = normalized_provider
+  invalidate_index()
+  return normalized_provider
+end
 
 ---@param root string
 ---@return Provider
@@ -39,11 +67,6 @@ function M.invalidate()
   if type(invalidate) == "function" then
     invalidate()
   end
-end
-
----@return Provider
-function M.config()
-  return config_provider
 end
 
 return M

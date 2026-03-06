@@ -123,6 +123,13 @@ What Neovim does not give as a first-class concept:
 
 Because of that, `cmd-ux` uses a provider registry.
 
+Built-in providers register themselves during `require("cmd_ux").setup()`.
+External plugins can register additional providers at runtime with:
+
+```lua
+require("cmd_ux").register("File", require("cmd_ux_fs.provider"))
+```
+
 Providers enrich command families whose semantics are richer than what Neovim can prove generically.
 
 They are not an admission gate. A command does not disappear merely because it lacks a dedicated provider.

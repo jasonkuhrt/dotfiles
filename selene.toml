@@ -1,4 +1,4 @@
-std = "nvim"
+std = "selene.nvim"
 
 [lints]
 # lazy.nvim plugin specs are intentionally mixed tables in upstream style.

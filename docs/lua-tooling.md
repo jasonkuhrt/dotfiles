@@ -23,21 +23,21 @@ Machine-managed installs live in [home/Brewfile](/Users/jasonkuhrt/projects/jaso
 | [home/dot_config/nvim/lua/plugins/lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/dot_config/nvim/lua/plugins/lua.lua) | Lua-specific Neovim tooling glue |
 | [.luarc.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.luarc.json) | Repo-owned LuaLS policy for Neovim, Claude/Serena, and shell checks |
 | [selene.toml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/selene.toml) | Selene lint policy |
-| [nvim.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/nvim.yml) | Selene stdlib/global definitions for Neovim-style Lua |
+| [selene.nvim.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/selene.nvim.yml) | Selene stdlib/global definitions for Neovim-style Lua |
 | [home/dot_config/nvim/stylua.toml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/dot_config/nvim/stylua.toml) | StyLua formatting rules |
 | [home/dot_config/nvim/dot_neoconf.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/dot_config/nvim/dot_neoconf.json) | Enables Lua library support for Neovim config work |
 | [.mcp.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.mcp.json) | Project-local Serena MCP entry for Claude Code |
 | [.serena/project.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.serena/project.yml) | Serena language-server configuration, now including Lua via LSP backend |
 
-## What `nvim.yml` Is
+## What `selene.nvim.yml` Is
 
-`nvim.yml` is a Selene standard library definition, not a Neovim config file.
+`selene.nvim.yml` is a Selene standard library definition, not a Neovim config file.
 
-Selene is a linter. By default it does not know that globals like `vim`, `Snacks`, or `LazyVim` are legitimate in this repo. [nvim.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/nvim.yml) declares those globals so Neovim plugin/config code is linted accurately instead of being drowned in false positives.
+Selene is a linter. By default it does not know that globals like `vim`, `Snacks`, or `LazyVim` are legitimate in this repo. [selene.nvim.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/selene.nvim.yml) declares those globals so Neovim plugin/config code is linted accurately instead of being drowned in false positives.
 
 Without it, Neovim Lua code would look much noisier to the linter than it actually is.
 
-The old `vim.yml` name was technically valid but too ambiguous for humans. `nvim.yml` is clearer.
+The old `vim.yml` and `nvim.yml` names were technically valid but still too ambiguous for humans. `selene.nvim.yml` makes the tool ownership explicit.
 
 ## What `lua/plugins/lua.lua` Does
 

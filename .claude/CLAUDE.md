@@ -12,4 +12,4 @@
 
 * For Lua changes in the Neovim config or `cmd-ux`, run `just lua-check` before finishing.
 * Use `just lua-fmt` to apply Lua formatting. Do not document raw `selene`, `stylua`, or `lua-language-server --check` commands as the primary workflow.
-* Treat `.luarc.json`, `selene.toml`, and `nvim.yml` as the source of truth for LuaLS and Selene behavior in this repo.
+* Treat `.luarc.json`, `selene.toml`, and `selene.nvim.yml` as the source of truth for LuaLS and Selene behavior in this repo.

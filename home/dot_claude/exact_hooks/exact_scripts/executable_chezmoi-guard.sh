@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Guard: Block dangerous chezmoi operations that silently destroy runtime edits.
 #
+# Preferred public workflow in this repo:
+#   just edit <target>
+#   just explain <target>
+#   just up
+#
 # Always blocked:
 #   chezmoi apply --force / -f
 #   chezmoi state delete-bucket
@@ -58,13 +63,18 @@ BLOCKED: Dangerous chezmoi operation.
 
 $REASON
 
-Conflict resolution flow (use the chezmoi skill):
-  1. chezmoi status <target>          # Check for conflicts (col 1 = M)
-  2. chezmoi diff <target>            # Show what would change
-  3. ASK THE USER for approval
-  4. chezmoi state delete --bucket=entryState --key=<absolute_target_path>
-  5. chezmoi apply --no-tty <target>  # Apply one file
-  6. chezmoi status <target>          # Verify in sync
+Preferred flow in this repo:
+  1. just explain <target>            # See lane, source path, and policy
+  2. just edit <target>               # Normal existing-file edits are usually live
+  3. just up                          # Converge machine state and healer
+
+Only drop to raw chezmoi for special-lane or surgical repair:
+  4. chezmoi status <target>
+  5. chezmoi diff <target>
+  6. ASK THE USER for approval
+  7. chezmoi state delete --bucket=entryState --key=<absolute_target_path>
+  8. chezmoi apply --mode symlink --no-tty <target>
+  9. chezmoi status <target>
 
 Never nuke all state. Never use --force. Always resolve per-file.
 ERRMSG

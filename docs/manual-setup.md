@@ -1,6 +1,6 @@
 # Manual Setup
 
-Steps to complete after running `chezmoi apply`.
+Steps to complete after initial bootstrap (`chezmoi init --apply`, age key install, then `just up`).
 
 ## 1. Full Disk Access for Terminal
 
@@ -13,7 +13,7 @@ open "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Pri
 
 ## 2. Fish Secrets
 
-Secrets are age-encrypted in the repo. Edit with `chezmoi edit ~/.config/fish/config.secrets.fish` (decrypts in-place for editing, re-encrypts on save). On first setup, paste your age key from your password manager to `~/.config/chezmoi/key.txt`, then `chezmoi apply` decrypts automatically.
+Secrets are age-encrypted in the repo. Edit with `chezmoi edit ~/.config/fish/config.secrets.fish` (decrypts in-place for editing, re-encrypts on save). On first setup, paste your age key from your password manager to `~/.config/chezmoi/key.txt`, then `just up` decrypts automatically.
 
 ## 3. macOS Settings
 
@@ -72,7 +72,7 @@ open -a Raycast
 * Launch and sign in (settings sync automatically)
 * Grant Accessibility permission when prompted
 * Grant Microphone permission when prompted
-* Hotkey is managed by chezmoi: push-to-talk is set to `F8` (run `chezmoi apply` with Wispr Flow closed)
+* Hotkey is managed by dotfiles: push-to-talk is set to `F8` (run `just up` with Wispr Flow closed)
 
 ## 7. Email Password
 

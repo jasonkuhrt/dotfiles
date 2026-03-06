@@ -14,22 +14,22 @@ Audit the dotfiles setup for improvements, obsolete workarounds, and optimizatio
 
 ## Valid Scopes
 
-Source files live in `home/` with chezmoi naming conventions.
+Source of truth now lives in both `home/` and `symlink-roots/`, depending on lane. Use `just explain <target>` when a live path is ambiguous.
 
-| Scope      | Source (in `home/`)            | Description                  |
+| Scope      | Source of truth                | Description                  |
 | ---------- | ------------------------------ | ---------------------------- |
 | `aws`      | private_dot_aws/               | AWS CLI configuration        |
 | `brew`     | Brewfile                       | Homebrew packages and casks  |
 | `chezmoi`  | .chezmoi*.toml*                | chezmoi configuration        |
-| `claude`   | dot_claude/                    | Claude Code configuration    |
-| `direnv`   | dot_config/direnv/             | Directory environment loader |
+| `claude`   | home/dot_claude/, symlink-roots/claude/ | Claude Code configuration |
+| `direnv`   | symlink-roots/config/direnv/ | Directory environment loader |
 | `dock`     | dock/                          | macOS Dock configuration     |
-| `dprint`   | dot_config/dprint/             | Code formatter config        |
+| `dprint`   | symlink-roots/config/dprint/ | Code formatter config       |
 | `fish`     | dot_config/fish/               | Fish shell configuration     |
 | `gh`       | dot_config/gh/                 | GitHub CLI configuration     |
-| `ghostty`  | dot_config/ghostty/            | Ghostty terminal config      |
-| `git`      | dot_config/git/, dot_gitconfig | Git configuration            |
-| `lazygit`  | dot_config/lazygit/            | Git TUI configuration        |
+| `ghostty`  | symlink-roots/config/ghostty/ | Ghostty terminal config    |
+| `git`      | symlink-roots/config/git/, home/dot_gitconfig | Git configuration |
+| `lazygit`  | symlink-roots/config/lazygit/ | Git TUI configuration      |
 | `npm`      | dot_npmrc, npm/                | npm configuration            |
 | `nvim`     | dot_config/nvim/               | Neovim configuration         |
 | `scripts`  | .chezmoiscripts/               | Lifecycle scripts            |
@@ -107,14 +107,16 @@ After specific checks, discover something new:
 
 ### claude
 
-1. __Rule accuracy__: Are rules in `home/dot_claude/exact_rules/` still accurate?
-2. __Scope coverage__: Are there missing rules for common workflows?
+1. __Rule accuracy__: Are rules in `symlink-roots/claude/rules/` and other global Claude sources still accurate?
+2. __Lane placement__: Do files under `home/dot_claude/` vs `symlink-roots/claude/` still belong in the right lane?
+3. __Scope coverage__: Are there missing rules for common workflows?
 
 ### chezmoi
 
 1. __Script idempotency__: Are all lifecycle scripts fully idempotent?
 2. __Hash triggers__: Are `run_onchange_` scripts using correct hash comments?
-3. __Naming conventions__: Are `exact_`, `private_`, `encrypted_` prefixes used correctly?
+3. __Lane fit__: Are `trueDir`, `fileSymlink`, and `special` lanes still assigned correctly?
+4. __Naming conventions__: Are `exact_`, `private_`, `encrypted_` prefixes used correctly?
 
 ### npm
 

@@ -56,13 +56,13 @@ The `export-state/` directory created by beads hooks contains machine-specific p
 
 **Workaround:** The `kilar` formula is commented out in `home/Brewfile` until upstream fixes the release artifact or tap checksum.
 
-**What to do when fixed:** Re-enable the `brew "polidog/kilar/kilar"` line and run `chezmoi apply`.
+**What to do when fixed:** Re-enable the `brew "polidog/kilar/kilar"` line and run `just up`.
 
 ## Manual Intervention Required
 
 These items require manual action and can't be fully automated:
 
-- **`sync-sudo`** — sudo operations (power management, Touch ID, Fish as default shell). Run `sudo ./sync-sudo` when prompted after apply.
+- **`sync-sudo`** — sudo operations (power management, Touch ID, Fish as default shell). Run `sudo ./sync-sudo` when prompted after `just up`.
 - **Fisher plugin removals** — `fisher update` handles removals, but some plugins leave behind universal variables in `~/.config/fish/fish_variables` that need manual cleanup.
 - **Keyboard repeat rate** — set by the macOS defaults script, but requires logout/login to take effect.
 

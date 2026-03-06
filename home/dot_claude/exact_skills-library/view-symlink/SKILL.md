@@ -13,8 +13,8 @@ The dotfiles repo uses two distinct symlink patterns:
 
 | Pattern | Direction | Owner | Example |
 |---------|-----------|-------|---------|
-| **Source of truth** | `~/.claude/skills` **→** `dotfiles/claude/skills` | Dotfiles repo | `link_subdir`, `link_file` |
-| **Convenience view** | `dotfiles/claude/tasks` **→** `~/.claude/tasks` | Runtime | Manual `ln -s` in sync script |
+| **Source of truth** | `~/.claude/rules` **→** `dotfiles/symlink-roots/claude/rules` | Dotfiles repo | `symlink_*.tmpl` + dotctl lane config |
+| **Convenience view** | `dotfiles/claude/tasks` **→** `~/.claude/tasks` | Runtime | Manual repo-side symlink + `.gitignore` |
 
 This skill handles the **convenience view** pattern.
 
@@ -24,30 +24,22 @@ When adding a new convenience view symlink:
 
 1. **Identify the runtime path** (e.g., `~/.claude/tasks`, `~/.config/foo/cache`)
 2. **Identify the dotfiles view path** (e.g., `claude/tasks`, `foo/cache`)
-3. **Add to sync script** — insert in the appropriate `header` section of `sync`:
+3. **Create the symlink directly in the repo**
    ```bash
-   if [ -L "$HERE/<view-path>" ]; then
-       skip "<view-path> (convenience symlink)"
-   elif [ -e "$HERE/<view-path>" ]; then
-       warn "<view-path> exists but is not a symlink - remove to create convenience link"
-   else
-       ln -s "$HOME/<runtime-path>" "$HERE/<view-path>"
-       task "<view-path> ${DIM}<- ~/<runtime-path> (convenience)${RESET}"
-   fi
+   ln -s "$HOME/<runtime-path>" "$HERE/<view-path>"
    ```
 4. **Add to `.gitignore`** — under the `# Claude Code runtime` section (or appropriate section):
    ```
    <view-path>
    ```
-5. **Create the symlink now** if it doesn't already exist:
-   ```bash
-   ln -s "$HOME/<runtime-path>" "$HERE/<view-path>"
-   ```
+5. **Verify it stays out of dotctl lanes**
+   - Do not put convenience views under `symlink-roots/`
+   - Do not add them to `packages/dotctl/src/lib/config.ts`
+   - They are repo-local browsing aids, not managed source-of-truth paths
 
 ## Key Principles
 
 - The symlink target (runtime path) is the **source of truth** — dotfiles repo just provides a window
 - Always `.gitignore` the view path — it's runtime data, not config
-- The sync script block is **idempotent** — safe to re-run, skips if already set up
-- Group convenience symlinks together in the sync script near related `link_subdir` calls
-- Use the three-branch pattern: already-a-symlink (skip), exists-but-not-symlink (warn), missing (create)
+- Convenience views are manual repo artifacts, not part of `just up`
+- Keep them obviously separate from real source-of-truth trees like `home/` and `symlink-roots/`

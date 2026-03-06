@@ -7,7 +7,7 @@ Personal system configuration managed by [chezmoi](https://www.chezmoi.io/).
 ```sh
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jasonkuhrt/dotfiles
 # Paste age key from password manager to ~/.config/chezmoi/key.txt, then:
-chezmoi apply
+just up
 # Complete manual steps: docs/manual-setup.md
 ```
 
@@ -24,7 +24,7 @@ just explain ~/.config/dprint
 
 ## How to Think About This Repo
 
-chezmoi is a tool that copies files from a source directory into your home directory. This repo's source directory is `home/`. A file at `home/.chezmoiroot` tells chezmoi that, so the repo root can hold non-deployed things like docs and the justfile without them ending up in `$HOME`.
+chezmoi materializes files from a source directory into your home directory. In this repo, most ordinary config is symlinked rather than copied. The main source directory is `home/`, and some repo-backed live directories live under `symlink-roots/`. A file at `home/.chezmoiroot` tells chezmoi that, so the repo root can hold non-deployed things like docs and the justfile without them ending up in `$HOME`.
 
 Inside `home/`, files are named with prefixes that tell chezmoi how to deploy them. `dot_gitconfig` becomes `~/.gitconfig`. `private_dot_ssh/config` becomes `~/.ssh/config` with mode 0700. `encrypted_credentials.age` gets decrypted with [age](https://github.com/FiloSottile/age) on deploy. Prefixes compose: `private_dot_aws/encrypted_credentials.age` becomes `~/.aws/credentials` in a private directory, decrypted from age. The full prefix vocabulary is `dot_`, `private_`, `exact_`, `encrypted_`, `executable_`, `symlink_`, and `empty_` — once you know these, you can read the whole repo at a glance. Details in [how-it-works.md](docs/how-it-works.md).
 
@@ -71,7 +71,7 @@ Secrets are encrypted at rest with age. The only thing to transfer between machi
 
 ## Claude Code Config
 
-Global CC config lives in `home/dot_claude/` and deploys to `~/.claude/`. Subdirectories use `exact_`, which means chezmoi deletes anything at the target that isn't in source — stale skills, rules, and commands get cleaned up automatically.
+Global CC config is split across lanes. `~/.claude/checks`, `commands`, `rules`, and `schemas` are repo-backed true-dir symlinks from `symlink-roots/claude/`. `home/dot_claude/` still owns top-level files plus exact-managed trees like hooks and skills.
 
 Project-local CC config for this repo lives in `.claude/` at the repo root, managed by git, invisible to chezmoi.
 
@@ -83,7 +83,7 @@ The pure `~/.claude/checks`, `~/.claude/commands`, `~/.claude/rules`, and `~/.cl
 
 - [How it works](docs/how-it-works.md) — naming conventions, script inventory, commands reference
 - [Symlink platform](docs/symlink-platform.md) — lane model, capture policy, local runtime state
-- [Manual setup](docs/manual-setup.md) — post-apply steps (GitHub auth, email, macOS settings)
+- [Manual setup](docs/manual-setup.md) — post-bootstrap steps (GitHub auth, email, macOS settings)
 - [CLI tools](docs/cli-tools.md) — reference for installed tools and shell abbreviations
 - [Neovim](docs/neovim.md) — LazyExtras strategy, AI stack, plugin decisions, skip list
 - [Node setup](docs/node-setup.md) — Node/pnpm/npm toolchain

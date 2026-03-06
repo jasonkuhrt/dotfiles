@@ -33,6 +33,8 @@ Current active `trueDir` roots:
 - `just doctor`: deeper drift and prerequisite checks
 - `just explain <target>`: lane, source path, expected shape, capture policy
 
+Normal content edits to existing files in the `trueDir` and `fileSymlink` lanes are live immediately. `just up` is for convergence, new files, renames, lifecycle scripts, and `special`-lane work.
+
 ## Runtime State
 
 `dotctl` stores local machine state under `~/.local/state/dotfiles-symlink/`:

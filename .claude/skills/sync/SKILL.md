@@ -1,11 +1,11 @@
 ---
 name: sync
-description: Use when user says "sync" or wants to commit, push, pull, and apply dotfiles via chezmoi. Also use when a chezmoi apply fails.
+description: Use when the user says "sync" or wants to commit, rebase, push, and converge this dotfiles repo. Uses just up as the public converge command instead of raw chezmoi apply.
 ---
 
 # Sync
 
-Full dotfiles sync: commit, git sync, apply via chezmoi.
+Full dotfiles sync: commit, rebase, converge with `just up`, then push.
 
 ## Steps
 
@@ -21,9 +21,9 @@ Full dotfiles sync: commit, git sync, apply via chezmoi.
    - Use conventional commit format with scope from CLAUDE.md
    - Example: fish config change + claude settings change = 2 commits
 
-3. **Git sync**
+3. **Rebase onto remote**
    ```bash
-   git sync  # alias for: git pull --rebase && git push
+   git pull --rebase
    ```
 
 4. **Resolve conflicts if any**
@@ -32,25 +32,38 @@ Full dotfiles sync: commit, git sync, apply via chezmoi.
      git add <file>
      git stash drop  # if autostash conflict
      ```
-   - Commit and push resolution
+   - Commit resolution if needed
 
-5. **Apply dotfiles** (Claude Code runs this directly)
+5. **Converge the machine**
    ```bash
-   chezmoi apply -v
+   just up
    ```
 
-6. **Relay sudo reminder if shown**
-   - The script auto-detects if `sync-sudo` is needed
-   - If output shows "Next: Run sudo ./sync-sudo", relay that to user
-   - If no reminder shown, everything is configured - done!
+6. **Inspect post-converge drift**
+   - `just up` can capture intentional live config back into repo source
+   - Run `git status` again
+   - If new intentional source changes appeared, commit them before pushing
 
-## What chezmoi apply Does
+7. **Push the data and git remotes**
+   ```bash
+   bd dolt pull
+   bd dolt push
+   git push
+   git status
+   ```
 
-**`chezmoi apply`** (Claude Code runs directly):
-- Deploys config files from `home/` source state to `$HOME`
+8. **Relay sudo reminder if shown**
+   - If output shows `sudo ./sync-sudo`, tell the user exactly that
+
+## What `just up` Does
+
+**`just up`**:
+- refreshes the cached symlink manifest
+- runs the dotctl healer once
+- applies chezmoi in symlink mode
 - Runs lifecycle scripts (brew bundle, node setup, macOS defaults, etc.)
-- Installs Fisher plugins and npm global packages
-- `run_once_` scripts run only on first apply; `run_onchange_` scripts re-run when content changes
+- installs or reloads the launchd healer
+- leaves read-only inspection to `just status`, `just doctor`, and `just explain`
 
 **`./sync-sudo`** (user runs manually, only if needed):
 - Power management (display sleep)
@@ -59,8 +72,8 @@ Full dotfiles sync: commit, git sync, apply via chezmoi.
 
 ## Troubleshooting
 
-- **Preview changes:** `chezmoi diff`
-- **Dry run:** `chezmoi apply --dry-run`
-- **System health:** `chezmoi doctor`
-- **Drift detection:** `chezmoi verify`
-- **Capture external changes:** `chezmoi re-add <file>`
+- **Machine health:** `just status`
+- **Deep drift check:** `just doctor`
+- **Explain one target:** `just explain <target>`
+- **Low-level diff:** `chezmoi diff`
+- **Encrypted files:** `chezmoi edit <target>`

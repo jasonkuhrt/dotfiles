@@ -6,7 +6,7 @@ Personal reference for nvim configuration decisions, LazyExtras strategy, and pl
 
 **LazyVim** — Folke's opinionated Neovim distribution. Extras are toggled via `:LazyExtras` and persisted in `lazyvim.json`.
 
-Config source: `home/dot_config/nvim/` (chezmoi-managed)
+Config source: `home/dot_config/nvim/`, exposed live at `~/.config/nvim/` through file-level symlinks.
 
 ## Architecture Decisions
 
@@ -92,7 +92,7 @@ Uses **oxlint** + **oxfmt** (not ESLint/Prettier). Configured outside LazyExtras
 - `ui.treesitter-context` — Sticky function/class header at top of screen
 
 ### Utilities
-- `util.chezmoi` — Recognizes chezmoi templates, auto-apply on save
+- `util.chezmoi` — Recognizes chezmoi templates and source-path relationships; less central now that most day-to-day edits are live via symlinks or `just edit`
 - `util.mini-hipatterns` — Inline color swatches for hex codes, TODO/FIXME highlights
 
 ## Skip List

@@ -1,6 +1,6 @@
 # How It Works
 
-This repo uses [chezmoi](https://www.chezmoi.io/) for declarative dotfiles management. Config files live in `home/` with chezmoi naming conventions, and `chezmoi apply` deploys them to `$HOME`.
+This repo uses [chezmoi](https://www.chezmoi.io/) as the substrate for declarative dotfiles management. Operationally, `just up` and `packages/dotctl/` drive the system. Config source lives in `home/` plus selected repo-backed trees in `symlink-roots/`, and the default deployment mode is symlink-first.
 
 ## Source State
 

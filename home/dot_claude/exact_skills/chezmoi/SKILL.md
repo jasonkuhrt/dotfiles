@@ -1,155 +1,136 @@
 ---
 name: chezmoi
-description: Use when editing chezmoi-managed dotfiles, applying chezmoi changes, resolving chezmoi conflicts, managing chezmoi scripts or state, debugging chezmoi issues, or working in a dotfiles repo managed by chezmoi. Also use when chezmoi apply fails with "has changed since chezmoi last wrote it" or TTY errors — the skill has the exact conflict resolution flow.
+description: Use when working in this symlink-first chezmoi repo: editing managed files, deciding between trueDir/fileSymlink/special lanes, using just up and just edit, handling encrypted files or scripts, or doing surgical raw chezmoi repair when low-level conflicts appear.
 user_invocable: false
 ---
 
 # Chezmoi
 
-Dotfile manager that syncs a source-of-truth directory to the home directory. The source dir is a git repo; `chezmoi apply` writes source state to live paths.
+This repo is not apply-heavy anymore. `chezmoi` is still the substrate, but `dotctl` plus `just` are the operational interface.
+
+## Default Interface
+
+- `just edit <target>`: open the correct backing file by live target path
+- `just up`: the only convergent mutation command
+- `just status`: one-screen machine health
+- `just doctor`: deeper checks
+- `just explain <target>`: lane, source path, expected shape, capture policy
+
+Prefer those before raw `chezmoi`.
+
+## Lane Model
+
+| Lane | Typical targets | What normal edits need |
+|---|---|---|
+| `trueDir` | `~/.config/ghostty`, `~/.config/git`, `~/.claude/rules` | Existing files and new files are live immediately on both sides. No apply needed for content or child-path changes. |
+| `fileSymlink` | `~/.gitconfig`, `~/.npmrc`, `~/.config/starship.toml`, `~/.config/vim/.vimrc` | Existing file content edits are live immediately. New files, renames, and shape repair go through `just up`. |
+| `special` | `encrypted_`, `modify_`, scripts, `exact_`/`executable_` metadata-heavy trees | Still apply-driven. Use `chezmoi edit` or `just up` depending on the target. |
 
 ## Hard Rules
 
-- **NEVER use `--force`.** Not blind, not after checking, not ever.
-- **All config changes go through the source dir**, not direct home-directory edits. `chezmoi apply` overwrites managed paths — direct edits are lost.
-- **Find the source dir**: `chezmoi source-path`
+- **NEVER use `chezmoi apply --force` or `-f`.**
+- **Do not assume direct home-directory edits are lost.** For most ordinary config files in this repo, the live path is the source because it is a symlink.
+- **Do not replace a live symlink with `mv tmp "$LIVE_PATH"` unless you are writing to the resolved backing file.** That breaks symlink shape.
+- **Use `chezmoi edit` for encrypted or modify targets.** Those remain special-lane operations.
 
-## Path Mapping
+## Editing Rules
 
-chezmoi encodes file attributes in filenames:
+1. **Existing config file**
+   - Start with `just edit <target>`.
+   - For `trueDir` and `fileSymlink` lanes, normal content edits are live immediately.
 
-| Source prefix/suffix | Meaning |
-|---|---|
-| `dot_` | `.` (hidden file) |
-| `exact_` | Directory contents managed exactly (extra files deleted) |
-| `private_` | `0600`/`0700` permissions |
-| `executable_` | `0755` permissions |
-| `symlink_` | Symlink |
-| `.tmpl` suffix | Go template, rendered at apply time |
-| `run_once_`, `run_onchange_` | Scripts, not dotfiles |
+2. **Need to know the lane or backing path first**
+   ```bash
+   just explain <target>
+   chezmoi source-path <target>
+   ```
 
-Example: `dot_config/fish/config.fish` → `~/.config/fish/config.fish`
+3. **New file under a `trueDir` root**
+   - Create it either under the live path or under `symlink-roots/`.
+   - Both sides are the same tree; no apply needed.
 
-## Auto-Apply After Editing
+4. **New file under `fileSymlink` or `special`**
+   - Create it in source with `chezmoi add ...` or by editing the source tree directly.
+   - Then run `just up`.
 
-After editing any chezmoi source file, **immediately apply it**:
+5. **Encrypted file**
+   ```bash
+   chezmoi edit <target>
+   just up
+   ```
 
-1. **Determine the target path** — use `chezmoi target-path <source_file>` or infer from the path mapping above
-2. **Check for conflicts** via `chezmoi status <target>`:
-   - Column 1 = ` ` (space) → no external edits → safe to apply (step 3)
-   - Column 1 = `M` → conflict. Go to **Conflict Resolution**.
-3. **Apply**: `chezmoi apply --no-tty <target>`
+## Raw Chezmoi: When It Still Matters
+
+Use raw `chezmoi` directly for:
+
+- encrypted files: `chezmoi edit <target>`
+- path inspection: `chezmoi source-path <target>`
+- surgical diff/status: `chezmoi diff <target>`, `chezmoi status <target>`
+- lifecycle script state: `chezmoi state get ...`, `chezmoi state delete ...`
+- adding/removing managed targets: `chezmoi add`, `chezmoi forget`
 
 ## Conflict Resolution
 
-When `chezmoi status` column 1 = `M` (live file modified outside chezmoi):
+Use manual per-target repair only when `just up` is not enough and the target is in the `special` lane, or when a file-symlink target needs immediate surgical handling.
 
-1. **Show the diff**: `chezmoi diff <target>` — present to the user
-2. **Wait for explicit approval** — do not proceed without it
-3. **Reset chezmoi's state for that file** — makes chezmoi forget its last-written hash so the next apply won't try to prompt:
+1. **Explain the target first**
+   ```bash
+   just explain <target>
    ```
+
+2. **Inspect low-level drift**
+   ```bash
+   chezmoi status <target>
+   chezmoi diff <target>
+   ```
+
+3. **Wait for explicit approval** before preserving or discarding live bytes.
+
+4. **Keep live bytes** for a broken file-symlink target:
+   ```bash
+   chezmoi re-add <target>
+   chezmoi apply --mode symlink --no-tty <target>
+   ```
+
+5. **Keep source bytes** on an apply-driven target after approval:
+   ```bash
    chezmoi state delete --bucket=entryState --key=<absolute_target_path>
+   chezmoi apply --mode symlink --no-tty <target>
    ```
-4. **Apply**: `chezmoi apply --no-tty <target>` — now succeeds without prompting
-5. **Verify**: `chezmoi status <target>` — should show no output (in sync)
 
-## Status Columns
+6. **Verify**
+   ```bash
+   chezmoi status <target>
+   ```
 
-`chezmoi status` output has two columns:
-- **Column 1**: live file vs chezmoi's last-written state (external modification detection)
-- **Column 2**: live file vs chezmoi's source state (what `apply` would change)
+## Lifecycle Scripts
 
-| Col 1 | Col 2 | Meaning |
-|-------|-------|---------|
-| ` ` | `M` | Source changed, live untouched → clean apply |
-| `M` | `M` | Both changed → conflict, use resolution flow |
-| `M` | ` ` | Live changed, source unchanged → external drift, no apply needed |
-| ` ` | ` ` | In sync |
+Lifecycle scripts still run via the underlying `chezmoi apply`, but the public trigger is `just up`.
 
-## Script Management
+Use `just up` after changing:
 
-chezmoi scripts live in the source dir and run during `chezmoi apply`.
+- `home/Brewfile`
+- `home/npm/global-packages.txt`
+- `home/dock/apps.txt`
+- any `run_once_*` / `run_onchange_*` script
+- any special-lane target that still needs apply
 
-| Prefix | Runs when |
-|---|---|
-| `run_once_before_` | Once ever, before file apply (tracks content hash) |
-| `run_once_after_` | Once ever, after file apply |
-| `run_onchange_before_` | When script content changes, before file apply |
-| `run_onchange_after_` | When script content changes, after file apply |
+Low-level script reset remains surgical:
 
-### Re-triggering scripts
-
-**run_once**: Change the script content (even a comment), or reset its state:
 ```bash
-# Reset a single script's state
 chezmoi state delete --bucket=scriptState --key=<absolute_script_path>
-
-# Nuclear: reset ALL run_once state (every script re-runs on next apply)
-chezmoi state delete-bucket --bucket=scriptState
 ```
 
-**run_onchange**: Change the content the script watches. The hash is computed from the rendered script content — if the template output changes, it re-runs.
-
-## State Management
-
-chezmoi tracks what it last wrote in a persistent state database. This is how it detects external modifications.
+## Safe Read-Only Diagnostics
 
 ```bash
-# View all state (large output)
-chezmoi state dump
-
-# View state for a specific file
-chezmoi state get --bucket=entryState --key=/absolute/path/to/file
-
-# Delete state for one file (used in conflict resolution)
-chezmoi state delete --bucket=entryState --key=/absolute/path/to/file
-
-# Delete state for one script (re-trigger run_once)
-chezmoi state delete --bucket=scriptState --key=/absolute/path/to/script
-```
-
-**Buckets**:
-- `entryState` — per-file hashes (for modification detection)
-- `scriptState` — per-script hashes (for run_once tracking)
-- `configState` — config template hash
-
-## Debugging
-
-All safe, read-only commands:
-
-```bash
-chezmoi doctor          # Check chezmoi configuration validity
-chezmoi verify          # Verify all managed files match source state (exit 1 if not)
-chezmoi diff            # Show what apply would change (all files)
-chezmoi diff <target>   # Show what apply would change (one file)
-chezmoi apply -n -v     # Dry-run: simulate apply with verbose output
-chezmoi managed         # List all managed file paths
-chezmoi unmanaged       # List files in home that chezmoi doesn't manage
-chezmoi cat <target>    # Show what chezmoi would write to target (rendered)
-chezmoi data            # Show all template data variables
-```
-
-## Common Operations
-
-**Add a new file to chezmoi management:**
-```bash
-chezmoi add ~/.config/foo/bar.toml
-# Creates source file, apply now manages it
-```
-
-**Add as template:**
-```bash
-chezmoi add --template ~/.config/foo/bar.toml
-# Creates .tmpl source file with Go template markers
-```
-
-**Remove a file from management (keep live file):**
-```bash
-chezmoi forget ~/.config/foo/bar.toml
-# Removes from source, live file untouched
-```
-
-**See where a managed file's source lives:**
-```bash
-chezmoi source-path ~/.config/foo/bar.toml
+just status
+just doctor
+just explain <target>
+chezmoi doctor
+chezmoi diff
+chezmoi managed
+chezmoi unmanaged
+chezmoi cat <target>
+chezmoi data
 ```

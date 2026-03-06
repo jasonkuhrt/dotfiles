@@ -2,8 +2,8 @@ local blocklist = require("cmd_ux.blocklist")
 local providers = require("cmd_ux.providers")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
-local cache = require("stdlib.cache")
-local fs = require("stdlib.fs")
+local cache = require("kit.cache")
+local fs = require("kit.fs")
 
 local M = {}
 

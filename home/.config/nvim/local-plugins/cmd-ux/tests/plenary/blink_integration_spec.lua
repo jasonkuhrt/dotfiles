@@ -7,14 +7,14 @@ end
 
 local function run_blink_smoke(key)
   local root = plugin_root()
-  local stdlib_root = vim.fn.fnamemodify(root, ":h") .. "/stdlib"
+  local kit_root = vim.fn.fnamemodify(root, ":h") .. "/kit"
   local penlight_root = vim.fn.expand("~/.local/share/nvim/lazy/penlight")
   local penlight_rocks_root = vim.fn.expand("~/.local/share/nvim/lazy-rocks/penlight")
   local blink_root = vim.fn.expand("~/.local/share/nvim/lazy/blink.cmp")
   local script_path = vim.fn.tempname() .. ".lua"
 
   local script = ([[local plugin_root = %q
-local stdlib_root = %q
+local kit_root = %q
 local penlight_root = %q
 local penlight_rocks_root = %q
 local blink_root = %q
@@ -41,7 +41,7 @@ local function has(items, expected)
 end
 
 vim.opt.runtimepath:prepend(penlight_root)
-vim.opt.runtimepath:prepend(stdlib_root)
+vim.opt.runtimepath:prepend(kit_root)
 vim.opt.runtimepath:prepend(plugin_root)
 vim.opt.runtimepath:prepend(blink_root)
 package.path = table.concat({
@@ -130,7 +130,7 @@ vim.schedule(function()
     end, 150)
   end, 100)
 end)
-]]):format(root, stdlib_root, penlight_root, penlight_rocks_root, blink_root, key)
+]]):format(root, kit_root, penlight_root, penlight_rocks_root, blink_root, key)
 
   vim.fn.writefile(vim.split(script, "\n", { plain = true }), script_path)
 

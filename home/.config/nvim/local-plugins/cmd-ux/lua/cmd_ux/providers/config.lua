@@ -1,6 +1,6 @@
 local util = require("cmd_ux.util")
 local types = require("cmd_ux.types")
-local strings = require("stdlib.strings")
+local strings = require("kit.strings")
 
 local M = {
   id = "config",

@@ -1,4 +1,4 @@
-local fs = require("stdlib.fs")
+local fs = require("kit.fs")
 
 local M = {}
 

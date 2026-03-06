@@ -1,4 +1,4 @@
----@class StdlibLazyPluginSpec
+---@class KitLazyPluginSpec
 ---@field [1]? string
 ---@field name string
 ---@field dir? string
@@ -6,7 +6,7 @@
 ---@field priority integer
 ---@field dependencies? string[]
 
----@type StdlibLazyPluginSpec[]
+---@type KitLazyPluginSpec[]
 return {
   {
     "lunarmodules/Penlight",
@@ -15,8 +15,8 @@ return {
     priority = 1150,
   },
   {
-    name = "stdlib",
-    dir = vim.fn.stdpath("config") .. "/local-plugins/stdlib",
+    name = "kit",
+    dir = vim.fn.stdpath("config") .. "/local-plugins/kit",
     lazy = false,
     priority = 1100,
     dependencies = { "penlight" },

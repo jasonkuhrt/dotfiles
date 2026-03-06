@@ -1,4 +1,4 @@
-local strings = require("stdlib.strings")
+local strings = require("kit.strings")
 
 local M = {}
 

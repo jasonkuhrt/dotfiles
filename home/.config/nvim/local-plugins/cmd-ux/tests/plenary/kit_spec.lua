@@ -1,4 +1,4 @@
-describe("stdlib Penlight integration", function()
+describe("kit Penlight integration", function()
   it("loads Penlight in the Neovim plugin environment", function()
     local stringx = require("pl.stringx")
 
@@ -6,9 +6,9 @@ describe("stdlib Penlight integration", function()
     assert(type(stringx.split) == "function")
   end)
 
-  it("keeps stdlib wrappers returning plain Lua data", function()
-    local collections = require("stdlib.collections")
-    local strings = require("stdlib.strings")
+  it("keeps kit wrappers returning plain Lua data", function()
+    local collections = require("kit.collections")
+    local strings = require("kit.strings")
 
     assert(vim.deep_equal("hello", strings.trim("  hello  ")))
     assert(vim.deep_equal({ "one", "two", "three" }, strings.split_words("one two three")))

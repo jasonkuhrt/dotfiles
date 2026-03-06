@@ -14,7 +14,7 @@ Local plugin development follows this stack:
 
 1. Neovim runtime and Lua builtins
 2. community libraries
-3. local stdlib
+3. local kit
 4. application code
 
 The approved community libraries are:
@@ -26,7 +26,7 @@ The intended layering is:
 
 - `plenary.nvim` for Neovim-oriented runtime and test support
 - `penlight` for generic Lua utility coverage
-- local `stdlib` for repo-blessed reusable utilities and stable conventions
+- local `kit` for repo-blessed reusable utilities and stable conventions
 - plugin/application code for product behavior
 
 ## Policy
@@ -46,9 +46,9 @@ Do not write custom infrastructure if one of those already solves the problem cl
 
 Even when community libraries are used, the repo should still own its stable internal boundary.
 
-That boundary is the local `stdlib`.
+That boundary is the local `kit`.
 
-The purpose of `stdlib` is:
+The purpose of `kit` is:
 
 - define repo-level conventions
 - provide stable reusable helpers across plugins
@@ -58,7 +58,7 @@ The purpose of `stdlib` is:
 
 Direct dependency is allowed.
 
-`stdlib` is not a mandatory facade over every external dependency.
+`kit` is not a mandatory facade over every external dependency.
 
 Use direct imports when:
 
@@ -66,7 +66,7 @@ Use direct imports when:
 - wrapping it would add no clarity
 - the code remains easy to understand
 
-Use `stdlib` instead when:
+Use `kit` instead when:
 
 - the same pattern appears across multiple plugins
 - the repo needs one blessed convention
@@ -96,11 +96,11 @@ Use `penlight` for:
 
 Do not treat `penlight` as an invitation to import broad subsystems indiscriminately. Use the smallest useful surface.
 
-## 3. `stdlib`
+## 3. `kit`
 
-The local stdlib should contain only reusable infrastructure.
+The local kit should contain only reusable infrastructure.
 
-Good stdlib content:
+Good kit content:
 
 - collections
 - strings
@@ -109,7 +109,7 @@ Good stdlib content:
 - generic test helpers
 - Neovim wrappers under a host-specific namespace
 
-Bad stdlib content:
+Bad kit content:
 
 - picker behavior
 - command semantics
@@ -131,44 +131,44 @@ It owns:
 
 Application code should not become a dumping ground for utility code that is clearly cross-plugin infrastructure.
 
-## Stdlib structure
+## Kit structure
 
-The top-level namespace should be `stdlib`, not `nvim_lib`.
+The top-level namespace should be `kit`, not `nvim_lib`.
 
 Reason:
 
-- the stdlib is conceptually broader than Neovim
+- the kit is conceptually broader than Neovim
 - generic utilities should not carry host-specific naming
 - host-specific code should be explicit and contained
 
 Preferred shape:
 
-- `stdlib.collections`
-- `stdlib.strings`
-- `stdlib.fs`
-- `stdlib.cache`
-- `stdlib.validate`
-- `stdlib.test`
-- `stdlib.nvim.commands`
-- `stdlib.nvim.async`
-- `stdlib.nvim.ui`
+- `kit.collections`
+- `kit.strings`
+- `kit.fs`
+- `kit.cache`
+- `kit.validate`
+- `kit.test`
+- `kit.nvim.commands`
+- `kit.nvim.async`
+- `kit.nvim.ui`
 
 Rule:
 
-- host-agnostic utilities go in `stdlib.*`
-- Neovim-specific bindings go in `stdlib.nvim.*`
+- host-agnostic utilities go in `kit.*`
+- Neovim-specific bindings go in `kit.nvim.*`
 
 Current shared modules:
 
-- `stdlib.strings`
-- `stdlib.collections`
-- `stdlib.fs`
-- `stdlib.cache`
-- `stdlib.nvim.commands`
+- `kit.strings`
+- `kit.collections`
+- `kit.fs`
+- `kit.cache`
+- `kit.nvim.commands`
 
 ## Promotion rule
 
-Promote code into `stdlib` when all of these are true:
+Promote code into `kit` when all of these are true:
 
 1. it is not product/domain logic
 2. it is reusable across multiple plugins or clearly should be
@@ -200,7 +200,7 @@ When adding new Lua code, ask these questions in order:
 1. can raw Lua or Neovim do this simply already?
 2. does `plenary.nvim` solve the Neovim-shaped problem cleanly?
 3. does `penlight` solve the generic Lua problem cleanly?
-4. should this become a repo-blessed `stdlib` utility?
+4. should this become a repo-blessed `kit` utility?
 5. if none of the above, write plugin-local code
 
 ## Current decision
@@ -209,7 +209,7 @@ The formal policy for this repo is:
 
 - use `plenary.nvim`
 - use `penlight`
-- use local `stdlib`
+- use local `kit`
 - keep the remainder as application code
 
 Direct application dependency on `plenary.nvim` and `penlight` is explicitly allowed.

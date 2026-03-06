@@ -1,7 +1,7 @@
 local M = {}
 
 local blocklist = require("cmd_ux.blocklist")
-local nvim_commands = require("stdlib.nvim.commands")
+local nvim_commands = require("kit.nvim.commands")
 
 M.denied_completion_types = {
   expression = true,

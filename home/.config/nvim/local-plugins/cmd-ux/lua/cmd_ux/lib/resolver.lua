@@ -2,8 +2,8 @@ local index = require("cmd_ux.index")
 local providers = require("cmd_ux.providers")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
-local collections = require("stdlib.collections")
-local strings = require("stdlib.strings")
+local collections = require("kit.collections")
+local strings = require("kit.strings")
 
 local M = {}
 

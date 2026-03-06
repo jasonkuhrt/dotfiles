@@ -1,6 +1,6 @@
 local util = require("cmd_ux.util")
 local types = require("cmd_ux.types")
-local nvim_commands = require("stdlib.nvim.commands")
+local nvim_commands = require("kit.nvim.commands")
 
 local M = {
   id = "generic",

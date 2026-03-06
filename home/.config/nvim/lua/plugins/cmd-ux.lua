@@ -13,7 +13,7 @@ return {
     dir = vim.fn.stdpath("config") .. "/local-plugins/cmd-ux",
     lazy = false,
     priority = 1000,
-    dependencies = { "stdlib" },
+    dependencies = { "kit" },
     config = function()
       require("cmd_ux").setup()
     end,

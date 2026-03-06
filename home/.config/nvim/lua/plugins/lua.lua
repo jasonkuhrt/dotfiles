@@ -11,8 +11,8 @@ return {
           words = { "cmd_ux" },
         },
         {
-          path = vim.fn.stdpath("config") .. "/local-plugins/stdlib",
-          words = { "stdlib" },
+          path = vim.fn.stdpath("config") .. "/local-plugins/kit",
+          words = { "kit" },
         },
       }
 

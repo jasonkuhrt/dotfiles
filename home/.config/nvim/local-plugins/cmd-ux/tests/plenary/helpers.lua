@@ -1,7 +1,7 @@
 local M = {}
 
 local cmd_ux = require("cmd_ux")
-local strings = require("stdlib.strings")
+local strings = require("kit.strings")
 
 function M.ensure_setup()
   cmd_ux.setup()

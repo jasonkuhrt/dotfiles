@@ -1,5 +1,5 @@
 local M = {}
-local strings = require("stdlib.strings")
+local strings = require("kit.strings")
 
 local default_path = vim.fn.stdpath("config") .. "/cmd-ux-command-blocklist.txt"
 

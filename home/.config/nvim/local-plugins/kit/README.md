@@ -1,11 +1,11 @@
-# stdlib
+# kit
 
 Repo-owned Lua standard library for local Neovim plugins.
 
 ## Namespace
 
-- `stdlib.*` for host-agnostic helpers
-- `stdlib.nvim.*` for Neovim-specific helpers
+- `kit.*` for host-agnostic helpers
+- `kit.nvim.*` for Neovim-specific helpers
 
 ## Scope
 

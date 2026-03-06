@@ -1,7 +1,7 @@
 local providers = require("cmd_ux.providers")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
-local nvim_commands = require("stdlib.nvim.commands")
+local nvim_commands = require("kit.nvim.commands")
 
 local M = {}
 

@@ -1,7 +1,7 @@
 set quiet
 
 dotctl := "DOTFILES_REPO_ROOT=" + justfile_directory() + " bun " + justfile_directory() + "/node_modules/dotctl/src/bin/dotctl.ts"
-lua_paths := "home/.config/nvim/lua home/.config/nvim/local-plugins/cmd-ux/lua home/.config/nvim/local-plugins/cmd-ux/tests home/.config/nvim/local-plugins/stdlib/lua"
+lua_paths := "home/.config/nvim/lua home/.config/nvim/local-plugins/cmd-ux/lua home/.config/nvim/local-plugins/cmd-ux/tests home/.config/nvim/local-plugins/kit/lua"
 cmd_ux_blocklist_path := "home/.config/nvim/cmd-ux-command-blocklist.txt"
 cmd_ux_plugin_path := "home/.config/nvim/local-plugins/cmd-ux"
 

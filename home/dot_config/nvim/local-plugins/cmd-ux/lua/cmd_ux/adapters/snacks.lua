@@ -130,8 +130,8 @@ local function refresh_picker(picker)
   update_input(picker)
 end
 
-local function handoff_to_fzf()
-  require("cmd_ux.adapters.fzf").open({ line = render_session() })
+local function handoff_to_cmdline()
+  require("cmd_ux.adapters.ex").open_cmdline(render_session())
 end
 
 local function apply_choice(picker, item)
@@ -220,10 +220,10 @@ local function picker_opts()
           [";"] = {
             function(picker)
               picker:close()
-              handoff_to_fzf()
+              handoff_to_cmdline()
             end,
             mode = { "n", "i" },
-            desc = "Handoff to fzf-lua picker",
+            desc = "Handoff to native Ex cmdline",
           },
         },
       },
@@ -241,9 +241,9 @@ local function picker_opts()
           [";"] = {
             function(picker)
               picker:close()
-              handoff_to_fzf()
+              handoff_to_cmdline()
             end,
-            desc = "Handoff to fzf-lua picker",
+            desc = "Handoff to native Ex cmdline",
           },
         },
       },

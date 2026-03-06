@@ -17,6 +17,23 @@ local state = {
 }
 vim.__cmd_ux_original_api = vim.__cmd_ux_original_api or {}
 
+---@param left string[]
+---@param right string[]
+---@return boolean
+local function same_roots(left, right)
+  if #left ~= #right then
+    return false
+  end
+
+  for i = 1, #left do
+    if left[i] ~= right[i] then
+      return false
+    end
+  end
+
+  return true
+end
+
 ---@param root string
 ---@param user_commands table<string, table>
 ---@param buffer_commands table<string, table>
@@ -47,6 +64,7 @@ local function write_cache(index)
     built_at = index.built_at,
     generation = index.generation,
     blocklist_mtime = blocklist_mtime(),
+    roots = index.roots,
     entries = index.entries,
   }
 
@@ -77,6 +95,22 @@ local function load_cache()
   end
 
   if tonumber(payload.blocklist_mtime or 0) ~= blocklist_mtime() then
+    return nil
+  end
+
+  local live_roots = util.discover_command_names()
+  local cached_roots = payload.roots
+  if type(cached_roots) ~= "table" then
+    cached_roots = {}
+    for _, entry in ipairs(payload.entries or {}) do
+      if type(entry) == "table" and type(entry.root) == "string" and entry.root ~= "" then
+        cached_roots[#cached_roots + 1] = entry.root
+      end
+    end
+    table.sort(cached_roots)
+  end
+
+  if not same_roots(live_roots, cached_roots) then
     return nil
   end
 

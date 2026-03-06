@@ -45,6 +45,14 @@ That does not mean it is the preferred manual typing surface for everything. It 
 
 Both surfaces are different UIs over the same command model.
 
+### Persisted index cache
+
+`cmd-ux` persists the compiled command index to speed later boots.
+
+That cache is not trusted blindly.
+
+It is reused only when the live discovered root command set still matches the cached root set. If command discovery has changed, `cmd-ux` rebuilds the index from live Neovim state.
+
 ### Command kinds
 
 Every supported command node is classified as one of:

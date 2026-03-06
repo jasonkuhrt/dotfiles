@@ -139,7 +139,7 @@ The runtime should trust the current index. If the index is stale, that is a coh
 
 3. Persist the index cache
    - after full index build, emit a cache artifact
-   - on next boot, load the cache artifact first
+   - on next boot, reuse the cache only if the live discovered root set still matches
    - `:Cmdux refresh` rebuilds and rewrites the cache
    - cache is an acceleration layer over the same command graph model
 
@@ -154,4 +154,3 @@ The runtime should trust the current index. If the index is stale, that is a coh
 - hiding commands because `cmd-ux` cannot yet prove them safe
 - treating provider coverage as an admission gate
 - maintaining separate matchable and runnable command sources
-

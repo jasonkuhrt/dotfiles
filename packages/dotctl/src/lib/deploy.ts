@@ -104,6 +104,7 @@ const DEPLOYABLE_KINDS = new Set<ConventionKind>([
   "symlinkDir",
   "symlinkFile",
   "modify",
+  "encrypted",
 ])
 
 const deploySymlink = (
@@ -218,12 +219,69 @@ const deployModify = (
   }
 }
 
+const deployDecrypt = (
+  ctx: RuntimeContext,
+  entry: PlanEntry,
+  options: DeployOptions,
+): DeployResult => {
+  const ageConfig = ctx.config.age
+  if (!ageConfig) {
+    return { entry, action: "error", detail: "age config not found in dotctl.config.json" }
+  }
+
+  if (!existsSync(ageConfig.identity)) {
+    return { entry, action: "error", detail: `age identity key not found: ${ageConfig.identity}` }
+  }
+
+  if (options.dryRun) {
+    if (pathExists(entry.targetAbs)) {
+      return { entry, action: "replaced", detail: `would decrypt ${path.basename(entry.sourceAbs)}` }
+    }
+    return { entry, action: "created", detail: `would decrypt ${path.basename(entry.sourceAbs)}` }
+  }
+
+  // Decrypt the .age file
+  let decrypted: string
+  try {
+    decrypted = execFileSync("age", ["-d", "-i", ageConfig.identity, entry.sourceAbs], {
+      encoding: "utf8",
+    })
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error)
+    return { entry, action: "error", detail: `age decrypt failed: ${msg}` }
+  }
+
+  // Back up existing target if present
+  const existed = pathExists(entry.targetAbs)
+  if (existed) {
+    const stat = lstatSync(entry.targetAbs)
+    if (stat.isSymbolicLink()) {
+      removeExistingSymlink(entry.targetAbs)
+    } else {
+      const backupDir = options.backupDir ?? path.join(
+        path.dirname(entry.targetAbs),
+        `.dotctl-backup-${timestampPath()}`,
+      )
+      backupExisting(entry.targetAbs, backupDir)
+    }
+  }
+
+  ensureParentDir(entry.targetAbs)
+  writeFileSync(entry.targetAbs, decrypted, { mode: 0o600 })
+
+  return {
+    entry,
+    action: existed ? "replaced" : "created",
+    detail: `decrypted ${path.basename(entry.sourceAbs)}`,
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Main executor
 // ---------------------------------------------------------------------------
 
 export const executeDeploy = (
-  _ctx: RuntimeContext,
+  ctx: RuntimeContext,
   plan: DeploymentPlan,
   options: DeployOptions,
 ): DeploySummary => {
@@ -243,6 +301,8 @@ export const executeDeploy = (
     try {
       const result = entry.kind === "modify"
         ? deployModify(entry, options)
+        : entry.kind === "encrypted"
+        ? deployDecrypt(ctx, entry, options)
         : deploySymlink(entry, options)
       results.push(result)
     } catch (error) {

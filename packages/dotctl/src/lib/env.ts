@@ -7,6 +7,15 @@ import { fileURLToPath } from "node:url"
 import { LOG_ROTATE_MAX_BYTES } from "./config.js"
 import { runCommand } from "./shell.js"
 
+export interface AgeConfig {
+  readonly identity: string
+  readonly recipient: string
+}
+
+export interface DotctlConfig {
+  readonly age?: AgeConfig
+}
+
 export interface RuntimeContext {
   readonly repoRoot: string
   readonly homeDir: string
@@ -28,6 +37,7 @@ export interface RuntimeContext {
   readonly chezmoiBin: string
   readonly bunBin: string
   readonly userId: number
+  readonly config: DotctlConfig
 }
 
 const repoRootFromModule = (): string => fileURLToPath(new URL("../../../../", import.meta.url))
@@ -40,6 +50,20 @@ const findExecutableOnPath = (name: string, envPath: string | undefined): string
     if (existsSync(candidate)) return candidate
   }
   return null
+}
+
+const loadDotctlConfig = (repoRoot: string, homeDir: string): DotctlConfig => {
+  const configPath = path.join(repoRoot, "dotctl.config.json")
+  try {
+    const raw = JSON.parse(readFileSync(configPath, "utf8"))
+    if (raw.age) {
+      const identity = (raw.age.identity as string).replace(/^~/, homeDir)
+      return { age: { identity, recipient: raw.age.recipient } }
+    }
+    return {}
+  } catch {
+    return {}
+  }
 }
 
 const detectChezMoiBin = (): string =>
@@ -77,6 +101,7 @@ export const createRuntimeContext = (): RuntimeContext => {
     chezmoiBin: detectChezMoiBin(),
     bunBin: process.execPath,
     userId: process.getuid?.() ?? Number(runCommand(["id", "-u"]).stdout.trim()),
+    config: loadDotctlConfig(repoRoot, homeDir),
   }
 }
 

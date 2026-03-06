@@ -158,6 +158,14 @@ Rule:
 - host-agnostic utilities go in `stdlib.*`
 - Neovim-specific bindings go in `stdlib.nvim.*`
 
+Current shared modules:
+
+- `stdlib.strings`
+- `stdlib.collections`
+- `stdlib.fs`
+- `stdlib.cache`
+- `stdlib.nvim.commands`
+
 ## Promotion rule
 
 Promote code into `stdlib` when all of these are true:

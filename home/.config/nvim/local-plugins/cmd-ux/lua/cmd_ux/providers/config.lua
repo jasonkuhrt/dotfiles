@@ -1,4 +1,6 @@
+local util = require("cmd_ux.util")
 local types = require("cmd_ux.types")
+local strings = require("stdlib.strings")
 
 local M = {
   id = "config",
@@ -269,18 +271,7 @@ local function child_items(prefix)
   for _, node in pairs(tree()) do
     items[#items + 1] = types.frontier_item(node)
   end
-  table.sort(items, function(a, b)
-    return a.label < b.label
-  end)
-
-  if prefix == "" then
-    return items
-  end
-
-  local escaped = vim.pesc(prefix)
-  return vim.tbl_filter(function(item)
-    return item.label:find("^" .. escaped) ~= nil
-  end, items)
+  return util.filter_prefix(util.sort_by_label(items), prefix)
 end
 
 ---@param root string
@@ -334,10 +325,7 @@ end
 function M.complete(line)
   local rest = line:match("^%s*Config%s*(.*)$") or ""
   local trailing_space = rest:match("%s$") ~= nil
-  local tokens = {}
-  for token in rest:gmatch("%S+") do
-    tokens[#tokens + 1] = token
-  end
+  local tokens = strings.split_words(rest)
 
   local prefix = ""
   if not trailing_space and #tokens > 0 then
@@ -358,10 +346,7 @@ end
 
 ---@param args string
 function M.execute(args)
-  local tokens = {}
-  for token in tostring(args or ""):gmatch("%S+") do
-    tokens[#tokens + 1] = token
-  end
+  local tokens = strings.split_words(args)
 
   if #tokens == 0 then
     show_help()

@@ -1,6 +1,7 @@
 local M = {}
 
 local cmd_ux = require("cmd_ux")
+local strings = require("stdlib.strings")
 
 function M.ensure_setup()
   cmd_ux.setup()
@@ -37,10 +38,7 @@ function M.create_structured_test_command(name)
     complete = function(arglead, line, _)
       local rest = line:match("^" .. vim.pesc(name) .. "%s*(.*)$") or ""
       local trailing_space = rest:match("%s$") ~= nil
-      local tokens = {}
-      for token in rest:gmatch("%S+") do
-        tokens[#tokens + 1] = token
-      end
+      local tokens = strings.split_words(rest)
 
       local items = {}
       if #tokens == 0 or (#tokens == 1 and not trailing_space) then

@@ -1,3 +1,4 @@
+local util = require("cmd_ux.util")
 local types = require("cmd_ux.types")
 
 local M = {
@@ -37,22 +38,17 @@ local function get_plugins(prefix)
   local lazy_config = config
   local items = {}
   for name in pairs(lazy_config.plugins) do
-    if prefix == "" or name:find("^" .. vim.pesc(prefix)) ~= nil then
-      items[#items + 1] = types.frontier_item({
-        token = name,
-        label = name,
-        kind = "arg",
-        desc = "Plugin name",
-        help = "Plugin argument for Lazy commands that operate on one or more plugins.",
-        examples = { "Lazy reload " .. name },
-      })
-    end
+    items[#items + 1] = types.frontier_item({
+      token = name,
+      label = name,
+      kind = "arg",
+      desc = "Plugin name",
+      help = "Plugin argument for Lazy commands that operate on one or more plugins.",
+      examples = { "Lazy reload " .. name },
+    })
   end
 
-  table.sort(items, function(a, b)
-    return a.label < b.label
-  end)
-  return items
+  return util.filter_prefix(util.sort_by_label(items), prefix)
 end
 
 ---@param prefix string
@@ -72,18 +68,7 @@ local function command_items(prefix)
     })
   end
 
-  table.sort(items, function(a, b)
-    return a.label < b.label
-  end)
-
-  if prefix == "" then
-    return items
-  end
-
-  local escaped = vim.pesc(prefix)
-  return vim.tbl_filter(function(item)
-    return item.label:find("^" .. escaped) ~= nil
-  end, items)
+  return util.filter_prefix(util.sort_by_label(items), prefix)
 end
 
 ---@param name string

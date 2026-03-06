@@ -1,0 +1,161 @@
+direction: down
+
+title: {
+  label: Gastown Entity Model
+  near: top-center
+  shape: text
+  style.font-size: 24
+  style.bold: true
+}
+
+# --- Town (top-level) ---
+town: Town (~\/gt\/) {
+  style.fill: "#f0f4ff"
+
+  mayor: Mayor {
+    shape: person
+    style.fill: "#ffd700"
+    tooltip: "User-facing orchestrator. Plans work, creates convoys. Does NOT edit code."
+  }
+
+  deacon: Deacon (daemon) {
+    shape: hexagon
+    style.fill: "#d4a0ff"
+    tooltip: "Background supervisor. Patrol loops, propagates work signals."
+  }
+
+  dogs: Dogs (N) {
+    shape: circle
+    style.fill: "#e0e0e0"
+    tooltip: "Deacon infrastructure helpers. NOT project workers."
+  }
+
+  convoys: Convoys {
+    style.fill: "#fff3e0"
+    convoy: Convoy {
+      shape: package
+      tooltip: "Batch of related work. Groups beads for coordinated tracking."
+    }
+  }
+
+  beads_ledger: .beads\/ (Dolt) {
+    shape: cylinder
+    style.fill: "#e8f5e9"
+    tooltip: "Git-backed issue ledger. Beads persist across sessions."
+  }
+
+  # --- Rig (per-project) ---
+  rig: Rig (per project) {
+    style.fill: "#e3f2fd"
+
+    git_repo: Git Repo {
+      shape: cylinder
+      style.fill: "#c8e6c9"
+    }
+
+    crew: Crew (N) {
+      shape: person
+      style.fill: "#81d4fa"
+      tooltip: "Persistent, human-managed. Design/judgment work."
+    }
+
+    polecats: Polecats (N) {
+      shape: person
+      style.fill: "#ffab91"
+      tooltip: "Ephemeral workers. One bead each. Identity persists, sessions don't."
+    }
+
+    witness: Witness (0-1) {
+      shape: diamond
+      style.fill: "#ce93d8"
+      tooltip: "Monitors polecats. Unsticks blocked workers. Nudges stalled agents."
+    }
+
+    refinery: Refinery (0-1) {
+      shape: hexagon
+      style.fill: "#a5d6a7"
+      tooltip: "Merge queue. Resolves conflicts. Runs tests. Rejects failures."
+    }
+
+    worktrees: Git Worktrees {
+      style.fill: "#f5f5f5"
+      wt: "1 worktree per agent" {
+        shape: document
+      }
+    }
+
+    merge_queue: Merge Queue {
+      shape: queue
+      style.fill: "#fff9c4"
+    }
+  }
+}
+
+# --- Relationships ---
+
+# User talks to Mayor only
+you: You (Jason) {
+  shape: person
+  style.fill: "#4caf50"
+  style.font-color: white
+}
+you -> town.mayor: "natural language\n(gt mayor attach)" {
+  style.stroke: "#4caf50"
+  style.stroke-width: 3
+}
+
+# Mayor orchestrates
+town.mayor -> town.convoys: creates
+town.mayor -> town.rig.crew: "assigns design work\n(gt sling)"
+town.mayor -> town.rig.polecats: "assigns grunt work\n(gt sling)"
+
+# Convoy contains beads
+town.convoys.convoy -> town.beads_ledger: "bundles beads from"
+
+# Deacon supervises
+town.deacon -> town.dogs: manages
+town.deacon -> town.rig.witness: "spawns / monitors"
+town.deacon -> town.rig.refinery: "spawns / monitors"
+
+# Witness watches polecats
+town.rig.witness -> town.rig.polecats: "monitors + nudges"
+
+# Agents use worktrees
+town.rig.crew -> town.rig.worktrees: "works in"
+town.rig.polecats -> town.rig.worktrees: "works in"
+
+# Work goes to merge queue
+town.rig.polecats -> town.rig.merge_queue: "pushes branch\n(gt done)"
+town.rig.crew -> town.rig.merge_queue: "pushes branch"
+
+# Refinery processes merge queue
+town.rig.refinery -> town.rig.merge_queue: "processes"
+town.rig.refinery -> town.rig.git_repo: "merges to main\n(tests pass)"
+
+# Hook system
+town.rig.worktrees.wt -> town.beads_ledger: "hook points to\ncurrent bead" {
+  style.stroke-dash: 3
+}
+
+# --- Agent Runtime (external) ---
+runtime: Agent Runtimes {
+  style.fill: "#fce4ec"
+  claude: claude {shape: rectangle}
+  codex: codex {shape: rectangle}
+  opencode: opencode {shape: rectangle}
+  cursor: cursor {shape: rectangle}
+  other: "..." {shape: rectangle}
+}
+
+town.rig.polecats -> runtime: "gt launches\n(configurable)" {
+  style.stroke-dash: 3
+  style.stroke: "#e91e63"
+}
+town.rig.crew -> runtime: "gt launches" {
+  style.stroke-dash: 3
+  style.stroke: "#e91e63"
+}
+town.mayor -> runtime.claude: "is a claude session" {
+  style.stroke-dash: 3
+  style.stroke: "#e91e63"
+}

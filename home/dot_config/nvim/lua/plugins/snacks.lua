@@ -28,6 +28,11 @@ return {
           },
         },
         sources = {
+          explorer = {
+            matcher = {
+              fuzzy = true,
+            },
+          },
           commands = {
             transform = function(item)
               if blocklist.is_blocked(item.text) then

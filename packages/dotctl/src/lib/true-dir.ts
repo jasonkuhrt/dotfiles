@@ -1,4 +1,4 @@
-import { cpSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync } from "node:fs"
+import { cpSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs"
 import path from "node:path"
 
 import { CUTOVER_VERSION, TRUE_DIRS } from "./config.js"
@@ -29,6 +29,14 @@ const listLeafPaths = (root: string): readonly string[] => {
       if (entry.isDirectory()) {
         visit(absolute)
         continue
+      }
+      if (entry.isSymbolicLink()) {
+        try {
+          if (statSync(absolute).isDirectory()) {
+            visit(absolute)
+            continue
+          }
+        } catch {}
       }
       results.push(relative)
     }

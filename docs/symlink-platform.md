@@ -18,8 +18,7 @@ Current active `trueDir` roots:
 - `~/.config/lazygit`
 - `~/.config/libra`
 - `~/.config/lsd`
-- `~/.config/nvim/lua/config`
-- `~/.config/nvim/lua/plugins`
+- `~/.config/nvim`
 - `~/.config/perles`
 - `~/.config/ripgrep`
 - `~/.claude/checks`
@@ -65,4 +64,4 @@ Only promote a path into `trueDir` when all of these are true:
 - git is the intended semantic source of truth
 - unmanaged runtime spill inside the subtree is acceptable or already excluded
 
-That is why `~/.config/dprint` is now `trueDir`, while `~/.config/starship.toml` remains a file-symlink target and the `~/.config/nvim` root remains excluded even though `~/.config/nvim/lua/config` and `~/.config/nvim/lua/plugins` are promoted nested true-dir roots.
+That is why `~/.config/dprint` is now `trueDir`, while `~/.config/starship.toml` remains a file-symlink target and `~/.config/nvim` now follows the same whole-root true-dir model.

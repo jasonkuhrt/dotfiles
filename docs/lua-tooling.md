@@ -24,8 +24,8 @@ Machine-managed installs live in [home/Brewfile](/Users/jasonkuhrt/projects/jaso
 | [.luarc.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.luarc.json) | Repo-owned LuaLS policy for Neovim, Claude/Serena, and shell checks |
 | [selene.toml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/selene.toml) | Selene lint policy |
 | [selene.nvim.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/selene.nvim.yml) | Selene stdlib/global definitions for Neovim-style Lua |
-| [home/dot_config/nvim/stylua.toml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/dot_config/nvim/stylua.toml) | StyLua formatting rules |
-| [home/dot_config/nvim/dot_neoconf.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/dot_config/nvim/dot_neoconf.json) | Enables Lua library support for Neovim config work |
+| [stylua.toml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/symlink-roots/config/nvim/stylua.toml) | StyLua formatting rules |
+| [.neoconf.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/symlink-roots/config/nvim/.neoconf.json) | Enables Lua library support for Neovim config work |
 | [.mcp.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.mcp.json) | Project-local Serena MCP entry for Claude Code |
 | [.serena/project.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.serena/project.yml) | Serena language-server configuration, now including Lua via LSP backend |
 
@@ -117,7 +117,7 @@ Expected workflow:
 For local commits, `just hooks-install` installs a staged-only pre-commit hook. That hook checks only staged Lua blobs from:
 
 - `symlink-roots/config/nvim/lua`
-- `home/dot_config/nvim/local-plugins/cmd-ux/lua`
+- `symlink-roots/config/nvim/local-plugins/cmd-ux/lua`
 
 This keeps existing unrelated repo issues from blocking a commit.
 
@@ -133,7 +133,7 @@ nvim --headless '+lua local lint=require("lint"); print(vim.inspect(lint.linters
 
 Yes. Neovim has Lua LSP support on.
 
-- [home/dot_config/nvim/dot_neoconf.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/dot_config/nvim/dot_neoconf.json) enables LuaLS-related Neovim config support.
+- [.neoconf.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/symlink-roots/config/nvim/.neoconf.json) enables LuaLS-related Neovim config support.
 - LazyVim already provides good `lua_ls` defaults.
 - [lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/symlink-roots/config/nvim/lua/plugins/lua.lua) adds the missing Lua-specific glue.
 

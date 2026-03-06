@@ -6,7 +6,7 @@ Personal reference for nvim configuration decisions, LazyExtras strategy, and pl
 
 **LazyVim** — Folke's opinionated Neovim distribution. Extras are toggled via `:LazyExtras` and persisted in `lazyvim.json`.
 
-Config source: `home/dot_config/nvim/`, exposed live at `~/.config/nvim/` through file-level symlinks.
+Config source: `symlink-roots/config/nvim/`, exposed live at `~/.config/nvim/` through one directory symlink.
 
 ## Architecture Decisions
 

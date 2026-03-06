@@ -1,4 +1,8 @@
-local M = {}
+local types = require("cmd_ux.types")
+
+local M = {
+  id = "config",
+}
 
 local config_dir = vim.fn.stdpath("config") .. "/lua/config"
 
@@ -199,18 +203,20 @@ local function reload_config()
   vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO, { title = "Config" })
 end
 
+---@return table<string, CommandNode>
 local function tree()
   return {
-    help = {
-      name = "help",
+    help = types.node({
+      token = "help",
       kind = "leaf",
       desc = "Show Config command help",
       help = table.concat(help_lines(), "\n"),
       examples = { "Config help" },
+      executable = true,
       execute = show_help,
-    },
-    reload = {
-      name = "reload",
+    }),
+    reload = types.node({
+      token = "reload",
       kind = "leaf",
       desc = "Reload the safe subset of your config",
       help = table.concat(vim.list_extend({
@@ -221,22 +227,18 @@ local function tree()
         "",
       }, help_lines()), "\n"),
       examples = { "Config reload" },
+      executable = true,
       execute = reload_config,
-    },
+    }),
   }
 end
 
+---@param prefix string
+---@return CommandFrontierItem[]
 local function child_items(prefix)
   local items = {}
-  for name, node in pairs(tree()) do
-    items[#items + 1] = {
-      token = name,
-      label = name,
-      kind = node.kind,
-      desc = node.desc,
-      help = node.help,
-      examples = node.examples,
-    }
+  for _, node in pairs(tree()) do
+    items[#items + 1] = types.frontier_item(node)
   end
   table.sort(items, function(a, b)
     return a.label < b.label
@@ -252,56 +254,54 @@ local function child_items(prefix)
   end, items)
 end
 
-function M.describe_root()
-  return {
-    root = "Config",
+---@param root string
+---@return CommandNode
+function M.describe_root(root)
+  return types.node({
+    token = root ~= "" and root or "Config",
     kind = "namespace",
     desc = "Personal config commands",
     help = table.concat(help_lines(), "\n"),
     examples = { "Config help", "Config reload" },
-  }
+    executable = false,
+    requires_more = true,
+  })
 end
 
+---@param ctx CommandSnapshot
+---@return ResolutionState
 function M.resolve(ctx)
+  local root_node = M.describe_root(ctx.root)
+
   if #ctx.accepted == 0 then
-    return {
-      kind = "namespace",
-      desc = "Personal config commands",
-      help = table.concat(help_lines(), "\n"),
-      examples = { "Config help", "Config reload" },
+    return types.state_from_node(root_node, {
       executable = false,
       requires_more = true,
       refusal_reason = "Config is a namespace. Pick a subcommand.",
       frontier = child_items(ctx.pending),
-    }
+    })
   end
 
   local name = ctx.accepted[1]
   local node = tree()[name]
   if not node then
-    return {
-      kind = "namespace",
-      desc = "Personal config commands",
-      help = table.concat(help_lines(), "\n"),
+    return types.state_from_node(root_node, {
       executable = false,
       requires_more = true,
       refusal_reason = "Unknown Config subcommand.",
       frontier = child_items(ctx.pending),
-    }
+    })
   end
 
-  return {
-    kind = node.kind,
-    desc = node.desc,
-    help = node.help,
-    examples = node.examples,
+  return types.state_from_node(node, {
     executable = true,
     requires_more = false,
-    execute = node.execute,
     frontier = {},
-  }
+  })
 end
 
+---@param line string
+---@return string[]
 function M.complete(line)
   local rest = line:match("^%s*Config%s*(.*)$") or ""
   local trailing_space = rest:match("%s$") ~= nil
@@ -327,6 +327,7 @@ function M.complete(line)
   return result
 end
 
+---@param args string
 function M.execute(args)
   local tokens = {}
   for token in tostring(args or ""):gmatch("%S+") do
@@ -347,4 +348,4 @@ function M.execute(args)
   node.execute()
 end
 
-return M
+return types.provider(M)

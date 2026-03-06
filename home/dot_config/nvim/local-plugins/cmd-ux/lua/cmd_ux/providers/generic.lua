@@ -1,13 +1,22 @@
 local util = require("cmd_ux.util")
+local types = require("cmd_ux.types")
 
-local M = {}
+local M = {
+  id = "generic",
+}
+local summary_cache = {}
 
+---@param root string
 local function command_summary(root)
+  if summary_cache[root] then
+    return summary_cache[root]
+  end
+
   local user_command = util.get_user_command(root)
   local parsed = util.parse_command(root)
   local completion_type = util.get_completion_type(root .. " ")
 
-  return {
+  local summary = {
     root = root,
     user_command = user_command,
     parsed = parsed,
@@ -15,24 +24,30 @@ local function command_summary(root)
     desc = (user_command and user_command.definition and user_command.definition ~= "" and user_command.definition)
       or util.synthetic_desc(root, parsed, completion_type),
   }
+  summary_cache[root] = summary
+  return summary
 end
 
+---@param line string
+---@return CommandFrontierItem[]
 local function build_arg_items(line)
   local matches = util.get_cmdline_matches(line)
   local items = {}
   for _, match in ipairs(matches) do
-    items[#items + 1] = {
+    items[#items + 1] = types.frontier_item({
       token = match,
       label = match,
       kind = "arg",
       desc = "Completion candidate",
       help = "Completion candidate suggested by Neovim for the current argument position.",
       examples = { line .. match },
-    }
+    })
   end
   return util.sort_by_label(items)
 end
 
+---@param root string
+---@return CommandNode
 function M.describe_root(root)
   local summary = command_summary(root)
   local kind = "leaf"
@@ -43,8 +58,8 @@ function M.describe_root(root)
     requires_more = true
   end
 
-  return {
-    root = root,
+  return types.node({
+    token = root,
     kind = kind,
     desc = summary.desc,
     help = table.concat({
@@ -56,21 +71,22 @@ function M.describe_root(root)
     examples = { root },
     executable = not requires_more,
     requires_more = requires_more,
-  }
+  })
 end
 
+---@param ctx CommandSnapshot
+---@return ResolutionState
 function M.resolve(ctx)
   local summary = command_summary(ctx.root)
+  local root_node = M.describe_root(ctx.root)
   local parsed = summary.parsed
   if not parsed then
-    return {
-      kind = "leaf",
-      desc = summary.desc,
+    return types.state_from_node(root_node, {
       help = summary.desc,
       executable = false,
       refusal_reason = "Command metadata is unavailable.",
       frontier = {},
-    }
+    })
   end
 
   local nargs = parsed.nargs or "0"
@@ -88,9 +104,7 @@ function M.resolve(ctx)
   end
 
   if completion_type ~= "" and util.denied_completion_types[completion_type] then
-    return {
-      kind = "leaf",
-      desc = summary.desc,
+    return types.state_from_node(root_node, {
       help = table.concat({
         summary.desc,
         "",
@@ -102,13 +116,11 @@ function M.resolve(ctx)
       requires_more = arg_count < min_required,
       refusal_reason = "Unsafe open-ended command family: " .. completion_type,
       frontier = frontier,
-    }
+    })
   end
 
   if arg_count < min_required then
-    return {
-      kind = "leaf",
-      desc = summary.desc,
+    return types.state_from_node(root_node, {
       help = table.concat({
         summary.desc,
         "",
@@ -120,13 +132,11 @@ function M.resolve(ctx)
       requires_more = true,
       refusal_reason = "This command requires more input.",
       frontier = frontier,
-    }
+    })
   end
 
   if arg_count == 0 then
-    return {
-      kind = "leaf",
-      desc = summary.desc,
+    return types.state_from_node(root_node, {
       help = table.concat({
         summary.desc,
         "",
@@ -136,7 +146,7 @@ function M.resolve(ctx)
       executable = true,
       requires_more = false,
       frontier = frontier,
-    }
+    })
   end
 
   if completion_type ~= "" and util.enumerable_completion_types[completion_type] then
@@ -149,9 +159,7 @@ function M.resolve(ctx)
       end
     end
 
-    return {
-      kind = "leaf",
-      desc = summary.desc,
+    return types.state_from_node(root_node, {
       help = table.concat({
         summary.desc,
         "",
@@ -163,12 +171,10 @@ function M.resolve(ctx)
       requires_more = false,
       refusal_reason = exact_match and nil or "Argument does not exactly match a known completion candidate.",
       frontier = frontier,
-    }
+    })
   end
 
-  return {
-    kind = "leaf",
-    desc = summary.desc,
+  return types.state_from_node(root_node, {
     help = table.concat({
       summary.desc,
       "",
@@ -180,7 +186,7 @@ function M.resolve(ctx)
     requires_more = false,
     refusal_reason = "Command arguments are not provably safe.",
     frontier = frontier,
-  }
+  })
 end
 
-return M
+return types.provider(M)

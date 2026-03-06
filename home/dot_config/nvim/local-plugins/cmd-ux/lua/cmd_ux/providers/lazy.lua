@@ -1,5 +1,10 @@
-local M = {}
+local types = require("cmd_ux.types")
 
+local M = {
+  id = "lazy",
+}
+
+---@return table[]
 local function get_commands()
   local ok, config = pcall(require, "lazy.view.config")
   if not ok then
@@ -8,6 +13,8 @@ local function get_commands()
   return config.get_commands()
 end
 
+---@param prefix string
+---@return CommandFrontierItem[]
 local function get_plugins(prefix)
   local ok, config = pcall(require, "lazy.core.config")
   if not ok then
@@ -17,14 +24,14 @@ local function get_plugins(prefix)
   local items = {}
   for name in pairs(config.plugins) do
     if prefix == "" or name:find("^" .. vim.pesc(prefix)) ~= nil then
-      items[#items + 1] = {
+      items[#items + 1] = types.frontier_item({
         token = name,
         label = name,
         kind = "arg",
         desc = "Plugin name",
         help = "Plugin argument for Lazy commands that operate on one or more plugins.",
         examples = { "Lazy reload " .. name },
-      }
+      })
     end
   end
 
@@ -34,10 +41,12 @@ local function get_plugins(prefix)
   return items
 end
 
+---@param prefix string
+---@return CommandFrontierItem[]
 local function command_items(prefix)
   local items = {}
   for _, command in ipairs(get_commands()) do
-    items[#items + 1] = {
+    items[#items + 1] = types.frontier_item({
       token = command.name,
       label = command.name,
       kind = "leaf",
@@ -45,7 +54,7 @@ local function command_items(prefix)
       help = command.desc or "Lazy command",
       examples = command.plugins_required and { "Lazy " .. command.name .. " lazy.nvim" } or { "Lazy " .. command.name },
       requires_more = command.plugins_required == true,
-    }
+    })
   end
 
   table.sort(items, function(a, b)
@@ -62,6 +71,8 @@ local function command_items(prefix)
   end, items)
 end
 
+---@param name string
+---@return table?
 local function find_command(name)
   for _, command in ipairs(get_commands()) do
     if command.name == name then
@@ -70,9 +81,11 @@ local function find_command(name)
   end
 end
 
-function M.describe_root()
-  return {
-    root = "Lazy",
+---@param root string
+---@return CommandNode
+function M.describe_root(root)
+  return types.node({
+    token = root ~= "" and root or "Lazy",
     kind = "hybrid",
     desc = "Plugin manager command hub",
     help = table.concat({
@@ -83,35 +96,33 @@ function M.describe_root()
       "Commands marked as plugin-scoped require at least one plugin argument.",
     }, "\n"),
     examples = { "Lazy", "Lazy health", "Lazy reload lazy.nvim" },
-  }
+    executable = true,
+    requires_more = false,
+  })
 end
 
+---@param ctx CommandSnapshot
+---@return ResolutionState
 function M.resolve(ctx)
+  local root_node = M.describe_root(ctx.root)
+
   if #ctx.accepted == 0 then
-    return {
-      kind = "hybrid",
-      desc = "Plugin manager command hub",
-      help = M.describe_root().help,
-      examples = M.describe_root().examples,
+    return types.state_from_node(root_node, {
       executable = not ctx.trailing_space,
       requires_more = false,
       refusal_reason = ctx.trailing_space and "Pick a Lazy subcommand." or nil,
       frontier = command_items(ctx.pending),
-    }
+    })
   end
 
   local command = find_command(ctx.accepted[1])
   if not command then
-    return {
-      kind = "hybrid",
-      desc = "Plugin manager command hub",
-      help = M.describe_root().help,
-      examples = M.describe_root().examples,
+    return types.state_from_node(root_node, {
       executable = false,
       requires_more = false,
       refusal_reason = "Unknown Lazy subcommand.",
       frontier = command_items(ctx.pending),
-    }
+    })
   end
 
   local plugin_args = {}
@@ -137,30 +148,29 @@ function M.resolve(ctx)
   local desc = #plugin_args > 0 and (command.desc_plugin or command.desc) or command.desc
   local help = desc or "Lazy command"
   local examples = command.plugins_required and { "Lazy " .. command.name .. " lazy.nvim" } or { "Lazy " .. command.name }
+  local command_node = types.node({
+    token = command.name,
+    kind = "leaf",
+    desc = desc,
+    help = help,
+    examples = examples,
+  })
 
   if command.plugins_required then
-    return {
-      kind = "leaf",
-      desc = desc,
-      help = help,
-      examples = examples,
+    return types.state_from_node(command_node, {
       executable = #plugin_args > 0 and all_plugins_valid,
       requires_more = #plugin_args == 0,
       refusal_reason = #plugin_args == 0 and "This Lazy command requires at least one plugin argument."
         or (not all_plugins_valid and "Unknown Lazy plugin name." or nil),
       frontier = get_plugins(ctx.pending),
-    }
+    })
   end
 
-  return {
-    kind = "leaf",
-    desc = desc,
-    help = help,
-    examples = examples,
+  return types.state_from_node(command_node, {
     executable = true,
     requires_more = false,
     frontier = {},
-  }
+  })
 end
 
-return M
+return types.provider(M)

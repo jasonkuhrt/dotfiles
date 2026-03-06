@@ -1,8 +1,10 @@
 local providers = require("cmd_ux.providers")
+local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
 
 local M = {}
 
+---@param line string
 local function parse_line(line)
   local trimmed = util.trim(line)
   if trimmed == "" then
@@ -40,35 +42,28 @@ local function parse_line(line)
   }
 end
 
+---@param prefix string
+---@return CommandFrontierItem[]
 local function root_frontier(prefix)
   local items = {}
   for _, name in ipairs(util.get_command_names(prefix)) do
-    local meta = providers.describe_root(name)
-    items[#items + 1] = {
-      token = name,
-      label = name,
-      kind = meta.kind,
-      desc = meta.desc,
-      help = meta.help,
-      examples = meta.examples,
-      executable = meta.executable,
-      requires_more = meta.requires_more,
-    }
+    items[#items + 1] = types.frontier_item(providers.describe_root(name))
   end
   return util.sort_by_label(items)
 end
 
+---@param state ResolutionState
+---@return string
 local function build_preview(state)
-  local lines = {
-    "# " .. (state.current_label or state.root or "Commands"),
-    "",
-    "Kind: " .. (state.kind or "unknown"),
-    "Executable now: " .. util.bool_text(state.executable == true),
-  }
+  local lines = {}
 
   if state.root then
     lines[#lines + 1] = "Breadcrumb: " .. state.rendered_display
+    lines[#lines + 1] = ""
   end
+
+  lines[#lines + 1] = "Kind: " .. (state.kind or "unknown")
+  lines[#lines + 1] = "Executable now: " .. util.bool_text(state.executable == true)
 
   if state.refusal_reason and state.refusal_reason ~= "" then
     lines[#lines + 1] = "Refusal: " .. state.refusal_reason
@@ -106,6 +101,9 @@ local function build_preview(state)
   return table.concat(lines, "\n")
 end
 
+---@param frontier CommandFrontierItem[]
+---@param token string
+---@return CommandFrontierItem?
 local function find_exact_frontier_item(frontier, token)
   for _, item in ipairs(frontier or {}) do
     if item.label == token then
@@ -114,97 +112,58 @@ local function find_exact_frontier_item(frontier, token)
   end
 end
 
-local function finalize_state(state)
-  state.rendered = util.render_command(state.root or "", state.accepted or {}, state.pending or "", state.trailing_space)
-  state.rendered_display = state.rendered ~= "" and state.rendered or "<root>"
-  state.current_label = state.root or "Commands"
-
-  if state.root and #state.accepted > 0 then
-    state.current_label = state.accepted[#state.accepted]
-  end
-  return state
+---@param root string
+---@param accepted string[]
+---@param pending string
+---@param trailing_space boolean
+---@param raw string
+---@return CommandSnapshot
+local function snapshot(root, accepted, pending, trailing_space, raw)
+  return types.snapshot({
+    root = root,
+    accepted = accepted,
+    pending = pending,
+    trailing_space = trailing_space,
+    raw = raw,
+  })
 end
 
-local function enrich_state(state)
-  finalize_state(state)
-
-  for _, item in ipairs(state.frontier or {}) do
-    local next_state = M.accept_token(state, item.token, false)
-    item.preview = {
-      text = build_preview(next_state),
-      ft = "markdown",
-    }
-    item.next_state = next_state
-    item.text = item.label .. (item.desc ~= "" and ("  " .. item.desc) or "")
-  end
-
-  state.preview = {
-    text = build_preview(state),
-    ft = "markdown",
-  }
-
-  return state
-end
-
+---@param line string
+---@param decorate? boolean
+---@return ResolutionState
 local function resolve_line(line, decorate)
   local parsed = parse_line(line)
   if not parsed then
-    local state = {
-      kind = "root",
-      desc = "Command root",
-      help = "Browse commands.",
-      executable = false,
+    local state = types.root_state({
       frontier = root_frontier(""),
-      accepted = {},
-      pending = "",
-      trailing_space = false,
-    }
-    return decorate == false and finalize_state(state) or enrich_state(state)
+      raw = line,
+    })
+    return types.finalize_state(state)
   end
 
   if parsed.unsupported then
-    local state = {
-      kind = "unsupported",
-      desc = parsed.reason,
-      help = parsed.reason,
-      executable = false,
-      refusal_reason = parsed.reason,
-      frontier = {},
-      accepted = {},
-      pending = "",
-      trailing_space = false,
-    }
-    return decorate == false and finalize_state(state) or enrich_state(state)
+    return types.finalize_state(types.unsupported_state(parsed.reason, {
+      raw = line,
+    }))
   end
 
   if parsed.blank then
-    local state = {
-      kind = "root",
-      desc = "Command root",
-      help = "Browse commands.",
-      executable = false,
+    local state = types.root_state({
       frontier = root_frontier(""),
-      accepted = {},
-      pending = "",
-      trailing_space = false,
-    }
-    return decorate == false and finalize_state(state) or enrich_state(state)
+      raw = line,
+    })
+    return types.finalize_state(state)
   end
 
   if not util.has_exact_command(parsed.root_input) then
-    local state = {
-      kind = "root",
-      root = nil,
-      desc = "Command root",
+    local state = types.root_state({
       help = "Choose a command.",
-      executable = false,
       root_input = parsed.root_input,
       frontier = root_frontier(parsed.root_input),
-      accepted = {},
       pending = parsed.root_input,
-      trailing_space = false,
-    }
-    return decorate == false and finalize_state(state) or enrich_state(state)
+      raw = line,
+    })
+    return types.finalize_state(state)
   end
 
   local root = parsed.root_input
@@ -214,37 +173,38 @@ local function resolve_line(line, decorate)
     pending = table.remove(tokens)
   end
 
-  local resolved = providers.resolve(root, {
-    root = root,
-    accepted = tokens,
-    pending = pending,
-    trailing_space = parsed.trailing_space,
-    raw = line,
-  })
+  local resolved = providers.resolve(root, snapshot(root, tokens, pending, parsed.trailing_space, line))
 
   if pending ~= "" and find_exact_frontier_item(resolved.frontier, pending) then
     tokens[#tokens + 1] = pending
     pending = ""
-    resolved = providers.resolve(root, {
-      root = root,
-      accepted = tokens,
-      pending = "",
-      trailing_space = false,
-      raw = line,
-    })
+    resolved = providers.resolve(root, snapshot(root, tokens, "", false, line))
   end
 
   resolved.root = root
   resolved.accepted = tokens
   resolved.pending = pending
   resolved.trailing_space = parsed.trailing_space
-  return decorate == false and finalize_state(resolved) or enrich_state(resolved)
+  resolved.raw = line
+  return types.finalize_state(resolved)
 end
 
+---@param line string
+---@return ResolutionState
 function M.resolve_line(line)
   return resolve_line(line, true)
 end
 
+---@param state ResolutionState
+---@return string
+function M.preview_text(state)
+  return build_preview(state)
+end
+
+---@param state ResolutionState
+---@param token string
+---@param decorate? boolean
+---@return ResolutionState
 function M.accept_token(state, token, decorate)
   if not token or token == "" then
     return state

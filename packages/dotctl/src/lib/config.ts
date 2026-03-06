@@ -30,6 +30,7 @@ export const HEAL_INTERVAL_SECONDS = 300
 export const LOG_ROTATE_MAX_BYTES = 256 * 1024
 
 export const TRUE_DIRS: readonly TrueDirEntry[] = [
+  { targetRel: ".bookmarks", repoRel: "symlink-roots/bookmarks" },
   { targetRel: ".config/bat", repoRel: "symlink-roots/config/bat" },
   { targetRel: ".config/direnv", repoRel: "symlink-roots/config/direnv" },
   { targetRel: ".config/dprint", repoRel: "symlink-roots/config/dprint", note: "Promoted in dotctl wave" },

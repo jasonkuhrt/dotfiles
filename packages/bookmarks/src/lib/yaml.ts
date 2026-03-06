@@ -17,13 +17,16 @@ export const load = (path: string): Effect.Effect<BookmarksConfig, Error> =>
       try: () => Fs.readFile(path, "utf-8"),
       catch: (e) => new Error(`Failed to read ${path}: ${e}`),
     })
-    const parsed: unknown = Yaml.parse(raw)
+    const parsed = yield* Effect.try({
+      try: () => Yaml.parse(raw) as unknown,
+      catch: (e) => new Error(`Failed to parse ${path}: ${e}`),
+    })
     return yield* Schema.decodeUnknown(BookmarksConfig)(parsed).pipe(
       Effect.mapError((e) => new Error(`Schema validation failed: ${e.message}`)),
     )
   })
 
-const SCHEMA_MODELINE = "# yaml-language-server: $schema=../packages/bookmarks/src/lib/bookmarks.schema.json\n"
+const SCHEMA_MODELINE = "# yaml-language-server: $schema=./bookmarks.schema.json\n"
 
 /** Write a BookmarksConfig back to bookmarks.yaml. */
 export const save = (path: string, config: BookmarksConfig): Effect.Effect<void, Error> =>

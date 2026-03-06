@@ -16,7 +16,7 @@
  *   validate    schema check only
  */
 
-import { Console, Data, DateTime, Effect, Option } from "effect"
+import { Cause, Console, Data, DateTime, Effect, Exit, Option } from "effect"
 
 /** Expected CLI exits where the user has already been informed. */
 class CliExitError extends Data.TaggedError("CliExitError")<{}> {
@@ -25,10 +25,10 @@ class CliExitError extends Data.TaggedError("CliExitError")<{}> {
 }
 import * as Daemon from "../lib/daemon.js"
 import * as Doctor from "../lib/doctor.js"
+import * as Paths from "../lib/paths.js"
 import * as SyncModule from "../lib/sync.js"
 import * as YamlModule from "../lib/yaml.js"
-import * as Fs from "node:fs/promises"
-import * as path from "node:path"
+import { BookmarkTree, BookmarksConfig, TargetProfile } from "../lib/schema/__.js"
 
 const USAGE = `
 bookmarks - Cross-browser bookmark sync from dotfiles
@@ -68,7 +68,28 @@ const parseArgs = (args: string[]) => {
 }
 
 const notImplemented = (command: string) =>
-  Console.error(`Command '${command}' is not yet implemented.`)
+  Effect.gen(function* () {
+    yield* Console.error(`Command '${command}' is not yet implemented.`)
+    return yield* Effect.fail(new CliExitError())
+  })
+
+const makeDefaultConfig = (safariPlistPath: string): BookmarksConfig =>
+  BookmarksConfig.make({
+    targets: {
+      safari: {
+        default: TargetProfile.make({ path: safariPlistPath }),
+      },
+    },
+    base: BookmarkTree.make({}),
+  })
+
+const loadConfigOrDefault = (yamlPath: string): Effect.Effect<BookmarksConfig, Error> =>
+  YamlModule.load(yamlPath).pipe(
+    Effect.catchAll(() => Effect.succeed(makeDefaultConfig(Paths.defaultSafariPlistPath()))),
+  )
+
+const resolveSafariPlistPath = (config: BookmarksConfig): string =>
+  config.targets.safari?.default?.path ?? Paths.defaultSafariPlistPath()
 
 const program = Effect.gen(function* () {
   const [command, ...args] = process.argv.slice(2)
@@ -82,38 +103,32 @@ const program = Effect.gen(function* () {
 
   switch (command) {
     case "push":
-      yield* notImplemented("push")
-      break
+      return yield* notImplemented("push")
     case "pull": {
-      // One-way: browsers -> YAML (wipe YAML, then sync from scratch)
+      // One-way: browsers -> YAML using an empty in-memory YAML tree as the source.
       const { flags: pullFlags } = parseArgs(args)
-      const pullYamlPath = path.resolve(import.meta.dirname, "../../../..", "bookmarks/bookmarks.yaml")
-      const safariPlistPath = path.resolve(
-        process.env["HOME"] ?? "",
-        "Library/Safari/Bookmarks.plist",
-      )
-
-      // Wipe existing YAML for clean pull (git baseline will be empty after this)
-      yield* Effect.tryPromise({
-        try: () => Fs.rm(pullYamlPath, { force: true }),
-        catch: () => new Error("Failed to remove bookmarks.yaml"),
-      }).pipe(Effect.catchAll(() => Effect.void))
+      const pullYamlPath = Paths.defaultYamlPath()
+      const currentConfig = yield* loadConfigOrDefault(pullYamlPath)
+      const safariPlistPath = resolveSafariPlistPath(currentConfig)
 
       const pullResult = yield* SyncModule.sync({
         yamlPath: pullYamlPath,
         safariPlistPath,
         dryRun: pullFlags.dryRun,
+        yamlOverride: BookmarksConfig.make({
+          targets: currentConfig.targets,
+          base: BookmarkTree.make({}),
+          profiles: currentConfig.profiles,
+        }),
       })
       yield* Console.log(`\nPull complete: ${pullResult.applied.length} bookmarks synced`)
       break
     }
     case "sync": {
       const { flags: syncFlags } = parseArgs(args)
-      const syncYamlPath = path.resolve(import.meta.dirname, "../../../..", "bookmarks/bookmarks.yaml")
-      const syncSafariPlistPath = path.resolve(
-        process.env["HOME"] ?? "",
-        "Library/Safari/Bookmarks.plist",
-      )
+      const syncYamlPath = Paths.defaultYamlPath()
+      const currentConfig = yield* loadConfigOrDefault(syncYamlPath)
+      const syncSafariPlistPath = resolveSafariPlistPath(currentConfig)
       const syncResult = yield* SyncModule.sync({
         yamlPath: syncYamlPath,
         safariPlistPath: syncSafariPlistPath,
@@ -123,14 +138,11 @@ const program = Effect.gen(function* () {
       break
     }
     case "status":
-      yield* notImplemented("status")
-      break
+      return yield* notImplemented("status")
     case "backup":
-      yield* notImplemented("backup")
-      break
+      return yield* notImplemented("backup")
     case "gc":
-      yield* notImplemented("gc")
-      break
+      return yield* notImplemented("gc")
     case "daemon": {
       const subcommand = positional[0]
       if (!subcommand || !["start", "stop", "status"].includes(subcommand)) {
@@ -164,7 +176,7 @@ const program = Effect.gen(function* () {
       break
     }
     case "doctor": {
-      const doctorYamlPath = path.resolve(import.meta.dirname, "../../../..", "bookmarks/bookmarks.yaml")
+      const doctorYamlPath = Paths.defaultYamlPath()
       const doctorResult = yield* Doctor.runDiagnostics(doctorYamlPath)
       yield* Console.log(Doctor.formatReport(doctorResult))
       if (!doctorResult.allPassed) {
@@ -173,10 +185,15 @@ const program = Effect.gen(function* () {
       break
     }
     case "validate": {
-      const yamlPath = path.resolve(import.meta.dirname, "../../../..", "bookmarks/bookmarks.yaml")
+      const yamlPath = Paths.defaultYamlPath()
       yield* YamlModule.load(yamlPath).pipe(
         Effect.flatMap(() => Console.log("bookmarks.yaml is valid")),
-        Effect.catchAll((e) => Console.error(e.message)),
+        Effect.catchAll((e) =>
+          Effect.gen(function* () {
+            yield* Console.error(e.message)
+            return yield* Effect.fail(new CliExitError())
+          })
+        ),
       )
       break
     }
@@ -187,7 +204,10 @@ const program = Effect.gen(function* () {
   }
 })
 
-Effect.runPromise(program).catch((err: unknown) => {
-  if (!CliExitError.is(err)) console.error(err)
-  process.exit(1)
+Effect.runPromiseExit(program).then((exit) => {
+  if (Exit.isFailure(exit)) {
+    const err = Cause.squash(exit.cause)
+    if (!CliExitError.is(err)) console.error(err)
+    process.exit(1)
+  }
 })

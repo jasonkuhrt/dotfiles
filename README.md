@@ -28,7 +28,7 @@ chezmoi materializes files from a source directory into your home directory. In 
 
 Inside `home/`, files are named with prefixes that tell chezmoi how to deploy them. `dot_gitconfig` becomes `~/.gitconfig`. `private_dot_ssh/config` becomes `~/.ssh/config` with mode 0700. `encrypted_credentials.age` gets decrypted with [age](https://github.com/FiloSottile/age) on deploy. Prefixes compose: `private_dot_aws/encrypted_credentials.age` becomes `~/.aws/credentials` in a private directory, decrypted from age. The full prefix vocabulary is `dot_`, `private_`, `exact_`, `encrypted_`, `executable_`, `symlink_`, and `empty_` — once you know these, you can read the whole repo at a glance. Details in [how-it-works.md](docs/how-it-works.md).
 
-Some pure config directories now live under `symlink-roots/` and are exposed into `$HOME` as whole-directory symlinks. That means new files inside those dirs are instant on both sides and git, not chezmoi child-file metadata, is the source of truth there.
+Some pure config directories now live under `symlink-roots/` and are exposed into `$HOME` as whole-directory symlinks. That means new files inside those dirs are instant on both sides and git, not chezmoi child-file metadata, is the source of truth there. That now includes `~/.bookmarks`, backed by `symlink-roots/bookmarks/`.
 
 The local control plane is `packages/dotctl/`. It builds the symlink manifest, runs the launchd healer, and exposes the read-only health/explain UX around `just up`.
 

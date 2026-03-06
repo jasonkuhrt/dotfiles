@@ -9,6 +9,7 @@
 import { Effect } from "effect"
 import { homedir } from "node:os"
 import { join } from "node:path"
+import * as Paths from "./paths.js"
 import * as Permissions from "./permissions.js"
 import * as YamlModule from "./yaml.js"
 
@@ -127,7 +128,7 @@ const checkBrowserNotRunning = (browser: string): Effect.Effect<DoctorCheck> =>
  * Each check is independent — all run even if some fail.
  */
 export const runDiagnostics = (yamlPath?: string): Effect.Effect<DoctorResult> => {
-  const resolvedYamlPath = yamlPath ?? join(process.cwd(), "bookmarks/bookmarks.yaml")
+  const resolvedYamlPath = yamlPath ?? Paths.defaultYamlPath()
 
   return Effect.all(
     [

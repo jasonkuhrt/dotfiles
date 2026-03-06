@@ -8,6 +8,7 @@
 
 import { Array as Arr, DateTime, Duration, Effect, Order, Schema, Trie, pipe } from "effect"
 import { execFile } from "node:child_process"
+import * as Fs from "node:fs/promises"
 import * as Path from "node:path"
 import * as Yaml from "yaml"
 import * as Graveyard from "./graveyard.js"
@@ -34,8 +35,7 @@ export interface ConflictResolution {
  */
 export const readGitBaseline = (yamlPath: string): Effect.Effect<BookmarkTree, Error> =>
   Effect.gen(function* () {
-    const repoRoot = yield* gitRepoRoot(yamlPath)
-    const relPath = Path.relative(repoRoot, yamlPath)
+    const { repoRoot, relPath } = yield* resolveGitTarget(yamlPath)
 
     const raw = yield* Effect.tryPromise({
       try: () =>
@@ -56,7 +56,10 @@ export const readGitBaseline = (yamlPath: string): Effect.Effect<BookmarkTree, E
     }
 
     // Parse and validate the committed YAML
-    const parsed: unknown = Yaml.parse(raw)
+    const parsed = yield* Effect.try({
+      try: () => Yaml.parse(raw) as unknown,
+      catch: (e) => new Error(`Failed to parse committed bookmarks.yaml: ${e}`),
+    })
     const config = yield* Schema.decodeUnknown(BookmarksConfig)(parsed).pipe(
       Effect.mapError((e) => new Error(`Failed to parse committed bookmarks.yaml: ${e.message}`)),
     )
@@ -81,11 +84,25 @@ const gitRepoRoot = (filePath: string): Effect.Effect<string, Error> =>
     catch: (e) => new Error(`Failed to find git repo root: ${e}`),
   })
 
+/** Resolve a possibly symlinked home path to the repo-relative file path git expects. */
+const resolveGitTarget = (filePath: string): Effect.Effect<{ repoRoot: string; relPath: string }, Error> =>
+  Effect.gen(function* () {
+    const realDir = yield* Effect.tryPromise({
+      try: () => Fs.realpath(Path.dirname(filePath)),
+      catch: () => Path.dirname(filePath),
+    })
+    const canonicalPath = Path.join(realDir, Path.basename(filePath))
+    const repoRoot = yield* gitRepoRoot(canonicalPath)
+    return {
+      repoRoot,
+      relPath: Path.relative(repoRoot, canonicalPath),
+    }
+  })
+
 /** Auto-commit bookmarks.yaml so the committed version becomes the new baseline. */
 export const gitAutoCommit = (yamlPath: string): Effect.Effect<void, Error> =>
   Effect.gen(function* () {
-    const repoRoot = yield* gitRepoRoot(yamlPath)
-    const relPath = Path.relative(repoRoot, yamlPath)
+    const { repoRoot, relPath } = yield* resolveGitTarget(yamlPath)
 
     // Stage the file
     yield* Effect.tryPromise({
@@ -256,6 +273,8 @@ export interface SyncConfig {
   readonly dryRun?: boolean
   /** Max age for graveyard entries before GC removes them. Default: 90 days. */
   readonly graveyardMaxAge?: Duration.Duration
+  /** Optional YAML config override for one-way workflows such as `pull`. */
+  readonly yamlOverride?: BookmarksConfig
 }
 
 /**
@@ -283,7 +302,7 @@ export const sync = (config: SyncConfig): Effect.Effect<SyncResult, Error> =>
     const baselineTree = yield* readGitBaseline(config.yamlPath)
 
     // 3. Load current YAML from disk (user's edits since last commit)
-    const yamlConfig = yield* YamlModule.load(config.yamlPath).pipe(
+    const yamlConfig = config.yamlOverride ?? (yield* YamlModule.load(config.yamlPath).pipe(
       Effect.catchAll(() =>
         Effect.succeed(
           BookmarksConfig.make({
@@ -296,7 +315,7 @@ export const sync = (config: SyncConfig): Effect.Effect<SyncResult, Error> =>
           }),
         ),
       ),
-    )
+    ))
     const yamlTree = yamlConfig.base
 
     // 4. Three-way diff: generate patches from each side against baseline

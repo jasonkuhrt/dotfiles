@@ -4,8 +4,8 @@
  *
  * Usage: bun src/lib/generate-json-schema.ts
  *
- * Writes bookmarks.schema.json co-located with schema.ts.
- * Referenced by bookmarks.yaml via yaml-language-server $schema modeline.
+ * Writes bookmarks.schema.json to both the package source and the managed
+ * ~/.bookmarks true-dir so YAML schema lookup works from the live path too.
  */
 
 import { JSONSchema } from "effect"
@@ -15,8 +15,14 @@ import { BookmarksConfig } from "./schema/__.js"
 
 const jsonSchema = JSONSchema.make(BookmarksConfig)
 
-const outPath = path.resolve(import.meta.dirname, "bookmarks.schema.json")
 const content = JSON.stringify(jsonSchema, null, 2) + "\n"
+const outPaths = [
+  path.resolve(import.meta.dirname, "bookmarks.schema.json"),
+  path.resolve(import.meta.dirname, "../../../../symlink-roots/bookmarks/bookmarks.schema.json"),
+]
 
-await fs.writeFile(outPath, content, "utf-8")
-console.log(`Wrote ${outPath}`)
+for (const outPath of outPaths) {
+  await fs.mkdir(path.dirname(outPath), { recursive: true })
+  await fs.writeFile(outPath, content, "utf-8")
+  console.log(`Wrote ${outPath}`)
+}

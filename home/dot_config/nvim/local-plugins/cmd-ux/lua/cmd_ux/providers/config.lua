@@ -203,11 +203,6 @@ local function reload_config()
     end
   end
 
-  local ok, blocklist = pcall(require, "config.command-blocklist")
-  if ok and type(blocklist.reload) == "function" then
-    blocklist.reload()
-  end
-
   local cmd_ux_ok, cmd_ux_err = reload_cmd_ux()
   if not cmd_ux_ok then
     vim.notify("Config reload failed while refreshing cmd_ux: " .. tostring(cmd_ux_err), vim.log.levels.ERROR, {

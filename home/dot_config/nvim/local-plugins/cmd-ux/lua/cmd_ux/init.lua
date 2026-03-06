@@ -1,8 +1,15 @@
+local blocklist = require("cmd_ux.blocklist")
 local config_provider = require("cmd_ux.providers").config()
+local util = require("cmd_ux.util")
 
 local M = {}
 
 local did_setup = false
+
+function M.reload()
+  blocklist.reload()
+  util.invalidate_command_cache()
+end
 
 function M.setup()
   if did_setup then
@@ -20,6 +27,8 @@ function M.setup()
     end,
     force = true,
   })
+
+  M.reload()
 end
 
 function M.open_picker(opts)

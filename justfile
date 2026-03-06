@@ -1,6 +1,7 @@
 set quiet
 
 lua_paths := "home/dot_config/nvim/lua home/dot_config/nvim/local-plugins/cmd-ux/lua"
+cmd_ux_blocklist_path := "home/dot_config/nvim/cmd-ux-command-blocklist.txt"
 
 [private]
 default:
@@ -37,6 +38,40 @@ lua-fmt-check:
 
 lua-fmt:
     stylua {{ lua_paths }}
+
+cmd-ux-blocklist-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    path="{{ cmd_ux_blocklist_path }}"
+    extracted="$(mktemp)"
+    trap 'rm -f "$extracted"' EXIT
+
+    awk '
+      /^[[:space:]]*($|#)/ { next }
+      {
+        if ($0 ~ /[[:space:]]/) {
+          printf "FAIL: %s:%d: expected one exact command per line with no whitespace: %s\n", FILENAME, NR, $0 > "/dev/stderr"
+          failed = 1
+          next
+        }
+        if (seen[$0]++) {
+          printf "FAIL: %s:%d: duplicate command: %s\n", FILENAME, NR, $0 > "/dev/stderr"
+          failed = 1
+        }
+        print $0
+      }
+      END {
+        exit failed
+      }
+    ' "$path" > "$extracted"
+
+    if ! diff -u "$extracted" <(LC_ALL=C sort "$extracted") >/dev/null; then
+        printf 'FAIL: %s: commands must be sorted ascending (ignoring comments and blank lines)\n' "$path" >&2
+        exit 1
+    fi
+
+    printf 'PASS: %s\n' "$path"
 
 hooks-install:
     bash scripts/git-hooks/install-pre-commit.sh

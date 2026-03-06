@@ -1,4 +1,6 @@
-local blocklist = require("config.command-blocklist")
+local function is_blocked_command(name)
+  return require("cmd_ux.blocklist").is_blocked(name)
+end
 
 return {
   {
@@ -40,7 +42,7 @@ return {
           },
           commands = {
             transform = function(item)
-              if blocklist.is_blocked(item.text) then
+              if is_blocked_command(item.text) then
                 return false
               end
             end,

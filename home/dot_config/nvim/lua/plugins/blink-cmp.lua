@@ -1,4 +1,6 @@
-local blocklist = require("config.command-blocklist")
+local function is_blocked_command(name)
+  return require("cmd_ux.blocklist").is_blocked(name)
+end
 
 return {
   {
@@ -45,7 +47,7 @@ return {
           cmdline = {
             transform_items = function(_, items)
               return vim.tbl_filter(function(item)
-                return not blocklist.is_blocked(item.label)
+                return not is_blocked_command(item.label)
               end, items)
             end,
           },

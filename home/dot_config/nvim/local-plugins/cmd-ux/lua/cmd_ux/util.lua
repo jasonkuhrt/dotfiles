@@ -1,6 +1,6 @@
 local M = {}
 
-local blocklist = require("config.command-blocklist")
+local blocklist = require("cmd_ux.blocklist")
 
 ---@class CommandCache
 ---@field exact table<string, boolean>?
@@ -82,18 +82,14 @@ end
 ---@return string[]
 function M.get_command_names(prefix)
   if not command_cache.exact or not command_cache.names then
-    local names = vim.fn.getcompletion("", "command")
+    local names = blocklist.filter_commands(vim.fn.getcompletion("", "command"))
     local exact = {}
-    local filtered = {}
     for _, name in ipairs(names) do
-      if not blocklist.is_blocked(name) then
-        filtered[#filtered + 1] = name
-        exact[name] = true
-      end
+      exact[name] = true
     end
-    table.sort(filtered)
+    table.sort(names)
     command_cache.exact = exact
-    command_cache.names = filtered
+    command_cache.names = names
   end
 
   if not prefix or prefix == "" then

@@ -1,0 +1,350 @@
+local M = {}
+
+local config_dir = vim.fn.stdpath("config") .. "/lua/config"
+
+local non_reloadable_paths = {
+  ["lua/config/lazy.lua"] = true,
+}
+
+local always_restart_required_paths = {
+  "init.lua",
+}
+
+local function discover_config_entries()
+  local ok, names = pcall(vim.fn.readdir, config_dir)
+  if not ok then
+    return nil, names
+  end
+
+  local entries = {}
+  for _, name in ipairs(names) do
+    if name:sub(-4) == ".lua" then
+      local stem = name:sub(1, -5)
+      entries[#entries + 1] = {
+        module = "config." .. stem,
+        path = "lua/config/" .. name,
+      }
+    end
+  end
+
+  table.sort(entries, function(a, b)
+    return a.path < b.path
+  end)
+
+  return entries
+end
+
+local function build_reload_plan()
+  local entries, err = discover_config_entries()
+  if not entries then
+    return nil, err
+  end
+
+  local reloadable_modules = {}
+  local skipped_paths = {}
+
+  for _, entry in ipairs(entries) do
+    if non_reloadable_paths[entry.path] then
+      skipped_paths[#skipped_paths + 1] = entry.path
+    else
+      reloadable_modules[#reloadable_modules + 1] = entry.module
+    end
+  end
+
+  local restart_required_paths = vim.deepcopy(always_restart_required_paths)
+  for _, path in ipairs(skipped_paths) do
+    restart_required_paths[#restart_required_paths + 1] = path
+  end
+  table.sort(restart_required_paths)
+
+  return {
+    reloadable_modules = reloadable_modules,
+    skipped_paths = skipped_paths,
+    restart_required_paths = restart_required_paths,
+  }
+end
+
+local function append_bullets(lines, items)
+  for _, item in ipairs(items) do
+    lines[#lines + 1] = "- " .. item
+  end
+end
+
+local function help_lines()
+  local lines = {
+    "Config commands:",
+    "- Config help",
+    "- Config reload",
+    "",
+    "Reload scope (best-effort):",
+  }
+
+  local plan, err = build_reload_plan()
+  if not plan then
+    lines[#lines + 1] = "- Could not inspect lua/config/*.lua: " .. tostring(err)
+  elseif #plan.reloadable_modules == 0 then
+    lines[#lines + 1] = "- No reloadable config modules discovered."
+  else
+    append_bullets(lines, plan.reloadable_modules)
+  end
+
+  lines[#lines + 1] = ""
+  lines[#lines + 1] = "Also refreshed:"
+  lines[#lines + 1] = "- local-plugins/cmd-ux/lua/cmd_ux/*"
+  lines[#lines + 1] = ""
+  lines[#lines + 1] = "Not reloaded here:"
+  lines[#lines + 1] = "- lua/plugins/* (lazy.nvim already watches plugin specs)"
+
+  if plan and #plan.skipped_paths > 0 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "Skipped during reload:"
+    append_bullets(lines, plan.skipped_paths)
+  end
+
+  lines[#lines + 1] = ""
+  lines[#lines + 1] = "Restart required after editing:"
+
+  append_bullets(lines, plan and plan.restart_required_paths or always_restart_required_paths)
+
+  return lines
+end
+
+local function clear_modules(modules)
+  for _, module in ipairs(modules) do
+    package.loaded[module] = nil
+  end
+end
+
+local function clear_package_prefix(prefix)
+  local modules = {}
+  local escaped = "^" .. vim.pesc(prefix) .. "%."
+
+  for name in pairs(package.loaded) do
+    if name == prefix or name:find(escaped) ~= nil then
+      modules[#modules + 1] = name
+    end
+  end
+
+  table.sort(modules)
+  clear_modules(modules)
+end
+
+local function reload_cmd_ux()
+  clear_package_prefix("cmd_ux")
+
+  local ok, cmd_ux = pcall(require, "cmd_ux")
+  if not ok then
+    return false, cmd_ux
+  end
+
+  local setup_ok, setup_err = pcall(cmd_ux.setup)
+  if not setup_ok then
+    return false, setup_err
+  end
+
+  return true
+end
+
+local function show_help()
+  vim.notify(table.concat(help_lines(), "\n"), vim.log.levels.INFO, { title = "Config" })
+end
+
+local function reload_config()
+  local plan, err = build_reload_plan()
+  if not plan then
+    vim.notify("Config reload failed while discovering lua/config/*.lua: " .. tostring(err), vim.log.levels.ERROR, {
+      title = "Config",
+    })
+    return
+  end
+
+  clear_modules(plan.reloadable_modules)
+
+  for _, module in ipairs(plan.reloadable_modules) do
+    local ok, err = pcall(require, module)
+    if not ok then
+      vim.notify("Config reload failed for " .. module .. ": " .. err, vim.log.levels.ERROR, { title = "Config" })
+      return
+    end
+  end
+
+  local ok, blocklist = pcall(require, "config.command-blocklist")
+  if ok and type(blocklist.reload) == "function" then
+    blocklist.reload()
+  end
+
+  local cmd_ux_ok, cmd_ux_err = reload_cmd_ux()
+  if not cmd_ux_ok then
+    vim.notify("Config reload failed while refreshing cmd_ux: " .. tostring(cmd_ux_err), vim.log.levels.ERROR, {
+      title = "Config",
+    })
+    return
+  end
+
+  local lines = {
+    ("Neovim config reloaded (%d modules, best-effort)."):format(#plan.reloadable_modules),
+    "Cmd UX command state refreshed.",
+    "",
+    "Restart still required for:",
+  }
+
+  append_bullets(lines, plan.restart_required_paths)
+
+  if #plan.skipped_paths > 0 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "Skipped during reload:"
+    append_bullets(lines, plan.skipped_paths)
+  end
+
+  vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO, { title = "Config" })
+end
+
+local function tree()
+  return {
+    help = {
+      name = "help",
+      kind = "leaf",
+      desc = "Show Config command help",
+      help = table.concat(help_lines(), "\n"),
+      examples = { "Config help" },
+      execute = show_help,
+    },
+    reload = {
+      name = "reload",
+      kind = "leaf",
+      desc = "Reload the safe subset of your config",
+      help = table.concat(vim.list_extend({
+        "Reload the safe subset of your config.",
+        "",
+        "This is best-effort. Plugin specs are left to lazy.nvim.",
+        "Restart is still required after editing bootstrap files.",
+        "",
+      }, help_lines()), "\n"),
+      examples = { "Config reload" },
+      execute = reload_config,
+    },
+  }
+end
+
+local function child_items(prefix)
+  local items = {}
+  for name, node in pairs(tree()) do
+    items[#items + 1] = {
+      token = name,
+      label = name,
+      kind = node.kind,
+      desc = node.desc,
+      help = node.help,
+      examples = node.examples,
+    }
+  end
+  table.sort(items, function(a, b)
+    return a.label < b.label
+  end)
+
+  if prefix == "" then
+    return items
+  end
+
+  local escaped = vim.pesc(prefix)
+  return vim.tbl_filter(function(item)
+    return item.label:find("^" .. escaped) ~= nil
+  end, items)
+end
+
+function M.describe_root()
+  return {
+    root = "Config",
+    kind = "namespace",
+    desc = "Personal config commands",
+    help = table.concat(help_lines(), "\n"),
+    examples = { "Config help", "Config reload" },
+  }
+end
+
+function M.resolve(ctx)
+  if #ctx.accepted == 0 then
+    return {
+      kind = "namespace",
+      desc = "Personal config commands",
+      help = table.concat(help_lines(), "\n"),
+      examples = { "Config help", "Config reload" },
+      executable = false,
+      requires_more = true,
+      refusal_reason = "Config is a namespace. Pick a subcommand.",
+      frontier = child_items(ctx.pending),
+    }
+  end
+
+  local name = ctx.accepted[1]
+  local node = tree()[name]
+  if not node then
+    return {
+      kind = "namespace",
+      desc = "Personal config commands",
+      help = table.concat(help_lines(), "\n"),
+      executable = false,
+      requires_more = true,
+      refusal_reason = "Unknown Config subcommand.",
+      frontier = child_items(ctx.pending),
+    }
+  end
+
+  return {
+    kind = node.kind,
+    desc = node.desc,
+    help = node.help,
+    examples = node.examples,
+    executable = true,
+    requires_more = false,
+    execute = node.execute,
+    frontier = {},
+  }
+end
+
+function M.complete(line)
+  local rest = line:match("^%s*Config%s*(.*)$") or ""
+  local trailing_space = rest:match("%s$") ~= nil
+  local tokens = {}
+  for token in rest:gmatch("%S+") do
+    tokens[#tokens + 1] = token
+  end
+
+  local prefix = ""
+  if not trailing_space and #tokens > 0 then
+    prefix = table.remove(tokens)
+  end
+
+  if #tokens > 0 then
+    return {}
+  end
+
+  local items = child_items(prefix)
+  local result = {}
+  for _, item in ipairs(items) do
+    result[#result + 1] = item.label
+  end
+  return result
+end
+
+function M.execute(args)
+  local tokens = {}
+  for token in tostring(args or ""):gmatch("%S+") do
+    tokens[#tokens + 1] = token
+  end
+
+  if #tokens == 0 then
+    show_help()
+    return
+  end
+
+  local node = tree()[tokens[1]]
+  if not node then
+    vim.notify("Unknown Config subcommand: " .. tokens[1], vim.log.levels.ERROR, { title = "Config" })
+    return
+  end
+
+  node.execute()
+end
+
+return M

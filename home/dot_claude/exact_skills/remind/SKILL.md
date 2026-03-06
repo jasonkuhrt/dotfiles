@@ -12,7 +12,7 @@ Persistent reminders stored at `~/.claude/reminders.md` as a markdown checklist.
 ```md
 - [ ] `2025-02-11` Try zerobrew, a replacement for homebrew
 - [ ] `2025-02-11` Fix the auth bug
-- [x] `2025-02-10` Update dotfiles sync script
+- [x] `2025-02-10` Update dotfiles converge workflow
 ```
 
 Each item: `- [ ] \`<date-added>\` <text>`

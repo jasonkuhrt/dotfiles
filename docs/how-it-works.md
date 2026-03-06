@@ -116,7 +116,7 @@ These must be inside `home/` (the source directory) because chezmoi's `include` 
 
 ## Encryption
 
-Secrets use age encryption (built into chezmoi). Encrypted files have the `encrypted_` prefix and are decrypted on `chezmoi apply`. The age key lives at `~/.config/chezmoi/key.txt`.
+Secrets use age encryption (built into chezmoi). Encrypted files have the `encrypted_` prefix and are decrypted during the underlying apply step, usually via `just up`. The age key lives at `~/.config/chezmoi/key.txt`.
 
 ## Drift Detection
 

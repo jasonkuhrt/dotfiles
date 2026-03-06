@@ -1,6 +1,6 @@
 # CLI Tools Reference
 
-Quick reference for all the tools installed via Brewfile. Forget what something does? Check here.
+Quick reference for the CLI tools used by this setup. Most come from the Brewfile; a few are built into macOS.
 
 ## Shell Abbreviations
 
@@ -38,19 +38,18 @@ Full list in `home/dot_config/fish/config.fish`.
 | **Monitor** | `btm`        | Modern system monitor (replaces top)  | `btm`                                           |
 | Monitor     | `dust`       | Visual du with bars                   | `dust`, `dust -d 2`                             |
 | Monitor     | `duf`        | Modern df with colors                 | `duf`                                           |
-| Monitor     | `kilar`      | Interactive port/process manager      | `kilar` (TUI), `kilar -p 3000`                  |
 | Monitor     | `procs`      | Modern ps with colors/tree            | `procs`, `procs --tree`                         |
 | Monitor     | `watch`      | Run command repeatedly                | `watch -n 2 'kubectl get pods'`                 |
 | Monitor     | `watchman`   | Watch files for changes               | (used by tools like Jest)                       |
 | **Network** | `doggo`      | Colorized dig/DNS lookup              | `doggo example.com`, `doggo MX gmail.com`       |
 | Network     | `gping`      | Ping with live graph                  | `gping google.com cloudflare.com`               |
-| Network     | `speedtest`  | Internet speed test                   | `speedtest`                                     |
+| Network     | `networkQuality` | Built-in macOS network speed/quality test | `networkQuality`                           |
 | Network     | `xh`         | Colorized curl alternative            | `xh GET api.example.com/users`                  |
 | **Data**    | `fx`         | Interactive JSON viewer               | `cat data.json \| fx`                           |
 | Data        | `jq`         | JSON processor (query, transform)     | `cat data.json \| jq '.users[0].name'`          |
 | Data        | `yj`         | Convert between YAML/JSON/TOML        | `yj < config.yaml > config.json`                |
 | **Search**  | `fzf`        | Fuzzy finder for anything             | `ctrl+r` (history), `vim $(fzf)`                |
-| Search      | `tldr`       | Simplified man pages with examples    | `tldr tar`, `tldr git rebase`                   |
+| Search      | `tldr`       | Simplified man pages via `tlrc`       | `tldr tar`, `tldr git rebase`                   |
 | Search      | `z` (zoxide) | Jump to frecent directories           | `z proj` → `~/projects`                         |
 | **Git**     | `gh`         | GitHub CLI (PRs, issues, repos)       | `gh pr create`, `gh issue list`                 |
 | Git         | `git-crypt`  | Encrypt files in git transparently    | `git-crypt init`                                |
@@ -59,12 +58,11 @@ Full list in `home/dot_config/fish/config.fish`.
 | Git         | `onefetch`   | Git repo stats (neofetch for repos)   | `onefetch` (run in any repo)                    |
 | Git         | `pre-commit` | Git hooks framework                   | `pre-commit install`                            |
 | **Beads**   | `bdui`       | TUI for beads (kanban, tree, graph)   | `bdui`                                          |
-| Beads       | `lazybeads`  | Lazygit-style TUI for beads           | `lazybeads` (supports `$EDITOR`)                |
 | Beads       | `perles`     | TUI for beads (kanban, BQL search)    | `perles`                                        |
 | **Dev**     | `deno`       | Secure JS/TS runtime                  | `deno run script.ts`                            |
 | Dev         | `dprint`     | Fast code formatter                   | `dprint fmt`                                    |
 | Dev         | `hyperfine`  | Benchmark CLI commands                | `hyperfine 'fd . -e ts' 'find . -name "*.ts"'` |
-| Dev         | `just`       | Command runner (modern make)          | `just --list`, `just sync`                      |
+| Dev         | `just`       | Command runner for the dotfiles UX    | `just up`, `just status`                        |
 | Dev         | `neovim`     | Editor                                | `nvim file.ts`                                  |
 | Dev         | `node`       | Node.js runtime                       | `node script.js`                                |
 | Dev         | `pnpm`       | Fast Node package manager             | `pnpm install`, `pnpm add -D pkg`              |
@@ -80,7 +78,6 @@ Full list in `home/dot_config/fish/config.fish`.
 | Shell       | `zsm`        | TUI manager for zmx sessions          | `zsm`                                           |
 | **Media**   | `ffmpeg`     | Audio/video processing Swiss Army knife | `ffmpeg -i in.mp4 out.gif`                    |
 | **Docs**    | `glow`       | Render markdown in terminal           | `glow README.md`                                |
-| Docs        | `mdcat`      | Render markdown (alternative)         | `mdcat README.md`                               |
 | Docs        | `pandoc`     | Convert between doc formats           | `pandoc doc.md -o doc.pdf`                      |
 | **Email**   | `himalaya`   | Read/send email from CLI              | `himalaya list`                                 |
 | Email       | `imapfilter` | Server-side email filtering           | (see config)                                    |
@@ -89,5 +86,5 @@ Full list in `home/dot_config/fish/config.fish`.
 | **macOS**   | `dockutil`   | Manage Dock programmatically          | `dockutil --add /Applications/App.app`          |
 | macOS       | `mas`        | Mac App Store CLI                     | `mas install 497799835` (Xcode)                 |
 | **Info**    | `cal`        | 3-month calendar view                 | `cal`                                           |
-| Info        | `neofetch`   | System info with ASCII art            | `neofetch`                                      |
+| Info        | `fastfetch`  | Fast system info overview             | `fastfetch`                                     |
 | Info        | `weather`    | Terminal weather forecast             | `weather` (Montreal) or `weather Tokyo`         |

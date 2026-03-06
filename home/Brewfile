@@ -83,7 +83,13 @@ brew "node"          # bootstrap only (pnpm manages LTS)
 brew "pnpm"          # fast package manager + node version manager
 brew "deno"          # Deno runtime
 brew "go"
+brew "lua"           # Lua runtime
+brew "lua-language-server"  # Lua LSP for editor and CLI workflows
+brew "luajit"        # LuaJIT runtime (matches Neovim's embedded Lua)
+brew "luarocks"      # Lua package manager
 brew "rust"
+brew "selene"        # Lua linter
+brew "stylua"        # Lua formatter
 brew "uv"            # fast Python package manager
 brew "neovim"        # editor
 brew "cmake"

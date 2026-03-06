@@ -4,8 +4,8 @@
 local map = vim.keymap.set
 
 local function cmdline_backspace_or_noop()
-  if vim.fn.getcmdline() == "" then
-    return ""
+  if vim.fn.getcmdtype() == ":" and vim.fn.getcmdline() == "" then
+    return "<Ignore>"
   end
   return "<BS>"
 end

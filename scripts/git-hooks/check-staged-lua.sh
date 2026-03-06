@@ -7,7 +7,7 @@ cd "$repo_root"
 files=()
 while IFS= read -r -d '' file; do
   case "$file" in
-    home/dot_config/nvim/lua/*.lua | home/dot_config/nvim/local-plugins/cmd-ux/lua/*.lua)
+    symlink-roots/config/nvim/lua/*.lua | home/dot_config/nvim/local-plugins/cmd-ux/lua/*.lua)
       files+=("$file")
       ;;
   esac
@@ -24,6 +24,7 @@ cleanup() {
 trap cleanup EXIT
 
 mkdir -p "$tmpdir/home/dot_config/nvim"
+mkdir -p "$tmpdir/symlink-roots/config/nvim"
 cp .luarc.json "$tmpdir/.luarc.json"
 cp selene.toml "$tmpdir/selene.toml"
 cp selene.nvim.yml "$tmpdir/selene.nvim.yml"

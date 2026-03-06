@@ -25,7 +25,7 @@ export interface PolicyOverride {
   readonly note: string
 }
 
-export const CUTOVER_VERSION = 2
+export const CUTOVER_VERSION = 3
 export const HEAL_INTERVAL_SECONDS = 300
 export const LOG_ROTATE_MAX_BYTES = 256 * 1024
 
@@ -39,6 +39,16 @@ export const TRUE_DIRS: readonly TrueDirEntry[] = [
   { targetRel: ".config/lazygit", repoRel: "symlink-roots/config/lazygit" },
   { targetRel: ".config/libra", repoRel: "symlink-roots/config/libra" },
   { targetRel: ".config/lsd", repoRel: "symlink-roots/config/lsd" },
+  {
+    targetRel: ".config/nvim/lua/config",
+    repoRel: "symlink-roots/config/nvim/lua/config",
+    note: "Nested true-dir root inside the mixed Neovim config tree.",
+  },
+  {
+    targetRel: ".config/nvim/lua/plugins",
+    repoRel: "symlink-roots/config/nvim/lua/plugins",
+    note: "Nested true-dir root inside the mixed Neovim config tree.",
+  },
   { targetRel: ".config/perles", repoRel: "symlink-roots/config/perles" },
   { targetRel: ".config/ripgrep", repoRel: "symlink-roots/config/ripgrep" },
   { targetRel: ".claude/checks", repoRel: "symlink-roots/claude/checks" },
@@ -71,7 +81,7 @@ export const EXCLUSIONS = [
   { targetRel: ".config/gh", reason: "Tool-authored auth/runtime state mixes with config." },
   { targetRel: ".config/kitty", reason: "Keep in file-symlink lane until audited." },
   { targetRel: ".config/lnav", reason: "Mixed state and config under one root." },
-  { targetRel: ".config/nvim", reason: "Large mixed authored/tool-managed tree." },
+  { targetRel: ".config/nvim", reason: "Large mixed authored/tool-managed tree; only selected nested lua subtrees are promoted." },
   { targetRel: ".config/zed", reason: "Executable and settings mix; keep file-level policy." },
   { targetRel: ".claude/hooks", reason: "Exact/executable child metadata keeps it out of true-dir lane." },
   { targetRel: ".claude/skills", reason: "Exact managed subtree; not a true-dir candidate." },

@@ -14,13 +14,13 @@ Personal reference for the Lua toolchain in this repo: what is installed, how Ne
 | `selene` | Linter | Repo-owned static analysis for Lua |
 | `stylua` | Formatter | Canonical formatting for Lua |
 
-Machine-managed installs live in [home/Brewfile](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/Brewfile). Neovim-managed installs are ensured through [home/dot_config/nvim/lua/plugins/lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/dot_config/nvim/lua/plugins/lua.lua).
+Machine-managed installs live in [home/Brewfile](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/Brewfile). Neovim-managed installs are ensured through [lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/symlink-roots/config/nvim/lua/plugins/lua.lua).
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| [home/dot_config/nvim/lua/plugins/lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/dot_config/nvim/lua/plugins/lua.lua) | Lua-specific Neovim tooling glue |
+| [lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/symlink-roots/config/nvim/lua/plugins/lua.lua) | Lua-specific Neovim tooling glue |
 | [.luarc.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.luarc.json) | Repo-owned LuaLS policy for Neovim, Claude/Serena, and shell checks |
 | [selene.toml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/selene.toml) | Selene lint policy |
 | [selene.nvim.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/selene.nvim.yml) | Selene stdlib/global definitions for Neovim-style Lua |
@@ -41,7 +41,7 @@ The old `vim.yml` and `nvim.yml` names were technically valid but still too ambi
 
 ## What `lua/plugins/lua.lua` Does
 
-[home/dot_config/nvim/lua/plugins/lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/dot_config/nvim/lua/plugins/lua.lua) is a small Lua-tooling overlay on top of LazyVim defaults.
+[lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/symlink-roots/config/nvim/lua/plugins/lua.lua) is a small Lua-tooling overlay on top of LazyVim defaults.
 
 This is the idiomatic extension point here. The installed LazyVim tree already ships core `lazydev.nvim` and `lua_ls` defaults, but it does not ship an `extras/lang/lua.lua` extra. So the repo-level `plugins/lua.lua` file is extending the existing Lua stack, not replacing some missing standard plugin.
 
@@ -116,7 +116,7 @@ Expected workflow:
 
 For local commits, `just hooks-install` installs a staged-only pre-commit hook. That hook checks only staged Lua blobs from:
 
-- `home/dot_config/nvim/lua`
+- `symlink-roots/config/nvim/lua`
 - `home/dot_config/nvim/local-plugins/cmd-ux/lua`
 
 This keeps existing unrelated repo issues from blocking a commit.
@@ -135,7 +135,7 @@ Yes. Neovim has Lua LSP support on.
 
 - [home/dot_config/nvim/dot_neoconf.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/dot_config/nvim/dot_neoconf.json) enables LuaLS-related Neovim config support.
 - LazyVim already provides good `lua_ls` defaults.
-- [home/dot_config/nvim/lua/plugins/lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/dot_config/nvim/lua/plugins/lua.lua) adds the missing Lua-specific glue.
+- [lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/symlink-roots/config/nvim/lua/plugins/lua.lua) adds the missing Lua-specific glue.
 
 ### Codex
 

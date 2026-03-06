@@ -1,6 +1,6 @@
 set quiet
 
-lua_paths := "home/dot_config/nvim/lua home/dot_config/nvim/local-plugins/cmd-ux/lua"
+lua_paths := "symlink-roots/config/nvim/lua home/dot_config/nvim/local-plugins/cmd-ux/lua"
 cmd_ux_blocklist_path := "home/dot_config/nvim/cmd-ux-command-blocklist.txt"
 
 [private]

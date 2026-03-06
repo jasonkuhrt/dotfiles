@@ -135,7 +135,7 @@ brew link neovim    # re-link 0.11.6
 
 ## Plugin Config Files
 
-Custom overrides live in `home/dot_config/nvim/lua/plugins/`:
+Custom overrides live in `symlink-roots/config/nvim/lua/plugins/`:
 - `blink-cmp.lua` — Completion keymaps, cmdline blocklist, cmdline CR behavior
 - `colorscheme.lua` — Theme
 - `editor.lua` — Telescope layout, mini.statusline (replaced lualine)

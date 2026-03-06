@@ -1,5 +1,0 @@
-export type draft = "draft"
-export type start = "start"
-export type review = "review"
-export type mergeable = "mergeable"
-export type merge = "merge"

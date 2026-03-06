@@ -61,6 +61,30 @@ function M.create_optional_structured_test_command(name)
   M.create_structured_test_command(name, { nargs = "?" })
 end
 
+function M.create_trailing_space_structured_command(name)
+  M.drop_user_command(name)
+  vim.api.nvim_create_user_command(name, function() end, {
+    nargs = "*",
+    desc = "Structured command that only exposes the next frontier after a trailing space",
+    complete = function(arglead, line, _)
+      local rest = line:match("^" .. vim.pesc(name) .. "%s*(.*)$") or ""
+      local trailing_space = rest:match("%s$") ~= nil
+      local tokens = strings.split_words(rest)
+
+      local items = {}
+      if #tokens == 0 then
+        items = { "alpha", "beta" }
+      elseif tokens[1] == "alpha" and trailing_space and #tokens == 1 then
+        items = { "one", "two" }
+      end
+
+      return vim.tbl_filter(function(item)
+        return item:find("^" .. vim.pesc(arglead)) ~= nil
+      end, items)
+    end,
+  })
+end
+
 function M.create_enum_choice_command(name)
   M.drop_user_command(name)
   vim.api.nvim_create_user_command(name, function() end, {

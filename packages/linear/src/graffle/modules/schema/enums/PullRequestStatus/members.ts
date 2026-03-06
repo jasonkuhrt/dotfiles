@@ -1,6 +1,0 @@
-export type draft = "draft"
-export type open = "open"
-export type inReview = "inReview"
-export type approved = "approved"
-export type merged = "merged"
-export type closed = "closed"

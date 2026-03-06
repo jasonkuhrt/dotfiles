@@ -1,6 +1,0 @@
-export type pending = "pending"
-export type active = "active"
-export type complete = "complete"
-export type awaitingInput = "awaitingInput"
-export type error = "error"
-export type stale = "stale"

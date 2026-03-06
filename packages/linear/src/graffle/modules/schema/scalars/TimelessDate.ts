@@ -1,1 +1,0 @@
-export type { TimelessDate } from '../../scalar.js'

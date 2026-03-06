@@ -1,1 +1,0 @@
-export type { Duration } from '../../scalar.js'

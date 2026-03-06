@@ -1,1 +1,0 @@
-export type { UUID } from '../../scalar.js'

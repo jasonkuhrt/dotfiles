@@ -1,5 +1,0 @@
-export type entityCreated = "entityCreated"
-export type entityUpdated = "entityUpdated"
-export type entityCreatedOrUpdated = "entityCreatedOrUpdated"
-export type entityRemoved = "entityRemoved"
-export type entityUnarchived = "entityUnarchived"

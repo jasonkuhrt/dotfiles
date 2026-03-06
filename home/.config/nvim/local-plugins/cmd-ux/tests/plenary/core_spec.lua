@@ -21,6 +21,7 @@ describe("cmd_ux semantic decisions", function()
     helpers.drop_user_command("NeedArgCmd")
     helpers.drop_user_command("TestCmdSpace")
     helpers.drop_user_command("OptionalTestCmd")
+    helpers.drop_user_command("TrailingSpaceCmd")
     helpers.drop_user_command("EnumChoiceCmd")
     helpers.drop_user_command("IndexVisibleCmd")
     helpers.sync_cmd_ux()
@@ -31,6 +32,7 @@ describe("cmd_ux semantic decisions", function()
     helpers.drop_user_command("NeedArgCmd")
     helpers.drop_user_command("TestCmdSpace")
     helpers.drop_user_command("OptionalTestCmd")
+    helpers.drop_user_command("TrailingSpaceCmd")
     helpers.drop_user_command("EnumChoiceCmd")
     helpers.drop_user_command("IndexVisibleCmd")
     helpers.sync_cmd_ux()
@@ -136,6 +138,22 @@ describe("cmd_ux semantic decisions", function()
     eq({ type = "advance", line = "TestCmdSpace alpha " }, action(state, "enter"))
     eq({ type = "advance", line = "TestCmdSpace alpha " }, action(state, "tab"))
     eq({ type = "advance", line = "TestCmdSpace alpha " }, action(state, "space"))
+  end)
+
+  it("keeps accepted inferred tokens valid when the callback only exposes children after a space", function()
+    helpers.create_trailing_space_structured_command("TrailingSpaceCmd")
+    helpers.sync_cmd_ux()
+
+    local state = core.resolve_line("TrailingSpaceCmd alpha")
+
+    eq("generic", state.provider)
+    eq("namespace", state.kind)
+    eq(
+      { "one", "two" },
+      vim.tbl_map(function(item)
+        return item.label
+      end, state.frontier)
+    )
   end)
 
   it("executes the final structured generic leaf when the path is complete", function()

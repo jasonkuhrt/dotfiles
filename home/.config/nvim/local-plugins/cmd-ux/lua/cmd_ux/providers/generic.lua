@@ -239,6 +239,18 @@ local function has_exact_match(matches, token)
   return false
 end
 
+---@param frontier CommandFrontierItem[]?
+---@param token string
+---@return boolean
+local function frontier_has_token(frontier, token)
+  for _, item in ipairs(frontier or {}) do
+    if item.label == token then
+      return true
+    end
+  end
+  return false
+end
+
 ---@param summary GenericCommandSummary
 ---@return CommandKind
 local function inferred_root_kind(summary)
@@ -347,6 +359,27 @@ local function is_structured(summary, completion_type)
 end
 
 ---@param summary GenericCommandSummary
+---@param root string
+---@param accepted string[]
+---@param token string
+---@return boolean
+local function accepted_token_valid(summary, root, accepted, token)
+  local line = util.render_command(root, accepted, token, false)
+  local matches = completion_matches(summary, line, token)
+  if has_exact_match(matches, token) then
+    return true
+  end
+
+  local parent_frontier = infer_named_frontier(summary, accepted)
+  if frontier_has_token(parent_frontier, token) then
+    return true
+  end
+
+  local parent_matches = completion_matches(summary, util.render_command(root, accepted, "", true), "")
+  return has_exact_match(parent_matches, token)
+end
+
+---@param summary GenericCommandSummary
 ---@param ctx CommandSnapshot
 ---@param completion_type string
 ---@return boolean, string?
@@ -357,9 +390,7 @@ local function validate_path(summary, ctx, completion_type)
 
   local accepted = {}
   for _, token in ipairs(ctx.accepted) do
-    local line = util.render_command(ctx.root, accepted, token, false)
-    local matches = completion_matches(summary, line, token)
-    if not has_exact_match(matches, token) then
+    if not accepted_token_valid(summary, ctx.root, accepted, token) then
       return false, token
     end
     accepted[#accepted + 1] = token

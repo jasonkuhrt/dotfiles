@@ -1,1 +1,0 @@
-export type { JSON } from '../../scalar.js'

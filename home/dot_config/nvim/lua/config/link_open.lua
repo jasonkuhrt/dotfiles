@@ -49,6 +49,10 @@ local function is_uri(target)
   return target:match("^https?://") ~= nil or target:match("^mailto:") ~= nil or target:match("^file://") ~= nil
 end
 
+local function is_web_uri(target)
+  return target:match("^https?://") ~= nil
+end
+
 local function is_localish_target(target)
   return target:sub(1, 1) == "#"
     or target:sub(1, 1) == "/"
@@ -196,7 +200,34 @@ local function resolve_local_target(target)
   return absolute_path, fragment ~= "" and fragment or nil
 end
 
+local function in_cmux()
+  return vim.env.CMUX_WORKSPACE_ID ~= nil and vim.env.CMUX_WORKSPACE_ID ~= "" and vim.fn.executable("cmux") == 1
+end
+
+local function open_in_cmux_browser(target)
+  local result = vim.system({
+    "cmux",
+    "browser",
+    "open",
+    target,
+  }, { text = true }):wait()
+
+  return result.code == 0, result.stderr
+end
+
 local function open_external(target)
+  if is_web_uri(target) and in_cmux() then
+    local opened, err = open_in_cmux_browser(target)
+    if opened then
+      return true, nil
+    end
+
+    vim.notify(
+      "cmux browser open failed, falling back to system opener" .. (err and err ~= "" and (": " .. trim(err)) or ""),
+      vim.log.levels.WARN
+    )
+  end
+
   local opener = nil
   if vim.fn.has("mac") == 1 and vim.fn.executable("open") == 1 then
     opener = { "open", target }

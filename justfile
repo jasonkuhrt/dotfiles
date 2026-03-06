@@ -1,7 +1,8 @@
 set quiet
 
-lua_paths := "symlink-roots/config/nvim/lua symlink-roots/config/nvim/local-plugins/cmd-ux/lua"
+lua_paths := "symlink-roots/config/nvim/lua symlink-roots/config/nvim/local-plugins/cmd-ux/lua symlink-roots/config/nvim/local-plugins/cmd-ux/tests"
 cmd_ux_blocklist_path := "symlink-roots/config/nvim/cmd-ux-command-blocklist.txt"
+cmd_ux_plugin_path := "symlink-roots/config/nvim/local-plugins/cmd-ux"
 
 [private]
 default:
@@ -72,6 +73,26 @@ cmd-ux-blocklist-check:
     fi
 
     printf 'PASS: %s\n' "$path"
+
+cmd-ux-test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    plugin_root="$PWD/{{ cmd_ux_plugin_path }}"
+    plenary="${PLENARY_PATH:-$HOME/.local/share/nvim/lazy/plenary.nvim}"
+    cache_dir="$(mktemp -d)"
+    trap 'rm -rf "$cache_dir"' EXIT
+
+    if [ ! -d "$plenary" ]; then
+        printf 'FAIL: plenary.nvim not found at %s\n' "$plenary" >&2
+        exit 1
+    fi
+
+    XDG_CONFIG_HOME="$PWD/symlink-roots/config" XDG_CACHE_HOME="$cache_dir" nvim --headless -u NONE \
+        --cmd "set runtimepath^=$plenary" \
+        -c "lua require('plenary.test_harness').test_directory('$plugin_root/tests/plenary', { minimal_init = '$plugin_root/tests/minimal_init.lua', sequential = true })"
+
+    bash "$plugin_root/tests/bin/stale_cache_smoke.sh"
 
 hooks-install:
     bash scripts/git-hooks/install-pre-commit.sh

@@ -282,7 +282,7 @@ function M.should_intercept_space(state)
   end
 
   if state.pending ~= "" then
-    return state.provider ~= "generic"
+    return state.pending_is_named == true or state.provider ~= "generic"
   end
 
   if state.kind == "namespace" or state.kind == "hybrid" or state.requires_more then

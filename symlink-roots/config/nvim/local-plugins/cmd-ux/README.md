@@ -198,6 +198,7 @@ Repeated `<Tab>` must never become menu cycling.
 
 - partial named root like `config`: accept top match and advance to `Config `
 - partial provider-owned descendant like `Lazy re`: accept top match and advance to `Lazy reload `
+- partial structured generic descendant like `RenderMarkdown di`: accept top match and advance to the next named token
 - exact `namespace`, `hybrid`, or known-incomplete command: advance with trailing space
 - generic free-form argument positions: remain literal space
 - open-ended denied families: remain literal space

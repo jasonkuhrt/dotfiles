@@ -212,6 +212,7 @@ function M.resolve(ctx)
   local matches = completion_matches(summary, match_line, ctx.pending)
   local frontier = build_arg_items(match_line, matches)
   local path_valid, invalid_token = validate_path(summary, ctx, completion_type)
+  local pending_is_named = completion_type == "custom" and ctx.pending ~= "" and #matches > 0
   local current_node = root_node
 
   if #ctx.accepted > 0 then
@@ -235,6 +236,7 @@ function M.resolve(ctx)
       examples = { ctx.root },
       executable = false,
       requires_more = false,
+      pending_is_named = pending_is_named,
       refusal_reason = "Unknown command token: " .. tostring(invalid_token),
       frontier = frontier,
     })
@@ -251,6 +253,7 @@ function M.resolve(ctx)
       examples = { base_line },
       executable = false,
       requires_more = false,
+      pending_is_named = pending_is_named,
       refusal_reason = "Unknown command token: " .. ctx.pending,
       frontier = frontier,
     })
@@ -267,6 +270,7 @@ function M.resolve(ctx)
       examples = { ctx.root },
       executable = false,
       requires_more = true,
+      pending_is_named = pending_is_named,
       refusal_reason = "This command requires more input.",
       frontier = frontier,
     })
@@ -282,6 +286,7 @@ function M.resolve(ctx)
       examples = { ctx.root },
       executable = true,
       requires_more = false,
+      pending_is_named = pending_is_named,
       frontier = frontier,
     })
   end
@@ -301,6 +306,7 @@ function M.resolve(ctx)
       examples = { base_line },
       executable = exact_match,
       requires_more = false,
+      pending_is_named = pending_is_named,
       refusal_reason = exact_match and nil or "Argument does not exactly match a known completion candidate.",
       frontier = frontier,
     })
@@ -319,6 +325,7 @@ function M.resolve(ctx)
       examples = { base_line },
       executable = not needs_more,
       requires_more = needs_more,
+      pending_is_named = pending_is_named,
       refusal_reason = needs_more and "This command needs more input." or nil,
       frontier = frontier,
     })
@@ -334,6 +341,7 @@ function M.resolve(ctx)
     examples = { base_line },
     executable = true,
     requires_more = false,
+    pending_is_named = pending_is_named,
     frontier = frontier,
   })
 end

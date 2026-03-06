@@ -131,6 +131,7 @@ local resolution_kinds = {
 ---@field rendered_display string
 ---@field current_label string
 ---@field provider? string
+---@field pending_is_named boolean
 ---@field execute? fun()
 
 ---@class ResolutionStateSpec
@@ -152,6 +153,7 @@ local resolution_kinds = {
 ---@field rendered_display? string
 ---@field current_label? string
 ---@field provider? string
+---@field pending_is_named? boolean
 ---@field execute? fun()
 
 ---@class ResolutionStatePatch
@@ -173,6 +175,7 @@ local resolution_kinds = {
 ---@field rendered_display? string
 ---@field current_label? string
 ---@field provider? string
+---@field pending_is_named? boolean
 ---@field execute? fun()
 
 ---@class Provider
@@ -467,6 +470,7 @@ function M.state(spec)
     rendered_display = normalize_string(spec.rendered_display, "state.rendered_display"),
     current_label = normalize_string(spec.current_label, "state.current_label"),
     provider = optional_string(spec.provider, "state.provider"),
+    pending_is_named = spec.pending_is_named == true,
     execute = spec.execute,
   }
 end
@@ -498,6 +502,7 @@ function M.state_from_node(node, spec)
     rendered_display = spec.rendered_display,
     current_label = spec.current_label,
     provider = spec.provider,
+    pending_is_named = spec.pending_is_named,
     execute = spec.execute ~= nil and spec.execute or normalized.execute,
   }
 
@@ -536,6 +541,7 @@ function M.root_state(spec)
     rendered_display = spec.rendered_display,
     current_label = spec.current_label,
     provider = spec.provider,
+    pending_is_named = spec.pending_is_named,
     execute = spec.execute,
   }
   return M.state(next_state)
@@ -566,6 +572,7 @@ function M.unsupported_state(reason, spec)
     rendered_display = spec.rendered_display,
     current_label = spec.current_label,
     provider = spec.provider,
+    pending_is_named = spec.pending_is_named,
     execute = spec.execute,
   }
   return M.state(next_state)

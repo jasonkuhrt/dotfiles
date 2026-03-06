@@ -2,6 +2,8 @@
 
 `cmd-ux` is a local Neovim plugin that turns command entry into a semantic system instead of a raw string submission path.
 
+Local plugin architecture in this repo follows the shared guide at [DEVELOPMENT.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/local-plugins/DEVELOPMENT.md).
+
 It has one job: make command execution predictable across two surfaces:
 
 - the native Ex cmdline

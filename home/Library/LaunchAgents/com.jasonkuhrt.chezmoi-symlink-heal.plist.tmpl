@@ -6,8 +6,10 @@
     <string>com.jasonkuhrt.chezmoi-symlink-heal</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/bin/bash</string>
-        <string>{{ .chezmoi.homeDir }}/projects/jasonkuhrt/dotfiles/scripts/chezmoi/heal.sh</string>
+        <string>{{ .chezmoi.homeDir }}/.bun/bin/bun</string>
+        <string>{{ .chezmoi.homeDir }}/projects/jasonkuhrt/dotfiles/packages/dotctl/src/bin/dotctl.ts</string>
+        <string>heal</string>
+        <string>--background</string>
     </array>
     <key>WorkingDirectory</key>
     <string>{{ .chezmoi.homeDir }}/projects/jasonkuhrt/dotfiles</string>

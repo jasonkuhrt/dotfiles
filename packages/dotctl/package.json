@@ -1,0 +1,18 @@
+{
+  "name": "@jasonkuhrt/dotctl",
+  "version": "0.0.0",
+  "type": "module",
+  "sideEffects": false,
+  "bin": {
+    "dotctl": "./src/bin/dotctl.ts"
+  },
+  "scripts": {
+    "dotctl": "bun src/bin/dotctl.ts",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@tsconfig/strictest": "^2.0.8",
+    "@types/bun": "^1.2.0"
+  }
+}

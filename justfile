@@ -5,10 +5,19 @@ default:
     just --list
 
 up:
-    ./scripts/chezmoi/up.sh
+    bun packages/dotctl/src/bin/dotctl.ts up
 
 edit target:
-    ./scripts/chezmoi/edit.sh {{ target }}
+    bun packages/dotctl/src/bin/dotctl.ts edit {{ target }}
+
+status:
+    bun packages/dotctl/src/bin/dotctl.ts status
+
+doctor:
+    bun packages/dotctl/src/bin/dotctl.ts doctor
+
+explain target:
+    bun packages/dotctl/src/bin/dotctl.ts explain {{ target }}
 
 [private]
 sync:
@@ -26,7 +35,7 @@ diff:
     chezmoi diff
 
 [private]
-doctor:
+chezmoi-doctor:
     chezmoi doctor
 
 [private]

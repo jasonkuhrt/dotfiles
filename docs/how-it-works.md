@@ -9,9 +9,10 @@ The repo root contains project files (justfile, docs, packages). The actual dotf
 ```
 dotfiles/                     # git repo root
 ├── .chezmoiroot              # contains "home"
-├── justfile                  # wraps chezmoi commands
+├── justfile                  # public DX surface
+├── packages/dotctl/          # typed control plane (up/heal/status/doctor/explain/edit)
 ├── symlink-roots/            # repo-backed directories exposed as whole-dir symlinks
-├── scripts/chezmoi/          # local converge/heal/edit runtime
+├── scripts/chezmoi/          # legacy wrappers that delegate to dotctl
 ├── sync-sudo                 # manual sudo ops
 ├── docs/, packages/, .beads/ # project files
 │
@@ -101,6 +102,8 @@ The `run_onchange_` scripts use a comment with a hash to detect changes:
 
 chezmoi evaluates this template on each run. If `Brewfile` has changed since last apply, the hash is different, and chezmoi re-runs the script. This is the idiomatic chezmoi pattern — `sha256sum` is a built-in sprig template function, no external process needed.
 
+The dprint updater is the one exception: its config now lives in `symlink-roots/config/dprint/`, so the template hashes the repo-backed file via `output "cat" ...` instead of `include`.
+
 ## Data Files
 
 Some files exist in `home/` for script access but are NOT deployed to `$HOME`. They're listed in `.chezmoiignore`:
@@ -120,9 +123,12 @@ Secrets use age encryption (built into chezmoi). Encrypted files have the `encry
 ```bash
 just up          # converge local machine to repo state
 just edit <file> # open the right backing file
+just status      # one-screen machine health
+just doctor      # deeper drift and prerequisite checks
+just explain <file> # lane/source/policy explanation
 ```
 
-The launchd healer covers the file-symlink lane automatically. For true-dir symlink roots, git is the source of truth and child files are live repo files.
+The launchd healer covers the file-symlink lane automatically. It reads a cached manifest under `~/.local/state/dotfiles-symlink/manifest.json`, so steady-state background runs only do cheap shape checks. For true-dir symlink roots, git is the source of truth and child files are live repo files.
 
 ## Commands
 
@@ -132,9 +138,12 @@ Run `just` from the repo root to see all available recipes. The key ones:
 git pull --rebase   # fetch repo changes
 just up             # converge this machine
 just edit <target>  # edit source by target path
+just status         # one-screen health
+just doctor         # deep checks
+just explain <path> # lane/source/policy explanation
 ```
 
-Everything else in the `justfile` is private compatibility or advanced maintenance. For direct low-level operations, use `chezmoi` itself.
+Everything else in the `justfile` is private compatibility or advanced maintenance. For direct low-level operations, use `chezmoi` itself or `bun packages/dotctl/src/bin/dotctl.ts`.
 
 ## Notes
 
@@ -143,3 +152,4 @@ Everything else in the `justfile` is private compatibility or advanced maintenan
 - **CC settings.json** — NOT managed by chezmoi (both use atomic writes, creating a race condition). CC owns this file at runtime.
 - **Sudo operations** — remain manual via `sudo ./sync-sudo` (power management, Touch ID, Fish default shell)
 - **Repo-backed true-dir roots** — child files inside these dirs are not individually managed by chezmoi. `just edit` resolves that split for you.
+- **Local runtime state** — `~/.local/state/dotfiles-symlink/` contains `manifest.json`, `health.json`, `captures.json`, and backup snapshots used by the healer.

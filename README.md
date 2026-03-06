@@ -17,6 +17,9 @@ After bootstrap, the public interface is:
 ```sh
 just up
 just edit ~/.config/ghostty/config
+just status
+just doctor
+just explain ~/.config/dprint
 ```
 
 ## How to Think About This Repo
@@ -26,6 +29,8 @@ chezmoi is a tool that copies files from a source directory into your home direc
 Inside `home/`, files are named with prefixes that tell chezmoi how to deploy them. `dot_gitconfig` becomes `~/.gitconfig`. `private_dot_ssh/config` becomes `~/.ssh/config` with mode 0700. `encrypted_credentials.age` gets decrypted with [age](https://github.com/FiloSottile/age) on deploy. Prefixes compose: `private_dot_aws/encrypted_credentials.age` becomes `~/.aws/credentials` in a private directory, decrypted from age. The full prefix vocabulary is `dot_`, `private_`, `exact_`, `encrypted_`, `executable_`, `symlink_`, and `empty_` — once you know these, you can read the whole repo at a glance. Details in [how-it-works.md](docs/how-it-works.md).
 
 Some pure config directories now live under `symlink-roots/` and are exposed into `$HOME` as whole-directory symlinks. That means new files inside those dirs are instant on both sides and git, not chezmoi child-file metadata, is the source of truth there.
+
+The local control plane is `packages/dotctl/`. It builds the symlink manifest, runs the launchd healer, and exposes the read-only health/explain UX around `just up`.
 
 That covers config files. But managing a system also means installing packages, setting macOS defaults, configuring the Dock — things that aren't files. That's what lifecycle scripts handle.
 
@@ -39,7 +44,7 @@ The interesting ones are scripts that re-run when a *data file* changes, not whe
 # Brewfile hash: {{ include "Brewfile" | sha256sum }}
 ```
 
-chezmoi evaluates that template on every apply. If the hash is different from last time, chezmoi considers the script "changed" and re-runs it. So editing `home/Brewfile` and running `just apply` automatically triggers `brew bundle` — no manual step needed.
+chezmoi evaluates that template on every apply. If the hash is different from last time, chezmoi considers the script "changed" and re-runs it. So editing `home/Brewfile` and running `just up` automatically triggers `brew bundle` — no manual step needed.
 
 ## Data Files
 
@@ -53,9 +58,12 @@ Why put them in `home/` at all? Because of the hash-trigger pattern above. chezm
 git pull --rebase
 just up
 just edit ~/.config/ghostty/config
+just status
 ```
 
-`just up` is convergent: it performs the one-time symlink cutover on a machine, ensures the launchd healer is loaded, repairs broken file symlinks, and reapplies chezmoi in symlink mode. Re-running it is safe.
+`just up` is convergent: it refreshes the cached symlink manifest, applies chezmoi in symlink mode, ensures the launchd healer is loaded, repairs broken file symlinks according to explicit policy, and reapplies chezmoi. Re-running it is safe.
+
+`just status`, `just doctor`, and `just explain <target>` are read-only.
 
 ## Secrets
 
@@ -74,6 +82,7 @@ The pure `~/.claude/checks`, `~/.claude/commands`, `~/.claude/rules`, and `~/.cl
 ## Further Reading
 
 - [How it works](docs/how-it-works.md) — naming conventions, script inventory, commands reference
+- [Symlink platform](docs/symlink-platform.md) — lane model, capture policy, local runtime state
 - [Manual setup](docs/manual-setup.md) — post-apply steps (GitHub auth, email, macOS settings)
 - [CLI tools](docs/cli-tools.md) — reference for installed tools and shell abbreviations
 - [Neovim](docs/neovim.md) — LazyExtras strategy, AI stack, plugin decisions, skip list

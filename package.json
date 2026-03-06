@@ -4,6 +4,7 @@
   "workspaces": ["packages/*"],
   "scripts": {
     "bookmarks": "bun packages/bookmarks/src/bin/bookmarks.ts",
+    "dotctl": "bun packages/dotctl/src/bin/dotctl.ts",
     "shan": "bun packages/shan/src/bin/shan.ts"
   },
   "dependencies": {

@@ -2,7 +2,7 @@
 # chezmoi:template:left-delimiter="{{" right-delimiter="}}"
 set -e
 
-# dprint config hash: {{ include "dot_config/dprint/dprint.json" | sha256sum }}
+# dprint config hash: {{ output "cat" (printf "%s/projects/jasonkuhrt/dotfiles/symlink-roots/config/dprint/dprint.json" .chezmoi.homeDir) | sha256sum }}
 
 {{ template "helpers.sh" . }}
 

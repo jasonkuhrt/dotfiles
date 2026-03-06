@@ -26,6 +26,9 @@ lua-check: lua-lint lua-lsp-check lua-fmt-check
 lua-lint:
     selene {{ lua_paths }}
 
+lua-check-staged:
+    bash scripts/git-hooks/check-staged-lua.sh
+
 lua-lsp-check:
     lua-language-server --check . --configpath .luarc.json --checklevel=Warning
 
@@ -34,6 +37,15 @@ lua-fmt-check:
 
 lua-fmt:
     stylua {{ lua_paths }}
+
+hooks-install:
+    bash scripts/git-hooks/install-pre-commit.sh
+
+hooks-uninstall:
+    bash scripts/git-hooks/uninstall-pre-commit.sh
+
+hooks-status:
+    bash scripts/git-hooks/pre-commit-status.sh
 
 [private]
 sync:

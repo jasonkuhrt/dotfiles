@@ -96,7 +96,9 @@ Primary commands:
 
 ```sh
 just lua-check
+just lua-check-staged
 just lua-fmt
+just hooks-install
 ```
 
 Expected workflow:
@@ -111,6 +113,13 @@ Expected workflow:
 - `selene`
 - `lua-language-server --check . --configpath .luarc.json --checklevel=Warning`
 - `stylua --check`
+
+For local commits, `just hooks-install` installs a staged-only pre-commit hook. That hook checks only staged Lua blobs from:
+
+- `home/dot_config/nvim/lua`
+- `home/dot_config/nvim/local-plugins/cmd-ux/lua`
+
+This keeps existing unrelated repo issues from blocking a commit.
 
 For editor-state debugging, a headless Neovim check can confirm runtime wiring:
 

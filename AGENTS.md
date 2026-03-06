@@ -61,3 +61,4 @@ For architecture and design brainstorming:
 - If a workflow matters and no `just` recipe exists yet, add one instead of leaving the procedure as raw shell commands in docs only.
 - For Lua or Neovim Lua changes, run `just lua-check` before closing the task.
 - Use `just lua-fmt` to normalize Lua formatting.
+- The local staged-only Lua pre-commit hook is installed via `just hooks-install`.

@@ -30,10 +30,13 @@ function M.create_needarg_command(name)
   })
 end
 
-function M.create_structured_test_command(name)
+---@param name string
+---@param opts? { nargs?: string, choices?: string[] }
+function M.create_structured_test_command(name, opts)
+  opts = opts or {}
   M.drop_user_command(name)
   vim.api.nvim_create_user_command(name, function() end, {
-    nargs = "*",
+    nargs = opts.nargs or "*",
     desc = "Structured custom completion command for cmd-ux tests",
     complete = function(arglead, line, _)
       local rest = line:match("^" .. vim.pesc(name) .. "%s*(.*)$") or ""
@@ -45,6 +48,46 @@ function M.create_structured_test_command(name)
         items = { "alpha", "beta" }
       elseif tokens[1] == "alpha" and (#tokens == 1 or (#tokens == 2 and not trailing_space)) then
         items = { "one", "two" }
+      end
+
+      return vim.tbl_filter(function(item)
+        return item:find("^" .. vim.pesc(arglead)) ~= nil
+      end, items)
+    end,
+  })
+end
+
+function M.create_optional_structured_test_command(name)
+  M.create_structured_test_command(name, { nargs = "?" })
+end
+
+function M.create_enum_choice_command(name)
+  M.drop_user_command(name)
+  vim.api.nvim_create_user_command(name, function() end, {
+    nargs = "?",
+    desc = "Enum-style custom completion command for cmd-ux tests",
+    complete = function(arglead, line, _)
+      local items = {
+        "typescript",
+        "vimdoc",
+        "git_config",
+        "gitcommit",
+        "git_rebase",
+        "gitignore",
+        "gitattributes",
+        "diff",
+        "markdown",
+        "lua",
+        "bash",
+        "zsh",
+        "fish",
+      }
+
+      local rest = line:match("^" .. vim.pesc(name) .. "%s*(.*)$") or ""
+      local trailing_space = rest:match("%s$") ~= nil
+      local tokens = strings.split_words(rest)
+      if #tokens > 1 or (#tokens == 1 and trailing_space) then
+        return {}
       end
 
       return vim.tbl_filter(function(item)

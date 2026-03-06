@@ -13,9 +13,13 @@ local M = {
 ---@field parsed table?
 ---@field completion_type string
 ---@field desc string
+---@field named_frontier_cache table<string, CommandFrontierItem[]|false>
 
 ---@type table<string, GenericCommandSummary>
 local summary_cache = {}
+
+local max_named_frontier_items = 32
+local optional_named_root_limit = 12
 
 function M.invalidate()
   summary_cache = {}
@@ -61,6 +65,7 @@ local function command_summary(root)
     parsed = parsed,
     completion_type = completion_type,
     desc = command_desc(buffer_command or user_command) or util.synthetic_desc(root, parsed, completion_type),
+    named_frontier_cache = {},
   }
   summary_cache[root] = summary
   return summary
@@ -98,6 +103,112 @@ local function completion_matches(summary, line, arglead)
   return nvim_commands.get_cmdline_matches(line)
 end
 
+---@param token string
+---@return boolean
+local function looks_like_named_token(token)
+  return type(token) == "string" and token ~= "" and token:find("^[%a][%w_-]*$") ~= nil
+end
+
+---@param matches string[]
+---@return boolean
+local function looks_like_named_frontier(matches)
+  if #matches == 0 or #matches > max_named_frontier_items then
+    return false
+  end
+
+  for _, match in ipairs(matches) do
+    if not looks_like_named_token(match) then
+      return false
+    end
+  end
+
+  return true
+end
+
+---@param accepted string[]
+---@return string
+local function frontier_cache_key(accepted)
+  return table.concat(accepted, "\31")
+end
+
+---@param accepted string[]
+---@param token string
+---@return string[]
+local function append_token(accepted, token)
+  local tokens = vim.deepcopy(accepted)
+  tokens[#tokens + 1] = token
+  return tokens
+end
+
+---@param summary GenericCommandSummary
+---@param accepted string[]
+---@return string[]
+local function probe_named_matches(summary, accepted)
+  local line = util.render_command(summary.root, accepted, "", true)
+  return completion_matches(summary, line, "")
+end
+
+---@param summary GenericCommandSummary
+---@param matches string[]
+---@return boolean
+local function should_infer_optional_named_root(summary, matches)
+  if #matches <= optional_named_root_limit then
+    return true
+  end
+
+  for _, token in ipairs(matches) do
+    if #probe_named_matches(summary, { token }) > 0 then
+      return true
+    end
+  end
+
+  return false
+end
+
+---@param summary GenericCommandSummary
+---@param accepted string[]
+---@return CommandFrontierItem[]?
+local function infer_named_frontier(summary, accepted)
+  local key = frontier_cache_key(accepted)
+  local cached = summary.named_frontier_cache[key]
+  if cached ~= nil then
+    return cached or nil
+  end
+
+  local matches = probe_named_matches(summary, accepted)
+  if not looks_like_named_frontier(matches) then
+    summary.named_frontier_cache[key] = false
+    return nil
+  end
+
+  local nargs = summary.parsed and summary.parsed.nargs or "0"
+  if #accepted == 0 and nargs == "?" and not should_infer_optional_named_root(summary, matches) then
+    summary.named_frontier_cache[key] = false
+    return nil
+  end
+
+  local items = {}
+  for _, match in ipairs(matches) do
+    local child_accepted = append_token(accepted, match)
+    local child_named = looks_like_named_frontier(probe_named_matches(summary, child_accepted))
+    items[#items + 1] = types.frontier_item({
+      token = match,
+      label = match,
+      kind = child_named and "namespace" or "leaf",
+      desc = child_named and "Inferred subcommand group" or "Inferred subcommand",
+      help = child_named and "Pick a deeper subcommand to continue."
+        or "Subcommand inferred from Neovim's custom completion callback.",
+      examples = { util.render_command(summary.root, child_accepted, "", false) },
+      executable = not child_named,
+      requires_more = child_named,
+    })
+  end
+
+  items = util.sort_by_label(items)
+  summary.named_frontier_cache[key] = items
+  return items
+end
+
 ---@param line string
 ---@param matches string[]
 ---@return CommandFrontierItem[]
@@ -126,6 +237,104 @@ local function has_exact_match(matches, token)
     end
   end
   return false
+end
+
+---@param summary GenericCommandSummary
+---@return CommandKind
+local function inferred_root_kind(summary)
+  local nargs = summary.parsed and summary.parsed.nargs or "0"
+  if util.min_required_args(nargs) > 0 then
+    return "namespace"
+  end
+  if nargs == "?" then
+    return "hybrid"
+  end
+  return "namespace"
+end
+
+---@param summary GenericCommandSummary
+---@param completion_type string
+---@param kind CommandKind
+---@param accepted string[]
+---@param frontier CommandFrontierItem[]
+---@return string
+local function inferred_help(summary, completion_type, kind, accepted, frontier)
+  local lines = {
+    summary.desc,
+    "",
+    "Inferred named subcommands from Neovim's custom completion callback.",
+    "Completion type: " .. (completion_type ~= "" and completion_type or "custom"),
+  }
+
+  if kind == "hybrid" then
+    lines[#lines + 1] = "Bare root is executable and also exposes subcommands."
+  else
+    lines[#lines + 1] = "Pick a subcommand to continue."
+  end
+
+  if frontier[1] then
+    lines[#lines + 1] = "Example: "
+      .. util.render_command(summary.root, append_token(accepted, frontier[1].token), "", false)
+  end
+
+  return table.concat(lines, "\n")
+end
+
+---@param summary GenericCommandSummary
+---@param ctx CommandSnapshot
+---@param completion_type string
+---@param frontier CommandFrontierItem[]
+---@return ResolutionState
+local function inferred_named_state(summary, ctx, completion_type, frontier)
+  local kind = #ctx.accepted == 0 and inferred_root_kind(summary) or "namespace"
+  local current_line = util.render_command(ctx.root, ctx.accepted, "", false)
+  local help = inferred_help(summary, completion_type, kind, ctx.accepted, frontier)
+  local current_node = types.node({
+    token = #ctx.accepted == 0 and ctx.root or ctx.accepted[#ctx.accepted],
+    kind = kind,
+    desc = summary.desc,
+    help = help,
+    examples = current_line ~= "" and { current_line } or { ctx.root },
+    executable = kind == "hybrid",
+    requires_more = kind == "namespace",
+  })
+
+  local filtered_frontier = util.filter_prefix(frontier, ctx.pending)
+  local pending_is_named = ctx.pending ~= "" and #filtered_frontier > 0
+  if ctx.pending ~= "" and #filtered_frontier == 0 then
+    local invalid_kind = kind == "namespace" and "leaf" or kind
+    local invalid_node = types.node({
+      token = current_node.token,
+      label = current_node.label,
+      kind = invalid_kind,
+      desc = current_node.desc,
+      help = current_node.help,
+      examples = current_node.examples,
+    })
+    return types.state_from_node(invalid_node, {
+      help = table.concat({
+        help,
+        "",
+        "The current token does not match any inferred subcommand.",
+      }, "\n"),
+      examples = { util.render_command(ctx.root, ctx.accepted, ctx.pending, false) },
+      executable = false,
+      requires_more = false,
+      pending_is_named = false,
+      refusal_reason = "Unknown command token: " .. ctx.pending,
+      frontier = filtered_frontier,
+    })
+  end
+
+  return types.state_from_node(current_node, {
+    help = help,
+    examples = current_node.examples,
+    executable = kind == "hybrid" and ctx.pending == "",
+    requires_more = kind == "namespace",
+    pending_is_named = pending_is_named,
+    refusal_reason = kind == "namespace" and "Pick a subcommand." or nil,
+    frontier = filtered_frontier,
+  })
 end
 
 ---@param summary GenericCommandSummary
@@ -166,6 +375,25 @@ function M.describe_root(root)
   local parsed = summary.parsed
   local nargs = parsed and parsed.nargs or "0"
   local completion_type = effective_completion_type(summary)
+  local inferred_frontier = infer_named_frontier(summary, {})
+  if inferred_frontier then
+    local kind = inferred_root_kind(summary)
+    local executable = kind == "hybrid"
+
+    return types.node({
+      token = root,
+      kind = kind,
+      desc = summary.desc,
+      help = inferred_help(summary, completion_type, kind, {}, inferred_frontier),
+      examples = inferred_frontier[1] and {
+        root,
+        util.render_command(root, { inferred_frontier[1].token }, "", false),
+      } or { root },
+      executable = executable,
+      requires_more = not executable,
+    })
+  end
+
   local root_matches = completion_matches(summary, root .. " ", "")
   local kind = (#root_matches > 0 and util.min_required_args(nargs) == 0) and "hybrid" or "leaf"
   local requires_more = util.min_required_args(nargs) > 0
@@ -241,6 +469,11 @@ function M.resolve(ctx)
       refusal_reason = "Unknown command token: " .. tostring(invalid_token),
       frontier = frontier,
     })
+  end
+
+  local inferred_frontier = infer_named_frontier(summary, ctx.accepted)
+  if inferred_frontier then
+    return inferred_named_state(summary, ctx, completion_type, inferred_frontier)
   end
 
   if ctx.pending ~= "" and is_structured(summary, completion_type) and #matches == 0 then

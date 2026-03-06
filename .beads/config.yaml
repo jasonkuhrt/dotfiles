@@ -58,3 +58,7 @@
 # - linear.api-key
 # - github.org
 # - github.repo
+
+backup.enabled: false
+
+dolt.auto-commit: "on"

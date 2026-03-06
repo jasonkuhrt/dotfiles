@@ -1,6 +1,8 @@
 local blocklist = require("cmd_ux.blocklist")
-local config_provider = require("cmd_ux.providers").config()
-local util = require("cmd_ux.util")
+local index = require("cmd_ux.index")
+local providers = require("cmd_ux.providers")
+local cmdux_provider = require("cmd_ux.providers.cmdux")
+local config_provider = providers.config()
 
 local M = {}
 
@@ -8,7 +10,8 @@ local did_setup = false
 
 function M.reload()
   blocklist.reload()
-  util.invalidate_command_cache()
+  providers.invalidate()
+  index.refresh()
 end
 
 function M.setup()
@@ -16,6 +19,8 @@ function M.setup()
     return
   end
   did_setup = true
+
+  index.install_hooks()
 
   vim.api.nvim_create_user_command("Config", function(opts)
     config_provider.execute(opts.args)
@@ -28,7 +33,38 @@ function M.setup()
     force = true,
   })
 
-  M.reload()
+  vim.api.nvim_create_user_command("Cmdux", function(opts)
+    cmdux_provider.execute(opts.args)
+  end, {
+    desc = "Cmd UX commands (help, refresh)",
+    nargs = "*",
+    complete = function(_, line, _)
+      return cmdux_provider.complete(line)
+    end,
+    force = true,
+  })
+
+  local group = vim.api.nvim_create_augroup("CmdUxLifecycle", { clear = true })
+  vim.api.nvim_create_autocmd("BufEnter", {
+    group = group,
+    callback = function()
+      index.invalidate()
+    end,
+    desc = "Invalidate cmd-ux command index on buffer scope changes",
+  })
+  vim.api.nvim_create_autocmd("User", {
+    group = group,
+    pattern = "LazyReload",
+    callback = function()
+      M.reload()
+    end,
+    desc = "Refresh cmd-ux after lazy command graph reload",
+  })
+
+  blocklist.reload()
+  providers.invalidate()
+  index.invalidate()
+  index.get()
 end
 
 function M.open_picker(opts)

@@ -2,14 +2,6 @@ local M = {}
 
 local blocklist = require("cmd_ux.blocklist")
 
----@class CommandCache
----@field exact table<string, boolean>?
----@field names string[]?
-local command_cache = {
-  exact = nil,
-  names = nil,
-}
-
 M.denied_completion_types = {
   expression = true,
   lua = true,
@@ -66,53 +58,33 @@ function M.slice(list, start_index)
   return result
 end
 
----@param name string
----@return boolean
-function M.has_exact_command(name)
-  if name == "" then
-    return false
-  end
-  if not command_cache.exact or not command_cache.names then
-    M.get_command_names("")
-  end
-  return command_cache.exact[name] == true
-end
-
----@param prefix? string
 ---@return string[]
-function M.get_command_names(prefix)
-  if not command_cache.exact or not command_cache.names then
-    local names = blocklist.filter_commands(vim.fn.getcompletion("", "command"))
-    local exact = {}
-    for _, name in ipairs(names) do
-      exact[name] = true
-    end
-    table.sort(names)
-    command_cache.exact = exact
-    command_cache.names = names
-  end
-
-  if not prefix or prefix == "" then
-    return command_cache.names or {}
-  end
-
-  local escaped = vim.pesc(prefix)
-  local result = {}
-  for _, name in ipairs(command_cache.names or {}) do
-    if name:find("^" .. escaped) ~= nil then
-      result[#result + 1] = name
-    end
-  end
-  return result
+function M.discover_command_names()
+  local names = blocklist.filter_commands(vim.fn.getcompletion("", "command"))
+  table.sort(names)
+  return names
 end
 
-function M.invalidate_command_cache()
-  command_cache.exact = nil
-  command_cache.names = nil
+---@return table<string, table>
+function M.get_user_commands()
+  return vim.api.nvim_get_commands({})
+end
+
+---@param bufnr? integer
+---@return table<string, table>
+function M.get_buffer_commands(bufnr)
+  return vim.api.nvim_buf_get_commands(bufnr or 0, {})
 end
 
 function M.get_user_command(name)
-  local commands = vim.api.nvim_get_commands({})
+  local commands = M.get_user_commands()
+  return commands[name]
+end
+
+---@param name string
+---@param bufnr? integer
+function M.get_buffer_command(name, bufnr)
+  local commands = M.get_buffer_commands(bufnr)
   return commands[name]
 end
 

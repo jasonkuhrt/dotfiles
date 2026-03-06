@@ -88,6 +88,30 @@ local resolution_kinds = {
 ---@field trailing_space? boolean
 ---@field raw? string
 
+---@class CommandIndexEntry
+---@field root string
+---@field source string
+---@field provider string
+---@field node CommandNode
+
+---@class CommandIndexEntrySpec
+---@field root string
+---@field source string
+---@field provider string
+---@field node CommandNodeSpec|CommandNode
+
+---@class CommandIndex
+---@field generation integer
+---@field built_at integer
+---@field roots string[]
+---@field entries CommandIndexEntry[]
+---@field by_root table<string, CommandIndexEntry>
+
+---@class CommandIndexSpec
+---@field generation integer
+---@field built_at? integer
+---@field entries CommandIndexEntrySpec[]|CommandIndexEntry[]
+
 ---@class ResolutionState
 ---@field kind ResolutionKind
 ---@field root? string
@@ -351,6 +375,67 @@ function M.snapshot(spec)
     pending = pending,
     trailing_space = trailing_space,
     raw = raw or util.render_command(root, accepted, pending, trailing_space),
+  }
+end
+
+---@param spec CommandIndexEntrySpec|CommandIndexEntry
+---@return CommandIndexEntry
+function M.index_entry(spec)
+  if type(spec) ~= "table" then
+    error(("cmd_ux.types: expected index entry spec table, got %s"):format(type(spec)))
+  end
+
+  local root = normalize_string(spec.root, "index_entry.root")
+  if root == "" then
+    error("cmd_ux.types: index_entry.root is required")
+  end
+
+  return {
+    root = root,
+    source = normalize_string(spec.source, "index_entry.source"),
+    provider = normalize_string(spec.provider, "index_entry.provider"),
+    node = M.node(spec.node),
+  }
+end
+
+---@param spec CommandIndexSpec|CommandIndex
+---@return CommandIndex
+function M.index(spec)
+  if type(spec) ~= "table" then
+    error(("cmd_ux.types: expected index spec table, got %s"):format(type(spec)))
+  end
+
+  local generation = spec.generation
+  if type(generation) ~= "number" then
+    error(("cmd_ux.types: expected index.generation to be a number, got %s"):format(type(generation)))
+  end
+
+  if type(spec.entries) ~= "table" then
+    error(("cmd_ux.types: expected index.entries to be a list, got %s"):format(type(spec.entries)))
+  end
+
+  local entries = {}
+  local roots = {}
+  local by_root = {}
+
+  for _, entry in ipairs(spec.entries) do
+    local normalized = M.index_entry(entry)
+    entries[#entries + 1] = normalized
+    roots[#roots + 1] = normalized.root
+    by_root[normalized.root] = normalized
+  end
+
+  table.sort(entries, function(a, b)
+    return a.root < b.root
+  end)
+  table.sort(roots)
+
+  return {
+    generation = generation,
+    built_at = type(spec.built_at) == "number" and spec.built_at or os.time(),
+    roots = roots,
+    entries = entries,
+    by_root = by_root,
   }
 end
 

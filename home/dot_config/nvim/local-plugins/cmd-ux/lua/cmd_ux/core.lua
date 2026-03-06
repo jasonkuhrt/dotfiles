@@ -1,3 +1,4 @@
+local index = require("cmd_ux.index")
 local providers = require("cmd_ux.providers")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
@@ -85,11 +86,7 @@ end
 ---@param prefix string
 ---@return CommandFrontierItem[]
 local function root_frontier(prefix)
-  local items = {}
-  for _, name in ipairs(util.get_command_names(prefix)) do
-    items[#items + 1] = types.frontier_item(providers.describe_root(name))
-  end
-  return util.sort_by_label(items)
+  return index.frontier(prefix)
 end
 
 ---@param state ResolutionState
@@ -194,7 +191,7 @@ local function resolve_line(line)
     return types.finalize_state(state)
   end
 
-  if not util.has_exact_command(parsed.root_input) then
+  if not index.has(parsed.root_input) then
     local state = types.root_state({
       help = "Choose a command.",
       root_input = parsed.root_input,

@@ -1,3 +1,4 @@
+local cmdux_provider = require("cmd_ux.providers.cmdux")
 local config_provider = require("cmd_ux.providers.config")
 local generic_provider = require("cmd_ux.providers.generic")
 local lazy_provider = require("cmd_ux.providers.lazy")
@@ -7,6 +8,7 @@ local M = {}
 
 ---@type table<string, Provider>
 M.by_root = {
+  Cmdux = cmdux_provider,
   Config = config_provider,
   Lazy = lazy_provider,
 }
@@ -30,6 +32,13 @@ end
 function M.resolve(root, ctx)
   local provider = M.get(root)
   return types.attach_provider(provider.resolve(ctx), provider.id or "generic")
+end
+
+function M.invalidate()
+  local invalidate = rawget(generic_provider, "invalidate")
+  if type(invalidate) == "function" then
+    invalidate()
+  end
 end
 
 ---@return Provider

@@ -7,9 +7,24 @@ It has one job: make command execution predictable across two surfaces:
 - the native Ex cmdline
 - the Snacks command picker
 
-The plugin owns command semantics, safety policy, and transition rules. Your config only wires those semantics into keys and UI surfaces.
+The plugin owns command discovery, command semantics, and transition rules. Your config only wires those semantics into keys and UI surfaces.
 
 ## Concepts
+
+### Discovery coverage
+
+`cmd-ux` aims to expose effectively 100% of commands that currently exist in the running Neovim session, minus the explicit denylist.
+
+That includes:
+
+- builtin Ex commands
+- global user commands
+- buffer-local user commands for the current buffer
+- lazy command stubs once they exist
+
+That does not include hypothetical commands from plugins that have not registered anything yet.
+
+Missing coverage is a `cmd-ux` bug, not intended product behavior.
 
 ### Native Ex cmdline
 
@@ -72,11 +87,12 @@ These are hard rules, not preferences.
 - never execute a nonexistent command
 - never execute a namespace
 - never execute a known-incomplete command
+- never hide a currently registered command unless it is denylisted
 - `<Tab>` never executes
 - `<Tab>` never cycles completion selection
 - `<Space>` only acts semantically in named slots; otherwise it remains a literal space
 - `<C-j>` and `<C-k>` are the selection keys
-- open-ended command families are denied by default unless a provider exists
+- lack of rich command semantics is not, by itself, a valid exclusion reason
 
 ## Why providers exist
 
@@ -99,7 +115,9 @@ What Neovim does not give as a first-class concept:
 
 Because of that, `cmd-ux` uses a provider registry.
 
-Providers are only needed for command families whose semantics are richer than what Neovim can prove.
+Providers enrich command families whose semantics are richer than what Neovim can prove generically.
+
+They are not an admission gate. A command does not disappear merely because it lacks a dedicated provider.
 
 ## Provider model
 
@@ -118,21 +136,23 @@ Each provider is responsible for:
 
 The v1 providers are:
 
+- `Cmdux`
 - `Lazy`
 - `Config`
 - generic Neovim commands
 
 ### Generic provider
 
-The generic provider is intentionally conservative.
+The generic provider is the baseline representation for discovered commands that do not yet have a richer dedicated provider.
 
-It only allows execution when Neovim can prove enough:
+It is responsible for:
 
-- exact zero-arg or optional-arg command roots can execute
-- enumerable completion families can execute only after exact candidate match
-- open-ended families like `lua`, `execute`, and `terminal` are denied
+- surfacing the command in the index
+- attaching the best available metadata from Neovim
+- modeling argument/frontier behavior when Neovim exposes enough structure
+- representing open or weakly modeled families honestly instead of hiding them
 
-Unknown richness is not guessed.
+Unknown richness is not a reason to exclude the command. It is a reason to improve the model.
 
 ## Surface behavior
 
@@ -188,6 +208,7 @@ Behavior:
 - confirm on `namespace` or `hybrid` advances deeper
 - confirm on safe `leaf` executes directly
 - `;` hands off the current semantic session into the native Ex cmdline
+- preview content is built for the selected item only; it is not eagerly precomputed for the whole frontier
 
 ## Picker UI contract
 
@@ -218,6 +239,13 @@ It shows:
 - examples
 
 The preview is intentionally focused on the current node and its next valid choices.
+
+It should also be readable without fighting the UI:
+
+- preview text wraps to the preview width
+- preview uses the window title for the node label instead of rendering a markdown heading in the buffer
+- line numbers are suppressed because this is semantic help, not source code
+- the picker layout should use most of the floating window area instead of sitting in a narrow centered box
 
 Full tree dumps are out of scope for the main UX.
 

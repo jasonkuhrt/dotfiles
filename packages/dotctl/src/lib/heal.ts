@@ -2,8 +2,8 @@ import { appendFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readlin
 import path from "node:path"
 
 import type { RuntimeContext } from "./env.js"
-import { ensureRuntimeDirs, timestampPath, timestampUtc } from "./env.js"
-import { readJsonFile, writeJsonFile } from "./json.js"
+import { ensureRuntimeDirs, timestampUtc } from "./env.js"
+import { writeJsonFile } from "./json.js"
 import { buildDeploymentPlan, type PlanEntry } from "./conventions.js"
 
 /** @deprecated Capture system removed — kept for status.ts compat during transition. */

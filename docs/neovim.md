@@ -140,8 +140,11 @@ Custom overrides live in `home/dot_config/nvim/lua/plugins/`:
 - `colorscheme.lua` — Theme
 - `editor.lua` — Telescope layout, mini.statusline (replaced lualine)
 - `lang.lua` — Language-specific overrides
+- `lua.lua` — Lua tooling glue (`lazydev`, `selene`, Mason ensure list)
 - `lsp.lua` — LSP config overrides
 - `smart-splits.lua` — Pane navigation (hjkl across kitty splits)
 - `snacks.lua` — Dashboard, picker, project config
 - `unnest.lua` — Unnest plugin
 - `zen-mode.lua` — Zen mode
+
+See also: [docs/lua-tooling.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/docs/lua-tooling.md) for the dedicated Lua toolchain guide.

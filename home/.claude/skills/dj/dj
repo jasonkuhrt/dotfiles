@@ -209,8 +209,10 @@ search() {
         if c < mx then set mx to c
         set output to (c as text) & \" results\"
         repeat with i from 1 to mx
-            set t to item i of r
-            set output to output & linefeed & (name of t) & \" — \" & (artist of t)
+            try
+                set t to item i of r
+                set output to output & linefeed & (name of t) & \" — \" & (artist of t)
+            end try
         end repeat
         return output
     end tell"
@@ -356,12 +358,19 @@ end tell'
         [ -n "${batch_nf:-}" ] && not_found+="$batch_nf"
     done
 
-    # AirPlay — read into array to handle device names with spaces
-    local -a airplay_devs=()
-    while IFS= read -r dev; do
-        [[ -n "$dev" ]] && airplay_devs+=("$dev")
-    done < <(echo "$AIRPLAY_JSON" | jq -r '.[]')
-    airplay::set "${airplay_devs[@]}" 2>/dev/null || true
+    # AirPlay — handle "all" string or device name array
+    local airplay_raw; airplay_raw=$(echo "$CONFIG" | jq -r '.airplay // empty')
+    if [[ "$airplay_raw" == "all" ]]; then
+        airplay::all
+    else
+        local -a airplay_devs=()
+        while IFS= read -r dev; do
+            [[ -n "$dev" ]] && airplay_devs+=("$dev")
+        done < <(echo "$AIRPLAY_JSON" | jq -r '.[]')
+        if [[ ${#airplay_devs[@]} -gt 0 ]]; then
+            airplay::set "${airplay_devs[@]}" 2>/dev/null || true
+        fi
+    fi
 
     # Play
     volume "$VOLUME"

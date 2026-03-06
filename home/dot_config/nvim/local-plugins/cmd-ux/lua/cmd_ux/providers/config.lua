@@ -23,6 +23,8 @@ local always_restart_required_paths = {
   "init.lua",
 }
 
+local uv = vim.uv or vim.loop
+
 ---@return ConfigEntry[]?, string?
 local function discover_config_entries()
   local ok, names = pcall(vim.fn.readdir, config_dir)
@@ -33,11 +35,18 @@ local function discover_config_entries()
   local entries = {}
   for _, name in ipairs(names) do
     if name:sub(-4) == ".lua" then
-      local stem = name:sub(1, -5)
-      entries[#entries + 1] = {
-        module = "config." .. stem,
-        path = "lua/config/" .. name,
-      }
+      local absolute_path = config_dir .. "/" .. name
+      local stat = uv.fs_stat(absolute_path)
+
+      -- The live config dir can contain dangling symlinks when a managed source
+      -- file was removed but the symlink shape has not been repaired yet.
+      if stat and stat.type == "file" then
+        local stem = name:sub(1, -5)
+        entries[#entries + 1] = {
+          module = "config." .. stem,
+          path = "lua/config/" .. name,
+        }
+      end
     end
   end
 

@@ -1,4 +1,5 @@
-import { existsSync, lstatSync, mkdirSync, readlinkSync, symlinkSync, renameSync, unlinkSync } from "node:fs"
+import { existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, symlinkSync, renameSync, unlinkSync, writeFileSync, chmodSync } from "node:fs"
+import { execFileSync } from "node:child_process"
 import path from "node:path"
 
 import type { RuntimeContext } from "./env.js"
@@ -102,6 +103,7 @@ const removeExistingSymlink = (targetPath: string): void => {
 const DEPLOYABLE_KINDS = new Set<ConventionKind>([
   "symlinkDir",
   "symlinkFile",
+  "modify",
 ])
 
 const deploySymlink = (
@@ -152,6 +154,70 @@ const deploySymlink = (
   return { entry, action: "created", detail: `-> ${linkTarget}` }
 }
 
+const deployModify = (
+  entry: PlanEntry,
+  options: DeployOptions,
+): DeployResult => {
+  const sidecarPath = entry.modifyScript
+  if (!sidecarPath) {
+    return { entry, action: "error", detail: "modify entry missing modifyScript path" }
+  }
+
+  // Read current target content (empty string if target doesn't exist)
+  let currentContent = ""
+  try {
+    currentContent = readFileSync(entry.targetAbs, "utf8")
+  } catch {
+    // Target doesn't exist yet — that's fine, script gets empty stdin
+  }
+
+  if (options.dryRun) {
+    if (currentContent) {
+      return { entry, action: "replaced", detail: `would run ${path.basename(sidecarPath)} to merge` }
+    }
+    return { entry, action: "created", detail: `would run ${path.basename(sidecarPath)} to generate` }
+  }
+
+  // Ensure sidecar is executable
+  try {
+    chmodSync(sidecarPath, 0o755)
+  } catch {
+    // Best effort — may already be executable
+  }
+
+  // Run sidecar: source data file on stdin of sidecar, current target on env
+  // Convention: sidecar reads managed data from its companion file (sourceAbs),
+  // reads current target from stdin, writes merged result to stdout.
+  const result = execFileSync(sidecarPath, {
+    input: currentContent,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      DOTCTL_SOURCE: entry.sourceAbs,
+      DOTCTL_TARGET: entry.targetAbs,
+    },
+  })
+
+  // Back up existing target if it has content
+  if (currentContent) {
+    const backupDir = options.backupDir ?? path.join(
+      path.dirname(entry.targetAbs),
+      `.dotctl-backup-${timestampPath()}`,
+    )
+    mkdirSync(backupDir, { recursive: true })
+    writeFileSync(path.join(backupDir, path.basename(entry.targetAbs)), currentContent)
+  }
+
+  ensureParentDir(entry.targetAbs)
+  writeFileSync(entry.targetAbs, result)
+
+  return {
+    entry,
+    action: currentContent ? "replaced" : "created",
+    detail: `merged via ${path.basename(sidecarPath)}`,
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Main executor
 // ---------------------------------------------------------------------------
@@ -175,7 +241,9 @@ export const executeDeploy = (
     }
 
     try {
-      const result = deploySymlink(entry, options)
+      const result = entry.kind === "modify"
+        ? deployModify(entry, options)
+        : deploySymlink(entry, options)
       results.push(result)
     } catch (error) {
       results.push({

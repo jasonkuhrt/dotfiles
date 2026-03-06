@@ -1,0 +1,20 @@
+#!/bin/bash
+# Merge managed keys into settings.json, preserving CC runtime state.
+#
+# Managed keys (from settings.json): overwritten on deploy.
+# Preserved keys (CC runtime, never touched): permissions, enabledPlugins
+#
+# Convention: DOTCTL_SOURCE points to the managed data file.
+# Stdin contains current target content.
+
+set -euo pipefail
+
+MANAGED=$(cat "$DOTCTL_SOURCE")
+CURRENT=$(cat)
+
+if [ -z "$CURRENT" ]; then
+  CURRENT='{}'
+fi
+
+# Recursive merge: managed keys overwrite, runtime keys preserved
+echo "$CURRENT" | jq --argjson managed "$MANAGED" '. * $managed'

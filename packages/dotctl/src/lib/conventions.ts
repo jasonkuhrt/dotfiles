@@ -91,6 +91,8 @@ export interface PlanEntry {
   readonly targetRel: string
   /** For symlinkDir entries backed by symlink-roots, the actual repo dir. */
   readonly symlinkTarget?: string
+  /** For modify entries, absolute path to the .modify sidecar script. */
+  readonly modifyScript?: string
   /** Human-readable note about the entry. */
   readonly note?: string
 }
@@ -236,8 +238,9 @@ const walkSourceDir = (
       // Regular directory: recurse to discover children
       walkSourceDir(ctx, sourcePath, targetPath, targetRel, entries, warnings)
     } else if (entry.isFile()) {
-      // .spread markers are metadata only — never deploy them
+      // .spread markers and .modify sidecars are metadata only — never deploy them directly
       if (entry.name === ".spread") continue
+      if (entry.name.endsWith(".modify")) continue
 
       // Symlink templates: chezmoi convention for directory symlinks into symlink-roots/
       if (entry.name.startsWith("symlink_") && entry.name.endsWith(".tmpl")) {
@@ -285,13 +288,14 @@ const walkSourceDir = (
           note: "Encrypted file, requires age decryption",
         })
       } else if (entry.name.startsWith("modify_")) {
+        // Legacy chezmoi modify scripts — superseded by .modify sidecar convention
         entries.push({
-          kind: "modify",
+          kind: "chezmoiInternal",
           sourceAbs: sourcePath,
           sourceRel: path.relative(ctx.repoRoot, sourcePath),
           targetAbs: targetPath,
           targetRel,
-          note: "Modify script: runs to generate target content",
+          note: "Legacy chezmoi modify_ script, superseded by .modify sidecar",
         })
       } else if (entry.name.endsWith(".tmpl") && !entry.name.startsWith("symlink_")) {
         entries.push({
@@ -303,13 +307,27 @@ const walkSourceDir = (
           note: "Chezmoi template, not yet handled by convention engine",
         })
       } else {
-        entries.push({
-          kind: "symlinkFile",
-          sourceAbs: sourcePath,
-          sourceRel: path.relative(ctx.repoRoot, sourcePath),
-          targetAbs: targetPath,
-          targetRel,
-        })
+        // Check for .modify sidecar: F.modify alongside F
+        const sidecarPath = path.join(sourceDir, `${entry.name}.modify`)
+        if (existsSync(sidecarPath)) {
+          entries.push({
+            kind: "modify",
+            sourceAbs: sourcePath,
+            sourceRel: path.relative(ctx.repoRoot, sourcePath),
+            targetAbs: targetPath,
+            targetRel,
+            modifyScript: sidecarPath,
+            note: `Modify sidecar: ${entry.name}.modify`,
+          })
+        } else {
+          entries.push({
+            kind: "symlinkFile",
+            sourceAbs: sourcePath,
+            sourceRel: path.relative(ctx.repoRoot, sourcePath),
+            targetAbs: targetPath,
+            targetRel,
+          })
+        }
       }
     }
   }

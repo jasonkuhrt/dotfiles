@@ -13,7 +13,7 @@ dotfiles/                     # git repo root
 ├── packages/dotctl/          # typed control plane (up/heal/status/doctor/explain/edit)
 ├── symlink-roots/            # repo-backed directories exposed as whole-dir symlinks
 ├── scripts/chezmoi/          # legacy wrappers that delegate to dotctl
-├── sync-sudo                 # manual sudo ops
+├── scripts/sync-sudo         # manual sudo ops
 ├── docs/, packages/, .beads/ # project files
 │
 └── home/                     # CHEZMOI SOURCE STATE
@@ -150,6 +150,6 @@ Everything else in the `justfile` is private compatibility or advanced maintenan
 - **Browser sync** — automatic via Google login (Chrome) and iCloud (Safari)
 - **Keyboard settings** — chezmoi sets fast key repeat via `defaults`, but requires logout/login to take effect
 - **CC settings.json** — NOT managed by chezmoi (both use atomic writes, creating a race condition). CC owns this file at runtime.
-- **Sudo operations** — remain manual via `sudo ./sync-sudo` (power management, Touch ID, Fish default shell)
+- **Sudo operations** — remain manual via `sudo ./scripts/sync-sudo` (power management, Touch ID, Fish default shell)
 - **Repo-backed true-dir roots** — child files inside these dirs are not individually managed by chezmoi. `just edit` resolves that split for you.
 - **Local runtime state** — `~/.local/state/dotfiles-symlink/` contains `manifest.json`, `health.json`, `captures.json`, and backup snapshots used by the healer.

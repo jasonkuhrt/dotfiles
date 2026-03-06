@@ -9,6 +9,15 @@ vim.api.nvim_create_autocmd("FocusLost", {
   end,
 })
 
+-- Disable spellcheck in text-like filetypes (LazyVim enables this by default).
+vim.api.nvim_create_autocmd("FileType", {
+  group = vim.api.nvim_create_augroup("disable_spellcheck", { clear = true }),
+  pattern = { "text", "plaintex", "typst", "gitcommit", "markdown" },
+  callback = function()
+    vim.opt_local.spell = false
+  end,
+})
+
 -- Auto-enter insert mode when focusing a terminal buffer
 vim.api.nvim_create_autocmd({ "TermOpen", "BufEnter", "WinEnter" }, {
   group = vim.api.nvim_create_augroup("terminal_insert", { clear = true }),
@@ -19,3 +28,5 @@ vim.api.nvim_create_autocmd({ "TermOpen", "BufEnter", "WinEnter" }, {
     end
   end,
 })
+
+require("config.image_open").setup()

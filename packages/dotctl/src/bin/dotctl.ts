@@ -36,7 +36,7 @@ const main = async (): Promise<number> => {
   }
 
   if (command === "up") {
-    console.log(runUp(ctx))
+    console.log(await runUp(ctx))
     return 0
   }
 

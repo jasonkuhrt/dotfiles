@@ -4,7 +4,6 @@ import path from "node:path"
 import type { RuntimeContext } from "./env.js"
 import type { Manifest, ManifestFileEntry } from "./manifest.js"
 import { displayHomePath, pathIsWithin } from "./paths.js"
-import { runChezMoi } from "./chezmoi.js"
 
 export interface PrunableSymlinkEntry {
   readonly targetAbs: string
@@ -83,16 +82,10 @@ export const findOrphanedRepoSymlinksInPaths = (
   })
 }
 
-export const findOrphanedRepoSymlinks = (ctx: RuntimeContext): readonly OrphanedRepoSymlinkEntry[] => {
-  const result = runChezMoi(ctx, ["unmanaged", "--path-style", "absolute"], { allowFailure: true })
-  if (result.exitCode !== 0) return []
-  return findOrphanedRepoSymlinksInPaths(
-    ctx,
-    result.stdout
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean),
-  )
+export const findOrphanedRepoSymlinks = (_ctx: RuntimeContext): readonly OrphanedRepoSymlinkEntry[] => {
+  // Orphan detection previously relied on `chezmoi unmanaged`.
+  // Convention engine doesn't have an equivalent yet — return empty for now.
+  return []
 }
 
 export const pruneStaleFileEntries = (entries: readonly PrunableSymlinkEntry[]): StalePruneSummary => {

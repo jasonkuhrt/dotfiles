@@ -1,56 +1,48 @@
-import { existsSync } from "node:fs"
-import path from "node:path"
-
-import { ensureRuntimeDirs, rotateLogIfLarge, timestampPath } from "./env.js"
+import { ensureRuntimeDirs, rotateLogIfLarge } from "./env.js"
 import type { RuntimeContext } from "./env.js"
-import { healOnce } from "./heal.js"
-import { ensureHealAgentLoaded } from "./launchd.js"
-import { generateAndWriteManifest, loadManifest } from "./manifest.js"
-import { runChezMoi } from "./chezmoi.js"
-import { findOrphanedRepoSymlinks, findStaleFileEntries, pruneStaleFileEntries } from "./stale.js"
-import { auditTrueDirRoots, backupTrueDirRoots, needsCutoverPass, writeCutoverMarker } from "./true-dir.js"
+import { buildDeploymentPlan } from "./conventions.js"
+import { executeDeploy, formatDeploySummary } from "./deploy.js"
+import { buildScriptPlan, runScripts, type ScriptPlan } from "./scripts.js"
 
-export const runUp = (ctx: RuntimeContext): string => {
+const filterPlanByPhase = (plan: ScriptPlan, phase: "before" | "after"): ScriptPlan => ({
+  scripts: plan.scripts.filter((s) => s.entry.phase === phase),
+})
+
+export const runUp = async (ctx: RuntimeContext): Promise<string> => {
   ensureRuntimeDirs(ctx)
   rotateLogIfLarge(ctx.healLaunchdStdoutPath)
   rotateLogIfLarge(ctx.healLaunchdStderrPath)
 
-  let backupDir: string | null = null
-  if (needsCutoverPass(ctx)) {
-    const issues = auditTrueDirRoots(ctx)
-    if (issues.length > 0) {
-      throw new Error(`true-dir preflight failed: ${issues.map((issue) => issue.message).join("; ")}`)
-    }
-    backupDir = path.join(ctx.backupRoot, `cutover-${timestampPath()}`)
-    backupTrueDirRoots(ctx, backupDir)
-  }
+  // Phase 1: before scripts
+  const scriptPlan = buildScriptPlan(ctx)
+  const beforePlan = filterPlanByPhase(scriptPlan, "before")
+  const beforeSummary = await runScripts(ctx, beforePlan)
 
-  const previousManifest = existsSync(ctx.manifestPath) ? loadManifest(ctx) : null
-  const manifest = generateAndWriteManifest(ctx)
-  runChezMoi(ctx, ["apply", "--mode", "symlink", "--no-tty"])
-  const staleEntries = new Map(
-    findStaleFileEntries(previousManifest, manifest).map((entry) => [entry.targetAbs, entry] as const),
-  )
-  for (const entry of findOrphanedRepoSymlinks(ctx)) {
-    staleEntries.set(entry.targetAbs, entry)
-  }
-  const stalePrune = pruneStaleFileEntries(Array.from(staleEntries.values()))
-  ensureHealAgentLoaded(ctx)
-  const heal = healOnce(ctx, { background: false, strict: true })
-  runChezMoi(ctx, ["apply", "--mode", "symlink", "--no-tty"])
+  // Phase 2: convention deploy
+  const deployPlan = buildDeploymentPlan(ctx)
+  const deploySummary = executeDeploy(ctx, deployPlan, { dryRun: false })
 
-  const auditIssues = auditTrueDirRoots(ctx)
-  if (auditIssues.length > 0) {
-    throw new Error(`true-dir audit failed: ${auditIssues.map((issue) => issue.message).join("; ")}`)
-  }
+  // Phase 3: after scripts
+  const afterPlan = filterPlanByPhase(scriptPlan, "after")
+  const afterSummary = await runScripts(ctx, afterPlan)
 
-  if (backupDir) writeCutoverMarker(ctx, backupDir)
-
-  return [
+  const lines = [
     "dotfiles up complete",
-    `manifest: ${manifest.generatedAt}`,
-    `stale prune: scanned=${stalePrune.scanned} removed=${stalePrune.removed} skipped=${stalePrune.skipped}`,
-    `heal: scanned=${heal.scanned} healed=${heal.healed} broken=${heal.broken} errors=${heal.errors}`,
-    backupDir ? `backup: ${backupDir}` : "backup: unchanged",
-  ].join("\n")
+    "",
+    formatDeploySummary(deploySummary, false),
+    `scripts (before): ran=${beforeSummary.ran} skipped=${beforeSummary.skipped} failed=${beforeSummary.failed}`,
+    `scripts (after): ran=${afterSummary.ran} skipped=${afterSummary.skipped} failed=${afterSummary.failed}`,
+  ]
+
+  if (deploySummary.errors > 0) {
+    lines.push("")
+    lines.push("Deploy errors:")
+    for (const r of deploySummary.results) {
+      if (r.action === "error") {
+        lines.push(`  ${r.entry.targetRel}: ${r.detail}`)
+      }
+    }
+  }
+
+  return lines.join("\n")
 }

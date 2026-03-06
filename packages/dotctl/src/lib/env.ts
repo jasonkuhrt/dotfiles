@@ -32,25 +32,12 @@ export interface RuntimeContext {
   readonly healPlistPath: string
   readonly healLaunchdStdoutPath: string
   readonly healLaunchdStderrPath: string
-  readonly chezmoiConfigPath: string
-  readonly chezmoiTemplatePath: string
-  readonly chezmoiBin: string
   readonly bunBin: string
   readonly userId: number
   readonly config: DotctlConfig
 }
 
 const repoRootFromModule = (): string => fileURLToPath(new URL("../../../../", import.meta.url))
-
-const findExecutableOnPath = (name: string, envPath: string | undefined): string | null => {
-  const searchPath = envPath ?? process.env["PATH"] ?? ""
-  for (const entry of searchPath.split(":")) {
-    if (!entry) continue
-    const candidate = path.join(entry, name)
-    if (existsSync(candidate)) return candidate
-  }
-  return null
-}
 
 const loadDotctlConfig = (repoRoot: string, homeDir: string): DotctlConfig => {
   const configPath = path.join(repoRoot, "dotctl.config.json")
@@ -65,13 +52,6 @@ const loadDotctlConfig = (repoRoot: string, homeDir: string): DotctlConfig => {
     return {}
   }
 }
-
-const detectChezMoiBin = (): string =>
-  process.env["DOTFILES_CHEZMOI_BIN"]
-    ?? findExecutableOnPath("chezmoi", process.env["PATH"])
-    ?? (existsSync("/opt/homebrew/bin/chezmoi") ? "/opt/homebrew/bin/chezmoi" : null)
-    ?? (existsSync("/usr/local/bin/chezmoi") ? "/usr/local/bin/chezmoi" : null)
-    ?? "chezmoi"
 
 export const createRuntimeContext = (): RuntimeContext => {
   const homeDir = process.env["HOME"] ?? os.homedir()
@@ -96,9 +76,6 @@ export const createRuntimeContext = (): RuntimeContext => {
     healPlistPath: path.join(homeDir, "Library", "LaunchAgents", `${healLabel}.plist`),
     healLaunchdStdoutPath: path.join(logDir, "heal-launchd.out.log"),
     healLaunchdStderrPath: path.join(logDir, "heal-launchd.err.log"),
-    chezmoiConfigPath: path.join(homeDir, ".config", "chezmoi", "chezmoi.toml"),
-    chezmoiTemplatePath: path.join(repoRoot, "home", ".chezmoi.toml.tmpl"),
-    chezmoiBin: detectChezMoiBin(),
     bunBin: process.execPath,
     userId: process.getuid?.() ?? Number(runCommand(["id", "-u"]).stdout.trim()),
     config: loadDotctlConfig(repoRoot, homeDir),
@@ -116,21 +93,6 @@ export const timestampUtc = (): string => new Date().toISOString()
 export const timestampPath = (): string => timestampUtc().replaceAll(":", "").replaceAll("-", "").replace(".000Z", "Z")
 
 export const sha256 = (value: string): string => createHash("sha256").update(value).digest("hex")
-
-export const syncChezMoiConfig = (ctx: RuntimeContext): void => {
-  if (!existsSync(ctx.chezmoiTemplatePath)) return
-
-  const rendered = runCommand([ctx.chezmoiBin, "execute-template"], {
-    cwd: ctx.repoRoot,
-    env: { ...process.env, PATH: `${path.dirname(ctx.chezmoiBin)}:/opt/homebrew/bin:/usr/local/bin:${process.env["PATH"] ?? ""}` },
-    stdin: readFileSync(ctx.chezmoiTemplatePath, "utf8"),
-  }).stdout
-
-  mkdirSync(path.dirname(ctx.chezmoiConfigPath), { recursive: true })
-  if (!existsSync(ctx.chezmoiConfigPath) || readFileSync(ctx.chezmoiConfigPath, "utf8") !== rendered) {
-    writeFileSync(ctx.chezmoiConfigPath, rendered, "utf8")
-  }
-}
 
 export const rotateLogIfLarge = (filePath: string): void => {
   if (!existsSync(filePath)) return

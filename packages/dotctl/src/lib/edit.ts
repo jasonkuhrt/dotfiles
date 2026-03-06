@@ -1,9 +1,7 @@
-import path from "node:path"
-
 import type { RuntimeContext } from "./env.js"
 import { expandUserPath, resolveTrueDirRepoPath } from "./paths.js"
-import { runChezMoi } from "./chezmoi.js"
 import { runInteractive } from "./shell.js"
+import { buildDeploymentPlan } from "./conventions.js"
 
 const runEditor = async (targetPath: string): Promise<number> => {
   const editor = process.env["VISUAL"] ?? process.env["EDITOR"] ?? "vi"
@@ -17,19 +15,19 @@ const runEditor = async (targetPath: string): Promise<number> => {
 }
 
 export const runEdit = async (ctx: RuntimeContext, target: string): Promise<number> => {
+  // Check true-dir roots first
   const repoPath = resolveTrueDirRepoPath(ctx, target)
   if (repoPath) {
     return runEditor(repoPath)
   }
 
+  // Look up source in convention plan
   const targetAbs = expandUserPath(target, ctx.homeDir)
-  const result = runChezMoi(ctx, ["source-path", targetAbs], { allowFailure: true })
-  if (result.exitCode === 0 && result.stdout.trim() !== "") {
-    const sourcePath = result.stdout.trim().split("\n")[0]!
-    if (sourcePath.startsWith(path.join(ctx.repoRoot, "home", "private_")) || sourcePath.includes("/encrypted_")) {
-      return runInteractive([ctx.chezmoiBin, "edit", targetAbs], { cwd: ctx.repoRoot, env: process.env })
-    }
+  const plan = buildDeploymentPlan(ctx)
+  const entry = plan.entries.find((e) => e.targetAbs === targetAbs)
+  if (entry) {
+    return runEditor(entry.sourceAbs)
   }
 
-  return runInteractive([ctx.chezmoiBin, "edit", targetAbs], { cwd: ctx.repoRoot, env: process.env })
+  throw new Error(`Cannot resolve source for ${target}`)
 }

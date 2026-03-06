@@ -15,12 +15,7 @@ import type { RuntimeContext } from "./env.js"
 import { timestampUtc } from "./env.js"
 import { readJsonFile, writeJsonFile } from "./json.js"
 import { displayHomePath, expandUserPath, toHomeRelative, toRepoRelative } from "./paths.js"
-import { runChezMoi } from "./chezmoi.js"
-
-interface RawManagedEntry {
-  readonly absolute: string
-  readonly sourceAbsolute: string
-}
+import { buildDeploymentPlan } from "./conventions.js"
 
 export interface ManifestTrueDirEntry {
   readonly lane: "trueDir"
@@ -54,27 +49,6 @@ export interface Manifest {
   readonly promotionCandidates: readonly PromotionCandidate[]
 }
 
-const listManagedEntries = (ctx: RuntimeContext): readonly RawManagedEntry[] => {
-  const raw = runChezMoi(ctx, [
-    "managed",
-    "--mode",
-    "file",
-    "--include=files",
-    "--path-style=all",
-    "--format",
-    "json",
-  ]).stdout
-  const parsed = JSON.parse(raw) as Record<string, RawManagedEntry>
-  return Object.values(parsed)
-}
-
-const expectedSymlinkSource = (ctx: RuntimeContext, targetAbs: string): string | null => {
-  const result = runChezMoi(ctx, ["cat", "--mode", "symlink", targetAbs], { allowFailure: true })
-  if (result.exitCode !== 0) return null
-  const rendered = result.stdout.trim()
-  return rendered === "" ? null : rendered
-}
-
 export const buildTrueDirEntries = (ctx: RuntimeContext): readonly ManifestTrueDirEntry[] =>
   TRUE_DIRS.map((entry) => ({
     lane: "trueDir",
@@ -87,31 +61,36 @@ export const buildTrueDirEntries = (ctx: RuntimeContext): readonly ManifestTrueD
     ...(entry.note ? { note: entry.note } : {}),
   }))
 
-export const generateManifest = (ctx: RuntimeContext): Manifest => ({
-  version: 1,
-  generatedAt: timestampUtc(),
-  repoRoot: ctx.repoRoot,
-  homeDir: ctx.homeDir,
-  trueDirs: buildTrueDirEntries(ctx),
-  fileEntries: listManagedEntries(ctx)
-    .map((entry): ManifestFileEntry => {
-      const targetRel = toHomeRelative(entry.absolute, ctx.homeDir)
-      const expectedLink = expectedSymlinkSource(ctx, entry.absolute)
-      const lane: Exclude<Lane, "trueDir"> = expectedLink === entry.sourceAbsolute ? "fileSymlink" : "special"
+export const generateManifest = (ctx: RuntimeContext): Manifest => {
+  const plan = buildDeploymentPlan(ctx)
+
+  const fileEntries: ManifestFileEntry[] = plan.entries
+    .filter((e) => e.kind === "symlinkFile" || e.kind === "symlinkDir")
+    .map((entry) => {
+      const lane: Exclude<Lane, "trueDir"> = "fileSymlink"
       return {
         lane,
-        targetAbs: entry.absolute,
-        targetRel,
-        targetDisplay: displayHomePath(entry.absolute, ctx.homeDir),
-        sourceAbs: entry.sourceAbsolute,
-        sourceRel: toRepoRelative(entry.sourceAbsolute, ctx.repoRoot),
-        expectedShape: lane === "fileSymlink" ? "symlinkFile" : "managedOther",
-        capturePolicy: resolveCapturePolicy(targetRel, lane),
+        targetAbs: entry.targetAbs,
+        targetRel: entry.targetRel,
+        targetDisplay: displayHomePath(entry.targetAbs, ctx.homeDir),
+        sourceAbs: entry.symlinkTarget ?? entry.sourceAbs,
+        sourceRel: toRepoRelative(entry.sourceAbs, ctx.repoRoot),
+        expectedShape: (entry.kind === "symlinkDir" ? "symlinkDir" : "symlinkFile") as ExpectedShape,
+        capturePolicy: resolveCapturePolicy(entry.targetRel, lane),
       }
     })
-    .sort((left, right) => left.targetAbs.localeCompare(right.targetAbs)),
-  promotionCandidates: PROMOTION_CANDIDATES,
-})
+    .sort((a, b) => a.targetAbs.localeCompare(b.targetAbs))
+
+  return {
+    version: 1,
+    generatedAt: timestampUtc(),
+    repoRoot: ctx.repoRoot,
+    homeDir: ctx.homeDir,
+    trueDirs: buildTrueDirEntries(ctx),
+    fileEntries,
+    promotionCandidates: PROMOTION_CANDIDATES,
+  }
+}
 
 export const validateManifest = (ctx: RuntimeContext, manifest: Manifest): readonly string[] => {
   const problems: string[] = []

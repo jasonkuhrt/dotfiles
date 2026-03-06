@@ -1,13 +1,11 @@
 import { existsSync } from "node:fs"
 import path from "node:path"
 
-import { auditTrueDirRoots } from "./true-dir.js"
 import type { RuntimeContext } from "./env.js"
 import { getLaunchdStatus } from "./launchd.js"
-import { resolveManifest, validateManifest } from "./manifest.js"
 import { runCommand } from "./shell.js"
-import { runChezMoi } from "./chezmoi.js"
-import { findBrokenTargetEntries, findEntriesWithMissingSources, findOrphanedRepoSymlinks } from "./stale.js"
+import { buildDeploymentPlan } from "./conventions.js"
+import { executeDeploy } from "./deploy.js"
 
 interface DoctorCheck {
   readonly name: string
@@ -27,57 +25,22 @@ const checkPrerequisite = (name: string): DoctorCheck => {
   }
 }
 
-const checkChezMoiDryRun = (ctx: RuntimeContext): DoctorCheck => {
-  const result = runChezMoi(ctx, ["apply", "--mode", "symlink", "--no-tty", "-n"], { allowFailure: true })
-  return {
-    name: "chezmoi-dry-run",
-    ok: result.exitCode === 0,
-    detail: result.exitCode === 0 ? "chezmoi dry-run apply succeeded" : (result.stderr.trim() || result.stdout.trim() || "chezmoi dry-run failed"),
+const checkConventionDryRun = (ctx: RuntimeContext): DoctorCheck => {
+  const plan = buildDeploymentPlan(ctx)
+  if (plan.warnings.length > 0) {
+    return {
+      name: "convention-plan",
+      ok: false,
+      detail: plan.warnings.join("; "),
+    }
   }
-}
-
-const checkManifest = (ctx: RuntimeContext): DoctorCheck => {
-  const manifest = resolveManifest(ctx)
-  const issues = validateManifest(ctx, manifest)
-  const missingSourceEntries = findEntriesWithMissingSources(manifest)
+  const summary = executeDeploy(ctx, plan, { dryRun: true })
   return {
-    name: "manifest",
-    ok: issues.length === 0 && missingSourceEntries.length === 0,
-    detail:
-      issues.length === 0 && missingSourceEntries.length === 0
-        ? `manifest ok (${manifest.fileEntries.length} files)`
-        : [
-            ...issues,
-            ...missingSourceEntries.map((entry) => `missing source for ${entry.targetDisplay}`),
-          ].join("; "),
-  }
-}
-
-const checkTrueDirAudit = (ctx: RuntimeContext): DoctorCheck => {
-  const issues = auditTrueDirRoots(ctx)
-  return {
-    name: "true-dir-audit",
-    ok: issues.length === 0,
-    detail: issues.length === 0 ? "no unmanaged spill in true-dir roots" : issues.map((issue) => issue.message).join("; "),
-  }
-}
-
-const checkBrokenSymlinks = (ctx: RuntimeContext): DoctorCheck => {
-  const manifest = resolveManifest(ctx)
-  const broken = findBrokenTargetEntries(manifest)
-  return {
-    name: "broken-symlink-count",
-    ok: broken.length === 0,
-    detail: broken.length === 0 ? "all expected symlink targets are symlinks" : broken.map((entry) => entry.targetDisplay).join(", "),
-  }
-}
-
-const checkOrphanedRepoSymlinks = (ctx: RuntimeContext): DoctorCheck => {
-  const orphaned = findOrphanedRepoSymlinks(ctx)
-  return {
-    name: "orphaned-repo-symlinks",
-    ok: orphaned.length === 0,
-    detail: orphaned.length === 0 ? "no orphaned repo-backed symlink targets" : orphaned.map((entry) => entry.targetDisplay).join(", "),
+    name: "convention-plan",
+    ok: summary.errors === 0,
+    detail: summary.errors === 0
+      ? `plan ok (${plan.entries.length} entries)`
+      : `${summary.errors} errors in dry-run deploy`,
   }
 }
 
@@ -104,15 +67,10 @@ const checkBrewBundle = (ctx: RuntimeContext): DoctorCheck => {
 
 export const runDoctor = async (ctx: RuntimeContext): Promise<{ readonly ok: boolean; readonly output: string }> => {
   const checks: DoctorCheck[] = [
-    checkPrerequisite("chezmoi"),
     checkPrerequisite("bun"),
     checkPrerequisite("just"),
-    checkPrerequisite("dprint"),
-    checkChezMoiDryRun(ctx),
-    checkManifest(ctx),
-    checkTrueDirAudit(ctx),
-    checkBrokenSymlinks(ctx),
-    checkOrphanedRepoSymlinks(ctx),
+    checkPrerequisite("age"),
+    checkConventionDryRun(ctx),
     checkLaunchd(ctx),
     checkBrewBundle(ctx),
   ]

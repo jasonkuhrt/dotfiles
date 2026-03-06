@@ -11,23 +11,5 @@
   "heal": {
     "label": "com.jasonkuhrt.chezmoi-symlink-heal",
     "intervalSeconds": 300
-  },
-  "trueDirs": [
-    { "targetRel": ".bookmarks", "repoRel": "home/.bookmarks" },
-    { "targetRel": ".config/bat", "repoRel": "home/.config/bat" },
-    { "targetRel": ".config/direnv", "repoRel": "home/.config/direnv" },
-    { "targetRel": ".config/dprint", "repoRel": "home/.config/dprint" },
-    { "targetRel": ".config/ghostty", "repoRel": "home/.config/ghostty" },
-    { "targetRel": ".config/git", "repoRel": "home/.config/git" },
-    { "targetRel": ".config/lazygit", "repoRel": "home/.config/lazygit" },
-    { "targetRel": ".config/libra", "repoRel": "home/.config/libra" },
-    { "targetRel": ".config/lsd", "repoRel": "home/.config/lsd" },
-    { "targetRel": ".config/nvim", "repoRel": "home/.config/nvim" },
-    { "targetRel": ".config/perles", "repoRel": "home/.config/perles" },
-    { "targetRel": ".config/ripgrep", "repoRel": "home/.config/ripgrep" },
-    { "targetRel": ".claude/checks", "repoRel": "home/.claude/checks" },
-    { "targetRel": ".claude/commands", "repoRel": "home/.claude/commands" },
-    { "targetRel": ".claude/rules", "repoRel": "home/.claude/rules" },
-    { "targetRel": ".claude/schemas", "repoRel": "home/.claude/schemas" }
-  ]
+  }
 }

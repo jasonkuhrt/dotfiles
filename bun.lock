@@ -5,7 +5,6 @@
     "": {
       "name": "dotfiles",
       "dependencies": {
-        "dotctl": "git+ssh://git@github.com/jasonkuhrt/dotctl.git",
         "yaml": "^2.8.2",
       },
     },
@@ -176,8 +175,6 @@
     "detect-libc": ["detect-libc@2.1.2", "", {}, "sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ=="],
 
     "devlop": ["devlop@1.1.0", "", { "dependencies": { "dequal": "^2.0.0" } }, "sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA=="],
-
-    "dotctl": ["@jasonkuhrt/dotctl@git+ssh://git@github.com/jasonkuhrt/dotctl.git#0dbaad3448d60b61bd00533dfbac8f165eff7eb6", { "bin": { "dotctl": "./src/bin/dotctl.ts" } }, "0dbaad3448d60b61bd00533dfbac8f165eff7eb6"],
 
     "effect": ["effect@3.19.15", "", { "dependencies": { "@standard-schema/spec": "^1.0.0", "fast-check": "^3.23.1" } }, "sha512-vzMmgfZKLcojmUjBdlQx+uaKryO7yULlRxjpDnHdnvcp1NPHxJyoM6IOXBLlzz2I/uPtZpGKavt5hBv7IvGZkA=="],
 

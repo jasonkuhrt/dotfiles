@@ -3,11 +3,9 @@
   "private": true,
   "workspaces": ["packages/*"],
   "scripts": {
-    "dotctl": "DOTFILES_REPO_ROOT=$PWD bun node_modules/dotctl/src/bin/dotctl.ts",
     "shan": "bun packages/shan/src/bin/shan.ts"
   },
   "dependencies": {
-    "dotctl": "git+ssh://git@github.com/jasonkuhrt/dotctl.git",
     "yaml": "^2.8.2"
   }
 }

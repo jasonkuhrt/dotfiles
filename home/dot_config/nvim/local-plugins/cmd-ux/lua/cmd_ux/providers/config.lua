@@ -4,6 +4,15 @@ local M = {
   id = "config",
 }
 
+---@class ConfigEntry
+---@field module string
+---@field path string
+
+---@class ConfigReloadPlan
+---@field reloadable_modules string[]
+---@field skipped_paths string[]
+---@field restart_required_paths string[]
+
 local config_dir = vim.fn.stdpath("config") .. "/lua/config"
 
 local non_reloadable_paths = {
@@ -14,6 +23,7 @@ local always_restart_required_paths = {
   "init.lua",
 }
 
+---@return ConfigEntry[]?, string?
 local function discover_config_entries()
   local ok, names = pcall(vim.fn.readdir, config_dir)
   if not ok then
@@ -38,6 +48,7 @@ local function discover_config_entries()
   return entries
 end
 
+---@return ConfigReloadPlan?, string?
 local function build_reload_plan()
   local entries, err = discover_config_entries()
   if not entries then
@@ -68,12 +79,15 @@ local function build_reload_plan()
   }
 end
 
+---@param lines string[]
+---@param items string[]
 local function append_bullets(lines, items)
   for _, item in ipairs(items) do
     lines[#lines + 1] = "- " .. item
   end
 end
 
+---@return string[]
 local function help_lines()
   local lines = {
     "Config commands:",
@@ -113,13 +127,16 @@ local function help_lines()
   return lines
 end
 
+---@param modules string[]
 local function clear_modules(modules)
   for _, module in ipairs(modules) do
     package.loaded[module] = nil
   end
 end
 
+---@param prefix string
 local function clear_package_prefix(prefix)
+  ---@type string[]
   local modules = {}
   local escaped = "^" .. vim.pesc(prefix) .. "%."
 
@@ -133,6 +150,7 @@ local function clear_package_prefix(prefix)
   clear_modules(modules)
 end
 
+---@return boolean, unknown?
 local function reload_cmd_ux()
   clear_package_prefix("cmd_ux")
 
@@ -355,4 +373,13 @@ function M.execute(args)
   node.execute()
 end
 
-return types.provider(M)
+---@type ProviderSpec
+local provider = {
+  id = M.id,
+  describe_root = M.describe_root,
+  resolve = M.resolve,
+  complete = M.complete,
+  execute = M.execute,
+}
+
+return types.provider(provider)

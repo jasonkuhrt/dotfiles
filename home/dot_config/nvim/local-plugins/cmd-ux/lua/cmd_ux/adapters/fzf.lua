@@ -3,17 +3,35 @@ local util = require("cmd_ux.util")
 
 local M = {}
 
+---@class CmdUxFzfSession
+---@field prefix string
+---@field pending string
+---@field trailing_space boolean
 M.session = {
   prefix = "",
   pending = "",
   trailing_space = false,
 }
 
+---@class CmdUxFzfPickerItem
+---@field text string
+---@field token string
+---@field label string
+---@field desc string
+---@field kind CommandKind
+---@field executable boolean
+---@field requires_more boolean
+---@field next_state ResolutionState?
+
+---@class CmdUxFzfStateCache
+---@field line string?
+---@field state ResolutionState?
 local state_cache = {
   line = nil,
   state = nil,
 }
 
+---@return string
 local function render_session()
   return util.render_line(M.session)
 end
@@ -41,15 +59,18 @@ local function set_session_from_line(line)
   M.session.trailing_space = state.trailing_space == true
 end
 
+---@return ResolutionState
 local function current_state()
   local line = render_session()
   if state_cache.line ~= line or not state_cache.state then
     state_cache.line = line
     state_cache.state = core.resolve_line(line)
   end
-  return state_cache.state
+  return assert(state_cache.state, "cmd_ux.fzf: state cache missing")
 end
 
+---@param item? CmdUxFzfPickerItem
+---@return ResolutionState
 local function item_state(item)
   if not item then
     return current_state()
@@ -58,13 +79,14 @@ local function item_state(item)
     return item.next_state
   end
   item.next_state = core.accept_token(current_state(), item.token)
-  return item.next_state
+  return assert(item.next_state, "cmd_ux.fzf: next state missing")
 end
 
+---@return CmdUxFzfPickerItem[]
 local function current_items()
   local state = current_state()
   local items = {}
-  for _, item in ipairs(state.frontier or {}) do
+  for _, item in ipairs(state.frontier) do
     items[#items + 1] = {
       text = item.text,
       token = item.token,
@@ -78,6 +100,7 @@ local function current_items()
   return items
 end
 
+---@return string
 local function current_title()
   local state = current_state()
   local label = state.root and state.rendered_display or "Commands"
@@ -94,6 +117,7 @@ local function reopen()
   end)
 end
 
+---@param item? CmdUxFzfPickerItem
 local function apply_choice(item)
   if not item then
     return
@@ -127,11 +151,17 @@ local function apply_choice(item)
   reopen()
 end
 
+---@param index integer
+---@param item CmdUxFzfPickerItem
+---@return string
 local function entry_for(index, item)
   local desc = item.desc ~= "" and item.desc or ""
   return table.concat({ tostring(index), item.label, desc }, "\t")
 end
 
+---@param selected string[]?
+---@param items CmdUxFzfPickerItem[]
+---@return CmdUxFzfPickerItem?
 local function item_from_selection(selected, items)
   local line = selected and selected[1] or nil
   if not line or line == "" then
@@ -141,6 +171,7 @@ local function item_from_selection(selected, items)
   return index and items[index] or nil
 end
 
+---@param opts? { line?: string }
 function M.open(opts)
   opts = opts or {}
   local ok, fzf = pcall(require, "fzf-lua")

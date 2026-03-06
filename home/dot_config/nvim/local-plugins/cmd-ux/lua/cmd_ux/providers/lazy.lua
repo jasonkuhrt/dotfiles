@@ -4,13 +4,25 @@ local M = {
   id = "lazy",
 }
 
----@return table[]
+---@class LazyCommandSpec
+---@field name string
+---@field desc? string
+---@field desc_plugin? string
+---@field plugins_required? boolean
+
+---@class LazyPluginConfig
+---@field plugins table<string, unknown>
+
+---@return LazyCommandSpec[]
 local function get_commands()
   local ok, config = pcall(require, "lazy.view.config")
   if not ok then
     return {}
   end
-  return config.get_commands()
+
+  ---@type LazyCommandSpec[]
+  local commands = config.get_commands()
+  return commands
 end
 
 ---@param prefix string
@@ -21,8 +33,10 @@ local function get_plugins(prefix)
     return {}
   end
 
+  ---@type LazyPluginConfig
+  local lazy_config = config
   local items = {}
-  for name in pairs(config.plugins) do
+  for name in pairs(lazy_config.plugins) do
     if prefix == "" or name:find("^" .. vim.pesc(prefix)) ~= nil then
       items[#items + 1] = types.frontier_item({
         token = name,
@@ -73,7 +87,7 @@ local function command_items(prefix)
 end
 
 ---@param name string
----@return table?
+---@return LazyCommandSpec?
 local function find_command(name)
   for _, command in ipairs(get_commands()) do
     if command.name == name then
@@ -135,8 +149,10 @@ function M.resolve(ctx)
   if command.plugins_required then
     local ok, config = pcall(require, "lazy.core.config")
     if ok then
+      ---@type LazyPluginConfig
+      local lazy_config = config
       for _, plugin in ipairs(plugin_args) do
-        if not config.plugins[plugin] then
+        if not lazy_config.plugins[plugin] then
           all_plugins_valid = false
           break
         end
@@ -175,4 +191,11 @@ function M.resolve(ctx)
   })
 end
 
-return types.provider(M)
+---@type ProviderSpec
+local provider = {
+  id = M.id,
+  describe_root = M.describe_root,
+  resolve = M.resolve,
+}
+
+return types.provider(provider)

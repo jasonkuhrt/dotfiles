@@ -4,9 +4,19 @@ local types = require("cmd_ux.types")
 local M = {
   id = "generic",
 }
+
+---@class GenericCommandSummary
+---@field root string
+---@field user_command table?
+---@field parsed table?
+---@field completion_type string
+---@field desc string
+
+---@type table<string, GenericCommandSummary>
 local summary_cache = {}
 
 ---@param root string
+---@return GenericCommandSummary
 local function command_summary(root)
   if summary_cache[root] then
     return summary_cache[root]
@@ -16,6 +26,7 @@ local function command_summary(root)
   local parsed = util.parse_command(root)
   local completion_type = util.get_completion_type(root .. " ")
 
+  ---@type GenericCommandSummary
   local summary = {
     root = root,
     user_command = user_command,
@@ -189,4 +200,11 @@ function M.resolve(ctx)
   })
 end
 
-return types.provider(M)
+---@type ProviderSpec
+local provider = {
+  id = M.id,
+  describe_root = M.describe_root,
+  resolve = M.resolve,
+}
+
+return types.provider(provider)

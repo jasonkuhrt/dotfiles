@@ -4,7 +4,47 @@ local util = require("cmd_ux.util")
 
 local M = {}
 
+---@alias CmdUxIntent
+---| "enter"
+---| "tab"
+---| "space"
+
+---@alias CmdUxActionType
+---| "fallback"
+---| "noop"
+---| "refuse"
+---| "set"
+---| "advance"
+---| "execute"
+
+---@class ParsedCommandLine
+---@field raw string
+---@field blank boolean
+---@field trailing_space boolean
+---@field root_input string
+---@field tokens string[]
+
+---@class ParsedBlankLine
+---@field raw string
+---@field blank boolean
+---@field trailing_space boolean
+---@field prefix string
+---@field tokens string[]
+
+---@class ParsedUnsupportedLine
+---@field raw string
+---@field unsupported boolean
+---@field reason string
+
+---@alias ParsedLine ParsedCommandLine|ParsedBlankLine|ParsedUnsupportedLine
+
+---@class CmdUxAction
+---@field type CmdUxActionType
+---@field line? string
+---@field message? string
+
 ---@param line string
+---@return ParsedLine?
 local function parse_line(line)
   local trimmed = util.trim(line)
   if trimmed == "" then
@@ -101,7 +141,7 @@ local function build_preview(state)
   return table.concat(lines, "\n")
 end
 
----@param frontier CommandFrontierItem[]
+---@param frontier CommandFrontierItem[]?
 ---@param token string
 ---@return CommandFrontierItem?
 local function find_exact_frontier_item(frontier, token)
@@ -233,6 +273,8 @@ function M.selected_token(cmp, state)
   end
 end
 
+---@param state ResolutionState
+---@return boolean
 function M.should_intercept_space(state)
   if state.kind == "unsupported" then
     return false
@@ -253,6 +295,8 @@ function M.should_intercept_space(state)
   return false
 end
 
+---@param state ResolutionState
+---@return string
 local function with_trailing_space(state)
   local line = state.rendered
   if line ~= "" and line:sub(-1) ~= " " then
@@ -261,6 +305,9 @@ local function with_trailing_space(state)
   return line
 end
 
+---@param state ResolutionState
+---@param intent CmdUxIntent
+---@return CmdUxAction
 function M.decide_current(state, intent)
   if state.kind == "unsupported" then
     return { type = "fallback" }
@@ -306,6 +353,10 @@ function M.decide_current(state, intent)
   return { type = "fallback" }
 end
 
+---@param state ResolutionState
+---@param token string
+---@param intent CmdUxIntent
+---@return CmdUxAction
 function M.decide_choice(state, token, intent)
   local next_state = M.accept_token(state, token)
 

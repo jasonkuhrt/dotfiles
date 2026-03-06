@@ -36,6 +36,13 @@ local resolution_kinds = {
 ---@field desc string
 ---@field help string
 
+---@class CommandSlotSpec
+---@field name string
+---@field kind? string
+---@field required? boolean
+---@field desc? string
+---@field help? string
+
 ---@class CommandNode
 ---@field token string
 ---@field label string
@@ -48,8 +55,24 @@ local resolution_kinds = {
 ---@field slots CommandSlot[]
 ---@field execute? fun()
 
+---@class CommandNodeSpec
+---@field token? string
+---@field name? string
+---@field label? string
+---@field kind CommandKind
+---@field desc? string
+---@field help? string
+---@field examples? string[]|string
+---@field executable? boolean
+---@field requires_more? boolean
+---@field slots? CommandSlotSpec[]|CommandSlot[]
+---@field execute? fun()
+
 ---@class CommandFrontierItem: CommandNode
 ---@field text string
+
+---@class CommandFrontierItemSpec: CommandNodeSpec
+---@field text? string
 
 ---@class CommandSnapshot
 ---@field root string
@@ -57,6 +80,13 @@ local resolution_kinds = {
 ---@field pending string
 ---@field trailing_space boolean
 ---@field raw string
+
+---@class CommandSnapshotSpec
+---@field root string
+---@field accepted? string[]|string
+---@field pending? string
+---@field trailing_space? boolean
+---@field raw? string
 
 ---@class ResolutionState
 ---@field kind ResolutionKind
@@ -79,7 +109,56 @@ local resolution_kinds = {
 ---@field provider? string
 ---@field execute? fun()
 
+---@class ResolutionStateSpec
+---@field kind ResolutionKind
+---@field root? string
+---@field root_input? string
+---@field desc? string
+---@field help? string
+---@field examples? string[]|string
+---@field executable? boolean
+---@field requires_more? boolean
+---@field refusal_reason? string
+---@field frontier? CommandFrontierItemSpec[]|CommandFrontierItem[]
+---@field accepted? string[]|string
+---@field pending? string
+---@field trailing_space? boolean
+---@field raw? string
+---@field rendered? string
+---@field rendered_display? string
+---@field current_label? string
+---@field provider? string
+---@field execute? fun()
+
+---@class ResolutionStatePatch
+---@field kind? ResolutionKind
+---@field root? string
+---@field root_input? string
+---@field desc? string
+---@field help? string
+---@field examples? string[]|string
+---@field executable? boolean
+---@field requires_more? boolean
+---@field refusal_reason? string
+---@field frontier? CommandFrontierItemSpec[]|CommandFrontierItem[]
+---@field accepted? string[]|string
+---@field pending? string
+---@field trailing_space? boolean
+---@field raw? string
+---@field rendered? string
+---@field rendered_display? string
+---@field current_label? string
+---@field provider? string
+---@field execute? fun()
+
 ---@class Provider
+---@field id string
+---@field describe_root fun(root: string): CommandNode
+---@field resolve fun(ctx: CommandSnapshot): ResolutionState
+---@field complete? fun(line: string): string[]
+---@field execute? fun(args: string)
+
+---@class ProviderSpec
 ---@field id string
 ---@field describe_root fun(root: string): CommandNode
 ---@field resolve fun(ctx: CommandSnapshot): ResolutionState
@@ -152,7 +231,7 @@ local function normalize_kind(kind, allowed, field)
   return kind
 end
 
----@param spec table
+---@param spec CommandSlotSpec|CommandSlot
 ---@return CommandSlot
 function M.slot(spec)
   if type(spec) ~= "table" then
@@ -173,7 +252,7 @@ function M.slot(spec)
   }
 end
 
----@param slots unknown
+---@param slots CommandSlotSpec[]|CommandSlot[]?
 ---@return CommandSlot[]
 local function normalize_slots(slots)
   if slots == nil then
@@ -192,7 +271,7 @@ local function normalize_slots(slots)
   return result
 end
 
----@param spec table
+---@param spec CommandNodeSpec|CommandNode
 ---@return CommandNode
 function M.node(spec)
   if type(spec) ~= "table" then
@@ -220,7 +299,7 @@ function M.node(spec)
   }
 end
 
----@param spec table
+---@param spec CommandNodeSpec|CommandNode|CommandFrontierItemSpec|CommandFrontierItem
 ---@return CommandFrontierItem
 function M.frontier_item(spec)
   local item = M.node(spec)
@@ -230,7 +309,7 @@ function M.frontier_item(spec)
   return item
 end
 
----@param items unknown
+---@param items CommandFrontierItemSpec[]|CommandFrontierItem[]?
 ---@return CommandFrontierItem[]
 local function normalize_frontier(items)
   if items == nil then
@@ -249,7 +328,7 @@ local function normalize_frontier(items)
   return result
 end
 
----@param spec table
+---@param spec CommandSnapshotSpec|CommandSnapshot
 ---@return CommandSnapshot
 function M.snapshot(spec)
   if type(spec) ~= "table" then
@@ -275,7 +354,7 @@ function M.snapshot(spec)
   }
 end
 
----@param spec table
+---@param spec ResolutionStateSpec|ResolutionState
 ---@return ResolutionState
 function M.state(spec)
   if type(spec) ~= "table" then
@@ -307,13 +386,14 @@ function M.state(spec)
   }
 end
 
----@param node CommandNode|table
----@param spec? table
+---@param node CommandNodeSpec|CommandNode
+---@param spec? ResolutionStatePatch
 ---@return ResolutionState
 function M.state_from_node(node, spec)
   local normalized = M.node(node)
   spec = spec or {}
 
+  ---@type ResolutionStateSpec
   local next_state = {
     kind = spec.kind or normalized.kind,
     root = spec.root,
@@ -347,37 +427,66 @@ function M.state_from_node(node, spec)
   return M.state(next_state)
 end
 
----@param spec? table
+---@param spec? ResolutionStatePatch
 ---@return ResolutionState
 function M.root_state(spec)
   spec = spec or {}
-  spec.kind = "root"
-  if spec.desc == nil then
-    spec.desc = "Command root"
-  end
-  if spec.help == nil then
-    spec.help = "Browse commands."
-  end
-  spec.executable = false
-  spec.requires_more = false
-  return M.state(spec)
+  ---@type ResolutionStateSpec
+  local next_state = {
+    kind = "root",
+    root = spec.root,
+    root_input = spec.root_input,
+    desc = spec.desc or "Command root",
+    help = spec.help or "Browse commands.",
+    examples = spec.examples,
+    executable = false,
+    requires_more = false,
+    refusal_reason = spec.refusal_reason,
+    frontier = spec.frontier,
+    accepted = spec.accepted,
+    pending = spec.pending,
+    trailing_space = spec.trailing_space,
+    raw = spec.raw,
+    rendered = spec.rendered,
+    rendered_display = spec.rendered_display,
+    current_label = spec.current_label,
+    provider = spec.provider,
+    execute = spec.execute,
+  }
+  return M.state(next_state)
 end
 
 ---@param reason string
----@param spec? table
+---@param spec? ResolutionStatePatch
 ---@return ResolutionState
 function M.unsupported_state(reason, spec)
   spec = spec or {}
-  spec.kind = "unsupported"
-  spec.desc = spec.desc or reason
-  spec.help = spec.help or reason
-  spec.executable = false
-  spec.requires_more = false
-  spec.refusal_reason = spec.refusal_reason or reason
-  return M.state(spec)
+  ---@type ResolutionStateSpec
+  local next_state = {
+    kind = "unsupported",
+    root = spec.root,
+    root_input = spec.root_input,
+    desc = spec.desc or reason,
+    help = spec.help or reason,
+    examples = spec.examples,
+    executable = false,
+    requires_more = false,
+    refusal_reason = spec.refusal_reason or reason,
+    frontier = spec.frontier,
+    accepted = spec.accepted,
+    pending = spec.pending,
+    trailing_space = spec.trailing_space,
+    raw = spec.raw,
+    rendered = spec.rendered,
+    rendered_display = spec.rendered_display,
+    current_label = spec.current_label,
+    provider = spec.provider,
+    execute = spec.execute,
+  }
+  return M.state(next_state)
 end
 
----@param state ResolutionState|table
+---@param state ResolutionStateSpec|ResolutionState
 ---@return ResolutionState
 function M.finalize_state(state)
   local normalized = M.state(state)
@@ -397,7 +506,7 @@ function M.finalize_state(state)
   return normalized
 end
 
----@param provider Provider|table
+---@param provider ProviderSpec|Provider
 ---@return Provider
 function M.provider(provider)
   if type(provider) ~= "table" then
@@ -418,7 +527,7 @@ function M.provider(provider)
   return provider
 end
 
----@param state ResolutionState|table
+---@param state ResolutionStateSpec|ResolutionState
 ---@param provider_id string
 ---@return ResolutionState
 function M.attach_provider(state, provider_id)

@@ -1,4 +1,4 @@
-import { existsSync, lstatSync } from "node:fs"
+import { existsSync } from "node:fs"
 
 import type { RuntimeContext } from "./env.js"
 import { readJsonFile } from "./json.js"
@@ -6,6 +6,7 @@ import { getLaunchdStatus } from "./launchd.js"
 import { resolveManifest } from "./manifest.js"
 import type { HealSummary, CaptureRecord } from "./heal.js"
 import { runCommand } from "./shell.js"
+import { findBrokenTargetEntries, findOrphanedRepoSymlinks } from "./stale.js"
 
 interface RepoStatusSummary {
   readonly tracked: number
@@ -19,17 +20,6 @@ const readCaptures = (ctx: RuntimeContext): readonly CaptureRecord[] =>
   existsSync(ctx.capturesPath)
     ? readJsonFile<{ readonly entries: readonly CaptureRecord[] }>(ctx.capturesPath).entries
     : []
-
-const countBrokenSymlinks = (ctx: RuntimeContext): number =>
-  resolveManifest(ctx).fileEntries
-    .filter((entry) => entry.expectedShape === "symlinkFile")
-    .filter((entry) => {
-      try {
-        return !lstatSync(entry.targetAbs).isSymbolicLink()
-      } catch {
-        return true
-      }
-    }).length
 
 const repoStatusSummary = (ctx: RuntimeContext): RepoStatusSummary => {
   const output = runCommand(["git", "status", "--porcelain"], { cwd: ctx.repoRoot }).stdout
@@ -65,7 +55,8 @@ export const renderStatus = (ctx: RuntimeContext): string => {
   const captures = readCaptures(ctx)
   const pending = pendingCaptureReviews(ctx, captures)
   const repo = repoStatusSummary(ctx)
-  const brokenCount = countBrokenSymlinks(ctx)
+  const brokenCount = findBrokenTargetEntries(manifest).length
+  const orphanedSymlinks = findOrphanedRepoSymlinks(ctx)
 
   const lines = [
     "dotfiles status",
@@ -75,7 +66,8 @@ export const renderStatus = (ctx: RuntimeContext): string => {
       ? `heal: last=${health.lastRunAt} scanned=${health.scanned} healed=${health.healed} broken=${health.broken} errors=${health.errors}`
       : "heal: no recorded runs",
     `pending captured review: ${pending.length}`,
-    `broken symlink targets: ${brokenCount}`,
+    `broken managed symlink targets: ${brokenCount}`,
+    `orphaned repo symlink targets: ${orphanedSymlinks.length}`,
     `repo dirty: tracked=${repo.tracked} untracked=${repo.untracked}`,
   ]
 
@@ -83,6 +75,13 @@ export const renderStatus = (ctx: RuntimeContext): string => {
     lines.push("pending capture paths:")
     for (const entry of pending.slice(-5)) {
       lines.push(`  - ${entry.targetDisplay} -> ${entry.sourceRel ?? entry.sourceAbs}`)
+    }
+  }
+
+  if (orphanedSymlinks.length > 0) {
+    lines.push("orphaned repo symlink paths:")
+    for (const entry of orphanedSymlinks.slice(-5)) {
+      lines.push(`  - ${entry.targetDisplay} -> ${entry.sourceAbs}`)
     }
   }
 

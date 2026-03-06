@@ -1,4 +1,4 @@
-import { existsSync, lstatSync } from "node:fs"
+import { existsSync } from "node:fs"
 import path from "node:path"
 
 import { auditTrueDirRoots } from "./true-dir.js"
@@ -7,6 +7,7 @@ import { getLaunchdStatus } from "./launchd.js"
 import { resolveManifest, validateManifest } from "./manifest.js"
 import { runCommand } from "./shell.js"
 import { runChezMoi } from "./chezmoi.js"
+import { findBrokenTargetEntries, findEntriesWithMissingSources, findOrphanedRepoSymlinks } from "./stale.js"
 
 interface DoctorCheck {
   readonly name: string
@@ -38,10 +39,17 @@ const checkChezMoiDryRun = (ctx: RuntimeContext): DoctorCheck => {
 const checkManifest = (ctx: RuntimeContext): DoctorCheck => {
   const manifest = resolveManifest(ctx)
   const issues = validateManifest(ctx, manifest)
+  const missingSourceEntries = findEntriesWithMissingSources(manifest)
   return {
     name: "manifest",
-    ok: issues.length === 0,
-    detail: issues.length === 0 ? `manifest ok (${manifest.fileEntries.length} files)` : issues.join("; "),
+    ok: issues.length === 0 && missingSourceEntries.length === 0,
+    detail:
+      issues.length === 0 && missingSourceEntries.length === 0
+        ? `manifest ok (${manifest.fileEntries.length} files)`
+        : [
+            ...issues,
+            ...missingSourceEntries.map((entry) => `missing source for ${entry.targetDisplay}`),
+          ].join("; "),
   }
 }
 
@@ -56,17 +64,20 @@ const checkTrueDirAudit = (ctx: RuntimeContext): DoctorCheck => {
 
 const checkBrokenSymlinks = (ctx: RuntimeContext): DoctorCheck => {
   const manifest = resolveManifest(ctx)
-  const broken = manifest.fileEntries.filter((entry) => entry.expectedShape === "symlinkFile").filter((entry) => {
-    try {
-      return !lstatSync(entry.targetAbs).isSymbolicLink()
-    } catch {
-      return true
-    }
-  })
+  const broken = findBrokenTargetEntries(manifest)
   return {
     name: "broken-symlink-count",
     ok: broken.length === 0,
     detail: broken.length === 0 ? "all expected symlink targets are symlinks" : broken.map((entry) => entry.targetDisplay).join(", "),
+  }
+}
+
+const checkOrphanedRepoSymlinks = (ctx: RuntimeContext): DoctorCheck => {
+  const orphaned = findOrphanedRepoSymlinks(ctx)
+  return {
+    name: "orphaned-repo-symlinks",
+    ok: orphaned.length === 0,
+    detail: orphaned.length === 0 ? "no orphaned repo-backed symlink targets" : orphaned.map((entry) => entry.targetDisplay).join(", "),
   }
 }
 
@@ -101,6 +112,7 @@ export const runDoctor = async (ctx: RuntimeContext): Promise<{ readonly ok: boo
     checkManifest(ctx),
     checkTrueDirAudit(ctx),
     checkBrokenSymlinks(ctx),
+    checkOrphanedRepoSymlinks(ctx),
     checkLaunchd(ctx),
     checkBrewBundle(ctx),
   ]

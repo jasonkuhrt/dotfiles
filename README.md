@@ -11,13 +11,21 @@ chezmoi apply
 # Complete manual steps: docs/manual-setup.md
 ```
 
-After bootstrap, `just` is the primary interface. Run `just` for all recipes, `just sync` for the daily driver.
+After bootstrap, `just` is the primary interface.
+After bootstrap, the public interface is:
+
+```sh
+just up
+just edit ~/.config/ghostty/config
+```
 
 ## How to Think About This Repo
 
 chezmoi is a tool that copies files from a source directory into your home directory. This repo's source directory is `home/`. A file at `home/.chezmoiroot` tells chezmoi that, so the repo root can hold non-deployed things like docs and the justfile without them ending up in `$HOME`.
 
 Inside `home/`, files are named with prefixes that tell chezmoi how to deploy them. `dot_gitconfig` becomes `~/.gitconfig`. `private_dot_ssh/config` becomes `~/.ssh/config` with mode 0700. `encrypted_credentials.age` gets decrypted with [age](https://github.com/FiloSottile/age) on deploy. Prefixes compose: `private_dot_aws/encrypted_credentials.age` becomes `~/.aws/credentials` in a private directory, decrypted from age. The full prefix vocabulary is `dot_`, `private_`, `exact_`, `encrypted_`, `executable_`, `symlink_`, and `empty_` — once you know these, you can read the whole repo at a glance. Details in [how-it-works.md](docs/how-it-works.md).
+
+Some pure config directories now live under `symlink-roots/` and are exposed into `$HOME` as whole-directory symlinks. That means new files inside those dirs are instant on both sides and git, not chezmoi child-file metadata, is the source of truth there.
 
 That covers config files. But managing a system also means installing packages, setting macOS defaults, configuring the Dock — things that aren't files. That's what lifecycle scripts handle.
 
@@ -42,12 +50,12 @@ Why put them in `home/` at all? Because of the hash-trigger pattern above. chezm
 ## Daily Workflow
 
 ```sh
-just edit ~/.config/fish/config.fish   # opens the source file in $EDITOR
-just diff                              # preview what would change
-just sync                              # commit + pull + push + apply
+git pull --rebase
+just up
+just edit ~/.config/ghostty/config
 ```
 
-When external tools modify files chezmoi manages (Fisher updating `fish_plugins`, Lazy.nvim updating `lazy-lock.json`), capture those changes back with `just re-add <file>`. Use `just verify` to check for drift.
+`just up` is convergent: it performs the one-time symlink cutover on a machine, ensures the launchd healer is loaded, repairs broken file symlinks, and reapplies chezmoi in symlink mode. Re-running it is safe.
 
 ## Secrets
 
@@ -60,6 +68,8 @@ Global CC config lives in `home/dot_claude/` and deploys to `~/.claude/`. Subdir
 Project-local CC config for this repo lives in `.claude/` at the repo root, managed by git, invisible to chezmoi.
 
 `~/.claude/settings.json` is not managed by chezmoi — both tools use atomic writes (temp file + rename), so they'd destroy each other's files. CC owns it at runtime.
+
+The pure `~/.claude/checks`, `~/.claude/commands`, `~/.claude/rules`, and `~/.claude/schemas` trees are now repo-backed directory symlinks. `just edit` understands that split so you do not need to care which lane a target lives in.
 
 ## Further Reading
 

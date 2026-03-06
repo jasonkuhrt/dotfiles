@@ -10,6 +10,8 @@ The repo root contains project files (justfile, docs, packages). The actual dotf
 dotfiles/                     # git repo root
 ├── .chezmoiroot              # contains "home"
 ├── justfile                  # wraps chezmoi commands
+├── symlink-roots/            # repo-backed directories exposed as whole-dir symlinks
+├── scripts/chezmoi/          # local converge/heal/edit runtime
 ├── sync-sudo                 # manual sudo ops
 ├── docs/, packages/, .beads/ # project files
 │
@@ -21,6 +23,7 @@ dotfiles/                     # git repo root
     │
     ├── dot_claude/           # → ~/.claude/
     ├── dot_config/           # → ~/.config/
+    ├── Library/              # → ~/Library/
     ├── dot_gitconfig         # → ~/.gitconfig
     ├── dot_npmrc             # → ~/.npmrc
     ├── private_dot_ssh/      # → ~/.ssh/ (mode 0700)
@@ -115,40 +118,23 @@ Secrets use age encryption (built into chezmoi). Encrypted files have the `encry
 ## Drift Detection
 
 ```bash
-just verify      # check for drift (exits non-zero if any)
-just diff        # preview what apply would change
-just re-add      # capture external changes back to source
+just up          # converge local machine to repo state
+just edit <file> # open the right backing file
 ```
 
-Use `just re-add <file>` when external tools modify managed files (e.g., Fisher updates `fish_plugins`, Lazy.nvim updates `lazy-lock.json`).
+The launchd healer covers the file-symlink lane automatically. For true-dir symlink roots, git is the source of truth and child files are live repo files.
 
 ## Commands
 
 Run `just` from the repo root to see all available recipes. The key ones:
 
 ```bash
-# Core workflow
-just sync           # commit + pull + push + apply (daily driver)
-just apply          # apply without git sync
-just diff           # preview changes
-
-# Inspection
-just doctor         # system health check
-just verify         # detect drift
-just managed        # list all managed files
-just unmanaged      # find unmanaged files in ~/.config
-
-# Editing
+git pull --rebase   # fetch repo changes
+just up             # converge this machine
 just edit <target>  # edit source by target path
-just re-add <file>  # capture external changes
-
-# Brew
-just brew           # run brew bundle
-just brew-check     # show what's missing
-just brew-cleanup   # remove unlisted packages
 ```
 
-For operations beyond what the justfile wraps, use `chezmoi` directly — see `chezmoi --help`.
+Everything else in the `justfile` is private compatibility or advanced maintenance. For direct low-level operations, use `chezmoi` itself.
 
 ## Notes
 
@@ -156,3 +142,4 @@ For operations beyond what the justfile wraps, use `chezmoi` directly — see `c
 - **Keyboard settings** — chezmoi sets fast key repeat via `defaults`, but requires logout/login to take effect
 - **CC settings.json** — NOT managed by chezmoi (both use atomic writes, creating a race condition). CC owns this file at runtime.
 - **Sudo operations** — remain manual via `sudo ./sync-sudo` (power management, Touch ID, Fish default shell)
+- **Repo-backed true-dir roots** — child files inside these dirs are not individually managed by chezmoi. `just edit` resolves that split for you.

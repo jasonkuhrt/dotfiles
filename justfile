@@ -1,49 +1,35 @@
 set quiet
 
-# ─────────────────────────────────────────────────────────
-# Dotfiles command runner
-# ─────────────────────────────────────────────────────────
-
-# List available recipes
+[private]
 default:
     just --list
 
-# ─────────────────────────────────────────────────────────
-# Core workflow
-# ─────────────────────────────────────────────────────────
+up:
+    ./scripts/chezmoi/up.sh
 
-# Full sync: commit, pull, push, apply
+edit target:
+    ./scripts/chezmoi/edit.sh {{ target }}
+
+[private]
 sync:
     #!/usr/bin/env bash
-    set -e
-    if [ -n "$(git status --porcelain)" ]; then
-        echo "── Committing changes ──"
-        git add -A
-        git commit -v
-    fi
-    echo "── Git sync ──"
-    git pull --rebase
-    git push
-    echo "── Applying dotfiles ──"
-    chezmoi apply -v
+    set -euo pipefail
+    printf 'Use `git pull --rebase` and then `just up`.\n' >&2
+    exit 1
 
-# Apply dotfiles (preview with --dry-run)
+[private]
 apply *args:
-    chezmoi apply -v {{ args }}
+    chezmoi apply --mode symlink -v {{ args }}
 
-# Preview changes without applying
+[private]
 diff:
     chezmoi diff
 
-# ─────────────────────────────────────────────────────────
-# Inspection
-# ─────────────────────────────────────────────────────────
-
-# Check system health
+[private]
 doctor:
     chezmoi doctor
 
-# QA Fn toggle + Wispr Flow hotkey integration (macOS)
+[private]
 fn-wispr-qa:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -167,78 +153,58 @@ fn-wispr-qa:
 
     printf "\nResult: PASS\n"
 
-# Detect drift between source and target
+[private]
 verify:
     chezmoi verify
 
-# List all managed files
+[private]
 managed:
     chezmoi managed
 
-# Find files in ~/.config NOT managed by chezmoi
+[private]
 unmanaged:
     chezmoi unmanaged --path-style=absolute ~/.config
 
-# ─────────────────────────────────────────────────────────
-# Editing
-# ─────────────────────────────────────────────────────────
-
-# Edit a config's source file by its target path
-edit target:
-    chezmoi edit {{ target }}
-
-# Capture external changes back to source (e.g. after Fisher modifies fish_plugins)
+[private]
 re-add *args:
     chezmoi re-add {{ args }}
 
-# Update from remote + apply
+[private]
 update:
     chezmoi update
 
-# ─────────────────────────────────────────────────────────
-# Brew
-# ─────────────────────────────────────────────────────────
-
-# Install/update Homebrew packages from Brewfile
+[private]
 brew:
     brew bundle --file=$(chezmoi source-path)/Brewfile
 
-# Show what's missing from Brewfile
+[private]
 brew-check:
     brew bundle check --file=$(chezmoi source-path)/Brewfile --verbose || true
 
-# Clean up packages not in Brewfile
+[private]
 brew-cleanup:
     brew bundle cleanup --file=$(chezmoi source-path)/Brewfile
 
-# ─────────────────────────────────────────────────────────
-# Go tools (no Homebrew tap available)
-# ─────────────────────────────────────────────────────────
-
-# Install/update lazybeads TUI for beads
+[private]
 install-lazybeads:
     cd /tmp && rm -rf lazybeads && git clone --depth 1 https://github.com/codegangsta/lazybeads.git && cd lazybeads && go install .
 
-# ─────────────────────────────────────────────────────────
-# Shan (Claude Code tooling)
-# ─────────────────────────────────────────────────────────
-
-# Show shan help
+[private]
 shan:
     bun packages/shan/src/bin/shan.ts
 
-# Dump session transcript as Markdown
+[private]
 transcript-dump *args:
     bun packages/shan/src/bin/shan.ts transcript dump {{ args }}
 
-# Analyze session context consumption
+[private]
 transcript-analyze *args:
     bun packages/shan/src/bin/shan.ts transcript analyze {{ args }}
 
-# Dump task list as JSON (or --md for Markdown)
+[private]
 task-dump *args:
     bun packages/shan/src/bin/shan.ts task dump {{ args }}
 
-# Open task list in editor
+[private]
 task-open *args:
     bun packages/shan/src/bin/shan.ts task open {{ args }}

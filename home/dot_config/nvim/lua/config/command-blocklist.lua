@@ -76,4 +76,8 @@ function M.is_blocked(name)
   return false
 end
 
+function M.reload()
+  patterns = load()
+end
+
 return M

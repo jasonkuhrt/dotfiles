@@ -51,7 +51,8 @@
 # The loader (lua/config/command-blocklist.lua) reads this
 # file line by line, extracting quoted strings after "- ".
 # Comments and blank lines are ignored. The patterns are
-# cached for the session — restart nvim to pick up changes.
+# cached for the session — run :Config reload (or restart)
+# to pick up changes.
 #
 # Snacks picker: transform() returns false for blocked items
 # blink.cmp:    transform_items() filters the CompletionItem[]
@@ -67,7 +68,6 @@
 - "^Sexplore$"
 - "^Texplore$"
 - "^Vexplore$"
-- "^Netrw"
 - "^NetUserPass$"
 - "^Nread$"
 - "^Nsource$"
@@ -80,7 +80,6 @@
 - "^Match%u"
 
 # ── Plenary test harness (dev-only) ─────────────────────
-- "^Plenary"
 
 # ── SmartSplits (bound to keys, never invoked by name) ──
 - "^Smart%u"
@@ -89,7 +88,6 @@
 - "^TS%u"
 
 # ── Telescope (use Snacks picker instead) ────────────────
-- "^Telescope$"
 - "^TodoTelescope$"
 
 # ── DAP install/uninstall (use :Mason instead) ──────────

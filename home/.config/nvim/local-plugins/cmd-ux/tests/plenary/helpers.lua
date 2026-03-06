@@ -85,6 +85,46 @@ function M.create_trailing_space_structured_command(name)
   })
 end
 
+function M.create_repeatable_named_enum_command(name)
+  M.drop_user_command(name)
+  vim.api.nvim_create_user_command(name, function() end, {
+    nargs = "+",
+    desc = "Repeatable named-enum command for cmd-ux tests",
+    complete = function(arglead)
+      local items = { "alpha", "beta", "gamma", "delta" }
+      return vim.tbl_filter(function(item)
+        return item:find("^" .. vim.pesc(arglead)) ~= nil
+      end, items)
+    end,
+  })
+end
+
+function M.create_prefix_family_command(name)
+  M.drop_user_command(name)
+  vim.api.nvim_create_user_command(name, function() end, {
+    nargs = "?",
+    desc = "Prefix-family subcommand tree for cmd-ux tests",
+    complete = function(arglead, line, _)
+      local rest = line:match("^" .. vim.pesc(name) .. "%s*(.*)$") or ""
+      local trailing_space = rest:match("%s$") ~= nil
+      local tokens = strings.split_words(rest)
+
+      local items = {}
+      if #tokens == 0 or (#tokens == 1 and not trailing_space) then
+        items = { "copy", "copy-dir-path", "copy-name", "copy-path", "copy-path-relative", "delete" }
+      elseif tokens[1] == "copy" and (#tokens == 1 or (#tokens == 2 and not trailing_space)) then
+        items = { "copy", "copy-dir-path", "copy-name", "copy-path", "copy-path-relative" }
+      elseif tokens[1] == "copy-path" and (#tokens == 1 or (#tokens == 2 and not trailing_space)) then
+        items = { "copy-path", "copy-path-relative" }
+      end
+
+      return vim.tbl_filter(function(item)
+        return item:find("^" .. vim.pesc(arglead)) ~= nil
+      end, items)
+    end,
+  })
+end
+
 function M.create_enum_choice_command(name)
   M.drop_user_command(name)
   vim.api.nvim_create_user_command(name, function() end, {

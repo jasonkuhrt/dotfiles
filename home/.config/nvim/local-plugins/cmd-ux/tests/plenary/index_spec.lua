@@ -41,6 +41,8 @@ describe("cmd_ux index cache", function()
     helpers.drop_user_command("RegisteredVisibleCmd")
     helpers.drop_user_command("StructuredVisibleCmd")
     helpers.drop_user_command("OptionalVisibleCmd")
+    helpers.drop_user_command("RepeatEnumVisibleCmd")
+    helpers.drop_user_command("PrefixFamilyVisibleCmd")
     providers.by_root.RegisteredVisibleCmd = nil
     helpers.sync_cmd_ux()
   end)
@@ -50,6 +52,8 @@ describe("cmd_ux index cache", function()
     helpers.drop_user_command("RegisteredVisibleCmd")
     helpers.drop_user_command("StructuredVisibleCmd")
     helpers.drop_user_command("OptionalVisibleCmd")
+    helpers.drop_user_command("RepeatEnumVisibleCmd")
+    helpers.drop_user_command("PrefixFamilyVisibleCmd")
     providers.by_root.RegisteredVisibleCmd = nil
     helpers.sync_cmd_ux()
   end)
@@ -88,5 +92,15 @@ describe("cmd_ux index cache", function()
 
     assert.are.equal("namespace", payload.by_root.StructuredVisibleCmd.node.kind)
     assert.are.equal("hybrid", payload.by_root.OptionalVisibleCmd.node.kind)
+  end)
+
+  it("keeps repeatable enums generic while preserving narrowed prefix families", function()
+    helpers.create_repeatable_named_enum_command("RepeatEnumVisibleCmd")
+    helpers.create_prefix_family_command("PrefixFamilyVisibleCmd")
+
+    local payload = index.get()
+
+    assert.are.equal("leaf", payload.by_root.RepeatEnumVisibleCmd.node.kind)
+    assert.are.equal("hybrid", payload.by_root.PrefixFamilyVisibleCmd.node.kind)
   end)
 end)

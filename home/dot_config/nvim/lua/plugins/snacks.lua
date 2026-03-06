@@ -27,37 +27,11 @@ return {
             min_width = 80,
           },
         },
-        win = {
-          input = {
-            keys = {
-              [";"] = { "close", mode = { "n", "i" } },
-              [":"] = {
-                function(self)
-                  self:close()
-                  vim.schedule(function()
-                    vim.api.nvim_feedkeys(":", "n", false)
-                  end)
-                end,
-                mode = { "n", "i" },
-                desc = "Back to command line",
-              },
-            },
-          },
-        },
         sources = {
           commands = {
             transform = function(item)
               if blocklist.is_blocked(item.text) then
                 return false
-              end
-            end,
-            confirm = function(picker, item)
-              picker:close()
-              if item and item.cmd then
-                vim.schedule(function()
-                  -- Feed : + command together; "n" flag bypasses : → palette remap
-                  vim.api.nvim_feedkeys(":" .. item.cmd, "n", false)
-                end)
               end
             end,
           },

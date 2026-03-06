@@ -4,9 +4,6 @@ return {
   {
     "saghen/blink.cmp",
     opts = {
-      enabled = function()
-        return vim.bo.filetype ~= "markdown"
-      end,
       keymap = {
         ["<C-j>"] = { "select_next", "fallback" },
         ["<C-k>"] = { "select_prev", "fallback" },
@@ -14,6 +11,23 @@ return {
       completion = {
         menu = {
           border = "rounded",
+          auto_show = function()
+            return vim.bo.filetype ~= "markdown"
+          end,
+        },
+      },
+      cmdline = {
+        keymap = {
+          ["<C-j>"] = { "select_next", "fallback" },
+          ["<C-k>"] = { "select_prev", "fallback" },
+          ["<CR>"] = {
+            function(cmp) return require("cmd_ux").handle_enter(cmp) end,
+            "fallback",
+          },
+          ["<Tab>"] = {
+            function(cmp) return require("cmd_ux").handle_tab(cmp) end,
+            "fallback",
+          },
         },
       },
       sources = {

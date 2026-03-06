@@ -638,17 +638,25 @@ function M.resolve(ctx)
   end
 
   if completion_type == "custom" then
-    local needs_more = #frontier > 0
+    local repeatable_named_values = looks_like_repeatable_named_values(summary, ctx.accepted, matches)
+    local executable = repeatable_named_values and arg_count >= min_required and ctx.pending == ""
+    local needs_more = not executable and #frontier > 0
+    local status_line = needs_more and "Pick one of the next valid choices to continue."
+      or "Current structured command path is executable."
+    if repeatable_named_values then
+      status_line = executable and "Current value set is executable; more named values remain optional."
+        or "Pick one or more named values to continue."
+    end
+
     return types.state_from_node(current_node, {
       help = table.concat({
         summary.desc,
         "",
         "Completion type: custom",
-        needs_more and "Pick one of the next valid choices to continue."
-          or "Current structured command path is executable.",
+        status_line,
       }, "\n"),
       examples = { base_line },
-      executable = not needs_more,
+      executable = executable or not needs_more,
       requires_more = needs_more,
       pending_is_named = pending_is_named,
       refusal_reason = needs_more and "This command needs more input." or nil,

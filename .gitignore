@@ -9,7 +9,9 @@
 Brewfile.lock.json
 
 # Serena
-.serena/
+.serena/*
+!.serena/
+!.serena/project.yml
 
 # Bookmarks sync
 bookmarks/backups/

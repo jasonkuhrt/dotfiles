@@ -39,15 +39,17 @@ local function open_in_cmux(abs_path)
     return false
   end
 
-  local create = vim.system({
-    "cmux",
-    "--json",
-    "new-pane",
-    "--type",
-    "terminal",
-    "--direction",
-    "right",
-  }, { text = true }):wait()
+  local create = vim
+    .system({
+      "cmux",
+      "--json",
+      "new-pane",
+      "--type",
+      "terminal",
+      "--direction",
+      "right",
+    }, { text = true })
+    :wait()
 
   if create.code ~= 0 then
     return false
@@ -63,13 +65,15 @@ local function open_in_cmux(abs_path)
     return false
   end
 
-  local send = vim.system({
-    "cmux",
-    "send",
-    "--surface",
-    surface,
-    viewer.shell .. "\n",
-  }, { text = true }):wait()
+  local send = vim
+    .system({
+      "cmux",
+      "send",
+      "--surface",
+      surface,
+      viewer.shell .. "\n",
+    }, { text = true })
+    :wait()
 
   return send.code == 0
 end

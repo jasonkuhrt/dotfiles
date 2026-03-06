@@ -1,5 +1,7 @@
 set quiet
 
+lua_paths := "home/dot_config/nvim/lua home/dot_config/nvim/local-plugins/cmd-ux/lua"
+
 [private]
 default:
     just --list
@@ -18,6 +20,20 @@ doctor:
 
 explain target:
     bun packages/dotctl/src/bin/dotctl.ts explain {{ target }}
+
+lua-check: lua-lint lua-lsp-check lua-fmt-check
+
+lua-lint:
+    selene {{ lua_paths }}
+
+lua-lsp-check:
+    lua-language-server --check . --configpath .luarc.json --checklevel=Warning
+
+lua-fmt-check:
+    stylua --check {{ lua_paths }}
+
+lua-fmt:
+    stylua {{ lua_paths }}
 
 [private]
 sync:

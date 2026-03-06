@@ -137,7 +137,7 @@ local function extract_raw_uri(line, col1)
   }
 
   for _, pattern in ipairs(patterns) do
-    for start_col, match, end_exclusive in line:gmatch("()(" .. pattern .. ")()") do
+    for start_col, match, _ in line:gmatch("()(" .. pattern .. ")()") do
       local target = strip_trailing_punctuation(match)
       local target_end_col = start_col + #target - 1
       if cursor_in_range(col1, start_col, target_end_col) then
@@ -205,12 +205,14 @@ local function in_cmux()
 end
 
 local function open_in_cmux_browser(target)
-  local result = vim.system({
-    "cmux",
-    "browser",
-    "open",
-    target,
-  }, { text = true }):wait()
+  local result = vim
+    .system({
+      "cmux",
+      "browser",
+      "open",
+      target,
+    }, { text = true })
+    :wait()
 
   return result.code == 0, result.stderr
 end

@@ -2,6 +2,14 @@ local M = {}
 
 local blocklist = require("config.command-blocklist")
 
+---@class CommandCache
+---@field exact table<string, boolean>?
+---@field names string[]?
+local command_cache = {
+  exact = nil,
+  names = nil,
+}
+
 M.denied_completion_types = {
   expression = true,
   lua = true,
@@ -58,27 +66,53 @@ function M.slice(list, start_index)
   return result
 end
 
+---@param name string
+---@return boolean
 function M.has_exact_command(name)
   if name == "" then
     return false
   end
-  for _, command in ipairs(vim.fn.getcompletion(name, "command")) do
-    if command == name then
-      return true
-    end
+  if not command_cache.exact or not command_cache.names then
+    M.get_command_names("")
   end
-  return false
+  return command_cache.exact[name] == true
 end
 
+---@param prefix? string
+---@return string[]
 function M.get_command_names(prefix)
-  local names = vim.fn.getcompletion(prefix or "", "command")
+  if not command_cache.exact or not command_cache.names then
+    local names = vim.fn.getcompletion("", "command")
+    local exact = {}
+    local filtered = {}
+    for _, name in ipairs(names) do
+      if not blocklist.is_blocked(name) then
+        filtered[#filtered + 1] = name
+        exact[name] = true
+      end
+    end
+    table.sort(filtered)
+    command_cache.exact = exact
+    command_cache.names = filtered
+  end
+
+  if not prefix or prefix == "" then
+    return command_cache.names or {}
+  end
+
+  local escaped = vim.pesc(prefix)
   local result = {}
-  for _, name in ipairs(names) do
-    if not blocklist.is_blocked(name) then
+  for _, name in ipairs(command_cache.names or {}) do
+    if name:find("^" .. escaped) ~= nil then
       result[#result + 1] = name
     end
   end
   return result
+end
+
+function M.invalidate_command_cache()
+  command_cache.exact = nil
+  command_cache.names = nil
 end
 
 function M.get_user_command(name)
@@ -166,7 +200,7 @@ function M.min_required_args(nargs)
 end
 
 function M.synthetic_desc(root, parsed, completion_type)
-  local parts = { "Ex command" }
+  local parts = { root ~= "" and ("Ex command `" .. root .. "`") or "Ex command" }
   if parsed and parsed.nargs and parsed.nargs ~= "0" then
     if parsed.nargs == "1" then
       parts[#parts + 1] = "needs 1 argument"

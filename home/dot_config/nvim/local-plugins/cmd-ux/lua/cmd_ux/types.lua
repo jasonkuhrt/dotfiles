@@ -185,7 +185,7 @@ local function normalize_slots(slots)
   end
 
   local result = {}
-  for index, slot in ipairs(slots) do
+  for _, slot in ipairs(slots) do
     result[#result + 1] = M.slot(slot)
   end
 
@@ -224,7 +224,9 @@ end
 ---@return CommandFrontierItem
 function M.frontier_item(spec)
   local item = M.node(spec)
-  item.text = normalize_string(spec.text or (item.label .. (item.desc ~= "" and ("  " .. item.desc) or "")), "item.text")
+  ---@cast item CommandFrontierItem
+  item.text =
+    normalize_string(spec.text or (item.label .. (item.desc ~= "" and ("  " .. item.desc) or "")), "item.text")
   return item
 end
 
@@ -240,7 +242,7 @@ local function normalize_frontier(items)
   end
 
   local result = {}
-  for index, item in ipairs(items) do
+  for _, item in ipairs(items) do
     result[#result + 1] = M.frontier_item(item)
   end
 
@@ -380,7 +382,8 @@ end
 function M.finalize_state(state)
   local normalized = M.state(state)
 
-  normalized.rendered = util.render_command(normalized.root or "", normalized.accepted, normalized.pending, normalized.trailing_space)
+  normalized.rendered =
+    util.render_command(normalized.root or "", normalized.accepted, normalized.pending, normalized.trailing_space)
   normalized.rendered_display = normalized.rendered ~= "" and normalized.rendered or "<root>"
 
   if normalized.root and #normalized.accepted > 0 then
@@ -411,6 +414,7 @@ function M.provider(provider)
   ensure_function(provider.complete, "provider.complete")
   ensure_function(provider.execute, "provider.execute")
 
+  ---@cast provider Provider
   return provider
 end
 

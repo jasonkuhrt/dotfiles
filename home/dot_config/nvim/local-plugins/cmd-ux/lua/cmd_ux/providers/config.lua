@@ -165,9 +165,13 @@ local function reload_config()
   clear_modules(plan.reloadable_modules)
 
   for _, module in ipairs(plan.reloadable_modules) do
-    local ok, err = pcall(require, module)
+    local ok, module_err = pcall(require, module)
     if not ok then
-      vim.notify("Config reload failed for " .. module .. ": " .. err, vim.log.levels.ERROR, { title = "Config" })
+      vim.notify(
+        "Config reload failed for " .. module .. ": " .. module_err,
+        vim.log.levels.ERROR,
+        { title = "Config" }
+      )
       return
     end
   end
@@ -219,13 +223,16 @@ local function tree()
       token = "reload",
       kind = "leaf",
       desc = "Reload the safe subset of your config",
-      help = table.concat(vim.list_extend({
-        "Reload the safe subset of your config.",
-        "",
-        "This is best-effort. Plugin specs are left to lazy.nvim.",
-        "Restart is still required after editing bootstrap files.",
-        "",
-      }, help_lines()), "\n"),
+      help = table.concat(
+        vim.list_extend({
+          "Reload the safe subset of your config.",
+          "",
+          "This is best-effort. Plugin specs are left to lazy.nvim.",
+          "Restart is still required after editing bootstrap files.",
+          "",
+        }, help_lines()),
+        "\n"
+      ),
       examples = { "Config reload" },
       executable = true,
       execute = reload_config,

@@ -54,8 +54,7 @@ local function handle(cmp, intent)
     return
   end
 
-  local has_pending_choice = (not state.root and state.pending ~= "")
-    or (state.root and state.pending ~= "")
+  local has_pending_choice = (not state.root and state.pending ~= "") or (state.root and state.pending ~= "")
 
   if has_pending_choice then
     local token = core.selected_token(cmp, state)

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime.version": "LuaJIT",
+  "workspace.checkThirdParty": false,
+  "workspace.useGitIgnore": true,
+  "workspace.library": [
+    "${3rd}/luv/library"
+  ],
+  "diagnostics.globals": [
+    "vim",
+    "jit",
+    "LazyVim",
+    "Snacks",
+    "describe",
+    "it",
+    "before_each",
+    "assert"
+  ],
+  "diagnostics.workspaceEvent": "OnChange",
+  "completion.callSnippet": "Replace",
+  "doc.privateName": [
+    "^_"
+  ],
+  "hint.enable": true,
+  "hint.paramType": true,
+  "hint.paramName": "Disable",
+  "hint.setType": false,
+  "hint.arrayIndex": "Disable",
+  "hint.semicolon": "Disable",
+  "type.checkTableShape": true,
+  "type.inferParamType": true,
+  "format.enable": false
+}

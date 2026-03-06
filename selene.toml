@@ -1,5 +1,7 @@
 std = "nvim"
 
 [lints]
+# lazy.nvim plugin specs are intentionally mixed tables in upstream style.
 mixed_table = "allow"
+# inline callback literals in Neovim config would create low-signal churn here.
 multiple_statements = "allow"

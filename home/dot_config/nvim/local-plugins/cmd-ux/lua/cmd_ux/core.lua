@@ -129,9 +129,8 @@ local function snapshot(root, accepted, pending, trailing_space, raw)
 end
 
 ---@param line string
----@param decorate? boolean
 ---@return ResolutionState
-local function resolve_line(line, decorate)
+local function resolve_line(line)
   local parsed = parse_line(line)
   if not parsed then
     local state = types.root_state({
@@ -192,7 +191,7 @@ end
 ---@param line string
 ---@return ResolutionState
 function M.resolve_line(line)
-  return resolve_line(line, true)
+  return resolve_line(line)
 end
 
 ---@param state ResolutionState
@@ -203,9 +202,8 @@ end
 
 ---@param state ResolutionState
 ---@param token string
----@param decorate? boolean
 ---@return ResolutionState
-function M.accept_token(state, token, decorate)
+function M.accept_token(state, token)
   if not token or token == "" then
     return state
   end
@@ -218,7 +216,7 @@ function M.accept_token(state, token, decorate)
     accepted[#accepted + 1] = token
     next_line = util.render_command(state.root, accepted, "", false)
   end
-  return resolve_line(next_line, decorate ~= false)
+  return resolve_line(next_line)
 end
 
 function M.selected_token(cmp, state)

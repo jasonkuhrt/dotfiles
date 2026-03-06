@@ -52,7 +52,8 @@ local function command_items(prefix)
       kind = "leaf",
       desc = command.desc or "Lazy command",
       help = command.desc or "Lazy command",
-      examples = command.plugins_required and { "Lazy " .. command.name .. " lazy.nvim" } or { "Lazy " .. command.name },
+      examples = command.plugins_required and { "Lazy " .. command.name .. " lazy.nvim" }
+        or { "Lazy " .. command.name },
       requires_more = command.plugins_required == true,
     })
   end
@@ -147,7 +148,8 @@ function M.resolve(ctx)
 
   local desc = #plugin_args > 0 and (command.desc_plugin or command.desc) or command.desc
   local help = desc or "Lazy command"
-  local examples = command.plugins_required and { "Lazy " .. command.name .. " lazy.nvim" } or { "Lazy " .. command.name }
+  local examples = command.plugins_required and { "Lazy " .. command.name .. " lazy.nvim" }
+    or { "Lazy " .. command.name }
   local command_node = types.node({
     token = command.name,
     kind = "leaf",

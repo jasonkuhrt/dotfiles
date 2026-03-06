@@ -21,15 +21,21 @@ return {
           ["<C-j>"] = { "select_next", "fallback" },
           ["<C-k>"] = { "select_prev", "fallback" },
           ["<CR>"] = {
-            function(cmp) return require("cmd_ux").handle_enter(cmp) end,
+            function(cmp)
+              return require("cmd_ux").handle_enter(cmp)
+            end,
             "fallback",
           },
           ["<Tab>"] = {
-            function(cmp) return require("cmd_ux").handle_tab(cmp) end,
+            function(cmp)
+              return require("cmd_ux").handle_tab(cmp)
+            end,
             "fallback",
           },
           ["<Space>"] = {
-            function(cmp) return require("cmd_ux").handle_space(cmp) end,
+            function(cmp)
+              return require("cmd_ux").handle_space(cmp)
+            end,
             "fallback",
           },
         },

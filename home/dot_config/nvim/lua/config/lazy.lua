@@ -14,7 +14,11 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
-require("lazy").setup({
+---@type { setup: fun(spec: table) }
+---@diagnostic disable-next-line: different-requires
+local lazy = require("lazy")
+
+lazy.setup({
   spec = {
     { "LazyVim/LazyVim", import = "lazyvim.plugins" },
 

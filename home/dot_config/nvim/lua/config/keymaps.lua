@@ -24,16 +24,25 @@ map("n", "N", "Nzz", { desc = "Prev match (centered)" })
 map("n", "G", "Gzz", { desc = "Go to bottom (centered)" })
 
 -- Close buffer (Cmd+W passthrough from Kitty when nvim focused)
-map("n", "<D-w>", function() Snacks.bufdelete() end, { desc = "Close buffer" })
+map("n", "<D-w>", function()
+  Snacks.bufdelete()
+end, { desc = "Close buffer" })
+
+-- Find files
+map("n", "<leader>k", LazyVim.pick("files"), { desc = "Find Files (Root Dir)" })
 
 -- Start/end of line
 map({ "n", "v" }, "H", "^", { desc = "Start of line" })
 map({ "n", "v" }, "L", "$", { desc = "End of line" })
 
 -- Command palette / command line (swapped: : = palette, ; = ex command)
-map("n", ":", function() require("cmd_ux").open_picker() end, { desc = "Command palette" })
+map("n", ":", function()
+  require("cmd_ux").open_picker()
+end, { desc = "Command palette" })
 map("n", ";", ":", { desc = "Command line" })
-map("c", ";", function() require("cmd_ux").handoff_from_cmdline() end, { desc = "Escalate to command palette" })
+map("c", ";", function()
+  require("cmd_ux").handoff_from_cmdline()
+end, { desc = "Escalate to command palette" })
 map("c", ":", "<C-c>", { desc = "Back to normal" })
 
 -- External command shortcut

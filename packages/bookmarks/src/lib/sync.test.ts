@@ -1,12 +1,14 @@
 import { describe, expect, test } from "bun:test"
 import { DateTime, Effect } from "effect"
-import { BookmarkFolder, BookmarkLeaf, BookmarkTree } from "./schema/__.js"
+import { BookmarkFolder, BookmarkLeaf, BookmarkTree, TargetProfile } from "./schema/__.js"
 import * as Patch from "./patch.js"
 import * as Sync from "./sync.js"
 
 // -- Test helpers --
 
 const leaf = (name: string, url: string) => new BookmarkLeaf({ name, url })
+const folder = (name: string, children: Array<BookmarkLeaf | BookmarkFolder>) =>
+  new BookmarkFolder({ name, children })
 
 const emptyTree = () => new BookmarkTree({})
 
@@ -217,5 +219,79 @@ describe("applyPatches", () => {
     const result = await run(Sync.applyPatches(tree, []))
     expect(result.favorites_bar).toBeDefined()
     expect(result.favorites_bar!.length).toBe(1)
+  })
+})
+
+describe("decomposeResolvedTrees", () => {
+  test("extracts common bookmarks into base and profile-specific bookmarks into overlays", () => {
+    const targets = {
+      safari: {
+        default: TargetProfile.make({ path: "/tmp/safari-default.plist" }),
+      },
+      chrome: {
+        work: TargetProfile.make({ path: "/tmp/chrome-work.json" }),
+      },
+    }
+
+    const safariTree = new BookmarkTree({
+      favorites_bar: [
+        folder("Shared", [leaf("Common", "https://common.example")]),
+        leaf("Safari Only", "https://safari-only.example"),
+      ],
+    })
+    const chromeTree = new BookmarkTree({
+      favorites_bar: [
+        folder("Shared", [leaf("Common", "https://common.example")]),
+        leaf("Chrome Only", "https://chrome-only.example"),
+      ],
+    })
+
+    const config = Sync.decomposeResolvedTrees(targets, {
+      "safari/default": safariTree,
+      "chrome/work": chromeTree,
+    })
+
+    expect(config.base.favorites_bar).toBeDefined()
+    const sharedFolder = config.base.favorites_bar!.find(
+      (node): node is BookmarkFolder => BookmarkFolder.is(node) && node.name === "Shared",
+    )
+    expect(sharedFolder).toBeDefined()
+    expect(sharedFolder!.children.length).toBe(1)
+
+    expect(config.profiles?.["safari/default"]?.favorites_bar).toBeDefined()
+    expect(config.profiles?.["chrome/work"]?.favorites_bar).toBeDefined()
+
+    const safariOnly = config.profiles?.["safari/default"]?.favorites_bar?.find(
+      (node): node is BookmarkLeaf => BookmarkLeaf.is(node),
+    )
+    const chromeOnly = config.profiles?.["chrome/work"]?.favorites_bar?.find(
+      (node): node is BookmarkLeaf => BookmarkLeaf.is(node),
+    )
+    expect(safariOnly?.url).toBe("https://safari-only.example")
+    expect(chromeOnly?.url).toBe("https://chrome-only.example")
+  })
+
+  test("omits profile overlays when every resolved tree is identical", () => {
+    const targets = {
+      safari: {
+        default: TargetProfile.make({ path: "/tmp/safari-default.plist" }),
+      },
+      chrome: {
+        default: TargetProfile.make({ path: "/tmp/chrome-default.json" }),
+      },
+    }
+
+    const sharedTree = new BookmarkTree({
+      other: [leaf("Shared", "https://shared.example")],
+    })
+
+    const config = Sync.decomposeResolvedTrees(targets, {
+      "safari/default": sharedTree,
+      "chrome/default": sharedTree,
+    })
+
+    expect(config.base.other).toBeDefined()
+    expect(config.base.other!.length).toBe(1)
+    expect(config.profiles).toBeUndefined()
   })
 })

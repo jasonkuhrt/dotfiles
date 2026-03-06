@@ -16,7 +16,7 @@
  *   validate    schema check only
  */
 
-import { Cause, Console, Data, DateTime, Effect, Exit, Option } from "effect"
+import { Cause, Console, Data, DateTime, Duration, Effect, Exit, Option } from "effect"
 
 /** Expected CLI exits where the user has already been informed. */
 class CliExitError extends Data.TaggedError("CliExitError")<{}> {
@@ -28,7 +28,6 @@ import * as Doctor from "../lib/doctor.js"
 import * as Paths from "../lib/paths.js"
 import * as SyncModule from "../lib/sync.js"
 import * as YamlModule from "../lib/yaml.js"
-import { BookmarkTree, BookmarksConfig, TargetProfile } from "../lib/schema/__.js"
 
 const USAGE = `
 bookmarks - Cross-browser bookmark sync from dotfiles
@@ -67,29 +66,66 @@ const parseArgs = (args: string[]) => {
   return { flags, positional }
 }
 
-const notImplemented = (command: string) =>
+const parseMaxAge = (input: string): Effect.Effect<Duration.Duration, CliExitError> =>
   Effect.gen(function* () {
-    yield* Console.error(`Command '${command}' is not yet implemented.`)
-    return yield* Effect.fail(new CliExitError())
+    const match = /^(\d+)([mhd])$/.exec(input)
+    if (!match) {
+      yield* Console.error("Invalid --max-age value. Use formats like 30d, 12h, or 45m.")
+      return yield* Effect.fail(new CliExitError())
+    }
+
+    const amount = Number(match[1])
+    const unit = match[2]
+    switch (unit) {
+      case "m":
+        return Duration.minutes(amount)
+      case "h":
+        return Duration.hours(amount)
+      case "d":
+        return Duration.days(amount)
+      default:
+        yield* Console.error("Invalid --max-age unit. Use m, h, or d.")
+        return yield* Effect.fail(new CliExitError())
+    }
   })
 
-const makeDefaultConfig = (safariPlistPath: string): BookmarksConfig =>
-  BookmarksConfig.make({
-    targets: {
-      safari: {
-        default: TargetProfile.make({ path: safariPlistPath }),
-      },
-    },
-    base: BookmarkTree.make({}),
+const printSyncSummary = (label: string, result: SyncModule.SyncResult) =>
+  Effect.gen(function* () {
+    yield* Console.log(`\n${label}: ${result.applied.length} applied, ${result.graveyarded.length} graveyarded`)
+    for (const targetResult of result.targets) {
+      yield* Console.log(
+        `  ${targetResult.target.browser}/${targetResult.target.profile}: ` +
+          `${targetResult.applied.length} applied, ${targetResult.graveyarded.length} graveyarded`,
+      )
+    }
   })
 
-const loadConfigOrDefault = (yamlPath: string): Effect.Effect<BookmarksConfig, Error> =>
-  YamlModule.load(yamlPath).pipe(
-    Effect.catchAll(() => Effect.succeed(makeDefaultConfig(Paths.defaultSafariPlistPath()))),
-  )
+const printStatus = (status: SyncModule.StatusResult) =>
+  Effect.gen(function* () {
+    yield* Console.log(`YAML: ${status.yamlPath}`)
+    if (status.targets.length === 0) {
+      yield* Console.log("No enabled targets configured.")
+      return
+    }
 
-const resolveSafariPlistPath = (config: BookmarksConfig): string =>
-  config.targets.safari?.default?.path ?? Paths.defaultSafariPlistPath()
+    for (const targetStatus of status.targets) {
+      yield* Console.log(`${targetStatus.target.browser}/${targetStatus.target.profile}`)
+      yield* Console.log(`  path: ${targetStatus.target.path}`)
+      yield* Console.log(`  pending -> browser: ${targetStatus.yamlPatches.length}`)
+      yield* Console.log(`  pending -> yaml:    ${targetStatus.browserPatches.length}`)
+    }
+  })
+
+const printBackupSummary = (result: SyncModule.BackupResult) =>
+  Effect.gen(function* () {
+    yield* Console.log(`Backups written to ${result.backupDir}`)
+    for (const file of result.files) {
+      yield* Console.log(`  wrote ${file}`)
+    }
+    for (const skipped of result.skipped) {
+      yield* Console.log(`  skipped ${skipped}`)
+    }
+  })
 
 const program = Effect.gen(function* () {
   const [command, ...args] = process.argv.slice(2)
@@ -102,47 +138,60 @@ const program = Effect.gen(function* () {
   const { positional } = parseArgs(args)
 
   switch (command) {
-    case "push":
-      return yield* notImplemented("push")
-    case "pull": {
-      // One-way: browsers -> YAML using an empty in-memory YAML tree as the source.
-      const { flags: pullFlags } = parseArgs(args)
-      const pullYamlPath = Paths.defaultYamlPath()
-      const currentConfig = yield* loadConfigOrDefault(pullYamlPath)
-      const safariPlistPath = resolveSafariPlistPath(currentConfig)
-
-      const pullResult = yield* SyncModule.sync({
-        yamlPath: pullYamlPath,
-        safariPlistPath,
-        dryRun: pullFlags.dryRun,
-        yamlOverride: BookmarksConfig.make({
-          targets: currentConfig.targets,
-          base: BookmarkTree.make({}),
-          profiles: currentConfig.profiles,
-        }),
+    case "push": {
+      const { flags: pushFlags } = parseArgs(args)
+      const pushResult = yield* SyncModule.push({
+        yamlPath: Paths.defaultYamlPath(),
+        dryRun: pushFlags.dryRun,
       })
-      yield* Console.log(`\nPull complete: ${pullResult.applied.length} bookmarks synced`)
+      yield* printSyncSummary("Push complete", pushResult)
+      break
+    }
+    case "pull": {
+      const { flags: pullFlags } = parseArgs(args)
+      const pullResult = yield* SyncModule.pull({
+        yamlPath: Paths.defaultYamlPath(),
+        dryRun: pullFlags.dryRun,
+      })
+      yield* printSyncSummary("Pull complete", pullResult)
       break
     }
     case "sync": {
       const { flags: syncFlags } = parseArgs(args)
-      const syncYamlPath = Paths.defaultYamlPath()
-      const currentConfig = yield* loadConfigOrDefault(syncYamlPath)
-      const syncSafariPlistPath = resolveSafariPlistPath(currentConfig)
       const syncResult = yield* SyncModule.sync({
-        yamlPath: syncYamlPath,
-        safariPlistPath: syncSafariPlistPath,
+        yamlPath: Paths.defaultYamlPath(),
         dryRun: syncFlags.dryRun,
       })
-      yield* Console.log(`\nSync complete: ${syncResult.applied.length} applied, ${syncResult.graveyarded.length} graveyarded`)
+      yield* printSyncSummary("Sync complete", syncResult)
       break
     }
-    case "status":
-      return yield* notImplemented("status")
-    case "backup":
-      return yield* notImplemented("backup")
-    case "gc":
-      return yield* notImplemented("gc")
+    case "status": {
+      yield* printStatus(
+        yield* SyncModule.status({
+          yamlPath: Paths.defaultYamlPath(),
+        }),
+      )
+      break
+    }
+    case "backup": {
+      yield* printBackupSummary(
+        yield* SyncModule.backup({
+          yamlPath: Paths.defaultYamlPath(),
+          backupDir: Paths.defaultBackupDir(),
+        }),
+      )
+      break
+    }
+    case "gc": {
+      const { flags: gcFlags } = parseArgs(args)
+      const maxAge = yield* parseMaxAge(gcFlags.maxAge)
+      const gcResult = yield* SyncModule.gc({
+        yamlPath: Paths.defaultYamlPath(),
+        graveyardMaxAge: maxAge,
+      })
+      yield* printSyncSummary("GC complete", gcResult)
+      break
+    }
     case "daemon": {
       const subcommand = positional[0]
       if (!subcommand || !["start", "stop", "status"].includes(subcommand)) {

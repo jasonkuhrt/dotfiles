@@ -8,11 +8,14 @@ import { runDoctor } from "../lib/doctor.js"
 import { renderExplain } from "../lib/explain.js"
 import { runEdit } from "../lib/edit.js"
 import { generateAndWriteManifest, resolveManifest } from "../lib/manifest.js"
+import { buildDeploymentPlan, formatPlan } from "../lib/conventions.js"
+import { executeDeploy, formatDeploySummary } from "../lib/deploy.js"
 
 const USAGE = `dotctl
 
 Usage:
   dotctl up
+  dotctl deploy [--dry-run] [--verbose]
   dotctl heal [--background]
   dotctl status
   dotctl doctor
@@ -33,6 +36,21 @@ const main = async (): Promise<number> => {
   if (command === "up") {
     console.log(runUp(ctx))
     return 0
+  }
+
+  if (command === "deploy") {
+    const dryRun = args.includes("--dry-run")
+    const verbose = args.includes("--verbose")
+    const plan = buildDeploymentPlan(ctx)
+
+    if (dryRun) {
+      console.log(formatPlan(plan))
+      return 0
+    }
+
+    const summary = executeDeploy(ctx, plan, { dryRun: false })
+    console.log(formatDeploySummary(summary, verbose))
+    return summary.errors === 0 ? 0 : 1
   }
 
   if (command === "heal") {

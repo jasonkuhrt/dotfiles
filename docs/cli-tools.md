@@ -57,8 +57,6 @@ Full list in `home/dot_config/fish/config.fish`.
 | Git         | `lazygit`    | Terminal UI for git                   | `lazygit`                                       |
 | Git         | `onefetch`   | Git repo stats (neofetch for repos)   | `onefetch` (run in any repo)                    |
 | Git         | `pre-commit` | Git hooks framework                   | `pre-commit install`                            |
-| **Beads**   | `bdui`       | TUI for beads (kanban, tree, graph)   | `bdui`                                          |
-| Beads       | `perles`     | TUI for beads (kanban, BQL search)    | `perles`                                        |
 | **Dev**     | `deno`       | Secure JS/TS runtime                  | `deno run script.ts`                            |
 | Dev         | `dprint`     | Fast code formatter                   | `dprint fmt`                                    |
 | Dev         | `hyperfine`  | Benchmark CLI commands                | `hyperfine 'fd . -e ts' 'find . -name "*.ts"'` |

@@ -1,11 +1,11 @@
 # Symlink Platform
 
-`chezmoi` is still the substrate. `packages/dotctl/` is the local control plane that makes the symlink-first model operational on macOS.
+`packages/dotctl/` is the local control plane that makes the symlink-first model operational on macOS.
 
 ## Lane Model
 
 - `trueDir`: whole-directory symlinks backed by `symlink-roots/`
-- `fileSymlink`: normal chezmoi targets expected to be symlinked file-by-file
+- `fileSymlink`: normal managed targets expected to be symlinked file-by-file
 - `special`: managed targets that are not safe or meaningful to heal as symlinks
 
 Current active `trueDir` roots:
@@ -19,7 +19,6 @@ Current active `trueDir` roots:
 - `~/.config/libra`
 - `~/.config/lsd`
 - `~/.config/nvim`
-- `~/.config/perles`
 - `~/.config/ripgrep`
 - `~/.claude/checks`
 - `~/.claude/commands`
@@ -49,7 +48,7 @@ Normal content edits to existing files in the `trueDir` and `fileSymlink` lanes 
 
 `fileSymlink` targets have explicit policy:
 
-- `capture`: back up live and source, `chezmoi re-add`, then restore symlink shape
+- `capture`: back up live and source, refresh the managed source, then restore symlink shape
 - `relinkOnly`: back up, discard live bytes, restore source symlink shape
 - `ignore`: report drift but do not mutate it automatically
 
@@ -60,7 +59,7 @@ The current default is `capture` for the file-symlink lane because most of this 
 Only promote a path into `trueDir` when all of these are true:
 
 - the target is a directory, not a single file
-- the subtree is plain target-shaped, not full of chezmoi metadata prefixes
+- the subtree is plain target-shaped, not full of manager-specific metadata prefixes
 - git is the intended semantic source of truth
 - unmanaged runtime spill inside the subtree is acceptable or already excluded
 

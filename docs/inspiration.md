@@ -13,5 +13,4 @@
 
 ## Management Tools
 
-* [chezmoi](https://github.com/twpayne/chezmoi) — 17k stars, multi-machine, templating, secrets
 * [yadm](https://github.com/yadm-dev/yadm) — 6k stars, git-based with encryption

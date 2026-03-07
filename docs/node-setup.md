@@ -46,7 +46,7 @@ Priority   Tool       Manages               Location
 
 ## Bootstrap Flow
 
-Handled by `just up` (which runs scripts 04-node-toolchain + 05-npm-globals under chezmoi):
+Handled by `just up` (which runs scripts 04-node-toolchain + 05-npm-globals):
 
 ```
 ↓   brew install node pnpm       initial node + pnpm

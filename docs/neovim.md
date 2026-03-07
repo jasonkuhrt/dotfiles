@@ -56,7 +56,7 @@ Reference for what's on and why. Update this when toggling extras.
 
 ### Core (always on)
 - `test.core` — test runner integration
-- `util.dot` — syntax for chezmoi/dotfile formats
+- `util.dot` — syntax for dotfile-oriented formats
 
 ### AI
 - `ai.copilot-native` — inline completions + NES (requires nvim >= 0.12)
@@ -92,7 +92,6 @@ Uses **oxlint** + **oxfmt** (not ESLint/Prettier). Configured outside LazyExtras
 - `ui.treesitter-context` — Sticky function/class header at top of screen
 
 ### Utilities
-- `util.chezmoi` — Recognizes chezmoi templates and source-path relationships; less central now that most day-to-day edits are live via symlinks or `just edit`
 - `util.mini-hipatterns` — Inline color swatches for hex codes, TODO/FIXME highlights
 
 ## Skip List

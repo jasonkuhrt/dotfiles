@@ -34,21 +34,13 @@ Claude Code has multiple bugs that prevent symlinked `settings.json` from workin
 * Atomic writes replace symlinks with regular files
 * Performance degradation with symlinked settings
 
-**Workaround:** `settings.json` is excluded from chezmoi via `.chezmoiignore`. CC owns `~/.claude/settings.json` at runtime.
+**Workaround:** `settings.json` stays runtime-owned. CC owns `~/.claude/settings.json` at runtime.
 
 **Tracking:**
 
 * [anthropics/claude-code#3575](https://github.com/anthropics/claude-code/issues/3575) — Symlinked settings.json permission failures
 * [anthropics/claude-code#764](https://github.com/anthropics/claude-code/issues/764) — Stow-symlinked ~/.claude dir not detected
 * [anthropics/claude-code#18160](https://github.com/anthropics/claude-code/issues/18160) — Symlinked settings.json permissions ignored
-
-## Beads: export-state/ Not in Default .gitignore
-
-The `export-state/` directory created by beads hooks contains machine-specific paths and timestamps but isn't included in the default `.gitignore` template from `bd init`.
-
-**Workaround:** Manually added `export-state/` to `.beads/.gitignore`.
-
-**Tracking:** [steveyegge/beads#1319](https://github.com/steveyegge/beads/issues/1319)
 
 ## Homebrew Tap: kilar Checksum Mismatch
 

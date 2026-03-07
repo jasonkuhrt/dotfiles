@@ -28,10 +28,6 @@ tmp/
 # Node.js
 node_modules/
 
-# Dolt database files (added by bd init)
-.dolt/
-*.db
-
 # Research reference clones
 research/refs/
 

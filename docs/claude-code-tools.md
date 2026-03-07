@@ -7,7 +7,6 @@ Quick reference for all Claude Code plugins, MCP servers, and hooks in this setu
 | Category         | Plugin                       | What it does                                           | Key skills / commands                                  |
 | ---------------- | ---------------------------- | ------------------------------------------------------ | ------------------------------------------------------ |
 | **Workflow**      | `superpowers`               | Structured dev workflows — planning, TDD, debugging    | brainstorming, writing-plans, systematic-debugging, TDD |
-| Workflow          | `beads`                     | Git-backed issue tracker with cross-session persistence | create, close, ready, dolt pull/push, epic, dep         |
 | **Code Quality**  | `code-review`               | PR code review                                         | `/code-review`                                         |
 | Code Quality      | `plannotator`               | Interactive visual code review UI                      | `/plannotator-review`                                  |
 | Code Quality      | `typescript-lsp`            | TypeScript language server integration                 | Type checking, go-to-definition                        |
@@ -24,7 +23,6 @@ Quick reference for all Claude Code plugins, MCP servers, and hooks in this setu
 | -------------------------- | ------------------------------------------------------------- |
 | `claude-plugins-official`  | code-review, hookify, plugin-dev, typescript-lsp, playground, claude-md-management |
 | `superpowers-marketplace`  | superpowers, superpowers-dev-for-cc                           |
-| `beads-marketplace`        | beads                                                         |
 | `supermemory-plugins`      | claude-supermemory                                            |
 | `plannotator`              | plannotator                                                   |
 
@@ -41,8 +39,6 @@ Quick reference for all Claude Code plugins, MCP servers, and hooks in this setu
 
 | Event             | Matcher          | Script                              | What it does                                       |
 | ----------------- | ---------------- | ----------------------------------- | -------------------------------------------------- |
-| PreToolUse        | `Bash`           | `flo-orphan-guard.sh`               | Blocks commands outside active epic branch          |
-| PreToolUse        | `Bash`           | `bead-label-guard.sh`               | Enforces label taxonomy on bead creation            |
 | PermissionRequest | `Skill\|mcp__.*` | `approve-and-persist-permissions.sh` | Auto-approves and persists plugin/MCP permissions   |
 | SessionStart      | —                | `session-start-resume-info.sh`      | Shows resume command on session start               |
 | SessionStart      | —                | `compact-recovery.sh`               | Recovers epic context after compaction              |

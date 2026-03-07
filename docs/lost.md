@@ -1,6 +1,6 @@
 # Lost Work — 2026-02-15
 
-Working tree deletion of 4356 tracked files. Cause unknown. All non-hidden files were removed from disk; `.git/`, `.beads/`, `.claude/`, `.serena/` survived. Tracked files restored from `git checkout HEAD -- .`. Modifications and new untracked files below were not committed and are lost unless noted.
+Working tree deletion of 4356 tracked files. Cause unknown. All non-hidden files were removed from disk; `.git/`, `.claude/`, and `.serena/` survived. Tracked files restored from `git checkout HEAD -- .`. Modifications and new untracked files below were not committed and are lost unless noted.
 
 ## Recovered
 

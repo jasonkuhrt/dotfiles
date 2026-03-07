@@ -1,4 +1,5 @@
 local strings = require("kit.strings")
+local learning = require("cmd_ux.lib.learning")
 
 local M = {}
 
@@ -14,6 +15,10 @@ function M.build(state)
 
   lines[#lines + 1] = "Kind: " .. (state.kind or "unknown")
   lines[#lines + 1] = "Executable now: " .. strings.bool_text(state.executable == true)
+
+  for _, line in ipairs(learning.preview_lines(state)) do
+    lines[#lines + 1] = line
+  end
 
   if state.refusal_reason and state.refusal_reason ~= "" then
     lines[#lines + 1] = "Refusal: " .. state.refusal_reason

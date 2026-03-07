@@ -85,6 +85,29 @@ Current cache boundaries:
 - in-memory root semantic cache: lazy root descriptions per active index revision
 - generic provider cache: build-time live user/buffer command maps when available, plus command summaries and inferred frontiers per active index revision
 
+## 2.5 CommandLearning
+
+`CommandLearning` is the persisted feedback layer that adapts `cmd-ux` to real usage.
+
+It stores:
+
+- root execution/selection counts
+- frontier transition counts
+- executed rendered commands
+- recency via monotonically increasing sequence numbers
+
+It does not change semantic truth.
+It changes ordering and reporting.
+
+Ranking contract:
+
+- executed paths outrank merely selected paths
+- higher-frequency paths outrank lower-frequency paths
+- more recent paths break ties
+- original provider/index order is the deterministic fallback
+
+The learning store is scoped to active index revisions for in-memory caches, but its persisted usage data survives across sessions.
+
 ## 3. Semantic Enrichment
 
 `cmd-ux` enriches command families in two ways:
@@ -161,6 +184,7 @@ Safe next-step candidates, if more latency remains:
 - provider-local revision caches for families with expensive live metadata lookups
 - narrower generic completion-probe memoization keyed by root plus accepted path
 - profiling-guided reductions in resolve-path allocations and repeated string rendering
+- provider-local learning-aware ordering for richer domain-specific heuristics
 
 Rejected performance shortcuts:
 
@@ -186,11 +210,18 @@ Rejected performance shortcuts:
    - `:Cmdux refresh` rebuilds and rewrites the cache
    - cache is an acceleration layer over the same command graph model
 
+4. Keep learning/reporting first-class
+   - learned ordering must apply consistently across picker and semantic Ex
+   - learning reports must stay inspectable and exportable
+   - transitions, noise candidates, and deterministic suggestions should remain first-class reports, not buried in one omnibus view
+   - helper roots like `Flow` and `Recall` should remain part of the same semantic system
+
 ## Execution Notes
 
 - `CommandSnapshot` already exists in code and means provider input context
 - `CommandIndex` is the runtime command graph/cache object
 - `ResolutionState` is per interaction and must not become the index itself
+- `ARCHITECTURE.md` is the canonical high-level reference for runtime layers, cache boundaries, and invalidation rules
 
 ## Rejected Ideas
 

@@ -3,6 +3,7 @@
 `cmd-ux` is a local Neovim plugin that turns command entry into a semantic system instead of a raw string submission path.
 
 Local plugin architecture in this repo follows the shared guide at [DEVELOPMENT.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/local-plugins/DEVELOPMENT.md).
+The detailed runtime/data-flow architecture is documented in [ARCHITECTURE.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/local-plugins/cmd-ux/ARCHITECTURE.md).
 
 It has one job: make command execution predictable across two surfaces:
 
@@ -112,6 +113,62 @@ What is intentionally not cached across revisions:
 An active index revision is not the same thing as the persisted cache generation.
 The revision changes whenever the live in-memory index instance changes, including a cache reload after invalidation.
 
+### Adaptive learning
+
+`cmd-ux` now learns from actual command usage.
+
+It persists:
+
+- executed roots
+- executed full commands
+- learned transitions inside namespaces and structured frontiers
+- explicit choice selections in pickers and semantic completion
+
+That learning feeds back into ordering:
+
+- executed choices outrank merely selected choices
+- higher-frequency choices outrank lower-frequency choices
+- more recent choices break ties
+- original provider/index order remains the final deterministic fallback
+
+This is the behavior that lets repeated usage like `Config reload` rise above `Config help` over time without hardcoding a special case.
+
+### Flow Helpers
+
+Two new roots extend `cmd-ux` beyond plain command discovery:
+
+- `Flow`
+  - context-aware actions for the current buffer
+  - examples: save, write-all, source-buffer, config-reload, quickfix, alternate-buffer, diagnostics
+
+- `Recall`
+  - replay recent executed commands
+  - examples: `Recall last`, `Recall 2`
+
+These are still regular `cmd-ux` semantic roots, not sidecar UIs.
+
+### Learning Reports
+
+`Cmdux` is now both a maintenance namespace and a learning/reporting namespace.
+
+Useful subcommands:
+
+- `Cmdux blocklist`
+- `Cmdux stats`
+- `Cmdux recent`
+- `Cmdux roots`
+- `Cmdux transitions`
+- `Cmdux noise`
+- `Cmdux suggest`
+- `Cmdux export`
+- `Cmdux reset-learning`
+
+This makes the learning layer inspectable in three different modes:
+
+- observability: stats, recent, roots, transitions
+- cleanup: noise, blocklist
+- design input: suggest, export
+
 ### Command kinds
 
 Every supported command node is classified as one of:
@@ -218,7 +275,9 @@ Each provider is responsible for:
 The v1 providers are:
 
 - `Cmdux`
+- `Flow`
 - `Lazy`
+- `Recall`
 - `Config`
 - generic Neovim commands
 
@@ -303,6 +362,7 @@ Behavior:
 - confirm on safe `leaf` executes directly
 - `;` hands off the current semantic session into the native Ex cmdline
 - preview content is built for the selected item only; it is not eagerly precomputed for the whole frontier
+- ranked ordering follows learned usage, not just alphabetical fallback
 
 ## Picker UI contract
 
@@ -327,6 +387,7 @@ It shows:
 - breadcrumb
 - current kind
 - executable now: yes/no
+- learned usage hints
 - refusal reason when blocked
 - help text
 - current subtree/frontier
@@ -375,6 +436,16 @@ Semantic classification:
 - `Config help`: `leaf`
 - `Config reload`: `leaf`
 
+### Learned ordering
+
+After repeatedly using `Config reload`:
+
+- `Config` frontier promotes `reload` above `help`
+- root ordering can promote the command families you actually use
+- preview reflects the current learned bias
+
+This behavior is generic. It is not hardcoded to `Config`.
+
 ### Generic exact command
 
 Example: `Open README.md`
@@ -396,9 +467,12 @@ Example: `lua print(1)`
 Plugin structure:
 
 - `lua/cmd_ux/core.lua`: line resolution and transition policy
+- `lua/cmd_ux/lib/learning.lua`: persistent learning, ranking, and reports
+- `lua/cmd_ux/lib/runtime.lua`: shared execution helper for replay/context actions
 - `lua/cmd_ux/providers/`: semantic providers
 - `lua/cmd_ux/adapters/ex.lua`: native Ex behavior
 - `lua/cmd_ux/adapters/snacks.lua`: semantic picker behavior
+- `ARCHITECTURE.md`: runtime layers, invariants, and extension guidance
 
 Config responsibilities:
 

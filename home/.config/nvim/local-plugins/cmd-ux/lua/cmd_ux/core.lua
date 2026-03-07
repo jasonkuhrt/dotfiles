@@ -1,4 +1,5 @@
 local actions = require("cmd_ux.lib.actions")
+local learning = require("cmd_ux.lib.learning")
 local preview = require("cmd_ux.lib.preview")
 local resolver = require("cmd_ux.lib.resolver")
 
@@ -25,7 +26,7 @@ local M = {}
 ---@param line string
 ---@return ResolutionState
 function M.resolve_line(line)
-  return resolver.resolve_line(line)
+  return learning.rank_state(resolver.resolve_line(line))
 end
 
 ---@param state ResolutionState

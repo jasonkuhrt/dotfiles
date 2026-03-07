@@ -1,4 +1,5 @@
 local resolver = require("cmd_ux.lib.resolver")
+local learning = require("cmd_ux.lib.learning")
 
 local M = {}
 
@@ -17,12 +18,12 @@ function M.selected_token(cmp, state)
   if item and item.label and item.label ~= "" then
     return item.label
   end
+  if state.frontier and state.frontier[1] then
+    return state.frontier[1].token
+  end
   local items = cmp and cmp.get_items and cmp.get_items() or {}
   if items[1] and items[1].label and items[1].label ~= "" then
     return items[1].label
-  end
-  if state.frontier and state.frontier[1] then
-    return state.frontier[1].token
   end
 end
 
@@ -83,6 +84,7 @@ function M.decide_current(state, intent)
   end
 
   if state.executable then
+    learning.record_execute_state(state)
     return { type = "execute", line = state.rendered }
   end
 
@@ -99,6 +101,7 @@ end
 ---@return CmdUxAction
 function M.decide_choice(state, token, intent)
   local next_state = resolver.accept_token(state, token)
+  learning.record_choice(state, token)
 
   if intent == "space" then
     return { type = "advance", line = with_trailing_space(next_state) }
@@ -116,6 +119,7 @@ function M.decide_choice(state, token, intent)
   end
 
   if next_state.executable then
+    learning.record_execute_state(next_state)
     return { type = "execute", line = next_state.rendered }
   end
 

@@ -6,7 +6,11 @@ local cmdux_provider = require("cmd_ux.providers.cmdux")
 ---@type Provider
 local config_provider = require("cmd_ux.providers.config")
 ---@type Provider
+local flow_provider = require("cmd_ux.providers.flow")
+---@type Provider
 local lazy_provider = require("cmd_ux.providers.lazy")
+---@type Provider
+local recall_provider = require("cmd_ux.providers.recall")
 
 local M = {}
 
@@ -49,7 +53,9 @@ function M.setup()
 
   providers.register("Cmdux", cmdux_provider)
   providers.register("Config", config_provider)
+  providers.register("Flow", flow_provider)
   providers.register("Lazy", lazy_provider)
+  providers.register("Recall", recall_provider)
 
   index.install_hooks()
 
@@ -75,6 +81,32 @@ function M.setup()
     ---@param line string
     complete = function(_, line, _)
       return cmdux_provider.complete(line)
+    end,
+    force = true,
+  })
+
+  ---@param opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Flow", function(opts)
+    flow_provider.execute(opts.args)
+  end, {
+    desc = "Context-aware flow actions",
+    nargs = "*",
+    ---@param line string
+    complete = function(_, line, _)
+      return flow_provider.complete(line)
+    end,
+    force = true,
+  })
+
+  ---@param opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Recall", function(opts)
+    recall_provider.execute(opts.args)
+  end, {
+    desc = "Replay recent cmd-ux commands",
+    nargs = "*",
+    ---@param line string
+    complete = function(_, line, _)
+      return recall_provider.complete(line)
     end,
     force = true,
   })

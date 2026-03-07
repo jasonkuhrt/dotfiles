@@ -1,4 +1,5 @@
 local core = require("cmd_ux.core")
+local learning = require("cmd_ux.lib.learning")
 local util = require("cmd_ux.util")
 
 local M = {}
@@ -200,6 +201,7 @@ local function apply_choice(picker, item)
   end
 
   local next_state = item_state(item)
+  learning.record_choice(current_state(), item.token)
   local action_type = "execute"
   if next_state.kind == "namespace" or next_state.kind == "hybrid" or next_state.requires_more then
     action_type = "advance"
@@ -217,6 +219,7 @@ local function apply_choice(picker, item)
   end
 
   if action_type == "execute" then
+    learning.record_execute_state(next_state)
     local rendered = next_state.rendered
     picker:close()
     vim.schedule(function()

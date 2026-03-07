@@ -1,10 +1,12 @@
 local M = {}
 
 local cmd_ux = require("cmd_ux")
+local learning = require("cmd_ux.lib.learning")
 local strings = require("kit.strings")
 
 function M.ensure_setup()
   cmd_ux.setup()
+  learning.reset()
 end
 
 function M.drop_user_command(name)
@@ -13,6 +15,10 @@ end
 
 function M.sync_cmd_ux()
   cmd_ux.reload()
+end
+
+function M.reset_learning()
+  learning.reset()
 end
 
 function M.create_noarg_command(name)

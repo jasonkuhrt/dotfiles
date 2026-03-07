@@ -13,9 +13,6 @@ Beads is issue tracking that lives in your repo, making it perfect for AI coding
 ### Essential Commands
 
 ```bash
-# View current workflow context
-bd prime
-
 # Create new issues
 bd create "Add user authentication"
 
@@ -26,21 +23,20 @@ bd list
 bd show <issue-id>
 
 # Update issue status
-bd update <issue-id> --status in_progress
+bd update <issue-id> --claim
 bd update <issue-id> --status done
 
-# Sync beads state
-bd dolt pull
+# Sync with Dolt remote
 bd dolt push
 ```
 
 ### Working with Issues
 
 Issues in Beads are:
-- **Dolt-native**: Stored in local Dolt with push/pull replication
+- **Git-native**: Stored in Dolt database with version control and branching
 - **AI-friendly**: CLI-first design works perfectly with AI coding agents
 - **Branch-aware**: Issues can follow your branch workflow
-- **Always in sync**: `bd dolt pull` / `bd dolt push` keeps state shareable
+- **Always in sync**: Auto-syncs with your commits
 
 ## Why Beads?
 
@@ -55,9 +51,9 @@ Issues in Beads are:
 - Fast, lightweight, and stays out of your way
 
 🔧 **Git Integration**
-- Works with Dolt local history + Dolt remote replication
+- Automatic sync with git commits
 - Branch-aware issue tracking
-- Independent from code commits while still repo-local
+- Dolt-native three-way merge resolution
 
 ## Get Started with Beads
 

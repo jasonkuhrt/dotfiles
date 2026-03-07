@@ -1,4 +1,7 @@
 {
   "database": "dolt",
-  "jsonl_export": "issues.jsonl"
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "dotfiles",
+  "project_id": "708b1db1-63b5-4c95-a024-5ec8e9cc36d6"
 }

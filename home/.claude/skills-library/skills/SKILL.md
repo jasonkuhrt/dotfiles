@@ -20,11 +20,12 @@ This is the entry point for managing skills. Based on the user's intent, route t
 - **/skills:list** — Read-only views: show outfit, history, token budget
   - Use for: "what skills are on", "show my skills", "available skills", "skill cost", "skill history"
 
-- **/skills:doctor** — Health checks (already exists as its own skill)
+- **/skills:doctor** — Health checks
   - Use for: "check skills", "diagnose", "skill problems"
 
 ## Routing Logic
 
 1. If the user wants to **view** or **query** skill state → `/skills:list`
 2. If the user wants to **change** skill state → `/skills:change`
-3. If ambiguous, ask which they need
+3. If the user wants to **diagnose** skill problems or audit skills → `/skills:doctor`
+4. If ambiguous, ask which they need

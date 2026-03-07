@@ -3,21 +3,25 @@ name: skills:doctor
 description: Use when asked to "review skill", "check skill", "evaluate skill", "assess skill", or any skill quality check.
 ---
 
-# Reviewing Skills
+# /skills:doctor - Review Skill Quality
 
-## CRITICAL
+Use this when the user wants an audit of one or more Claude Code skills.
 
-**You MUST apply the referenced skills as if their ENTIRE content was inlined here.** Invoking is not enough. Every checklist item, every anti-pattern, every guideline in those skills applies to your review. A shallow review that misses structural issues covered by the referenced skills is a failure.
+## Review Focus
 
-Specifically:
-- Apply ALL token efficiency checks (redundancy, duplicate content, tutorial vs reference style)
-- Check EVERY anti-pattern listed
-- Verify ALL structural requirements
-- Audit for bloat: "Why X" justification sections, repeated information across sections, decorative content
+Check these in order:
 
-## Process
+- Broken behavior first: stale commands, missing files, invalid paths, impossible tool instructions, bad frontmatter.
+- Trigger quality: `name` and `description` should make the skill fire for the right requests without being vague.
+- Token efficiency: cut duplicated prose, tutorial filler, decorative framing, and repeated examples.
+- Structure: keep `SKILL.md` lean, move bulky detail into `references/`, repeated code into `scripts/`, and output assets into `assets/`.
+- Progressive disclosure: only load extra files when needed, and make sure `SKILL.md` points to them clearly.
+- External dependencies: every referenced sub-skill, script, path, and command must actually exist or be clearly described as a prerequisite.
 
-Invoke both and exhaustively apply their guidance:
+## Workflow
 
-1. REQUIRED SUB-SKILL: superpowers:writing-skills - Structure, CSO, token efficiency, anti-patterns, quality criteria
-2. REQUIRED SUB-SKILL: superpowers-developing-for-claude-code:working-with-claude-code - Official CC skill format, capabilities
+1. Open the target `SKILL.md` and only the referenced files needed to verify it.
+2. Identify concrete defects before style concerns.
+3. When reviewing, lead with findings and include exact file references.
+4. Prefer specific fixes over general advice.
+5. If the skill is already solid, say so explicitly and note any residual risks or testing gaps.

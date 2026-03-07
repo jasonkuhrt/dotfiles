@@ -112,6 +112,7 @@ git clone git@github.com:jasonkuhrt/shan.git ~/projects/jasonkuhrt/shan
 cd ~/projects/jasonkuhrt/shan
 just install
 just install-global
+just install-skills-user
 ```
 
 After that, dotfiles `just shan ...` wrappers and direct `bun x @jasonkuhrt/shan ...` commands both resolve to the standalone checkout.

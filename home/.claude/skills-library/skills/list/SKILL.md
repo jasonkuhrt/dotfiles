@@ -14,19 +14,24 @@ Read-only views of the skill system state.
 ## Commands
 
 ### Show outfit (default)
+
 ```bash
-bun /Users/jasonkuhrt/projects/jasonkuhrt/shan/src/bin/shan.ts skills list
+bun x @jasonkuhrt/shan skills list
 ```
+
 Shows:
+
 - Core skills (user + project)
 - Pluggable on skills with scope and token cost
 - Pluggable off skills (available in library)
 - Total budget usage
 
 ### Show history
+
 ```bash
-bun /Users/jasonkuhrt/projects/jasonkuhrt/shan/src/bin/shan.ts skills history [--scope user]
+bun x @jasonkuhrt/shan skills history [--scope user]
 ```
+
 Shows the operation log: what was turned on/off and when.
 
 ## Output Interpretation

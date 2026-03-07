@@ -1,0 +1,11 @@
+# This file contains fish universal variable definitions.
+# VERSION: 3.0
+SETUVAR ZO_CMD:zo
+SETUVAR Z_CMD:z
+SETUVAR Z_DATA:/Users/jasonkuhrt/\x2elocal/share/z/data
+SETUVAR Z_DATA_DIR:/Users/jasonkuhrt/\x2elocal/share/z
+SETUVAR Z_EXCLUDE:\x5e/Users/jasonkuhrt\x24
+SETUVAR __fish_initialized:4300
+SETUVAR _fisher_upgraded_to_4_4:\x1d
+SETUVAR fish_greeting:
+SETUVAR fish_user_paths:/Users/jasonkuhrt/go/bin\x1e/Users/jasonkuhrt/\x2ecargo/bin\x1e/opt/homebrew/sbin\x1e/opt/homebrew/bin

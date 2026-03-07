@@ -13,14 +13,6 @@ Brewfile.lock.json
 !.serena/
 !.serena/project.yml
 
-# Bookmarks sync
-home/.bookmarks/backups/
-home/.bookmarks/runtime/
-home/.bookmarks/.sync-state.json
-
-# Fish runtime state
-home/.config/fish/fish_variables
-
 # Claude transcripts (generated output)
 **/.claude/transcripts/
 

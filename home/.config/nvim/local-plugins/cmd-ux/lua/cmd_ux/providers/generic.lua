@@ -18,6 +18,16 @@ local M = {
 ---@type table<string, GenericCommandSummary>
 local summary_cache = {}
 
+---@class GenericLiveCommandState
+---@field revision integer?
+---@field user_commands table<string, table>
+---@field buffer_commands table<string, table>
+local live_command_state = {
+  revision = nil,
+  user_commands = {},
+  buffer_commands = {},
+}
+
 local max_named_frontier_items = 32
 local optional_named_root_limit = 12
 local repeatable_overlap_threshold = 0.75
@@ -28,6 +38,35 @@ local infer_named_frontier
 
 function M.invalidate()
   summary_cache = {}
+  live_command_state = {
+    revision = nil,
+    user_commands = {},
+    buffer_commands = {},
+  }
+end
+
+---@return GenericLiveCommandState
+local function current_live_command_state()
+  -- Generic summaries are only valid for one active in-memory index revision.
+  local index = require("cmd_ux.index")
+  local revision = index.revision()
+  if live_command_state.revision == revision then
+    return live_command_state
+  end
+
+  summary_cache = {}
+  local index_command_maps = index.live_command_maps()
+  live_command_state = {
+    revision = revision,
+    user_commands = index_command_maps and index_command_maps.revision == revision and index_command_maps.user_commands
+      or nvim_commands.get_user_commands(),
+    buffer_commands = index_command_maps
+        and index_command_maps.revision == revision
+        and index_command_maps.buffer_commands
+      or nvim_commands.get_buffer_commands(0),
+  }
+
+  return live_command_state
 end
 
 ---@param command table?
@@ -53,12 +92,12 @@ end
 ---@param root string
 ---@return GenericCommandSummary
 local function command_summary(root)
+  local command_state = current_live_command_state()
   if summary_cache[root] then
     return summary_cache[root]
   end
-
-  local user_command = nvim_commands.get_user_command(root)
-  local buffer_command = nvim_commands.get_buffer_command(root)
+  local user_command = command_state.user_commands[root]
+  local buffer_command = command_state.buffer_commands[root]
   local parsed = nvim_commands.parse_command(root)
   local completion_type = nvim_commands.get_completion_type(root .. " ")
 

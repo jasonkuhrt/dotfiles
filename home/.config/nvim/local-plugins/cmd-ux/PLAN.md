@@ -66,17 +66,28 @@ Each indexed command has:
 
 - root name
 - current scope (`builtin`, `user`, `buffer-local`, provider-owned)
-- baseline node shape
-- semantic kind when known (`leaf`, `namespace`, `hybrid`)
-- generic or provider-owned help/description
-- modeled frontier rules where available
-- open/freeform slot description where richer modeling is not yet available
+- provider ownership
+- lightweight root-list item data for matchable discovery surfaces
 
-The index is complete first, then enriched.
+Deep semantic root description is not built into the index eagerly.
+
+Instead:
+
+- the inventory stays cheap to build and cache
+- root list rendering reads only lightweight indexed items
+- provider/generic semantic enrichment is resolved lazily when a specific root becomes active
+
+The index is complete first. Enrichment is demand-driven.
+
+Current cache boundaries:
+
+- persisted cache: discovered roots plus lightweight root-list items only
+- in-memory root semantic cache: lazy root descriptions per active index revision
+- generic provider cache: build-time live user/buffer command maps when available, plus command summaries and inferred frontiers per active index revision
 
 ## 3. Semantic Enrichment
 
-`cmd-ux` enriches index entries in two ways:
+`cmd-ux` enriches command families in two ways:
 
 - explicit providers for command families like `Config`, `Lazy`, and plugin command families that deserve first-class behavior
 - generic command analysis for commands without a dedicated provider
@@ -106,8 +117,8 @@ That means:
 
 - root matches come from `CommandIndex`
 - root existence checks come from `CommandIndex`
-- picker items come from `CommandIndex`
-- advancement and execution decisions start from `CommandIndex`
+- picker root items come from `CommandIndex`
+- active command semantics come from provider/generic resolution for the current root
 
 There must not be a second path that discovers commands ad hoc.
 
@@ -135,6 +146,27 @@ The index lifecycle is explicit:
 - rebuild when the current-buffer command scope changes
 
 The runtime should trust the current index. If the index is stale, that is a coherence bug.
+
+## Deterministic Performance Doctrine
+
+Safe performance work must improve one of these properties without weakening correctness:
+
+- reduce total-command work during startup and rebuild
+- reduce repeated live Neovim API calls within one active index revision
+- localize expensive semantic probing to the active command family
+- preserve exact invalidation when command inventory or buffer scope changes
+
+Safe next-step candidates, if more latency remains:
+
+- provider-local revision caches for families with expensive live metadata lookups
+- narrower generic completion-probe memoization keyed by root plus accepted path
+- profiling-guided reductions in resolve-path allocations and repeated string rendering
+
+Rejected performance shortcuts:
+
+- trusting persisted semantic state across revisions without proving validity
+- skipping live root-set validation before reusing persisted inventory
+- sharing semantic caches across command-inventory revisions
 
 ## Current Task List
 

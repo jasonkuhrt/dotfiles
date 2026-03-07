@@ -2,26 +2,41 @@ local cache = require("cmd_ux.lib.index_cache")
 local index_builder = require("cmd_ux.lib.index_builder")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
+local providers = require("cmd_ux.providers")
 
 local M = {}
-local cache_version = 1
+local cache_version = 2
 local cache_path = vim.fn.stdpath("cache") .. "/cmd-ux-command-index.json"
 
 ---@class CommandIndexState
 ---@field current? CommandIndex
 ---@field generation integer
+---@field revision integer
+---@field root_nodes table<string, CommandNode>
+---@field live_command_maps? { revision: integer, user_commands: table<string, table>, buffer_commands: table<string, table> }
 local state = {
   current = nil,
   generation = 0,
+  revision = 0,
+  root_nodes = {},
+  live_command_maps = nil,
 }
 vim.__cmd_ux_original_api = vim.__cmd_ux_original_api or {}
 
 ---@return CommandIndex
 function M.build()
   state.generation = state.generation + 1
+  state.revision = state.revision + 1
+  state.root_nodes = {}
+  local entries, user_commands, buffer_commands = index_builder.build_entries()
+  state.live_command_maps = {
+    revision = state.revision,
+    user_commands = user_commands,
+    buffer_commands = buffer_commands,
+  }
   state.current = types.index({
     generation = state.generation,
-    entries = index_builder.build_entries(),
+    entries = entries,
   })
   cache.write(cache_path, cache_version, assert(state.current))
 
@@ -30,6 +45,8 @@ end
 
 function M.invalidate()
   state.current = nil
+  state.root_nodes = {}
+  state.live_command_maps = nil
 end
 
 function M.install_hooks()
@@ -79,6 +96,9 @@ function M.get()
   if cached then
     state.current = cached
     state.generation = cached.generation
+    state.revision = state.revision + 1
+    state.root_nodes = {}
+    state.live_command_maps = nil
     return cached
   end
 
@@ -106,6 +126,38 @@ function M.entry(root)
   return M.get().by_root[root]
 end
 
+---@param root string
+---@return CommandNode?
+function M.describe_root(root)
+  if root == "" then
+    return nil
+  end
+
+  if not M.has(root) then
+    return nil
+  end
+
+  local cached = state.root_nodes[root]
+  if cached then
+    return cached
+  end
+
+  local node = providers.describe_root(root)
+  state.root_nodes[root] = node
+  return node
+end
+
+---@return { revision: integer, user_commands: table<string, table>, buffer_commands: table<string, table> }?
+function M.live_command_maps()
+  return state.live_command_maps
+end
+
+---@return integer
+function M.revision()
+  M.get()
+  return state.revision
+end
+
 ---@param prefix? string
 ---@return string[]
 function M.roots(prefix)
@@ -131,7 +183,7 @@ function M.frontier(prefix)
   for _, root in ipairs(M.roots(prefix)) do
     local entry = M.entry(root)
     if entry then
-      items[#items + 1] = types.frontier_item(entry.node)
+      items[#items + 1] = types.frontier_item(entry.item)
     end
   end
   return util.sort_by_label(items)

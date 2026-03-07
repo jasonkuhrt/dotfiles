@@ -49,11 +49,68 @@ Both surfaces are different UIs over the same command model.
 
 ### Persisted index cache
 
-`cmd-ux` persists the compiled command index to speed later boots.
+`cmd-ux` persists the discovered command inventory and lightweight root-list items to speed later boots.
 
 That cache is not trusted blindly.
 
-It is reused only when the live discovered root command set still matches the cached root set. If command discovery has changed, `cmd-ux` rebuilds the index from live Neovim state.
+It is reused only when the live discovered root command set still matches the cached root set. If command discovery has changed, `cmd-ux` rebuilds the inventory from live Neovim state.
+
+Rich root semantics are resolved lazily when a specific command becomes active. They are not eagerly materialized for every root during startup.
+
+### Runtime architecture
+
+`cmd-ux` is organized into four runtime layers:
+
+1. `CommandInventory`
+   - discovers the live root command set from Neovim
+   - applies the denylist
+   - captures lightweight list-facing metadata such as source and short description
+
+2. `CommandIndex`
+   - persists and reloads that inventory
+   - answers root existence and prefix frontier queries
+   - intentionally does not eagerly build full semantic root trees
+
+3. Lazy semantic resolution
+   - resolves detailed root semantics only for the currently active command family
+   - delegates to dedicated providers first
+   - falls back to conservative generic inference when no dedicated provider exists
+
+4. Surface adapters
+   - Ex adapter and Snacks adapter consume the same root inventory and semantic resolution pipeline
+   - surfaces do not rediscover commands independently
+
+This split is the current performance boundary:
+
+- inventory work should scale with total command count
+- semantic work should scale with the active command family only
+
+### Cache and invalidation model
+
+There are multiple cache layers, each with a narrow contract:
+
+- persisted inventory cache
+  - stores discovered roots and lightweight root-list items
+  - reused only when the live root set still matches
+  - keeps a persisted build generation for cache payload identity only
+
+- in-memory root semantic cache
+  - stores lazily described root nodes per current active index revision
+  - cleared whenever the command inventory is invalidated or rebuilt
+
+- generic provider revision cache
+  - reuses the live `nvim_get_commands({})` and `nvim_buf_get_commands(0, {})` results already fetched during inventory build when available
+  - otherwise fetches them once per active index revision
+  - stores generic command summaries and inferred named frontiers for that same revision
+  - rebuilt automatically whenever the active in-memory index instance changes after command creation/deletion, buffer-scope changes, or cache reload
+
+What is intentionally not cached across revisions:
+
+- open-ended dynamic argument spaces whose truth is inherently live
+- semantic state that cannot be proven stable from the current session shape
+
+An active index revision is not the same thing as the persisted cache generation.
+The revision changes whenever the live in-memory index instance changes, including a cache reload after invalidation.
 
 ### Command kinds
 

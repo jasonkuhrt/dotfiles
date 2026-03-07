@@ -92,13 +92,13 @@ local resolution_kinds = {
 ---@field root string
 ---@field source string
 ---@field provider string
----@field node CommandNode
+---@field item CommandFrontierItem
 
 ---@class CommandIndexEntrySpec
 ---@field root string
 ---@field source string
 ---@field provider string
----@field node CommandNodeSpec|CommandNode
+---@field item CommandFrontierItemSpec|CommandFrontierItem
 
 ---@class CommandIndex
 ---@field generation integer
@@ -397,7 +397,7 @@ function M.index_entry(spec)
     root = root,
     source = normalize_string(spec.source, "index_entry.source"),
     provider = normalize_string(spec.provider, "index_entry.provider"),
-    node = M.node(spec.node),
+    item = M.frontier_item(spec.item),
   }
 end
 

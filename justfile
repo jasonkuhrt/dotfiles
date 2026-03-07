@@ -190,6 +190,18 @@ cmd-ux-test:
         --cmd "set runtimepath^=$plenary" \
         -c "lua require('plenary.test_harness').test_directory('$plugin_root/tests/plenary', { minimal_init = '$plugin_root/tests/minimal_init.lua', sequential = true })"
 
+cmd-ux-bench:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    plugin_root="$PWD/{{ cmd_ux_plugin_path }}"
+    cache_dir="$(mktemp -d)"
+    trap 'rm -rf "$cache_dir"' EXIT
+
+    CMD_UX_TEST=1 XDG_CONFIG_HOME="$PWD/home/.config" XDG_CACHE_HOME="$cache_dir" nvim --headless -u NONE \
+        -c "lua dofile('$plugin_root/tests/minimal_init.lua')" \
+        -c "lua dofile('$plugin_root/tests/benchmarks/index_bench.lua')"
+
 hooks-install:
     bash scripts/git-hooks/install-pre-commit.sh
 

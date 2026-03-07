@@ -6,7 +6,6 @@ tap "planetscale/tap"
 tap "polidog/kilar"
 tap "assimelha/tap"
 tap "manaflow-ai/cmux"
-tap "zjrosen/perles"
 tap "neurosnap/tap"
 tap "mdsakalu/tap"
 
@@ -72,8 +71,6 @@ brew "gh"            # GitHub CLI
 brew "git-delta"     # better diffs (also in gitconfig)
 brew "git-crypt"     # transparent file encryption
 brew "lazygit"       # terminal UI for git
-brew "bdui"          # terminal UI for beads (kanban, tree, graph views)
-brew "perles"        # terminal UI for beads issue tracking (kanban, BQL search)
 brew "zmx"           # terminal session persistence
 brew "zsm"           # TUI session manager for zmx
 brew "pre-commit"    # git hooks framework
@@ -101,9 +98,8 @@ brew "glow"          # render markdown in terminal
 # `glow` covers terminal markdown; removed disabled `mdcat`
 brew "pandoc"        # document converter
 
-# Dotfiles management
-brew "chezmoi"       # declarative dotfiles manager
-brew "age"           # encryption for chezmoi secrets
+# Encryption
+brew "age"           # file encryption and key management
 
 # System utilities
 brew "watch"         # run command repeatedly
@@ -116,7 +112,7 @@ brew "sevenzip"      # 7-Zip (yazi archive preview)
 # brew "polidog/kilar/kilar"  # interactive port/process manager
 
 # Database
-brew "dolt"                        # git for data (beads backend)
+brew "dolt"                        # git for data
 brew "planetscale/tap/pscale"
 
 # Cloud

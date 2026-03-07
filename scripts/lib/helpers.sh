@@ -1,5 +1,5 @@
-# Shared helpers for chezmoi scripts
-# Included by chezmoi scripts via template directive
+# Shared helpers for dotfiles setup scripts
+# Included by shell setup entrypoints
 
 # ─────────────────────────────────────────────────────────────
 # Colors

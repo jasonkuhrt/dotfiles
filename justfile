@@ -63,14 +63,14 @@ claude-cmux-check:
 
     env_output="$(
         CMUX_WORKSPACE_ID=workspace:1 \
-        CMUX_SURFACE_ID=surface:7 \
+        CMUX_SURFACE_ID=77777777-7777-7777-7777-777777777777 \
         CLAUDE_REAL_BIN=/usr/bin/env \
         "$wrapper"
     )"
     printf '%s\n' "$env_output" | grep -q '^TMUX=cmux$'
-    printf '%s\n' "$env_output" | grep -q '^TMUX_PANE=%7$'
+    printf '%s\n' "$env_output" | grep -q '^TMUX_PANE=%77777777-7777-7777-7777-777777777777$'
     printf '%s\n' "$env_output" | grep -q '^CC_CMUX_WORKSPACE_ID=workspace:1$'
-    printf '%s\n' "$env_output" | grep -q '^CC_CMUX_SURFACE_ID=surface:7$'
+    printf '%s\n' "$env_output" | grep -q '^CC_CMUX_SURFACE_ID=77777777-7777-7777-7777-777777777777$'
 
     tmpdir="$(mktemp -d)"
     trap 'rm -rf "$tmpdir"' EXIT
@@ -85,56 +85,56 @@ claude-cmux-check:
         CC_CMUX_TEST_LOG="$log" \
         CC_CMUX_TEST_STATE="$state" \
         CC_CMUX_WORKSPACE_ID=workspace:1 \
-        CC_CMUX_SURFACE_ID=surface:1 \
+        CC_CMUX_SURFACE_ID=11111111-1111-1111-1111-111111111111 \
         "$shim" display-message -p '#{pane_id}'
     )"
-    [ "$pane_id" = "%1" ]
+    [ "$pane_id" = "%11111111-1111-1111-1111-111111111111" ]
 
     new_pane="$(
         CC_CMUX_CMUX_BIN="$tmpdir/cmux" \
         CC_CMUX_TEST_LOG="$log" \
         CC_CMUX_TEST_STATE="$state" \
         CC_CMUX_WORKSPACE_ID=workspace:1 \
-        CC_CMUX_SURFACE_ID=surface:1 \
-        "$shim" split-window -h -t %1 -P -F '#{pane_id}'
+        CC_CMUX_SURFACE_ID=11111111-1111-1111-1111-111111111111 \
+        "$shim" split-window -h -t %11111111-1111-1111-1111-111111111111 -P -F '#{pane_id}'
     )"
-    [ "$new_pane" = "%2" ]
+    [ "$new_pane" = "%22222222-2222-2222-2222-222222222222" ]
 
     list_output="$(
         CC_CMUX_CMUX_BIN="$tmpdir/cmux" \
         CC_CMUX_TEST_LOG="$log" \
         CC_CMUX_TEST_STATE="$state" \
         CC_CMUX_WORKSPACE_ID=workspace:1 \
-        CC_CMUX_SURFACE_ID=surface:1 \
+        CC_CMUX_SURFACE_ID=11111111-1111-1111-1111-111111111111 \
         "$shim" list-panes -F '#{pane_id}'
     )"
-    [ "$list_output" = "$(printf '%%1\n%%2')" ]
+    [ "$list_output" = "$(printf '%%11111111-1111-1111-1111-111111111111\n%%22222222-2222-2222-2222-222222222222')" ]
 
     CC_CMUX_CMUX_BIN="$tmpdir/cmux" \
     CC_CMUX_TEST_LOG="$log" \
     CC_CMUX_TEST_STATE="$state" \
     CC_CMUX_WORKSPACE_ID=workspace:1 \
-    CC_CMUX_SURFACE_ID=surface:1 \
-    "$shim" send-keys -t %2 "echo hi" Enter
+    CC_CMUX_SURFACE_ID=11111111-1111-1111-1111-111111111111 \
+    "$shim" send-keys -t %22222222-2222-2222-2222-222222222222 "echo hi" Enter
 
     CC_CMUX_CMUX_BIN="$tmpdir/cmux" \
     CC_CMUX_TEST_LOG="$log" \
     CC_CMUX_TEST_STATE="$state" \
     CC_CMUX_WORKSPACE_ID=workspace:1 \
-    CC_CMUX_SURFACE_ID=surface:1 \
-    "$shim" select-pane -t %2
+    CC_CMUX_SURFACE_ID=11111111-1111-1111-1111-111111111111 \
+    "$shim" select-pane -t %22222222-2222-2222-2222-222222222222
 
     CC_CMUX_CMUX_BIN="$tmpdir/cmux" \
     CC_CMUX_TEST_LOG="$log" \
     CC_CMUX_TEST_STATE="$state" \
     CC_CMUX_WORKSPACE_ID=workspace:1 \
-    CC_CMUX_SURFACE_ID=surface:1 \
-    "$shim" kill-pane -t %2
+    CC_CMUX_SURFACE_ID=11111111-1111-1111-1111-111111111111 \
+    "$shim" kill-pane -t %22222222-2222-2222-2222-222222222222
 
-    grep -q 'send --workspace workspace:1 --surface surface:2 echo hi' "$log"
-    grep -q 'send-key --workspace workspace:1 --surface surface:2 enter' "$log"
-    grep -q 'focus-pane --workspace workspace:1 --pane pane:20' "$log"
-    grep -q 'close-surface --workspace workspace:1 --surface surface:2' "$log"
+    grep -q 'send --workspace workspace:1 --surface 22222222-2222-2222-2222-222222222222 echo hi' "$log"
+    grep -q 'send-key --workspace workspace:1 --surface 22222222-2222-2222-2222-222222222222 enter' "$log"
+    grep -q 'focus-pane --workspace workspace:1 --pane pane-22222222' "$log"
+    grep -q 'close-surface --workspace workspace:1 --surface 22222222-2222-2222-2222-222222222222' "$log"
 
     printf 'PASS: claude-cmux-check\n'
 

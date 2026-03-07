@@ -26,7 +26,13 @@ require_cmd "${cmux_bin}"
 require_cmd "${jq_bin}"
 
 cmux_json() {
-    "${cmux_bin}" --json "$@"
+    "${cmux_bin}" --id-format both --json "$@"
+}
+
+first_json_value() {
+    local filter="$1"
+
+    "${jq_bin}" -r "first(.. | objects | (${filter}) // empty)"
 }
 
 current_workspace_ref() {
@@ -35,7 +41,7 @@ current_workspace_ref() {
         return 0
     fi
 
-    cmux_json current-workspace | "${jq_bin}" -r 'first(.. | objects | .workspace_ref? // empty)'
+    cmux_json current-workspace | first_json_value '.workspace_id? // .workspace_uuid? // .workspace_ref?'
 }
 
 current_surface_ref() {
@@ -44,11 +50,12 @@ current_surface_ref() {
         return 0
     fi
 
-    cmux_json identify | "${jq_bin}" -r 'first(.. | objects | .surface_ref? // empty)'
+    cmux_json identify | first_json_value '.surface_id? // .surface_uuid? // .surface_ref?'
 }
 
 surface_ref_from_target() {
     local target="${1:-}"
+    local normalized=""
 
     if [[ -z "${target}" ]]; then
         current_surface_ref
@@ -57,32 +64,55 @@ surface_ref_from_target() {
 
     case "${target}" in
         %*)
-            printf 'surface:%s\n' "${target#%}"
+            normalized="${target#%}"
+            case "${normalized}" in
+                surface:*)
+                    printf '%s\n' "${normalized}"
+                    ;;
+                '' )
+                    current_surface_ref
+                    ;;
+                * )
+                    if [[ "${normalized}" =~ ^[0-9]+$ ]]; then
+                        printf 'surface:%s\n' "${normalized}"
+                    else
+                        printf '%s\n' "${normalized}"
+                    fi
+                    ;;
+            esac
             ;;
         surface:*)
             printf '%s\n' "${target}"
             ;;
         *)
-            current_surface_ref
+            printf '%s\n' "${target}"
             ;;
     esac
 }
 
 tmux_pane_id_from_surface() {
-    local surface_ref="$1"
-    printf '%%%s\n' "${surface_ref#surface:}"
+    local surface_id="$1"
+
+    case "${surface_id}" in
+        surface:*)
+            printf '%%%s\n' "${surface_id#surface:}"
+            ;;
+        *)
+            printf '%%%s\n' "${surface_id}"
+            ;;
+    esac
 }
 
 pane_ref_from_surface() {
     local surface_ref="$1"
 
     cmux_json identify --workspace "$(current_workspace_ref)" --surface "${surface_ref}" \
-        | "${jq_bin}" -r 'first(.. | objects | .pane_ref? // empty)'
+        | first_json_value '.pane_id? // .pane_uuid? // .pane_ref?'
 }
 
 list_surface_refs() {
     cmux_json list-pane-surfaces --workspace "$(current_workspace_ref)" \
-        | "${jq_bin}" -r '.. | objects | .surface_ref? // empty' \
+        | "${jq_bin}" -r '.. | objects | (.surface_id? // .surface_uuid? // .surface_ref? // empty)' \
         | awk 'NF { print }' \
         | sort -u
 }

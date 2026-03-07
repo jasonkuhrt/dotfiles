@@ -27,7 +27,7 @@ This project uses [Beads (bd)](https://github.com/steveyegge/beads) for issue tr
 - Use `bd ready` to find available work
 - Use `bd create` to track new issues/tasks/bugs
 - Use `bd sync` at end of session to sync with git remote
-- Git hooks auto-sync on commit/merge
+- This repo uses `bd sync` manually; beads hooks are not installed because `core.hooksPath` is already customized
 
 ## Quick Reference
 

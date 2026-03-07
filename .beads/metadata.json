@@ -2,7 +2,6 @@
   "database": "dolt",
   "backend": "dolt",
   "dolt_mode": "server",
-  "dolt_server_port": 13863,
   "dolt_database": "dotfiles",
-  "project_id": "f2c94c31-6d40-4e08-bc82-ec93315ae0fd"
+  "project_id": "feeac57c-8820-4f90-986f-cfb86ca87428"
 }

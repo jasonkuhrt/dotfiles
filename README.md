@@ -118,7 +118,7 @@ A macOS launchd agent runs `dotctl heal` every 5 minutes. Some applications repl
     "recipient": "age1..."
   },
   "heal": {
-    "label": "com.jasonkuhrt.chezmoi-symlink-heal",
+    "label": "com.jasonkuhrt.dotfiles-symlink-heal",
     "intervalSeconds": 300
   }
 }
@@ -126,9 +126,7 @@ A macOS launchd agent runs `dotctl heal` every 5 minutes. Some applications repl
 
 ## Further Reading
 
-- [How it works](docs/how-it-works.md) — detailed conventions and commands reference
 - [Symlink platform](docs/symlink-platform.md) — lane model, capture policy, runtime state
-- [Manual setup](docs/manual-setup.md) — post-bootstrap steps (GitHub auth, macOS settings)
 - [CLI tools](docs/cli-tools.md) — installed tools and shell abbreviations
 - [Neovim](docs/neovim.md) — LazyExtras, AI stack, plugin decisions
 - [Known limitations](docs/known-limitations.md) — workarounds and manual intervention

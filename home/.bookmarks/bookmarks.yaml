@@ -21,15 +21,6 @@ base:
               name: Releases · backnotprop/plannotator
               url: https://github.com/backnotprop/plannotator/releases
         - _tag: BookmarkFolder
-          name: beads
-          children:
-            - _tag: BookmarkFolder
-              name: CHANGELOG.md at main · steveyegge
-              children:
-                - _tag: BookmarkLeaf
-                  name: beads/CHANGELOG.md at main · steveyegge/beads
-                  url: https://github.com/steveyegge/beads/blob/main/CHANGELOG.md
-        - _tag: BookmarkFolder
           name: claude-code
           children:
             - _tag: BookmarkLeaf
@@ -743,10 +734,6 @@ base:
     - _tag: BookmarkLeaf
       name: Announcing ES Module Shims 2.0
       url: https://guybedford.com/es-module-shims-2.0
-    - _tag: BookmarkLeaf
-      name: Beads - Memory for your Agent and The Best Damn Issue Tracker Your're Not
-        Using
-      url: https://ianbull.com/posts/beads
     - _tag: BookmarkLeaf
       name: Best Practices for Claude Code - Claude Code Docs
       url: https://code.claude.com/docs/en/best-practices

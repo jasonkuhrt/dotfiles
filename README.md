@@ -1,93 +1,135 @@
 # dotfiles
 
-Personal system configuration managed by [chezmoi](https://www.chezmoi.io/).
+Personal macOS system configuration deployed by [dotctl](https://github.com/jasonkuhrt/dotctl). Everything lives in a single `home/` source tree. The directory layout is the configuration — no manifest to maintain, no filename prefixes to learn.
 
 ## New Machine Setup
 
 ```sh
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jasonkuhrt/dotfiles
-# Paste age key from password manager to ~/.config/chezmoi/key.txt, then:
+git clone git@github.com:jasonkuhrt/dotfiles.git ~/projects/jasonkuhrt/dotfiles
+cd ~/projects/jasonkuhrt/dotfiles
+bun install
 just up
-# Complete manual steps: docs/manual-setup.md
 ```
 
-After bootstrap, `just` is the primary interface.
-After bootstrap, the public interface is:
+Paste your age private key from your password manager into `~/.config/dotctl/age-key.txt` before the first `just up` if you have encrypted secrets. Complete remaining manual steps in [docs/manual-setup.md](docs/manual-setup.md).
+
+## Daily Use
 
 ```sh
-just up
-just edit ~/.config/ghostty/config
-just status
-just doctor
-just explain ~/.config/dprint
+just up                          # full deploy (scripts + symlinks + manifest)
+just edit ~/.config/ghostty/config  # open the source file for any managed target
+just status                      # deployment health
+just doctor                      # 55 invariant checks
+just explain ~/.config/dprint    # how a target is managed
 ```
 
-## How to Think About This Repo
+`just up` is convergent and idempotent. Run it whenever you pull, edit config, or feel uncertain.
 
-chezmoi materializes files from a source directory into your home directory. In this repo, most ordinary config is symlinked rather than copied. The main source directory is `home/`, and some repo-backed live directories live under `symlink-roots/`. A file at `home/.chezmoiroot` tells chezmoi that, so the repo root can hold non-deployed things like docs and the justfile without them ending up in `$HOME`.
+## How It Works
 
-Inside `home/`, files are named with prefixes that tell chezmoi how to deploy them. `dot_gitconfig` becomes `~/.gitconfig`. `private_dot_ssh/config` becomes `~/.ssh/config` with mode 0700. `encrypted_credentials.age` gets decrypted with [age](https://github.com/FiloSottile/age) on deploy. Prefixes compose: `private_dot_aws/encrypted_credentials.age` becomes `~/.aws/credentials` in a private directory, decrypted from age. The full prefix vocabulary is `dot_`, `private_`, `exact_`, `encrypted_`, `executable_`, `symlink_`, and `empty_` — once you know these, you can read the whole repo at a glance. Details in [how-it-works.md](docs/how-it-works.md).
+dotctl walks `home/` and creates symlinks into `$HOME`. Three conventions determine what happens to each entry.
 
-Some pure config directories now live under `symlink-roots/` and are exposed into `$HOME` as whole-directory symlinks. That means new files inside those dirs are instant on both sides and git, not chezmoi child-file metadata, is the source of truth there. That now includes `~/.bookmarks`, backed by `symlink-roots/bookmarks/`. The bookmark sync CLI itself now lives in the standalone `jasonkuhrt/bookmarks` repo; this repo only owns the managed config directory.
+**Directory symlinks.** A directory without a `.spread` marker is symlinked whole. `home/.ssh/` becomes `~/.ssh -> repo/home/.ssh`. Edits inside the target write directly into the repo.
 
-The local control plane is `packages/dotctl/`. It builds the symlink manifest, runs the launchd healer, and exposes the read-only health/explain UX around `just up`.
+**Spread directories.** A `.spread` file inside a directory tells dotctl to create the directory as a real folder in `$HOME` and symlink each child individually. This is how `home/.config/` works — dotctl owns `starship.toml` and `fish/` without claiming all of `~/.config/`. Spread is recursive: a spread directory can contain both spread subdirectories (with their own `.spread`) and whole-directory symlinks (without one).
 
-The Claude Code helper CLI `shan` also lives outside this repo now, in standalone `jasonkuhrt/shan`. Dotfiles only keeps your Claude config and convenience `just` wrappers; register the standalone repo with `bun link` so `just shan ...` can resolve it via `bun x @jasonkuhrt/shan`.
+Use `.spread` when an application writes runtime state alongside your config (logs, caches, sockets). Without it, those writes go into the repo.
 
-That covers config files. But managing a system also means installing packages, setting macOS defaults, configuring the Dock — things that aren't files. That's what lifecycle scripts handle.
+**Files.** Regular files at the `home/` root or inside spread directories become individual symlinks.
 
-## Lifecycle Scripts
+### Special conventions
 
-`home/.chezmoiscripts/` has 18 shell scripts that run during `chezmoi apply`. Their filenames encode when and how often they run. `run_once_before_02-homebrew.sh.tmpl` runs once, on a new machine, before chezmoi deploys files — it installs Homebrew. `run_onchange_after_08-macos-defaults.sh.tmpl` re-runs after file deployment whenever the script's content changes — it sets keyboard repeat rate, trackpad speed, and so on.
+**Encrypted files (`.age`).** `home/.aws/credentials.age` is decrypted with [age](https://github.com/FiloSottile/age) at deploy time and written as `~/.aws/credentials` with mode `0600`. The age identity lives at `~/.config/dotctl/age-key.txt`. Keep it in your password manager — it is the only secret you need to transfer between machines.
 
-The interesting ones are scripts that re-run when a *data file* changes, not when the script itself changes. For example, the brew-bundle script has this line in it:
+**Modify scripts (`.modify` sidecars).** A file `F` with a companion `F.modify` script uses merge deployment. The sidecar receives the source path via `$DOTCTL_SOURCE`, writes merged output to stdout. This lets you combine managed configuration with machine-local values.
 
-```bash
-# Brewfile hash: {{ include "Brewfile" | sha256sum }}
+**Skipped entries.** `Brewfile`, `dock/`, and `npm/` live in `home/` but are not deployed — they exist so setup scripts can reference them. Additional skips are configurable via `homeRootSkip` in `dotctl.config.json`.
+
+## Source Tree
+
+```
+home/
+  .aws/                  # dir-symlink (contains credentials.age)
+  .bookmarks/            # dir-symlink (bookmarks sync config)
+  .claude/               # spread (skills, rules, hooks — runtime writes transcripts/)
+    .spread
+  .config/               # spread (owns specific app configs, not all of ~/.config)
+    .spread
+    fish/                # spread (config + fish_variables; fish writes completions/)
+      .spread
+    gh/                  # spread
+      .spread
+    ghostty/             # dir-symlink (pure config)
+    starship.toml        # file symlink
+    ...
+  .gitconfig             # file symlink
+  .serena/               # spread (config; Serena writes logs/, memories/)
+    .spread
+  .ssh/                  # spread (config + known_hosts; SSH writes sockets/)
+    .spread
+  Library/               # spread
+    .spread
+    LaunchAgents/        # spread (plist files)
+      .spread
+  Brewfile               # skipped — read by brew-bundle setup script
+  dock/                  # skipped — read by dock-apps setup script
+  npm/                   # skipped — read by npm-globals setup script
 ```
 
-chezmoi evaluates that template on every apply. If the hash is different from last time, chezmoi considers the script "changed" and re-runs it. So editing `home/Brewfile` and running `just up` automatically triggers `brew bundle` — no manual step needed.
+## Setup Scripts
 
-## Data Files
+Scripts in `scripts/setup/` run during `just up` in two phases: `before/` (prerequisites) and `after/` (configuration that depends on deployed files). Each phase has `once/` (first run only) and `onchange/` (re-runs when watched files change) subdirectories.
 
-Here's the thing that might seem odd at first: the `Brewfile`, `dock/apps.txt`, and `npm/global-packages.txt` all live inside `home/`, but they are NOT deployed to your home directory. They're listed in `.chezmoiignore` to prevent that.
+Before scripts install foundational dependencies:
 
-Why put them in `home/` at all? Because of the hash-trigger pattern above. chezmoi's `include` function can only read files that are inside the source directory (`home/`). If the Brewfile lived at the repo root, the script couldn't write `{{ include "Brewfile" | sha256sum }}` — chezmoi wouldn't find it. So these files live in `home/` to be reachable by `include`, and `.chezmoiignore` keeps them from being deployed. It's a pragmatic workaround for a chezmoi limitation.
+- `01-xcode-cli.sh` — Xcode command-line tools
+- `02-homebrew.sh` — Homebrew
+- `03-brew-bundle.sh` — `brew bundle` from `home/Brewfile` (re-runs on Brewfile change)
 
-## Daily Workflow
+After scripts configure the system:
 
-```sh
-git pull --rebase
-just up
-just edit ~/.config/ghostty/config
-just status
+- `04-node-toolchain.sh` — Node.js via fnm
+- `05-npm-globals.sh` — global npm packages from `home/npm/global-packages.txt`
+- `06-fisher.sh` — Fisher plugin manager for fish
+- `07-fisher-plugins.sh` — fish plugins from `home/.config/fish/fish_plugins`
+- `08-macos-defaults.sh` — keyboard repeat, trackpad speed, Finder preferences
+- `09-dock-apps.sh` — Dock layout from `home/dock/apps.txt`
+- `11-dprint-update.sh` — dprint formatter plugins
+- `12-skills-sync.sh` — Claude Code skill installation
+- `13-git-ssh.sh` — SSH key for GitHub
+- `14-neovim-plugins.sh` — Neovim plugin install via lazy.nvim
+
+## Heal Agent
+
+A macOS launchd agent runs `dotctl heal` every 5 minutes. Some applications replace symlinks with regular files during atomic saves — the healer detects this drift and restores the symlinks. `just up` installs and loads the agent automatically.
+
+## Configuration
+
+`dotctl.config.json` in the repo root:
+
+```json
+{
+  "sourceDir": "home",
+  "scriptsDir": "scripts/setup",
+  "stateDir": "~/.local/state/dotfiles-symlink",
+  "homeRootSkip": ["Brewfile", "dock", "npm"],
+  "age": {
+    "identity": "~/.config/dotctl/age-key.txt",
+    "recipient": "age1..."
+  },
+  "heal": {
+    "label": "com.jasonkuhrt.chezmoi-symlink-heal",
+    "intervalSeconds": 300
+  }
+}
 ```
-
-`just up` is convergent: it refreshes the cached symlink manifest, applies chezmoi in symlink mode, ensures the launchd healer is loaded, repairs broken file symlinks according to explicit policy, and reapplies chezmoi. Re-running it is safe.
-
-`just status`, `just doctor`, and `just explain <target>` are read-only.
-
-## Secrets
-
-Secrets are encrypted at rest with age. The only thing to transfer between machines is the age key at `~/.config/chezmoi/key.txt` (keep it in your password manager). `chezmoi add --encrypt <file>` encrypts a new secret. `chezmoi edit <file>` decrypts, opens your editor, and re-encrypts on save.
-
-## Claude Code Config
-
-Global CC config is split across lanes. `~/.claude/checks`, `commands`, `rules`, and `schemas` are repo-backed true-dir symlinks from `symlink-roots/claude/`. `home/dot_claude/` still owns top-level files plus exact-managed trees like hooks and skills.
-
-Project-local CC config for this repo lives in `.claude/` at the repo root, managed by git, invisible to chezmoi.
-
-`~/.claude/settings.json` is not managed by chezmoi — both tools use atomic writes (temp file + rename), so they'd destroy each other's files. CC owns it at runtime.
-
-The pure `~/.claude/checks`, `~/.claude/commands`, `~/.claude/rules`, and `~/.claude/schemas` trees are now repo-backed directory symlinks. `just edit` understands that split so you do not need to care which lane a target lives in.
 
 ## Further Reading
 
-- [How it works](docs/how-it-works.md) — naming conventions, script inventory, commands reference
-- [Symlink platform](docs/symlink-platform.md) — lane model, capture policy, local runtime state
-- [Manual setup](docs/manual-setup.md) — post-bootstrap steps (GitHub auth, email, macOS settings)
-- [CLI tools](docs/cli-tools.md) — reference for installed tools and shell abbreviations
-- [Neovim](docs/neovim.md) — LazyExtras strategy, AI stack, plugin decisions, skip list
-- [Node setup](docs/node-setup.md) — Node/pnpm/npm toolchain
-- [Known limitations](docs/known-limitations.md) — bugs, workarounds, manual intervention
+- [How it works](docs/how-it-works.md) — detailed conventions and commands reference
+- [Symlink platform](docs/symlink-platform.md) — lane model, capture policy, runtime state
+- [Manual setup](docs/manual-setup.md) — post-bootstrap steps (GitHub auth, macOS settings)
+- [CLI tools](docs/cli-tools.md) — installed tools and shell abbreviations
+- [Neovim](docs/neovim.md) — LazyExtras, AI stack, plugin decisions
+- [Known limitations](docs/known-limitations.md) — workarounds and manual intervention
 - [Decisions](DECISIONS.md) — architecture decision records

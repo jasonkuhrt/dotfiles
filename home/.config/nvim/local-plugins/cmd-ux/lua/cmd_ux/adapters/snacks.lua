@@ -42,13 +42,11 @@ local M = {}
 ---@field prefix string
 ---@field pending string
 ---@field trailing_space boolean
----@field ignore_next_change boolean
 ---@type CmdUxSession
 M.session = {
   prefix = "",
   pending = "",
   trailing_space = false,
-  ignore_next_change = false,
 }
 
 ---@class CmdUxPickerItem
@@ -165,8 +163,7 @@ local function update_input(picker)
   if picker.input:get() == M.session.pending then
     return
   end
-  M.session.ignore_next_change = true
-  picker.input:set(M.session.pending, M.session.pending)
+  picker.input:set("", M.session.pending)
 end
 
 ---@param picker? CmdUxSnacksPicker
@@ -174,9 +171,20 @@ local function refresh_picker(picker)
   if not picker or picker.closed then
     return
   end
+  update_input(picker)
   picker.opts.title = current_title()
   picker:refresh()
-  update_input(picker)
+end
+
+---@param search string?
+local function sync_pending(search)
+  local pending = search or ""
+  if pending == M.session.pending then
+    return
+  end
+  M.session.pending = pending
+  M.session.trailing_space = false
+  invalidate_state()
 end
 
 local function handoff_to_cmdline()
@@ -229,7 +237,10 @@ end
 local function picker_opts()
   return {
     source = "cmd_ux",
+    live = true,
     title = current_title(),
+    pattern = "",
+    search = M.session.pending,
     prompt = "> ",
     focus = "input",
     layout = {
@@ -240,7 +251,15 @@ local function picker_opts()
         min_width = 120,
       },
     },
-    finder = function()
+    matcher = {
+      fuzzy = false,
+      sort = false,
+      sort_empty = false,
+    },
+    finder = function(_, ctx)
+      sync_pending(ctx.filter.search)
+      ctx.picker.opts.title = current_title()
+      ctx.picker:update_titles()
       return current_items()
     end,
     format = function(item)
@@ -306,22 +325,6 @@ local function picker_opts()
     ---@param picker CmdUxSnacksPicker
     on_show = function(picker)
       update_input(picker)
-    end,
-    ---@param picker CmdUxSnacksPicker
-    on_change = function(picker)
-      if M.session.ignore_next_change then
-        M.session.ignore_next_change = false
-        return
-      end
-      local pending = picker.input:get()
-      if pending == M.session.pending then
-        return
-      end
-      M.session.pending = pending
-      M.session.trailing_space = false
-      invalidate_state()
-      picker.opts.title = current_title()
-      picker:refresh()
     end,
     ---@param picker CmdUxSnacksPicker
     ---@param item? CmdUxPickerItem

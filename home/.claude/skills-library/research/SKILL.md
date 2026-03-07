@@ -1,9 +1,19 @@
 ---
 name: research
-description: Use when working with research files (~/.claude/research/ by default, .claude/research/ for project level) — creating, importing, formatting, pruning conversational artifacts, or flushing session learnings before context loss.
+description: Use when working with research files (~/.claude/research/ by default, .claude/research/ for project level) — creating, importing, formatting, pruning conversational artifacts, or flushing session learnings before context loss. Not for specs, beads, tasks, or other work-tracking artifacts.
 ---
 
 # Research
+
+## Not This Skill
+
+Use something else when the user is driving work instead of preserving reference material:
+
+- Specs, acceptance criteria, or design docs meant to guide implementation -> `writing-specs`
+- Issues, tasks, beads, or TODO capture -> `bd create` / `beads:offload`
+- Session planning or execution tracking -> beads/tasks, not research files
+
+If the user wants something actionable and trackable, do not create a research file.
 
 ## Level
 

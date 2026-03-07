@@ -9,6 +9,10 @@ description: >
 
 Code checks are defined in `CHECKS.quality.md`. Run `/check @effect` to evaluate them.
 
+## Documentation Lookup
+
+Use Ref first for Effect guides, concepts, and pattern docs. Fall back to `effect-docs` only when you need exact API signatures or symbol-level reference detail that Ref does not expose cleanly. If neither is enough, read the source.
+
 ## Terminology
 
 | Term                    | Definition                                                                                                 |

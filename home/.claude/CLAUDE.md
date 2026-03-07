@@ -25,6 +25,7 @@
 
 ## Information Quality
 
+* For documentation lookups, use this order: matching local skill/reference docs → ref MCP → local indexed docs/source clone → web search.
 * __HALT on incomplete information:__ If documentation remains unavailable after attempting the remediation cascade—and this affects task quality—STOP and tell me immediately. Don't proceed with partial knowledge.
 * __Remediation cascade:__ When WebFetch truncates or docs seem incomplete:
   1. Try ref MCP first (handles most libraries without truncation)
@@ -42,3 +43,8 @@ __Always use Serena MCP tools for code exploration.__ Serena provides LSP-backed
 | Find references           | `mcp__serena__find_referencing_symbols` | Grep for usage         |
 | Understand file structure | `mcp__serena__get_symbols_overview`     | Read entire file       |
 | Navigate to related code  | Symbol-based navigation                 | Path guessing          |
+
+## Claude Code Internals
+
+* Never directly edit Claude Code internal JSON files (`installed_plugins.json`, `known_marketplaces.json`, `sessions-index.json`, internal `settings.json`). Use the supported CLI/REPL surfaces (`/plugin`, `/settings`, marketplace commands, etc.).
+* Exception: repair a broken plugin manifest only as a last resort, then validate with `jq empty ~/.claude/plugins/installed_plugins.json`.

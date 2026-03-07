@@ -5,6 +5,8 @@ description: Use when writing, editing, reviewing, debugging, or iterating on Cl
 
 # CC Authoring
 
+Start here before web search when the question is about Claude Code skills, hooks, rules, markers, or other authoring behavior already documented in this skill's references.
+
 ## Topics
 
 ### Writing Skills

@@ -2,9 +2,6 @@
   "name": "dotfiles",
   "private": true,
   "workspaces": ["packages/*"],
-  "scripts": {
-    "shan": "bun packages/shan/src/bin/shan.ts"
-  },
   "dependencies": {
     "yaml": "^2.8.2"
   }

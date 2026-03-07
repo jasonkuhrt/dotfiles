@@ -285,21 +285,21 @@ install-lazybeads:
     cd /tmp && rm -rf lazybeads && git clone --depth 1 https://github.com/codegangsta/lazybeads.git && cd lazybeads && go install .
 
 [private]
-shan:
-    bun packages/shan/src/bin/shan.ts
+shan *args:
+    bun x @jasonkuhrt/shan {{ args }}
 
 [private]
 transcript-dump *args:
-    bun packages/shan/src/bin/shan.ts transcript dump {{ args }}
+    bun x @jasonkuhrt/shan transcript dump {{ args }}
 
 [private]
 transcript-analyze *args:
-    bun packages/shan/src/bin/shan.ts transcript analyze {{ args }}
+    bun x @jasonkuhrt/shan transcript analyze {{ args }}
 
 [private]
 task-dump *args:
-    bun packages/shan/src/bin/shan.ts task dump {{ args }}
+    bun x @jasonkuhrt/shan task dump {{ args }}
 
 [private]
 task-open *args:
-    bun packages/shan/src/bin/shan.ts task open {{ args }}
+    bun x @jasonkuhrt/shan task open {{ args }}

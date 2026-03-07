@@ -103,7 +103,20 @@ claude mcp add --scope user serena -- uvx --from git+https://github.com/oraios/s
 * `--context claude-code` disables tools that duplicate Claude Code's built-in ones
 * `--project-from-cwd` auto-activates project based on working directory
 
-## 10. iCloud Desktop & Documents
+## 10. Shan CLI
+
+Clone the standalone repo and install the launcher:
+
+```sh
+git clone git@github.com:jasonkuhrt/shan.git ~/projects/jasonkuhrt/shan
+cd ~/projects/jasonkuhrt/shan
+just install
+just install-global
+```
+
+After that, dotfiles `just shan ...` wrappers and direct `bun x @jasonkuhrt/shan ...` commands both resolve to the standalone checkout.
+
+## 11. iCloud Desktop & Documents
 
 ```sh
 open "x-apple.systempreferences:com.apple.preferences.AppleIDPrefPane"

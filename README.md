@@ -32,6 +32,8 @@ Some pure config directories now live under `symlink-roots/` and are exposed int
 
 The local control plane is `packages/dotctl/`. It builds the symlink manifest, runs the launchd healer, and exposes the read-only health/explain UX around `just up`.
 
+The Claude Code helper CLI `shan` also lives outside this repo now, in standalone `jasonkuhrt/shan`. Dotfiles only keeps your Claude config and convenience `just` wrappers; register the standalone repo with `bun link` so `just shan ...` can resolve it via `bun x @jasonkuhrt/shan`.
+
 That covers config files. But managing a system also means installing packages, setting macOS defaults, configuring the Dock — things that aren't files. That's what lifecycle scripts handle.
 
 ## Lifecycle Scripts

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.jasonkuhrt.chezmoi-symlink-heal</string>
+    <string>dotctl-heal</string>
     <key>ProgramArguments</key>
     <array>
         <string>__HOME__/.bun/bin/bun</string>
@@ -23,8 +23,8 @@
     <key>StartInterval</key>
     <integer>300</integer>
     <key>StandardOutPath</key>
-    <string>__HOME__/.local/state/dotfiles-symlink/logs/heal-launchd.out.log</string>
+    <string>__HOME__/.local/state/dotctl/logs/heal-launchd.out.log</string>
     <key>StandardErrorPath</key>
-    <string>__HOME__/.local/state/dotfiles-symlink/logs/heal-launchd.err.log</string>
+    <string>__HOME__/.local/state/dotctl/logs/heal-launchd.err.log</string>
 </dict>
 </plist>

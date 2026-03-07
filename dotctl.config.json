@@ -1,15 +1,6 @@
 {
   "$schema": "./node_modules/dotctl/dotctl.schema.json",
-  "sourceDir": "home",
-  "scriptsDir": "scripts/setup",
-  "stateDir": "~/.local/state/dotfiles-symlink",
-  "homeRootSkip": ["Brewfile", "dock", "npm"],
   "age": {
-    "identity": "~/.config/dotctl/age-key.txt",
     "recipient": "age1p4y0hn4l0wv5llnk97rsdatfhyuvdp4fw6z24auvkvd7kya7kc7qf8yvfm"
-  },
-  "heal": {
-    "label": "com.jasonkuhrt.chezmoi-symlink-heal",
-    "intervalSeconds": 300
   }
 }

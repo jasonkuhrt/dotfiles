@@ -1,4 +1,5 @@
 ---
+name: packages-experimental
 description: Use when tracking experimental npm packages - monitoring issues, updating versions, maintaining changelog history for packages not yet stable for production
 ---
 

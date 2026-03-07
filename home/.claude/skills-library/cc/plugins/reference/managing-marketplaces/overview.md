@@ -86,7 +86,7 @@ digraph update_flow {
 
 ## Scope Affects Loading, Not Data
 
-For plugins with their own data stores (e.g., beads), scope only controls whether CC loads the plugin's skills/hooks/commands. The plugin's data is managed independently (e.g., beads stores data in per-project `.beads/` directories regardless of plugin scope).
+For plugins with their own data stores, scope only controls whether CC loads the plugin's skills, hooks, and commands. Plugin-managed data remains independent of marketplace scope.
 
 ## Local Development
 

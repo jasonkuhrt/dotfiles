@@ -1,5 +1,5 @@
 ---
-name: serena_teacher
+name: serena:teacher
 description: Use when onboarding to Serena MCP, configuring project.yml, troubleshooting language server issues, or learning which Serena tools to use for code navigation.
 ---
 

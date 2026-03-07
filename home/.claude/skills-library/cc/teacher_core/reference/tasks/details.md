@@ -30,7 +30,7 @@ When multiple agents share a list, Claude auto-claims tasks (via `owner` field) 
 
 ## Limitations
 
-- Local-only — not Git-shareable or portable across machines. For team-level issue tracking with persistence and Git sync, tools like [beads](https://github.com/steveyegge/beads) fill a different niche.
+- Local-only — not Git-shareable or portable across machines.
 - **No repo awareness** — `CLAUDE_CODE_TASK_LIST_ID` is just a directory name. Using the same ID across different repos causes cross-contamination (tasks from unrelated projects visible in both). Use repo-specific IDs.
 
 ## Opting Out

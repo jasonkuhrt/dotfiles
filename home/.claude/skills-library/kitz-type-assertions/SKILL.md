@@ -1,5 +1,5 @@
 ---
-name: type-assertions
+name: kitz-type-assertions
 description: Use when writing type-level tests, .test-d.ts files, or asserting TypeScript types with @kitz/assert.
 ---
 

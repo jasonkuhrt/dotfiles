@@ -1,5 +1,5 @@
 ---
-name: components
+name: react-components
 description: Use when creating React components, refactoring component structure, or applying React export and typing conventions.
 ---
 

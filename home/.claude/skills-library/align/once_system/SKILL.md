@@ -1,5 +1,5 @@
 ---
-name: align:once:system
+name: align:once_system
 description: Systems review — stop execution, defend your architecture with full provenance, alternatives, tradeoffs, and visual data flows. Use when user says /align:once:system to force architect-mode evaluation of current approach.
 disable-model-invocation: true
 ---

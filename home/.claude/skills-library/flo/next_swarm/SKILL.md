@@ -1,5 +1,5 @@
 ---
-name: flo:next:swarm
+name: flo:next_swarm
 description: >
   Autopilot execution through an epic — runs all waves hands-off, parallelizing
   within each wave. Use when the user wants to swarm, fan out, or run the epic

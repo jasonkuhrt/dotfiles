@@ -1,5 +1,5 @@
 ---
-name: table-testing
+name: kitz-table-testing
 description: Use when creating test cases, parameterized tests, or writing .test.ts files with @kitz/test. Triggers on table-driven testing, vitest, test.each, or parameterized test patterns.
 ---
 

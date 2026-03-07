@@ -4,7 +4,6 @@ Links and release notes for the CC Tasks system.
 
 ## Recommended Reading
 
-* https://paddo.dev/blog/from-beads-to-tasks/ -- Best take on layering: CC tasks = session-level, beads = project-level
 
 ## Official Docs
 

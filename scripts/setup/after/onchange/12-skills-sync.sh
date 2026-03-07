@@ -8,8 +8,8 @@ header "Skills Sync (codex)"
 # Mirror ~/.claude/skills/ to ~/.codex/skills/ via per-skill symlinks.
 # Preserves .system directory (Codex system skills).
 #
-# Note: ~/.agents/skills is a whole-directory symlink to ~/.claude/skills
-# (managed by chezmoi's symlink_skills.tmpl), so it doesn't need mirroring.
+# Note: ~/.agents/skills is a whole-directory symlink to ~/.claude/skills,
+# so it doesn't need mirroring.
 
 SKILLS_SRC="$HOME/.claude/skills"
 target_dir="$HOME/.codex/skills"

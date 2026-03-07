@@ -15,7 +15,7 @@ Read-only views of the skill system state.
 
 ### Show outfit (default)
 ```bash
-bun /Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/shan/src/bin/shan.ts skills list
+bun /Users/jasonkuhrt/projects/jasonkuhrt/shan/src/bin/shan.ts skills list
 ```
 Shows:
 - Core skills (user + project)
@@ -25,7 +25,7 @@ Shows:
 
 ### Show history
 ```bash
-bun /Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/shan/src/bin/shan.ts skills history [--scope user]
+bun /Users/jasonkuhrt/projects/jasonkuhrt/shan/src/bin/shan.ts skills history [--scope user]
 ```
 Shows the operation log: what was turned on/off and when.
 

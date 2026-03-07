@@ -13,7 +13,7 @@ Claude Code tooling CLI (named after Claude Shannon).
 Run the shan CLI with provided arguments:
 
 ```bash
-bun ~/projects/jasonkuhrt/dotfiles/packages/shan/src/bin/shan.ts $ARGUMENTS
+bun /Users/jasonkuhrt/projects/jasonkuhrt/shan/src/bin/shan.ts $ARGUMENTS
 ```
 
 ## Commands

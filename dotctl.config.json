@@ -1,5 +1,5 @@
 {
-  "$schema": "./dotctl.schema.json",
+  "$schema": "./node_modules/dotctl/dotctl.schema.json",
   "sourceDir": "home",
   "scriptsDir": "scripts/setup",
   "stateDir": "~/.local/state/dotfiles-symlink",

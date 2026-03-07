@@ -18,7 +18,7 @@ All commands use `bun` to run the shan CLI:
 
 ### Turn on skills
 ```bash
-bun /Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/shan/src/bin/shan.ts skills on <targets> [--scope user]
+bun /Users/jasonkuhrt/projects/jasonkuhrt/shan/src/bin/shan.ts skills on <targets> [--scope user]
 ```
 - `<targets>`: comma-separated skill/group names using colon syntax
 - Examples: `playwright`, `ts:tooling`, `ts` (whole group), `ts:tooling,linear,playwright`
@@ -26,14 +26,14 @@ bun /Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/shan/src/bin/shan.ts
 
 ### Turn off skills
 ```bash
-bun /Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/shan/src/bin/shan.ts skills off <targets> [--scope user]
+bun /Users/jasonkuhrt/projects/jasonkuhrt/shan/src/bin/shan.ts skills off <targets> [--scope user]
 ```
 - Same target syntax as `on`
 - No targets = reset ALL pluggable skills: `bun ... skills off [--scope user]`
 
 ### Move skills
 ```bash
-bun /Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/shan/src/bin/shan.ts skills move <axis> <direction> <targets> [--scope user]
+bun /Users/jasonkuhrt/projects/jasonkuhrt/shan/src/bin/shan.ts skills move <axis> <direction> <targets> [--scope user]
 ```
 - `axis`: `scope` (user↔project library) or `commitment` (pluggable↔core)
 - `direction`: `up` (project→user / pluggable→core) or `down` (user→project / core→pluggable)
@@ -42,8 +42,8 @@ bun /Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/shan/src/bin/shan.ts
 
 ### Undo/Redo
 ```bash
-bun /Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/shan/src/bin/shan.ts skills undo [N] [--scope user]
-bun /Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/shan/src/bin/shan.ts skills redo [N] [--scope user]
+bun /Users/jasonkuhrt/projects/jasonkuhrt/shan/src/bin/shan.ts skills undo [N] [--scope user]
+bun /Users/jasonkuhrt/projects/jasonkuhrt/shan/src/bin/shan.ts skills redo [N] [--scope user]
 ```
 - N = number of operations to undo/redo (default: 1)
 - Supports composite move operations (undo/redo reverses all sub-actions)
@@ -69,6 +69,6 @@ When a target names a group (directory with children in the library), ALL descen
 - The shan binary path is: find it via `which shan` or use the full path from the library
 - Actually, the canonical way to run shan is:
   ```bash
-  bun /Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/shan/src/bin/shan.ts skills <command> [args]
+  bun /Users/jasonkuhrt/projects/jasonkuhrt/shan/src/bin/shan.ts skills <command> [args]
   ```
 - Use `--scope user` when managing user-level skills, omit for project-level

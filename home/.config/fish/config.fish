@@ -224,7 +224,9 @@ set --export GITHUB_HANDLE jasonkuhrt
 # See README "Node Package Management" for details
 set -gx NPM_GLOBAL "$HOME/.npm-global"
 set -gx PNPM_HOME "$HOME/Library/pnpm"
-set -gx PATH "$HOME/.local/bin" "$NPM_GLOBAL/bin" "$PNPM_HOME" $PATH
+
+# Keep the managed Claude wrapper ahead of the updater-managed binary in ~/.local/bin.
+set -gx PATH "$HOME/.local/libexec/claude/bin" "$HOME/.local/bin" "$NPM_GLOBAL/bin" "$PNPM_HOME" $PATH
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/jasonkuhrt/google-cloud-sdk/path.fish.inc' ]; . '/Users/jasonkuhrt/google-cloud-sdk/path.fish.inc'; end

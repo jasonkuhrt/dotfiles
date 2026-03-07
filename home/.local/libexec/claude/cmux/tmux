@@ -1,0 +1,589 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cmux_bin="${CC_CMUX_CMUX_BIN:-cmux}"
+jq_bin="${CC_CMUX_JQ_BIN:-jq}"
+
+debug() {
+    if [[ -z "${CC_CMUX_DEBUG:-}" ]]; then
+        return 0
+    fi
+
+    mkdir -p "${HOME}/.cache/cc-cmux"
+    printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "${HOME}/.cache/cc-cmux/tmux-shim.log"
+}
+
+die() {
+    printf 'cc-cmux tmux shim: %s\n' "$*" >&2
+    exit 64
+}
+
+require_cmd() {
+    command -v "$1" >/dev/null 2>&1 || die "missing required command: $1"
+}
+
+require_cmd "${cmux_bin}"
+require_cmd "${jq_bin}"
+
+cmux_json() {
+    "${cmux_bin}" --json "$@"
+}
+
+current_workspace_ref() {
+    if [[ -n "${CC_CMUX_WORKSPACE_ID:-}" ]]; then
+        printf '%s\n' "${CC_CMUX_WORKSPACE_ID}"
+        return 0
+    fi
+
+    cmux_json current-workspace | "${jq_bin}" -r 'first(.. | objects | .workspace_ref? // empty)'
+}
+
+current_surface_ref() {
+    if [[ -n "${CC_CMUX_SURFACE_ID:-}" ]]; then
+        printf '%s\n' "${CC_CMUX_SURFACE_ID}"
+        return 0
+    fi
+
+    cmux_json identify | "${jq_bin}" -r 'first(.. | objects | .surface_ref? // empty)'
+}
+
+surface_ref_from_target() {
+    local target="${1:-}"
+
+    if [[ -z "${target}" ]]; then
+        current_surface_ref
+        return 0
+    fi
+
+    case "${target}" in
+        %*)
+            printf 'surface:%s\n' "${target#%}"
+            ;;
+        surface:*)
+            printf '%s\n' "${target}"
+            ;;
+        *)
+            current_surface_ref
+            ;;
+    esac
+}
+
+tmux_pane_id_from_surface() {
+    local surface_ref="$1"
+    printf '%%%s\n' "${surface_ref#surface:}"
+}
+
+pane_ref_from_surface() {
+    local surface_ref="$1"
+
+    cmux_json identify --workspace "$(current_workspace_ref)" --surface "${surface_ref}" \
+        | "${jq_bin}" -r 'first(.. | objects | .pane_ref? // empty)'
+}
+
+list_surface_refs() {
+    cmux_json list-pane-surfaces --workspace "$(current_workspace_ref)" \
+        | "${jq_bin}" -r '.. | objects | .surface_ref? // empty' \
+        | awk 'NF { print }' \
+        | sort -u
+}
+
+print_formatted_panes() {
+    local format='#{pane_id}'
+    if (($# > 0)) && [[ -n "${1:-}" ]]; then
+        format="$1"
+    fi
+
+    while IFS= read -r surface_ref; do
+        if [[ -z "${surface_ref}" ]]; then
+            continue
+        fi
+
+        local pane_id
+        pane_id="$(tmux_pane_id_from_surface "${surface_ref}")"
+        case "${format}" in
+            '#{pane_id}')
+                printf '%s\n' "${pane_id}"
+                ;;
+            *)
+                printf '%s\n' "${format}" | sed "s/#{pane_id}/${pane_id}/g"
+                ;;
+        esac
+    done < <(list_surface_refs)
+}
+
+cmd_display_message() {
+    local print_only=0
+    local target=""
+    local format=""
+
+    while (($#)); do
+        case "$1" in
+            -p|--print)
+                print_only=1
+                shift
+                ;;
+            -t)
+                target="${2:-}"
+                shift 2
+                ;;
+            *)
+                format="$1"
+                shift
+                ;;
+        esac
+    done
+
+    if (( print_only == 0 )); then
+        return 0
+    fi
+
+    local surface_ref
+    surface_ref="$(surface_ref_from_target "${target}")"
+    local pane_id
+    pane_id="$(tmux_pane_id_from_surface "${surface_ref}")"
+
+    case "${format}" in
+        '#{pane_id}')
+            printf '%s\n' "${pane_id}"
+            ;;
+        '#{session_name}:#{window_index}')
+            printf 'cmux:0\n'
+            ;;
+        '')
+            printf '\n'
+            ;;
+        *)
+            printf '%s\n' "${format}"
+            ;;
+    esac
+}
+
+cmd_list_panes() {
+    local format='#{pane_id}'
+
+    while (($#)); do
+        case "$1" in
+            -F)
+                format="${2:-}"
+                if [[ -z "${format}" ]]; then
+                    format='#{pane_id}'
+                fi
+                shift 2
+                ;;
+            -t|-s|-a)
+                if [[ "$1" == "-t" ]]; then
+                    shift 2
+                else
+                    shift
+                fi
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+
+    print_formatted_panes "${format}"
+}
+
+cmd_split_window() {
+    local direction="down"
+    local target=""
+    local print_pane=0
+    local format=""
+    local before after new_surface_ref
+
+    while (($#)); do
+        case "$1" in
+            -h)
+                direction="right"
+                shift
+                ;;
+            -v)
+                direction="down"
+                shift
+                ;;
+            -t)
+                target="${2:-}"
+                shift 2
+                ;;
+            -P)
+                print_pane=1
+                shift
+                ;;
+            -F)
+                format="${2:-}"
+                shift 2
+                ;;
+            -d|-b)
+                shift
+                ;;
+            -c|-l|-p)
+                shift 2
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+
+    before="$(list_surface_refs || true)"
+    "${cmux_bin}" new-split "${direction}" --workspace "$(current_workspace_ref)" --surface "$(surface_ref_from_target "${target}")" >/dev/null
+    after="$(list_surface_refs || true)"
+
+    new_surface_ref="$(
+        comm -13 <(printf '%s\n' "${before}" | awk 'NF { print }' | sort -u) \
+                 <(printf '%s\n' "${after}" | awk 'NF { print }' | sort -u) \
+        | head -n 1
+    )"
+
+    if [[ -z "${new_surface_ref}" ]]; then
+        die "could not resolve new cmux surface after split-window"
+    fi
+
+    if (( print_pane == 1 )); then
+        local pane_id
+        pane_id="$(tmux_pane_id_from_surface "${new_surface_ref}")"
+        case "${format}" in
+            ''|'#{pane_id}')
+                printf '%s\n' "${pane_id}"
+                ;;
+            *)
+                printf '%s\n' "${format}" | sed "s/#{pane_id}/${pane_id}/g"
+                ;;
+        esac
+    fi
+}
+
+flush_pending_text() {
+    local surface_ref="$1"
+    local pending="$2"
+
+    if [[ -n "${pending}" ]]; then
+        "${cmux_bin}" send --workspace "$(current_workspace_ref)" --surface "${surface_ref}" "${pending}"
+    fi
+}
+
+send_special_key() {
+    local surface_ref="$1"
+    local token="$2"
+
+    case "${token}" in
+        Enter|C-m)
+            "${cmux_bin}" send-key --workspace "$(current_workspace_ref)" --surface "${surface_ref}" enter
+            ;;
+        Tab)
+            "${cmux_bin}" send-key --workspace "$(current_workspace_ref)" --surface "${surface_ref}" tab
+            ;;
+        Escape|Esc)
+            "${cmux_bin}" send-key --workspace "$(current_workspace_ref)" --surface "${surface_ref}" escape
+            ;;
+        BSpace|Backspace)
+            "${cmux_bin}" send-key --workspace "$(current_workspace_ref)" --surface "${surface_ref}" backspace
+            ;;
+        Delete|DC)
+            "${cmux_bin}" send-key --workspace "$(current_workspace_ref)" --surface "${surface_ref}" delete
+            ;;
+        Up)
+            "${cmux_bin}" send-key --workspace "$(current_workspace_ref)" --surface "${surface_ref}" up
+            ;;
+        Down)
+            "${cmux_bin}" send-key --workspace "$(current_workspace_ref)" --surface "${surface_ref}" down
+            ;;
+        Left)
+            "${cmux_bin}" send-key --workspace "$(current_workspace_ref)" --surface "${surface_ref}" left
+            ;;
+        Right)
+            "${cmux_bin}" send-key --workspace "$(current_workspace_ref)" --surface "${surface_ref}" right
+            ;;
+        Space)
+            "${cmux_bin}" send --workspace "$(current_workspace_ref)" --surface "${surface_ref}" ' '
+            ;;
+        C-c)
+            "${cmux_bin}" send --workspace "$(current_workspace_ref)" --surface "${surface_ref}" $'\003'
+            ;;
+        C-d)
+            "${cmux_bin}" send --workspace "$(current_workspace_ref)" --surface "${surface_ref}" $'\004'
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+is_special_key() {
+    case "${1:-}" in
+        Enter|C-m|Tab|Escape|Esc|BSpace|Backspace|Delete|DC|Up|Down|Left|Right|Space|C-c|C-d)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+cmd_send_keys() {
+    local target=""
+    local literal_mode=0
+    local -a tokens=()
+
+    while (($#)); do
+        case "$1" in
+            -t)
+                target="${2:-}"
+                shift 2
+                ;;
+            -l)
+                literal_mode=1
+                shift
+                ;;
+            *)
+                tokens+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    local surface_ref
+    surface_ref="$(surface_ref_from_target "${target}")"
+    local pending=""
+
+    for token in "${tokens[@]}"; do
+        if (( literal_mode == 0 )) && is_special_key "${token}"; then
+            if [[ -n "${pending}" ]]; then
+                flush_pending_text "${surface_ref}" "${pending}"
+                pending=""
+            fi
+            send_special_key "${surface_ref}" "${token}"
+            continue
+        fi
+
+        if [[ -n "${pending}" ]]; then
+            pending+=" "
+        fi
+        pending+="${token}"
+    done
+
+    flush_pending_text "${surface_ref}" "${pending}"
+}
+
+cmd_kill_pane() {
+    local target=""
+
+    while (($#)); do
+        case "$1" in
+            -t)
+                target="${2:-}"
+                shift 2
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+
+    "${cmux_bin}" close-surface --workspace "$(current_workspace_ref)" --surface "$(surface_ref_from_target "${target}")" >/dev/null
+}
+
+cmd_select_pane() {
+    local target=""
+
+    while (($#)); do
+        case "$1" in
+            -t)
+                target="${2:-}"
+                shift 2
+                ;;
+            -T|-P)
+                shift 2
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+
+    if [[ -n "${target}" ]]; then
+        local surface_ref pane_ref
+        surface_ref="$(surface_ref_from_target "${target}")"
+        pane_ref="$(pane_ref_from_surface "${surface_ref}")"
+        if [[ -z "${pane_ref}" ]]; then
+            die "could not resolve pane ref for ${surface_ref}"
+        fi
+        "${cmux_bin}" focus-pane --workspace "$(current_workspace_ref)" --pane "${pane_ref}" >/dev/null
+    fi
+}
+
+cmd_resize_pane() {
+    local target=""
+    local amount=1
+    local direction=""
+
+    while (($#)); do
+        case "$1" in
+            -t)
+                target="${2:-}"
+                shift 2
+                ;;
+            -L|-R|-U|-D)
+                direction="$1"
+                shift
+                ;;
+            -x|-y)
+                shift 2
+                ;;
+            *)
+                amount="$1"
+                shift
+                ;;
+        esac
+    done
+
+    local surface_ref pane_ref
+    surface_ref="$(surface_ref_from_target "${target}")"
+    pane_ref="$(pane_ref_from_surface "${surface_ref}")"
+    if [[ -z "${pane_ref}" ]]; then
+        die "could not resolve pane ref for ${surface_ref}"
+    fi
+
+    "${cmux_bin}" resize-pane --workspace "$(current_workspace_ref)" --pane "${pane_ref}" "${direction}" --amount "${amount}" >/dev/null
+}
+
+cmd_break_pane() {
+    local target=""
+    local no_focus=0
+
+    while (($#)); do
+        case "$1" in
+            -t)
+                target="${2:-}"
+                shift 2
+                ;;
+            -d)
+                no_focus=1
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+
+    if (( no_focus == 1 )); then
+        "${cmux_bin}" break-pane --workspace "$(current_workspace_ref)" --surface "$(surface_ref_from_target "${target}")" --no-focus >/dev/null
+    else
+        "${cmux_bin}" break-pane --workspace "$(current_workspace_ref)" --surface "$(surface_ref_from_target "${target}")" >/dev/null
+    fi
+}
+
+cmd_join_pane() {
+    local source_target=""
+    local dest_target=""
+    local no_focus=0
+
+    while (($#)); do
+        case "$1" in
+            -s)
+                source_target="${2:-}"
+                shift 2
+                ;;
+            -t)
+                dest_target="${2:-}"
+                shift 2
+                ;;
+            -d)
+                no_focus=1
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+
+    local source_surface dest_surface dest_pane
+    source_surface="$(surface_ref_from_target "${source_target}")"
+    dest_surface="$(surface_ref_from_target "${dest_target}")"
+    dest_pane="$(pane_ref_from_surface "${dest_surface}")"
+    if [[ -z "${dest_pane}" ]]; then
+        die "could not resolve destination pane ref for ${dest_surface}"
+    fi
+
+    if (( no_focus == 1 )); then
+        "${cmux_bin}" join-pane --workspace "$(current_workspace_ref)" --surface "${source_surface}" --target-pane "${dest_pane}" --no-focus >/dev/null
+    else
+        "${cmux_bin}" join-pane --workspace "$(current_workspace_ref)" --surface "${source_surface}" --target-pane "${dest_pane}" >/dev/null
+    fi
+}
+
+strip_tmux_globals() {
+    local -a stripped=()
+
+    while (($#)); do
+        case "$1" in
+            -L|-S|-f)
+                shift 2
+                ;;
+            -u)
+                shift
+                ;;
+            *)
+                stripped+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    STRIPPED_ARGS=("${stripped[@]}")
+}
+
+STRIPPED_ARGS=()
+strip_tmux_globals "$@"
+set -- "${STRIPPED_ARGS[@]}"
+
+cmd="${1:-}"
+if [[ -z "${cmd}" ]]; then
+    die "missing tmux subcommand"
+fi
+shift || true
+
+debug "${cmd} $*"
+
+case "${cmd}" in
+    -V|version)
+        printf 'tmux 3.5a\n'
+        ;;
+    display-message)
+        cmd_display_message "$@"
+        ;;
+    list-panes)
+        cmd_list_panes "$@"
+        ;;
+    split-window)
+        cmd_split_window "$@"
+        ;;
+    send-keys)
+        cmd_send_keys "$@"
+        ;;
+    kill-pane)
+        cmd_kill_pane "$@"
+        ;;
+    select-pane)
+        cmd_select_pane "$@"
+        ;;
+    resize-pane)
+        cmd_resize_pane "$@"
+        ;;
+    break-pane)
+        cmd_break_pane "$@"
+        ;;
+    join-pane)
+        cmd_join_pane "$@"
+        ;;
+    set-option|set-window-option|select-layout|has-session|new-session|new-window|list-windows)
+        exit 0
+        ;;
+    *)
+        die "unsupported tmux subcommand: ${cmd}"
+        ;;
+esac

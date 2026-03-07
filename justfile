@@ -44,6 +44,100 @@ lua-fmt-check:
 lua-fmt:
     stylua {{ lua_paths }}
 
+claude-cmux-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    wrapper="$PWD/home/.local/libexec/claude/bin/claude"
+    shim="$PWD/home/.local/libexec/claude/cmux/tmux"
+    fish_cfg="$PWD/home/.config/fish/config.fish"
+
+    bash -n "$wrapper"
+    bash -n "$shim"
+    fish -n "$fish_cfg"
+
+    if [ "$(CLAUDE_REAL_BIN=/bin/echo "$wrapper" alpha beta)" != "alpha beta" ]; then
+        printf 'FAIL: wrapper pass-through outside cmux\n' >&2
+        exit 1
+    fi
+
+    env_output="$(
+        CMUX_WORKSPACE_ID=workspace:1 \
+        CMUX_SURFACE_ID=surface:7 \
+        CLAUDE_REAL_BIN=/usr/bin/env \
+        "$wrapper"
+    )"
+    printf '%s\n' "$env_output" | grep -q '^TMUX=cmux$'
+    printf '%s\n' "$env_output" | grep -q '^TMUX_PANE=%7$'
+    printf '%s\n' "$env_output" | grep -q '^CC_CMUX_WORKSPACE_ID=workspace:1$'
+    printf '%s\n' "$env_output" | grep -q '^CC_CMUX_SURFACE_ID=surface:7$'
+
+    tmpdir="$(mktemp -d)"
+    trap 'rm -rf "$tmpdir"' EXIT
+    log="$tmpdir/cmux.log"
+    state="$tmpdir/state.json"
+
+    cp "$PWD/scripts/tests/fake-cmux.sh" "$tmpdir/cmux"
+    chmod +x "$tmpdir/cmux"
+
+    pane_id="$(
+        CC_CMUX_CMUX_BIN="$tmpdir/cmux" \
+        CC_CMUX_TEST_LOG="$log" \
+        CC_CMUX_TEST_STATE="$state" \
+        CC_CMUX_WORKSPACE_ID=workspace:1 \
+        CC_CMUX_SURFACE_ID=surface:1 \
+        "$shim" display-message -p '#{pane_id}'
+    )"
+    [ "$pane_id" = "%1" ]
+
+    new_pane="$(
+        CC_CMUX_CMUX_BIN="$tmpdir/cmux" \
+        CC_CMUX_TEST_LOG="$log" \
+        CC_CMUX_TEST_STATE="$state" \
+        CC_CMUX_WORKSPACE_ID=workspace:1 \
+        CC_CMUX_SURFACE_ID=surface:1 \
+        "$shim" split-window -h -t %1 -P -F '#{pane_id}'
+    )"
+    [ "$new_pane" = "%2" ]
+
+    list_output="$(
+        CC_CMUX_CMUX_BIN="$tmpdir/cmux" \
+        CC_CMUX_TEST_LOG="$log" \
+        CC_CMUX_TEST_STATE="$state" \
+        CC_CMUX_WORKSPACE_ID=workspace:1 \
+        CC_CMUX_SURFACE_ID=surface:1 \
+        "$shim" list-panes -F '#{pane_id}'
+    )"
+    [ "$list_output" = "$(printf '%%1\n%%2')" ]
+
+    CC_CMUX_CMUX_BIN="$tmpdir/cmux" \
+    CC_CMUX_TEST_LOG="$log" \
+    CC_CMUX_TEST_STATE="$state" \
+    CC_CMUX_WORKSPACE_ID=workspace:1 \
+    CC_CMUX_SURFACE_ID=surface:1 \
+    "$shim" send-keys -t %2 "echo hi" Enter
+
+    CC_CMUX_CMUX_BIN="$tmpdir/cmux" \
+    CC_CMUX_TEST_LOG="$log" \
+    CC_CMUX_TEST_STATE="$state" \
+    CC_CMUX_WORKSPACE_ID=workspace:1 \
+    CC_CMUX_SURFACE_ID=surface:1 \
+    "$shim" select-pane -t %2
+
+    CC_CMUX_CMUX_BIN="$tmpdir/cmux" \
+    CC_CMUX_TEST_LOG="$log" \
+    CC_CMUX_TEST_STATE="$state" \
+    CC_CMUX_WORKSPACE_ID=workspace:1 \
+    CC_CMUX_SURFACE_ID=surface:1 \
+    "$shim" kill-pane -t %2
+
+    grep -q 'send --workspace workspace:1 --surface surface:2 echo hi' "$log"
+    grep -q 'send-key --workspace workspace:1 --surface surface:2 enter' "$log"
+    grep -q 'focus-pane --workspace workspace:1 --pane pane:20' "$log"
+    grep -q 'close-surface --workspace workspace:1 --surface surface:2' "$log"
+
+    printf 'PASS: claude-cmux-check\n'
+
 cmd-ux-blocklist-check:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -111,18 +205,6 @@ sync:
     set -euo pipefail
     printf 'Use `git pull --rebase` and then `just up`.\n' >&2
     exit 1
-
-[private]
-apply *args:
-    chezmoi apply --mode symlink -v {{ args }}
-
-[private]
-diff:
-    chezmoi diff
-
-[private]
-chezmoi-doctor:
-    chezmoi doctor
 
 [private]
 fn-wispr-qa:
@@ -249,40 +331,16 @@ fn-wispr-qa:
     printf "\nResult: PASS\n"
 
 [private]
-verify:
-    chezmoi verify
-
-[private]
-managed:
-    chezmoi managed
-
-[private]
-unmanaged:
-    chezmoi unmanaged --path-style=absolute ~/.config
-
-[private]
-re-add *args:
-    chezmoi re-add {{ args }}
-
-[private]
-update:
-    chezmoi update
-
-[private]
 brew:
-    brew bundle --file=$(chezmoi source-path)/Brewfile
+    brew bundle --file=scripts/data/Brewfile
 
 [private]
 brew-check:
-    brew bundle check --file=$(chezmoi source-path)/Brewfile --verbose || true
+    brew bundle check --file=scripts/data/Brewfile --verbose || true
 
 [private]
 brew-cleanup:
-    brew bundle cleanup --file=$(chezmoi source-path)/Brewfile
-
-[private]
-install-lazybeads:
-    cd /tmp && rm -rf lazybeads && git clone --depth 1 https://github.com/codegangsta/lazybeads.git && cd lazybeads && go install .
+    brew bundle cleanup --file=scripts/data/Brewfile
 
 [private]
 shan *args:

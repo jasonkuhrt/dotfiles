@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+wrapper_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+claude_root="$(cd -- "${wrapper_dir}/.." && pwd)"
+real_claude="${CLAUDE_REAL_BIN:-$HOME/.local/bin/claude}"
+shim_dir="${claude_root}/cmux"
+
+if [[ ! -x "${real_claude}" ]]; then
+    printf 'claude wrapper: real binary not found at %s\n' "${real_claude}" >&2
+    exit 1
+fi
+
+if [[ -z "${CMUX_WORKSPACE_ID:-}" || -z "${CMUX_SURFACE_ID:-}" ]]; then
+    exec "${real_claude}" "$@"
+fi
+
+surface_suffix="${CMUX_SURFACE_ID#surface:}"
+if [[ "${surface_suffix}" == "${CMUX_SURFACE_ID}" ]]; then
+    printf 'claude wrapper: unsupported CMUX_SURFACE_ID format: %s\n' "${CMUX_SURFACE_ID}" >&2
+    exit 1
+fi
+
+export TMUX="cmux"
+export TMUX_PANE="%${surface_suffix}"
+export CC_CMUX_WORKSPACE_ID="${CMUX_WORKSPACE_ID}"
+export CC_CMUX_SURFACE_ID="${CMUX_SURFACE_ID}"
+export CLAUDE_CODE_TEAMMATE_COMMAND="${CLAUDE_CODE_TEAMMATE_COMMAND:-${wrapper_dir}/claude}"
+export PATH="${shim_dir}:${PATH}"
+
+exec "${real_claude}" "$@"

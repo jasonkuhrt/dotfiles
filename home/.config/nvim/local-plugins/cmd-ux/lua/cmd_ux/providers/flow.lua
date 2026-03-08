@@ -1,3 +1,4 @@
+local lsp = require("cmd_ux.lib.lsp")
 local runtime = require("cmd_ux.lib.runtime")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
@@ -23,6 +24,14 @@ end
 
 local function current_filetype()
   return vim.bo[vim.api.nvim_get_current_buf()].filetype
+end
+
+local function current_word()
+  local word = vim.fn.expand("<cword>")
+  if type(word) ~= "string" or word == "" then
+    return nil
+  end
+  return word
 end
 
 local function is_normal_file_buffer()
@@ -63,6 +72,11 @@ end
 local function actions()
   local items = {}
   local path = current_path()
+  local word = current_word()
+  local has_lsp = lsp.has_clients()
+  local supports_references = has_lsp and lsp.supports("textDocument/references")
+  local supports_rename = has_lsp and lsp.supports("textDocument/rename")
+  local supports_code_action = has_lsp and lsp.supports("textDocument/codeAction")
 
   if is_normal_file_buffer() and is_modified() then
     items[#items + 1] = {
@@ -164,6 +178,46 @@ local function actions()
     }
   end
 
+  if word and is_normal_file_buffer() then
+    items[#items + 1] = {
+      token = "search-word",
+      desc = "Search the word under cursor",
+      help = "Jump into the Search namespace with the current word.",
+      examples = { "Flow search-word" },
+      command = "Search text word",
+    }
+  end
+
+  if word and supports_references then
+    items[#items + 1] = {
+      token = "lsp-references",
+      desc = "Search LSP references for the current symbol",
+      help = "Use the Lsp namespace to open references for the symbol under cursor.",
+      examples = { "Flow lsp-references" },
+      command = "Lsp references",
+    }
+  end
+
+  if word and supports_rename then
+    items[#items + 1] = {
+      token = "lsp-rename",
+      desc = "Rename the current symbol",
+      help = "Use the Lsp namespace to rename the symbol under cursor.",
+      examples = { "Flow lsp-rename" },
+      command = "Lsp refactor rename",
+    }
+  end
+
+  if supports_code_action then
+    items[#items + 1] = {
+      token = "lsp-code-action",
+      desc = "Show LSP code actions",
+      help = "Use the Lsp namespace to open the code-action menu.",
+      examples = { "Flow lsp-code-action" },
+      command = "Lsp refactor action all",
+    }
+  end
+
   if window_count() > 1 then
     items[#items + 1] = {
       token = "pane-only",
@@ -191,6 +245,14 @@ local function actions()
       help = "Jump straight to the current buffer diagnostics.",
       examples = { "Flow diagnostics" },
       command = "lopen",
+    }
+
+    items[#items + 1] = {
+      token = "search-diagnostics",
+      desc = "Search diagnostics in a picker",
+      help = "Use the Search namespace to browse current-buffer diagnostics.",
+      examples = { "Flow search-diagnostics" },
+      command = "Search lists diagnostics-buffer",
     }
   end
 
@@ -252,9 +314,9 @@ function M.describe_root(root)
     help = table.concat({
       "Flow surfaces high-signal actions based on the current buffer.",
       "",
-      "Examples include save, write-all, source, config reload, quickfix, alternate-buffer, and diagnostics.",
+      "Examples include save, write-all, source, config reload, search-word, lsp-rename, quickfix, alternate-buffer, and diagnostics.",
     }, "\n"),
-    examples = { "Flow save", "Flow write-all", "Flow source-buffer", "Flow config-reload" },
+    examples = { "Flow save", "Flow search-word", "Flow lsp-rename", "Flow config-reload" },
     executable = false,
     requires_more = true,
   })

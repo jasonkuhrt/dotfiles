@@ -190,6 +190,7 @@ exusage
 fclose
 filter
 finally
+find
 finish
 first
 for
@@ -200,6 +201,7 @@ grep
 grepadd
 gui
 gvim
+help
 hide
 highlight
 horizontal
@@ -222,6 +224,7 @@ iunabbrev
 iunmap
 iunmenu
 join
+jumps
 k
 keepalt
 keepjumps
@@ -290,6 +293,7 @@ make
 map
 mapclear
 mark
+marks
 match
 menu
 menutranslate
@@ -373,6 +377,7 @@ redir
 redraw
 redrawstatus
 redrawtabline
+registers
 resize
 retab
 return

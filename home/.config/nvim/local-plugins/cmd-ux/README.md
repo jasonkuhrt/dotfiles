@@ -138,9 +138,9 @@ That learning feeds back into ordering:
 
 This is the behavior that lets repeated usage like `Config reload` rise above `Config help`, lets `refactor` rise after repeated use of one refactor leaf, and lets hot full paths such as `Config reload` appear as promoted shortcuts at the root layer.
 
-### Flow Helpers
+### Built-in Semantic Roots
 
-Five built-in semantic roots now extend `cmd-ux` beyond plain command discovery:
+Seven built-in semantic roots now extend `cmd-ux` beyond plain command discovery:
 
 - `Buffer`
   - semantic buffer navigation and lifecycle
@@ -156,11 +156,19 @@ Five built-in semantic roots now extend `cmd-ux` beyond plain command discovery:
 
 - `Flow`
   - context-aware actions for the current buffer
-  - examples: save, write-all, source-buffer, config-reload, alternate-buffer, close-buffer, pane-only, tab-only
+  - examples: save, write-all, source-buffer, config-reload, search-word, lsp-rename, alternate-buffer, close-buffer, pane-only, tab-only
+
+- `Lsp`
+  - semantic LSP navigation, symbols, and refactors
+  - examples: `Lsp jump definition`, `Lsp references`, `Lsp symbols workspace`, `Lsp refactor action organize-imports`
 
 - `Recall`
   - replay recent executed commands
   - examples: `Recall last`, `Recall 2`
+
+- `Search`
+  - semantic search and picker families for files, text, vim state, and result lists
+  - examples: `Search files project`, `Search text word`, `Search vim help`, `Search lists diagnostics`
 
 These are still regular `cmd-ux` semantic roots, not sidecar UIs.
 
@@ -298,9 +306,11 @@ The v1 providers are:
 - `Cmdux`
 - `Config`
 - `Flow`
-- `Pane`
 - `Lazy`
+- `Lsp`
+- `Pane`
 - `Recall`
+- `Search`
 - `Tab`
 - generic Neovim commands
 

@@ -93,6 +93,16 @@ local resolve_root_buffer = benchmark(100, function()
 end)
 print_result("resolve_root_buffer", 100, resolve_root_buffer)
 
+local resolve_root_search = benchmark(100, function()
+  core.resolve_line("Search")
+end)
+print_result("resolve_root_search", 100, resolve_root_search)
+
+local resolve_root_lsp = benchmark(100, function()
+  core.resolve_line("Lsp")
+end)
+print_result("resolve_root_lsp", 100, resolve_root_lsp)
+
 local resolve_branch_pane = benchmark(100, function()
   core.resolve_line("Pane focus")
 end)
@@ -102,6 +112,11 @@ local resolve_branch_tab = benchmark(100, function()
   core.resolve_line("Tab move")
 end)
 print_result("resolve_branch_tab", 100, resolve_branch_tab)
+
+local resolve_branch_lsp_refactor = benchmark(100, function()
+  core.resolve_line("Lsp refactor action")
+end)
+print_result("resolve_branch_lsp_ref", 100, resolve_branch_lsp_refactor)
 
 local resolve_branch_structured = benchmark(100, function()
   core.resolve_line("BenchStructured001 alpha")

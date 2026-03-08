@@ -13,9 +13,13 @@ local flow_provider = require("cmd_ux.providers.flow")
 ---@type Provider
 local lazy_provider = require("cmd_ux.providers.lazy")
 ---@type Provider
+local lsp_provider = require("cmd_ux.providers.lsp")
+---@type Provider
 local pane_provider = require("cmd_ux.providers.pane")
 ---@type Provider
 local recall_provider = require("cmd_ux.providers.recall")
+---@type Provider
+local search_provider = require("cmd_ux.providers.search")
 ---@type Provider
 local tab_provider = require("cmd_ux.providers.tab")
 
@@ -67,8 +71,10 @@ function M.setup(opts)
   providers.register("Config", config_provider)
   providers.register("Flow", flow_provider)
   providers.register("Lazy", lazy_provider)
+  providers.register("Lsp", lsp_provider)
   providers.register("Pane", pane_provider)
   providers.register("Recall", recall_provider)
+  providers.register("Search", search_provider)
   providers.register("Tab", tab_provider)
 
   index.install_hooks()
@@ -126,6 +132,19 @@ function M.setup(opts)
   })
 
   ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Lsp", function(cmd_opts)
+    lsp_provider.execute(cmd_opts.args)
+  end, {
+    desc = "LSP commands (jump, symbols, refactor, ...)",
+    nargs = "*",
+    ---@param line string
+    complete = function(_, line, _)
+      return lsp_provider.complete(line)
+    end,
+    force = true,
+  })
+
+  ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Pane", function(cmd_opts)
     pane_provider.execute(cmd_opts.args)
   end, {
@@ -147,6 +166,19 @@ function M.setup(opts)
     ---@param line string
     complete = function(_, line, _)
       return recall_provider.complete(line)
+    end,
+    force = true,
+  })
+
+  ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Search", function(cmd_opts)
+    search_provider.execute(cmd_opts.args)
+  end, {
+    desc = "Search commands (files, text, lists, vim, ...)",
+    nargs = "*",
+    ---@param line string
+    complete = function(_, line, _)
+      return search_provider.complete(line)
     end,
     force = true,
   })

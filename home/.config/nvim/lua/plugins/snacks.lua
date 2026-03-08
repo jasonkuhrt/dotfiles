@@ -27,6 +27,7 @@ return {
         },
       },
       picker = {
+        hidden = true,
         layout = {
           layout = {
             width = 0.7,
@@ -36,6 +37,7 @@ return {
         },
         sources = {
           explorer = {
+            hidden = true,
             layout = {
               preset = "sidebar",
               preview = "main",

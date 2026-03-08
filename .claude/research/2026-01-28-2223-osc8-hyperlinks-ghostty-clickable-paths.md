@@ -41,7 +41,7 @@
 - Pipe any command output through it to inject OSC 8 sequences for detected file paths
 - Use case: wrap commands that produce file paths but don't emit OSC 8 natively
   ```zsh
-  alias tsc='npx tsc --noEmit 2>&1 | add-osc-8-hyperlink'
+  alias tsgo='npx tsgo --noEmit 2>&1 | add-osc-8-hyperlink'
   alias gst='git -c color.status=always status | add-osc-8-hyperlink'
   ```
 

@@ -83,4 +83,62 @@ describe("cmd_ux snacks adapter", function()
     assert.is_true(#filtered > 0)
     assert.equal("Config", filtered[1].label)
   end)
+
+  it("advances a namespace root into its semantic children on confirm", function()
+    local captured
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    snacks.open()
+
+    local fake_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      close = function(self)
+        self.closed = true
+      end,
+      input = {
+        value = "Ta",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    fake_picker.refresh = function(self)
+      self.items = captured.finder(captured, {
+        filter = { search = self.input:get() },
+        picker = self,
+      })
+    end
+
+    local root_items = captured.finder(captured, {
+      filter = { search = "Ta" },
+      picker = fake_picker,
+    })
+
+    assert.equal("Tab", root_items[1].label)
+    captured.confirm(fake_picker, root_items[1])
+
+    assert.equal("", fake_picker.input.value)
+    assert.equal("Cmd UX: Tab ", fake_picker.opts.title)
+    assert.is_truthy(fake_picker.items)
+    assert.are.same(
+      { "close", "first", "goto", "last", "move", "new", "next", "only", "previous" },
+      vim.tbl_map(function(item)
+        return item.label
+      end, fake_picker.items)
+    )
+  end)
 end)

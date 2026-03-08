@@ -10,7 +10,8 @@ Code conventions are defined as checks in `~/.claude/checks/typescript.quality.m
 ## Script Execution
 
 - Always use tsx to execute TypeScript files
-- Always use `tsconfig.json` when running tsc to ensure correct configuration
+- Always use `tsgo` for TypeScript build and typecheck workflows
+- Always use `tsconfig.json` when running `tsgo` to ensure correct configuration
 
 ## Other
 

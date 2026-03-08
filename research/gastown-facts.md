@@ -153,7 +153,7 @@ That said, a polecat is just a `claude` session — so plan mode works _within_ 
 4. Tests pass + merge conflicts -> Refinery resolves conflicts, re-runs tests
 5. Tests pass + clean merge -> merged to main
 
-**Lint and type checking are NOT built-in.** If you want them gated, they need to be part of your test suite (e.g., `npm test` runs `tsc --noEmit && eslint . && vitest`). The Refinery just runs whatever your project's verification command is — it's project-defined, not gt-defined.
+**Lint and type checking are NOT built-in.** If you want them gated, they need to be part of your test suite (e.g., `npm test` runs `tsgo --noEmit && eslint . && vitest`). The Refinery just runs whatever your project's verification command is — it's project-defined, not gt-defined.
 
 v0.10.0 added `gt done --pre-verified` for a fast-path when the polecat already ran checks before submitting.
 

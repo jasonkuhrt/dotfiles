@@ -48,7 +48,7 @@ test *args:
 
 # Type check
 check:
-    pnpm tsc --noEmit
+    pnpm tsgo --project tsconfig.json --noEmit
 
 # Lint
 lint:

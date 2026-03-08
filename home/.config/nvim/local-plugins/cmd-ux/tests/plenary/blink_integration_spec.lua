@@ -5,23 +5,20 @@ local function plugin_root()
   return vim.fn.fnamemodify(source, ":p:h:h:h")
 end
 
-local function run_blink_smoke(key)
-  local root = plugin_root()
-  local kit_root = vim.fn.fnamemodify(root, ":h") .. "/kit"
-  local penlight_root = vim.fn.expand("~/.local/share/nvim/lazy/penlight")
-  local penlight_rocks_root = vim.fn.expand("~/.local/share/nvim/lazy-rocks/penlight")
-  local blink_root = vim.fn.expand("~/.local/share/nvim/lazy/blink.cmp")
-  local script_path = vim.fn.tempname() .. ".lua"
+describe("cmd_ux live blink cmdline integration", function()
+  it("auto-advances exact namespace roots while typing", function()
+    local root = plugin_root()
+    local kit_root = vim.fn.fnamemodify(root, ":h") .. "/kit"
+    local penlight_root = vim.fn.expand("~/.local/share/nvim/lazy/penlight")
+    local penlight_rocks_root = vim.fn.expand("~/.local/share/nvim/lazy-rocks/penlight")
+    local blink_root = vim.fn.expand("~/.local/share/nvim/lazy/blink.cmp")
+    local script_path = vim.fn.tempname() .. ".lua"
 
-  local script = ([[local plugin_root = %q
+    local script = ([[local plugin_root = %q
 local kit_root = %q
 local penlight_root = %q
 local penlight_rocks_root = %q
 local blink_root = %q
-
-local function termcodes(keys)
-  return vim.api.nvim_replace_termcodes(keys, true, false, true)
-end
 
 local function labels(blink)
   local result = {}
@@ -65,26 +62,7 @@ blink.setup({
   },
   cmdline = {
     enabled = true,
-    keymap = {
-      ["<CR>"] = {
-        function(cmp)
-          return require("cmd_ux").handle_enter(cmp)
-        end,
-        "fallback",
-      },
-      ["<Tab>"] = {
-        function(cmp)
-          return require("cmd_ux").handle_tab(cmp)
-        end,
-        "fallback",
-      },
-      ["<Space>"] = {
-        function(cmp)
-          return require("cmd_ux").handle_space(cmp)
-        end,
-        "fallback",
-      },
-    },
+    keymap = {},
     completion = {
       menu = { auto_show = false },
     },
@@ -94,77 +72,60 @@ blink.setup({
   },
 })
 
-vim.schedule(function()
-  vim.api.nvim_input(":")
-  vim.defer_fn(function()
-    vim.api.nvim_input("Config")
+  vim.schedule(function()
+    vim.api.nvim_input(":")
     vim.defer_fn(function()
-      blink.show({ initial_selected_item_idx = 1 })
+      vim.api.nvim_input("Tab")
       vim.defer_fn(function()
-        vim.api.nvim_input(termcodes(%q))
+        local current_labels = labels(blink)
+      local ok = vim.fn.getcmdline():find("^Tab%%s") ~= nil
+        and blink.is_menu_visible()
+        and has(current_labels, "goto")
+        and has(current_labels, "next")
+
+      if ok then
+        io.stdout:write("CMDUX_OK\\n")
+        vim.api.nvim_input(vim.api.nvim_replace_termcodes("<C-c>", true, false, true))
         vim.defer_fn(function()
-          local current_labels = labels(blink)
-          local ok = vim.fn.getcmdline():find("^Config%%s") ~= nil
-            and blink.is_menu_visible()
-            and has(current_labels, "reload")
-            and has(current_labels, "help")
-
-          if ok then
-            io.stdout:write("CMDUX_OK\\n")
-            vim.api.nvim_input(termcodes("<C-c>"))
-            vim.defer_fn(function()
-              vim.cmd("qa!")
-            end, 50)
-          else
-            io.stderr:write(
-              ("CMDUX_FAIL line=%%s visible=%%s items=%%s\\n"):format(
-                vim.fn.getcmdline(),
-                tostring(blink.is_menu_visible()),
-                vim.inspect(current_labels)
-              )
-            )
-            vim.cmd("cquit 1")
-          end
-        end, 500)
-      end, 300)
-    end, 150)
-  end, 100)
+          vim.cmd("qa!")
+        end, 50)
+      else
+        io.stderr:write(
+          ("CMDUX_FAIL line=%%s visible=%%s items=%%s\\n"):format(
+            vim.fn.getcmdline(),
+            tostring(blink.is_menu_visible()),
+            vim.inspect(current_labels)
+          )
+        )
+        vim.cmd("cquit 1")
+      end
+    end, 600)
+  end, 150)
 end)
-]]):format(root, kit_root, penlight_root, penlight_rocks_root, blink_root, key)
+]]):format(root, kit_root, penlight_root, penlight_rocks_root, blink_root)
 
-  vim.fn.writefile(vim.split(script, "\n", { plain = true }), script_path)
+    vim.fn.writefile(vim.split(script, "\n", { plain = true }), script_path)
 
-  local result = vim
-    .system({
-      "nvim",
-      "--headless",
-      "-u",
-      "NONE",
-      "-S",
-      script_path,
-    }, {
-      env = {
-        XDG_CONFIG_HOME = vim.fn.getcwd() .. "/home/.config",
-        CMD_UX_TEST = "1",
-      },
-      text = true,
-    })
-    :wait()
+    local result = vim
+      .system({
+        "nvim",
+        "--headless",
+        "-u",
+        "NONE",
+        "-S",
+        script_path,
+      }, {
+        env = {
+          XDG_CONFIG_HOME = vim.fn.getcwd() .. "/home/.config",
+          CMD_UX_TEST = "1",
+        },
+        text = true,
+      })
+      :wait()
 
-  vim.fn.delete(script_path)
+    vim.fn.delete(script_path)
 
-  return result
-end
-
-describe("cmd_ux live blink cmdline integration", function()
-  for _, key in ipairs({ "<CR>", "<Tab>", "<Space>" }) do
-    local label = key == "<CR>" and "enter" or key == "<Tab>" and "tab" or "space"
-
-    it("reopens Config subcommands on " .. label, function()
-      local result = run_blink_smoke(key)
-
-      assert.are.equal(0, result.code, result.stderr)
-      assert.is_truthy((result.stdout or ""):find("CMDUX_OK", 1, true))
-    end)
-  end
+    assert.are.equal(0, result.code, result.stderr)
+    assert.is_truthy((result.stdout or ""):find("CMDUX_OK", 1, true))
+  end)
 end)

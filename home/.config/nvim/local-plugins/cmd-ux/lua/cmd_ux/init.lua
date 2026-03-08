@@ -33,6 +33,7 @@ local M = {}
 ---@field handle_enter fun(cmp: unknown): boolean?
 ---@field handle_tab fun(cmp: unknown): boolean?
 ---@field handle_space fun(cmp: unknown): boolean?
+---@field handle_cmdline_changed fun(): boolean?
 ---@field register fun(root: string, provider: ProviderSpec|Provider): Provider
 
 ---@class CmdUxUserCommandOpts
@@ -212,6 +213,13 @@ function M.setup(opts)
     end,
     desc = "Refresh cmd-ux after lazy command graph reload",
   })
+  vim.api.nvim_create_autocmd("CmdlineChanged", {
+    group = group,
+    callback = function()
+      ex_adapter().handle_cmdline_changed()
+    end,
+    desc = "Auto-advance exact semantic cmd-ux namespaces in the Ex cmdline",
+  })
 
   blocklist.reload()
   providers.invalidate()
@@ -244,6 +252,11 @@ end
 ---@return boolean?
 function M.handle_space(cmp)
   return ex_adapter().handle_space(cmp)
+end
+
+---@return boolean?
+function M.handle_cmdline_changed()
+  return ex_adapter().handle_cmdline_changed()
 end
 
 ---@param root string

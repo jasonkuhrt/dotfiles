@@ -9,14 +9,63 @@ local core = require("cmd_ux.core")
 ---@field handle_enter fun(cmp: unknown): boolean?
 ---@field handle_tab fun(cmp: unknown): boolean?
 ---@field handle_space fun(cmp: unknown): boolean?
+---@field handle_cmdline_changed fun(): boolean?
 ---@field handoff_to_picker fun()
 ---@field open_cmdline fun(line?: string)
 
 local M = {}
+local auto_advancing = false
 
 ---@param keys string
 local function feed(keys)
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "n", false)
+end
+
+---@param state ResolutionState
+---@return string
+local function with_trailing_space(state)
+  local line = state.rendered
+  if line ~= "" and line:sub(-1) ~= " " then
+    line = line .. " "
+  end
+  return line
+end
+
+---@param state ResolutionState
+---@return boolean
+local function should_auto_advance(state)
+  if auto_advancing or vim.fn.getcmdtype() ~= ":" then
+    return false
+  end
+
+  if not state.root or state.pending ~= "" or state.trailing_space then
+    return false
+  end
+
+  if state.provider == "generic" then
+    return false
+  end
+
+  return state.kind == "namespace" or state.kind == "hybrid" or state.requires_more
+end
+
+local function reopen_blink_menu()
+  vim.schedule(function()
+    local ok, blink = pcall(require, "blink.cmp")
+    if not ok then
+      return
+    end
+    ---@cast blink CmdUxBlinkCmp
+    local reopen = function()
+      blink.show({ initial_selected_item_idx = 1 })
+    end
+
+    if blink.is_menu_visible and blink.is_menu_visible() then
+      blink.hide({ callback = reopen })
+    else
+      reopen()
+    end
+  end)
 end
 
 ---@param action CmdUxAction?
@@ -44,21 +93,7 @@ local function apply_action(action)
   end
 
   if action.type == "advance" then
-    vim.schedule(function()
-      local ok, blink = pcall(require, "blink.cmp")
-      if ok then
-        ---@cast blink CmdUxBlinkCmp
-        local reopen = function()
-          blink.show({ initial_selected_item_idx = 1 })
-        end
-
-        if blink.is_menu_visible and blink.is_menu_visible() then
-          blink.hide({ callback = reopen })
-        else
-          reopen()
-        end
-      end
-    end)
+    reopen_blink_menu()
     return true
   end
 
@@ -122,6 +157,26 @@ function M.handle_space(cmp)
   end
 
   return handle(cmp, "space")
+end
+
+---@return boolean?
+function M.handle_cmdline_changed()
+  if vim.fn.getcmdtype() ~= ":" then
+    return
+  end
+
+  local state = core.resolve_line(vim.fn.getcmdline())
+  if not should_auto_advance(state) then
+    return
+  end
+
+  auto_advancing = true
+  vim.fn.setcmdline(with_trailing_space(state))
+  reopen_blink_menu()
+  vim.schedule(function()
+    auto_advancing = false
+  end)
+  return true
 end
 
 function M.handoff_to_picker()

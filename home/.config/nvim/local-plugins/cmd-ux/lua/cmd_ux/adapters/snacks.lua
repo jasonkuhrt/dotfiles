@@ -187,6 +187,44 @@ local function sync_pending(search)
   invalidate_state()
 end
 
+---@param state ResolutionState
+---@return boolean
+local function should_canonicalize_typed_namespace(state)
+  if M.session.pending == "" then
+    return false
+  end
+
+  if not state.root or state.pending ~= "" or state.trailing_space then
+    return false
+  end
+
+  if state.provider == "generic" then
+    return false
+  end
+
+  return state.kind == "namespace" or state.kind == "hybrid" or state.requires_more
+end
+
+---@param picker? CmdUxSnacksPicker
+---@param filter? { search?: string }
+local function canonicalize_typed_namespace(picker, filter)
+  local state = current_state()
+  if not should_canonicalize_typed_namespace(state) then
+    return
+  end
+
+  M.session.prefix = state.rendered
+  M.session.pending = ""
+  M.session.trailing_space = true
+  invalidate_state()
+
+  if filter then
+    filter.search = ""
+  end
+
+  update_input(picker)
+end
+
 local function handoff_to_cmdline()
   ex_adapter().open_cmdline(render_session())
 end
@@ -260,6 +298,7 @@ local function picker_opts()
     },
     finder = function(_, ctx)
       sync_pending(ctx.filter.search)
+      canonicalize_typed_namespace(ctx.picker, ctx.filter)
       ctx.picker.opts.title = current_title()
       ctx.picker:update_titles()
       return current_items()

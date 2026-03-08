@@ -130,6 +130,28 @@ describe("cmd_ux ex adapter", function()
     assert.stub(blink.show).was_called_with({ initial_selected_item_idx = 1 })
   end)
 
+  it("auto-advances an exact typed namespace root on cmdline change", function()
+    local blink = install_blink(true)
+    vim.fn.getcmdline.returns("Tab")
+
+    ex.handle_cmdline_changed()
+
+    assert.stub(vim.fn.setcmdline).was_called_with("Tab ")
+    assert.stub(blink.hide).was_called(1)
+    assert.stub(blink.show).was_called_with({ initial_selected_item_idx = 1 })
+  end)
+
+  it("does not auto-advance executable leaves on cmdline change", function()
+    helpers.create_noarg_command("LeafCmd")
+    helpers.sync_cmd_ux()
+    vim.fn.getcmdline.returns("LeafCmd")
+
+    ex.handle_cmdline_changed()
+
+    assert.stub(vim.fn.setcmdline).was_not_called()
+    assert.stub(vim.api.nvim_feedkeys).was_not_called()
+  end)
+
   it("shows directly when blink menu is not visible", function()
     local blink = install_blink(false)
     vim.fn.getcmdline.returns("Config")

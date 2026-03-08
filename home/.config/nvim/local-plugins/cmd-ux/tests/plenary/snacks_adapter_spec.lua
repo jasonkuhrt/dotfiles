@@ -9,11 +9,17 @@ describe("cmd_ux snacks adapter", function()
   before_each(function()
     helpers.ensure_setup()
     helpers.sync_cmd_ux()
+    snacks.session.prefix = ""
+    snacks.session.pending = ""
+    snacks.session.trailing_space = false
     original_snacks = Snacks
   end)
 
   after_each(function()
     Snacks = original_snacks
+    snacks.session.prefix = ""
+    snacks.session.pending = ""
+    snacks.session.trailing_space = false
   end)
 
   it("reruns the finder from the live search text instead of matcher pattern", function()
@@ -139,6 +145,52 @@ describe("cmd_ux snacks adapter", function()
       vim.tbl_map(function(item)
         return item.label
       end, fake_picker.items)
+    )
+  end)
+
+  it("auto-enters an exact typed namespace search", function()
+    local captured
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    snacks.open()
+
+    local fake_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      input = {
+        value = "Tab",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    local filter = { search = "Tab" }
+    local items = captured.finder(captured, {
+      filter = filter,
+      picker = fake_picker,
+    })
+
+    assert.equal("", fake_picker.input.value)
+    assert.equal("", filter.search)
+    assert.equal("Cmd UX: Tab ", fake_picker.opts.title)
+    assert.are.same(
+      { "close", "first", "goto", "last", "move", "new", "next", "only", "previous" },
+      vim.tbl_map(function(item)
+        return item.label
+      end, items)
     )
   end)
 end)

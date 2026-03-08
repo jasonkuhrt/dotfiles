@@ -121,22 +121,39 @@ The revision changes whenever the live in-memory index instance changes, includi
 It persists:
 
 - per-project active-day usage buckets
+- exact context-vector slices plus best matching context facets
 - exact rendered command executions
 - learned transitions inside namespaces and structured frontiers
 - explicit choice selections in pickers and semantic completion
 - propagated ancestor/category activation from hot descendant paths
 - promoted full-path shortcuts for strong recent semantic paths
 
+It also keeps in-memory session heat:
+
+- project-local recent behavior inside the current editor session
+- exact-context and facet-context bursts that should temporarily matter now
+- zero persistence across restarts so it can accelerate flow without polluting long-term habits
+
 That learning feeds back into ordering:
 
 - current-project evidence outweighs cross-project evidence by default
+- exact live context outweighs broader facet context by default
 - recent usage outweighs stale usage via a sliding active-time window
+- current-session heat can temporarily outweigh older stable habits when configured to do so
 - executed choices outrank merely selected choices
 - higher-frequency choices outrank lower-frequency choices
 - more recent choices break ties
 - original provider/index order remains the final deterministic fallback
 
 This is the behavior that lets repeated usage like `Config reload` rise above `Config help`, lets `refactor` rise after repeated use of one refactor leaf, and lets hot full paths such as `Config reload` appear as promoted shortcuts at the root layer.
+
+The runtime context model is no longer a single flat `resource kind` string. It is a typed context vector that includes:
+
+- surface kind and detail
+- filetype
+- buftype
+- mode
+- a legacy coarse context key for compatibility and explainability
 
 ### Built-in Semantic Roots
 
@@ -156,6 +173,7 @@ Seven built-in semantic roots now extend `cmd-ux` beyond plain command discovery
 
 - `Flow`
   - context-aware actions for the current buffer
+  - built from typed capability steps instead of opaque command strings
   - examples: save, write-all, source-buffer, config-reload, search-word, lsp-rename, alternate-buffer, close-buffer, pane-only, tab-only
 
 - `Lsp`
@@ -179,12 +197,14 @@ These are still regular `cmd-ux` semantic roots, not sidecar UIs.
 Useful subcommands:
 
 - `Cmdux blocklist`
+- `Cmdux capabilities`
 - `Cmdux explain`
 - `Cmdux stats`
 - `Cmdux recent`
 - `Cmdux roots`
 - `Cmdux transitions`
 - `Cmdux paths`
+- `Cmdux inbox`
 - `Cmdux noise`
 - `Cmdux suggest`
 - `Cmdux export`
@@ -194,8 +214,10 @@ This makes the learning layer inspectable in three different modes:
 
 - explanation: explain
 - observability: stats, recent, roots, transitions, paths
+- substrate: capabilities
+- proposal inbox: inbox, suggest
 - cleanup: noise, blocklist
-- design input: suggest, export
+- design input: inbox, suggest, export
 
 ### Command kinds
 
@@ -222,6 +244,7 @@ The core resolves current input into a state with:
 - whether more input is required
 - refusal reason when blocked
 - current valid frontier of next choices
+- typed slots and current slot values when the state expects open-ended arguments
 
 ### Transitions
 
@@ -243,6 +266,7 @@ These are hard rules, not preferences.
 - `<Tab>` never executes
 - `<Tab>` never cycles completion selection
 - `<Space>` only acts semantically in named slots; otherwise it remains a literal space
+- typed slot preview/validation must never lie about the currently focused target
 - `<C-j>` and `<C-k>` are the selection keys
 - lack of rich command semantics is not, by itself, a valid exclusion reason
 
@@ -258,6 +282,14 @@ What Neovim can give:
 - completion types such as `file`, `help`, `lua`, `shellcmd`
 - user-command completion callbacks
 - live completion frontiers for partially entered command paths
+
+What `cmd-ux` adds on top:
+
+- typed slot validators and previewers
+- capability-backed flow composition
+- context-vector adaptive ranking
+- promoted shortcut lanes
+- actionable deterministic proposal reports
 
 What Neovim does not give as a first-class concept:
 

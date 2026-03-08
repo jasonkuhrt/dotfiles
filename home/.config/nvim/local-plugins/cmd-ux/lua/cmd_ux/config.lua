@@ -13,6 +13,19 @@ local M = {}
 ---@field execute integer[]
 ---@field select integer[]
 
+---@class CmdUxLearningPropagationProfile
+---@field execute? integer[]
+---@field select? integer[]
+
+---@class CmdUxLearningContextConfig
+---@field exact_weight integer
+---@field facet_weight integer
+
+---@class CmdUxLearningSessionConfig
+---@field enabled boolean
+---@field project_weight integer
+---@field cross_project_weight integer
+
 ---@class CmdUxLearningPromotionConfig
 ---@field enabled boolean
 ---@field max_per_context integer
@@ -24,6 +37,9 @@ local M = {}
 ---@field scope CmdUxLearningScopeConfig
 ---@field time CmdUxLearningTimeConfig
 ---@field propagation CmdUxLearningPropagationConfig
+---@field profiles table<string, CmdUxLearningPropagationProfile>
+---@field context CmdUxLearningContextConfig
+---@field session CmdUxLearningSessionConfig
 ---@field promotions CmdUxLearningPromotionConfig
 
 ---@class CmdUxConfig
@@ -44,6 +60,16 @@ local defaults = {
     propagation = {
       execute = { 100, 35, 12, 4 },
       select = { 35, 12, 4, 1 },
+    },
+    profiles = {},
+    context = {
+      exact_weight = 6,
+      facet_weight = 2,
+    },
+    session = {
+      enabled = true,
+      project_weight = 6,
+      cross_project_weight = 1,
     },
     promotions = {
       enabled = true,

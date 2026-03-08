@@ -140,6 +140,8 @@ local function current_items()
       accept_line = item.accept_line,
       promoted = item.promoted,
       node_id = item.node_id,
+      lane = item.lane,
+      slot_values = item.slot_values,
     }
   end
   return items
@@ -305,8 +307,8 @@ local function picker_opts()
     end,
     format = function(item)
       local label = item.label or item.text
-      if item.promoted then
-        label = label .. "  [promoted]"
+      if item.lane == "shortcut" or item.promoted then
+        label = label .. "  [shortcut]"
       end
       return {
         { label, "SnacksPickerFile" },

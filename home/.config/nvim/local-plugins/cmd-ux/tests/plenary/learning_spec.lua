@@ -282,6 +282,56 @@ describe("cmd_ux learning and flow features", function()
     eq("help", state.frontier[1].label)
   end)
 
+  it("lets session heat temporarily outweigh older persistent ordering when configured to do so", function()
+    cmd_ux.setup({
+      learning = {
+        scope = {
+          project_weight = 4,
+          cross_project_weight = 1,
+          cross_project_enabled = true,
+        },
+        time = {
+          window_days = 21,
+          freshness_days = 5,
+        },
+        propagation = {
+          execute = { 100, 35, 12, 4 },
+          select = { 35, 12, 4, 1 },
+        },
+        profiles = {},
+        context = {
+          exact_weight = 6,
+          facet_weight = 2,
+        },
+        session = {
+          enabled = true,
+          project_weight = 1000,
+          cross_project_weight = 0,
+        },
+        promotions = {
+          enabled = true,
+          max_per_context = 3,
+          min_hops_saved = 2,
+          min_recent_executes = 2,
+          freshness_days = 5,
+        },
+      },
+    })
+
+    learning.record_execute_state(core.resolve_line("Config reload"))
+    learning.record_execute_state(core.resolve_line("Config reload"))
+    learning.record_execute_state(core.resolve_line("Config reload"))
+    learning.reload()
+    learning.record_execute_state(core.resolve_line("Config help"))
+    learning.record_execute_state(core.resolve_line("Config help"))
+
+    local state = core.resolve_line("Config")
+    eq("help", state.frontier[1].label)
+
+    local explain = table.concat(learning.explain_lines("Config"), "\n")
+    assert.is_truthy(explain:find("session=", 1, true))
+  end)
+
   it("propagates descendant usage up the semantic tree", function()
     register_tree_provider("TreeTest")
     helpers.sync_cmd_ux()
@@ -417,6 +467,25 @@ describe("cmd_ux learning and flow features", function()
     pcall(vim.fn.delete, path)
   end)
 
+  it("buffer goto preview surfaces typed slot validation and buffer metadata", function()
+    local path = vim.fn.tempname() .. ".lua"
+    vim.fn.writefile({ "return {}" }, path)
+    vim.cmd("edit " .. vim.fn.fnameescape(path))
+    local bufnr = vim.api.nvim_get_current_buf()
+
+    local preview = core.preview_text(core.resolve_line("Buffer goto " .. bufnr))
+    assert.is_truthy(preview:find("Slots:", 1, true))
+    assert.is_truthy(preview:find("Target buffer: " .. bufnr, 1, true))
+    assert.is_truthy(preview:find("valid: yes", 1, true))
+
+    local invalid_preview = core.preview_text(core.resolve_line("Buffer goto 999999"))
+    assert.is_truthy(invalid_preview:find("Expected a listed buffer number.", 1, true))
+    assert.is_truthy(invalid_preview:find("valid: no", 1, true))
+
+    vim.cmd("bdelete!")
+    pcall(vim.fn.delete, path)
+  end)
+
   it("buffer exposes semantic goto and lifecycle actions", function()
     local path_a = vim.fn.tempname() .. ".lua"
     local path_b = vim.fn.tempname() .. ".lua"
@@ -493,7 +562,9 @@ describe("cmd_ux learning and flow features", function()
 
   it("cmdux completion exposes the new learning commands", function()
     eq({ "blocklist" }, cmdux_provider.complete("Cmdux bl"))
+    eq({ "capabilities" }, cmdux_provider.complete("Cmdux cap"))
     assert.is_true(vim.tbl_contains(cmdux_provider.complete("Cmdux ex"), "explain"))
+    eq({ "inbox" }, cmdux_provider.complete("Cmdux in"))
     eq({ "stats" }, cmdux_provider.complete("Cmdux st"))
     eq({ "recent" }, cmdux_provider.complete("Cmdux rec"))
     eq({ "transitions" }, cmdux_provider.complete("Cmdux tr"))
@@ -535,13 +606,27 @@ describe("cmd_ux learning and flow features", function()
     cmdux_provider.execute("stats")
     local stats_lines = table.concat(current_lines(), "\n")
     assert.is_truthy(stats_lines:find("Project active day:", 1, true))
-    assert.is_truthy(stats_lines:find("Active windows:", 1, true))
+    assert.is_truthy(stats_lines:find("Context vector:", 1, true))
+    assert.is_truthy(stats_lines:find("Session weights:", 1, true))
     close_report_tab()
 
     cmdux_provider.execute("suggest")
     local lines = table.concat(current_lines(), "\n")
+    assert.is_truthy(lines:find("Alias candidates:", 1, true))
     assert.is_truthy(lines:find("Config reload", 1, true))
     assert.is_truthy(lines:find("Config -> reload", 1, true))
+    close_report_tab()
+
+    cmdux_provider.execute("inbox")
+    local inbox_lines = table.concat(current_lines(), "\n")
+    assert.is_truthy(inbox_lines:find("Alias proposals:", 1, true))
+    assert.is_truthy(inbox_lines:find("config-reload", 1, true))
+    close_report_tab()
+
+    cmdux_provider.execute("capabilities")
+    local capability_lines = table.concat(current_lines(), "\n")
+    assert.is_truthy(capability_lines:find("buffer.write_current", 1, true))
+    assert.is_truthy(capability_lines:find("config.reload", 1, true))
     close_report_tab()
   end)
 

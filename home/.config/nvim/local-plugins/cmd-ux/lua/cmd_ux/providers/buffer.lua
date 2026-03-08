@@ -1,3 +1,4 @@
+local slot_specs = require("cmd_ux.lib.slot_specs")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
 local strings = require("kit.strings")
@@ -5,6 +6,11 @@ local strings = require("kit.strings")
 local M = {
   id = "buffer",
 }
+
+local goto_slot = slot_specs.buffer_number({
+  desc = "Listed buffer number",
+  help = "Pick a listed buffer number to focus.",
+})
 
 ---@class BufferAction
 ---@field token string
@@ -100,6 +106,8 @@ local function goto_items(prefix)
       executable = true,
       text = ("%s  %s"):format(token, desc),
       node_id = "Buffer/goto/" .. token,
+      slots = { goto_slot },
+      slot_values = { token },
     })
   end
   return util.filter_prefix(items, prefix)
@@ -109,6 +117,19 @@ end
 ---@return boolean
 local function has_buffer(bufnr)
   return vim.api.nvim_buf_is_valid(bufnr) and vim.fn.buflisted(bufnr) == 1
+end
+
+---@param value string
+---@return integer?, string?
+local function parse_buffer_number(value)
+  local ok, reason = true, nil
+  if goto_slot.validate then
+    ok, reason = goto_slot.validate(value)
+  end
+  if not ok then
+    return nil, reason
+  end
+  return tonumber(value or ""), nil
 end
 
 ---@return table<string, BufferAction>
@@ -243,6 +264,7 @@ local function action_items(prefix)
       examples = { "Buffer goto 3" },
       executable = false,
       requires_more = true,
+      slots = { goto_slot },
     }),
     types.frontier_item({
       token = "last",
@@ -320,6 +342,7 @@ function M.resolve(ctx)
       examples = { "Buffer goto 3" },
       executable = false,
       requires_more = true,
+      slots = { goto_slot },
     })
 
     if #ctx.accepted == 1 then
@@ -329,30 +352,38 @@ function M.resolve(ctx)
         requires_more = true,
         refusal_reason = #frontier == 0 and "No listed buffers match the current prefix." or "Pick a buffer number.",
         frontier = frontier,
+        slot_values = ctx.pending ~= "" and { ctx.pending } or {},
       })
     end
 
-    local bufnr = tonumber(ctx.accepted[2] or "")
+    local bufnr, reason = parse_buffer_number(ctx.accepted[2] or "")
     if not bufnr or not has_buffer(bufnr) then
       return types.state_from_node(goto_node, {
         executable = false,
         requires_more = true,
-        refusal_reason = "Unknown listed buffer.",
+        refusal_reason = reason or "Unknown listed buffer.",
         frontier = goto_items(ctx.pending),
+        slot_values = { ctx.accepted[2] or "" },
       })
     end
 
-    return types.state_from_node(types.node({
-      token = tostring(bufnr),
-      kind = "leaf",
-      desc = "Jump to listed buffer " .. bufnr,
-      help = "Focus the selected listed buffer.",
-      examples = { "Buffer goto " .. bufnr },
-      executable = true,
-      execute = function()
-        vim.cmd("buffer " .. bufnr)
-      end,
-    }))
+    return types.state_from_node(
+      types.node({
+        token = "goto",
+        kind = "leaf",
+        desc = "Jump to listed buffer " .. bufnr,
+        help = "Focus the selected listed buffer.",
+        examples = { "Buffer goto " .. bufnr },
+        executable = true,
+        slots = { goto_slot },
+        execute = function()
+          vim.cmd("buffer " .. bufnr)
+        end,
+      }),
+      {
+        slot_values = { tostring(bufnr) },
+      }
+    )
   end
 
   local action = find_action(ctx.accepted[1])
@@ -417,9 +448,9 @@ function M.execute(args)
   end
 
   if token == "goto" then
-    local bufnr = tonumber(tokens[2] or "")
+    local bufnr, reason = parse_buffer_number(tokens[2] or "")
     if not bufnr or not has_buffer(bufnr) then
-      vim.notify("Buffer goto needs a listed buffer number.", vim.log.levels.ERROR, { title = "Buffer" })
+      vim.notify(reason or "Buffer goto needs a listed buffer number.", vim.log.levels.ERROR, { title = "Buffer" })
       return
     end
 

@@ -235,6 +235,30 @@ The system should be able to answer:
 - what is hot in this project generally
 - what is hot across other projects
 
+### Context Vector
+
+The runtime context should be a typed vector, not one opaque string.
+
+Minimum fields:
+
+- `surface`
+- `surface_detail`
+- `filetype`
+- `buftype`
+- `mode`
+- `legacy_key`
+
+The engine should derive:
+
+- one exact key from the whole vector
+- a bounded set of facet keys such as surface-only, filetype-only, or surface+filetype
+
+Ranking should prefer:
+
+1. exact context
+2. best matching facet context
+3. global semantic truth
+
 ## Signal Credits
 
 The system should use integer credits only.
@@ -402,6 +426,22 @@ If disabled:
 
 - `mixed_score = project_score`
 
+## Session Heat
+
+The live engine should also keep an in-memory session layer.
+
+Rules:
+
+- it is never persisted
+- it uses the same semantic ids as durable learning
+- it can temporarily bias ranking toward what is hot right now
+- it resets cleanly on restart or explicit learning reset
+
+Suggested defaults:
+
+- `session_project_weight = 6`
+- `session_cross_project_weight = 1`
+
 ## Ranking Algorithm
 
 Ranking must be deterministic and explainable.
@@ -411,9 +451,10 @@ For a candidate node `n` visible in live context `c`:
 1. compute exact-context transition score
 2. compute relaxed-context transition score
 3. compute mixed node activation score
-4. break ties by recency
-5. break ties by original structural order
-6. break final ties by label
+4. add session heat in the same exact/facet context mix
+5. break ties by recency
+6. break ties by original structural order
+7. break final ties by label
 
 Suggested numeric form:
 
@@ -592,6 +633,41 @@ The ideal artifact is:
 - test cases
 - docs impact
 
+## Typed Slots
+
+Open-ended arguments should be modeled as typed slots.
+
+Each slot should define:
+
+- stable slot id
+- human label
+- slot kind
+- required/optional flag
+- validator
+- previewer
+
+Examples:
+
+- `Buffer goto <buffer>`
+- `Tab goto <tab>`
+- `File open <path>`
+
+## Capability-Composed Flows
+
+Flow-like actions should be expressed as ordered capability steps, not opaque command strings.
+
+Ideal shape:
+
+```lua
+{
+  id = "flow.config.save_and_reload",
+  steps = {
+    { capability = "buffer.write_current" },
+    { capability = "config.reload" },
+  },
+}
+```
+
 ## Reports
 
 The engine should expose reports for humans and agents:
@@ -600,6 +676,9 @@ The engine should expose reports for humans and agents:
 - top nodes
 - top transitions
 - top promoted paths
+- alias proposals
+- capability inventory
+- command-system inbox
 - stale promoted paths
 - friction hotspots
 - workflow candidates
@@ -632,6 +711,20 @@ learning = {
   propagation = {
     execute = { 100, 35, 12, 4 },
     select = { 35, 12, 4, 1 },
+  },
+  profiles = {
+    Config = {
+      execute = { 100, 50, 20, 8 },
+    },
+  },
+  context = {
+    exact_weight = 6,
+    facet_weight = 2,
+  },
+  session = {
+    enabled = true,
+    project_weight = 6,
+    cross_project_weight = 1,
   },
   promotions = {
     enabled = true,

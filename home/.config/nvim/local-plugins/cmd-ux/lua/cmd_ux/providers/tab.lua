@@ -1,3 +1,4 @@
+local slot_specs = require("cmd_ux.lib.slot_specs")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
 local strings = require("kit.strings")
@@ -5,6 +6,11 @@ local strings = require("kit.strings")
 local M = {
   id = "tab",
 }
+
+local goto_slot = slot_specs.tab_number({
+  desc = "Tab number",
+  help = "Pick a valid tab number to focus.",
+})
 
 ---@class TabAction
 ---@field token string
@@ -54,9 +60,24 @@ local function goto_items(prefix)
       executable = true,
       text = ("%s  %s"):format(token, desc),
       node_id = "Tab/goto/" .. token,
+      slots = { goto_slot },
+      slot_values = { token },
     })
   end
   return util.filter_prefix(items, prefix)
+end
+
+---@param value string
+---@return integer?, string?
+local function parse_tab_number(value)
+  local ok, reason = true, nil
+  if goto_slot.validate then
+    ok, reason = goto_slot.validate(value)
+  end
+  if not ok then
+    return nil, reason
+  end
+  return tonumber(value or ""), nil
 end
 
 local function move_actions()
@@ -194,6 +215,7 @@ local function root_items(prefix)
       examples = { "Tab goto 2" },
       executable = false,
       requires_more = true,
+      slots = { goto_slot },
     }),
     types.frontier_item({
       token = "last",
@@ -308,6 +330,7 @@ function M.resolve(ctx)
       examples = { "Tab goto 2" },
       executable = false,
       requires_more = true,
+      slots = { goto_slot },
     })
 
     if #ctx.accepted == 1 then
@@ -317,30 +340,38 @@ function M.resolve(ctx)
         requires_more = true,
         refusal_reason = #frontier == 0 and "No tabpages match the current prefix." or "Pick a tab number.",
         frontier = frontier,
+        slot_values = ctx.pending ~= "" and { ctx.pending } or {},
       })
     end
 
-    local tabnr = tonumber(ctx.accepted[2] or "")
+    local tabnr, reason = parse_tab_number(ctx.accepted[2] or "")
     if not tabnr or tabnr < 1 or tabnr > #tab_pages() then
       return types.state_from_node(goto_node, {
         executable = false,
         requires_more = true,
-        refusal_reason = "Unknown tabpage.",
+        refusal_reason = reason or "Unknown tabpage.",
         frontier = goto_items(ctx.pending),
+        slot_values = { ctx.accepted[2] or "" },
       })
     end
 
-    return types.state_from_node(types.node({
-      token = tostring(tabnr),
-      kind = "leaf",
-      desc = "Jump to tab " .. tabnr,
-      help = "Focus the selected tabpage.",
-      examples = { "Tab goto " .. tabnr },
-      executable = true,
-      execute = function()
-        vim.cmd("tabnext " .. tabnr)
-      end,
-    }))
+    return types.state_from_node(
+      types.node({
+        token = "goto",
+        kind = "leaf",
+        desc = "Jump to tab " .. tabnr,
+        help = "Focus the selected tabpage.",
+        examples = { "Tab goto " .. tabnr },
+        executable = true,
+        slots = { goto_slot },
+        execute = function()
+          vim.cmd("tabnext " .. tabnr)
+        end,
+      }),
+      {
+        slot_values = { tostring(tabnr) },
+      }
+    )
   end
 
   if ctx.accepted[1] == "move" then
@@ -456,9 +487,9 @@ function M.execute(args)
   end
 
   if token == "goto" then
-    local tabnr = tonumber(tokens[2] or "")
+    local tabnr, reason = parse_tab_number(tokens[2] or "")
     if not tabnr or tabnr < 1 or tabnr > #tab_pages() then
-      vim.notify("Tab goto needs a valid tab number.", vim.log.levels.ERROR, { title = "Tab" })
+      vim.notify(reason or "Tab goto needs a valid tab number.", vim.log.levels.ERROR, { title = "Tab" })
       return
     end
     vim.cmd("tabnext " .. tabnr)

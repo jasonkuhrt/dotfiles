@@ -69,6 +69,32 @@ The result is a `ResolutionState`, not a cached global tree.
 - executable status
 - refusal reason
 - next valid frontier
+- typed slots and current slot values for open-ended arguments
+
+## 3.5 Capability Layer
+
+`cmd-ux` now has a typed capability registry below the semantic forest.
+
+It owns:
+
+- stable capability ids such as `buffer.write_current` and `config.reload`
+- availability checks
+- safety metadata
+- preview builders
+- execution functions
+
+This is the substrate used by:
+
+- `Flow`
+- capability-backed composite actions
+- capability reporting through `Cmdux capabilities`
+- future synthesis work
+
+The critical boundary is:
+
+- semantic roots are the user-facing grammar
+- capabilities are the executable substrate
+- learning and future synthesis must not bypass the capability layer
 
 ## 4. Learning Layer
 
@@ -78,6 +104,8 @@ It stores:
 
 - per-project active-day buckets
 - mixed current-project and cross-project scores
+- exact context-vector slices plus best matching facet slices
+- in-memory session heat that is never persisted
 - root and node activation
 - frontier transition activation
 - promoted path activation
@@ -93,6 +121,7 @@ It changes:
 - promotions
 - preview hints
 - reports
+- inbox proposals
 
 It does not change:
 
@@ -156,11 +185,12 @@ Learning ranks structural frontiers using this order:
 1. exact-context transition score
 2. relaxed-context transition score
 3. scoped node activation score
-4. recency
-5. original provider/index order
-6. label for final tie-break
+4. session heat in the same context mix
+5. recency
+6. original provider/index order
+7. label for final tie-break
 
-Promoted paths are ranked separately from structural children and then prepended as shortcut items.
+Promoted paths are ranked separately from structural children and then prepended as shortcut-lane items.
 
 That keeps adaptive ordering deterministic and explainable.
 
@@ -186,7 +216,9 @@ Learning data survives invalidation because usage history is orthogonal to comma
 
 `Cmdux` exposes the learning layer as first-class reports:
 
+- `capabilities`
 - `explain`
+- `inbox`
 - `stats`
 - `recent`
 - `roots`
@@ -202,7 +234,8 @@ This turns `cmd-ux` into a closed feedback loop:
 1. observe real command behavior
 2. adapt ordering automatically
 3. inspect patterns and ranking causes
-4. remove noise or promote hot flows
+4. review alias/shortcut/noise proposals in the inbox
+5. remove noise or promote hot flows
 
 ## Extension Rules
 

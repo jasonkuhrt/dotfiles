@@ -1,5 +1,5 @@
-local lsp = require("cmd_ux.lib.lsp")
-local runtime = require("cmd_ux.lib.runtime")
+local capabilities = require("cmd_ux.lib.capabilities")
+require("cmd_ux.lib.capability_catalog").register_all()
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
 
@@ -12,261 +12,211 @@ local M = {
 ---@field desc string
 ---@field help string
 ---@field examples string[]
----@field command string
-
-local function current_path()
-  local path = vim.api.nvim_buf_get_name(0)
-  if path == "" then
-    return nil
-  end
-  return path
-end
-
-local function current_filetype()
-  return vim.bo[vim.api.nvim_get_current_buf()].filetype
-end
-
-local function current_word()
-  local word = vim.fn.expand("<cword>")
-  if type(word) ~= "string" or word == "" then
-    return nil
-  end
-  return word
-end
-
-local function is_normal_file_buffer()
-  return vim.bo[vim.api.nvim_get_current_buf()].buftype == "" and current_path() ~= nil
-end
-
-local function is_modified()
-  return vim.bo[vim.api.nvim_get_current_buf()].modified == true
-end
-
-local function has_modified_buffers()
-  return #vim.fn.getbufinfo({ bufmodified = 1 }) > 0
-end
-
-local function listed_buffer_count()
-  return #vim.fn.getbufinfo({ buflisted = 1 })
-end
-
-local function window_count()
-  return #vim.api.nvim_tabpage_list_wins(0)
-end
-
-local function tab_count()
-  return #vim.api.nvim_list_tabpages()
-end
-
-local function is_sourceable(path)
-  local filetype = current_filetype()
-  return filetype == "lua" or filetype == "vim" or path:sub(-4) == ".lua" or path:sub(-4) == ".vim"
-end
-
-local function in_config(path)
-  local config_root = vim.fn.stdpath("config")
-  return path:find(vim.pesc(config_root), 1) == 1
-end
+---@field steps CmdUxCapabilityStep[]
 
 ---@return FlowAction[]
 local function actions()
-  local items = {}
-  local path = current_path()
-  local word = current_word()
-  local has_lsp = lsp.has_clients()
-  local supports_references = has_lsp and lsp.supports("textDocument/references")
-  local supports_rename = has_lsp and lsp.supports("textDocument/rename")
-  local supports_code_action = has_lsp and lsp.supports("textDocument/codeAction")
-
-  if is_normal_file_buffer() and is_modified() then
-    items[#items + 1] = {
-      token = "save",
-      desc = "Write the current buffer",
-      help = "Save the current file without leaving the current flow.",
-      examples = { "Flow save" },
-      command = "write",
-    }
-  end
-
-  if has_modified_buffers() then
-    items[#items + 1] = {
-      token = "write-all",
-      desc = "Write every modified buffer",
-      help = "Flush all modified buffers without leaving the current command flow.",
-      examples = { "Flow write-all" },
-      command = "wall",
-    }
-  end
-
-  if path and is_sourceable(path) then
-    items[#items + 1] = {
-      token = "source-buffer",
-      desc = "Source the current Lua/Vim buffer",
-      help = "Run :source on the current file.",
-      examples = { "Flow source-buffer" },
-      command = "source " .. vim.fn.fnameescape(path),
-    }
-  end
-
-  if path and is_sourceable(path) and is_modified() then
-    items[#items + 1] = {
-      token = "save-and-source",
-      desc = "Write and source the current buffer",
-      help = "Save the current file first, then source it.",
-      examples = { "Flow save-and-source" },
-      command = "write | source " .. vim.fn.fnameescape(path),
-    }
-  end
-
-  if path and in_config(path) then
-    items[#items + 1] = {
-      token = "config-reload",
-      desc = "Run Config reload",
-      help = "Reload the safe subset of your Neovim config.",
-      examples = { "Flow config-reload" },
-      command = "Config reload",
-    }
-  end
-
-  if path and in_config(path) and is_modified() then
-    items[#items + 1] = {
-      token = "save-and-config-reload",
-      desc = "Write the file and reload config",
-      help = "Save the current config file first, then run Config reload.",
-      examples = { "Flow save-and-config-reload" },
-      command = "write | Config reload",
-    }
-  end
-
-  if vim.fn.buflisted(vim.api.nvim_get_current_buf()) == 1 then
-    items[#items + 1] = {
+  return {
+    {
+      token = "alternate-buffer",
+      desc = "Jump to the alternate buffer",
+      help = "Switch to the alternate buffer through the capability graph.",
+      examples = { "Flow alternate-buffer" },
+      steps = {
+        { capability = "buffer.alternate" },
+      },
+    },
+    {
+      token = "buffer-dir",
+      desc = "Change cwd to the current file directory",
+      help = "Set the local working directory to the current buffer folder through a typed capability.",
+      examples = { "Flow buffer-dir" },
+      steps = {
+        { capability = "window.cwd_to_buffer_dir" },
+      },
+    },
+    {
       token = "close-buffer",
       desc = "Close the current buffer",
-      help = "Close the current buffer through the Buffer namespace.",
+      help = "Close the current buffer through the Buffer capability.",
       examples = { "Flow close-buffer" },
-      command = "Buffer close",
-    }
-  end
-
-  if listed_buffer_count() > 1 then
-    items[#items + 1] = {
+      steps = {
+        { capability = "buffer.close_current" },
+      },
+    },
+    {
       token = "close-other-buffers",
       desc = "Close all other listed buffers",
       help = "Keep the current buffer and close every other listed buffer.",
       examples = { "Flow close-other-buffers" },
-      command = "Buffer close-others",
-    }
-  end
-
-  if vim.fn.bufname("#") ~= "" then
-    items[#items + 1] = {
-      token = "alternate-buffer",
-      desc = "Jump to the alternate buffer",
-      help = "Use the Buffer namespace for alternate buffer switching.",
-      examples = { "Flow alternate-buffer" },
-      command = "Buffer alternate",
-    }
-  end
-
-  if is_normal_file_buffer() and path then
-    items[#items + 1] = {
-      token = "buffer-dir",
-      desc = "Change cwd to the current file directory",
-      help = "Set the local working directory to the current buffer's folder.",
-      examples = { "Flow buffer-dir" },
-      command = "lcd %:p:h",
-    }
-  end
-
-  if word and is_normal_file_buffer() then
-    items[#items + 1] = {
-      token = "search-word",
-      desc = "Search the word under cursor",
-      help = "Jump into the Search namespace with the current word.",
-      examples = { "Flow search-word" },
-      command = "Search text word",
-    }
-  end
-
-  if word and supports_references then
-    items[#items + 1] = {
-      token = "lsp-references",
-      desc = "Search LSP references for the current symbol",
-      help = "Use the Lsp namespace to open references for the symbol under cursor.",
-      examples = { "Flow lsp-references" },
-      command = "Lsp references",
-    }
-  end
-
-  if word and supports_rename then
-    items[#items + 1] = {
-      token = "lsp-rename",
-      desc = "Rename the current symbol",
-      help = "Use the Lsp namespace to rename the symbol under cursor.",
-      examples = { "Flow lsp-rename" },
-      command = "Lsp refactor rename",
-    }
-  end
-
-  if supports_code_action then
-    items[#items + 1] = {
-      token = "lsp-code-action",
-      desc = "Show LSP code actions",
-      help = "Use the Lsp namespace to open the code-action menu.",
-      examples = { "Flow lsp-code-action" },
-      command = "Lsp refactor action all",
-    }
-  end
-
-  if window_count() > 1 then
-    items[#items + 1] = {
-      token = "pane-only",
-      desc = "Keep only the current pane",
-      help = "Close all other panes through the Pane namespace.",
-      examples = { "Flow pane-only" },
-      command = "Pane only",
-    }
-  end
-
-  if tab_count() > 1 then
-    items[#items + 1] = {
-      token = "tab-only",
-      desc = "Keep only the current tab",
-      help = "Close all other tabs through the Tab namespace.",
-      examples = { "Flow tab-only" },
-      command = "Tab only",
-    }
-  end
-
-  if vim.diagnostic.get(0) and #vim.diagnostic.get(0) > 0 then
-    items[#items + 1] = {
+      steps = {
+        { capability = "buffer.close_others" },
+      },
+    },
+    {
+      token = "config-reload",
+      desc = "Reload config",
+      help = "Reload the safe subset of your config through a typed capability.",
+      examples = { "Flow config-reload" },
+      steps = {
+        { capability = "config.reload" },
+      },
+    },
+    {
       token = "diagnostics",
       desc = "Open the diagnostics list",
-      help = "Jump straight to the current buffer diagnostics.",
+      help = "Open the location list for current-buffer diagnostics.",
       examples = { "Flow diagnostics" },
-      command = "lopen",
-    }
-
-    items[#items + 1] = {
-      token = "search-diagnostics",
-      desc = "Search diagnostics in a picker",
-      help = "Use the Search namespace to browse current-buffer diagnostics.",
-      examples = { "Flow search-diagnostics" },
-      command = "Search lists diagnostics-buffer",
-    }
-  end
-
-  if #vim.fn.getqflist() > 0 then
-    items[#items + 1] = {
+      steps = {
+        { capability = "lists.loclist_open" },
+      },
+    },
+    {
+      token = "lsp-code-action",
+      desc = "Show LSP code actions",
+      help = "Open the general LSP code-action menu.",
+      examples = { "Flow lsp-code-action" },
+      steps = {
+        { capability = "lsp.code_action_all" },
+      },
+    },
+    {
+      token = "lsp-rename",
+      desc = "Rename the current symbol",
+      help = "Rename the symbol under cursor through the capability graph.",
+      examples = { "Flow lsp-rename" },
+      steps = {
+        { capability = "lsp.rename" },
+      },
+    },
+    {
+      token = "lsp-references",
+      desc = "Search LSP references",
+      help = "Open references for the symbol under cursor through the capability graph.",
+      examples = { "Flow lsp-references" },
+      steps = {
+        { capability = "lsp.references" },
+      },
+    },
+    {
+      token = "pane-only",
+      desc = "Keep only the current pane",
+      help = "Close all other panes through the Pane capability.",
+      examples = { "Flow pane-only" },
+      steps = {
+        { capability = "pane.only" },
+      },
+    },
+    {
       token = "quickfix",
       desc = "Open the quickfix list",
-      help = "Jump straight to the current quickfix list.",
+      help = "Open the current quickfix list through the capability graph.",
       examples = { "Flow quickfix" },
-      command = "copen",
-    }
-  end
+      steps = {
+        { capability = "lists.quickfix_open" },
+      },
+    },
+    {
+      token = "save",
+      desc = "Write the current buffer",
+      help = "Save the current file through a typed capability.",
+      examples = { "Flow save" },
+      steps = {
+        { capability = "buffer.write_current" },
+      },
+    },
+    {
+      token = "save-and-config-reload",
+      desc = "Write the file and reload config",
+      help = "Save the current config file first, then reload the safe config subset.",
+      examples = { "Flow save-and-config-reload" },
+      steps = {
+        { capability = "buffer.write_current" },
+        { capability = "config.reload" },
+      },
+    },
+    {
+      token = "save-and-source",
+      desc = "Write and source the current buffer",
+      help = "Save the current file first, then source it.",
+      examples = { "Flow save-and-source" },
+      steps = {
+        { capability = "buffer.write_current" },
+        { capability = "buffer.source_current" },
+      },
+    },
+    {
+      token = "search-diagnostics",
+      desc = "Search diagnostics in a picker",
+      help = "Browse current-buffer diagnostics through the Search capability.",
+      examples = { "Flow search-diagnostics" },
+      steps = {
+        { capability = "search.buffer_diagnostics" },
+      },
+    },
+    {
+      token = "search-word",
+      desc = "Search the word under cursor",
+      help = "Open a project text search for the current word.",
+      examples = { "Flow search-word" },
+      steps = {
+        { capability = "search.word_under_cursor" },
+      },
+    },
+    {
+      token = "source-buffer",
+      desc = "Source the current Lua/Vim buffer",
+      help = "Run :source on the current file through a typed capability.",
+      examples = { "Flow source-buffer" },
+      steps = {
+        { capability = "buffer.source_current" },
+      },
+    },
+    {
+      token = "tab-only",
+      desc = "Keep only the current tab",
+      help = "Close all other tabs through the Tab capability.",
+      examples = { "Flow tab-only" },
+      steps = {
+        { capability = "tab.only" },
+      },
+    },
+    {
+      token = "write-all",
+      desc = "Write every modified buffer",
+      help = "Flush all modified buffers through a typed capability.",
+      examples = { "Flow write-all" },
+      steps = {
+        { capability = "workspace.write_all" },
+      },
+    },
+  }
+end
 
-  return items
+---@param action FlowAction
+---@return boolean, string?
+local function action_available(action)
+  for _, step in ipairs(action.steps) do
+    local available, reason = capabilities.available(step.capability, nil, step.args)
+    if not available then
+      return false, reason
+    end
+  end
+  return true, nil
+end
+
+---@param action FlowAction
+---@return string
+local function action_help(action)
+  local lines = {
+    action.help,
+    "",
+    "Capability steps:",
+  }
+  for _, line in ipairs(capabilities.describe_steps(action.steps)) do
+    lines[#lines + 1] = line
+  end
+  return table.concat(lines, "\n")
 end
 
 ---@param action FlowAction
@@ -277,7 +227,7 @@ local function action_item(action)
     label = action.token,
     kind = "leaf",
     desc = action.desc,
-    help = action.help,
+    help = action_help(action),
     examples = action.examples,
     executable = true,
     text = action.token .. "  " .. action.desc,
@@ -289,7 +239,10 @@ end
 local function action_items(prefix)
   local items = {}
   for _, action in ipairs(actions()) do
-    items[#items + 1] = action_item(action)
+    local available = action_available(action)
+    if available then
+      items[#items + 1] = action_item(action)
+    end
   end
   return util.filter_prefix(util.sort_by_label(items), prefix)
 end
@@ -310,9 +263,11 @@ function M.describe_root(root)
   return types.node({
     token = root ~= "" and root or "Flow",
     kind = "namespace",
-    desc = "Context-aware flow actions for the current editing state",
+    desc = "Context-aware capability flows for the current editing state",
     help = table.concat({
       "Flow surfaces high-signal actions based on the current buffer.",
+      "",
+      "Each action is composed from typed capability steps rather than opaque command strings.",
       "",
       "Examples include save, write-all, source, config reload, search-word, lsp-rename, quickfix, alternate-buffer, and diagnostics.",
     }, "\n"),
@@ -348,21 +303,23 @@ function M.resolve(ctx)
     })
   end
 
+  local available, reason = action_available(action)
   return types.state_from_node(
     types.node({
       token = action.token,
       kind = "leaf",
       desc = action.desc,
-      help = action.help,
+      help = action_help(action),
       examples = action.examples,
-      executable = true,
+      executable = available,
       execute = function()
-        runtime.execute_command(action.command)
+        capabilities.execute_steps(action.steps)
       end,
     }),
     {
-      executable = true,
+      executable = available,
       requires_more = false,
+      refusal_reason = available and nil or (reason or "Flow action is currently unavailable."),
       frontier = {},
     }
   )
@@ -406,7 +363,13 @@ function M.execute(args)
     return
   end
 
-  runtime.execute_command(action.command)
+  local available, reason = action_available(action)
+  if not available then
+    vim.notify(reason or ("Flow action is unavailable: " .. token), vim.log.levels.WARN, { title = "Flow" })
+    return
+  end
+
+  capabilities.execute_steps(action.steps)
 end
 
 local provider = types.provider({

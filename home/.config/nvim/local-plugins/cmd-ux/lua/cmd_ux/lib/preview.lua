@@ -16,8 +16,46 @@ function M.build(state)
   lines[#lines + 1] = "Kind: " .. (state.kind or "unknown")
   lines[#lines + 1] = "Executable now: " .. strings.bool_text(state.executable == true)
 
+  local shortcut_count = 0
+  for _, item in ipairs(state.frontier or {}) do
+    if item.lane == "shortcut" then
+      shortcut_count = shortcut_count + 1
+    end
+  end
+  if shortcut_count > 0 then
+    lines[#lines + 1] = ("Shortcut lane: %d promoted path%s"):format(shortcut_count, shortcut_count == 1 and "" or "s")
+  end
+
   for _, line in ipairs(learning.preview_lines(state)) do
     lines[#lines + 1] = line
+  end
+
+  if state.slots and #state.slots > 0 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "Slots:"
+    for index, slot in ipairs(state.slots) do
+      local value = state.slot_values and state.slot_values[index] or ""
+      local detail = slot.desc ~= "" and (" - " .. slot.desc) or ""
+      lines[#lines + 1] = ("- <%s:%s>%s"):format(slot.name, slot.kind ~= "" and slot.kind or "value", detail)
+      if value ~= "" then
+        lines[#lines + 1] = "  current: " .. value
+        if slot.validate then
+          local ok, reason = slot.validate(value)
+          lines[#lines + 1] = "  valid: " .. strings.bool_text(ok)
+          if not ok and reason and reason ~= "" then
+            lines[#lines + 1] = "  reason: " .. reason
+          end
+        end
+        if slot.preview then
+          local preview = slot.preview(value)
+          local preview_lines = type(preview) == "string" and vim.split(preview, "\n", { plain = true })
+            or (type(preview) == "table" and preview or {})
+          for _, preview_line in ipairs(preview_lines) do
+            lines[#lines + 1] = "  " .. preview_line
+          end
+        end
+      end
+    end
   end
 
   if state.refusal_reason and state.refusal_reason ~= "" then
@@ -40,8 +78,9 @@ function M.build(state)
     lines[#lines + 1] = ""
     lines[#lines + 1] = "Next valid choices:"
     for _, item in ipairs(state.frontier) do
+      local lane = item.lane == "shortcut" and " [shortcut]" or ""
       local detail = item.desc ~= "" and (" - " .. item.desc) or ""
-      lines[#lines + 1] = "- " .. item.label .. detail
+      lines[#lines + 1] = "- " .. item.label .. lane .. detail
     end
   end
 

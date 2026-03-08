@@ -1,9 +1,10 @@
 local cache = require("kit.cache")
 local config = require("cmd_ux.config")
+local context = require("cmd_ux.lib.context")
 
 local M = {}
 
-local version = 3
+local version = 4
 local learning_path = vim.fn.stdpath("cache") .. "/cmd-ux-learning.json"
 
 ---@class CmdUxLearningMetric
@@ -42,10 +43,38 @@ local learning_path = vim.fn.stdpath("cache") .. "/cmd-ux-learning.json"
 ---@field updated_at integer
 ---@field scopes table<string, CmdUxLearningScope>
 
+---@class CmdUxSessionSignalStat
+---@field execute integer
+---@field select integer
+---@field shortcut integer
+---@field last_seq integer
+
+---@class CmdUxSessionPathStat: CmdUxSessionSignalStat
+---@field rendered string
+---@field root string
+---@field depth integer
+
+---@class CmdUxSessionScope
+---@field nodes_global table<string, CmdUxSessionSignalStat>
+---@field nodes_by_kind table<string, table<string, CmdUxSessionSignalStat>>
+---@field transitions_exact table<string, table<string, CmdUxSessionSignalStat>>
+---@field transitions_relaxed table<string, table<string, CmdUxSessionSignalStat>>
+---@field paths_exact table<string, table<string, CmdUxSessionPathStat>>
+---@field paths_relaxed table<string, CmdUxSessionPathStat>
+
+---@class CmdUxSessionStore
+---@field next_seq integer
+---@field scopes table<string, CmdUxSessionScope>
+
 ---@type CmdUxLearningStore?
 local learning_state = nil
 local flush_scheduled = false
 local test_now = nil
+---@type CmdUxSessionStore
+local session_state = {
+  next_seq = 1,
+  scopes = {},
+}
 
 local root_context = "<root>"
 
@@ -99,6 +128,38 @@ local function default_state()
     next_seq = 1,
     updated_at = now(),
     scopes = {},
+  }
+end
+
+---@return CmdUxSessionSignalStat
+local function empty_session_signal_stat()
+  return {
+    execute = 0,
+    select = 0,
+    shortcut = 0,
+    last_seq = 0,
+  }
+end
+
+---@return CmdUxSessionPathStat
+local function empty_session_path_stat()
+  local stat = empty_session_signal_stat()
+  ---@cast stat CmdUxSessionPathStat
+  stat.rendered = ""
+  stat.root = ""
+  stat.depth = 0
+  return stat
+end
+
+---@return CmdUxSessionScope
+local function empty_session_scope()
+  return {
+    nodes_global = {},
+    nodes_by_kind = {},
+    transitions_exact = {},
+    transitions_relaxed = {},
+    paths_exact = {},
+    paths_relaxed = {},
   }
 end
 
@@ -415,7 +476,7 @@ local function load()
   normalized.next_seq = math.max(1, normalize_int(payload.next_seq))
   normalized.updated_at = normalize_int(payload.updated_at)
 
-  if payload.version ~= 2 and payload.version ~= version then
+  if payload.version ~= 2 and payload.version ~= 3 and payload.version ~= version then
     return normalized
   end
 
@@ -461,69 +522,22 @@ end
 
 ---@return string
 local function current_project_id()
-  local cwd = vim.fn.fnamemodify(vim.fn.getcwd(), ":p")
-  local git_dir = vim.fn.finddir(".git", cwd .. ";")
-  if git_dir ~= "" then
-    return vim.fn.fnamemodify(git_dir, ":p:h")
-  end
-  return cwd
+  return context.project_id()
 end
 
----@return string
-local function current_resource_kind()
-  local buf = vim.api.nvim_get_current_buf()
-  local win = vim.api.nvim_get_current_win()
-  local buftype = vim.bo[buf].buftype
-  local filetype = vim.bo[buf].filetype
-  local path = vim.api.nvim_buf_get_name(buf)
+---@return CmdUxContextVector
+local function current_context_vector()
+  return context.current()
+end
 
-  if filetype == "minifiles" then
-    return "panel:minifiles"
+---@param vector CmdUxContextVector
+---@return string[]
+local function all_context_keys(vector)
+  local keys = { vector.exact_key }
+  for _, key in ipairs(vector.facet_keys or {}) do
+    keys[#keys + 1] = key
   end
-
-  if filetype == "qf" then
-    local wininfo = vim.fn.getwininfo(win)[1] or {}
-    if wininfo.loclist == 1 then
-      return "panel:loclist"
-    end
-    return "panel:quickfix"
-  end
-
-  if filetype == "help" then
-    return "panel:help"
-  end
-
-  if filetype ~= "" and filetype:find("^snacks") ~= nil then
-    return "panel:" .. filetype
-  end
-
-  if buftype == "terminal" then
-    return "panel:terminal"
-  end
-
-  if buftype ~= "" then
-    return "buftype:" .. buftype
-  end
-
-  if path ~= "" then
-    local config_root = vim.fn.stdpath("config")
-    if path:find(vim.pesc(config_root), 1) == 1 then
-      if filetype ~= "" then
-        return "config:filetype:" .. filetype
-      end
-      return "config:file"
-    end
-  end
-
-  if filetype ~= "" then
-    return "filetype:" .. filetype
-  end
-
-  if path ~= "" then
-    return "file"
-  end
-
-  return "buffer"
+  return keys
 end
 
 ---@param scope_id string
@@ -538,6 +552,19 @@ end
 ---@return CmdUxLearningScope?
 local function get_scope(scope_id)
   return ensure_state().scopes[scope_id]
+end
+
+---@param scope_id string
+---@return CmdUxSessionScope
+local function ensure_session_scope(scope_id)
+  session_state.scopes[scope_id] = session_state.scopes[scope_id] or empty_session_scope()
+  return session_state.scopes[scope_id]
+end
+
+---@param scope_id string
+---@return CmdUxSessionScope?
+local function get_session_scope(scope_id)
+  return session_state.scopes[scope_id]
 end
 
 ---@return integer
@@ -587,19 +614,6 @@ local function prune_metric(metric, current_active_day)
 end
 
 ---@param metric CmdUxLearningMetric
----@param source CmdUxLearningMetric?
-local function merge_metric(metric, source)
-  if not source then
-    return
-  end
-
-  for bucket, credit in pairs(source.buckets) do
-    metric.buckets[bucket] = normalize_int(metric.buckets[bucket]) + normalize_int(credit)
-  end
-  metric.last_seq = math.max(metric.last_seq, source.last_seq)
-end
-
----@param metric CmdUxLearningMetric
 ---@param scope_id string
 ---@param credit integer
 local function touch_metric(scope_id, metric, credit)
@@ -616,6 +630,19 @@ local function touch_metric(scope_id, metric, credit)
   store.updated_at = now()
   prune_metric(metric, active_day)
   schedule_flush()
+end
+
+---@param stat CmdUxSessionSignalStat
+---@param field "execute"|"select"|"shortcut"
+---@param credit integer
+local function touch_session_stat(stat, field, credit)
+  if credit <= 0 then
+    return
+  end
+
+  stat[field] = normalize_int(stat[field]) + credit
+  stat.last_seq = session_state.next_seq
+  session_state.next_seq = session_state.next_seq + 1
 end
 
 ---@param scope_id string
@@ -690,6 +717,70 @@ local function ensure_command(scope_id, rendered)
   return scope.commands[rendered]
 end
 
+---@param scope_id string
+---@param node_id string
+---@return CmdUxSessionSignalStat
+local function ensure_session_global_node_stat(scope_id, node_id)
+  local scope = ensure_session_scope(scope_id)
+  scope.nodes_global[node_id] = scope.nodes_global[node_id] or empty_session_signal_stat()
+  return scope.nodes_global[node_id]
+end
+
+---@param scope_id string
+---@param context_key string
+---@param node_id string
+---@return CmdUxSessionSignalStat
+local function ensure_session_context_node_stat(scope_id, context_key, node_id)
+  local scope = ensure_session_scope(scope_id)
+  scope.nodes_by_kind[context_key] = scope.nodes_by_kind[context_key] or {}
+  scope.nodes_by_kind[context_key][node_id] = scope.nodes_by_kind[context_key][node_id] or empty_session_signal_stat()
+  return scope.nodes_by_kind[context_key][node_id]
+end
+
+---@param scope_id string
+---@param context_key string
+---@param node_id string
+---@return CmdUxSessionSignalStat
+local function ensure_session_transition_exact(scope_id, context_key, node_id)
+  local scope = ensure_session_scope(scope_id)
+  scope.transitions_exact[context_key] = scope.transitions_exact[context_key] or {}
+  scope.transitions_exact[context_key][node_id] = scope.transitions_exact[context_key][node_id]
+    or empty_session_signal_stat()
+  return scope.transitions_exact[context_key][node_id]
+end
+
+---@param scope_id string
+---@param context_key string
+---@param node_id string
+---@return CmdUxSessionSignalStat
+local function ensure_session_transition_relaxed(scope_id, context_key, node_id)
+  local scope = ensure_session_scope(scope_id)
+  scope.transitions_relaxed[context_key] = scope.transitions_relaxed[context_key] or {}
+  scope.transitions_relaxed[context_key][node_id] = scope.transitions_relaxed[context_key][node_id]
+    or empty_session_signal_stat()
+  return scope.transitions_relaxed[context_key][node_id]
+end
+
+---@param scope_id string
+---@param context_key string
+---@param node_id string
+---@return CmdUxSessionPathStat
+local function ensure_session_exact_path(scope_id, context_key, node_id)
+  local scope = ensure_session_scope(scope_id)
+  scope.paths_exact[context_key] = scope.paths_exact[context_key] or {}
+  scope.paths_exact[context_key][node_id] = scope.paths_exact[context_key][node_id] or empty_session_path_stat()
+  return scope.paths_exact[context_key][node_id]
+end
+
+---@param scope_id string
+---@param node_id string
+---@return CmdUxSessionPathStat
+local function ensure_session_relaxed_path(scope_id, node_id)
+  local scope = ensure_session_scope(scope_id)
+  scope.paths_relaxed[node_id] = scope.paths_relaxed[node_id] or empty_session_path_stat()
+  return scope.paths_relaxed[node_id]
+end
+
 ---@param metric CmdUxLearningMetric?
 ---@param active_day integer
 ---@return integer
@@ -756,6 +847,21 @@ local function stat_recency(stat)
   return math.max(metric_recency(stat.execute), metric_recency(stat.select), metric_recency(stat.shortcut))
 end
 
+---@param stat CmdUxSessionSignalStat?
+---@return integer
+local function session_stat_score(stat)
+  if not stat then
+    return 0
+  end
+  return normalize_int(stat.execute) + normalize_int(stat.select) + normalize_int(stat.shortcut)
+end
+
+---@param stat CmdUxSessionSignalStat?
+---@return integer
+local function session_stat_recency(stat)
+  return stat and normalize_int(stat.last_seq) or 0
+end
+
 ---@param path string
 ---@return string[]
 local function split_node_path(path)
@@ -773,6 +879,19 @@ local function path_prefixes(path)
     prefixes[#prefixes + 1] = current
   end
   return prefixes
+end
+
+---@param root string?
+---@return { execute: integer[], select: integer[] }
+local function propagation_profile(root)
+  local learning_cfg = config.get().learning
+  local profile = root and learning_cfg.profiles[root] or nil
+  return {
+    execute = type(profile) == "table" and type(profile.execute) == "table" and profile.execute
+      or learning_cfg.propagation.execute,
+    select = type(profile) == "table" and type(profile.select) == "table" and profile.select
+      or learning_cfg.propagation.select,
+  }
 end
 
 ---@param state ResolutionState?
@@ -848,47 +967,113 @@ local function normalize_choice_item(state, choice)
 end
 
 ---@param scope_id string
----@param resource_kind string
+---@param vector CmdUxContextVector
 ---@param node_id string
 ---@param field "execute"|"select"|"shortcut"
 ---@param credit integer
-local function add_node_credit(scope_id, resource_kind, node_id, field, credit)
+local function add_node_credit(scope_id, vector, node_id, field, credit)
   touch_metric(scope_id, ensure_global_node_stat(scope_id, node_id)[field], credit)
-  touch_metric(scope_id, ensure_kind_node_stat(scope_id, resource_kind, node_id)[field], credit)
+  for _, context_key in ipairs(all_context_keys(vector)) do
+    touch_metric(scope_id, ensure_kind_node_stat(scope_id, context_key, node_id)[field], credit)
+  end
 end
 
 ---@param scope_id string
----@param resource_kind string
+---@param vector CmdUxContextVector
 ---@param parent_id string
 ---@param child_id string
 ---@param field "execute"|"select"
 ---@param credit integer
-local function add_transition_credit(scope_id, resource_kind, parent_id, child_id, field, credit)
-  local exact_key = resource_kind .. "|" .. parent_id
+local function add_transition_credit(scope_id, vector, parent_id, child_id, field, credit)
+  local exact_key = vector.exact_key .. "|" .. parent_id
   touch_metric(scope_id, ensure_transition_exact(scope_id, exact_key, child_id)[field], credit)
+  for _, context_key in ipairs(vector.facet_keys or {}) do
+    local facet_key = context_key .. "|" .. parent_id
+    touch_metric(scope_id, ensure_transition_exact(scope_id, facet_key, child_id)[field], credit)
+  end
   touch_metric(scope_id, ensure_transition_relaxed(scope_id, parent_id, child_id)[field], credit)
 end
 
 ---@param scope_id string
----@param resource_kind string
+---@param vector CmdUxContextVector
 ---@param node_id string
 ---@param rendered string
 ---@param root string
 ---@param depth integer
 ---@param field "execute"|"select"|"shortcut"
 ---@param credit integer
-local function add_path_credit(scope_id, resource_kind, node_id, rendered, root, depth, field, credit)
-  local exact = ensure_exact_path(scope_id, resource_kind, node_id)
-  exact.rendered = rendered
-  exact.root = root
-  exact.depth = depth
-  touch_metric(scope_id, exact[field], credit)
+local function add_path_credit(scope_id, vector, node_id, rendered, root, depth, field, credit)
+  for _, context_key in ipairs(all_context_keys(vector)) do
+    local exact = ensure_exact_path(scope_id, context_key, node_id)
+    exact.rendered = rendered
+    exact.root = root
+    exact.depth = depth
+    touch_metric(scope_id, exact[field], credit)
+  end
 
   local relaxed = ensure_relaxed_path(scope_id, node_id)
   relaxed.rendered = rendered
   relaxed.root = root
   relaxed.depth = depth
   touch_metric(scope_id, relaxed[field], credit)
+end
+
+---@param scope_id string
+---@param vector CmdUxContextVector
+---@param node_id string
+---@param field "execute"|"select"|"shortcut"
+---@param credit integer
+local function add_session_node_credit(scope_id, vector, node_id, field, credit)
+  touch_session_stat(ensure_session_global_node_stat(scope_id, node_id), field, credit)
+  for _, context_key in ipairs(all_context_keys(vector)) do
+    touch_session_stat(ensure_session_context_node_stat(scope_id, context_key, node_id), field, credit)
+  end
+end
+
+---@param scope_id string
+---@param vector CmdUxContextVector
+---@param parent_id string
+---@param child_id string
+---@param field "execute"|"select"
+---@param credit integer
+local function add_session_transition_credit(scope_id, vector, parent_id, child_id, field, credit)
+  touch_session_stat(
+    ensure_session_transition_exact(scope_id, vector.exact_key .. "|" .. parent_id, child_id),
+    field,
+    credit
+  )
+  for _, context_key in ipairs(vector.facet_keys or {}) do
+    touch_session_stat(
+      ensure_session_transition_exact(scope_id, context_key .. "|" .. parent_id, child_id),
+      field,
+      credit
+    )
+  end
+  touch_session_stat(ensure_session_transition_relaxed(scope_id, parent_id, child_id), field, credit)
+end
+
+---@param scope_id string
+---@param vector CmdUxContextVector
+---@param node_id string
+---@param rendered string
+---@param root string
+---@param depth integer
+---@param field "execute"|"select"|"shortcut"
+---@param credit integer
+local function add_session_path_credit(scope_id, vector, node_id, rendered, root, depth, field, credit)
+  for _, context_key in ipairs(all_context_keys(vector)) do
+    local exact = ensure_session_exact_path(scope_id, context_key, node_id)
+    exact.rendered = rendered
+    exact.root = root
+    exact.depth = depth
+    touch_session_stat(exact, field, credit)
+  end
+
+  local relaxed = ensure_session_relaxed_path(scope_id, node_id)
+  relaxed.rendered = rendered
+  relaxed.root = root
+  relaxed.depth = depth
+  touch_session_stat(relaxed, field, credit)
 end
 
 ---@param scope_id string
@@ -901,37 +1086,72 @@ local function add_command_execute(scope_id, rendered, root)
 end
 
 ---@param scope_id string
----@param resource_kind string
+---@param vector CmdUxContextVector
 ---@param node_id string
 ---@param field "execute"|"select"
 ---@param credits integer[]
-local function add_propagated_node_credits(scope_id, resource_kind, node_id, field, credits)
+local function add_propagated_node_credits(scope_id, vector, node_id, field, credits)
   local prefixes = path_prefixes(node_id)
   for distance = 0, #credits - 1 do
     local credit = normalize_int(credits[distance + 1])
     if credit > 0 then
       local target = prefixes[#prefixes - distance]
       if target then
-        add_node_credit(scope_id, resource_kind, target, field, credit)
+        add_node_credit(scope_id, vector, target, field, credit)
       end
     end
   end
 end
 
 ---@param scope_id string
----@param resource_kind string
+---@param vector CmdUxContextVector
+---@param node_id string
+---@param field "execute"|"select"
+---@param credits integer[]
+local function add_session_propagated_node_credits(scope_id, vector, node_id, field, credits)
+  local prefixes = path_prefixes(node_id)
+  for distance = 0, #credits - 1 do
+    local credit = normalize_int(credits[distance + 1])
+    if credit > 0 then
+      local target = prefixes[#prefixes - distance]
+      if target then
+        add_session_node_credit(scope_id, vector, target, field, credit)
+      end
+    end
+  end
+end
+
+---@param scope_id string
+---@param vector CmdUxContextVector
 ---@param node_path string[]
 ---@param field "execute"|"select"
 ---@param credit integer
-local function add_path_transitions(scope_id, resource_kind, node_path, field, credit)
+local function add_path_transitions(scope_id, vector, node_path, field, credit)
   if #node_path == 0 then
     return
   end
 
-  add_transition_credit(scope_id, resource_kind, root_context, node_path[1], field, credit)
+  add_transition_credit(scope_id, vector, root_context, node_path[1], field, credit)
 
   for index = 2, #node_path do
-    add_transition_credit(scope_id, resource_kind, node_path[index - 1], node_path[index], field, credit)
+    add_transition_credit(scope_id, vector, node_path[index - 1], node_path[index], field, credit)
+  end
+end
+
+---@param scope_id string
+---@param vector CmdUxContextVector
+---@param node_path string[]
+---@param field "execute"|"select"
+---@param credit integer
+local function add_session_path_transitions(scope_id, vector, node_path, field, credit)
+  if #node_path == 0 then
+    return
+  end
+
+  add_session_transition_credit(scope_id, vector, root_context, node_path[1], field, credit)
+
+  for index = 2, #node_path do
+    add_session_transition_credit(scope_id, vector, node_path[index - 1], node_path[index], field, credit)
   end
 end
 
@@ -949,76 +1169,244 @@ local function cross_scope_ids(scopes, exclude_scope)
   return ids
 end
 
----@param stat_fn fun(scope: CmdUxLearningScope): CmdUxLearningSignalStat?
----@return { score: integer, recency: integer, project_score: integer, cross_score: integer }
-local function scoped_signal_view(stat_fn)
-  local learning_cfg = config.get().learning
-  local project_id = current_project_id()
-  local project_scope = get_scope(project_id)
+---@param scope CmdUxLearningScope?
+---@param vector CmdUxContextVector
+---@param context_stat_fn fun(scope: CmdUxLearningScope, context_key: string): CmdUxLearningSignalStat?
+---@return { exact_score: integer, exact_recency: integer, facet_score: integer, facet_recency: integer, facet_key: string }
+local function persistent_context_components(scope, vector, context_stat_fn)
+  if not scope then
+    return {
+      exact_score = 0,
+      exact_recency = 0,
+      facet_score = 0,
+      facet_recency = 0,
+      facet_key = "",
+    }
+  end
 
-  local project_stat = project_scope and stat_fn(project_scope) or nil
-  local project_score = project_scope and stat_score(project_stat, project_scope.active_day) or 0
-  local weighted_project = project_score * learning_cfg.scope.project_weight
-  local weighted_cross = 0
-  local recency = stat_recency(project_stat)
-
-  if learning_cfg.scope.cross_project_enabled then
-    for _, scope_id in ipairs(cross_scope_ids(ensure_state().scopes, project_id)) do
-      local scope = assert(get_scope(scope_id))
-      local stat = stat_fn(scope)
-      weighted_cross = weighted_cross + (stat_score(stat, scope.active_day) * learning_cfg.scope.cross_project_weight)
-      recency = math.max(recency, stat_recency(stat))
+  local exact = context_stat_fn(scope, vector.exact_key)
+  local best_facet_score = 0
+  local best_facet_recency = 0
+  local best_facet_key = ""
+  for _, facet_key in ipairs(vector.facet_keys or {}) do
+    local stat = context_stat_fn(scope, facet_key)
+    local score = stat_score(stat, scope.active_day)
+    local recency = stat_recency(stat)
+    if score > best_facet_score or (score == best_facet_score and recency > best_facet_recency) then
+      best_facet_score = score
+      best_facet_recency = recency
+      best_facet_key = facet_key
     end
   end
 
   return {
-    score = weighted_project + weighted_cross,
-    recency = recency,
-    project_score = weighted_project,
-    cross_score = weighted_cross,
+    exact_score = stat_score(exact, scope.active_day),
+    exact_recency = stat_recency(exact),
+    facet_score = best_facet_score,
+    facet_recency = best_facet_recency,
+    facet_key = best_facet_key,
   }
 end
 
----@param resource_kind string
----@param node_id string
----@return { score: integer, recency: integer, project_score: integer, cross_score: integer }
-local function mixed_node_view(resource_kind, node_id)
-  return scoped_signal_view(function(scope)
-    local kind_stat = scope.nodes_by_kind[resource_kind] and scope.nodes_by_kind[resource_kind][node_id] or nil
-    local global_stat = scope.nodes_global[node_id]
-    if not kind_stat and not global_stat then
-      return nil
-    end
+---@param scope CmdUxSessionScope?
+---@param vector CmdUxContextVector
+---@param context_stat_fn fun(scope: CmdUxSessionScope, context_key: string): CmdUxSessionSignalStat?
+---@return { exact_score: integer, exact_recency: integer, facet_score: integer, facet_recency: integer, facet_key: string }
+local function session_context_components(scope, vector, context_stat_fn)
+  if not scope then
+    return {
+      exact_score = 0,
+      exact_recency = 0,
+      facet_score = 0,
+      facet_recency = 0,
+      facet_key = "",
+    }
+  end
 
-    local merged = empty_signal_stat()
-    if kind_stat then
-      merge_metric(merged.execute, kind_stat.execute)
-      merge_metric(merged.select, kind_stat.select)
-      merge_metric(merged.shortcut, kind_stat.shortcut)
+  local exact = context_stat_fn(scope, vector.exact_key)
+  local best_facet_score = 0
+  local best_facet_recency = 0
+  local best_facet_key = ""
+  for _, facet_key in ipairs(vector.facet_keys or {}) do
+    local stat = context_stat_fn(scope, facet_key)
+    local score = session_stat_score(stat)
+    local recency = session_stat_recency(stat)
+    if score > best_facet_score or (score == best_facet_score and recency > best_facet_recency) then
+      best_facet_score = score
+      best_facet_recency = recency
+      best_facet_key = facet_key
     end
-    if global_stat then
-      merge_metric(merged.execute, global_stat.execute)
-      merge_metric(merged.select, global_stat.select)
-      merge_metric(merged.shortcut, global_stat.shortcut)
+  end
+
+  return {
+    exact_score = session_stat_score(exact),
+    exact_recency = session_stat_recency(exact),
+    facet_score = best_facet_score,
+    facet_recency = best_facet_recency,
+    facet_key = best_facet_key,
+  }
+end
+
+---@param persistent_scope CmdUxLearningScope?
+---@param session_scope CmdUxSessionScope?
+---@param vector CmdUxContextVector
+---@param global_stat_fn fun(scope: CmdUxLearningScope): CmdUxLearningSignalStat?
+---@param context_stat_fn fun(scope: CmdUxLearningScope, context_key: string): CmdUxLearningSignalStat?
+---@param session_global_stat_fn fun(scope: CmdUxSessionScope): CmdUxSessionSignalStat?
+---@param session_context_stat_fn fun(scope: CmdUxSessionScope, context_key: string): CmdUxSessionSignalStat?
+---@return { persistent_score: integer, session_score: integer, recency: integer, exact_score: integer, facet_score: integer, session_exact_score: integer, session_facet_score: integer, facet_key: string }
+local function composed_scope_components(
+  persistent_scope,
+  session_scope,
+  vector,
+  global_stat_fn,
+  context_stat_fn,
+  session_global_stat_fn,
+  session_context_stat_fn
+)
+  local learning_cfg = config.get().learning
+  local persistent_context = persistent_context_components(persistent_scope, vector, context_stat_fn)
+  local session_context = session_context_components(session_scope, vector, session_context_stat_fn)
+  local global_score = persistent_scope and stat_score(global_stat_fn(persistent_scope), persistent_scope.active_day)
+    or 0
+  local global_recency = persistent_scope and stat_recency(global_stat_fn(persistent_scope)) or 0
+  local session_global = session_scope and session_stat_score(session_global_stat_fn(session_scope)) or 0
+  local session_global_recency = session_scope and session_stat_recency(session_global_stat_fn(session_scope)) or 0
+
+  return {
+    persistent_score = global_score
+      + (persistent_context.exact_score * learning_cfg.context.exact_weight)
+      + (persistent_context.facet_score * learning_cfg.context.facet_weight),
+    session_score = session_global
+      + (session_context.exact_score * learning_cfg.context.exact_weight)
+      + (session_context.facet_score * learning_cfg.context.facet_weight),
+    recency = math.max(
+      global_recency,
+      persistent_context.exact_recency,
+      persistent_context.facet_recency,
+      session_global_recency,
+      session_context.exact_recency,
+      session_context.facet_recency
+    ),
+    exact_score = persistent_context.exact_score,
+    facet_score = persistent_context.facet_score,
+    session_exact_score = session_context.exact_score,
+    session_facet_score = session_context.facet_score,
+    facet_key = persistent_context.facet_key ~= "" and persistent_context.facet_key or session_context.facet_key,
+  }
+end
+
+---@param vector CmdUxContextVector
+---@param global_stat_fn fun(scope: CmdUxLearningScope): CmdUxLearningSignalStat?
+---@param context_stat_fn fun(scope: CmdUxLearningScope, context_key: string): CmdUxLearningSignalStat?
+---@param session_global_stat_fn fun(scope: CmdUxSessionScope): CmdUxSessionSignalStat?
+---@param session_context_stat_fn fun(scope: CmdUxSessionScope, context_key: string): CmdUxSessionSignalStat?
+---@return { score: integer, recency: integer, project_score: integer, cross_score: integer, session_project_score: integer, session_cross_score: integer, exact_score: integer, facet_score: integer, session_exact_score: integer, session_facet_score: integer, facet_key: string }
+local function scoped_signal_view(
+  vector,
+  global_stat_fn,
+  context_stat_fn,
+  session_global_stat_fn,
+  session_context_stat_fn
+)
+  local learning_cfg = config.get().learning
+  local project_id = current_project_id()
+  local project_components = composed_scope_components(
+    get_scope(project_id),
+    get_session_scope(project_id),
+    vector,
+    global_stat_fn,
+    context_stat_fn,
+    session_global_stat_fn,
+    session_context_stat_fn
+  )
+
+  local weighted_project = project_components.persistent_score * learning_cfg.scope.project_weight
+  local weighted_cross = 0
+  local session_project = learning_cfg.session.enabled
+      and (project_components.session_score * learning_cfg.session.project_weight)
+    or 0
+  local session_cross = 0
+  local recency = project_components.recency
+
+  if learning_cfg.scope.cross_project_enabled then
+    for _, scope_id in ipairs(cross_scope_ids(ensure_state().scopes, project_id)) do
+      local components = composed_scope_components(
+        get_scope(scope_id),
+        get_session_scope(scope_id),
+        vector,
+        global_stat_fn,
+        context_stat_fn,
+        session_global_stat_fn,
+        session_context_stat_fn
+      )
+      weighted_cross = weighted_cross + (components.persistent_score * learning_cfg.scope.cross_project_weight)
+      if learning_cfg.session.enabled then
+        session_cross = session_cross + (components.session_score * learning_cfg.session.cross_project_weight)
+      end
+      recency = math.max(recency, components.recency)
     end
-    return merged
+  end
+
+  return {
+    score = weighted_project + weighted_cross + session_project + session_cross,
+    recency = recency,
+    project_score = weighted_project,
+    cross_score = weighted_cross,
+    session_project_score = session_project,
+    session_cross_score = session_cross,
+    exact_score = project_components.exact_score,
+    facet_score = project_components.facet_score,
+    session_exact_score = project_components.session_exact_score,
+    session_facet_score = project_components.session_facet_score,
+    facet_key = project_components.facet_key,
+  }
+end
+
+---@param vector CmdUxContextVector
+---@param node_id string
+---@return { score: integer, recency: integer, project_score: integer, cross_score: integer, session_project_score: integer, session_cross_score: integer, exact_score: integer, facet_score: integer, session_exact_score: integer, session_facet_score: integer, facet_key: string }
+local function mixed_node_view(vector, node_id)
+  return scoped_signal_view(vector, function(scope)
+    return scope.nodes_global[node_id]
+  end, function(scope, context_key)
+    local nodes = scope.nodes_by_kind[context_key]
+    return nodes and nodes[node_id] or nil
+  end, function(scope)
+    return scope.nodes_global[node_id]
+  end, function(scope, context_key)
+    local nodes = scope.nodes_by_kind[context_key]
+    return nodes and nodes[node_id] or nil
   end)
 end
 
----@param resource_kind string
+---@param vector CmdUxContextVector
 ---@param parent_id string
 ---@param child_id string
----@return { exact_score: integer, relaxed_score: integer, recency: integer, exact: { score: integer, recency: integer, project_score: integer, cross_score: integer }, relaxed: { score: integer, recency: integer, project_score: integer, cross_score: integer } }
-local function mixed_transition_view(resource_kind, parent_id, child_id)
-  local exact_key = resource_kind .. "|" .. parent_id
-  local exact = scoped_signal_view(function(scope)
-    local transitions = scope.transitions_exact[exact_key]
+---@return { exact_score: integer, relaxed_score: integer, recency: integer, exact: { score: integer, recency: integer, project_score: integer, cross_score: integer, session_project_score: integer, session_cross_score: integer, exact_score: integer, facet_score: integer, session_exact_score: integer, session_facet_score: integer, facet_key: string }, relaxed: { score: integer, recency: integer, project_score: integer, cross_score: integer, session_project_score: integer, session_cross_score: integer, exact_score: integer, facet_score: integer, session_exact_score: integer, session_facet_score: integer, facet_key: string } }
+local function mixed_transition_view(vector, parent_id, child_id)
+  local exact = scoped_signal_view(vector, function()
+    return nil
+  end, function(scope, context_key)
+    local transitions = scope.transitions_exact[context_key .. "|" .. parent_id]
+    return transitions and transitions[child_id] or nil
+  end, function()
+    return nil
+  end, function(scope, context_key)
+    local transitions = scope.transitions_exact[context_key .. "|" .. parent_id]
     return transitions and transitions[child_id] or nil
   end)
 
-  local relaxed = scoped_signal_view(function(scope)
+  local relaxed = scoped_signal_view(vector, function(scope)
     local transitions = scope.transitions_relaxed[parent_id]
     return transitions and transitions[child_id] or nil
+  end, function()
+    return nil
+  end, function(scope)
+    local transitions = scope.transitions_relaxed[parent_id]
+    return transitions and transitions[child_id] or nil
+  end, function()
+    return nil
   end)
 
   return {
@@ -1030,69 +1418,147 @@ local function mixed_transition_view(resource_kind, parent_id, child_id)
   }
 end
 
----@param resource_kind string
+---@param vector CmdUxContextVector
 ---@param node_id string
----@return { exact_score: integer, relaxed_score: integer, recency: integer, exact_exec_recent: integer, relaxed_exec_recent: integer, rendered: string, depth: integer, exact_project_score: integer, exact_cross_score: integer, relaxed_project_score: integer, relaxed_cross_score: integer }
-local function mixed_path_view(resource_kind, node_id)
+---@return { exact_score: integer, relaxed_score: integer, recency: integer, exact_exec_recent: integer, relaxed_exec_recent: integer, rendered: string, depth: integer, exact_project_score: integer, exact_cross_score: integer, relaxed_project_score: integer, relaxed_cross_score: integer, exact_session_project_score: integer, exact_session_cross_score: integer, relaxed_session_project_score: integer, relaxed_session_cross_score: integer }
+local function mixed_path_view(vector, node_id)
   local project_id = current_project_id()
   local learning_cfg = config.get().learning
+
+  local function best_exact_path(scope, session_scope)
+    local best_stat = nil
+    local best_score = 0
+    local best_recency = 0
+
+    if scope then
+      local paths = scope.paths_exact[vector.exact_key]
+      local stat = paths and paths[node_id] or nil
+      best_stat = stat
+      best_score = stat_score(stat, scope.active_day)
+      best_recency = stat_recency(stat)
+
+      for _, facet_key in ipairs(vector.facet_keys or {}) do
+        local facet_stat = scope.paths_exact[facet_key] and scope.paths_exact[facet_key][node_id] or nil
+        local facet_score = stat_score(facet_stat, scope.active_day)
+        local facet_recency = stat_recency(facet_stat)
+        if facet_score > best_score or (facet_score == best_score and facet_recency > best_recency) then
+          best_stat = facet_stat
+          best_score = facet_score
+          best_recency = facet_recency
+        end
+      end
+    end
+
+    local best_session_stat = nil
+    local best_session_score = 0
+    local best_session_recency = 0
+    if session_scope then
+      local paths = session_scope.paths_exact[vector.exact_key]
+      local stat = paths and paths[node_id] or nil
+      best_session_stat = stat
+      best_session_score = session_stat_score(stat)
+      best_session_recency = session_stat_recency(stat)
+
+      for _, facet_key in ipairs(vector.facet_keys or {}) do
+        local facet_stat = session_scope.paths_exact[facet_key] and session_scope.paths_exact[facet_key][node_id] or nil
+        local facet_score = session_stat_score(facet_stat)
+        local facet_recency = session_stat_recency(facet_stat)
+        if
+          facet_score > best_session_score
+          or (facet_score == best_session_score and facet_recency > best_session_recency)
+        then
+          best_session_stat = facet_stat
+          best_session_score = facet_score
+          best_session_recency = facet_recency
+        end
+      end
+    end
+
+    return best_stat, best_score, best_recency, best_session_stat, best_session_score, best_session_recency
+  end
 
   local function aggregate_path(path_fn)
     local exact_score = 0
     local project_score = 0
     local cross_score = 0
+    local session_project_score = 0
+    local session_cross_score = 0
     local recency = 0
     local recent_execute = 0
     local rendered = ""
     local depth = 0
 
-    local function visit(scope_id, weight, is_project)
+    local function visit(scope_id, weight, session_weight, is_project)
       local scope = get_scope(scope_id)
-      if not scope then
-        return
+      local session_scope = get_session_scope(scope_id)
+
+      local stat, best_score, best_recency, session_stat, session_score, session_recency = path_fn(scope, session_scope)
+
+      if stat then
+        local weighted_score = best_score * weight
+        exact_score = exact_score + weighted_score
+        if is_project then
+          project_score = project_score + weighted_score
+        else
+          cross_score = cross_score + weighted_score
+        end
+        recency = math.max(recency, best_recency)
+        if scope then
+          recent_execute = recent_execute
+            + metric_recent_credit(stat.execute, scope.active_day, learning_cfg.promotions.freshness_days)
+        end
+        if rendered == "" and stat.rendered ~= "" then
+          rendered = stat.rendered
+        end
+        depth = math.max(depth, stat.depth)
       end
 
-      local stat = path_fn(scope)
-      if not stat then
-        return
+      if learning_cfg.session.enabled and session_stat then
+        local weighted_session = session_score * session_weight
+        if is_project then
+          session_project_score = session_project_score + weighted_session
+        else
+          session_cross_score = session_cross_score + weighted_session
+        end
+        recency = math.max(recency, session_recency)
+        if rendered == "" and session_stat.rendered ~= "" then
+          rendered = session_stat.rendered
+        end
+        depth = math.max(depth, session_stat.depth)
       end
-
-      local weighted_score = stat_score(stat, scope.active_day) * weight
-      exact_score = exact_score + weighted_score
-      if is_project then
-        project_score = project_score + weighted_score
-      else
-        cross_score = cross_score + weighted_score
-      end
-      recency = math.max(recency, stat_recency(stat))
-      recent_execute = recent_execute
-        + metric_recent_credit(stat.execute, scope.active_day, learning_cfg.promotions.freshness_days)
-      if rendered == "" and stat.rendered ~= "" then
-        rendered = stat.rendered
-      end
-      depth = math.max(depth, stat.depth)
     end
 
-    visit(project_id, learning_cfg.scope.project_weight, true)
+    visit(project_id, learning_cfg.scope.project_weight, learning_cfg.session.project_weight, true)
     if learning_cfg.scope.cross_project_enabled then
       for _, scope_id in ipairs(cross_scope_ids(ensure_state().scopes, project_id)) do
-        visit(scope_id, learning_cfg.scope.cross_project_weight, false)
+        visit(scope_id, learning_cfg.scope.cross_project_weight, learning_cfg.session.cross_project_weight, false)
       end
     end
 
-    return exact_score, project_score, cross_score, recency, recent_execute, rendered, depth
+    return exact_score + session_project_score + session_cross_score,
+      project_score,
+      cross_score,
+      session_project_score,
+      session_cross_score,
+      recency,
+      recent_execute,
+      rendered,
+      depth
   end
 
-  local exact_score, exact_project_score, exact_cross_score, exact_recency, exact_recent_exec, rendered, depth = aggregate_path(
-    function(scope)
-      local paths = scope.paths_exact[resource_kind]
-      return paths and paths[node_id] or nil
-    end
-  )
+  local exact_score, exact_project_score, exact_cross_score, exact_session_project_score, exact_session_cross_score, exact_recency, exact_recent_exec, rendered, depth =
+    aggregate_path(best_exact_path)
 
-  local relaxed_score, relaxed_project_score, relaxed_cross_score, relaxed_recency, relaxed_recent_exec = aggregate_path(
-    function(scope)
-      return scope.paths_relaxed[node_id]
+  local relaxed_score, relaxed_project_score, relaxed_cross_score, relaxed_session_project_score, relaxed_session_cross_score, relaxed_recency, relaxed_recent_exec = aggregate_path(
+    function(scope, session_scope)
+      local stat = scope and scope.paths_relaxed[node_id] or nil
+      local session_stat = session_scope and session_scope.paths_relaxed[node_id] or nil
+      return stat,
+        scope and stat_score(stat, scope.active_day) or 0,
+        stat_recency(stat),
+        session_stat,
+        session_stat_score(session_stat),
+        session_stat_recency(session_stat)
     end
   )
 
@@ -1108,51 +1574,115 @@ local function mixed_path_view(resource_kind, node_id)
     exact_cross_score = exact_cross_score,
     relaxed_project_score = relaxed_project_score,
     relaxed_cross_score = relaxed_cross_score,
+    exact_session_project_score = exact_session_project_score,
+    exact_session_cross_score = exact_session_cross_score,
+    relaxed_session_project_score = relaxed_session_project_score,
+    relaxed_session_cross_score = relaxed_session_cross_score,
   }
 end
 
 ---@param state ResolutionState
 ---@param item CommandFrontierItem
----@return { total_score: integer, recency: integer, resource_kind: string, node_id: string, parent_id: string?, transition: { exact_score: integer, relaxed_score: integer, recency: integer, exact: { score: integer, recency: integer, project_score: integer, cross_score: integer }, relaxed: { score: integer, recency: integer, project_score: integer, cross_score: integer } }, node: { score: integer, recency: integer, project_score: integer, cross_score: integer }, path: { exact_score: integer, relaxed_score: integer, recency: integer, exact_exec_recent: integer, relaxed_exec_recent: integer, rendered: string, depth: integer, exact_project_score: integer, exact_cross_score: integer, relaxed_project_score: integer, relaxed_cross_score: integer }? }
+---@return { total_score: integer, recency: integer, context: CmdUxContextVector, node_id: string, parent_id: string?, transition: { exact_score: integer, relaxed_score: integer, recency: integer, exact: { score: integer, recency: integer, project_score: integer, cross_score: integer, session_project_score: integer, session_cross_score: integer, exact_score: integer, facet_score: integer, session_exact_score: integer, session_facet_score: integer, facet_key: string }, relaxed: { score: integer, recency: integer, project_score: integer, cross_score: integer, session_project_score: integer, session_cross_score: integer, exact_score: integer, facet_score: integer, session_exact_score: integer, session_facet_score: integer, facet_key: string } }, node: { score: integer, recency: integer, project_score: integer, cross_score: integer, session_project_score: integer, session_cross_score: integer, exact_score: integer, facet_score: integer, session_exact_score: integer, session_facet_score: integer, facet_key: string }, path: { exact_score: integer, relaxed_score: integer, recency: integer, exact_exec_recent: integer, relaxed_exec_recent: integer, rendered: string, depth: integer, exact_project_score: integer, exact_cross_score: integer, relaxed_project_score: integer, relaxed_cross_score: integer, exact_session_project_score: integer, exact_session_cross_score: integer, relaxed_session_project_score: integer, relaxed_session_cross_score: integer }? }
 local function item_score_components(state, item)
-  local resource_kind = current_resource_kind()
+  local vector = current_context_vector()
   local node_id = choice_node_id(state, item)
   if not node_id then
     return {
       total_score = 0,
       recency = 0,
-      resource_kind = resource_kind,
+      context = vector,
       node_id = "",
       parent_id = nil,
       transition = {
         exact_score = 0,
         relaxed_score = 0,
         recency = 0,
-        exact = { score = 0, recency = 0, project_score = 0, cross_score = 0 },
-        relaxed = { score = 0, recency = 0, project_score = 0, cross_score = 0 },
+        exact = {
+          score = 0,
+          recency = 0,
+          project_score = 0,
+          cross_score = 0,
+          session_project_score = 0,
+          session_cross_score = 0,
+          exact_score = 0,
+          facet_score = 0,
+          session_exact_score = 0,
+          session_facet_score = 0,
+          facet_key = "",
+        },
+        relaxed = {
+          score = 0,
+          recency = 0,
+          project_score = 0,
+          cross_score = 0,
+          session_project_score = 0,
+          session_cross_score = 0,
+          exact_score = 0,
+          facet_score = 0,
+          session_exact_score = 0,
+          session_facet_score = 0,
+          facet_key = "",
+        },
       },
-      node = { score = 0, recency = 0, project_score = 0, cross_score = 0 },
+      node = {
+        score = 0,
+        recency = 0,
+        project_score = 0,
+        cross_score = 0,
+        session_project_score = 0,
+        session_cross_score = 0,
+        exact_score = 0,
+        facet_score = 0,
+        session_exact_score = 0,
+        session_facet_score = 0,
+        facet_key = "",
+      },
       path = nil,
     }
   end
 
   local parent_id = context_parent_id(state)
-  local transition = parent_id and mixed_transition_view(resource_kind, parent_id, node_id)
+  local transition = parent_id and mixed_transition_view(vector, parent_id, node_id)
     or {
       exact_score = 0,
       relaxed_score = 0,
       recency = 0,
-      exact = { score = 0, recency = 0, project_score = 0, cross_score = 0 },
-      relaxed = { score = 0, recency = 0, project_score = 0, cross_score = 0 },
+      exact = {
+        score = 0,
+        recency = 0,
+        project_score = 0,
+        cross_score = 0,
+        session_project_score = 0,
+        session_cross_score = 0,
+        exact_score = 0,
+        facet_score = 0,
+        session_exact_score = 0,
+        session_facet_score = 0,
+        facet_key = "",
+      },
+      relaxed = {
+        score = 0,
+        recency = 0,
+        project_score = 0,
+        cross_score = 0,
+        session_project_score = 0,
+        session_cross_score = 0,
+        exact_score = 0,
+        facet_score = 0,
+        session_exact_score = 0,
+        session_facet_score = 0,
+        facet_key = "",
+      },
     }
-  local node = mixed_node_view(resource_kind, node_id)
-  local path = item.promoted and mixed_path_view(resource_kind, node_id) or nil
+  local node = mixed_node_view(vector, node_id)
+  local path = item.promoted and mixed_path_view(vector, node_id) or nil
   local total_score = (transition.exact_score * 8) + (transition.relaxed_score * 3) + (node.score * 2)
 
   return {
     total_score = total_score,
     recency = math.max(transition.recency, node.recency),
-    resource_kind = resource_kind,
+    context = vector,
     node_id = node_id,
     parent_id = parent_id,
     transition = transition,
@@ -1181,7 +1711,7 @@ local function promoted_items(state)
     return {}
   end
 
-  local resource_kind = current_resource_kind()
+  local vector = current_context_vector()
   local candidates = {}
   local seen = {}
   local store = ensure_state()
@@ -1200,10 +1730,12 @@ local function promoted_items(state)
       end
     end
 
-    for node_id, _ in pairs(scope.paths_exact[resource_kind] or {}) do
-      if not seen[node_id] then
-        seen[node_id] = true
-        candidates[#candidates + 1] = node_id
+    for _, context_key in ipairs(all_context_keys(vector)) do
+      for node_id, _ in pairs(scope.paths_exact[context_key] or {}) do
+        if not seen[node_id] then
+          seen[node_id] = true
+          candidates[#candidates + 1] = node_id
+        end
       end
     end
   end
@@ -1217,7 +1749,7 @@ local function promoted_items(state)
 
   local ranked = {}
   for _, node_id in ipairs(candidates) do
-    local view = mixed_path_view(resource_kind, node_id)
+    local view = mixed_path_view(vector, node_id)
     if view.rendered ~= "" and view.depth >= promotions_cfg.min_hops_saved then
       local execute_base = math.max(1, normalize_int(config.get().learning.propagation.execute[1]))
       local recent_executes = math.floor(view.exact_exec_recent / execute_base)
@@ -1233,6 +1765,7 @@ local function promoted_items(state)
             rendered = view.rendered,
             score = score,
             recency = view.recency,
+            lane = "shortcut",
           }
         end
       end
@@ -1264,9 +1797,10 @@ local function promoted_items(state)
         examples = target.examples,
         executable = target.executable,
         requires_more = target.requires_more,
-        text = candidate.rendered .. "  promoted",
+        text = candidate.rendered .. "  shortcut",
         accept_line = candidate.rendered,
         promoted = true,
+        lane = candidate.lane,
         node_id = candidate.node_id,
       }
       if #items == promotions_cfg.max_per_context then
@@ -1302,21 +1836,34 @@ function M.record_execute_state(state)
   end
 
   local scope_id = current_project_id()
-  local resource_kind = current_resource_kind()
-  local execute_credits = config.get().learning.propagation.execute
+  local vector = current_context_vector()
+  local execute_credits = propagation_profile(state.root).execute
   local root_id = state.root
   ---@cast root_id string
 
-  add_node_credit(scope_id, resource_kind, root_id, "execute", execute_credits[1])
+  add_node_credit(scope_id, vector, root_id, "execute", execute_credits[1])
+  add_session_node_credit(scope_id, vector, root_id, "execute", execute_credits[1])
   add_command_execute(scope_id, state.rendered, root_id)
 
   local node_id = semantic_node_id(state)
   if node_id then
-    add_propagated_node_credits(scope_id, resource_kind, node_id, "execute", execute_credits)
-    add_path_transitions(scope_id, resource_kind, path_prefixes(node_id), "execute", execute_credits[1])
+    add_propagated_node_credits(scope_id, vector, node_id, "execute", execute_credits)
+    add_session_propagated_node_credits(scope_id, vector, node_id, "execute", execute_credits)
+    add_path_transitions(scope_id, vector, path_prefixes(node_id), "execute", execute_credits[1])
+    add_session_path_transitions(scope_id, vector, path_prefixes(node_id), "execute", execute_credits[1])
     add_path_credit(
       scope_id,
-      resource_kind,
+      vector,
+      node_id,
+      state.rendered,
+      state.root,
+      #split_node_path(node_id),
+      "execute",
+      execute_credits[1]
+    )
+    add_session_path_credit(
+      scope_id,
+      vector,
       node_id,
       state.rendered,
       state.root,
@@ -1325,7 +1872,8 @@ function M.record_execute_state(state)
       execute_credits[1]
     )
   else
-    add_transition_credit(scope_id, resource_kind, root_context, root_id, "execute", execute_credits[1])
+    add_transition_credit(scope_id, vector, root_context, root_id, "execute", execute_credits[1])
+    add_session_transition_credit(scope_id, vector, root_context, root_id, "execute", execute_credits[1])
   end
 end
 
@@ -1342,23 +1890,26 @@ function M.record_choice(state, choice)
   end
 
   local scope_id = current_project_id()
-  local resource_kind = current_resource_kind()
-  local select_credits = config.get().learning.propagation.select
+  local vector = current_context_vector()
+  local select_credits = propagation_profile(state.root).select
   local node_path = choice_path_ids(state, item)
   if #node_path == 0 then
     return
   end
 
-  add_propagated_node_credits(scope_id, resource_kind, node_path[#node_path], "select", select_credits)
+  add_propagated_node_credits(scope_id, vector, node_path[#node_path], "select", select_credits)
+  add_session_propagated_node_credits(scope_id, vector, node_path[#node_path], "select", select_credits)
   local parent_id = context_parent_id(state)
   if parent_id then
-    add_transition_credit(scope_id, resource_kind, parent_id, node_path[#node_path], "select", select_credits[1])
+    add_transition_credit(scope_id, vector, parent_id, node_path[#node_path], "select", select_credits[1])
+    add_session_transition_credit(scope_id, vector, parent_id, node_path[#node_path], "select", select_credits[1])
   end
 
   if item.promoted and item.accept_line ~= "" then
-    add_path_credit(
+    add_path_credit(scope_id, vector, node_path[#node_path], item.accept_line, node_path[1], #node_path, "shortcut", 15)
+    add_session_path_credit(
       scope_id,
-      resource_kind,
+      vector,
       node_path[#node_path],
       item.accept_line,
       node_path[1],
@@ -1376,12 +1927,14 @@ function M.record_rendered_command(rendered)
   end
 
   local scope_id = current_project_id()
-  local resource_kind = current_resource_kind()
-  local execute_credit = config.get().learning.propagation.execute[1]
+  local vector = current_context_vector()
   local root = rendered_root(rendered)
+  local execute_credit = propagation_profile(root).execute[1]
   if root ~= "" then
-    add_node_credit(scope_id, resource_kind, root, "execute", execute_credit)
-    add_transition_credit(scope_id, resource_kind, root_context, root, "execute", execute_credit)
+    add_node_credit(scope_id, vector, root, "execute", execute_credit)
+    add_session_node_credit(scope_id, vector, root, "execute", execute_credit)
+    add_transition_credit(scope_id, vector, root_context, root, "execute", execute_credit)
+    add_session_transition_credit(scope_id, vector, root_context, root, "execute", execute_credit)
   end
 
   add_command_execute(scope_id, rendered, root)
@@ -1436,14 +1989,14 @@ end
 ---@param limit integer
 ---@return { root: string, selected: integer, executed: integer, last_seq: integer }[]
 function M.top_roots(limit)
-  local resource_kind = current_resource_kind()
+  local vector = current_context_vector()
   local seen = {}
   local items = {}
   for _, scope in pairs(ensure_state().scopes) do
     for node_id, _ in pairs(scope.nodes_global) do
       if node_id:find("/", 1, true) == nil and not seen[node_id] then
         seen[node_id] = true
-        local view = mixed_node_view(resource_kind, node_id)
+        local view = mixed_node_view(vector, node_id)
         items[#items + 1] = {
           root = node_id,
           selected = view.score,
@@ -1527,19 +2080,21 @@ end
 ---@param limit integer
 ---@return { context: string, token: string, selected: integer, executed: integer, last_seq: integer }[]
 function M.top_transitions(limit)
-  local resource_kind = current_resource_kind()
+  local vector = current_context_vector()
+  local context_keys = all_context_keys(vector)
   local seen = {}
   local items = {}
 
   for _, scope in pairs(ensure_state().scopes) do
     for exact_key, tokens in pairs(scope.transitions_exact) do
       local parent_id = exact_key:match("^.-|(.*)$")
-      if parent_id and exact_key:find("^" .. vim.pesc(resource_kind) .. "|", 1) ~= nil then
+      local context_prefix = exact_key:match("^(.-)|")
+      if parent_id and context_prefix and vim.tbl_contains(context_keys, context_prefix) then
         for node_id, _ in pairs(tokens) do
           local key = parent_id .. "->" .. node_id
           if not seen[key] then
             seen[key] = true
-            local view = mixed_transition_view(resource_kind, parent_id, node_id)
+            local view = mixed_transition_view(vector, parent_id, node_id)
             items[#items + 1] = {
               context = parent_id,
               token = split_node_path(node_id)[#split_node_path(node_id)] or node_id,
@@ -1575,7 +2130,7 @@ end
 ---@param limit integer
 ---@return { rendered: string, node_id: string, score: integer, last_seq: integer }[]
 function M.top_paths(limit)
-  local resource_kind = current_resource_kind()
+  local vector = current_context_vector()
   local seen = {}
   local items = {}
 
@@ -1583,7 +2138,7 @@ function M.top_paths(limit)
     for node_id, _ in pairs(scope.paths_relaxed) do
       if not seen[node_id] then
         seen[node_id] = true
-        local view = mixed_path_view(resource_kind, node_id)
+        local view = mixed_path_view(vector, node_id)
         if view.rendered ~= "" then
           items[#items + 1] = {
             rendered = view.rendered,
@@ -1609,14 +2164,43 @@ function M.top_paths(limit)
   return vim.list_slice(items, 1, limit)
 end
 
+---@param value string
+---@return string
+local function alias_slug(value)
+  local slug = value:lower():gsub("[^%w]+", "-"):gsub("%-+", "-"):gsub("^%-", ""):gsub("%-$", "")
+  return slug
+end
+
+---@param limit integer
+---@return { alias: string, rendered: string, score: integer }[]
+function M.alias_candidates(limit)
+  local items = {}
+  local seen = {}
+  for _, path in ipairs(M.top_paths(limit * 3)) do
+    local alias = alias_slug(path.rendered)
+    if alias ~= "" and alias ~= path.rendered:lower() and not seen[alias] then
+      seen[alias] = true
+      items[#items + 1] = {
+        alias = alias,
+        rendered = path.rendered,
+        score = path.score,
+      }
+    end
+    if #items == limit then
+      break
+    end
+  end
+  return items
+end
+
 ---@param roots string[]
 ---@param limit integer
 ---@return string[]
 function M.unlearned_roots(roots, limit)
-  local resource_kind = current_resource_kind()
+  local vector = current_context_vector()
   local items = {}
   for _, root in ipairs(roots or {}) do
-    if mixed_node_view(resource_kind, root).score == 0 then
+    if mixed_node_view(vector, root).score == 0 then
       items[#items + 1] = root
     end
   end
@@ -1627,21 +2211,28 @@ end
 ---@param state ResolutionState
 ---@return string[]
 function M.preview_lines(state)
+  local vector = current_context_vector()
   local lines = {
     "Project: " .. vim.fn.fnamemodify(current_project_id(), ":t"),
-    "Context: " .. current_resource_kind(),
+    "Context: " .. vector.display,
   }
 
   local node_id = semantic_node_id(state)
   if node_id then
-    local node = mixed_node_view(current_resource_kind(), node_id)
+    local node = mixed_node_view(vector, node_id)
     if node.score > 0 then
       lines[#lines + 1] = ("Learned node score: %d"):format(node.score)
     end
+    if node.session_project_score > 0 then
+      lines[#lines + 1] = ("Session heat: %d"):format(node.session_project_score)
+    end
   elseif state.root then
-    local root = mixed_node_view(current_resource_kind(), state.root)
+    local root = mixed_node_view(vector, state.root)
     if root.score > 0 then
       lines[#lines + 1] = ("Learned root score: %d"):format(root.score)
+    end
+    if root.session_project_score > 0 then
+      lines[#lines + 1] = ("Session heat: %d"):format(root.session_project_score)
     end
   end
 
@@ -1680,7 +2271,7 @@ function M.explain_lines(line)
   local resolver = require("cmd_ux.lib.resolver")
   local raw = type(line) == "string" and vim.trim(line) or ""
   local state = M.rank_state(resolver.resolve_line(raw))
-  local resource_kind = current_resource_kind()
+  local vector = current_context_vector()
   local lines = {
     "Cmd UX explain",
     "",
@@ -1688,7 +2279,7 @@ function M.explain_lines(line)
     "Rendered: " .. (state.rendered ~= "" and state.rendered or "<root>"),
     "Kind: " .. state.kind,
     "Project: " .. current_project_id(),
-    "Context: " .. resource_kind,
+    "Context: " .. vector.display,
   }
 
   if state.root then
@@ -1697,20 +2288,22 @@ function M.explain_lines(line)
 
   local node_id = semantic_node_id(state)
   if node_id then
-    local current = mixed_node_view(resource_kind, node_id)
-    lines[#lines + 1] = ("Current node: %s  total=%d project=%d cross=%d"):format(
+    local current = mixed_node_view(vector, node_id)
+    lines[#lines + 1] = ("Current node: %s  total=%d project=%d cross=%d session=%d"):format(
       node_id,
       current.score,
       current.project_score,
-      current.cross_score
+      current.cross_score,
+      current.session_project_score + current.session_cross_score
     )
   elseif state.root then
-    local root_view = mixed_node_view(resource_kind, state.root)
-    lines[#lines + 1] = ("Current root: %s  total=%d project=%d cross=%d"):format(
+    local root_view = mixed_node_view(vector, state.root)
+    lines[#lines + 1] = ("Current root: %s  total=%d project=%d cross=%d session=%d"):format(
       state.root,
       root_view.score,
       root_view.project_score,
-      root_view.cross_score
+      root_view.cross_score,
+      root_view.session_project_score + root_view.session_cross_score
     )
   end
 
@@ -1731,31 +2324,41 @@ function M.explain_lines(line)
     local components = item_score_components(state, item)
     local promoted = item.promoted and " promoted" or ""
     lines[#lines + 1] = ("%d. %s%s  total=%d"):format(index, item.label, promoted, components.total_score)
-    lines[#lines + 1] = ("   node=%d (project=%d cross=%d)"):format(
+    lines[#lines + 1] = ("   node=%d (project=%d cross=%d session=%d exact=%d facet=%d)"):format(
       components.node.score,
       components.node.project_score,
-      components.node.cross_score
+      components.node.cross_score,
+      components.node.session_project_score + components.node.session_cross_score,
+      components.node.exact_score,
+      components.node.facet_score
     )
-    lines[#lines + 1] = ("   transition exact=%d (project=%d cross=%d) relaxed=%d (project=%d cross=%d)"):format(
+    lines[#lines + 1] = ("   transition exact=%d (project=%d cross=%d session=%d) relaxed=%d (project=%d cross=%d session=%d)"):format(
       components.transition.exact_score,
       components.transition.exact.project_score,
       components.transition.exact.cross_score,
+      components.transition.exact.session_project_score + components.transition.exact.session_cross_score,
       components.transition.relaxed_score,
       components.transition.relaxed.project_score,
-      components.transition.relaxed.cross_score
+      components.transition.relaxed.cross_score,
+      components.transition.relaxed.session_project_score + components.transition.relaxed.session_cross_score
     )
     lines[#lines + 1] = ("   recency=%d node_id=%s"):format(
       components.recency,
       components.node_id ~= "" and components.node_id or "<none>"
     )
+    if components.node.facet_key ~= "" then
+      lines[#lines + 1] = "   strongest facet=" .. components.node.facet_key
+    end
     if components.path then
-      lines[#lines + 1] = ("   promotion exact=%d (project=%d cross=%d) relaxed=%d (project=%d cross=%d)"):format(
+      lines[#lines + 1] = ("   promotion exact=%d (project=%d cross=%d session=%d) relaxed=%d (project=%d cross=%d session=%d)"):format(
         components.path.exact_score,
         components.path.exact_project_score,
         components.path.exact_cross_score,
+        components.path.exact_session_project_score + components.path.exact_session_cross_score,
         components.path.relaxed_score,
         components.path.relaxed_project_score,
-        components.path.relaxed_cross_score
+        components.path.relaxed_cross_score,
+        components.path.relaxed_session_project_score + components.path.relaxed_session_cross_score
       )
       lines[#lines + 1] = ("   promotion recent exact=%d relaxed=%d hops=%d threshold=%d"):format(
         components.path.exact_exec_recent,
@@ -1776,12 +2379,14 @@ function M.stats_lines(roots)
   local learning_cfg = config.get().learning
   local project_id = current_project_id()
   local project_scope = get_scope(project_id)
+  local vector = current_context_vector()
   local lines = {
     "Cmd UX learning stats",
     "",
     "Learning file: " .. learning_path,
     "Active project: " .. project_id,
-    "Resource kind: " .. current_resource_kind(),
+    "Context vector: " .. vector.display,
+    "Legacy context key: " .. vector.legacy_key,
     ("Tracked scopes: %d"):format(vim.tbl_count(store.scopes)),
     ("Project active day: %d"):format(project_scope and project_scope.active_day or 0),
     "Project last activity: "
@@ -1790,6 +2395,12 @@ function M.stats_lines(roots)
       learning_cfg.scope.project_weight,
       learning_cfg.scope.cross_project_weight,
       learning_cfg.scope.cross_project_enabled and "yes" or "no"
+    ),
+    ("Context weights: exact=%d facet=%d"):format(learning_cfg.context.exact_weight, learning_cfg.context.facet_weight),
+    ("Session weights: enabled=%s project=%d cross-project=%d"):format(
+      learning_cfg.session.enabled and "yes" or "no",
+      learning_cfg.session.project_weight,
+      learning_cfg.session.cross_project_weight
     ),
     ("Active windows: score=%d freshness=%d promotion=%d"):format(
       learning_cfg.time.window_days,
@@ -1923,6 +2534,15 @@ function M.suggestion_lines(roots)
     "These recommendations are derived from scoped temporal learning only.",
   }
 
+  local aliases = M.alias_candidates and M.alias_candidates(8) or {}
+  if #aliases > 0 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "Alias candidates:"
+    for _, item in ipairs(aliases) do
+      lines[#lines + 1] = ("- %s => %s  score=%d"):format(item.alias, item.rendered, item.score)
+    end
+  end
+
   local paths = M.top_paths(8)
   if #paths > 0 then
     lines[#lines + 1] = ""
@@ -1964,6 +2584,64 @@ function M.suggestion_lines(roots)
   return lines
 end
 
+---@param roots string[]
+---@return string[]
+function M.inbox_lines(roots)
+  local lines = {
+    "Cmd UX inbox",
+    "",
+    "Actionable command-system suggestions derived from learned usage.",
+  }
+
+  local aliases = M.alias_candidates(8)
+  if #aliases > 0 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "Alias proposals:"
+    for _, item in ipairs(aliases) do
+      lines[#lines + 1] = ("- %s => %s  score=%d"):format(item.alias, item.rendered, item.score)
+    end
+  end
+
+  local paths = M.top_paths(8)
+  if #paths > 0 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "Shortcut candidates:"
+    for _, item in ipairs(paths) do
+      lines[#lines + 1] = ("- %s  score=%d"):format(item.rendered, item.score)
+    end
+  end
+
+  local transitions = M.top_transitions(8)
+  if #transitions > 0 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "Contextual ranking checks:"
+    for _, item in ipairs(transitions) do
+      lines[#lines + 1] = ("- %s -> %s  exact=%d relaxed=%d"):format(
+        item.context,
+        item.token,
+        item.executed,
+        item.selected
+      )
+    end
+  end
+
+  local noise = M.unlearned_roots(roots or {}, 12)
+  if #noise > 0 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "Noise review:"
+    for _, root in ipairs(noise) do
+      lines[#lines + 1] = ("- %s"):format(root)
+    end
+  end
+
+  if #lines == 3 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "No actionable suggestions yet."
+  end
+
+  return lines
+end
+
 function M.path()
   return learning_path
 end
@@ -1975,11 +2653,19 @@ end
 function M.reload()
   learning_state = load()
   flush_scheduled = false
+  session_state = {
+    next_seq = 1,
+    scopes = {},
+  }
 end
 
 function M.reset()
   learning_state = default_state()
   flush_scheduled = false
+  session_state = {
+    next_seq = 1,
+    scopes = {},
+  }
   schedule_flush()
 end
 

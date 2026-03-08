@@ -35,6 +35,8 @@ local resolution_kinds = {
 ---@field required boolean
 ---@field desc string
 ---@field help string
+---@field validate? fun(value: string): boolean, string?
+---@field preview? fun(value: string): string[]|string|nil
 
 ---@class CommandSlotSpec
 ---@field name string
@@ -42,6 +44,8 @@ local resolution_kinds = {
 ---@field required? boolean
 ---@field desc? string
 ---@field help? string
+---@field validate? fun(value: string): boolean, string?
+---@field preview? fun(value: string): string[]|string|nil
 
 ---@class CommandNode
 ---@field token string
@@ -73,12 +77,16 @@ local resolution_kinds = {
 ---@field accept_line string
 ---@field promoted boolean
 ---@field node_id string
+---@field lane string
+---@field slot_values string[]
 
 ---@class CommandFrontierItemSpec: CommandNodeSpec
 ---@field text? string
 ---@field accept_line? string
 ---@field promoted? boolean
 ---@field node_id? string
+---@field lane? string
+---@field slot_values? string[]|string
 
 ---@class CommandSnapshot
 ---@field root string
@@ -138,6 +146,8 @@ local resolution_kinds = {
 ---@field current_label string
 ---@field provider? string
 ---@field pending_is_named boolean
+---@field slots CommandSlot[]
+---@field slot_values string[]
 ---@field execute? fun()
 
 ---@class ResolutionStateSpec
@@ -160,6 +170,8 @@ local resolution_kinds = {
 ---@field current_label? string
 ---@field provider? string
 ---@field pending_is_named? boolean
+---@field slots? CommandSlotSpec[]|CommandSlot[]
+---@field slot_values? string[]|string
 ---@field execute? fun()
 
 ---@class ResolutionStatePatch
@@ -182,6 +194,8 @@ local resolution_kinds = {
 ---@field current_label? string
 ---@field provider? string
 ---@field pending_is_named? boolean
+---@field slots? CommandSlotSpec[]|CommandSlot[]
+---@field slot_values? string[]|string
 ---@field execute? fun()
 
 ---@class Provider
@@ -276,12 +290,17 @@ function M.slot(spec)
     error("cmd_ux.types: slot.name is required")
   end
 
+  ensure_function(spec.validate, "slot.validate")
+  ensure_function(spec.preview, "slot.preview")
+
   return {
     name = name,
     kind = normalize_string(spec.kind, "slot.kind"),
     required = spec.required == true,
     desc = normalize_string(spec.desc, "slot.desc"),
     help = normalize_string(spec.help ~= nil and spec.help or spec.desc, "slot.help"),
+    validate = spec.validate,
+    preview = spec.preview,
   }
 end
 
@@ -342,6 +361,9 @@ function M.frontier_item(spec)
   item.accept_line = normalize_string(spec.accept_line, "item.accept_line")
   item.promoted = spec.promoted == true
   item.node_id = normalize_string(spec.node_id, "item.node_id")
+  item.lane =
+    normalize_string(spec.lane ~= nil and spec.lane or (item.promoted and "shortcut" or "structural"), "item.lane")
+  item.slot_values = normalize_string_list(spec.slot_values, "item.slot_values")
   return item
 end
 
@@ -480,6 +502,8 @@ function M.state(spec)
     current_label = normalize_string(spec.current_label, "state.current_label"),
     provider = optional_string(spec.provider, "state.provider"),
     pending_is_named = spec.pending_is_named == true,
+    slots = normalize_slots(spec.slots),
+    slot_values = normalize_string_list(spec.slot_values, "state.slot_values"),
     execute = spec.execute,
   }
 end
@@ -512,6 +536,8 @@ function M.state_from_node(node, spec)
     current_label = spec.current_label,
     provider = spec.provider,
     pending_is_named = spec.pending_is_named,
+    slots = spec.slots ~= nil and spec.slots or normalized.slots,
+    slot_values = spec.slot_values,
     execute = spec.execute ~= nil and spec.execute or normalized.execute,
   }
 
@@ -551,6 +577,8 @@ function M.root_state(spec)
     current_label = spec.current_label,
     provider = spec.provider,
     pending_is_named = spec.pending_is_named,
+    slots = spec.slots,
+    slot_values = spec.slot_values,
     execute = spec.execute,
   }
   return M.state(next_state)
@@ -582,6 +610,8 @@ function M.unsupported_state(reason, spec)
     current_label = spec.current_label,
     provider = spec.provider,
     pending_is_named = spec.pending_is_named,
+    slots = spec.slots,
+    slot_values = spec.slot_values,
     execute = spec.execute,
   }
   return M.state(next_state)

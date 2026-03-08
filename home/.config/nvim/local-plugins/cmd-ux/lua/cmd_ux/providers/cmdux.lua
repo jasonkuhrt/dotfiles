@@ -1,4 +1,5 @@
 local blocklist = require("cmd_ux.blocklist")
+local capabilities = require("cmd_ux.lib.capabilities")
 local index = require("cmd_ux.index")
 local learning = require("cmd_ux.lib.learning")
 local report = require("cmd_ux.lib.report")
@@ -14,8 +15,10 @@ local function help_lines()
   return {
     "Cmdux commands:",
     "- Cmdux blocklist",
+    "- Cmdux capabilities",
     "- Cmdux explain [line]",
     "- Cmdux help",
+    "- Cmdux inbox",
     "- Cmdux noise",
     "- Cmdux paths",
     "- Cmdux suggest",
@@ -30,6 +33,8 @@ local function help_lines()
     "Refresh rebuilds the current command index and reloads the cmd-ux blocklist.",
     "Stats/recent/roots/transitions/paths/noise/suggest surface the learning data used for adaptive ordering.",
     "Explain shows the exact ranking breakdown for a root or partial command line.",
+    "Inbox surfaces actionable alias, shortcut, ranking, and noise proposals.",
+    "Capabilities shows the typed action substrate used by Flow and future synthesis.",
     "Blocklist opens the exact-hide list that shapes the indexed root set.",
     "Export opens the persisted learning JSON for agent analysis.",
     "Reset-learning clears the current learned ordering state.",
@@ -51,6 +56,17 @@ end
 
 local function show_stats()
   report.open("Cmd UX Stats", learning.stats_lines(index.get().roots))
+end
+
+local function show_capabilities()
+  local lines = {
+    "Cmd UX capabilities",
+    "",
+  }
+  for _, capability in ipairs(capabilities.list()) do
+    lines[#lines + 1] = ("- %s  [%s]  %s"):format(capability.id, capability.safety, capability.desc)
+  end
+  report.open("Cmd UX Capabilities", lines)
 end
 
 ---@param raw_line string?
@@ -108,6 +124,10 @@ local function show_suggestions()
   report.open("Cmd UX Suggestions", learning.suggestion_lines(index.get().roots))
 end
 
+local function show_inbox()
+  report.open("Cmd UX Inbox", learning.inbox_lines(index.get().roots))
+end
+
 local function export_learning()
   learning.flush()
   vim.cmd("edit " .. vim.fn.fnameescape(learning.path()))
@@ -154,6 +174,15 @@ local function tree()
       executable = true,
       execute = open_blocklist,
     }),
+    capabilities = types.node({
+      token = "capabilities",
+      kind = "leaf",
+      desc = "Open the typed capability registry report",
+      help = table.concat(help_lines(), "\n"),
+      examples = { "Cmdux capabilities" },
+      executable = true,
+      execute = show_capabilities,
+    }),
     help = types.node({
       token = "help",
       kind = "leaf",
@@ -162,6 +191,15 @@ local function tree()
       examples = { "Cmdux help" },
       executable = true,
       execute = show_help,
+    }),
+    inbox = types.node({
+      token = "inbox",
+      kind = "leaf",
+      desc = "Open actionable alias and command-system proposals",
+      help = table.concat(help_lines(), "\n"),
+      examples = { "Cmdux inbox" },
+      executable = true,
+      execute = show_inbox,
     }),
     noise = types.node({
       token = "noise",
@@ -267,6 +305,7 @@ function M.describe_root(root)
     help = table.concat(help_lines(), "\n"),
     examples = {
       "Cmdux help",
+      "Cmdux inbox",
       "Cmdux explain",
       "Cmdux stats",
       "Cmdux recent",
@@ -275,6 +314,7 @@ function M.describe_root(root)
       "Cmdux noise",
       "Cmdux suggest",
       "Cmdux blocklist",
+      "Cmdux capabilities",
       "Cmdux export",
       "Cmdux reset-learning",
     },

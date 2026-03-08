@@ -1,4 +1,5 @@
 local blocklist = require("cmd_ux.blocklist")
+local capability_catalog = require("cmd_ux.lib.capability_catalog")
 local config = require("cmd_ux.config")
 local index = require("cmd_ux.index")
 local providers = require("cmd_ux.providers")
@@ -60,6 +61,7 @@ end
 ---@param opts? CmdUxConfig
 function M.setup(opts)
   config.setup(opts)
+  capability_catalog.register_all()
 
   if did_setup then
     require("cmd_ux.lib.learning").reload()

@@ -88,6 +88,21 @@ local resolve_root_structured = benchmark(100, function()
 end)
 print_result("resolve_root_structured", 100, resolve_root_structured)
 
+local resolve_root_buffer = benchmark(100, function()
+  core.resolve_line("Buffer")
+end)
+print_result("resolve_root_buffer", 100, resolve_root_buffer)
+
+local resolve_branch_pane = benchmark(100, function()
+  core.resolve_line("Pane focus")
+end)
+print_result("resolve_branch_pane", 100, resolve_branch_pane)
+
+local resolve_branch_tab = benchmark(100, function()
+  core.resolve_line("Tab move")
+end)
+print_result("resolve_branch_tab", 100, resolve_branch_tab)
+
 local resolve_branch_structured = benchmark(100, function()
   core.resolve_line("BenchStructured001 alpha")
 end)

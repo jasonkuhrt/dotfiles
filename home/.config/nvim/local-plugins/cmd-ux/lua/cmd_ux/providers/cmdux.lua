@@ -14,6 +14,7 @@ local function help_lines()
   return {
     "Cmdux commands:",
     "- Cmdux blocklist",
+    "- Cmdux explain [line]",
     "- Cmdux help",
     "- Cmdux noise",
     "- Cmdux paths",
@@ -28,6 +29,7 @@ local function help_lines()
     "",
     "Refresh rebuilds the current command index and reloads the cmd-ux blocklist.",
     "Stats/recent/roots/transitions/paths/noise/suggest surface the learning data used for adaptive ordering.",
+    "Explain shows the exact ranking breakdown for a root or partial command line.",
     "Blocklist opens the exact-hide list that shapes the indexed root set.",
     "Export opens the persisted learning JSON for agent analysis.",
     "Reset-learning clears the current learned ordering state.",
@@ -49,6 +51,11 @@ end
 
 local function show_stats()
   report.open("Cmd UX Stats", learning.stats_lines(index.get().roots))
+end
+
+---@param raw_line string?
+local function show_explain(raw_line)
+  report.open("Cmd UX Explain", learning.explain_lines(raw_line))
 end
 
 local function show_recent()
@@ -126,6 +133,17 @@ local function tree()
       examples = { "Cmdux export" },
       executable = true,
       execute = export_learning,
+    }),
+    explain = types.node({
+      token = "explain",
+      kind = "hybrid",
+      desc = "Explain the learned ranking for a root or partial command line",
+      help = table.concat(help_lines(), "\n"),
+      examples = { "Cmdux explain", "Cmdux explain Config", "Cmdux explain Buffer goto" },
+      executable = true,
+      execute = function()
+        show_explain("")
+      end,
     }),
     blocklist = types.node({
       token = "blocklist",
@@ -249,6 +267,7 @@ function M.describe_root(root)
     help = table.concat(help_lines(), "\n"),
     examples = {
       "Cmdux help",
+      "Cmdux explain",
       "Cmdux stats",
       "Cmdux recent",
       "Cmdux transitions",
@@ -275,6 +294,42 @@ function M.resolve(ctx)
       requires_more = true,
       refusal_reason = "Cmdux is a namespace. Pick a subcommand.",
       frontier = child_items(ctx.pending),
+    })
+  end
+
+  if ctx.accepted[1] == "explain" then
+    local explain_node = tree().explain
+    local target_prefix = table.concat(vim.list_slice(ctx.accepted, 2), " ")
+    if #ctx.accepted == 1 then
+      return types.state_from_node(explain_node, {
+        help = table.concat({
+          explain_node.help,
+          "",
+          "Optional argument: a root or partial command line to inspect.",
+        }, "\n"),
+        executable = true,
+        requires_more = false,
+        refusal_reason = nil,
+        frontier = index.frontier(ctx.pending),
+      })
+    end
+
+    local target_line = util.render_line({
+      prefix = target_prefix,
+      pending = ctx.pending,
+      trailing_space = ctx.trailing_space,
+    })
+    return types.state_from_node(explain_node, {
+      help = table.concat({
+        explain_node.help,
+        "",
+        "Current explain target: " .. (target_line ~= "" and target_line or "<root>"),
+      }, "\n"),
+      executable = true,
+      requires_more = false,
+      refusal_reason = nil,
+      frontier = {},
+      examples = { "Cmdux explain " .. target_line },
     })
   end
 
@@ -308,6 +363,13 @@ function M.complete(line)
   end
 
   if #tokens > 0 then
+    if tokens[1] == "explain" and #tokens == 1 then
+      local result = {}
+      for _, item in ipairs(index.frontier(prefix)) do
+        result[#result + 1] = item.label
+      end
+      return result
+    end
     return {}
   end
 
@@ -320,10 +382,17 @@ end
 
 ---@param args string
 function M.execute(args)
-  local tokens = strings.split_words(args)
+  local trimmed = strings.trim(args)
+  local tokens = strings.split_words(trimmed)
 
   if #tokens == 0 then
     show_help()
+    return
+  end
+
+  if tokens[1] == "explain" then
+    local raw_line = trimmed:match("^explain%s*(.*)$") or ""
+    show_explain(raw_line)
     return
   end
 

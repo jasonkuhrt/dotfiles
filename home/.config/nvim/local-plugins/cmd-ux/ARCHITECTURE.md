@@ -186,6 +186,7 @@ Learning data survives invalidation because usage history is orthogonal to comma
 
 `Cmdux` exposes the learning layer as first-class reports:
 
+- `explain`
 - `stats`
 - `recent`
 - `roots`
@@ -200,7 +201,7 @@ This turns `cmd-ux` into a closed feedback loop:
 
 1. observe real command behavior
 2. adapt ordering automatically
-3. inspect patterns
+3. inspect patterns and ranking causes
 4. remove noise or promote hot flows
 
 ## Extension Rules

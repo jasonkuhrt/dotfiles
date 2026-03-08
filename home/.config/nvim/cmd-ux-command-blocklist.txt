@@ -70,6 +70,7 @@ bNext
 badd
 ball
 balt
+bdelete
 belowright
 bfirst
 blast
@@ -84,6 +85,7 @@ breaklist
 brewind
 browse
 bufdo
+buffer
 bunload
 bwipeout
 cNext
@@ -118,6 +120,7 @@ checktime
 chistory
 clast
 clist
+close
 cmap
 cmapclear
 cmenu

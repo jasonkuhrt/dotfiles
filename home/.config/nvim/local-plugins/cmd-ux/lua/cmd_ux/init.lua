@@ -3,6 +3,8 @@ local config = require("cmd_ux.config")
 local index = require("cmd_ux.index")
 local providers = require("cmd_ux.providers")
 ---@type Provider
+local buffer_provider = require("cmd_ux.providers.buffer")
+---@type Provider
 local cmdux_provider = require("cmd_ux.providers.cmdux")
 ---@type Provider
 local config_provider = require("cmd_ux.providers.config")
@@ -11,7 +13,11 @@ local flow_provider = require("cmd_ux.providers.flow")
 ---@type Provider
 local lazy_provider = require("cmd_ux.providers.lazy")
 ---@type Provider
+local pane_provider = require("cmd_ux.providers.pane")
+---@type Provider
 local recall_provider = require("cmd_ux.providers.recall")
+---@type Provider
+local tab_provider = require("cmd_ux.providers.tab")
 
 local M = {}
 
@@ -56,11 +62,14 @@ function M.setup(opts)
   end
   did_setup = true
 
+  providers.register("Buffer", buffer_provider)
   providers.register("Cmdux", cmdux_provider)
   providers.register("Config", config_provider)
   providers.register("Flow", flow_provider)
   providers.register("Lazy", lazy_provider)
+  providers.register("Pane", pane_provider)
   providers.register("Recall", recall_provider)
+  providers.register("Tab", tab_provider)
 
   index.install_hooks()
 
@@ -73,6 +82,19 @@ function M.setup(opts)
     ---@param line string
     complete = function(_, line, _)
       return config_provider.complete(line)
+    end,
+    force = true,
+  })
+
+  ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Buffer", function(cmd_opts)
+    buffer_provider.execute(cmd_opts.args)
+  end, {
+    desc = "Buffer commands (next, previous, close, goto, ...)",
+    nargs = "*",
+    ---@param line string
+    complete = function(_, line, _)
+      return buffer_provider.complete(line)
     end,
     force = true,
   })
@@ -104,6 +126,19 @@ function M.setup(opts)
   })
 
   ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Pane", function(cmd_opts)
+    pane_provider.execute(cmd_opts.args)
+  end, {
+    desc = "Pane commands (focus, resize, split, close, ...)",
+    nargs = "*",
+    ---@param line string
+    complete = function(_, line, _)
+      return pane_provider.complete(line)
+    end,
+    force = true,
+  })
+
+  ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Recall", function(cmd_opts)
     recall_provider.execute(cmd_opts.args)
   end, {
@@ -112,6 +147,19 @@ function M.setup(opts)
     ---@param line string
     complete = function(_, line, _)
       return recall_provider.complete(line)
+    end,
+    force = true,
+  })
+
+  ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Tab", function(cmd_opts)
+    tab_provider.execute(cmd_opts.args)
+  end, {
+    desc = "Tab commands (next, previous, close, goto, ...)",
+    nargs = "*",
+    ---@param line string
+    complete = function(_, line, _)
+      return tab_provider.complete(line)
     end,
     force = true,
   })

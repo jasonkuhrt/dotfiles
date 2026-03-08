@@ -5,10 +5,13 @@ local eq = assert.are.same
 local cmd_ux = require("cmd_ux")
 local cmdux_provider = require("cmd_ux.providers.cmdux")
 local core = require("cmd_ux.core")
+local buffer_provider = require("cmd_ux.providers.buffer")
 local flow_provider = require("cmd_ux.providers.flow")
 local helpers = require("tests.plenary.helpers")
 local learning = require("cmd_ux.lib.learning")
+local pane_provider = require("cmd_ux.providers.pane")
 local recall_provider = require("cmd_ux.providers.recall")
+local tab_provider = require("cmd_ux.providers.tab")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
 
@@ -226,6 +229,33 @@ describe("cmd_ux learning and flow features", function()
     eq("reload", state_a.frontier[1].label)
   end)
 
+  it("scopes learning by richer local context kinds", function()
+    register_tree_provider("TreeContext")
+    helpers.sync_cmd_ux()
+
+    local regular_path = vim.fn.tempname() .. ".lua"
+    vim.fn.writefile({ "return {}" }, regular_path)
+    vim.fn.mkdir(vim.fn.fnamemodify(config_test_path, ":h"), "p")
+    vim.fn.writefile({ "return {}" }, config_test_path)
+
+    vim.cmd("edit " .. vim.fn.fnameescape(config_test_path))
+    learning.record_execute_state(core.resolve_line("TreeContext refactor rename"))
+
+    vim.cmd("edit " .. vim.fn.fnameescape(regular_path))
+    learning.record_execute_state(core.resolve_line("TreeContext docs"))
+    learning.record_execute_state(core.resolve_line("TreeContext docs"))
+
+    local regular = core.resolve_line("TreeContext")
+    eq("docs", regular.frontier[1].label)
+
+    vim.cmd("edit " .. vim.fn.fnameescape(config_test_path))
+    local config_state = core.resolve_line("TreeContext")
+    eq("refactor", config_state.frontier[1].label)
+
+    vim.cmd("bdelete!")
+    pcall(vim.fn.delete, regular_path)
+  end)
+
   it("keeps learned ordering stable across AFK calendar gaps", function()
     local base = os.time({ year = 2026, month = 1, day = 1, hour = 12 })
     helpers.set_learning_time(base)
@@ -329,6 +359,7 @@ describe("cmd_ux learning and flow features", function()
     assert.is_true(vim.tbl_contains(labels(state.frontier), "write-all"))
     assert.is_true(vim.tbl_contains(labels(state.frontier), "source-buffer"))
     assert.is_true(vim.tbl_contains(labels(state.frontier), "save-and-source"))
+    assert.is_true(vim.tbl_contains(labels(state.frontier), "close-buffer"))
 
     flow_provider.execute("save")
     assert.is_false(vim.bo.modified)
@@ -365,8 +396,104 @@ describe("cmd_ux learning and flow features", function()
     assert.is_true(vim.tbl_contains(labels(state.frontier), "quickfix"))
   end)
 
+  it("flow surfaces pane and tab semantic helpers when available", function()
+    local path = vim.fn.tempname() .. ".lua"
+    vim.fn.writefile({ "return {}" }, path)
+    vim.cmd("edit " .. vim.fn.fnameescape(path))
+    vim.cmd("vsplit")
+
+    local pane_state = core.resolve_line("Flow")
+    local pane_labels = labels(pane_state.frontier)
+    assert.is_true(vim.tbl_contains(pane_labels, "pane-only"))
+
+    vim.cmd("tabnew")
+    local tab_state = core.resolve_line("Flow")
+    local tab_labels = labels(tab_state.frontier)
+    assert.is_true(vim.tbl_contains(tab_labels, "tab-only"))
+
+    vim.cmd("tabclose!")
+    vim.cmd("only")
+    vim.cmd("bdelete!")
+    pcall(vim.fn.delete, path)
+  end)
+
+  it("buffer exposes semantic goto and lifecycle actions", function()
+    local path_a = vim.fn.tempname() .. ".lua"
+    local path_b = vim.fn.tempname() .. ".lua"
+    vim.fn.writefile({ "return {}" }, path_a)
+    vim.fn.writefile({ "return {}" }, path_b)
+
+    vim.cmd("edit " .. vim.fn.fnameescape(path_a))
+    local buffer_a = vim.api.nvim_get_current_buf()
+    vim.cmd("edit " .. vim.fn.fnameescape(path_b))
+    local buffer_b = vim.api.nvim_get_current_buf()
+
+    local root_state = core.resolve_line("Buffer")
+    local root_labels = labels(root_state.frontier)
+    assert.is_true(vim.tbl_contains(root_labels, "goto"))
+    assert.is_true(vim.tbl_contains(root_labels, "close"))
+    assert.is_true(vim.tbl_contains(root_labels, "previous"))
+
+    local goto_state = core.resolve_line("Buffer goto")
+    assert.is_true(vim.tbl_contains(labels(goto_state.frontier), tostring(buffer_a)))
+    assert.is_true(vim.tbl_contains(labels(goto_state.frontier), tostring(buffer_b)))
+
+    buffer_provider.execute("goto " .. buffer_a)
+    eq(buffer_a, vim.api.nvim_get_current_buf())
+
+    buffer_provider.execute("close-others")
+    eq(0, vim.fn.buflisted(buffer_b))
+
+    pcall(vim.cmd, "silent! bdelete! " .. buffer_a)
+    pcall(vim.cmd, "silent! bdelete! " .. buffer_b)
+    pcall(vim.fn.delete, path_a)
+    pcall(vim.fn.delete, path_b)
+  end)
+
+  it("pane exposes semantic focus and split trees", function()
+    local root_state = core.resolve_line("Pane")
+    eq({ "balance", "close", "focus", "only", "resize", "split" }, labels(root_state.frontier))
+
+    pane_provider.execute("split right")
+    eq(2, #vim.api.nvim_tabpage_list_wins(0))
+
+    local wins = vim.api.nvim_tabpage_list_wins(0)
+    vim.api.nvim_set_current_win(wins[1])
+    pane_provider.execute("focus right")
+    eq(wins[2], vim.api.nvim_get_current_win())
+    pane_provider.execute("focus left")
+    eq(wins[1], vim.api.nvim_get_current_win())
+
+    pane_provider.execute("only")
+    eq(1, #vim.api.nvim_tabpage_list_wins(0))
+  end)
+
+  it("tab exposes semantic goto and move trees", function()
+    local root_state = core.resolve_line("Tab")
+    local root_labels = labels(root_state.frontier)
+    assert.is_true(vim.tbl_contains(root_labels, "goto"))
+    assert.is_true(vim.tbl_contains(root_labels, "move"))
+    assert.is_true(vim.tbl_contains(root_labels, "next"))
+
+    tab_provider.execute("new")
+    eq(2, #vim.api.nvim_list_tabpages())
+
+    local goto_state = core.resolve_line("Tab goto")
+    assert.is_true(vim.tbl_contains(labels(goto_state.frontier), "1"))
+    assert.is_true(vim.tbl_contains(labels(goto_state.frontier), "2"))
+
+    tab_provider.execute("goto 1")
+    eq(1, vim.fn.tabpagenr())
+    tab_provider.execute("goto 2")
+    eq(2, vim.fn.tabpagenr())
+
+    tab_provider.execute("close")
+    eq(1, #vim.api.nvim_list_tabpages())
+  end)
+
   it("cmdux completion exposes the new learning commands", function()
     eq({ "blocklist" }, cmdux_provider.complete("Cmdux bl"))
+    assert.is_true(vim.tbl_contains(cmdux_provider.complete("Cmdux ex"), "explain"))
     eq({ "stats" }, cmdux_provider.complete("Cmdux st"))
     eq({ "recent" }, cmdux_provider.complete("Cmdux rec"))
     eq({ "transitions" }, cmdux_provider.complete("Cmdux tr"))
@@ -396,6 +523,13 @@ describe("cmd_ux learning and flow features", function()
     cmdux_provider.execute("paths")
     local path_lines = table.concat(current_lines(), "\n")
     assert.is_truthy(path_lines:find("Config reload", 1, true))
+    close_report_tab()
+
+    cmdux_provider.execute("explain Config")
+    local explain_lines = table.concat(current_lines(), "\n")
+    assert.is_truthy(explain_lines:find("Cmd UX explain", 1, true))
+    assert.is_truthy(explain_lines:find("Frontier ranking:", 1, true))
+    assert.is_truthy(explain_lines:find("transition exact=", 1, true))
     close_report_tab()
 
     cmdux_provider.execute("stats")

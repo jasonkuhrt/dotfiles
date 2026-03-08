@@ -471,20 +471,50 @@ end
 
 ---@return string
 local function current_resource_kind()
-  local buftype = vim.bo[vim.api.nvim_get_current_buf()].buftype
+  local buf = vim.api.nvim_get_current_buf()
+  local win = vim.api.nvim_get_current_win()
+  local buftype = vim.bo[buf].buftype
+  local filetype = vim.bo[buf].filetype
+  local path = vim.api.nvim_buf_get_name(buf)
+
+  if filetype == "minifiles" then
+    return "panel:minifiles"
+  end
+
+  if filetype == "qf" then
+    local wininfo = vim.fn.getwininfo(win)[1] or {}
+    if wininfo.loclist == 1 then
+      return "panel:loclist"
+    end
+    return "panel:quickfix"
+  end
+
+  if filetype == "help" then
+    return "panel:help"
+  end
+
+  if filetype ~= "" and filetype:find("^snacks") ~= nil then
+    return "panel:" .. filetype
+  end
+
+  if buftype == "terminal" then
+    return "panel:terminal"
+  end
+
   if buftype ~= "" then
     return "buftype:" .. buftype
   end
 
-  local path = vim.api.nvim_buf_get_name(0)
   if path ~= "" then
     local config_root = vim.fn.stdpath("config")
     if path:find(vim.pesc(config_root), 1) == 1 then
-      return "config"
+      if filetype ~= "" then
+        return "config:filetype:" .. filetype
+      end
+      return "config:file"
     end
   end
 
-  local filetype = vim.bo[vim.api.nvim_get_current_buf()].filetype
   if filetype ~= "" then
     return "filetype:" .. filetype
   end
@@ -920,7 +950,7 @@ local function cross_scope_ids(scopes, exclude_scope)
 end
 
 ---@param stat_fn fun(scope: CmdUxLearningScope): CmdUxLearningSignalStat?
----@return { score: integer, recency: integer }
+---@return { score: integer, recency: integer, project_score: integer, cross_score: integer }
 local function scoped_signal_view(stat_fn)
   local learning_cfg = config.get().learning
   local project_id = current_project_id()
@@ -928,27 +958,30 @@ local function scoped_signal_view(stat_fn)
 
   local project_stat = project_scope and stat_fn(project_scope) or nil
   local project_score = project_scope and stat_score(project_stat, project_scope.active_day) or 0
-  local score = project_score * learning_cfg.scope.project_weight
+  local weighted_project = project_score * learning_cfg.scope.project_weight
+  local weighted_cross = 0
   local recency = stat_recency(project_stat)
 
   if learning_cfg.scope.cross_project_enabled then
     for _, scope_id in ipairs(cross_scope_ids(ensure_state().scopes, project_id)) do
       local scope = assert(get_scope(scope_id))
       local stat = stat_fn(scope)
-      score = score + (stat_score(stat, scope.active_day) * learning_cfg.scope.cross_project_weight)
+      weighted_cross = weighted_cross + (stat_score(stat, scope.active_day) * learning_cfg.scope.cross_project_weight)
       recency = math.max(recency, stat_recency(stat))
     end
   end
 
   return {
-    score = score,
+    score = weighted_project + weighted_cross,
     recency = recency,
+    project_score = weighted_project,
+    cross_score = weighted_cross,
   }
 end
 
 ---@param resource_kind string
 ---@param node_id string
----@return { score: integer, recency: integer }
+---@return { score: integer, recency: integer, project_score: integer, cross_score: integer }
 local function mixed_node_view(resource_kind, node_id)
   return scoped_signal_view(function(scope)
     local kind_stat = scope.nodes_by_kind[resource_kind] and scope.nodes_by_kind[resource_kind][node_id] or nil
@@ -975,7 +1008,7 @@ end
 ---@param resource_kind string
 ---@param parent_id string
 ---@param child_id string
----@return { exact_score: integer, relaxed_score: integer, recency: integer }
+---@return { exact_score: integer, relaxed_score: integer, recency: integer, exact: { score: integer, recency: integer, project_score: integer, cross_score: integer }, relaxed: { score: integer, recency: integer, project_score: integer, cross_score: integer } }
 local function mixed_transition_view(resource_kind, parent_id, child_id)
   local exact_key = resource_kind .. "|" .. parent_id
   local exact = scoped_signal_view(function(scope)
@@ -992,24 +1025,28 @@ local function mixed_transition_view(resource_kind, parent_id, child_id)
     exact_score = exact.score,
     relaxed_score = relaxed.score,
     recency = math.max(exact.recency, relaxed.recency),
+    exact = exact,
+    relaxed = relaxed,
   }
 end
 
 ---@param resource_kind string
 ---@param node_id string
----@return { exact_score: integer, relaxed_score: integer, recency: integer, exact_exec_recent: integer, relaxed_exec_recent: integer, rendered: string, depth: integer }
+---@return { exact_score: integer, relaxed_score: integer, recency: integer, exact_exec_recent: integer, relaxed_exec_recent: integer, rendered: string, depth: integer, exact_project_score: integer, exact_cross_score: integer, relaxed_project_score: integer, relaxed_cross_score: integer }
 local function mixed_path_view(resource_kind, node_id)
   local project_id = current_project_id()
   local learning_cfg = config.get().learning
 
   local function aggregate_path(path_fn)
     local exact_score = 0
+    local project_score = 0
+    local cross_score = 0
     local recency = 0
     local recent_execute = 0
     local rendered = ""
     local depth = 0
 
-    local function visit(scope_id, weight)
+    local function visit(scope_id, weight, is_project)
       local scope = get_scope(scope_id)
       if not scope then
         return
@@ -1020,7 +1057,13 @@ local function mixed_path_view(resource_kind, node_id)
         return
       end
 
-      exact_score = exact_score + (stat_score(stat, scope.active_day) * weight)
+      local weighted_score = stat_score(stat, scope.active_day) * weight
+      exact_score = exact_score + weighted_score
+      if is_project then
+        project_score = project_score + weighted_score
+      else
+        cross_score = cross_score + weighted_score
+      end
       recency = math.max(recency, stat_recency(stat))
       recent_execute = recent_execute
         + metric_recent_credit(stat.execute, scope.active_day, learning_cfg.promotions.freshness_days)
@@ -1030,24 +1073,28 @@ local function mixed_path_view(resource_kind, node_id)
       depth = math.max(depth, stat.depth)
     end
 
-    visit(project_id, learning_cfg.scope.project_weight)
+    visit(project_id, learning_cfg.scope.project_weight, true)
     if learning_cfg.scope.cross_project_enabled then
       for _, scope_id in ipairs(cross_scope_ids(ensure_state().scopes, project_id)) do
-        visit(scope_id, learning_cfg.scope.cross_project_weight)
+        visit(scope_id, learning_cfg.scope.cross_project_weight, false)
       end
     end
 
-    return exact_score, recency, recent_execute, rendered, depth
+    return exact_score, project_score, cross_score, recency, recent_execute, rendered, depth
   end
 
-  local exact_score, exact_recency, exact_recent_exec, rendered, depth = aggregate_path(function(scope)
-    local paths = scope.paths_exact[resource_kind]
-    return paths and paths[node_id] or nil
-  end)
+  local exact_score, exact_project_score, exact_cross_score, exact_recency, exact_recent_exec, rendered, depth = aggregate_path(
+    function(scope)
+      local paths = scope.paths_exact[resource_kind]
+      return paths and paths[node_id] or nil
+    end
+  )
 
-  local relaxed_score, relaxed_recency, relaxed_recent_exec = aggregate_path(function(scope)
-    return scope.paths_relaxed[node_id]
-  end)
+  local relaxed_score, relaxed_project_score, relaxed_cross_score, relaxed_recency, relaxed_recent_exec = aggregate_path(
+    function(scope)
+      return scope.paths_relaxed[node_id]
+    end
+  )
 
   return {
     exact_score = exact_score,
@@ -1057,6 +1104,60 @@ local function mixed_path_view(resource_kind, node_id)
     relaxed_exec_recent = relaxed_recent_exec,
     rendered = rendered,
     depth = depth,
+    exact_project_score = exact_project_score,
+    exact_cross_score = exact_cross_score,
+    relaxed_project_score = relaxed_project_score,
+    relaxed_cross_score = relaxed_cross_score,
+  }
+end
+
+---@param state ResolutionState
+---@param item CommandFrontierItem
+---@return { total_score: integer, recency: integer, resource_kind: string, node_id: string, parent_id: string?, transition: { exact_score: integer, relaxed_score: integer, recency: integer, exact: { score: integer, recency: integer, project_score: integer, cross_score: integer }, relaxed: { score: integer, recency: integer, project_score: integer, cross_score: integer } }, node: { score: integer, recency: integer, project_score: integer, cross_score: integer }, path: { exact_score: integer, relaxed_score: integer, recency: integer, exact_exec_recent: integer, relaxed_exec_recent: integer, rendered: string, depth: integer, exact_project_score: integer, exact_cross_score: integer, relaxed_project_score: integer, relaxed_cross_score: integer }? }
+local function item_score_components(state, item)
+  local resource_kind = current_resource_kind()
+  local node_id = choice_node_id(state, item)
+  if not node_id then
+    return {
+      total_score = 0,
+      recency = 0,
+      resource_kind = resource_kind,
+      node_id = "",
+      parent_id = nil,
+      transition = {
+        exact_score = 0,
+        relaxed_score = 0,
+        recency = 0,
+        exact = { score = 0, recency = 0, project_score = 0, cross_score = 0 },
+        relaxed = { score = 0, recency = 0, project_score = 0, cross_score = 0 },
+      },
+      node = { score = 0, recency = 0, project_score = 0, cross_score = 0 },
+      path = nil,
+    }
+  end
+
+  local parent_id = context_parent_id(state)
+  local transition = parent_id and mixed_transition_view(resource_kind, parent_id, node_id)
+    or {
+      exact_score = 0,
+      relaxed_score = 0,
+      recency = 0,
+      exact = { score = 0, recency = 0, project_score = 0, cross_score = 0 },
+      relaxed = { score = 0, recency = 0, project_score = 0, cross_score = 0 },
+    }
+  local node = mixed_node_view(resource_kind, node_id)
+  local path = item.promoted and mixed_path_view(resource_kind, node_id) or nil
+  local total_score = (transition.exact_score * 8) + (transition.relaxed_score * 3) + (node.score * 2)
+
+  return {
+    total_score = total_score,
+    recency = math.max(transition.recency, node.recency),
+    resource_kind = resource_kind,
+    node_id = node_id,
+    parent_id = parent_id,
+    transition = transition,
+    node = node,
+    path = path,
   }
 end
 
@@ -1064,19 +1165,8 @@ end
 ---@param item CommandFrontierItem
 ---@return integer, integer
 local function item_score(state, item)
-  local resource_kind = current_resource_kind()
-  local node_id = choice_node_id(state, item)
-  if not node_id then
-    return 0, 0
-  end
-
-  local parent_id = context_parent_id(state)
-  local transition = parent_id and mixed_transition_view(resource_kind, parent_id, node_id)
-    or { exact_score = 0, relaxed_score = 0, recency = 0 }
-  local node = mixed_node_view(resource_kind, node_id)
-
-  return (transition.exact_score * 8) + (transition.relaxed_score * 3) + (node.score * 2),
-    math.max(transition.recency, node.recency)
+  local components = item_score_components(state, item)
+  return components.total_score, components.recency
 end
 
 ---@param state ResolutionState
@@ -1578,6 +1668,101 @@ function M.preview_lines(state)
         labels[#labels + 1] = ("%s (%d)"):format(item.rendered, item.score)
       end
       lines[#lines + 1] = "Promoted paths: " .. table.concat(labels, ", ")
+    end
+  end
+
+  return lines
+end
+
+---@param line string?
+---@return string[]
+function M.explain_lines(line)
+  local resolver = require("cmd_ux.lib.resolver")
+  local raw = type(line) == "string" and vim.trim(line) or ""
+  local state = M.rank_state(resolver.resolve_line(raw))
+  local resource_kind = current_resource_kind()
+  local lines = {
+    "Cmd UX explain",
+    "",
+    "Input: " .. (raw ~= "" and raw or "<root>"),
+    "Rendered: " .. (state.rendered ~= "" and state.rendered or "<root>"),
+    "Kind: " .. state.kind,
+    "Project: " .. current_project_id(),
+    "Context: " .. resource_kind,
+  }
+
+  if state.root then
+    lines[#lines + 1] = "Root: " .. state.root
+  end
+
+  local node_id = semantic_node_id(state)
+  if node_id then
+    local current = mixed_node_view(resource_kind, node_id)
+    lines[#lines + 1] = ("Current node: %s  total=%d project=%d cross=%d"):format(
+      node_id,
+      current.score,
+      current.project_score,
+      current.cross_score
+    )
+  elseif state.root then
+    local root_view = mixed_node_view(resource_kind, state.root)
+    lines[#lines + 1] = ("Current root: %s  total=%d project=%d cross=%d"):format(
+      state.root,
+      root_view.score,
+      root_view.project_score,
+      root_view.cross_score
+    )
+  end
+
+  if state.refusal_reason then
+    lines[#lines + 1] = "Refusal: " .. state.refusal_reason
+  end
+
+  if #state.frontier == 0 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "No frontier items are available for this state."
+    return lines
+  end
+
+  lines[#lines + 1] = ""
+  lines[#lines + 1] = "Frontier ranking:"
+
+  for index, item in ipairs(vim.list_slice(state.frontier, 1, 10)) do
+    local components = item_score_components(state, item)
+    local promoted = item.promoted and " promoted" or ""
+    lines[#lines + 1] = ("%d. %s%s  total=%d"):format(index, item.label, promoted, components.total_score)
+    lines[#lines + 1] = ("   node=%d (project=%d cross=%d)"):format(
+      components.node.score,
+      components.node.project_score,
+      components.node.cross_score
+    )
+    lines[#lines + 1] = ("   transition exact=%d (project=%d cross=%d) relaxed=%d (project=%d cross=%d)"):format(
+      components.transition.exact_score,
+      components.transition.exact.project_score,
+      components.transition.exact.cross_score,
+      components.transition.relaxed_score,
+      components.transition.relaxed.project_score,
+      components.transition.relaxed.cross_score
+    )
+    lines[#lines + 1] = ("   recency=%d node_id=%s"):format(
+      components.recency,
+      components.node_id ~= "" and components.node_id or "<none>"
+    )
+    if components.path then
+      lines[#lines + 1] = ("   promotion exact=%d (project=%d cross=%d) relaxed=%d (project=%d cross=%d)"):format(
+        components.path.exact_score,
+        components.path.exact_project_score,
+        components.path.exact_cross_score,
+        components.path.relaxed_score,
+        components.path.relaxed_project_score,
+        components.path.relaxed_cross_score
+      )
+      lines[#lines + 1] = ("   promotion recent exact=%d relaxed=%d hops=%d threshold=%d"):format(
+        components.path.exact_exec_recent,
+        components.path.relaxed_exec_recent,
+        components.path.depth,
+        config.get().learning.promotions.min_recent_executes
+      )
     end
   end
 

@@ -140,11 +140,23 @@ This is the behavior that lets repeated usage like `Config reload` rise above `C
 
 ### Flow Helpers
 
-Two new roots extend `cmd-ux` beyond plain command discovery:
+Five built-in semantic roots now extend `cmd-ux` beyond plain command discovery:
+
+- `Buffer`
+  - semantic buffer navigation and lifecycle
+  - examples: `Buffer next`, `Buffer previous`, `Buffer close`, `Buffer goto 3`
+
+- `Pane`
+  - semantic pane focus, resize, and split actions
+  - examples: `Pane focus left`, `Pane resize right`, `Pane split below`, `Pane only`
+
+- `Tab`
+  - semantic tab navigation and layout
+  - examples: `Tab next`, `Tab previous`, `Tab move right`, `Tab goto 2`
 
 - `Flow`
   - context-aware actions for the current buffer
-  - examples: save, write-all, source-buffer, config-reload, quickfix, alternate-buffer, diagnostics
+  - examples: save, write-all, source-buffer, config-reload, alternate-buffer, close-buffer, pane-only, tab-only
 
 - `Recall`
   - replay recent executed commands
@@ -159,6 +171,7 @@ These are still regular `cmd-ux` semantic roots, not sidecar UIs.
 Useful subcommands:
 
 - `Cmdux blocklist`
+- `Cmdux explain`
 - `Cmdux stats`
 - `Cmdux recent`
 - `Cmdux roots`
@@ -171,6 +184,7 @@ Useful subcommands:
 
 This makes the learning layer inspectable in three different modes:
 
+- explanation: explain
 - observability: stats, recent, roots, transitions, paths
 - cleanup: noise, blocklist
 - design input: suggest, export
@@ -280,11 +294,14 @@ Each provider is responsible for:
 
 The v1 providers are:
 
+- `Buffer`
 - `Cmdux`
+- `Config`
 - `Flow`
+- `Pane`
 - `Lazy`
 - `Recall`
-- `Config`
+- `Tab`
 - generic Neovim commands
 
 ### Generic provider

@@ -37,6 +37,18 @@ local function has_modified_buffers()
   return #vim.fn.getbufinfo({ bufmodified = 1 }) > 0
 end
 
+local function listed_buffer_count()
+  return #vim.fn.getbufinfo({ buflisted = 1 })
+end
+
+local function window_count()
+  return #vim.api.nvim_tabpage_list_wins(0)
+end
+
+local function tab_count()
+  return #vim.api.nvim_list_tabpages()
+end
+
 local function is_sourceable(path)
   local filetype = current_filetype()
   return filetype == "lua" or filetype == "vim" or path:sub(-4) == ".lua" or path:sub(-4) == ".vim"
@@ -112,13 +124,33 @@ local function actions()
     }
   end
 
+  if vim.fn.buflisted(vim.api.nvim_get_current_buf()) == 1 then
+    items[#items + 1] = {
+      token = "close-buffer",
+      desc = "Close the current buffer",
+      help = "Close the current buffer through the Buffer namespace.",
+      examples = { "Flow close-buffer" },
+      command = "Buffer close",
+    }
+  end
+
+  if listed_buffer_count() > 1 then
+    items[#items + 1] = {
+      token = "close-other-buffers",
+      desc = "Close all other listed buffers",
+      help = "Keep the current buffer and close every other listed buffer.",
+      examples = { "Flow close-other-buffers" },
+      command = "Buffer close-others",
+    }
+  end
+
   if vim.fn.bufname("#") ~= "" then
     items[#items + 1] = {
       token = "alternate-buffer",
       desc = "Jump to the alternate buffer",
-      help = "Use Ctrl-^ style alternate buffer switching from cmd-ux.",
+      help = "Use the Buffer namespace for alternate buffer switching.",
       examples = { "Flow alternate-buffer" },
-      command = "buffer #",
+      command = "Buffer alternate",
     }
   end
 
@@ -129,6 +161,26 @@ local function actions()
       help = "Set the local working directory to the current buffer's folder.",
       examples = { "Flow buffer-dir" },
       command = "lcd %:p:h",
+    }
+  end
+
+  if window_count() > 1 then
+    items[#items + 1] = {
+      token = "pane-only",
+      desc = "Keep only the current pane",
+      help = "Close all other panes through the Pane namespace.",
+      examples = { "Flow pane-only" },
+      command = "Pane only",
+    }
+  end
+
+  if tab_count() > 1 then
+    items[#items + 1] = {
+      token = "tab-only",
+      desc = "Keep only the current tab",
+      help = "Close all other tabs through the Tab namespace.",
+      examples = { "Flow tab-only" },
+      command = "Tab only",
     }
   end
 

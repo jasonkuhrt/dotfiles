@@ -35,6 +35,12 @@ vim.__cmd_ux_capability_registry = vim.__cmd_ux_capability_registry or {}
 ---@type table<string, CmdUxCapability>
 M.registry = vim.__cmd_ux_capability_registry
 
+function M.reset()
+  for id, _ in pairs(M.registry) do
+    M.registry[id] = nil
+  end
+end
+
 ---@param value unknown
 ---@param field string
 ---@return string

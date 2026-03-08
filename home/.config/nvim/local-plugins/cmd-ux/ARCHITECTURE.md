@@ -115,6 +115,7 @@ It stores:
 
 Each scope advances its own active-day clock only when that scope records real activity on a new local day.
 Pure AFK calendar gaps do not decay learning.
+Semantic root usage is recorded whether the command is accepted through the `cmd-ux` picker flow or executed directly as an Ex command.
 
 It changes:
 

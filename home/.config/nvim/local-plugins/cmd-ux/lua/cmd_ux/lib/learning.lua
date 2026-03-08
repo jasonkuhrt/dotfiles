@@ -2,6 +2,7 @@ local cache = require("kit.cache")
 local capabilities = require("cmd_ux.lib.capabilities")
 local config = require("cmd_ux.config")
 local context = require("cmd_ux.lib.context")
+local providers = require("cmd_ux.providers")
 local types = require("cmd_ux.types")
 
 local M = {}
@@ -2275,6 +2276,12 @@ local function alias_slug(value)
   return slug
 end
 
+---@param root string
+---@return boolean
+local function quarantine_eligible_root(root)
+  return providers.by_root[root] == nil
+end
+
 ---@param limit integer
 ---@return { alias: string, rendered: string, score: integer, recent_exec: integer, depth: integer }[]
 function M.alias_candidates(limit)
@@ -2317,7 +2324,7 @@ function M.unlearned_roots(roots, limit)
   local vector = current_context_vector()
   local items = {}
   for _, root in ipairs(roots or {}) do
-    if mixed_node_view(vector, root).score == 0 then
+    if quarantine_eligible_root(root) and mixed_node_view(vector, root).score == 0 then
       items[#items + 1] = root
     end
   end
@@ -2411,7 +2418,15 @@ end
 ---@param event CmdUxLearningEvent
 ---@return boolean
 local function flow_event_supported(event)
-  return event.root ~= "Flow" and #event.capabilities > 0
+  if event.root == "Flow" or #event.capabilities == 0 then
+    return false
+  end
+  for _, capability_id in ipairs(event.capabilities) do
+    if not capabilities.get(capability_id) then
+      return false
+    end
+  end
+  return true
 end
 
 ---@param limit integer

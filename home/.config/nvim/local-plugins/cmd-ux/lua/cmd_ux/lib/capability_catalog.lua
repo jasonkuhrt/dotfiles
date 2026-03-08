@@ -5,8 +5,6 @@ local lsp = require("cmd_ux.lib.lsp")
 
 local M = {}
 
-local did_register = false
-
 local function current_path()
   local path = vim.api.nvim_buf_get_name(0)
   if path == "" then
@@ -66,10 +64,7 @@ local function register(spec)
 end
 
 function M.register_all()
-  if did_register then
-    return
-  end
-  did_register = true
+  capabilities.reset()
 
   register({
     id = "buffer.write_current",

@@ -9,6 +9,7 @@ local core = require("cmd_ux.core")
 local buffer_provider = require("cmd_ux.providers.buffer")
 local flow_provider = require("cmd_ux.providers.flow")
 local helpers = require("tests.plenary.helpers")
+local index = require("cmd_ux.index")
 local learning = require("cmd_ux.lib.learning")
 local pane_provider = require("cmd_ux.providers.pane")
 local recall_provider = require("cmd_ux.providers.recall")
@@ -696,6 +697,25 @@ describe("cmd_ux learning and flow features", function()
     close_report_tab()
   end)
 
+  it("learns semantic root commands executed directly through Ex", function()
+    local original_snacks = package.loaded["snacks"]
+    local calls = {}
+    package.loaded["snacks"] = {
+      picker = {
+        files = function()
+          calls[#calls + 1] = "files"
+        end,
+      },
+    }
+
+    vim.cmd("Project files")
+
+    eq({ "files" }, calls)
+    eq("Project files", learning.recent_commands(5)[1].rendered)
+
+    package.loaded["snacks"] = original_snacks
+  end)
+
   it("does not synthesize flows across long idle gaps", function()
     helpers.set_learning_time(1000)
     learning.record_execute_state(core.resolve_line("Project files"))
@@ -731,6 +751,23 @@ describe("cmd_ux learning and flow features", function()
     assert.is_not.equal("broken", capabilities.preview_lines("config.reload")[1])
   end)
 
+  it("setup clears dead capability ids before rebuilding the registry", function()
+    capabilities.register({
+      id = "ghost.capability",
+      label = "Ghost capability",
+      desc = "Ghost",
+      help = "Ghost",
+      safety = "safe",
+      execute = function() end,
+    })
+
+    assert.is_not_nil(capabilities.get("ghost.capability"))
+
+    cmd_ux.setup()
+
+    assert.is_nil(capabilities.get("ghost.capability"))
+  end)
+
   it("reports root ranking as score values instead of fake execute/select counts", function()
     learning.record_execute_state(core.resolve_line("Config reload"))
 
@@ -740,6 +777,21 @@ describe("cmd_ux learning and flow features", function()
     assert.is_falsy(roots_lines:find("executed=", 1, true))
     assert.is_falsy(roots_lines:find("selected=", 1, true))
     close_report_tab()
+  end)
+
+  it("quarantine excludes first-party semantic roots", function()
+    helpers.create_noarg_command("AaaNoiseCandidate")
+    helpers.sync_cmd_ux()
+
+    local candidates = learning.quarantine_candidates(index.get().roots, 20)
+    local roots = vim.tbl_map(function(item)
+      return item.root
+    end, candidates)
+
+    assert.is_true(vim.tbl_contains(roots, "AaaNoiseCandidate"))
+    assert.is_false(vim.tbl_contains(roots, "Buffer"))
+    assert.is_false(vim.tbl_contains(roots, "Search"))
+    assert.is_false(vim.tbl_contains(roots, "Tab"))
   end)
 
   it("cmdux reset-learning clears learned ordering", function()

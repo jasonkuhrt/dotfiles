@@ -66,6 +66,18 @@ local function ex_adapter()
   return require("cmd_ux.adapters.ex")
 end
 
+---@param root string
+---@param provider Provider
+---@param args string
+local function execute_semantic_user_command(root, provider, args)
+  local rendered = vim.trim(root .. " " .. (args or ""))
+  local ok, state = pcall(require("cmd_ux.core").resolve_line, rendered)
+  if ok and state and state.executable then
+    require("cmd_ux.lib.learning").record_execute_state(state)
+  end
+  provider.execute(args)
+end
+
 function M.reload()
   blocklist.reload()
   providers.invalidate()
@@ -105,7 +117,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Config", function(cmd_opts)
-    config_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Config", config_provider, cmd_opts.args)
   end, {
     desc = "Config commands (help, reload)",
     nargs = "*",
@@ -118,7 +130,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Buffer", function(cmd_opts)
-    buffer_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Buffer", buffer_provider, cmd_opts.args)
   end, {
     desc = "Buffer commands (next, previous, close, goto, ...)",
     nargs = "*",
@@ -131,7 +143,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Cmdux", function(cmd_opts)
-    cmdux_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Cmdux", cmdux_provider, cmd_opts.args)
   end, {
     desc = "Cmd UX commands (help, refresh)",
     nargs = "*",
@@ -144,7 +156,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Flow", function(cmd_opts)
-    flow_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Flow", flow_provider, cmd_opts.args)
   end, {
     desc = "Context-aware flow actions",
     nargs = "*",
@@ -157,7 +169,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Debug", function(cmd_opts)
-    debug_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Debug", debug_provider, cmd_opts.args)
   end, {
     desc = "Debug commands (continue, step, breakpoint, ...)",
     nargs = "*",
@@ -170,7 +182,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Git", function(cmd_opts)
-    git_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Git", git_provider, cmd_opts.args)
   end, {
     desc = "Git commands (status, branches, history, hunk, ...)",
     nargs = "*",
@@ -183,7 +195,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Lsp", function(cmd_opts)
-    lsp_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Lsp", lsp_provider, cmd_opts.args)
   end, {
     desc = "LSP commands (jump, symbols, refactor, ...)",
     nargs = "*",
@@ -196,7 +208,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Marks", function(cmd_opts)
-    marks_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Marks", marks_provider, cmd_opts.args)
   end, {
     desc = "Marks commands (browse)",
     nargs = "*",
@@ -209,7 +221,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Pane", function(cmd_opts)
-    pane_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Pane", pane_provider, cmd_opts.args)
   end, {
     desc = "Pane commands (focus, resize, split, close, ...)",
     nargs = "*",
@@ -222,7 +234,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Project", function(cmd_opts)
-    project_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Project", project_provider, cmd_opts.args)
   end, {
     desc = "Project commands (files, grep, switch, recent)",
     nargs = "*",
@@ -235,7 +247,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Recall", function(cmd_opts)
-    recall_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Recall", recall_provider, cmd_opts.args)
   end, {
     desc = "Replay recent cmd-ux commands",
     nargs = "*",
@@ -248,7 +260,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Registers", function(cmd_opts)
-    registers_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Registers", registers_provider, cmd_opts.args)
   end, {
     desc = "Registers commands (browse)",
     nargs = "*",
@@ -261,7 +273,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Search", function(cmd_opts)
-    search_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Search", search_provider, cmd_opts.args)
   end, {
     desc = "Search commands (files, text, lists, vim, ...)",
     nargs = "*",
@@ -274,7 +286,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Session", function(cmd_opts)
-    session_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Session", session_provider, cmd_opts.args)
   end, {
     desc = "Session commands (save, restore, stop)",
     nargs = "*",
@@ -287,7 +299,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Tab", function(cmd_opts)
-    tab_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Tab", tab_provider, cmd_opts.args)
   end, {
     desc = "Tab commands (next, previous, close, goto, ...)",
     nargs = "*",
@@ -300,7 +312,7 @@ function M.setup(opts)
 
   ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Test", function(cmd_opts)
-    test_provider.execute(cmd_opts.args)
+    execute_semantic_user_command("Test", test_provider, cmd_opts.args)
   end, {
     desc = "Test commands (run, debug, output, jump, ...)",
     nargs = "*",

@@ -241,6 +241,8 @@ Useful subcommands:
 - `Cmdux export`
 - `Cmdux reset-learning`
 
+`Cmdux quarantine` is intentionally aimed at low-value generic roots, not first-party semantic namespaces like `Buffer`, `Search`, or `Flow`.
+
 This makes the learning layer inspectable in three different modes:
 
 - explanation: explain

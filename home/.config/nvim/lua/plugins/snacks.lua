@@ -36,6 +36,10 @@ return {
         },
         sources = {
           explorer = {
+            layout = {
+              preset = "sidebar",
+              preview = "main",
+            },
             matcher = {
               fuzzy = true,
             },

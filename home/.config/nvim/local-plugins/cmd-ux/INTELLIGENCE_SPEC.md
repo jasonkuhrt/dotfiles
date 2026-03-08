@@ -145,9 +145,11 @@ Project identity should be:
 2. workspace root
 3. cwd or app-local project root
 
-### Daily Bucket
+### Active-Day Bucket
 
-Learning uses daily buckets in the user's local timezone.
+Learning uses per-scope active-day buckets in the user's local timezone.
+A scope advances only when it records real activity on a new local day.
+Pure AFK calendar gaps do not decay learning.
 
 The system does not rely on infinite lifetime counters.
 Recent behavior matters more than ancient behavior.
@@ -305,7 +307,7 @@ Workflow edges drive AI review, shortcut proposals, and future flow synthesis.
 
 ## Temporal Model
 
-All derived learning tables are bucketed by local day.
+All derived learning tables are bucketed by active day per scope.
 
 The engine computes effective scores over a sliding window.
 
@@ -314,30 +316,30 @@ Suggested defaults:
 - `window_days = 21`
 - `freshness_days = 5`
 
-Daily weight formula:
+Active-day weight formula:
 
 ```text
-day_weight(age_days) = window_days - age_days
+day_weight(active_day_age) = window_days - active_day_age
 ```
 
 For `window_days = 21`:
 
-- today: `21`
-- yesterday: `20`
+- current active day: `21`
+- previous active day: `20`
 - ...
-- 20 days ago: `1`
+- 20 active days ago: `1`
 
 Anything outside the window contributes `0`.
 
-This gives deterministic linear decay:
+This gives deterministic linear decay based on continued activity:
 
 - recent usage matters most
-- stale usage fades naturally
+- stale usage fades as the scope keeps being used
 - no negative counters are needed
 
 ## Derived Tables
 
-The system should maintain derived daily-bucket tables keyed by stable ids.
+The system should maintain derived active-day bucket tables keyed by stable ids.
 
 ### Node Activation
 
@@ -644,6 +646,9 @@ learning = {
   },
 }
 ```
+
+The `window_days` and `freshness_days` names are configuration surface labels.
+Semantically they mean active days, not raw calendar elapsed days.
 
 ## Safety Invariants
 

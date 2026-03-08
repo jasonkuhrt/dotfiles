@@ -3,11 +3,11 @@ local config = require("cmd_ux.config")
 
 local M = {}
 
-local version = 2
+local version = 3
 local learning_path = vim.fn.stdpath("cache") .. "/cmd-ux-learning.json"
 
 ---@class CmdUxLearningMetric
----@field days table<string, integer>
+---@field buckets table<string, integer>
 ---@field last_seq integer
 
 ---@class CmdUxLearningSignalStat
@@ -25,6 +25,9 @@ local learning_path = vim.fn.stdpath("cache") .. "/cmd-ux-learning.json"
 ---@field execute CmdUxLearningMetric
 
 ---@class CmdUxLearningScope
+---@field active_day integer
+---@field activity_days table<string, integer>
+---@field last_activity_key string
 ---@field nodes_global table<string, CmdUxLearningSignalStat>
 ---@field nodes_by_kind table<string, table<string, CmdUxLearningSignalStat>>
 ---@field transitions_exact table<string, table<string, CmdUxLearningSignalStat>>
@@ -56,44 +59,10 @@ local function today_key()
   return tostring(os.date("%Y-%m-%d", now()))
 end
 
----@param day string
----@return integer?
-local function day_timestamp(day)
-  local year, month, month_day = day:match("^(%d%d%d%d)%-(%d%d)%-(%d%d)$")
-  if not year then
-    return nil
-  end
-
-  local year_num = tonumber(year)
-  local month_num = tonumber(month)
-  local day_num = tonumber(month_day)
-  if not year_num or not month_num or not day_num then
-    return nil
-  end
-
-  return os.time({
-    year = year_num,
-    month = month_num,
-    day = day_num,
-    hour = 12,
-  })
-end
-
----@param day string
----@return integer
-local function age_days(day)
-  local timestamp = day_timestamp(day)
-  if not timestamp then
-    return math.huge
-  end
-
-  return math.max(0, math.floor((now() - timestamp) / 86400))
-end
-
 ---@return CmdUxLearningMetric
 local function empty_metric()
   return {
-    days = {},
+    buckets = {},
     last_seq = 0,
   }
 end
@@ -110,6 +79,9 @@ end
 ---@return CmdUxLearningScope
 local function empty_scope()
   return {
+    active_day = 0,
+    activity_days = {},
+    last_activity_key = "",
     nodes_global = {},
     nodes_by_kind = {},
     transitions_exact = {},
@@ -143,10 +115,11 @@ local function normalize_metric(metric)
   local normalized = empty_metric()
   normalized.last_seq = normalize_int(metric.last_seq)
 
-  if type(metric.days) == "table" then
-    for day, credit in pairs(metric.days) do
-      if type(day) == "string" and day ~= "" then
-        normalized.days[day] = normalize_int(credit)
+  local buckets = type(metric.buckets) == "table" and metric.buckets or metric.days
+  if type(buckets) == "table" then
+    for bucket, credit in pairs(buckets) do
+      if type(bucket) == "string" and bucket ~= "" then
+        normalized.buckets[bucket] = normalize_int(credit)
       end
     end
   end
@@ -192,6 +165,16 @@ end
 local function normalize_scope(scope)
   scope = type(scope) == "table" and scope or {}
   local normalized = empty_scope()
+  normalized.active_day = normalize_int(scope.active_day)
+  normalized.last_activity_key = type(scope.last_activity_key) == "string" and scope.last_activity_key or ""
+
+  if type(scope.activity_days) == "table" then
+    for day_key, index in pairs(scope.activity_days) do
+      if type(day_key) == "string" and day_key ~= "" then
+        normalized.activity_days[day_key] = normalize_int(index)
+      end
+    end
+  end
 
   for node_id, stat in pairs(scope.nodes_global or {}) do
     if type(node_id) == "string" and node_id ~= "" then
@@ -258,10 +241,173 @@ local function normalize_scope(scope)
   return normalized
 end
 
+---@param scope unknown
+---@return CmdUxLearningScope
+local function migrate_scope_v2(scope)
+  local migrated = empty_scope()
+  scope = type(scope) == "table" and scope or {}
+
+  local active_days = {}
+
+  local function collect_metric_days(metric)
+    if type(metric) ~= "table" or type(metric.days) ~= "table" then
+      return
+    end
+
+    for day_key, _ in pairs(metric.days) do
+      if type(day_key) == "string" and day_key ~= "" then
+        active_days[day_key] = true
+      end
+    end
+  end
+
+  local function collect_signal_stat(stat)
+    if type(stat) ~= "table" then
+      return
+    end
+    collect_metric_days(stat.execute)
+    collect_metric_days(stat.select)
+    collect_metric_days(stat.shortcut)
+  end
+
+  for _, stat in pairs(scope.nodes_global or {}) do
+    collect_signal_stat(stat)
+  end
+  for _, nodes in pairs(scope.nodes_by_kind or {}) do
+    for _, stat in pairs(nodes or {}) do
+      collect_signal_stat(stat)
+    end
+  end
+  for _, nodes in pairs(scope.transitions_exact or {}) do
+    for _, stat in pairs(nodes or {}) do
+      collect_signal_stat(stat)
+    end
+  end
+  for _, nodes in pairs(scope.transitions_relaxed or {}) do
+    for _, stat in pairs(nodes or {}) do
+      collect_signal_stat(stat)
+    end
+  end
+  for _, nodes in pairs(scope.paths_exact or {}) do
+    for _, stat in pairs(nodes or {}) do
+      collect_signal_stat(stat)
+    end
+  end
+  for _, stat in pairs(scope.paths_relaxed or {}) do
+    collect_signal_stat(stat)
+  end
+  for _, stat in pairs(scope.commands or {}) do
+    if type(stat) == "table" then
+      collect_metric_days(stat.execute)
+    end
+  end
+
+  local ordered_days = vim.tbl_keys(active_days)
+  table.sort(ordered_days)
+  for index, day_key in ipairs(ordered_days) do
+    migrated.activity_days[day_key] = index
+  end
+  migrated.active_day = #ordered_days
+  migrated.last_activity_key = ordered_days[#ordered_days] or ""
+
+  local function migrate_metric(metric)
+    metric = type(metric) == "table" and metric or {}
+    local normalized = empty_metric()
+    normalized.last_seq = normalize_int(metric.last_seq)
+    for day_key, credit in pairs(metric.days or {}) do
+      local bucket_index = migrated.activity_days[day_key]
+      if bucket_index then
+        normalized.buckets[tostring(bucket_index)] = normalize_int(credit)
+      end
+    end
+    return normalized
+  end
+
+  local function migrate_signal_stat(stat)
+    stat = type(stat) == "table" and stat or {}
+    return {
+      execute = migrate_metric(stat.execute),
+      select = migrate_metric(stat.select),
+      shortcut = migrate_metric(stat.shortcut),
+    }
+  end
+
+  for node_id, stat in pairs(scope.nodes_global or {}) do
+    if type(node_id) == "string" and node_id ~= "" then
+      migrated.nodes_global[node_id] = migrate_signal_stat(stat)
+    end
+  end
+  for resource_kind, nodes in pairs(scope.nodes_by_kind or {}) do
+    if type(resource_kind) == "string" and resource_kind ~= "" and type(nodes) == "table" then
+      migrated.nodes_by_kind[resource_kind] = {}
+      for node_id, stat in pairs(nodes) do
+        if type(node_id) == "string" and node_id ~= "" then
+          migrated.nodes_by_kind[resource_kind][node_id] = migrate_signal_stat(stat)
+        end
+      end
+    end
+  end
+  for context_key, nodes in pairs(scope.transitions_exact or {}) do
+    if type(context_key) == "string" and context_key ~= "" and type(nodes) == "table" then
+      migrated.transitions_exact[context_key] = {}
+      for node_id, stat in pairs(nodes) do
+        if type(node_id) == "string" and node_id ~= "" then
+          migrated.transitions_exact[context_key][node_id] = migrate_signal_stat(stat)
+        end
+      end
+    end
+  end
+  for context_key, nodes in pairs(scope.transitions_relaxed or {}) do
+    if type(context_key) == "string" and context_key ~= "" and type(nodes) == "table" then
+      migrated.transitions_relaxed[context_key] = {}
+      for node_id, stat in pairs(nodes) do
+        if type(node_id) == "string" and node_id ~= "" then
+          migrated.transitions_relaxed[context_key][node_id] = migrate_signal_stat(stat)
+        end
+      end
+    end
+  end
+  for resource_kind, nodes in pairs(scope.paths_exact or {}) do
+    if type(resource_kind) == "string" and resource_kind ~= "" and type(nodes) == "table" then
+      migrated.paths_exact[resource_kind] = {}
+      for node_id, stat in pairs(nodes) do
+        if type(node_id) == "string" and node_id ~= "" then
+          local path_stat = migrate_signal_stat(stat)
+          ---@cast path_stat CmdUxLearningPathStat
+          path_stat.rendered = type(stat.rendered) == "string" and stat.rendered or ""
+          path_stat.root = type(stat.root) == "string" and stat.root or ""
+          path_stat.depth = normalize_int(stat.depth)
+          migrated.paths_exact[resource_kind][node_id] = path_stat
+        end
+      end
+    end
+  end
+  for node_id, stat in pairs(scope.paths_relaxed or {}) do
+    if type(node_id) == "string" and node_id ~= "" then
+      local path_stat = migrate_signal_stat(stat)
+      ---@cast path_stat CmdUxLearningPathStat
+      path_stat.rendered = type(stat.rendered) == "string" and stat.rendered or ""
+      path_stat.root = type(stat.root) == "string" and stat.root or ""
+      path_stat.depth = normalize_int(stat.depth)
+      migrated.paths_relaxed[node_id] = path_stat
+    end
+  end
+  for rendered, stat in pairs(scope.commands or {}) do
+    if type(rendered) == "string" and rendered ~= "" then
+      migrated.commands[rendered] = {
+        root = type(stat.root) == "string" and stat.root or "",
+        execute = migrate_metric(type(stat) == "table" and stat.execute or nil),
+      }
+    end
+  end
+
+  return migrated
+end
+
 ---@return CmdUxLearningStore
 local function load()
   local payload = cache.read_json(learning_path)
-  if type(payload) ~= "table" or payload.version ~= version then
+  if type(payload) ~= "table" or type(payload.version) ~= "number" then
     return default_state()
   end
 
@@ -269,9 +415,17 @@ local function load()
   normalized.next_seq = math.max(1, normalize_int(payload.next_seq))
   normalized.updated_at = normalize_int(payload.updated_at)
 
+  if payload.version ~= 2 and payload.version ~= version then
+    return normalized
+  end
+
   for scope_id, scope in pairs(payload.scopes or {}) do
     if type(scope_id) == "string" and scope_id ~= "" then
-      normalized.scopes[scope_id] = normalize_scope(scope)
+      if payload.version == 2 then
+        normalized.scopes[scope_id] = migrate_scope_v2(scope)
+      else
+        normalized.scopes[scope_id] = normalize_scope(scope)
+      end
     end
   end
 
@@ -357,7 +511,7 @@ local function get_scope(scope_id)
 end
 
 ---@return integer
-local function retention_days()
+local function retention_active_days()
   local learning_cfg = config.get().learning
   return math.max(
     learning_cfg.time.window_days,
@@ -366,29 +520,71 @@ local function retention_days()
   ) + 30
 end
 
+---@param scope_id string
+---@return CmdUxLearningScope, integer
+local function ensure_scope_day(scope_id)
+  local scope = ensure_scope(scope_id)
+  local day_key = today_key()
+  local active_day = normalize_int(scope.activity_days[day_key])
+  if active_day == 0 then
+    scope.active_day = normalize_int(scope.active_day) + 1
+    active_day = scope.active_day
+    scope.activity_days[day_key] = active_day
+  end
+  scope.last_activity_key = day_key
+  return scope, active_day
+end
+
+---@param current_active_day integer
+---@param bucket string
+---@return integer
+local function bucket_age(current_active_day, bucket)
+  local bucket_index = normalize_int(bucket)
+  if bucket_index <= 0 or current_active_day <= 0 or bucket_index > current_active_day then
+    return math.huge
+  end
+  return current_active_day - bucket_index
+end
+
 ---@param metric CmdUxLearningMetric
-local function prune_metric(metric)
-  for day, _ in pairs(metric.days) do
-    if age_days(day) >= retention_days() then
-      metric.days[day] = nil
+---@param current_active_day integer
+local function prune_metric(metric, current_active_day)
+  for bucket, _ in pairs(metric.buckets) do
+    if bucket_age(current_active_day, bucket) >= retention_active_days() then
+      metric.buckets[bucket] = nil
     end
   end
 end
 
 ---@param metric CmdUxLearningMetric
+---@param source CmdUxLearningMetric?
+local function merge_metric(metric, source)
+  if not source then
+    return
+  end
+
+  for bucket, credit in pairs(source.buckets) do
+    metric.buckets[bucket] = normalize_int(metric.buckets[bucket]) + normalize_int(credit)
+  end
+  metric.last_seq = math.max(metric.last_seq, source.last_seq)
+end
+
+---@param metric CmdUxLearningMetric
+---@param scope_id string
 ---@param credit integer
-local function touch_metric(metric, credit)
+local function touch_metric(scope_id, metric, credit)
   if credit <= 0 then
     return
   end
 
   local store = ensure_state()
-  local day = today_key()
-  metric.days[day] = normalize_int(metric.days[day]) + credit
+  local _, active_day = ensure_scope_day(scope_id)
+  local bucket = tostring(active_day)
+  metric.buckets[bucket] = normalize_int(metric.buckets[bucket]) + credit
   metric.last_seq = store.next_seq
   store.next_seq = store.next_seq + 1
   store.updated_at = now()
-  prune_metric(metric)
+  prune_metric(metric, active_day)
   schedule_flush()
 end
 
@@ -465,16 +661,17 @@ local function ensure_command(scope_id, rendered)
 end
 
 ---@param metric CmdUxLearningMetric?
+---@param active_day integer
 ---@return integer
-local function metric_score(metric)
+local function metric_score(metric, active_day)
   if not metric then
     return 0
   end
 
   local score = 0
   local window_days = config.get().learning.time.window_days
-  for day, credit in pairs(metric.days) do
-    local age = age_days(day)
+  for bucket, credit in pairs(metric.buckets) do
+    local age = bucket_age(active_day, bucket)
     if age < window_days then
       score = score + (window_days - age) * normalize_int(credit)
     end
@@ -483,16 +680,17 @@ local function metric_score(metric)
 end
 
 ---@param metric CmdUxLearningMetric?
+---@param active_day integer
 ---@param days integer
 ---@return integer
-local function metric_recent_credit(metric, days)
+local function metric_recent_credit(metric, active_day, days)
   if not metric then
     return 0
   end
 
   local total = 0
-  for day, credit in pairs(metric.days) do
-    if age_days(day) < days then
+  for bucket, credit in pairs(metric.buckets) do
+    if bucket_age(active_day, bucket) < days then
       total = total + normalize_int(credit)
     end
   end
@@ -506,13 +704,16 @@ local function metric_recency(metric)
 end
 
 ---@param stat CmdUxLearningSignalStat?
+---@param active_day integer
 ---@return integer
-local function stat_score(stat)
+local function stat_score(stat, active_day)
   if not stat then
     return 0
   end
 
-  return metric_score(stat.execute) + metric_score(stat.select) + metric_score(stat.shortcut)
+  return metric_score(stat.execute, active_day)
+    + metric_score(stat.select, active_day)
+    + metric_score(stat.shortcut, active_day)
 end
 
 ---@param stat CmdUxLearningSignalStat?
@@ -622,8 +823,8 @@ end
 ---@param field "execute"|"select"|"shortcut"
 ---@param credit integer
 local function add_node_credit(scope_id, resource_kind, node_id, field, credit)
-  touch_metric(ensure_global_node_stat(scope_id, node_id)[field], credit)
-  touch_metric(ensure_kind_node_stat(scope_id, resource_kind, node_id)[field], credit)
+  touch_metric(scope_id, ensure_global_node_stat(scope_id, node_id)[field], credit)
+  touch_metric(scope_id, ensure_kind_node_stat(scope_id, resource_kind, node_id)[field], credit)
 end
 
 ---@param scope_id string
@@ -634,8 +835,8 @@ end
 ---@param credit integer
 local function add_transition_credit(scope_id, resource_kind, parent_id, child_id, field, credit)
   local exact_key = resource_kind .. "|" .. parent_id
-  touch_metric(ensure_transition_exact(scope_id, exact_key, child_id)[field], credit)
-  touch_metric(ensure_transition_relaxed(scope_id, parent_id, child_id)[field], credit)
+  touch_metric(scope_id, ensure_transition_exact(scope_id, exact_key, child_id)[field], credit)
+  touch_metric(scope_id, ensure_transition_relaxed(scope_id, parent_id, child_id)[field], credit)
 end
 
 ---@param scope_id string
@@ -651,13 +852,13 @@ local function add_path_credit(scope_id, resource_kind, node_id, rendered, root,
   exact.rendered = rendered
   exact.root = root
   exact.depth = depth
-  touch_metric(exact[field], credit)
+  touch_metric(scope_id, exact[field], credit)
 
   local relaxed = ensure_relaxed_path(scope_id, node_id)
   relaxed.rendered = rendered
   relaxed.root = root
   relaxed.depth = depth
-  touch_metric(relaxed[field], credit)
+  touch_metric(scope_id, relaxed[field], credit)
 end
 
 ---@param scope_id string
@@ -666,7 +867,7 @@ end
 local function add_command_execute(scope_id, rendered, root)
   local command = ensure_command(scope_id, rendered)
   command.root = root
-  touch_metric(command.execute, config.get().learning.propagation.execute[1])
+  touch_metric(scope_id, command.execute, config.get().learning.propagation.execute[1])
 end
 
 ---@param scope_id string
@@ -726,13 +927,15 @@ local function scoped_signal_view(stat_fn)
   local project_scope = get_scope(project_id)
 
   local project_stat = project_scope and stat_fn(project_scope) or nil
-  local score = stat_score(project_stat) * learning_cfg.scope.project_weight
+  local project_score = project_scope and stat_score(project_stat, project_scope.active_day) or 0
+  local score = project_score * learning_cfg.scope.project_weight
   local recency = stat_recency(project_stat)
 
   if learning_cfg.scope.cross_project_enabled then
     for _, scope_id in ipairs(cross_scope_ids(ensure_state().scopes, project_id)) do
-      local stat = stat_fn(assert(get_scope(scope_id)))
-      score = score + (stat_score(stat) * learning_cfg.scope.cross_project_weight)
+      local scope = assert(get_scope(scope_id))
+      local stat = stat_fn(scope)
+      score = score + (stat_score(stat, scope.active_day) * learning_cfg.scope.cross_project_weight)
       recency = math.max(recency, stat_recency(stat))
     end
   end
@@ -756,26 +959,14 @@ local function mixed_node_view(resource_kind, node_id)
 
     local merged = empty_signal_stat()
     if kind_stat then
-      merged.execute.days = vim.deepcopy(kind_stat.execute.days)
-      merged.execute.last_seq = kind_stat.execute.last_seq
-      merged.select.days = vim.deepcopy(kind_stat.select.days)
-      merged.select.last_seq = kind_stat.select.last_seq
-      merged.shortcut.days = vim.deepcopy(kind_stat.shortcut.days)
-      merged.shortcut.last_seq = kind_stat.shortcut.last_seq
+      merge_metric(merged.execute, kind_stat.execute)
+      merge_metric(merged.select, kind_stat.select)
+      merge_metric(merged.shortcut, kind_stat.shortcut)
     end
     if global_stat then
-      for day, credit in pairs(global_stat.execute.days) do
-        merged.execute.days[day] = normalize_int(merged.execute.days[day]) + credit
-      end
-      merged.execute.last_seq = math.max(merged.execute.last_seq, global_stat.execute.last_seq)
-      for day, credit in pairs(global_stat.select.days) do
-        merged.select.days[day] = normalize_int(merged.select.days[day]) + credit
-      end
-      merged.select.last_seq = math.max(merged.select.last_seq, global_stat.select.last_seq)
-      for day, credit in pairs(global_stat.shortcut.days) do
-        merged.shortcut.days[day] = normalize_int(merged.shortcut.days[day]) + credit
-      end
-      merged.shortcut.last_seq = math.max(merged.shortcut.last_seq, global_stat.shortcut.last_seq)
+      merge_metric(merged.execute, global_stat.execute)
+      merge_metric(merged.select, global_stat.select)
+      merge_metric(merged.shortcut, global_stat.shortcut)
     end
     return merged
   end)
@@ -829,9 +1020,10 @@ local function mixed_path_view(resource_kind, node_id)
         return
       end
 
-      exact_score = exact_score + (stat_score(stat) * weight)
+      exact_score = exact_score + (stat_score(stat, scope.active_day) * weight)
       recency = math.max(recency, stat_recency(stat))
-      recent_execute = recent_execute + metric_recent_credit(stat.execute, learning_cfg.promotions.freshness_days)
+      recent_execute = recent_execute
+        + metric_recent_credit(stat.execute, scope.active_day, learning_cfg.promotions.freshness_days)
       if rendered == "" and stat.rendered ~= "" then
         rendered = stat.rendered
       end
@@ -1203,7 +1395,7 @@ function M.recent_commands(limit)
       scoped[#scoped + 1] = {
         rendered = rendered,
         root = stat.root,
-        executed = metric_score(stat.execute),
+        executed = metric_score(stat.execute, scope.active_day),
         last_seq = stat.execute.last_seq,
       }
     end

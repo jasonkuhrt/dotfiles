@@ -120,7 +120,7 @@ The revision changes whenever the live in-memory index instance changes, includi
 
 It persists:
 
-- per-project usage buckets
+- per-project active-day usage buckets
 - exact rendered command executions
 - learned transitions inside namespaces and structured frontiers
 - explicit choice selections in pickers and semantic completion
@@ -130,7 +130,7 @@ It persists:
 That learning feeds back into ordering:
 
 - current-project evidence outweighs cross-project evidence by default
-- recent usage outweighs stale usage via a sliding time window
+- recent usage outweighs stale usage via a sliding active-time window
 - executed choices outrank merely selected choices
 - higher-frequency choices outrank lower-frequency choices
 - more recent choices break ties

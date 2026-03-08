@@ -226,14 +226,27 @@ describe("cmd_ux learning and flow features", function()
     eq("reload", state_a.frontier[1].label)
   end)
 
-  it("decays stale ordering outside the temporal window", function()
+  it("keeps learned ordering stable across AFK calendar gaps", function()
     local base = os.time({ year = 2026, month = 1, day = 1, hour = 12 })
     helpers.set_learning_time(base)
     learning.record_execute_state(core.resolve_line("Config reload"))
     learning.record_execute_state(core.resolve_line("Config reload"))
 
     helpers.set_learning_time(base + (30 * 86400))
-    learning.record_execute_state(core.resolve_line("Config help"))
+    local state = core.resolve_line("Config")
+    eq("reload", state.frontier[1].label)
+  end)
+
+  it("decays stale ordering after enough later active days", function()
+    local base = os.time({ year = 2026, month = 1, day = 1, hour = 12 })
+    helpers.set_learning_time(base)
+    learning.record_execute_state(core.resolve_line("Config reload"))
+    learning.record_execute_state(core.resolve_line("Config reload"))
+
+    for day = 1, 25 do
+      helpers.set_learning_time(base + (day * 86400))
+      learning.record_execute_state(core.resolve_line("Config help"))
+    end
 
     local state = core.resolve_line("Config")
     eq("help", state.frontier[1].label)
@@ -249,7 +262,7 @@ describe("cmd_ux learning and flow features", function()
     eq({ "refactor", "docs" }, labels(state.frontier))
   end)
 
-  it("promotes hot semantic paths at the root layer and lets them decay away", function()
+  it("keeps hot semantic paths promoted across AFK calendar gaps", function()
     register_tree_provider("TreePromo")
     helpers.sync_cmd_ux()
 
@@ -263,6 +276,24 @@ describe("cmd_ux learning and flow features", function()
     assert.is_true(promoted.frontier[1].promoted)
 
     helpers.set_learning_time(base + (30 * 86400))
+    local paused = core.resolve_line("")
+    assert.is_true(vim.tbl_contains(labels(paused.frontier), "TreePromo refactor rename"))
+  end)
+
+  it("lets hot semantic paths decay after enough later active days", function()
+    register_tree_provider("TreePromo")
+    helpers.sync_cmd_ux()
+
+    local base = os.time({ year = 2026, month = 1, day = 1, hour = 12 })
+    helpers.set_learning_time(base)
+    learning.record_execute_state(core.resolve_line("TreePromo refactor rename"))
+    learning.record_execute_state(core.resolve_line("TreePromo refactor rename"))
+
+    for day = 1, 25 do
+      helpers.set_learning_time(base + (day * 86400))
+      learning.record_execute_state(core.resolve_line("Config help"))
+    end
+
     local decayed = core.resolve_line("")
     assert.is_false(vim.tbl_contains(labels(decayed.frontier), "TreePromo refactor rename"))
   end)

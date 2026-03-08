@@ -76,13 +76,16 @@ The learning layer is persisted separately from the command index.
 
 It stores:
 
-- per-project daily buckets
+- per-project active-day buckets
 - mixed current-project and cross-project scores
 - root and node activation
 - frontier transition activation
 - promoted path activation
 - full rendered command execution history
 - recency using a monotonic sequence number
+
+Each scope advances its own active-day clock only when that scope records real activity on a new local day.
+Pure AFK calendar gaps do not decay learning.
 
 It changes:
 

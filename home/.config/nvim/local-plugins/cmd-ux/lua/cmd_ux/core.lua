@@ -42,8 +42,15 @@ function M.accept_token(state, token)
   return resolver.accept_token(state, token)
 end
 
-function M.selected_token(cmp, state)
-  return actions.selected_token(cmp, state)
+---@param state ResolutionState
+---@param choice string|CommandFrontierItem
+---@return ResolutionState
+function M.accept_choice(state, choice)
+  return resolver.accept_choice(state, choice)
+end
+
+function M.selected_choice(cmp, state)
+  return actions.selected_choice(cmp, state)
 end
 
 ---@param state ResolutionState
@@ -60,11 +67,11 @@ function M.decide_current(state, intent)
 end
 
 ---@param state ResolutionState
----@param token string
+---@param choice string|CommandFrontierItem
 ---@param intent CmdUxIntent
 ---@return CmdUxAction
-function M.decide_choice(state, token, intent)
-  return actions.decide_choice(state, token, intent)
+function M.decide_choice(state, choice, intent)
+  return actions.decide_choice(state, choice, intent)
 end
 
 return M

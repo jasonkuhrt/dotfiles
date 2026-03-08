@@ -1,12 +1,15 @@
 local M = {}
 
 local cmd_ux = require("cmd_ux")
+local config = require("cmd_ux.config")
 local learning = require("cmd_ux.lib.learning")
 local strings = require("kit.strings")
 
 function M.ensure_setup()
+  config.reset()
   cmd_ux.setup()
   learning.reset()
+  learning.set_now_for_tests(nil)
 end
 
 function M.drop_user_command(name)
@@ -19,6 +22,12 @@ end
 
 function M.reset_learning()
   learning.reset()
+  learning.set_now_for_tests(nil)
+end
+
+---@param timestamp integer?
+function M.set_learning_time(timestamp)
+  learning.set_now_for_tests(timestamp)
 end
 
 function M.create_noarg_command(name)

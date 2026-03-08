@@ -84,9 +84,9 @@ local function handle(cmp, intent)
   local has_pending_choice = (not state.root and state.pending ~= "") or (state.root and state.pending ~= "")
 
   if has_pending_choice then
-    local token = core.selected_token(cmp, state)
-    if token then
-      return apply_action(core.decide_choice(state, token, intent))
+    local choice = core.selected_choice(cmp, state)
+    if choice then
+      return apply_action(core.decide_choice(state, choice, intent))
     end
     if not state.root then
       return apply_action({ type = "refuse", message = "Command does not exist." })

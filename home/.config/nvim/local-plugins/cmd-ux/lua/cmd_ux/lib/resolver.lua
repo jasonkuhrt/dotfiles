@@ -176,4 +176,22 @@ function M.accept_token(state, token)
   return M.resolve_line(next_line)
 end
 
+---@param state ResolutionState
+---@param choice string|CommandFrontierItem
+---@return ResolutionState
+function M.accept_choice(state, choice)
+  if type(choice) == "table" then
+    if choice.accept_line and choice.accept_line ~= "" then
+      return M.resolve_line(choice.accept_line)
+    end
+    return M.accept_token(state, choice.token or choice.label or "")
+  end
+
+  if type(choice) == "string" then
+    return M.accept_token(state, choice)
+  end
+
+  return state
+end
+
 return M

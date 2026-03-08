@@ -70,9 +70,15 @@ local resolution_kinds = {
 
 ---@class CommandFrontierItem: CommandNode
 ---@field text string
+---@field accept_line string
+---@field promoted boolean
+---@field node_id string
 
 ---@class CommandFrontierItemSpec: CommandNodeSpec
 ---@field text? string
+---@field accept_line? string
+---@field promoted? boolean
+---@field node_id? string
 
 ---@class CommandSnapshot
 ---@field root string
@@ -333,6 +339,9 @@ function M.frontier_item(spec)
   ---@cast item CommandFrontierItem
   item.text =
     normalize_string(spec.text or (item.label .. (item.desc ~= "" and ("  " .. item.desc) or "")), "item.text")
+  item.accept_line = normalize_string(spec.accept_line, "item.accept_line")
+  item.promoted = spec.promoted == true
+  item.node_id = normalize_string(spec.node_id, "item.node_id")
   return item
 end
 

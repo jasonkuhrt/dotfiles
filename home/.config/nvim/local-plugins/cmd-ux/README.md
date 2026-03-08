@@ -4,6 +4,7 @@
 
 Local plugin architecture in this repo follows the shared guide at [DEVELOPMENT.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/local-plugins/DEVELOPMENT.md).
 The detailed runtime/data-flow architecture is documented in [ARCHITECTURE.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/local-plugins/cmd-ux/ARCHITECTURE.md).
+The adaptive ranking/promotion model is specified in [INTELLIGENCE_SPEC.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/local-plugins/cmd-ux/INTELLIGENCE_SPEC.md).
 
 It has one job: make command execution predictable across two surfaces:
 
@@ -119,19 +120,23 @@ The revision changes whenever the live in-memory index instance changes, includi
 
 It persists:
 
-- executed roots
-- executed full commands
+- per-project usage buckets
+- exact rendered command executions
 - learned transitions inside namespaces and structured frontiers
 - explicit choice selections in pickers and semantic completion
+- propagated ancestor/category activation from hot descendant paths
+- promoted full-path shortcuts for strong recent semantic paths
 
 That learning feeds back into ordering:
 
+- current-project evidence outweighs cross-project evidence by default
+- recent usage outweighs stale usage via a sliding time window
 - executed choices outrank merely selected choices
 - higher-frequency choices outrank lower-frequency choices
 - more recent choices break ties
 - original provider/index order remains the final deterministic fallback
 
-This is the behavior that lets repeated usage like `Config reload` rise above `Config help` over time without hardcoding a special case.
+This is the behavior that lets repeated usage like `Config reload` rise above `Config help`, lets `refactor` rise after repeated use of one refactor leaf, and lets hot full paths such as `Config reload` appear as promoted shortcuts at the root layer.
 
 ### Flow Helpers
 
@@ -158,6 +163,7 @@ Useful subcommands:
 - `Cmdux recent`
 - `Cmdux roots`
 - `Cmdux transitions`
+- `Cmdux paths`
 - `Cmdux noise`
 - `Cmdux suggest`
 - `Cmdux export`
@@ -165,7 +171,7 @@ Useful subcommands:
 
 This makes the learning layer inspectable in three different modes:
 
-- observability: stats, recent, roots, transitions
+- observability: stats, recent, roots, transitions, paths
 - cleanup: noise, blocklist
 - design input: suggest, export
 

@@ -4,6 +4,8 @@
 
 `cmd-ux` exists to make Neovim command entry semantic, adaptive, and safe without splitting discovery, ranking, and execution into separate systems.
 
+The broader adaptive-engine model is documented in [INTELLIGENCE_SPEC.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/local-plugins/cmd-ux/INTELLIGENCE_SPEC.md).
+
 The architecture is built around one rule:
 
 - every surface must read the same command truth
@@ -74,14 +76,18 @@ The learning layer is persisted separately from the command index.
 
 It stores:
 
-- root selection/execution counts
-- frontier transition selection/execution counts
-- full rendered command execution counts
+- per-project daily buckets
+- mixed current-project and cross-project scores
+- root and node activation
+- frontier transition activation
+- promoted path activation
+- full rendered command execution history
 - recency using a monotonic sequence number
 
 It changes:
 
 - ordering
+- promotions
 - preview hints
 - reports
 
@@ -142,13 +148,16 @@ A persisted cache generation is not the same thing as the active in-memory revis
 
 ## Deterministic Ranking
 
-Learning ranks frontiers using this order only:
+Learning ranks structural frontiers using this order:
 
-1. executed count
-2. selected count
-3. recency
-4. original provider/index order
-5. label for final tie-break
+1. exact-context transition score
+2. relaxed-context transition score
+3. scoped node activation score
+4. recency
+5. original provider/index order
+6. label for final tie-break
+
+Promoted paths are ranked separately from structural children and then prepended as shortcut items.
 
 That keeps adaptive ordering deterministic and explainable.
 
@@ -178,6 +187,7 @@ Learning data survives invalidation because usage history is orthogonal to comma
 - `recent`
 - `roots`
 - `transitions`
+- `paths`
 - `noise`
 - `suggest`
 - `export`

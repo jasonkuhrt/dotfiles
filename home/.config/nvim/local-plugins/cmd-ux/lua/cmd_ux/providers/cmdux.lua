@@ -16,6 +16,7 @@ local function help_lines()
     "- Cmdux blocklist",
     "- Cmdux help",
     "- Cmdux noise",
+    "- Cmdux paths",
     "- Cmdux suggest",
     "- Cmdux refresh",
     "- Cmdux stats",
@@ -26,7 +27,7 @@ local function help_lines()
     "- Cmdux reset-learning",
     "",
     "Refresh rebuilds the current command index and reloads the cmd-ux blocklist.",
-    "Stats/recent/roots/transitions/noise/suggest surface the learning data used for adaptive ordering.",
+    "Stats/recent/roots/transitions/paths/noise/suggest surface the learning data used for adaptive ordering.",
     "Blocklist opens the exact-hide list that shapes the indexed root set.",
     "Export opens the persisted learning JSON for agent analysis.",
     "Reset-learning clears the current learned ordering state.",
@@ -52,6 +53,22 @@ end
 
 local function show_recent()
   report.open("Cmd UX Recent", learning.recent_lines())
+end
+
+local function show_paths()
+  local lines = {
+    "Cmd UX promoted paths",
+    "",
+  }
+  local paths = learning.top_paths(20)
+  if #paths == 0 then
+    lines[#lines + 1] = "No promoted paths yet."
+  else
+    for _, item in ipairs(paths) do
+      lines[#lines + 1] = ("- %s  score=%d"):format(item.rendered, item.score)
+    end
+  end
+  report.open("Cmd UX Paths", lines)
 end
 
 local function show_transitions()
@@ -136,6 +153,15 @@ local function tree()
       examples = { "Cmdux noise" },
       executable = true,
       execute = show_noise,
+    }),
+    paths = types.node({
+      token = "paths",
+      kind = "leaf",
+      desc = "Open promoted path candidates",
+      help = table.concat(help_lines(), "\n"),
+      examples = { "Cmdux paths" },
+      executable = true,
+      execute = show_paths,
     }),
     recent = types.node({
       token = "recent",
@@ -226,6 +252,7 @@ function M.describe_root(root)
       "Cmdux stats",
       "Cmdux recent",
       "Cmdux transitions",
+      "Cmdux paths",
       "Cmdux noise",
       "Cmdux suggest",
       "Cmdux blocklist",

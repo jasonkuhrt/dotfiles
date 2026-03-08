@@ -222,6 +222,7 @@ Rejected performance shortcuts:
 - `CommandIndex` is the runtime command graph/cache object
 - `ResolutionState` is per interaction and must not become the index itself
 - `ARCHITECTURE.md` is the canonical high-level reference for runtime layers, cache boundaries, and invalidation rules
+- `INTELLIGENCE_SPEC.md` is the canonical reference for scoped temporal learning, promotions, decay, and future workflow synthesis
 
 ## Rejected Ideas
 

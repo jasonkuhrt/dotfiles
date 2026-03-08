@@ -1,4 +1,5 @@
 local blocklist = require("cmd_ux.blocklist")
+local config = require("cmd_ux.config")
 local index = require("cmd_ux.index")
 local providers = require("cmd_ux.providers")
 ---@type Provider
@@ -16,7 +17,7 @@ local M = {}
 
 ---@class CmdUxInitModule
 ---@field reload fun()
----@field setup fun()
+---@field setup fun(opts?: CmdUxConfig)
 ---@field open_picker fun(opts?: CmdUxSnacksOpenOpts): unknown
 ---@field handoff_from_cmdline fun()
 ---@field handle_enter fun(cmp: unknown): boolean?
@@ -45,8 +46,12 @@ function M.reload()
   index.refresh()
 end
 
-function M.setup()
+---@param opts? CmdUxConfig
+function M.setup(opts)
+  config.setup(opts)
+
   if did_setup then
+    require("cmd_ux.lib.learning").reload()
     return
   end
   did_setup = true
@@ -59,9 +64,9 @@ function M.setup()
 
   index.install_hooks()
 
-  ---@param opts CmdUxUserCommandOpts
-  vim.api.nvim_create_user_command("Config", function(opts)
-    config_provider.execute(opts.args)
+  ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Config", function(cmd_opts)
+    config_provider.execute(cmd_opts.args)
   end, {
     desc = "Config commands (help, reload)",
     nargs = "*",
@@ -72,9 +77,9 @@ function M.setup()
     force = true,
   })
 
-  ---@param opts CmdUxUserCommandOpts
-  vim.api.nvim_create_user_command("Cmdux", function(opts)
-    cmdux_provider.execute(opts.args)
+  ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Cmdux", function(cmd_opts)
+    cmdux_provider.execute(cmd_opts.args)
   end, {
     desc = "Cmd UX commands (help, refresh)",
     nargs = "*",
@@ -85,9 +90,9 @@ function M.setup()
     force = true,
   })
 
-  ---@param opts CmdUxUserCommandOpts
-  vim.api.nvim_create_user_command("Flow", function(opts)
-    flow_provider.execute(opts.args)
+  ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Flow", function(cmd_opts)
+    flow_provider.execute(cmd_opts.args)
   end, {
     desc = "Context-aware flow actions",
     nargs = "*",
@@ -98,9 +103,9 @@ function M.setup()
     force = true,
   })
 
-  ---@param opts CmdUxUserCommandOpts
-  vim.api.nvim_create_user_command("Recall", function(opts)
-    recall_provider.execute(opts.args)
+  ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Recall", function(cmd_opts)
+    recall_provider.execute(cmd_opts.args)
   end, {
     desc = "Replay recent cmd-ux commands",
     nargs = "*",

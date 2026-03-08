@@ -50,14 +50,7 @@ M.session = {
   trailing_space = false,
 }
 
----@class CmdUxPickerItem
----@field text string
----@field token string
----@field label string
----@field desc string
----@field kind CommandKind
----@field executable boolean
----@field requires_more boolean
+---@class CmdUxPickerItem: CommandFrontierItem
 ---@field next_state ResolutionState?
 
 ---@class CmdUxStateCache
@@ -123,7 +116,7 @@ local function item_state(item)
   if item.next_state then
     return item.next_state
   end
-  item.next_state = core.accept_token(current_state(), item.token)
+  item.next_state = core.accept_choice(current_state(), item)
   return item.next_state
 end
 
@@ -138,9 +131,15 @@ local function current_items()
       token = item.token,
       label = item.label,
       desc = item.desc,
+      help = item.help,
+      examples = item.examples,
       kind = item.kind,
       executable = item.executable,
       requires_more = item.requires_more,
+      slots = item.slots,
+      accept_line = item.accept_line,
+      promoted = item.promoted,
+      node_id = item.node_id,
     }
   end
   return items
@@ -201,7 +200,7 @@ local function apply_choice(picker, item)
   end
 
   local next_state = item_state(item)
-  learning.record_choice(current_state(), item.token)
+  learning.record_choice(current_state(), item)
   local action_type = "execute"
   if next_state.kind == "namespace" or next_state.kind == "hybrid" or next_state.requires_more then
     action_type = "advance"
@@ -266,8 +265,12 @@ local function picker_opts()
       return current_items()
     end,
     format = function(item)
+      local label = item.label or item.text
+      if item.promoted then
+        label = label .. "  [promoted]"
+      end
       return {
-        { item.label or item.text, "SnacksPickerFile" },
+        { label, "SnacksPickerFile" },
         { item.desc and ("  " .. item.desc) or "", "Comment" },
       }
     end,

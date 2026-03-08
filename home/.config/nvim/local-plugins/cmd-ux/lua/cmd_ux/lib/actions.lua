@@ -4,6 +4,21 @@ local learning = require("cmd_ux.lib.learning")
 local M = {}
 
 ---@param state ResolutionState
+---@param label string?
+---@return CommandFrontierItem?
+local function find_frontier_item(state, label)
+  if not label or label == "" then
+    return nil
+  end
+
+  for _, item in ipairs(state.frontier or {}) do
+    if item.label == label or item.token == label then
+      return item
+    end
+  end
+end
+
+---@param state ResolutionState
 ---@return string
 local function with_trailing_space(state)
   local line = state.rendered
@@ -13,16 +28,24 @@ local function with_trailing_space(state)
   return line
 end
 
-function M.selected_token(cmp, state)
+function M.selected_choice(cmp, state)
   local item = cmp and cmp.get_selected_item and cmp.get_selected_item() or nil
   if item and item.label and item.label ~= "" then
+    local frontier_item = find_frontier_item(state, item.label)
+    if frontier_item then
+      return frontier_item
+    end
     return item.label
   end
   if state.frontier and state.frontier[1] then
-    return state.frontier[1].token
+    return state.frontier[1]
   end
   local items = cmp and cmp.get_items and cmp.get_items() or {}
   if items[1] and items[1].label and items[1].label ~= "" then
+    local frontier_item = find_frontier_item(state, items[1].label)
+    if frontier_item then
+      return frontier_item
+    end
     return items[1].label
   end
 end
@@ -96,12 +119,12 @@ function M.decide_current(state, intent)
 end
 
 ---@param state ResolutionState
----@param token string
+---@param choice string|CommandFrontierItem
 ---@param intent CmdUxIntent
 ---@return CmdUxAction
-function M.decide_choice(state, token, intent)
-  local next_state = resolver.accept_token(state, token)
-  learning.record_choice(state, token)
+function M.decide_choice(state, choice, intent)
+  local next_state = resolver.accept_choice(state, choice)
+  learning.record_choice(state, choice)
 
   if intent == "space" then
     return { type = "advance", line = with_trailing_space(next_state) }

@@ -1588,13 +1588,29 @@ end
 ---@return string[]
 function M.stats_lines(roots)
   local store = ensure_state()
+  local learning_cfg = config.get().learning
+  local project_id = current_project_id()
+  local project_scope = get_scope(project_id)
   local lines = {
     "Cmd UX learning stats",
     "",
     "Learning file: " .. learning_path,
-    "Active project: " .. current_project_id(),
+    "Active project: " .. project_id,
     "Resource kind: " .. current_resource_kind(),
     ("Tracked scopes: %d"):format(vim.tbl_count(store.scopes)),
+    ("Project active day: %d"):format(project_scope and project_scope.active_day or 0),
+    "Project last activity: "
+      .. ((project_scope and project_scope.last_activity_key ~= "") and project_scope.last_activity_key or "none"),
+    ("Scope weights: project=%d cross-project=%d enabled=%s"):format(
+      learning_cfg.scope.project_weight,
+      learning_cfg.scope.cross_project_weight,
+      learning_cfg.scope.cross_project_enabled and "yes" or "no"
+    ),
+    ("Active windows: score=%d freshness=%d promotion=%d"):format(
+      learning_cfg.time.window_days,
+      learning_cfg.time.freshness_days,
+      learning_cfg.promotions.freshness_days
+    ),
   }
 
   local top_roots = M.top_roots(10)

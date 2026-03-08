@@ -398,6 +398,12 @@ describe("cmd_ux learning and flow features", function()
     assert.is_truthy(path_lines:find("Config reload", 1, true))
     close_report_tab()
 
+    cmdux_provider.execute("stats")
+    local stats_lines = table.concat(current_lines(), "\n")
+    assert.is_truthy(stats_lines:find("Project active day:", 1, true))
+    assert.is_truthy(stats_lines:find("Active windows:", 1, true))
+    close_report_tab()
+
     cmdux_provider.execute("suggest")
     local lines = table.concat(current_lines(), "\n")
     assert.is_truthy(lines:find("Config reload", 1, true))

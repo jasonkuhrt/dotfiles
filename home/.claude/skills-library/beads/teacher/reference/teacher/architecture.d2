@@ -1,0 +1,33 @@
+direction: down
+
+cli: "bd CLI\n(create/close/update)" {
+  shape: hexagon
+}
+
+dolt_server: "Dolt SQL server\n(local process)" {
+  shape: hexagon
+}
+
+dolt_db: "Dolt DB\n(.beads/dolt, git-ignored)" {
+  shape: cylinder
+}
+
+dolt_remote: "Dolt remote\n(origin)" {
+  shape: cloud
+}
+
+git_local: "git repo\n(code + docs)" {
+  shape: hexagon
+}
+
+git_remote: "git origin\n(code remote)" {
+  shape: cloud
+}
+
+cli -> dolt_server: commands
+dolt_server -> dolt_db: read/write
+dolt_db -> dolt_remote: bd dolt push
+dolt_remote -> dolt_db: bd dolt pull
+
+git_local -> git_remote: git push
+git_remote -> git_local: git pull

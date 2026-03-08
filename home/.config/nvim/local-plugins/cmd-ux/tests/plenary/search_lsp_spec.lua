@@ -49,10 +49,12 @@ describe("cmd_ux search and lsp namespaces", function()
 
   it("search exposes semantic families and nested completion", function()
     local state = core.resolve_line("Search")
-    eq({ "files", "lists", "resume", "text", "vim" }, labels(state.frontier))
+    eq({ "code", "editor", "files", "lists", "resume", "text" }, labels(state.frontier))
     eq({ "text" }, search_provider.complete("Search te"))
     eq({ "word" }, search_provider.complete("Search text wo"))
-    eq({ "diagnostics-buffer" }, search_provider.complete("Search lists diagnostics-b"))
+    eq({ "diagnostics-buffer" }, search_provider.complete("Search code diagnostics-b"))
+    eq({ "workspace" }, search_provider.complete("Search code symbols wor"))
+    eq({ "help" }, search_provider.complete("Search editor he"))
   end)
 
   it("search executes picker-backed actions and flow surfaces search shortcuts", function()
@@ -89,7 +91,7 @@ describe("cmd_ux search and lsp namespaces", function()
     assert.is_true(vim.tbl_contains(flow_labels, "search-diagnostics"))
 
     search_provider.execute("text word")
-    search_provider.execute("lists diagnostics-buffer")
+    search_provider.execute("code diagnostics-buffer")
 
     eq({ "grep_word", "diagnostics_buffer" }, calls)
 

@@ -4,16 +4,25 @@
 # Keep entries sorted ascending.
 # Check from shell with: just cmd-ux-blocklist-check
 
+DapContinue
 DapInstall
+DapStepInto
+DapStepOut
+DapStepOver
+DapTerminate
+DapToggleBreakpoint
+DapUIToggle
 DapUninstall
 DoMatchParen
 Explore
+Gitsigns
 Hexplore
 LazyDev
 Lexplore
 MatchDebug
 MatchDisable
 MatchEnable
+Neotest
 NetUserPass
 Nexplore
 Next
@@ -23,6 +32,10 @@ Nsource
 Ntree
 Nwrite
 Pexplore
+SessionLoad
+SessionSave
+SessionSelect
+SessionStop
 Sexplore
 SmartCursorMoveDown
 SmartCursorMoveLeft

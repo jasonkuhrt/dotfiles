@@ -110,6 +110,7 @@ It stores:
 - frontier transition activation
 - promoted path activation
 - full rendered command execution history
+- bounded semantic event history for deterministic flow proposal mining within short interaction bursts
 - recency using a monotonic sequence number
 
 Each scope advances its own active-day clock only when that scope records real activity on a new local day.
@@ -119,6 +120,8 @@ It changes:
 
 - ordering
 - promotions
+- alias proposals
+- deterministic flow proposals
 - preview hints
 - reports
 - inbox proposals
@@ -217,8 +220,11 @@ Learning data survives invalidation because usage history is orthogonal to comma
 `Cmdux` exposes the learning layer as first-class reports:
 
 - `capabilities`
+- `compare`
 - `explain`
+- `forest`
 - `inbox`
+- `quarantine`
 - `stats`
 - `recent`
 - `roots`

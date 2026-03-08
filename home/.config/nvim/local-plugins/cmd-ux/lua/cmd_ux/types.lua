@@ -18,6 +18,12 @@ local resolution_kinds = {
   arg = true,
 }
 
+local safety_kinds = {
+  safe = true,
+  reversible = true,
+  destructive = true,
+}
+
 ---@alias CommandKind
 ---| "leaf"
 ---| "namespace"
@@ -57,6 +63,10 @@ local resolution_kinds = {
 ---@field executable boolean
 ---@field requires_more boolean
 ---@field slots CommandSlot[]
+---@field safety "safe"|"reversible"|"destructive"
+---@field outcome string[]
+---@field capability string
+---@field steps CmdUxCapabilityStep[]
 ---@field execute? fun()
 
 ---@class CommandNodeSpec
@@ -70,6 +80,10 @@ local resolution_kinds = {
 ---@field executable? boolean
 ---@field requires_more? boolean
 ---@field slots? CommandSlotSpec[]|CommandSlot[]
+---@field safety? "safe"|"reversible"|"destructive"
+---@field outcome? string[]|string
+---@field capability? string
+---@field steps? CmdUxCapabilityStep[]
 ---@field execute? fun()
 
 ---@class CommandFrontierItem: CommandNode
@@ -148,6 +162,10 @@ local resolution_kinds = {
 ---@field pending_is_named boolean
 ---@field slots CommandSlot[]
 ---@field slot_values string[]
+---@field safety "safe"|"reversible"|"destructive"
+---@field outcome string[]
+---@field capability string
+---@field steps CmdUxCapabilityStep[]
 ---@field execute? fun()
 
 ---@class ResolutionStateSpec
@@ -172,6 +190,10 @@ local resolution_kinds = {
 ---@field pending_is_named? boolean
 ---@field slots? CommandSlotSpec[]|CommandSlot[]
 ---@field slot_values? string[]|string
+---@field safety? "safe"|"reversible"|"destructive"
+---@field outcome? string[]|string
+---@field capability? string
+---@field steps? CmdUxCapabilityStep[]
 ---@field execute? fun()
 
 ---@class ResolutionStatePatch
@@ -196,6 +218,10 @@ local resolution_kinds = {
 ---@field pending_is_named? boolean
 ---@field slots? CommandSlotSpec[]|CommandSlot[]
 ---@field slot_values? string[]|string
+---@field safety? "safe"|"reversible"|"destructive"
+---@field outcome? string[]|string
+---@field capability? string
+---@field steps? CmdUxCapabilityStep[]
 ---@field execute? fun()
 
 ---@class Provider
@@ -278,6 +304,19 @@ local function normalize_kind(kind, allowed, field)
   return kind
 end
 
+---@param safety unknown
+---@param field string
+---@return "safe"|"reversible"|"destructive"
+local function normalize_safety(safety, field)
+  if safety == nil then
+    return "safe"
+  end
+  if type(safety) ~= "string" or not safety_kinds[safety] then
+    error(("cmd_ux.types: invalid %s %q"):format(field, tostring(safety)))
+  end
+  return safety
+end
+
 ---@param spec CommandSlotSpec|CommandSlot
 ---@return CommandSlot
 function M.slot(spec)
@@ -347,6 +386,10 @@ function M.node(spec)
     executable = spec.executable == true,
     requires_more = spec.requires_more == true,
     slots = normalize_slots(spec.slots),
+    safety = normalize_safety(spec.safety, "node.safety"),
+    outcome = normalize_string_list(spec.outcome, "node.outcome"),
+    capability = normalize_string(spec.capability, "node.capability"),
+    steps = type(spec.steps) == "table" and vim.deepcopy(spec.steps) or {},
     execute = spec.execute,
   }
 end
@@ -504,6 +547,10 @@ function M.state(spec)
     pending_is_named = spec.pending_is_named == true,
     slots = normalize_slots(spec.slots),
     slot_values = normalize_string_list(spec.slot_values, "state.slot_values"),
+    safety = normalize_safety(spec.safety, "state.safety"),
+    outcome = normalize_string_list(spec.outcome, "state.outcome"),
+    capability = normalize_string(spec.capability, "state.capability"),
+    steps = type(spec.steps) == "table" and vim.deepcopy(spec.steps) or {},
     execute = spec.execute,
   }
 end
@@ -538,6 +585,10 @@ function M.state_from_node(node, spec)
     pending_is_named = spec.pending_is_named,
     slots = spec.slots ~= nil and spec.slots or normalized.slots,
     slot_values = spec.slot_values,
+    safety = spec.safety ~= nil and spec.safety or normalized.safety,
+    outcome = spec.outcome ~= nil and spec.outcome or normalized.outcome,
+    capability = spec.capability ~= nil and spec.capability or normalized.capability,
+    steps = spec.steps ~= nil and spec.steps or normalized.steps,
     execute = spec.execute ~= nil and spec.execute or normalized.execute,
   }
 
@@ -579,6 +630,10 @@ function M.root_state(spec)
     pending_is_named = spec.pending_is_named,
     slots = spec.slots,
     slot_values = spec.slot_values,
+    safety = spec.safety,
+    outcome = spec.outcome,
+    capability = spec.capability,
+    steps = spec.steps,
     execute = spec.execute,
   }
   return M.state(next_state)
@@ -612,6 +667,10 @@ function M.unsupported_state(reason, spec)
     pending_is_named = spec.pending_is_named,
     slots = spec.slots,
     slot_values = spec.slot_values,
+    safety = spec.safety,
+    outcome = spec.outcome,
+    capability = spec.capability,
+    steps = spec.steps,
     execute = spec.execute,
   }
   return M.state(next_state)

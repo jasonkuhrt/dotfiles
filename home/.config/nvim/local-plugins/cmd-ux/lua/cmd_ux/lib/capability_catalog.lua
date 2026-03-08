@@ -1,4 +1,5 @@
 local capabilities = require("cmd_ux.lib.capabilities")
+local extended = require("cmd_ux.lib.capability_catalog_extended")
 local context = require("cmd_ux.lib.context")
 local lsp = require("cmd_ux.lib.lsp")
 
@@ -61,9 +62,6 @@ local function in_config(path)
 end
 
 local function register(spec)
-  if capabilities.get(spec.id) then
-    return
-  end
   capabilities.register(spec)
 end
 
@@ -274,8 +272,8 @@ function M.register_all()
     id = "search.buffer_diagnostics",
     label = "Search current-buffer diagnostics",
     desc = "Browse diagnostics for the current buffer.",
-    help = "Open the Search lists diagnostics-buffer flow.",
-    examples = { "Search lists diagnostics-buffer" },
+    help = "Open the Search code diagnostics-buffer flow.",
+    examples = { "Search code diagnostics-buffer" },
     safety = "safe",
     available = function()
       return #vim.diagnostic.get(0) > 0, "Current buffer has no diagnostics."
@@ -287,7 +285,7 @@ function M.register_all()
       }
     end,
     execute = function()
-      require("cmd_ux.providers.search").execute("lists diagnostics-buffer")
+      require("cmd_ux.providers.search").execute("code diagnostics-buffer")
     end,
   })
 
@@ -403,6 +401,8 @@ function M.register_all()
       require("cmd_ux.providers.tab").execute("only")
     end,
   })
+
+  extended.register_all(register)
 end
 
 return M

@@ -1,4 +1,5 @@
 local M = {}
+local safety = require("cmd_ux.lib.safety")
 
 vim.__cmd_ux_capability_registry = vim.__cmd_ux_capability_registry or {}
 
@@ -122,6 +123,23 @@ function M.list()
 end
 
 ---@param id string
+---@return "safe"|"reversible"|"destructive"
+function M.safety_of(id)
+  local capability = M.get(id)
+  return safety.normalize(capability and capability.safety or "safe")
+end
+
+---@param steps CmdUxCapabilityStep[]
+---@return "safe"|"reversible"|"destructive"
+function M.steps_safety(steps)
+  local combined = "safe"
+  for _, step in ipairs(steps or {}) do
+    combined = safety.combine(combined, M.safety_of(step.capability))
+  end
+  return combined
+end
+
+---@param id string
 ---@param ctx? CmdUxCapabilityContext
 ---@param args? table<string, unknown>
 ---@return boolean, string?
@@ -163,10 +181,28 @@ function M.preview_lines(id, ctx, args)
   return lines
 end
 
+---@param steps CmdUxCapabilityStep[]
+---@param ctx? CmdUxCapabilityContext
+---@return string[]
+function M.preview_step_lines(steps, ctx)
+  local lines = {}
+  for index, step in ipairs(steps or {}) do
+    local capability = M.get(step.capability)
+    local label = capability and capability.label or step.capability
+    lines[#lines + 1] = ("%d. %s [%s]"):format(index, label, M.safety_of(step.capability))
+    local preview = M.preview_lines(step.capability, ctx, step.args)
+    for _, line in ipairs(preview) do
+      lines[#lines + 1] = "   " .. line
+    end
+  end
+  return lines
+end
+
 ---@param id string
 ---@param ctx? CmdUxCapabilityContext
 ---@param args? table<string, unknown>
-function M.execute(id, ctx, args)
+---@param opts? { skip_confirm?: boolean }
+function M.execute(id, ctx, args, opts)
   local capability = M.get(id)
   if not capability then
     error(("cmd_ux.capabilities: unknown capability %q"):format(id))
@@ -178,14 +214,26 @@ function M.execute(id, ctx, args)
     return
   end
 
+  opts = opts or {}
+  if not opts.skip_confirm then
+    local preview = M.preview_lines(id, ctx, args)
+    if not safety.confirm(capability.label, capability.safety, preview) then
+      return
+    end
+  end
+
   capability.execute(ctx, args)
 end
 
 ---@param steps CmdUxCapabilityStep[]
 ---@param ctx? CmdUxCapabilityContext
 function M.execute_steps(steps, ctx)
+  local lines = M.preview_step_lines(steps, ctx)
+  if not safety.confirm("flow", M.steps_safety(steps), lines) then
+    return
+  end
   for _, step in ipairs(steps or {}) do
-    M.execute(step.capability, ctx, step.args)
+    M.execute(step.capability, ctx, step.args, { skip_confirm = true })
   end
 end
 
@@ -197,7 +245,7 @@ function M.describe_steps(steps, ctx)
   for index, step in ipairs(steps or {}) do
     local capability = M.get(step.capability)
     local label = capability and capability.label or step.capability
-    lines[#lines + 1] = ("%d. %s"):format(index, label)
+    lines[#lines + 1] = ("%d. %s [%s]"):format(index, label, M.safety_of(step.capability))
     local preview = M.preview_lines(step.capability, ctx, step.args)
     for _, line in ipairs(preview) do
       lines[#lines + 1] = "   " .. line

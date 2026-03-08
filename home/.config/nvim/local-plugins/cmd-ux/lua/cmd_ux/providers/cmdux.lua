@@ -1,5 +1,6 @@
 local blocklist = require("cmd_ux.blocklist")
 local capabilities = require("cmd_ux.lib.capabilities")
+local forest = require("cmd_ux.lib.forest")
 local index = require("cmd_ux.index")
 local learning = require("cmd_ux.lib.learning")
 local report = require("cmd_ux.lib.report")
@@ -16,11 +17,15 @@ local function help_lines()
     "Cmdux commands:",
     "- Cmdux blocklist",
     "- Cmdux capabilities",
+    "- Cmdux compare <left> -- <right>",
     "- Cmdux explain [line]",
+    "- Cmdux forest",
     "- Cmdux help",
     "- Cmdux inbox",
     "- Cmdux noise",
     "- Cmdux paths",
+    "- Cmdux quarantine",
+    "- Cmdux quarantine apply <root>",
     "- Cmdux suggest",
     "- Cmdux refresh",
     "- Cmdux stats",
@@ -33,8 +38,11 @@ local function help_lines()
     "Refresh rebuilds the current command index and reloads the cmd-ux blocklist.",
     "Stats/recent/roots/transitions/paths/noise/suggest surface the learning data used for adaptive ordering.",
     "Explain shows the exact ranking breakdown for a root or partial command line.",
+    "Compare shows why one command path currently outranks another in the active context.",
     "Inbox surfaces actionable alias, shortcut, ranking, and noise proposals.",
+    "Forest prints the semantic command forest across all registered namespace providers.",
     "Capabilities shows the typed action substrate used by Flow and future synthesis.",
+    "Quarantine surfaces exact-hide candidates and can append them to the blocklist.",
     "Blocklist opens the exact-hide list that shapes the indexed root set.",
     "Export opens the persisted learning JSON for agent analysis.",
     "Reset-learning clears the current learned ordering state.",
@@ -74,6 +82,15 @@ local function show_explain(raw_line)
   report.open("Cmd UX Explain", learning.explain_lines(raw_line))
 end
 
+local function show_compare(raw_line)
+  local left, right = raw_line:match("^(.-)%s+%-%-%s+(.+)$")
+  if not left or not right then
+    vim.notify("Use: Cmdux compare <left> -- <right>", vim.log.levels.WARN, { title = "Cmdux" })
+    return
+  end
+  report.open("Cmd UX Compare", learning.compare_lines(left, right))
+end
+
 local function show_recent()
   report.open("Cmd UX Recent", learning.recent_lines())
 end
@@ -109,7 +126,7 @@ local function show_roots()
     lines[#lines + 1] = "No learned roots yet."
   else
     for _, item in ipairs(roots) do
-      lines[#lines + 1] = ("- %s  executed=%d selected=%d"):format(item.root, item.executed, item.selected)
+      lines[#lines + 1] = ("- %s  score=%d"):format(item.root, item.score)
     end
   end
 
@@ -118,6 +135,14 @@ end
 
 local function show_noise()
   report.open("Cmd UX Noise", learning.noise_lines(index.get().roots))
+end
+
+local function show_forest()
+  report.open("Cmd UX Forest", forest.lines())
+end
+
+local function show_quarantine()
+  report.open("Cmd UX Quarantine", learning.quarantine_lines(index.get().roots))
 end
 
 local function show_suggestions()
@@ -135,6 +160,18 @@ end
 
 local function open_blocklist()
   vim.cmd("edit " .. vim.fn.fnameescape(blocklist.path()))
+end
+
+---@param root string
+local function apply_quarantine(root)
+  root = vim.trim(root)
+  if root == "" then
+    vim.notify("Use: Cmdux quarantine apply <root>", vim.log.levels.WARN, { title = "Cmdux" })
+    return
+  end
+  blocklist.append({ root })
+  require("cmd_ux").reload()
+  vim.notify("Cmd UX quarantined " .. root .. ".", vim.log.levels.INFO, { title = "Cmdux" })
 end
 
 local function reset_learning()
@@ -183,6 +220,26 @@ local function tree()
       executable = true,
       execute = show_capabilities,
     }),
+    compare = types.node({
+      token = "compare",
+      kind = "hybrid",
+      desc = "Compare the learned ranking between two command paths",
+      help = table.concat(help_lines(), "\n"),
+      examples = { "Cmdux compare Config reload -- Flow config-reload" },
+      executable = true,
+      execute = function()
+        show_compare("")
+      end,
+    }),
+    forest = types.node({
+      token = "forest",
+      kind = "leaf",
+      desc = "Open the semantic provider forest",
+      help = table.concat(help_lines(), "\n"),
+      examples = { "Cmdux forest" },
+      executable = true,
+      execute = show_forest,
+    }),
     help = types.node({
       token = "help",
       kind = "leaf",
@@ -218,6 +275,15 @@ local function tree()
       examples = { "Cmdux paths" },
       executable = true,
       execute = show_paths,
+    }),
+    quarantine = types.node({
+      token = "quarantine",
+      kind = "hybrid",
+      desc = "Review or apply blocklist quarantine candidates",
+      help = table.concat(help_lines(), "\n"),
+      examples = { "Cmdux quarantine", "Cmdux quarantine apply Grep" },
+      executable = true,
+      execute = show_quarantine,
     }),
     recent = types.node({
       token = "recent",
@@ -306,12 +372,15 @@ function M.describe_root(root)
     examples = {
       "Cmdux help",
       "Cmdux inbox",
+      "Cmdux compare",
+      "Cmdux forest",
       "Cmdux explain",
       "Cmdux stats",
       "Cmdux recent",
       "Cmdux transitions",
       "Cmdux paths",
       "Cmdux noise",
+      "Cmdux quarantine",
       "Cmdux suggest",
       "Cmdux blocklist",
       "Cmdux capabilities",
@@ -373,6 +442,62 @@ function M.resolve(ctx)
     })
   end
 
+  if ctx.accepted[1] == "compare" then
+    local compare_node = tree().compare
+    local compare_target = table.concat(vim.list_slice(ctx.accepted, 2), " ")
+    local raw_compare = util.render_line({
+      prefix = compare_target,
+      pending = ctx.pending,
+      trailing_space = ctx.trailing_space,
+    })
+    return types.state_from_node(compare_node, {
+      help = table.concat({
+        compare_node.help,
+        "",
+        "Syntax: Cmdux compare <left> -- <right>",
+        "Current input: " .. (raw_compare ~= "" and raw_compare or "<left> -- <right>"),
+      }, "\n"),
+      executable = raw_compare:find("%s+%-%-%s+") ~= nil,
+      requires_more = false,
+      frontier = {},
+      refusal_reason = raw_compare:find("%s+%-%-%s+") ~= nil and nil
+        or "Separate the left and right paths with ` -- `.",
+    })
+  end
+
+  if ctx.accepted[1] == "quarantine" then
+    local quarantine_node = tree().quarantine
+    if #ctx.accepted == 1 then
+      local frontier = {}
+      for _, item in ipairs(learning.quarantine_items(index.get().roots, ctx.pending)) do
+        frontier[#frontier + 1] = item
+      end
+      frontier[#frontier + 1] = types.frontier_item({
+        token = "apply",
+        kind = "namespace",
+        desc = "Append a quarantine root to the blocklist",
+        help = quarantine_node.help,
+        executable = false,
+        requires_more = true,
+      })
+      return types.state_from_node(quarantine_node, {
+        executable = true,
+        requires_more = false,
+        frontier = frontier,
+      })
+    end
+
+    if ctx.accepted[2] == "apply" then
+      local items = learning.quarantine_items(index.get().roots, ctx.pending)
+      return types.state_from_node(quarantine_node, {
+        executable = #ctx.accepted >= 3,
+        requires_more = #ctx.accepted < 3,
+        frontier = items,
+        refusal_reason = #items == 0 and "No quarantine candidates are available." or nil,
+      })
+    end
+  end
+
   local node = tree()[ctx.accepted[1]]
   if not node then
     return types.state_from_node(root_node, {
@@ -410,6 +535,36 @@ function M.complete(line)
       end
       return result
     end
+    if tokens[1] == "compare" then
+      local compare_rest = rest:match("^compare%s*(.*)$") or ""
+      local delimiter = compare_rest:find("%s+%-%-%s+")
+      local compare_prefix = compare_rest
+      if delimiter then
+        compare_prefix = compare_rest:sub(delimiter + 4)
+      end
+      local result = {}
+      for _, item in ipairs(index.frontier(vim.trim(compare_prefix))) do
+        result[#result + 1] = item.label
+      end
+      return result
+    end
+    if tokens[1] == "quarantine" then
+      if #tokens == 1 then
+        local result = {}
+        for _, item in ipairs(learning.quarantine_items(index.get().roots, prefix)) do
+          result[#result + 1] = item.label
+        end
+        result[#result + 1] = "apply"
+        return result
+      end
+      if tokens[2] == "apply" then
+        local result = {}
+        for _, item in ipairs(learning.quarantine_items(index.get().roots, prefix)) do
+          result[#result + 1] = item.label
+        end
+        return result
+      end
+    end
     return {}
   end
 
@@ -433,6 +588,19 @@ function M.execute(args)
   if tokens[1] == "explain" then
     local raw_line = trimmed:match("^explain%s*(.*)$") or ""
     show_explain(raw_line)
+    return
+  end
+  if tokens[1] == "compare" then
+    local raw_line = trimmed:match("^compare%s*(.*)$") or ""
+    show_compare(raw_line)
+    return
+  end
+  if tokens[1] == "quarantine" then
+    if tokens[2] == "apply" then
+      apply_quarantine(trimmed:match("^quarantine%s+apply%s*(.*)$") or "")
+      return
+    end
+    show_quarantine()
     return
   end
 

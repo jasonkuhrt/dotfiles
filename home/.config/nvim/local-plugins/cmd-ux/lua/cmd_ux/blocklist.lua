@@ -141,4 +141,34 @@ function M.reload()
   ensure_state()
 end
 
+---@param commands string[]
+---@return string[]
+function M.append(commands)
+  local target = {}
+  for _, entry in ipairs(ensure_state().commands) do
+    target[entry] = true
+  end
+  for _, command in ipairs(commands or {}) do
+    if type(command) == "string" and command ~= "" then
+      target[command] = true
+    end
+  end
+
+  local ordered = vim.tbl_keys(target)
+  table.sort(ordered)
+
+  local lines = {
+    "# cmd-ux command blocklist",
+    "# One exact Ex command name per line.",
+    "# Full-line comments and blank lines are allowed.",
+    "# Keep entries sorted ascending.",
+    "# Check from shell with: just cmd-ux-blocklist-check",
+    "",
+  }
+  vim.list_extend(lines, ordered)
+  vim.fn.writefile(lines, default_path)
+  M.reload()
+  return ordered
+end
+
 return M

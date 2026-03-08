@@ -3,6 +3,7 @@
 local eq = assert.are.same
 
 local cmd_ux = require("cmd_ux")
+local capabilities = require("cmd_ux.lib.capabilities")
 local cmdux_provider = require("cmd_ux.providers.cmdux")
 local core = require("cmd_ux.core")
 local buffer_provider = require("cmd_ux.providers.buffer")
@@ -315,6 +316,33 @@ describe("cmd_ux learning and flow features", function()
           min_recent_executes = 2,
           freshness_days = 5,
         },
+        aliases = {
+          enabled = true,
+          max = 8,
+          min_recent_executes = 2,
+          min_depth = 2,
+          min_score = 120,
+        },
+        flows = {
+          enabled = true,
+          history_limit = 512,
+          max_gap_seconds = 180,
+          max = 6,
+          max_steps = 4,
+          min_support = 2,
+          min_score = 180,
+          same_context_only = true,
+        },
+        quarantine = {
+          min_unused_roots = 1,
+          max = 16,
+        },
+      },
+      safety = {
+        confirm_reversible = false,
+        confirm_destructive = true,
+        include_preview_in_confirm = true,
+        preview_line_limit = 4,
       },
     })
 
@@ -563,8 +591,11 @@ describe("cmd_ux learning and flow features", function()
   it("cmdux completion exposes the new learning commands", function()
     eq({ "blocklist" }, cmdux_provider.complete("Cmdux bl"))
     eq({ "capabilities" }, cmdux_provider.complete("Cmdux cap"))
+    eq({ "compare" }, cmdux_provider.complete("Cmdux comp"))
     assert.is_true(vim.tbl_contains(cmdux_provider.complete("Cmdux ex"), "explain"))
+    eq({ "forest" }, cmdux_provider.complete("Cmdux fo"))
     eq({ "inbox" }, cmdux_provider.complete("Cmdux in"))
+    eq({ "quarantine" }, cmdux_provider.complete("Cmdux qu"))
     eq({ "stats" }, cmdux_provider.complete("Cmdux st"))
     eq({ "recent" }, cmdux_provider.complete("Cmdux rec"))
     eq({ "transitions" }, cmdux_provider.complete("Cmdux tr"))
@@ -608,6 +639,7 @@ describe("cmd_ux learning and flow features", function()
     assert.is_truthy(stats_lines:find("Project active day:", 1, true))
     assert.is_truthy(stats_lines:find("Context vector:", 1, true))
     assert.is_truthy(stats_lines:find("Session weights:", 1, true))
+    assert.is_truthy(stats_lines:find("Stored events:", 1, true))
     close_report_tab()
 
     cmdux_provider.execute("suggest")
@@ -623,10 +655,90 @@ describe("cmd_ux learning and flow features", function()
     assert.is_truthy(inbox_lines:find("config-reload", 1, true))
     close_report_tab()
 
+    cmdux_provider.execute("forest")
+    local forest_lines = table.concat(current_lines(), "\n")
+    assert.is_truthy(forest_lines:find("Cmd UX semantic forest", 1, true))
+    assert.is_truthy(forest_lines:find("Search  [provider=search]", 1, true))
+    close_report_tab()
+
+    cmdux_provider.execute("compare Config reload -- Flow config-reload")
+    local compare_lines = table.concat(current_lines(), "\n")
+    assert.is_truthy(compare_lines:find("Cmd UX compare", 1, true))
+    assert.is_truthy(compare_lines:find("currently outranks", 1, true))
+    close_report_tab()
+
+    cmdux_provider.execute("quarantine")
+    local quarantine_lines = table.concat(current_lines(), "\n")
+    assert.is_truthy(quarantine_lines:find("Cmd UX quarantine", 1, true))
+    assert.is_truthy(quarantine_lines:find("AaaNoiseCandidate", 1, true))
+    close_report_tab()
+
     cmdux_provider.execute("capabilities")
     local capability_lines = table.concat(current_lines(), "\n")
     assert.is_truthy(capability_lines:find("buffer.write_current", 1, true))
     assert.is_truthy(capability_lines:find("config.reload", 1, true))
+    close_report_tab()
+  end)
+
+  it("derives deterministic flow proposals from repeated capability sequences", function()
+    learning.record_execute_state(core.resolve_line("Project files"))
+    learning.record_execute_state(core.resolve_line("Project grep"))
+    learning.record_execute_state(core.resolve_line("Project files"))
+    learning.record_execute_state(core.resolve_line("Project grep"))
+
+    local flows = learning.flow_candidates(5)
+    assert.is_true(#flows > 0)
+    assert.is_truthy(flows[1].example:find("Project files", 1, true))
+
+    cmdux_provider.execute("inbox")
+    local inbox_lines = table.concat(current_lines(), "\n")
+    assert.is_truthy(inbox_lines:find("Flow proposals:", 1, true))
+    close_report_tab()
+  end)
+
+  it("does not synthesize flows across long idle gaps", function()
+    helpers.set_learning_time(1000)
+    learning.record_execute_state(core.resolve_line("Project files"))
+    helpers.set_learning_time(1600)
+    learning.record_execute_state(core.resolve_line("Project grep"))
+    helpers.set_learning_time(2200)
+    learning.record_execute_state(core.resolve_line("Project files"))
+    helpers.set_learning_time(2800)
+    learning.record_execute_state(core.resolve_line("Project grep"))
+
+    eq({}, learning.flow_candidates(5))
+  end)
+
+  it("re-registers built-in capabilities over stale registry entries", function()
+    capabilities.register({
+      id = "config.reload",
+      label = "Broken config reload",
+      desc = "Broken",
+      help = "Broken",
+      examples = { "Broken" },
+      safety = "safe",
+      preview = function()
+        return { "broken" }
+      end,
+      execute = function() end,
+    })
+
+    package.loaded["cmd_ux.lib.capability_catalog"] = nil
+    package.loaded["cmd_ux.lib.capability_catalog_extended"] = nil
+    require("cmd_ux.lib.capability_catalog").register_all()
+
+    eq("Reload config", capabilities.get("config.reload").label)
+    assert.is_not.equal("broken", capabilities.preview_lines("config.reload")[1])
+  end)
+
+  it("reports root ranking as score values instead of fake execute/select counts", function()
+    learning.record_execute_state(core.resolve_line("Config reload"))
+
+    cmdux_provider.execute("roots")
+    local roots_lines = table.concat(current_lines(), "\n")
+    assert.is_truthy(roots_lines:find("score=", 1, true))
+    assert.is_falsy(roots_lines:find("executed=", 1, true))
+    assert.is_falsy(roots_lines:find("selected=", 1, true))
     close_report_tab()
   end)
 

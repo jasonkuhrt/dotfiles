@@ -1,10 +1,12 @@
 local cache = require("kit.cache")
+local capabilities = require("cmd_ux.lib.capabilities")
 local config = require("cmd_ux.config")
 local context = require("cmd_ux.lib.context")
+local types = require("cmd_ux.types")
 
 local M = {}
 
-local version = 4
+local version = 5
 local learning_path = vim.fn.stdpath("cache") .. "/cmd-ux-learning.json"
 
 ---@class CmdUxLearningMetric
@@ -42,6 +44,19 @@ local learning_path = vim.fn.stdpath("cache") .. "/cmd-ux-learning.json"
 ---@field next_seq integer
 ---@field updated_at integer
 ---@field scopes table<string, CmdUxLearningScope>
+---@field events CmdUxLearningEvent[]
+
+---@class CmdUxLearningEvent
+---@field rendered string
+---@field root string
+---@field node_id string
+---@field scope_id string
+---@field context_exact_key string
+---@field context_display string
+---@field seq integer
+---@field timestamp integer
+---@field capabilities string[]
+---@field safety "safe"|"reversible"|"destructive"
 
 ---@class CmdUxSessionSignalStat
 ---@field execute integer
@@ -70,6 +85,7 @@ local learning_path = vim.fn.stdpath("cache") .. "/cmd-ux-learning.json"
 local learning_state = nil
 local flush_scheduled = false
 local test_now = nil
+local semantic_node_id
 ---@type CmdUxSessionStore
 local session_state = {
   next_seq = 1,
@@ -128,6 +144,7 @@ local function default_state()
     next_seq = 1,
     updated_at = now(),
     scopes = {},
+    events = {},
   }
 end
 
@@ -218,6 +235,38 @@ local function normalize_command_stat(stat)
   return {
     root = type(stat.root) == "string" and stat.root or "",
     execute = normalize_metric(stat.execute),
+  }
+end
+
+---@param event unknown
+---@return CmdUxLearningEvent?
+local function normalize_event(event)
+  event = type(event) == "table" and event or {}
+  local rendered = type(event.rendered) == "string" and event.rendered or ""
+  local scope_id = type(event.scope_id) == "string" and event.scope_id or ""
+  if rendered == "" or scope_id == "" then
+    return nil
+  end
+
+  local capabilities_list = {}
+  for _, capability_id in ipairs(type(event.capabilities) == "table" and event.capabilities or {}) do
+    if type(capability_id) == "string" and capability_id ~= "" then
+      capabilities_list[#capabilities_list + 1] = capability_id
+    end
+  end
+
+  return {
+    rendered = rendered,
+    root = type(event.root) == "string" and event.root or "",
+    node_id = type(event.node_id) == "string" and event.node_id or "",
+    scope_id = scope_id,
+    context_exact_key = type(event.context_exact_key) == "string" and event.context_exact_key or "",
+    context_display = type(event.context_display) == "string" and event.context_display or "",
+    seq = normalize_int(event.seq),
+    timestamp = normalize_int(event.timestamp),
+    capabilities = capabilities_list,
+    safety = event.safety == "destructive" and "destructive"
+      or (event.safety == "reversible" and "reversible" or "safe"),
   }
 end
 
@@ -476,7 +525,7 @@ local function load()
   normalized.next_seq = math.max(1, normalize_int(payload.next_seq))
   normalized.updated_at = normalize_int(payload.updated_at)
 
-  if payload.version ~= 2 and payload.version ~= 3 and payload.version ~= version then
+  if payload.version ~= 2 and payload.version ~= 3 and payload.version ~= 4 and payload.version ~= version then
     return normalized
   end
 
@@ -487,6 +536,13 @@ local function load()
       else
         normalized.scopes[scope_id] = normalize_scope(scope)
       end
+    end
+  end
+
+  for _, event in ipairs(payload.events or {}) do
+    local normalized_event = normalize_event(event)
+    if normalized_event then
+      normalized.events[#normalized.events + 1] = normalized_event
     end
   end
 
@@ -530,6 +586,21 @@ local function current_context_vector()
   return context.current()
 end
 
+---@param state ResolutionState
+---@return string[]
+local function state_capabilities(state)
+  local ids = {}
+  if type(state.capability) == "string" and state.capability ~= "" then
+    ids[#ids + 1] = state.capability
+  end
+  for _, step in ipairs(type(state.steps) == "table" and state.steps or {}) do
+    if type(step) == "table" and type(step.capability) == "string" and step.capability ~= "" then
+      ids[#ids + 1] = step.capability
+    end
+  end
+  return ids
+end
+
 ---@param vector CmdUxContextVector
 ---@return string[]
 local function all_context_keys(vector)
@@ -546,6 +617,36 @@ local function ensure_scope(scope_id)
   local store = ensure_state()
   store.scopes[scope_id] = store.scopes[scope_id] or empty_scope()
   return store.scopes[scope_id]
+end
+
+local function prune_events(store)
+  local max_events = math.max(64, normalize_int(config.get().learning.flows.history_limit))
+  while #store.events > max_events do
+    table.remove(store.events, 1)
+  end
+end
+
+---@param state ResolutionState
+---@param scope_id string
+---@param vector CmdUxContextVector
+local function record_event(state, scope_id, vector)
+  local store = ensure_state()
+  local capabilities_list = state_capabilities(state)
+  store.events[#store.events + 1] = {
+    rendered = state.rendered,
+    root = state.root or "",
+    node_id = semantic_node_id(state) or "",
+    scope_id = scope_id,
+    context_exact_key = vector.exact_key,
+    context_display = vector.display,
+    seq = store.next_seq,
+    timestamp = now(),
+    capabilities = capabilities_list,
+    safety = state.safety == "destructive" and "destructive"
+      or (state.safety == "reversible" and "reversible" or "safe"),
+  }
+  prune_events(store)
+  schedule_flush()
 end
 
 ---@param scope_id string
@@ -896,7 +997,7 @@ end
 
 ---@param state ResolutionState?
 ---@return string?
-local function semantic_node_id(state)
+function semantic_node_id(state)
   if not state or not state.root then
     return nil
   end
@@ -1875,6 +1976,8 @@ function M.record_execute_state(state)
     add_transition_credit(scope_id, vector, root_context, root_id, "execute", execute_credits[1])
     add_session_transition_credit(scope_id, vector, root_context, root_id, "execute", execute_credits[1])
   end
+
+  record_event(state, scope_id, vector)
 end
 
 ---@param state ResolutionState?
@@ -1987,7 +2090,7 @@ function M.rank_state(state)
 end
 
 ---@param limit integer
----@return { root: string, selected: integer, executed: integer, last_seq: integer }[]
+---@return { root: string, score: integer, last_seq: integer }[]
 function M.top_roots(limit)
   local vector = current_context_vector()
   local seen = {}
@@ -1999,8 +2102,7 @@ function M.top_roots(limit)
         local view = mixed_node_view(vector, node_id)
         items[#items + 1] = {
           root = node_id,
-          selected = view.score,
-          executed = view.score,
+          score = view.score,
           last_seq = view.recency,
         }
       end
@@ -2008,8 +2110,8 @@ function M.top_roots(limit)
   end
 
   table.sort(items, function(left, right)
-    if left.executed ~= right.executed then
-      return left.executed > right.executed
+    if left.score ~= right.score then
+      return left.score > right.score
     end
     if left.last_seq ~= right.last_seq then
       return left.last_seq > right.last_seq
@@ -2128,7 +2230,7 @@ function M.top_transitions(limit)
 end
 
 ---@param limit integer
----@return { rendered: string, node_id: string, score: integer, last_seq: integer }[]
+---@return { rendered: string, node_id: string, score: integer, last_seq: integer, recent_exec: integer, depth: integer }[]
 function M.top_paths(limit)
   local vector = current_context_vector()
   local seen = {}
@@ -2145,6 +2247,8 @@ function M.top_paths(limit)
             node_id = node_id,
             score = (view.exact_score * 6) + (view.relaxed_score * 2),
             last_seq = view.recency,
+            recent_exec = math.max(view.exact_exec_recent, view.relaxed_exec_recent),
+            depth = view.depth,
           }
         end
       end
@@ -2172,18 +2276,31 @@ local function alias_slug(value)
 end
 
 ---@param limit integer
----@return { alias: string, rendered: string, score: integer }[]
+---@return { alias: string, rendered: string, score: integer, recent_exec: integer, depth: integer }[]
 function M.alias_candidates(limit)
+  local aliases_cfg = config.get().learning.aliases
+  if not aliases_cfg.enabled then
+    return {}
+  end
   local items = {}
   local seen = {}
   for _, path in ipairs(M.top_paths(limit * 3)) do
     local alias = alias_slug(path.rendered)
-    if alias ~= "" and alias ~= path.rendered:lower() and not seen[alias] then
+    if
+      alias ~= ""
+      and alias ~= path.rendered:lower()
+      and not seen[alias]
+      and path.depth >= aliases_cfg.min_depth
+      and path.recent_exec >= aliases_cfg.min_recent_executes
+      and path.score >= aliases_cfg.min_score
+    then
       seen[alias] = true
       items[#items + 1] = {
         alias = alias,
         rendered = path.rendered,
         score = path.score,
+        recent_exec = path.recent_exec,
+        depth = path.depth,
       }
     end
     if #items == limit then
@@ -2206,6 +2323,298 @@ function M.unlearned_roots(roots, limit)
   end
   table.sort(items)
   return vim.list_slice(items, 1, limit)
+end
+
+---@param roots string[]
+---@param limit integer
+---@return { root: string, score: integer, reason: string }[]
+function M.quarantine_candidates(roots, limit)
+  local quarantine_cfg = config.get().learning.quarantine
+  local candidates = {}
+  for _, root in ipairs(M.unlearned_roots(roots or {}, quarantine_cfg.max * 2)) do
+    candidates[#candidates + 1] = {
+      root = root,
+      score = 0,
+      reason = "No learned score in the current scoped mix.",
+    }
+    if #candidates == limit then
+      break
+    end
+  end
+  if #candidates < quarantine_cfg.min_unused_roots then
+    return {}
+  end
+  return candidates
+end
+
+---@param roots string[]
+---@param prefix string
+---@return CommandFrontierItem[]
+function M.quarantine_items(roots, prefix)
+  local items = {}
+  for _, candidate in ipairs(M.quarantine_candidates(roots, config.get().learning.quarantine.max)) do
+    items[#items + 1] = types.frontier_item({
+      token = candidate.root,
+      label = candidate.root,
+      kind = "leaf",
+      desc = candidate.reason,
+      help = ("Append %s to the cmd-ux blocklist."):format(candidate.root),
+      executable = true,
+      text = ("%s  %s"):format(candidate.root, candidate.reason),
+    })
+  end
+  return vim.tbl_filter(function(item)
+    return prefix == "" or item.label:find("^" .. vim.pesc(prefix)) ~= nil
+  end, items)
+end
+
+---@param roots string[]
+---@return string[]
+function M.quarantine_lines(roots)
+  local lines = {
+    "Cmd UX quarantine",
+    "",
+    "These roots are currently good blocklist candidates in the active scoped mix.",
+  }
+
+  local candidates = M.quarantine_candidates(roots or {}, config.get().learning.quarantine.max)
+  if #candidates == 0 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "No quarantine candidates are currently strong enough."
+    return lines
+  end
+
+  lines[#lines + 1] = ""
+  for _, candidate in ipairs(candidates) do
+    lines[#lines + 1] = ("- %s  reason=%s"):format(candidate.root, candidate.reason)
+  end
+  lines[#lines + 1] = ""
+  lines[#lines + 1] = "Apply with: Cmdux quarantine apply <root>"
+  return lines
+end
+
+---@param capability_ids string[]
+---@return string
+local function synthesized_flow_slug(capability_ids)
+  local tokens = {}
+  for _, capability_id in ipairs(capability_ids) do
+    local capability = capabilities.get(capability_id)
+    local label = capability and capability.label or capability_id
+    tokens[#tokens + 1] = alias_slug(label)
+  end
+
+  local slug = table.concat(tokens, "-then-")
+  slug = slug:gsub("%-+", "-"):gsub("^%-", ""):gsub("%-$", "")
+  return slug
+end
+
+---@param event CmdUxLearningEvent
+---@return boolean
+local function flow_event_supported(event)
+  return event.root ~= "Flow" and #event.capabilities > 0
+end
+
+---@param limit integer
+---@return { id: string, capabilities: string[], support: integer, score: integer, last_seq: integer, scope: string, context: string, example: string }[]
+function M.flow_candidates(limit)
+  local flows_cfg = config.get().learning.flows
+  if not flows_cfg.enabled then
+    return {}
+  end
+
+  local events = vim.deepcopy(ensure_state().events)
+  table.sort(events, function(left, right)
+    return left.seq < right.seq
+  end)
+
+  local project_id = current_project_id()
+  local aggregates = {}
+
+  for index = 1, #events do
+    local first = events[index]
+    if flow_event_supported(first) then
+      local combined = {}
+      local rendered = {}
+      local scope_id = first.scope_id
+      local context_key = first.context_exact_key
+      local context_display = first.context_display
+      local previous_timestamp = nil
+
+      for cursor = index, #events do
+        local event = events[cursor]
+        if not flow_event_supported(event) then
+          break
+        end
+        if event.scope_id ~= scope_id then
+          break
+        end
+        if flows_cfg.same_context_only and event.context_exact_key ~= context_key then
+          break
+        end
+        if
+          previous_timestamp ~= nil
+          and flows_cfg.max_gap_seconds > 0
+          and event.timestamp > 0
+          and previous_timestamp > 0
+          and (event.timestamp - previous_timestamp) > flows_cfg.max_gap_seconds
+        then
+          break
+        end
+
+        combined = vim.list_extend(combined, vim.deepcopy(event.capabilities))
+        rendered[#rendered + 1] = event.rendered
+        previous_timestamp = event.timestamp
+        if #combined > flows_cfg.max_steps then
+          break
+        end
+
+        if #combined >= 2 then
+          local key = scope_id .. "|" .. context_key .. "|" .. table.concat(combined, " -> ")
+          local aggregate = aggregates[key]
+          if not aggregate then
+            aggregate = {
+              id = synthesized_flow_slug(combined),
+              capabilities = vim.deepcopy(combined),
+              support = 0,
+              score = 0,
+              last_seq = 0,
+              scope = scope_id,
+              context = context_display,
+              example = table.concat(rendered, " -> "),
+            }
+            aggregates[key] = aggregate
+          end
+          aggregate.support = aggregate.support + 1
+          local weight = scope_id == project_id and config.get().learning.scope.project_weight
+            or config.get().learning.scope.cross_project_weight
+          aggregate.score = aggregate.score + (#combined * 20) + (weight * 40)
+          aggregate.last_seq = math.max(aggregate.last_seq, event.seq)
+        end
+      end
+    end
+  end
+
+  local items = {}
+  for _, aggregate in pairs(aggregates) do
+    if aggregate.support >= flows_cfg.min_support and aggregate.score >= flows_cfg.min_score then
+      items[#items + 1] = aggregate
+    end
+  end
+
+  table.sort(items, function(left, right)
+    if left.score ~= right.score then
+      return left.score > right.score
+    end
+    if left.support ~= right.support then
+      return left.support > right.support
+    end
+    if left.last_seq ~= right.last_seq then
+      return left.last_seq > right.last_seq
+    end
+    return left.id < right.id
+  end)
+
+  return vim.list_slice(items, 1, limit)
+end
+
+---@param line string
+---@return { input: string, rendered: string, kind: string, node_id: string, score: integer, recency: integer, node: any, path: any, root: string, context: CmdUxContextVector }
+local function line_breakdown(line)
+  local resolver = require("cmd_ux.lib.resolver")
+  local raw = type(line) == "string" and vim.trim(line) or ""
+  local state = M.rank_state(resolver.resolve_line(raw))
+  local vector = current_context_vector()
+  local exact_node_id = semantic_node_id(state)
+  local node_id = exact_node_id or state.root or ""
+  local node = node_id ~= "" and mixed_node_view(vector, node_id)
+    or {
+      score = 0,
+      recency = 0,
+      project_score = 0,
+      cross_score = 0,
+      session_project_score = 0,
+      session_cross_score = 0,
+      exact_score = 0,
+      facet_score = 0,
+    }
+  local path = exact_node_id and mixed_path_view(vector, exact_node_id) or nil
+  local score = (node.score * 2)
+  local recency = node.recency
+  if path then
+    score = score + (path.exact_score * 6) + (path.relaxed_score * 2)
+    recency = math.max(recency, path.recency)
+  end
+
+  return {
+    input = raw,
+    rendered = state.rendered ~= "" and state.rendered or raw,
+    kind = state.kind,
+    node_id = node_id,
+    score = score,
+    recency = recency,
+    node = node,
+    path = path,
+    root = state.root or "",
+    context = vector,
+  }
+end
+
+---@param left string
+---@param right string
+---@return string[]
+function M.compare_lines(left, right)
+  local left_view = line_breakdown(left)
+  local right_view = line_breakdown(right)
+  local lines = {
+    "Cmd UX compare",
+    "",
+    "Context: " .. left_view.context.display,
+    "",
+    ("A: %s"):format(left_view.rendered ~= "" and left_view.rendered or "<root>"),
+    ("   score=%d project=%d cross=%d session=%d node=%s"):format(
+      left_view.score,
+      left_view.node.project_score,
+      left_view.node.cross_score,
+      left_view.node.session_project_score + left_view.node.session_cross_score,
+      left_view.node_id ~= "" and left_view.node_id or "<none>"
+    ),
+    ("B: %s"):format(right_view.rendered ~= "" and right_view.rendered or "<root>"),
+    ("   score=%d project=%d cross=%d session=%d node=%s"):format(
+      right_view.score,
+      right_view.node.project_score,
+      right_view.node.cross_score,
+      right_view.node.session_project_score + right_view.node.session_cross_score,
+      right_view.node_id ~= "" and right_view.node_id or "<none>"
+    ),
+    "",
+  }
+
+  local winner = left_view
+  local loser = right_view
+  local prefix = "A"
+  local loser_prefix = "B"
+  if
+    right_view.score > left_view.score
+    or (right_view.score == left_view.score and right_view.recency > left_view.recency)
+  then
+    winner = right_view
+    loser = left_view
+    prefix = "B"
+    loser_prefix = "A"
+  end
+
+  lines[#lines + 1] = ("%s currently outranks %s."):format(prefix, loser_prefix)
+  lines[#lines + 1] = ("Delta: %d score, %d recency"):format(winner.score - loser.score, winner.recency - loser.recency)
+
+  if winner.path then
+    lines[#lines + 1] = ("Winner path lift: exact=%d relaxed=%d recent=%d"):format(
+      winner.path.exact_score,
+      winner.path.relaxed_score,
+      math.max(winner.path.exact_exec_recent, winner.path.relaxed_exec_recent)
+    )
+  end
+
+  return lines
 end
 
 ---@param state ResolutionState
@@ -2388,6 +2797,7 @@ function M.stats_lines(roots)
     "Context vector: " .. vector.display,
     "Legacy context key: " .. vector.legacy_key,
     ("Tracked scopes: %d"):format(vim.tbl_count(store.scopes)),
+    ("Stored events: %d"):format(#store.events),
     ("Project active day: %d"):format(project_scope and project_scope.active_day or 0),
     "Project last activity: "
       .. ((project_scope and project_scope.last_activity_key ~= "") and project_scope.last_activity_key or "none"),
@@ -2414,7 +2824,7 @@ function M.stats_lines(roots)
     lines[#lines + 1] = ""
     lines[#lines + 1] = "Top roots:"
     for _, item in ipairs(top_roots) do
-      lines[#lines + 1] = ("- %s  score=%d"):format(item.root, item.executed)
+      lines[#lines + 1] = ("- %s  score=%d"):format(item.root, item.score)
     end
   end
 
@@ -2424,6 +2834,35 @@ function M.stats_lines(roots)
     lines[#lines + 1] = "Promoted path candidates:"
     for _, item in ipairs(paths) do
       lines[#lines + 1] = ("- %s  score=%d"):format(item.rendered, item.score)
+    end
+  end
+
+  local aliases = M.alias_candidates(6)
+  if #aliases > 0 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "Alias candidates:"
+    for _, item in ipairs(aliases) do
+      lines[#lines + 1] = ("- %s => %s  score=%d recent=%d depth=%d"):format(
+        item.alias,
+        item.rendered,
+        item.score,
+        item.recent_exec,
+        item.depth
+      )
+    end
+  end
+
+  local flows = M.flow_candidates(6)
+  if #flows > 0 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "Flow candidates:"
+    for _, item in ipairs(flows) do
+      lines[#lines + 1] = ("- %s  support=%d score=%d context=%s"):format(
+        item.id,
+        item.support,
+        item.score,
+        item.context
+      )
     end
   end
 
@@ -2539,7 +2978,12 @@ function M.suggestion_lines(roots)
     lines[#lines + 1] = ""
     lines[#lines + 1] = "Alias candidates:"
     for _, item in ipairs(aliases) do
-      lines[#lines + 1] = ("- %s => %s  score=%d"):format(item.alias, item.rendered, item.score)
+      lines[#lines + 1] = ("- %s => %s  score=%d recent=%d"):format(
+        item.alias,
+        item.rendered,
+        item.score,
+        item.recent_exec
+      )
     end
   end
 
@@ -2567,12 +3011,26 @@ function M.suggestion_lines(roots)
     end
   end
 
-  local noise = M.unlearned_roots(roots or {}, 12)
-  if #noise > 0 then
+  local flows = M.flow_candidates(8)
+  if #flows > 0 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "Flow synthesis candidates:"
+    for _, item in ipairs(flows) do
+      lines[#lines + 1] = ("- %s  support=%d score=%d example=%s"):format(
+        item.id,
+        item.support,
+        item.score,
+        item.example
+      )
+    end
+  end
+
+  local quarantine = M.quarantine_candidates(roots or {}, 12)
+  if #quarantine > 0 then
     lines[#lines + 1] = ""
     lines[#lines + 1] = "Potential blocklist review:"
-    for _, root in ipairs(noise) do
-      lines[#lines + 1] = ("- %s  suggestion=hide it if it stays unused"):format(root)
+    for _, item in ipairs(quarantine) do
+      lines[#lines + 1] = ("- %s  suggestion=hide it if it stays unused"):format(item.root)
     end
   end
 
@@ -2598,7 +3056,12 @@ function M.inbox_lines(roots)
     lines[#lines + 1] = ""
     lines[#lines + 1] = "Alias proposals:"
     for _, item in ipairs(aliases) do
-      lines[#lines + 1] = ("- %s => %s  score=%d"):format(item.alias, item.rendered, item.score)
+      lines[#lines + 1] = ("- %s => %s  score=%d recent=%d"):format(
+        item.alias,
+        item.rendered,
+        item.score,
+        item.recent_exec
+      )
     end
   end
 
@@ -2625,12 +3088,26 @@ function M.inbox_lines(roots)
     end
   end
 
-  local noise = M.unlearned_roots(roots or {}, 12)
-  if #noise > 0 then
+  local flows = M.flow_candidates(8)
+  if #flows > 0 then
     lines[#lines + 1] = ""
-    lines[#lines + 1] = "Noise review:"
-    for _, root in ipairs(noise) do
-      lines[#lines + 1] = ("- %s"):format(root)
+    lines[#lines + 1] = "Flow proposals:"
+    for _, item in ipairs(flows) do
+      lines[#lines + 1] = ("- %s  support=%d score=%d example=%s"):format(
+        item.id,
+        item.support,
+        item.score,
+        item.example
+      )
+    end
+  end
+
+  local quarantine = M.quarantine_candidates(roots or {}, 12)
+  if #quarantine > 0 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "Quarantine review:"
+    for _, item in ipairs(quarantine) do
+      lines[#lines + 1] = ("- %s"):format(item.root)
     end
   end
 

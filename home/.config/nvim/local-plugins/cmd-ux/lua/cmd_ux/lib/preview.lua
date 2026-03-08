@@ -15,6 +15,7 @@ function M.build(state)
 
   lines[#lines + 1] = "Kind: " .. (state.kind or "unknown")
   lines[#lines + 1] = "Executable now: " .. strings.bool_text(state.executable == true)
+  lines[#lines + 1] = "Safety: " .. (state.safety or "safe")
 
   local shortcut_count = 0
   for _, item in ipairs(state.frontier or {}) do
@@ -60,6 +61,14 @@ function M.build(state)
 
   if state.refusal_reason and state.refusal_reason ~= "" then
     lines[#lines + 1] = "Refusal: " .. state.refusal_reason
+  end
+
+  if state.outcome and #state.outcome > 0 then
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "Outcome:"
+    for _, line in ipairs(state.outcome) do
+      lines[#lines + 1] = "- " .. line
+    end
   end
 
   if state.desc and state.desc ~= "" then

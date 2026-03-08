@@ -157,7 +157,7 @@ The runtime context model is no longer a single flat `resource kind` string. It 
 
 ### Built-in Semantic Roots
 
-Seven built-in semantic roots now extend `cmd-ux` beyond plain command discovery:
+`cmd-ux` now ships a semantic workspace vocabulary well beyond plain command discovery:
 
 - `Buffer`
   - semantic buffer navigation and lifecycle
@@ -174,19 +174,47 @@ Seven built-in semantic roots now extend `cmd-ux` beyond plain command discovery
 - `Flow`
   - context-aware actions for the current buffer
   - built from typed capability steps instead of opaque command strings
-  - examples: save, write-all, source-buffer, config-reload, search-word, lsp-rename, alternate-buffer, close-buffer, pane-only, tab-only
+  - examples: save, write-all, source-buffer, config-reload, search-word, lsp-rename, project-files, test-nearest, git-status, debug-continue
 
 - `Lsp`
   - semantic LSP navigation, symbols, and refactors
   - examples: `Lsp jump definition`, `Lsp references`, `Lsp symbols workspace`, `Lsp refactor action organize-imports`
+
+- `Git`
+  - semantic git status, history, hunk, and blame actions
+  - examples: `Git status`, `Git history file`, `Git hunk stage`, `Git blame`
+
+- `Test`
+  - semantic test running, debugging, output, and failure navigation
+  - examples: `Test run nearest`, `Test output panel`, `Test jump next-failed`
+
+- `Debug`
+  - semantic debugger control for stepping, breakpoints, REPL, and UI
+  - examples: `Debug continue`, `Debug breakpoint toggle`, `Debug step over`
+
+- `Project`
+  - semantic project browsing and search
+  - examples: `Project files`, `Project grep`, `Project switch`
+
+- `Session`
+  - semantic session save/restore control
+  - examples: `Session save`, `Session restore last`, `Session stop`
+
+- `Marks`
+  - semantic mark browsing
+  - examples: `Marks browse`
+
+- `Registers`
+  - semantic register browsing
+  - examples: `Registers browse`
 
 - `Recall`
   - replay recent executed commands
   - examples: `Recall last`, `Recall 2`
 
 - `Search`
-  - semantic search and picker families for files, text, vim state, and result lists
-  - examples: `Search files project`, `Search text word`, `Search vim help`, `Search lists diagnostics`
+  - federated search across files, text, code, editor state, and result lists
+  - examples: `Search files project`, `Search text word`, `Search code references`, `Search editor help`
 
 These are still regular `cmd-ux` semantic roots, not sidecar UIs.
 
@@ -198,7 +226,9 @@ Useful subcommands:
 
 - `Cmdux blocklist`
 - `Cmdux capabilities`
+- `Cmdux compare`
 - `Cmdux explain`
+- `Cmdux forest`
 - `Cmdux stats`
 - `Cmdux recent`
 - `Cmdux roots`
@@ -206,6 +236,7 @@ Useful subcommands:
 - `Cmdux paths`
 - `Cmdux inbox`
 - `Cmdux noise`
+- `Cmdux quarantine`
 - `Cmdux suggest`
 - `Cmdux export`
 - `Cmdux reset-learning`
@@ -213,10 +244,12 @@ Useful subcommands:
 This makes the learning layer inspectable in three different modes:
 
 - explanation: explain
+- ranking diffs: compare
 - observability: stats, recent, roots, transitions, paths
+- structure: forest
 - substrate: capabilities
 - proposal inbox: inbox, suggest
-- cleanup: noise, blocklist
+- cleanup: noise, quarantine, blocklist
 - design input: inbox, suggest, export
 
 ### Command kinds

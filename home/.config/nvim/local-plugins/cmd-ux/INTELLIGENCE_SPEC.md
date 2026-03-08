@@ -677,8 +677,12 @@ The engine should expose reports for humans and agents:
 - top transitions
 - top promoted paths
 - alias proposals
+- deterministic flow proposals
 - capability inventory
+- semantic forest snapshot
+- ranking compare reports
 - command-system inbox
+- quarantine candidates
 - stale promoted paths
 - friction hotspots
 - workflow candidates
@@ -730,15 +734,49 @@ learning = {
     enabled = true,
     max_per_context = 3,
     min_hops_saved = 2,
+    min_recent_executes = 2,
     freshness_days = 5,
   },
-  review = {
-    log_pointer_fallback = true,
-    log_motion_bursts = true,
-    log_workflow_episodes = true,
+  aliases = {
+    enabled = true,
+    max = 8,
+    min_recent_executes = 2,
+    min_depth = 2,
+    min_score = 120,
+  },
+  flows = {
+    enabled = true,
+    history_limit = 512,
+    max_gap_seconds = 180,
+    max = 6,
+    max_steps = 4,
+    min_support = 2,
+    min_score = 180,
+    same_context_only = true,
+  },
+  quarantine = {
+    min_unused_roots = 1,
+    max = 16,
   },
 }
 ```
+
+Richer semantic action telemetry remains deferred work and is intentionally not part of the current shipped `cmd_ux.setup()` runtime config surface.
+
+## Implemented Deterministic Surfaces
+
+The current `cmd-ux` implementation already ships the non-AI half of this model:
+
+- context-scoped adaptive ordering
+- active-day decay
+- session heat
+- promoted path shortcuts
+- alias proposals
+- deterministic flow proposals from bounded event history and short interaction bursts
+- semantic forest inspection
+- ranking compare
+- quarantine recommendations
+- safety tiers and outcome previews through the capability layer
 
 The `window_days` and `freshness_days` names are configuration surface labels.
 Semantically they mean active days, not raw calendar elapsed days.

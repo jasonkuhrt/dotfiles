@@ -142,6 +142,10 @@ local function current_items()
       node_id = item.node_id,
       lane = item.lane,
       slot_values = item.slot_values,
+      safety = item.safety,
+      outcome = item.outcome,
+      capability = item.capability,
+      steps = item.steps,
     }
   end
   return items

@@ -10,19 +10,33 @@ local cmdux_provider = require("cmd_ux.providers.cmdux")
 ---@type Provider
 local config_provider = require("cmd_ux.providers.config")
 ---@type Provider
+local debug_provider = require("cmd_ux.providers.debug")
+---@type Provider
 local flow_provider = require("cmd_ux.providers.flow")
+---@type Provider
+local git_provider = require("cmd_ux.providers.git")
 ---@type Provider
 local lazy_provider = require("cmd_ux.providers.lazy")
 ---@type Provider
 local lsp_provider = require("cmd_ux.providers.lsp")
 ---@type Provider
+local marks_provider = require("cmd_ux.providers.marks")
+---@type Provider
 local pane_provider = require("cmd_ux.providers.pane")
+---@type Provider
+local project_provider = require("cmd_ux.providers.project")
 ---@type Provider
 local recall_provider = require("cmd_ux.providers.recall")
 ---@type Provider
+local registers_provider = require("cmd_ux.providers.registers")
+---@type Provider
 local search_provider = require("cmd_ux.providers.search")
 ---@type Provider
+local session_provider = require("cmd_ux.providers.session")
+---@type Provider
 local tab_provider = require("cmd_ux.providers.tab")
+---@type Provider
+local test_provider = require("cmd_ux.providers.test")
 
 local M = {}
 
@@ -72,13 +86,20 @@ function M.setup(opts)
   providers.register("Buffer", buffer_provider)
   providers.register("Cmdux", cmdux_provider)
   providers.register("Config", config_provider)
+  providers.register("Debug", debug_provider)
   providers.register("Flow", flow_provider)
+  providers.register("Git", git_provider)
   providers.register("Lazy", lazy_provider)
   providers.register("Lsp", lsp_provider)
+  providers.register("Marks", marks_provider)
   providers.register("Pane", pane_provider)
+  providers.register("Project", project_provider)
   providers.register("Recall", recall_provider)
+  providers.register("Registers", registers_provider)
   providers.register("Search", search_provider)
+  providers.register("Session", session_provider)
   providers.register("Tab", tab_provider)
+  providers.register("Test", test_provider)
 
   index.install_hooks()
 
@@ -135,6 +156,32 @@ function M.setup(opts)
   })
 
   ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Debug", function(cmd_opts)
+    debug_provider.execute(cmd_opts.args)
+  end, {
+    desc = "Debug commands (continue, step, breakpoint, ...)",
+    nargs = "*",
+    ---@param line string
+    complete = function(_, line, _)
+      return debug_provider.complete(line)
+    end,
+    force = true,
+  })
+
+  ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Git", function(cmd_opts)
+    git_provider.execute(cmd_opts.args)
+  end, {
+    desc = "Git commands (status, branches, history, hunk, ...)",
+    nargs = "*",
+    ---@param line string
+    complete = function(_, line, _)
+      return git_provider.complete(line)
+    end,
+    force = true,
+  })
+
+  ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Lsp", function(cmd_opts)
     lsp_provider.execute(cmd_opts.args)
   end, {
@@ -143,6 +190,19 @@ function M.setup(opts)
     ---@param line string
     complete = function(_, line, _)
       return lsp_provider.complete(line)
+    end,
+    force = true,
+  })
+
+  ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Marks", function(cmd_opts)
+    marks_provider.execute(cmd_opts.args)
+  end, {
+    desc = "Marks commands (browse)",
+    nargs = "*",
+    ---@param line string
+    complete = function(_, line, _)
+      return marks_provider.complete(line)
     end,
     force = true,
   })
@@ -161,6 +221,19 @@ function M.setup(opts)
   })
 
   ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Project", function(cmd_opts)
+    project_provider.execute(cmd_opts.args)
+  end, {
+    desc = "Project commands (files, grep, switch, recent)",
+    nargs = "*",
+    ---@param line string
+    complete = function(_, line, _)
+      return project_provider.complete(line)
+    end,
+    force = true,
+  })
+
+  ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Recall", function(cmd_opts)
     recall_provider.execute(cmd_opts.args)
   end, {
@@ -169,6 +242,19 @@ function M.setup(opts)
     ---@param line string
     complete = function(_, line, _)
       return recall_provider.complete(line)
+    end,
+    force = true,
+  })
+
+  ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Registers", function(cmd_opts)
+    registers_provider.execute(cmd_opts.args)
+  end, {
+    desc = "Registers commands (browse)",
+    nargs = "*",
+    ---@param line string
+    complete = function(_, line, _)
+      return registers_provider.complete(line)
     end,
     force = true,
   })
@@ -187,6 +273,19 @@ function M.setup(opts)
   })
 
   ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Session", function(cmd_opts)
+    session_provider.execute(cmd_opts.args)
+  end, {
+    desc = "Session commands (save, restore, stop)",
+    nargs = "*",
+    ---@param line string
+    complete = function(_, line, _)
+      return session_provider.complete(line)
+    end,
+    force = true,
+  })
+
+  ---@param cmd_opts CmdUxUserCommandOpts
   vim.api.nvim_create_user_command("Tab", function(cmd_opts)
     tab_provider.execute(cmd_opts.args)
   end, {
@@ -195,6 +294,19 @@ function M.setup(opts)
     ---@param line string
     complete = function(_, line, _)
       return tab_provider.complete(line)
+    end,
+    force = true,
+  })
+
+  ---@param cmd_opts CmdUxUserCommandOpts
+  vim.api.nvim_create_user_command("Test", function(cmd_opts)
+    test_provider.execute(cmd_opts.args)
+  end, {
+    desc = "Test commands (run, debug, output, jump, ...)",
+    nargs = "*",
+    ---@param line string
+    complete = function(_, line, _)
+      return test_provider.complete(line)
     end,
     force = true,
   })

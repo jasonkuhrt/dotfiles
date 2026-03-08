@@ -1,4 +1,5 @@
 local capabilities = require("cmd_ux.lib.capabilities")
+local runtime = require("cmd_ux.lib.command_runtime")
 require("cmd_ux.lib.capability_catalog").register_all()
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
@@ -63,12 +64,39 @@ local function actions()
       },
     },
     {
+      token = "debug-continue",
+      desc = "Continue the debug session",
+      help = "Continue or start the active debug session.",
+      examples = { "Flow debug-continue" },
+      steps = {
+        { capability = "debug.continue" },
+      },
+    },
+    {
       token = "diagnostics",
       desc = "Open the diagnostics list",
       help = "Open the location list for current-buffer diagnostics.",
       examples = { "Flow diagnostics" },
       steps = {
         { capability = "lists.loclist_open" },
+      },
+    },
+    {
+      token = "git-status",
+      desc = "Browse git status",
+      help = "Open the git status picker for the current repo.",
+      examples = { "Flow git-status" },
+      steps = {
+        { capability = "git.status" },
+      },
+    },
+    {
+      token = "git-hunk-next",
+      desc = "Jump to the next hunk",
+      help = "Move to the next git hunk in the current file.",
+      examples = { "Flow git-hunk-next" },
+      steps = {
+        { capability = "git.hunk_next" },
       },
     },
     {
@@ -114,6 +142,24 @@ local function actions()
       examples = { "Flow quickfix" },
       steps = {
         { capability = "lists.quickfix_open" },
+      },
+    },
+    {
+      token = "project-files",
+      desc = "Browse project files",
+      help = "Open the project file picker.",
+      examples = { "Flow project-files" },
+      steps = {
+        { capability = "project.files" },
+      },
+    },
+    {
+      token = "project-grep",
+      desc = "Search project text",
+      help = "Open project grep.",
+      examples = { "Flow project-grep" },
+      steps = {
+        { capability = "project.grep" },
       },
     },
     {
@@ -173,12 +219,39 @@ local function actions()
       },
     },
     {
+      token = "session-save",
+      desc = "Save the current session",
+      help = "Persist the current session state.",
+      examples = { "Flow session-save" },
+      steps = {
+        { capability = "session.save" },
+      },
+    },
+    {
       token = "tab-only",
       desc = "Keep only the current tab",
       help = "Close all other tabs through the Tab capability.",
       examples = { "Flow tab-only" },
       steps = {
         { capability = "tab.only" },
+      },
+    },
+    {
+      token = "test-nearest",
+      desc = "Run the nearest test",
+      help = "Run the nearest test from the current cursor position.",
+      examples = { "Flow test-nearest" },
+      steps = {
+        { capability = "test.run_nearest" },
+      },
+    },
+    {
+      token = "test-summary",
+      desc = "Toggle test summary",
+      help = "Open or close the test summary pane.",
+      examples = { "Flow test-summary" },
+      steps = {
+        { capability = "test.summary_toggle" },
       },
     },
     {
@@ -206,30 +279,15 @@ local function action_available(action)
 end
 
 ---@param action FlowAction
----@return string
-local function action_help(action)
-  local lines = {
-    action.help,
-    "",
-    "Capability steps:",
-  }
-  for _, line in ipairs(capabilities.describe_steps(action.steps)) do
-    lines[#lines + 1] = line
-  end
-  return table.concat(lines, "\n")
-end
-
----@param action FlowAction
 ---@return CommandFrontierItem
 local function action_item(action)
-  return types.frontier_item({
+  return runtime.leaf_item({
     token = action.token,
-    label = action.token,
-    kind = "leaf",
     desc = action.desc,
-    help = action_help(action),
+    help = action.help,
     examples = action.examples,
-    executable = true,
+    steps = action.steps,
+  }, {
     text = action.token .. "  " .. action.desc,
   })
 end
@@ -305,16 +363,12 @@ function M.resolve(ctx)
 
   local available, reason = action_available(action)
   return types.state_from_node(
-    types.node({
+    runtime.leaf_node({
       token = action.token,
-      kind = "leaf",
       desc = action.desc,
-      help = action_help(action),
+      help = action.help,
       examples = action.examples,
-      executable = available,
-      execute = function()
-        capabilities.execute_steps(action.steps)
-      end,
+      steps = action.steps,
     }),
     {
       executable = available,

@@ -6,6 +6,12 @@ local providers = require("cmd_ux.providers")
 local types = require("cmd_ux.types")
 local nvim_commands = require("kit.nvim.commands")
 
+local function labels(items)
+  return vim.tbl_map(function(item)
+    return item.label
+  end, items)
+end
+
 local function registered_root(root)
   return types.node({
     token = root,
@@ -199,5 +205,16 @@ describe("cmd_ux index cache", function()
     end
     assert.are.equal(1, user_calls)
     assert.are.equal(1, buffer_calls)
+  end)
+
+  it("keeps semantic workspace roots while hiding overlapping legacy commands", function()
+    local frontier = labels(index.frontier(""))
+
+    assert.is_true(vim.tbl_contains(frontier, "Buffer"))
+    assert.is_true(vim.tbl_contains(frontier, "Search"))
+    assert.is_true(vim.tbl_contains(frontier, "Tab"))
+    assert.is_false(vim.tbl_contains(frontier, "buffers"))
+    assert.is_false(vim.tbl_contains(frontier, "files"))
+    assert.is_false(vim.tbl_contains(frontier, "ls"))
   end)
 end)

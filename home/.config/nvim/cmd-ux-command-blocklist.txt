@@ -86,6 +86,7 @@ brewind
 browse
 bufdo
 buffer
+buffers
 bunload
 bwipeout
 cNext
@@ -188,6 +189,7 @@ execute
 exit
 exusage
 fclose
+files
 filter
 finally
 find
@@ -282,6 +284,7 @@ lopen
 lpfile
 lprevious
 lrewind
+ls
 ltag
 luado
 luafile

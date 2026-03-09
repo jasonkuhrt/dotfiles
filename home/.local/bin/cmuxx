@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# @describe cmuxx — semantic veneer over cmux for missing surface/tab commands.
+# @describe Powered by osascript keystroke simulation (cmd+shift+bracket).
+# @describe cmux exposes surface.focus in its API but not yet as a CLI command,
+# @describe so this fills the gap with a self-documenting interface.
+
+_keystroke() {
+    osascript -e "tell application \"System Events\" to keystroke \"$1\" using {command down, shift down}" &
+}
+
+# @cmd Switch to the next surface (tab) in the current pane
+# @alias ns
+next_surface() {
+    _keystroke "]"
+}
+
+# @cmd Switch to the previous surface (tab) in the current pane
+# @alias ps
+prev_surface() {
+    _keystroke "["
+}
+
+# @cmd Workspace commands
+# @alias ws
+workspace() { :; }
+
+# Derive workspace name from a git branch: linear ID > slug > empty
+_name_from_branch() {
+    local branch="$1"
+    if [[ -z "$branch" || "$branch" == "HEAD" ]]; then
+        return
+    fi
+    local linear_id
+    linear_id=$(echo "$branch" | grep -oE '[A-Z]+-[0-9]+' | head -1) || true
+    if [[ -n "$linear_id" ]]; then
+        echo "$linear_id"
+    else
+        echo "${branch##*/}"
+    fi
+}
+
+# @cmd Pick a git worktree via fzf and create a workspace with Claude Code
+# @alias n
+workspace::new() {
+    # Pick worktree via fzf
+    local selection
+    selection=$(git worktree list | fzf --prompt="worktree> " --height=~50%) || exit 0
+    local wt_path wt_branch
+    wt_path=$(echo "$selection" | awk '{print $1}')
+    wt_branch=$(echo "$selection" | sed -n 's/.*\[\(.*\)\]/\1/p')
+
+    local name
+    name=$(_name_from_branch "$wt_branch")
+
+    # Create workspace and capture UUID
+    local uuid
+    uuid=$(cmux new-workspace | awk '{print $2}')
+
+    if [[ -n "$name" ]]; then
+        cmux rename-workspace --workspace "$uuid" "$name"
+    fi
+
+    # TODO: Set workspace color — not exposed in cmux socket API (v0.61).
+    # Tracked: https://github.com/manaflow-ai/cmux/issues/539 (--color on new-workspace)
+    #          https://github.com/manaflow-ai/cmux/issues/1041 (expose tab color via CLI)
+
+    # Wait for shell init, then cd and launch Claude Code
+    sleep 0.5
+    local escaped_path
+    escaped_path=$(printf '%q' "$wt_path")
+    cmux send --workspace "$uuid" "cd ${escaped_path} && claude '/rename main'\n"
+
+    # Switch to new workspace, then close the caller's surface
+    cmux select-workspace --workspace "$uuid"
+    cmux close-surface --surface "$CMUX_SURFACE_ID"
+}
+
+eval "$(argc --argc-eval "$0" "$@")"

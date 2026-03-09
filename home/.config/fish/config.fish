@@ -3,8 +3,7 @@ fish_add_path /opt/homebrew/bin
 fish_add_path /opt/homebrew/sbin
 
 if status is-interactive
-    # Gentle nudge if nesia changelog hasn't been checked in 7+ days
-    nesia nag 2>/dev/null
+    # Commands to run in interactive sessions can go here
 end
 
 # Prompt (Starship)
@@ -297,3 +296,7 @@ alias octorus="command or" # octorus CLI binary is "or", which collides with fis
 fish_add_path "$HOME/go/bin"
 
 # uv (uses ~/.local/bin, already in PATH from node package managers section)
+
+# Gentle nudge if nesia changelog hasn't been checked in 7+ days
+# Must be after PATH setup since nesia lives in ~/.local/bin
+nesia nag 2>/dev/null

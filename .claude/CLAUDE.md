@@ -3,7 +3,7 @@
 ## Workflow Rules
 
 * Any repeatable project workflow must be exposed through the root `justfile`. If a workflow matters, add a `just` recipe for it.
-* When adding or changing a user-facing capability (keybinding, CLI tool, alias, fish function, neovim mapping, etc.), run `nesia add <category> <description>` to log it.
+* When adding or changing any user-facing capability anywhere in the dotfiles, run `nesia add <category> <description>` to log it. This includes: neovim keymaps/plugins, fish keybindings/functions/aliases, CLI tools, shell abbreviations, Karabiner rules, Ghostty config — anything the user might forget they have.
 
 ## File Naming
 

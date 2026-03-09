@@ -41,20 +41,13 @@ _name_from_branch() {
     fi
 }
 
-# @cmd Pick a git worktree via fzf and create a workspace with Claude Code
-# @alias n
-workspace::new() {
-    # Pick worktree via fzf
-    local selection
-    selection=$(git worktree list | fzf --prompt="worktree> " --height=~50%) || exit 0
-    local wt_path wt_branch
-    wt_path=$(echo "$selection" | awk '{print $1}')
-    wt_branch=$(echo "$selection" | sed -n 's/.*\[\(.*\)\]/\1/p')
+# Create a cmux workspace for a worktree path + branch, launch Claude Code, and switch to it.
+_open_worktree() {
+    local wt_path="$1" wt_branch="$2"
 
     local name
     name=$(_name_from_branch "$wt_branch")
 
-    # Create workspace and capture UUID
     local uuid
     uuid=$(cmux new-workspace | awk '{print $2}')
 
@@ -66,15 +59,36 @@ workspace::new() {
     # Tracked: https://github.com/manaflow-ai/cmux/issues/539 (--color on new-workspace)
     #          https://github.com/manaflow-ai/cmux/issues/1041 (expose tab color via CLI)
 
-    # Wait for shell init, then cd and launch Claude Code
     sleep 0.5
     local escaped_path
     escaped_path=$(printf '%q' "$wt_path")
     cmux send --workspace "$uuid" "cd ${escaped_path} && claude '/rename main'\n"
 
-    # Switch to new workspace, then close the caller's surface
     cmux select-workspace --workspace "$uuid"
     cmux close-surface --surface "$CMUX_SURFACE_ID"
+}
+
+# @cmd Create a workspace from a worktree — pick via fzf, or create a new one with a branch name
+# @alias n
+# @arg name  Branch name for a new worktree (omit to pick existing via fzf)
+workspace::new() {
+    if [[ -z "${argc_name:-}" ]]; then
+        # fzf picker for existing worktrees
+        local selection
+        selection=$(git worktree list | fzf --prompt="worktree> " --height=~50%) || exit 0
+        local wt_path wt_branch
+        wt_path=$(echo "$selection" | awk '{print $1}')
+        wt_branch=$(echo "$selection" | sed -n 's/.*\[\(.*\)\]/\1/p')
+        _open_worktree "$wt_path" "$wt_branch"
+    else
+        # Create a new worktree branched from main
+        local main_root
+        main_root=$(git worktree list | awk 'NR==1{print $1}')
+        local wt_path="${main_root}-${argc_name}"
+
+        git worktree add -b "$argc_name" "$wt_path" main
+        _open_worktree "$wt_path" "$argc_name"
+    fi
 }
 
 eval "$(argc --argc-eval "$0" "$@")"

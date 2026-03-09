@@ -30,6 +30,6 @@ When making system configuration changes:
 
 5. **Promote to `trueDir` only when all of these hold**
    - the target is a directory
-   - the subtree is plain target-shaped, not full of chezmoi metadata prefixes
+   - the subtree is plain target-shaped (no metadata prefixes)
    - git is the intended source of truth
    - unmanaged runtime spill is acceptable or excluded

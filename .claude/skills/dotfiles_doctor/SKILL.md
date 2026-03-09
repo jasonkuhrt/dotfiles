@@ -20,7 +20,6 @@ Source of truth now lives in both `home/` and `symlink-roots/`, depending on lan
 | ---------- | ------------------------------ | ---------------------------- |
 | `aws`      | private_dot_aws/               | AWS CLI configuration        |
 | `brew`     | Brewfile                       | Homebrew packages and casks  |
-| `chezmoi`  | .chezmoi*.toml*                | chezmoi configuration        |
 | `claude`   | home/dot_claude/, symlink-roots/claude/ | Claude Code configuration |
 | `direnv`   | symlink-roots/config/direnv/ | Directory environment loader |
 | `dock`     | dock/                          | macOS Dock configuration     |
@@ -32,7 +31,7 @@ Source of truth now lives in both `home/` and `symlink-roots/`, depending on lan
 | `lazygit`  | symlink-roots/config/lazygit/ | Git TUI configuration      |
 | `npm`      | dot_npmrc, npm/                | npm configuration            |
 | `nvim`     | dot_config/nvim/               | Neovim configuration         |
-| `scripts`  | .chezmoiscripts/               | Lifecycle scripts            |
+| `scripts`  | scripts/setup/                 | Lifecycle scripts            |
 | `ssh`      | private_dot_ssh/               | SSH configuration            |
 | `starship` | dot_config/starship*.toml      | Starship prompt config       |
 | `zmx`      | dot_config/fish/, dot_config/starship.toml | zmx workflow + prompt context |
@@ -110,13 +109,6 @@ After specific checks, discover something new:
 1. __Rule accuracy__: Are rules in `symlink-roots/claude/rules/` and other global Claude sources still accurate?
 2. __Lane placement__: Do files under `home/dot_claude/` vs `symlink-roots/claude/` still belong in the right lane?
 3. __Scope coverage__: Are there missing rules for common workflows?
-
-### chezmoi
-
-1. __Script idempotency__: Are all lifecycle scripts fully idempotent?
-2. __Hash triggers__: Are `run_onchange_` scripts using correct hash comments?
-3. __Lane fit__: Are `trueDir`, `fileSymlink`, and `special` lanes still assigned correctly?
-4. __Naming conventions__: Are `exact_`, `private_`, `encrypted_` prefixes used correctly?
 
 ### npm
 

@@ -1,6 +1,6 @@
 ---
 name: sync
-description: Use when the user says "sync" or wants to commit, rebase, push, and converge this dotfiles repo. Uses just up as the public converge command instead of raw chezmoi apply.
+description: Use when the user says "sync" or wants to commit, rebase, push, and converge this dotfiles repo. Uses just up as the public converge command.
 ---
 
 # Sync
@@ -60,7 +60,7 @@ Full dotfiles sync: commit, rebase, converge with `just up`, then push.
 **`just up`**:
 - refreshes the cached symlink manifest
 - runs the dotctl healer once
-- applies chezmoi in symlink mode
+- deploys symlinks and runs lifecycle scripts
 - Runs lifecycle scripts (brew bundle, node setup, macOS defaults, etc.)
 - installs or reloads the launchd healer
 - leaves read-only inspection to `just status`, `just doctor`, and `just explain`
@@ -75,5 +75,5 @@ Full dotfiles sync: commit, rebase, converge with `just up`, then push.
 - **Machine health:** `just status`
 - **Deep drift check:** `just doctor`
 - **Explain one target:** `just explain <target>`
-- **Low-level diff:** `chezmoi diff`
-- **Encrypted files:** `chezmoi edit <target>`
+- **Low-level diff:** `dotctl status` / `just status`
+- **Encrypted files:** `just edit <target>`

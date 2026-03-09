@@ -11,7 +11,7 @@ Decide whether Claude Code config belongs in global (deployed to `~/.claude/`) o
 
 | Path | Deployed by | Scope |
 |------|-------------|-------|
-| `home/dot_claude/` + `symlink-roots/claude/` | symlink-first chezmoi/dotctl → `~/.claude/` | All projects (global) |
+| `home/dot_claude/` + `symlink-roots/claude/` | dotctl → `~/.claude/` | All projects (global) |
 | `.claude/` | Git checkout (local) | Dotfiles repo only |
 
 ## How It Works
@@ -27,14 +27,14 @@ Global Claude config is now split by lane:
 ├── schemas/           (true-dir symlink from symlink-roots/claude/schemas)
 ├── hooks/scripts/     (exact_/executable managed from home/dot_claude/)
 ├── skills/            (exact_ managed from home/dot_claude/)
-└── settings.json      (NOT managed by chezmoi — CC owns this at runtime)
+└── settings.json      (NOT managed by dotctl — CC owns this at runtime)
 ```
 
 Operational rule:
 
 - Use `just edit ~/.claude/...` when you know the live target path.
 - Use `just explain ~/.claude/...` when you need to know the lane first.
-- Use raw `chezmoi edit` only for encrypted or other special-lane cases.
+- Use `just edit <target>` for encrypted or other special-lane cases.
 
 ## Decision Guide
 

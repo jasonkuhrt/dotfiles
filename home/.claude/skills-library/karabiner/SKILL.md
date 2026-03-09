@@ -1,6 +1,6 @@
 ---
 name: karabiner
-description: Manage Karabiner-Elements remaps on macOS. Use when users ask to map or unmap keys (Caps Lock, Fn/Globe, Hyper), when remaps stop applying, when Karabiner service or permission health needs diagnosis, or when Karabiner config should be synced through dotfiles/chezmoi.
+description: Manage Karabiner-Elements remaps on macOS. Use when users ask to map or unmap keys (Caps Lock, Fn/Globe, Hyper), when remaps stop applying, when Karabiner service or permission health needs diagnosis, or when Karabiner config should be synced through dotfiles.
 ---
 
 # Karabiner Management
@@ -9,15 +9,15 @@ description: Manage Karabiner-Elements remaps on macOS. Use when users ask to ma
 
 ```bash
 LIVE_CONFIG="$HOME/.config/karabiner/karabiner.json"
-SOURCE_CONFIG="$(chezmoi source-path "$LIVE_CONFIG" 2>/dev/null || true)"
-EDIT_FILE="${SOURCE_CONFIG:-$LIVE_CONFIG}"
-if [ -L "$LIVE_CONFIG" ] && [ -z "${SOURCE_CONFIG:-}" ]; then
+if [ -L "$LIVE_CONFIG" ]; then
   EDIT_FILE="$(readlink "$LIVE_CONFIG")"
+else
+  EDIT_FILE="$LIVE_CONFIG"
 fi
 ```
 
 - In the current symlink-first setup, `karabiner.json` is normally a file-symlink target.
-- Normal content edits are live immediately. No `chezmoi apply` is needed for ordinary edits.
+- Normal content edits are live immediately. No `just up` is needed for ordinary edits.
 - Do not `mv` a temp file onto `LIVE_CONFIG` directly when it is a symlink. Write to `EDIT_FILE` instead.
 
 ## Baseline Diagnostics

@@ -39,6 +39,42 @@ local function command_source(root, user_commands, buffer_commands)
   return "builtin"
 end
 
+---@param command table?
+---@return boolean
+local function is_simple_flat_command(command)
+  if type(command) ~= "table" then
+    return false
+  end
+
+  local nargs = rawget(command, "nargs")
+  local complete = rawget(command, "complete")
+  local completion = rawget(command, "completion")
+
+  local has_args = type(nargs) == "string" and nargs ~= "0"
+  local has_completion = (type(complete) == "string" and complete ~= "")
+    or (type(completion) == "string" and completion ~= "")
+
+  return not has_args and not has_completion
+end
+
+---@param root string
+---@param user_commands table<string, table>
+---@param buffer_commands table<string, table>
+---@return boolean
+local function is_shadowed_by_semantic_root(root, user_commands, buffer_commands)
+  local command = buffer_commands[root] or user_commands[root]
+  if not is_simple_flat_command(command) then
+    return false
+  end
+
+  for semantic_root, _ in pairs(providers.by_root) do
+    if semantic_root ~= root and root:find("^" .. vim.pesc(semantic_root)) == 1 then
+      return true
+    end
+  end
+  return false
+end
+
 ---@param root string
 ---@param user_commands table<string, table>
 ---@param buffer_commands table<string, table>
@@ -69,14 +105,16 @@ function M.build_entries()
   local entries = {}
 
   for _, root in ipairs(util.discover_command_names()) do
-    local provider = providers.get(root)
-    local source = command_source(root, user_commands, buffer_commands)
-    entries[#entries + 1] = types.index_entry({
-      root = root,
-      source = source,
-      provider = provider.id or "generic",
-      item = root_item(root, user_commands, buffer_commands),
-    })
+    if not is_shadowed_by_semantic_root(root, user_commands, buffer_commands) then
+      local provider = providers.get(root)
+      local source = command_source(root, user_commands, buffer_commands)
+      entries[#entries + 1] = types.index_entry({
+        root = root,
+        source = source,
+        provider = provider.id or "generic",
+        item = root_item(root, user_commands, buffer_commands),
+      })
+    end
   end
 
   return entries, user_commands, buffer_commands

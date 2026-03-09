@@ -3,7 +3,8 @@ fish_add_path /opt/homebrew/bin
 fish_add_path /opt/homebrew/sbin
 
 if status is-interactive
-    # Commands to run in interactive sessions can go here
+    # Gentle nudge if tips changelog hasn't been checked in 7+ days
+    tips nag 2>/dev/null
 end
 
 # Prompt (Starship)

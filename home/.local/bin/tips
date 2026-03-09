@@ -3,13 +3,18 @@ set -euo pipefail
 
 # @describe tips — personal capability changelog. Track what you set up so you don't forget it exists.
 
-LOG_FILE="${XDG_DATA_HOME:-$HOME/.local/share}/tips/log"
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/tips"
+LOG_FILE="$DATA_DIR/log"
+LAST_SEEN="$DATA_DIR/last-seen"
 
 _ensure_log() {
-    local dir
-    dir="$(dirname "$LOG_FILE")"
-    [[ -d "$dir" ]] || mkdir -p "$dir"
+    [[ -d "$DATA_DIR" ]] || mkdir -p "$DATA_DIR"
     [[ -f "$LOG_FILE" ]] || touch "$LOG_FILE"
+}
+
+_touch_seen() {
+    _ensure_log
+    date +%s > "$LAST_SEEN"
 }
 
 _format_entries() {
@@ -26,6 +31,7 @@ _format_entries() {
 # @meta default-subcommand
 show() {
     _ensure_log
+    _touch_seen
     local total
     total="$(wc -l < "$LOG_FILE" | tr -d ' ')"
     if [[ "$total" -eq 0 ]]; then
@@ -42,6 +48,7 @@ show() {
 # @cmd Show all entries
 all() {
     _ensure_log
+    _touch_seen
     local total
     total="$(wc -l < "$LOG_FILE" | tr -d ' ')"
     if [[ "$total" -eq 0 ]]; then
@@ -68,6 +75,7 @@ add() {
 # @arg query! Search term
 search() {
     _ensure_log
+    _touch_seen
     local matches
     matches="$(grep -i "$argc_query" "$LOG_FILE" || true)"
     if [[ -z "$matches" ]]; then
@@ -84,6 +92,51 @@ search() {
 edit() {
     _ensure_log
     "${EDITOR:-nvim}" "$LOG_FILE"
+}
+
+# @cmd Check if tips is overdue and print a reminder banner (for shell startup)
+nag() {
+    _ensure_log
+
+    local total
+    total="$(wc -l < "$LOG_FILE" | tr -d ' ')"
+    [[ "$total" -gt 0 ]] || return 0
+
+    # No last-seen file means never viewed
+    if [[ ! -f "$LAST_SEEN" ]]; then
+        _print_banner "$total"
+        return 0
+    fi
+
+    local last_seen now age days_ago
+    last_seen="$(cat "$LAST_SEEN")"
+    now="$(date +%s)"
+    age=$(( now - last_seen ))
+    days_ago=$(( age / 86400 ))
+
+    if [[ "$days_ago" -ge 7 ]]; then
+        _print_banner "$total" "$days_ago"
+    fi
+}
+
+_print_banner() {
+    local total="${1}" days="${2:-}"
+    local cyan='\033[36m' dim='\033[2m' bold='\033[1m' reset='\033[0m'
+    local yellow='\033[33m' magenta='\033[35m'
+
+    # Gentle nudge with a little character
+    printf '\n'
+    printf '  %b   ╭─────────────────────────────────────╮%b\n' "$dim" "$reset"
+    printf '  %b┌─┐│%b  %b★%b You have %b%s%b capabilities logged  %b│%b\n' "$dim" "$reset" "$yellow" "$reset" "$bold" "$total" "$reset" "$dim" "$reset"
+    printf '  %b│▒││%b' "$dim" "$reset"
+    if [[ -n "$days" ]]; then
+        printf '  %bLast checked %s days ago%b          %b│%b\n' "$dim" "$days" "$reset" "$dim" "$reset"
+    else
+        printf '  %bNever checked — take a peek!%b       %b│%b\n' "$dim" "$reset" "$dim" "$reset"
+    fi
+    printf '  %b│░││%b  Run %b%btips%b to see what you can do   %b│%b\n' "$dim" "$reset" "$magenta" "$bold" "$reset" "$dim" "$reset"
+    printf '  %b└─┘╰─────────────────────────────────────╯%b\n' "$dim" "$reset"
+    printf '\n'
 }
 
 eval "$(argc --argc-eval "$0" "$@")"

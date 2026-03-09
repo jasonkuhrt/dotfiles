@@ -11,6 +11,7 @@ local flow_provider = require("cmd_ux.providers.flow")
 local helpers = require("tests.plenary.helpers")
 local index = require("cmd_ux.index")
 local learning = require("cmd_ux.lib.learning")
+local resolver = require("cmd_ux.lib.resolver")
 local runtime = require("cmd_ux.lib.runtime")
 local pane_provider = require("cmd_ux.providers.pane")
 local project_provider = require("cmd_ux.providers.project")
@@ -204,12 +205,49 @@ describe("cmd_ux learning and flow features", function()
     eq({ "UsageRankBeta", "UsageRankAlpha" }, labels(state.frontier))
   end)
 
+  it("returns a ranked copy without mutating the input frontier", function()
+    helpers.create_noarg_command("UsageRankAlpha")
+    helpers.create_noarg_command("UsageRankBeta")
+    helpers.sync_cmd_ux()
+
+    learning.record_execute_state(core.resolve_line("UsageRankBeta"))
+    local unranked = resolver.resolve_line("UsageRank")
+    local original = labels(unranked.frontier)
+
+    local ranked = learning.rank_state(unranked)
+
+    eq({ "UsageRankAlpha", "UsageRankBeta" }, original)
+    eq({ "UsageRankAlpha", "UsageRankBeta" }, labels(unranked.frontier))
+    eq({ "UsageRankBeta", "UsageRankAlpha" }, labels(ranked.frontier))
+    assert.is_not.equal(unranked, ranked)
+  end)
+
   it("shows learned preview hints for ranked next choices", function()
     learning.record_execute_state(core.resolve_line("Config reload"))
 
     local preview = core.preview_text(core.resolve_line("Config"))
 
     assert.is_truthy(preview:find("Learned next: reload", 1, true))
+  end)
+
+  it("keeps stored flow history bounded to the configured limit", function()
+    ---@diagnostic disable-next-line: missing-fields
+    cmd_ux.setup({
+      ---@diagnostic disable-next-line: missing-fields
+      learning = {
+        ---@diagnostic disable-next-line: missing-fields
+        flows = {
+          history_limit = 64,
+        },
+      },
+    })
+
+    for _ = 1, 80 do
+      learning.record_execute_state(core.resolve_line("Config reload"))
+    end
+
+    local stats_lines = table.concat(learning.stats_lines(index.get().roots), "\n")
+    assert.is_truthy(stats_lines:find("Stored events: 64", 1, true))
   end)
 
   it("prefers current project learning over cross-project history", function()

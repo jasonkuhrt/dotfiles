@@ -3,6 +3,7 @@ local index_builder = require("cmd_ux.lib.index_builder")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
 local providers = require("cmd_ux.providers")
+local nvim_commands = require("kit.nvim.commands")
 
 local M = {}
 local cache_version = 2
@@ -14,14 +15,65 @@ local cache_path = vim.fn.stdpath("cache") .. "/cmd-ux-command-index.json"
 ---@field revision integer
 ---@field root_nodes table<string, CommandNode>
 ---@field live_command_maps? { revision: integer, user_commands: table<string, table>, buffer_commands: table<string, table> }
+---@field buffer_command_signature? string
 local state = {
   current = nil,
   generation = 0,
   revision = 0,
   root_nodes = {},
   live_command_maps = nil,
+  buffer_command_signature = nil,
 }
 vim.__cmd_ux_original_api = vim.__cmd_ux_original_api or {}
+
+local command_signature_keys = {
+  "name",
+  "nargs",
+  "complete",
+  "definition",
+  "desc",
+  "bang",
+  "bar",
+  "count",
+  "range",
+  "register",
+  "addr",
+  "preview",
+  "keepscript",
+  "script_id",
+}
+
+---@param value unknown
+---@return string
+local function serialize_signature_value(value)
+  local kind = type(value)
+  if kind == "nil" then
+    return ""
+  end
+  if kind == "string" or kind == "number" or kind == "boolean" then
+    return tostring(value)
+  end
+  if kind == "function" then
+    return tostring(value)
+  end
+
+  return vim.inspect(value)
+end
+
+---@param commands table<string, table>
+---@return string
+local function command_scope_signature(commands)
+  local parts = {}
+  for name, command in pairs(commands or {}) do
+    local fields = { name }
+    for _, key in ipairs(command_signature_keys) do
+      fields[#fields + 1] = key .. "=" .. serialize_signature_value(rawget(command, key))
+    end
+    parts[#parts + 1] = table.concat(fields, "\31")
+  end
+  table.sort(parts)
+  return table.concat(parts, "\30")
+end
 
 ---@return CommandIndex
 function M.build()
@@ -34,6 +86,7 @@ function M.build()
     user_commands = user_commands,
     buffer_commands = buffer_commands,
   }
+  state.buffer_command_signature = command_scope_signature(buffer_commands)
   state.current = types.index({
     generation = state.generation,
     entries = entries,
@@ -99,6 +152,7 @@ function M.get()
     state.revision = state.revision + 1
     state.root_nodes = {}
     state.live_command_maps = nil
+    state.buffer_command_signature = command_scope_signature(nvim_commands.get_buffer_commands(0))
     return cached
   end
 
@@ -109,6 +163,15 @@ end
 function M.refresh()
   M.invalidate()
   return M.build()
+end
+
+---@param bufnr? integer
+---@return boolean
+function M.buffer_scope_changed(bufnr)
+  local signature = command_scope_signature(nvim_commands.get_buffer_commands(bufnr or 0))
+  local changed = state.buffer_command_signature ~= nil and state.buffer_command_signature ~= signature
+  state.buffer_command_signature = signature
+  return changed
 end
 
 ---@param root string

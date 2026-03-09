@@ -265,4 +265,33 @@ function M.create_enum_choice_command(name)
   })
 end
 
+---@param name string
+---@param depth integer
+function M.create_binary_cache_tree_command(name, depth)
+  M.drop_user_command(name)
+  vim.api.nvim_create_user_command(name, function() end, {
+    nargs = "*",
+    desc = "Deep binary completion tree for generic cache tests",
+    complete = function(arglead, line, _)
+      local rest = line:match("^" .. vim.pesc(name) .. "%s*(.*)$") or ""
+      local trailing_space = rest:match("%s$") ~= nil
+      local tokens = strings.split_words(rest)
+      local accepted_depth = trailing_space and #tokens or math.max(#tokens - 1, 0)
+
+      if accepted_depth >= depth then
+        return {}
+      end
+
+      local items = {
+        ("d%02da"):format(accepted_depth),
+        ("d%02db"):format(accepted_depth),
+      }
+
+      return vim.tbl_filter(function(item)
+        return item:find("^" .. vim.pesc(arglead)) ~= nil
+      end, items)
+    end,
+  })
+end
+
 return M

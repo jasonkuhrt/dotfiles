@@ -30,9 +30,13 @@ end
 ---@return string
 function M.project_id()
   local cwd = vim.fn.fnamemodify(vim.fn.getcwd(), ":p")
-  local git_dir = vim.fn.finddir(".git", cwd .. ";")
-  if git_dir ~= "" then
-    return vim.fn.fnamemodify(git_dir, ":p:h")
+  local git_marks = vim.fs.find(".git", {
+    path = cwd,
+    upward = true,
+    limit = 1,
+  })
+  if git_marks[1] then
+    return vim.fn.fnamemodify(vim.fs.dirname(git_marks[1]), ":p")
   end
   return cwd
 end

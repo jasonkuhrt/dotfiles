@@ -124,27 +124,9 @@ end
 ---@param item CommandFrontierItem
 ---@return CmdUxPickerItem
 local function picker_item(item)
-  return {
-    text = item.text,
-    token = item.token,
-    label = item.label,
-    desc = item.desc,
-    help = item.help,
-    examples = item.examples,
-    kind = item.kind,
-    executable = item.executable,
-    requires_more = item.requires_more,
-    slots = item.slots,
-    accept_line = item.accept_line,
-    promoted = item.promoted,
-    node_id = item.node_id,
-    lane = item.lane,
-    slot_values = item.slot_values,
-    safety = item.safety,
-    outcome = item.outcome,
-    capability = item.capability,
-    steps = item.steps,
-  }
+  local picker = vim.deepcopy(item)
+  picker.next_state = nil
+  return picker
 end
 
 ---@param state ResolutionState

@@ -45,6 +45,7 @@ describe("cmd_ux index cache", function()
   before_each(function()
     helpers.ensure_setup()
     helpers.drop_user_command("CacheVisibleCmd")
+    helpers.drop_user_command("CacheTreeCmd")
     helpers.drop_user_command("RegisteredVisibleCmd")
     helpers.drop_user_command("StructuredVisibleCmd")
     helpers.drop_user_command("OptionalVisibleCmd")
@@ -63,6 +64,7 @@ describe("cmd_ux index cache", function()
 
   after_each(function()
     helpers.drop_user_command("CacheVisibleCmd")
+    helpers.drop_user_command("CacheTreeCmd")
     helpers.drop_user_command("RegisteredVisibleCmd")
     helpers.drop_user_command("StructuredVisibleCmd")
     helpers.drop_user_command("OptionalVisibleCmd")
@@ -213,6 +215,15 @@ describe("cmd_ux index cache", function()
     end
     assert.are.equal(1, user_calls)
     assert.are.equal(1, buffer_calls)
+  end)
+
+  it("bounds the generic named frontier cache for deep custom completion trees", function()
+    local generic_provider = require("cmd_ux.providers.generic")
+
+    helpers.create_binary_cache_tree_command("CacheTreeCmd", 7)
+
+    assert.are.equal("namespace", index.describe_root("CacheTreeCmd").kind)
+    assert.is_true(generic_provider._named_frontier_cache_size_for_tests("CacheTreeCmd") <= 64)
   end)
 
   it("keeps semantic workspace roots while hiding overlapping legacy commands", function()

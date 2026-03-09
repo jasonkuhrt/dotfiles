@@ -622,8 +622,8 @@ end
 
 local function prune_events(store)
   local max_events = math.max(64, normalize_int(config.get().learning.flows.history_limit))
-  while #store.events > max_events do
-    table.remove(store.events, 1)
+  if #store.events > max_events then
+    store.events = vim.list_slice(store.events, #store.events - max_events + 1)
   end
 end
 
@@ -998,7 +998,7 @@ end
 
 ---@param state ResolutionState?
 ---@return string?
-function semantic_node_id(state)
+semantic_node_id = function(state)
   if not state or not state.root then
     return nil
   end
@@ -2051,6 +2051,7 @@ function M.rank_state(state)
     return state
   end
 
+  local ranked_state = vim.tbl_extend("force", {}, state)
   local structural = vim.deepcopy(state.frontier)
   local original_order = {}
   for index, item in ipairs(structural) do
@@ -2082,12 +2083,12 @@ function M.rank_state(state)
     for _, item in ipairs(structural) do
       promotions[#promotions + 1] = item
     end
-    state.frontier = promotions
+    ranked_state.frontier = promotions
   else
-    state.frontier = structural
+    ranked_state.frontier = structural
   end
 
-  return state
+  return ranked_state
 end
 
 ---@param limit integer

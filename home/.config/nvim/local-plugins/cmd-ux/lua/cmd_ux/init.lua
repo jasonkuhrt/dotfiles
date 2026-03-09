@@ -76,6 +76,14 @@ local function execute_semantic_user_command(root, provider, args)
   if not exec_ok then
     error(exec_err)
   end
+  if not ok then
+    vim.notify(
+      ("Cmd UX could not resolve semantic state for %q before execution: %s"):format(rendered, tostring(state)),
+      vim.log.levels.WARN,
+      { title = "Cmd UX" }
+    )
+    return
+  end
   if ok and state and state.executable then
     require("cmd_ux.lib.learning").record_execute_state(state)
   end
@@ -329,10 +337,12 @@ function M.setup(opts)
   local group = vim.api.nvim_create_augroup("CmdUxLifecycle", { clear = true })
   vim.api.nvim_create_autocmd("BufEnter", {
     group = group,
-    callback = function()
-      index.invalidate()
+    callback = function(args)
+      if index.buffer_scope_changed(args.buf) then
+        index.invalidate()
+      end
     end,
-    desc = "Invalidate cmd-ux command index on buffer scope changes",
+    desc = "Invalidate cmd-ux command index when buffer-local command scope changes",
   })
   vim.api.nvim_create_autocmd("User", {
     group = group,

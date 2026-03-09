@@ -14,6 +14,7 @@ local M = {
 ---@field completion_type string
 ---@field desc string
 ---@field named_frontier_cache table<string, CommandFrontierItem[]|false>
+---@field named_frontier_cache_order string[]
 
 ---@type table<string, GenericCommandSummary>
 local summary_cache = {}
@@ -32,6 +33,7 @@ local max_named_frontier_items = 32
 local optional_named_root_limit = 12
 local repeatable_overlap_threshold = 0.75
 local repeatable_probe_limit = 4
+local max_named_frontier_cache_entries = 64
 
 ---@type fun(summary: GenericCommandSummary, accepted: string[], seen_signatures?: table<string, boolean>): CommandFrontierItem[]?
 local infer_named_frontier
@@ -110,9 +112,29 @@ local function command_summary(root)
     completion_type = completion_type,
     desc = command_desc(buffer_command or user_command) or util.synthetic_desc(root, parsed, completion_type),
     named_frontier_cache = {},
+    named_frontier_cache_order = {},
   }
   summary_cache[root] = summary
   return summary
+end
+
+---@param summary GenericCommandSummary
+---@param key string
+---@param value CommandFrontierItem[]|false
+local function cache_named_frontier(summary, key, value)
+  if summary.named_frontier_cache[key] == nil then
+    summary.named_frontier_cache_order[#summary.named_frontier_cache_order + 1] = key
+  end
+  summary.named_frontier_cache[key] = value
+
+  while #summary.named_frontier_cache_order > max_named_frontier_cache_entries do
+    local evict = table.remove(summary.named_frontier_cache_order, 1)
+    if evict ~= nil then
+      summary.named_frontier_cache[evict] = nil
+    end
+  end
+
+  return value
 end
 
 ---@param summary GenericCommandSummary
@@ -284,25 +306,25 @@ infer_named_frontier = function(summary, accepted, seen_signatures)
 
   local matches = probe_named_matches(summary, accepted)
   if not looks_like_named_frontier(matches) then
-    summary.named_frontier_cache[key] = false
+    cache_named_frontier(summary, key, false)
     return nil
   end
 
   if looks_like_repeatable_named_values(summary, accepted, matches) then
-    summary.named_frontier_cache[key] = false
+    cache_named_frontier(summary, key, false)
     return nil
   end
 
   local nargs = summary.parsed and summary.parsed.nargs or "0"
   if #accepted == 0 and nargs == "?" and not should_infer_optional_named_root(summary, matches) then
-    summary.named_frontier_cache[key] = false
+    cache_named_frontier(summary, key, false)
     return nil
   end
 
   -- A repeated named frontier shape is a self-similar loop, not deeper structure.
   local signature = frontier_signature(matches)
   if seen_signatures[signature] then
-    summary.named_frontier_cache[key] = false
+    cache_named_frontier(summary, key, false)
     return nil
   end
   seen_signatures[signature] = true
@@ -326,7 +348,7 @@ infer_named_frontier = function(summary, accepted, seen_signatures)
 
   items = util.sort_by_label(items)
   seen_signatures[signature] = nil
-  summary.named_frontier_cache[key] = items
+  cache_named_frontier(summary, key, items)
   return items
 end
 
@@ -745,6 +767,10 @@ local provider = {
   id = M.id,
   describe_root = M.describe_root,
   resolve = M.resolve,
+  _named_frontier_cache_size_for_tests = function(root)
+    local summary = summary_cache[root]
+    return summary and #summary.named_frontier_cache_order or 0
+  end,
 }
 
 return types.provider(provider)

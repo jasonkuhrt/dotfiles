@@ -74,11 +74,9 @@ end
 ---@param token string
 ---@return CommandFrontierItem?
 local function find_exact_frontier_item(frontier, token)
-  for _, item in ipairs(frontier or {}) do
-    if item.label == token then
-      return item
-    end
-  end
+  return collections.find(frontier or {}, function(item)
+    return item.label == token
+  end)
 end
 
 ---@param root string

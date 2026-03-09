@@ -1,11 +1,10 @@
+local modules = require("kit.modules")
+
 local M = {}
 
 ---@return table?
 function M.persistence()
-  local ok, module = pcall(require, "persistence")
-  if ok and type(module) == "table" then
-    return module
-  end
+  return modules.optional("persistence", "table")
 end
 
 ---@return boolean

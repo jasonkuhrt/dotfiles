@@ -1,5 +1,6 @@
 local util = require("cmd_ux.util")
 local types = require("cmd_ux.types")
+local modules = require("kit.modules")
 
 local M = {
   id = "lazy",
@@ -16,8 +17,8 @@ local M = {
 
 ---@return LazyCommandSpec[]
 local function get_commands()
-  local ok, config = pcall(require, "lazy.view.config")
-  if not ok then
+  local config = modules.optional("lazy.view.config", "table")
+  if not config then
     return {}
   end
 
@@ -29,8 +30,8 @@ end
 ---@param prefix string
 ---@return CommandFrontierItem[]
 local function get_plugins(prefix)
-  local ok, config = pcall(require, "lazy.core.config")
-  if not ok then
+  local config = modules.optional("lazy.core.config", "table")
+  if not config then
     return {}
   end
 
@@ -132,8 +133,8 @@ function M.resolve(ctx)
 
   local all_plugins_valid = true
   if command.plugins_required then
-    local ok, config = pcall(require, "lazy.core.config")
-    if ok then
+    local config = modules.optional("lazy.core.config", "table")
+    if config then
       ---@type LazyPluginConfig
       local lazy_config = config
       for _, plugin in ipairs(plugin_args) do

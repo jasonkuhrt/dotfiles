@@ -3,6 +3,7 @@ local runtime = require("cmd_ux.lib.command_runtime")
 require("cmd_ux.lib.capability_catalog").register_all()
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
+local collections = require("kit.collections")
 
 local M = {
   id = "flow",
@@ -308,11 +309,9 @@ end
 ---@param token string
 ---@return FlowAction?
 local function find_action(token)
-  for _, action in ipairs(actions()) do
-    if action.token == token then
-      return action
-    end
-  end
+  return collections.find(actions(), function(action)
+    return action.token == token
+  end)
 end
 
 ---@param root string

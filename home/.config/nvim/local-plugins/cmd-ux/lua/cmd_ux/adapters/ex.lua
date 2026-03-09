@@ -1,4 +1,5 @@
 local core = require("cmd_ux.core")
+local modules = require("kit.modules")
 
 ---@class CmdUxBlinkCmp
 ---@field show fun(opts?: { initial_selected_item_idx?: integer })
@@ -58,8 +59,8 @@ end
 
 local function reopen_blink_menu()
   vim.schedule(function()
-    local ok, blink = pcall(require, "blink.cmp")
-    if not ok then
+    local blink = modules.optional("blink.cmp", "table")
+    if not blink then
       return
     end
     ---@cast blink CmdUxBlinkCmp

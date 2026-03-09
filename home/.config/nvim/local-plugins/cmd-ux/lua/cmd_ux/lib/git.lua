@@ -1,4 +1,5 @@
 local picker = require("cmd_ux.lib.picker")
+local modules = require("kit.modules")
 
 local M = {}
 
@@ -55,17 +56,14 @@ end
 
 ---@return table?
 function M.gitsigns()
-  local ok, module = pcall(require, "gitsigns")
-  if ok and type(module) == "table" then
-    return module
-  end
+  return modules.optional("gitsigns", "table")
 end
 
 ---@param method string
 function M.run_gitsigns(method)
   local module = M.gitsigns()
-  local fn = module and rawget(module, method)
-  if type(fn) ~= "function" then
+  local fn = modules.field(module, method, "function")
+  if not fn then
     vim.notify(("Gitsigns method is unavailable: %s"):format(method), vim.log.levels.ERROR, { title = "Git" })
     return
   end

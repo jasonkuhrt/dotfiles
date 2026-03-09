@@ -1,11 +1,10 @@
+local modules = require("kit.modules")
+
 local M = {}
 
 ---@return table?
 function M.neotest()
-  local ok, module = pcall(require, "neotest")
-  if ok and type(module) == "table" then
-    return module
-  end
+  return modules.optional("neotest", "table")
 end
 
 ---@return boolean

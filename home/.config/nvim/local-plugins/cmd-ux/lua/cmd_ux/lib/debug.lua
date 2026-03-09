@@ -1,19 +1,15 @@
+local modules = require("kit.modules")
+
 local M = {}
 
 ---@return table?
 function M.dap()
-  local ok, module = pcall(require, "dap")
-  if ok and type(module) == "table" then
-    return module
-  end
+  return modules.optional("dap", "table")
 end
 
 ---@return table?
 function M.dapui()
-  local ok, module = pcall(require, "dapui")
-  if ok and type(module) == "table" then
-    return module
-  end
+  return modules.optional("dapui", "table")
 end
 
 ---@return boolean

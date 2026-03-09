@@ -1,5 +1,6 @@
 local resolver = require("cmd_ux.lib.resolver")
 local learning = require("cmd_ux.lib.learning")
+local collections = require("kit.collections")
 
 local M = {}
 
@@ -11,11 +12,9 @@ local function find_frontier_item(state, label)
     return nil
   end
 
-  for _, item in ipairs(state.frontier or {}) do
-    if item.label == label or item.token == label then
-      return item
-    end
-  end
+  return collections.find(state.frontier or {}, function(item)
+    return item.label == label or item.token == label
+  end)
 end
 
 ---@param state ResolutionState

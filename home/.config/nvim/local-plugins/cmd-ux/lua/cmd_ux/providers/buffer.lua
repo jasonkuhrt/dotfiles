@@ -1,6 +1,7 @@
 local slot_specs = require("cmd_ux.lib.slot_specs")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
+local modules = require("kit.modules")
 local strings = require("kit.strings")
 
 local M = {
@@ -20,13 +21,7 @@ local goto_slot = slot_specs.buffer_number({
 ---@field execute fun()
 
 local function snacks_bufdelete()
-  local ok, snacks = pcall(require, "snacks")
-  if ok and type(snacks) == "table" then
-    local bufdelete = rawget(snacks, "bufdelete")
-    if type(bufdelete) == "function" then
-      return bufdelete
-    end
-  end
+  return modules.field(modules.optional("snacks", "table"), "bufdelete", "function")
 end
 
 local function close_buffer(bufnr, force)

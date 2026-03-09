@@ -1,4 +1,5 @@
 local lsp = require("cmd_ux.lib.lsp")
+local picker = require("cmd_ux.lib.picker")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
 local strings = require("kit.strings")
@@ -30,36 +31,11 @@ local cached_root_actions = nil
 ---@type table<string, LspNamespace>?
 local cached_namespaces = nil
 
-local function require_picker()
-  local ok, snacks = pcall(require, "snacks")
-  if not ok or type(snacks) ~= "table" then
-    return nil
-  end
-
-  local picker = rawget(snacks, "picker")
-  if type(picker) ~= "table" then
-    return nil
-  end
-
-  return picker
-end
-
 ---@param method string
 ---@param title string
 ---@param opts? table
 local function run_picker(method, title, opts)
-  local picker = require_picker()
-  local fn = picker and rawget(picker, method)
-  if type(fn) ~= "function" then
-    vim.notify("Lsp requires Snacks.picker." .. method, vim.log.levels.ERROR, { title = title })
-    return
-  end
-
-  if opts ~= nil then
-    fn(vim.deepcopy(opts))
-  else
-    fn()
-  end
+  picker.run(method, title, opts)
 end
 
 ---@param only? string|string[]

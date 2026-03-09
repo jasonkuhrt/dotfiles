@@ -2,6 +2,7 @@ local learning = require("cmd_ux.lib.learning")
 local runtime = require("cmd_ux.lib.runtime")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
+local collections = require("kit.collections")
 
 local M = {
   id = "recall",
@@ -58,11 +59,9 @@ end
 ---@param token string
 ---@return RecallEntry?
 local function find_entry(token)
-  for _, entry in ipairs(entries()) do
-    if entry.token == token then
-      return entry
-    end
-  end
+  return collections.find(entries(), function(entry)
+    return entry.token == token
+  end)
 end
 
 ---@param root string

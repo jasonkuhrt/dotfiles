@@ -1,5 +1,6 @@
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
+local modules = require("kit.modules")
 local strings = require("kit.strings")
 
 local M = {
@@ -14,10 +15,7 @@ local M = {
 ---@field execute fun()
 
 local function cmux_nav()
-  local ok, module = pcall(require, "cmux_nav")
-  if ok and type(module) == "table" then
-    return module
-  end
+  return modules.optional("cmux_nav", "table")
 end
 
 local function with_cmux_nav(method, fallback)

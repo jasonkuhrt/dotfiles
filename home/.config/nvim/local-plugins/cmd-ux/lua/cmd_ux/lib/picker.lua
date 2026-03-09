@@ -1,18 +1,10 @@
+local modules = require("kit.modules")
+
 local M = {}
 
 ---@return table?
 function M.snacks_picker()
-  local ok, snacks = pcall(require, "snacks")
-  if not ok or type(snacks) ~= "table" then
-    return nil
-  end
-
-  local picker = rawget(snacks, "picker")
-  if type(picker) ~= "table" then
-    return nil
-  end
-
-  return picker
+  return modules.field(modules.optional("snacks", "table"), "picker", "table")
 end
 
 ---@param name string

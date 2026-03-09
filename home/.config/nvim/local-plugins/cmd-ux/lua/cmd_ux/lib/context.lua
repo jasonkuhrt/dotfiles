@@ -1,3 +1,5 @@
+local collections = require("kit.collections")
+
 local M = {}
 
 ---@class CmdUxContextVector
@@ -12,20 +14,6 @@ local M = {}
 ---@field exact_key string
 ---@field facet_keys string[]
 ---@field display string
-
----@param values string[]
----@return string[]
-local function dedupe(values)
-  local seen = {}
-  local result = {}
-  for _, value in ipairs(values or {}) do
-    if type(value) == "string" and value ~= "" and not seen[value] then
-      seen[value] = true
-      result[#result + 1] = value
-    end
-  end
-  return result
-end
 
 ---@return string
 function M.project_id()
@@ -112,7 +100,7 @@ function M.current()
     "mode:" .. (mode ~= "" and mode or "*"),
   }, "|")
 
-  local facet_keys = dedupe({
+  local facet_keys = collections.unique({
     legacy_key,
     "surface:" .. surface,
     "surface:" .. surface .. "|detail:" .. surface_detail,
@@ -120,7 +108,12 @@ function M.current()
     "surface:" .. surface .. "|filetype:" .. (filetype ~= "" and filetype or "*"),
     "buftype:" .. (buftype ~= "" and buftype or "*"),
     "mode:" .. (mode ~= "" and mode or "*"),
-  })
+  }, function(value)
+    if type(value) == "string" and value ~= "" then
+      return value
+    end
+    return nil
+  end)
 
   return {
     project_id = M.project_id(),

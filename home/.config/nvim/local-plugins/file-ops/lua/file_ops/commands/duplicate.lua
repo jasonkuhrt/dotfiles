@@ -17,7 +17,7 @@ function M.run()
   Snacks.picker.util.copy_path(t.path, copy_path)
 
   if t.context == "buffer" then
-    vim.cmd.edit(copy_path)
+    vim.cmd({ cmd = "edit", args = { copy_path } })
   end
 
   target.after_mutation(t)

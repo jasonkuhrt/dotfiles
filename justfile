@@ -1,9 +1,10 @@
 set quiet
 
 dotctl := "DOTFILES_REPO_ROOT=" + justfile_directory() + " dotctl"
-lua_paths := "home/.config/nvim/lua home/.config/nvim/local-plugins/cmd-ux/lua home/.config/nvim/local-plugins/cmd-ux/tests home/.config/nvim/local-plugins/kit/lua"
+lua_paths := "home/.config/nvim/lua home/.config/nvim/local-plugins/cmd-ux/lua home/.config/nvim/local-plugins/cmd-ux/tests home/.config/nvim/local-plugins/file-ops/lua home/.config/nvim/local-plugins/file-ops/tests home/.config/nvim/local-plugins/kit/lua"
 cmd_ux_blocklist_path := "home/.config/nvim/cmd-ux-command-blocklist.txt"
 cmd_ux_plugin_path := "home/.config/nvim/local-plugins/cmd-ux"
+file_ops_plugin_path := "home/.config/nvim/local-plugins/file-ops"
 
 [private]
 default:
@@ -187,6 +188,24 @@ cmd-ux-test:
     fi
 
     CMD_UX_TEST=1 XDG_CONFIG_HOME="$PWD/home/.config" XDG_CACHE_HOME="$cache_dir" nvim --headless -u NONE \
+        --cmd "set runtimepath^=$plenary" \
+        -c "lua require('plenary.test_harness').test_directory('$plugin_root/tests/plenary', { minimal_init = '$plugin_root/tests/minimal_init.lua', sequential = true })"
+
+file-ops-test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    plugin_root="$PWD/{{ file_ops_plugin_path }}"
+    plenary="${PLENARY_PATH:-$HOME/.local/share/nvim/lazy/plenary.nvim}"
+    cache_dir="$(mktemp -d)"
+    trap 'rm -rf "$cache_dir"' EXIT
+
+    if [ ! -d "$plenary" ]; then
+        printf 'FAIL: plenary.nvim not found at %s\n' "$plenary" >&2
+        exit 1
+    fi
+
+    XDG_CONFIG_HOME="$PWD/home/.config" XDG_CACHE_HOME="$cache_dir" nvim --headless -u NONE \
         --cmd "set runtimepath^=$plenary" \
         -c "lua require('plenary.test_harness').test_directory('$plugin_root/tests/plenary', { minimal_init = '$plugin_root/tests/minimal_init.lua', sequential = true })"
 

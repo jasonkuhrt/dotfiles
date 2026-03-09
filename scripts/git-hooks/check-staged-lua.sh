@@ -7,7 +7,11 @@ cd "$repo_root"
 files=()
 while IFS= read -r -d '' file; do
   case "$file" in
-    symlink-roots/config/nvim/lua/*.lua | symlink-roots/config/nvim/local-plugins/cmd-ux/lua/*.lua)
+    home/.config/nvim/lua/*.lua | \
+    home/.config/nvim/local-plugins/cmd-ux/lua/*.lua | \
+    home/.config/nvim/local-plugins/file-ops/lua/*.lua | \
+    home/.config/nvim/local-plugins/file-ops/tests/*.lua | \
+    home/.config/nvim/local-plugins/file-ops/tests/plenary/*.lua)
       files+=("$file")
       ;;
   esac
@@ -23,11 +27,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-mkdir -p "$tmpdir/symlink-roots/config/nvim"
 cp .luarc.json "$tmpdir/.luarc.json"
 cp selene.toml "$tmpdir/selene.toml"
 cp selene.nvim.yml "$tmpdir/selene.nvim.yml"
-cp symlink-roots/config/nvim/stylua.toml "$tmpdir/symlink-roots/config/nvim/stylua.toml"
+mkdir -p "$tmpdir/home/.config/nvim"
+cp home/.config/nvim/stylua.toml "$tmpdir/home/.config/nvim/stylua.toml"
 
 for file in "${files[@]}"; do
   mkdir -p "$tmpdir/$(dirname "$file")"
@@ -62,7 +66,7 @@ done
 printf '\n[stylua --check]\n'
 if ! (
   cd "$tmpdir"
-  stylua --check --config-path symlink-roots/config/nvim/stylua.toml "${files[@]}"
+  stylua --check --config-path home/.config/nvim/stylua.toml "${files[@]}"
 ); then
   failed=1
 fi

@@ -3,6 +3,8 @@ base: lua51
 globals:
   LazyVim:
     any: true
+  MiniFiles:
+    any: true
   Snacks:
     any: true
   assert:

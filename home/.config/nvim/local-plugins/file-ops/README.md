@@ -18,14 +18,21 @@ Registers a standard Neovim user command `:File` with tab completion. No externa
 
 | Command | Description |
 |---|---|
-| `File copy-path` | Copy absolute path to clipboard |
-| `File copy-path-relative` | Copy relative path (to cwd) to clipboard |
-| `File copy-name` | Copy filename to clipboard |
-| `File copy-dir-path` | Copy containing directory path to clipboard |
+| `File copy path abs` | Copy absolute path to clipboard |
+| `File copy path abs-line` | Copy absolute path with current line (`/abs/file.lua:40`) |
+| `File copy path relative` | Copy relative path (to cwd) to clipboard |
+| `File copy path project` | Copy path relative to the git repo root |
+| `File copy path project-line` | Copy repo-relative path with current line (`lua/init.lua:40`) |
+| `File copy name` | Copy filename to clipboard |
+| `File copy dir` | Copy containing directory path to clipboard |
+| `File copy github link` | Copy a GitHub blob URL for the current target |
+| `File copy github link-line` | Copy a GitHub blob URL anchored to the current line |
+| `File copy github permalink` | Copy a commit-pinned GitHub blob URL |
+| `File copy github permalink-line` | Copy a commit-pinned GitHub blob URL anchored to the current line |
+| `File copy to` | Copy to new location (prompt for target path) |
 | `File delete` | Delete file/directory (trash, with confirmation) |
 | `File rename` | Rename in place (prompt prefilled with current name stem) |
 | `File move` | Move to new location (prompt prefilled with full path) |
-| `File copy` | Copy to new location (prompt for target path) |
 | `File duplicate` | Copy to same directory with `_copy` suffix |
 | `File new` | Create new file or directory (trailing `/` = directory) |
 | `File reveal` | Open containing directory in Finder |
@@ -58,14 +65,21 @@ How each command dispatches per context:
 
 | Command | Backend | minifiles post-action | buffer post-action | No-context |
 |---|---|---|---|---|
-| `copy-path` | `vim.fn.setreg("+", path)` | — | — | refuse |
-| `copy-path-relative` | `vim.fn.setreg("+", relative)` | — | — | refuse |
-| `copy-name` | `vim.fn.setreg("+", name)` | — | — | refuse |
-| `copy-dir-path` | `vim.fn.setreg("+", dir)` | — | — | refuse |
+| `copy path abs` | `vim.fn.setreg("+", path)` | — | — | refuse |
+| `copy path abs-line` | `vim.fn.setreg("+", path .. ":" .. line)` | refuse | — | refuse |
+| `copy path relative` | `vim.fn.setreg("+", relative)` | — | — | refuse |
+| `copy path project` | git-root relative + `vim.fn.setreg("+", relative)` | — | — | refuse |
+| `copy path project-line` | git-root relative + `vim.fn.setreg("+", relative .. ":" .. line)` | refuse | — | refuse |
+| `copy name` | `vim.fn.setreg("+", name)` | — | — | refuse |
+| `copy dir` | `vim.fn.setreg("+", dir)` | — | — | refuse |
+| `copy github link` | `git ls-remote` + `vim.fn.setreg("+", url)` | — | — | refuse |
+| `copy github link-line` | `git ls-remote` + `vim.fn.setreg("+", url .. "#L" .. line)` | refuse | — | refuse |
+| `copy github permalink` | `git rev-parse HEAD` + `vim.fn.setreg("+", url)` | — | — | refuse |
+| `copy github permalink-line` | `git rev-parse HEAD` + `vim.fn.setreg("+", url .. "#L" .. line)` | refuse | — | refuse |
+| `copy to` | `Snacks.picker.util.copy_path()` | `after_mutation()` | — | refuse |
 | `delete` | `trash(path)` | `after_mutation()` | `Snacks.bufdelete()` | refuse |
 | `rename` | `Snacks.rename.rename_file()` | `after_mutation()` | buffer swap (handled by Snacks) | refuse |
 | `move` | `Snacks.rename.rename_file({from, to})` | `after_mutation()` | buffer swap (handled by Snacks) | refuse |
-| `copy` | `Snacks.picker.util.copy_path()` | `after_mutation()` | — | refuse |
 | `duplicate` | `Snacks.picker.util.copy_path()` | `after_mutation()` | open new buffer | refuse |
 | `new` | `vim.fn.mkdir` + `io.open():close()` | `after_mutation()` | open new buffer | use cwd |
 | `reveal` | `vim.ui.open(dir)` | — | — | use cwd |
@@ -144,6 +158,12 @@ Copies to the same directory with `_copy` appended before the extension (e.g., `
 
 All write to the `+` register (system clipboard) and notify via `vim.notify`.
 
+- Line-aware filesystem variants use the editor-style `path:line` convention.
+- GitHub line anchors use GitHub's `#L40` convention.
+- The copy namespace is hierarchical: `File copy path ...`, `File copy github ...`, `File copy to`.
+- `copy github link` prefers the current branch when it exists on `origin`; otherwise it falls back to the remote default branch.
+- `copy github permalink` pins the URL to `HEAD` for stable review links.
+
 ### Error handling
 
 Snacks primitives already notify errors via `Snacks.notify.error()` with descriptive messages. file-ops does not wrap or re-throw these.
@@ -161,6 +181,7 @@ local-plugins/file-ops/
   lua/
     file_ops/
       init.lua              -- setup: create :File user command
+      git.lua               -- git root/remote helpers for repo-relative and GitHub links
       target.lua            -- resolve_target() + after_mutation()
       commands/
         init.lua            -- registry + dispatch + completion
@@ -174,7 +195,10 @@ local-plugins/file-ops/
         reveal.lua
         terminal.lua
   tests/
+    minimal_init.lua
     plenary/
+      copy_path_spec.lua    -- copy path/link command behavior
+      git_spec.lua          -- GitHub URL ref selection
       target_spec.lua       -- resolve_target() with mocked contexts
   README.md                 -- this file
 ```

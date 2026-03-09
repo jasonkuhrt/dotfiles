@@ -315,14 +315,14 @@ function M.open_under_cursor()
   if target:match("^file://") then
     local absolute_path = vim.uri_to_fname(target)
     if vim.uv.fs_stat(absolute_path) then
-      vim.cmd.edit(vim.fn.fnameescape(absolute_path))
+      vim.cmd({ cmd = "edit", args = { vim.fn.fnameescape(absolute_path) } })
       return true
     end
   end
 
   local absolute_path, fragment = resolve_local_target(target)
   if absolute_path and vim.uv.fs_stat(absolute_path) then
-    vim.cmd.edit(vim.fn.fnameescape(absolute_path))
+    vim.cmd({ cmd = "edit", args = { vim.fn.fnameescape(absolute_path) } })
     if fragment then
       jump_to_heading(fragment)
     end
@@ -349,7 +349,7 @@ function M.open_under_cursor_or_jump_older()
   end
 
   local keys = (vim.v.count > 0 and tostring(vim.v.count) or "") .. vim.keycode("<C-o>")
-  vim.cmd.normal({ bang = true, args = { keys } })
+  vim.cmd({ cmd = "normal", bang = true, args = { keys } })
 end
 
 ---@cast M LinkOpenModule

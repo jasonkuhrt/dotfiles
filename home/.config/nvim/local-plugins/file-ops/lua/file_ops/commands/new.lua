@@ -34,7 +34,7 @@ function M.run()
         f:close()
       end
       if t.context ~= "minifiles" then
-        vim.cmd.edit(path)
+        vim.cmd({ cmd = "edit", args = { path } })
       end
     end
 

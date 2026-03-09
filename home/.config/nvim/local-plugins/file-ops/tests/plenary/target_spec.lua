@@ -1,4 +1,4 @@
----@diagnostic disable: undefined-field, undefined-global
+---@diagnostic disable: undefined-field
 
 local target = require("file_ops.target")
 
@@ -8,8 +8,7 @@ describe("resolve_target", function()
     local original_ft = vim.bo.filetype
     vim.bo.filetype = "minifiles"
 
-    ---@diagnostic disable-next-line: lowercase-global
-    _G.MiniFiles = {
+    MiniFiles = {
       get_fs_entry = function()
         return { path = "/tmp/test.lua", name = "test.lua" }
       end,
@@ -23,7 +22,7 @@ describe("resolve_target", function()
     assert.are.equal("/tmp", t.dir)
 
     vim.bo.filetype = original_ft
-    _G.MiniFiles = nil
+    MiniFiles = nil
   end)
 
   it("returns buffer context when buffer has a real file", function()
@@ -40,7 +39,7 @@ describe("resolve_target", function()
 
     local t = target.resolve()
     assert.are.equal("buffer", t.context)
-    assert.are.equal(tmpfile, t.path)
+    assert.are.equal(vim.uv.fs_realpath(tmpfile), vim.uv.fs_realpath(t.path))
 
     vim.api.nvim_buf_delete(buf, { force = true })
     os.remove(tmpfile)
@@ -60,8 +59,7 @@ end)
 describe("after_mutation", function()
   it("calls synchronize for minifiles context", function()
     local synced = false
-    ---@diagnostic disable-next-line: lowercase-global
-    _G.MiniFiles = {
+    MiniFiles = {
       synchronize = function()
         synced = true
       end,
@@ -70,13 +68,12 @@ describe("after_mutation", function()
     target.after_mutation({ context = "minifiles" })
     assert.is_true(synced)
 
-    _G.MiniFiles = nil
+    MiniFiles = nil
   end)
 
   it("does not call synchronize for buffer context", function()
     local synced = false
-    ---@diagnostic disable-next-line: lowercase-global
-    _G.MiniFiles = {
+    MiniFiles = {
       synchronize = function()
         synced = true
       end,
@@ -85,6 +82,6 @@ describe("after_mutation", function()
     target.after_mutation({ context = "buffer" })
     assert.is_false(synced)
 
-    _G.MiniFiles = nil
+    MiniFiles = nil
   end)
 end)

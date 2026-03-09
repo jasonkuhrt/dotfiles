@@ -77,7 +77,7 @@ is_lua_relevant_path() {
   local file=$1
 
   matches_regex "$file" \
-    '^(\.github/workflows/lua\.yml|home/\.config/nvim/(lua|local-plugins/cmd-ux)/.*\.lua|\.luarc\.json|selene\.toml|selene\.nvim\.yml|home/\.config/nvim/stylua\.toml|justfile|scripts/ci/lua-ci\.sh|scripts/git-hooks/check-staged-lua\.sh)$'
+    '^(\.github/workflows/lua\.yml|home/\.config/nvim/(lua|local-plugins/(cmd-ux|file-ops))/.*\.lua|\.luarc\.json|selene\.toml|selene\.nvim\.yml|home/\.config/nvim/stylua\.toml|justfile|scripts/ci/lua-ci\.sh|scripts/git-hooks/check-staged-lua\.sh)$'
 }
 
 is_cmd_ux_test_path() {
@@ -85,6 +85,13 @@ is_cmd_ux_test_path() {
 
   matches_regex "$file" \
     '^(home/\.config/nvim/local-plugins/cmd-ux/.*|home/\.config/nvim/lua/plugins/cmd-ux\.lua)$'
+}
+
+is_file_ops_test_path() {
+  local file=$1
+
+  matches_regex "$file" \
+    '^(home/\.config/nvim/local-plugins/file-ops/.*|home/\.config/nvim/lua/plugins/file-ops\.lua)$'
 }
 
 collect_changed_files
@@ -116,6 +123,7 @@ done
 
 declare -a lua_relevant_files=()
 declare -a cmd_ux_test_files=()
+declare -a file_ops_test_files=()
 
 for file in "${unique_files[@]}"; do
   if is_lua_relevant_path "$file"; then
@@ -124,6 +132,10 @@ for file in "${unique_files[@]}"; do
 
   if is_cmd_ux_test_path "$file"; then
     cmd_ux_test_files+=("$file")
+  fi
+
+  if is_file_ops_test_path "$file"; then
+    file_ops_test_files+=("$file")
   fi
 done
 
@@ -140,10 +152,21 @@ done
 printf '\n[just lua-check]\n'
 just lua-check
 
-if [ ${#cmd_ux_test_files[@]} -eq 0 ]; then
-  printf '\nSKIP: cmd-ux tests not needed for this change set\n'
+if [ ${#cmd_ux_test_files[@]} -eq 0 ] && [ ${#file_ops_test_files[@]} -eq 0 ]; then
+  printf '\nSKIP: plugin tests not needed for this change set\n'
   exit 0
 fi
 
-printf '\n[just cmd-ux-test]\n'
-just cmd-ux-test
+if [ ${#cmd_ux_test_files[@]} -gt 0 ]; then
+  printf '\n[just cmd-ux-test]\n'
+  just cmd-ux-test
+else
+  printf '\nSKIP: cmd-ux tests not needed for this change set\n'
+fi
+
+if [ ${#file_ops_test_files[@]} -gt 0 ]; then
+  printf '\n[just file-ops-test]\n'
+  just file-ops-test
+else
+  printf '\nSKIP: file-ops tests not needed for this change set\n'
+fi

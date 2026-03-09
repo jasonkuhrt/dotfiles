@@ -19,6 +19,7 @@ local kit_root = %q
 local penlight_root = %q
 local penlight_rocks_root = %q
 local blink_root = %q
+local max_attempts = 25
 
 local function labels(blink)
   local result = {}
@@ -35,6 +36,25 @@ local function has(items, expected)
     end
   end
   return false
+end
+
+local function fail(blink)
+  io.stderr:write(
+    ("CMDUX_FAIL line=%%s visible=%%s items=%%s\\n"):format(
+      vim.fn.getcmdline(),
+      tostring(blink.is_menu_visible()),
+      vim.inspect(labels(blink))
+    )
+  )
+  vim.cmd("cquit 1")
+end
+
+local function succeed()
+  io.stdout:write("CMDUX_OK\\n")
+  vim.api.nvim_input(vim.api.nvim_replace_termcodes("<C-c>", true, false, true))
+  vim.defer_fn(function()
+    vim.cmd("qa!")
+  end, 50)
 end
 
 vim.opt.runtimepath:prepend(penlight_root)
@@ -72,35 +92,34 @@ blink.setup({
   },
 })
 
-  vim.schedule(function()
-    vim.api.nvim_input(":")
-    vim.defer_fn(function()
-      vim.api.nvim_input("Tab")
-      vim.defer_fn(function()
-        local current_labels = labels(blink)
-      local ok = vim.fn.getcmdline():find("^Tab%%s") ~= nil
-        and blink.is_menu_visible()
-        and has(current_labels, "goto")
-        and has(current_labels, "next")
+local function await_namespace(attempt)
+  local current_labels = labels(blink)
+  local ok = vim.fn.getcmdline():find("^Tab%%s") ~= nil
+    and blink.is_menu_visible()
+    and has(current_labels, "goto")
+    and has(current_labels, "next")
 
-      if ok then
-        io.stdout:write("CMDUX_OK\\n")
-        vim.api.nvim_input(vim.api.nvim_replace_termcodes("<C-c>", true, false, true))
-        vim.defer_fn(function()
-          vim.cmd("qa!")
-        end, 50)
-      else
-        io.stderr:write(
-          ("CMDUX_FAIL line=%%s visible=%%s items=%%s\\n"):format(
-            vim.fn.getcmdline(),
-            tostring(blink.is_menu_visible()),
-            vim.inspect(current_labels)
-          )
-        )
-        vim.cmd("cquit 1")
-      end
-    end, 600)
-  end, 150)
+  if ok then
+    succeed()
+    return
+  end
+
+  if attempt >= max_attempts then
+    fail(blink)
+    return
+  end
+
+  vim.defer_fn(function()
+    await_namespace(attempt + 1)
+  end, 80)
+end
+
+vim.schedule(function()
+  vim.api.nvim_input(":")
+  vim.defer_fn(function()
+    vim.api.nvim_input("Tab")
+    await_namespace(1)
+  end, 120)
 end)
 ]]):format(root, kit_root, penlight_root, penlight_rocks_root, blink_root)
 

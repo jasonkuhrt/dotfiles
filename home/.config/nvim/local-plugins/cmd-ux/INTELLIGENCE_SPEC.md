@@ -688,6 +688,11 @@ The engine should expose reports for humans and agents:
 - workflow candidates
 - unused or weakly justified roots
 
+Runtime boundary:
+
+- learning storage, scoring, and proposal truth stays in `lua/cmd_ux/lib/learning.lua`
+- human/agent report assembly and preview text stays in `lua/cmd_ux/lib/learning_reports.lua`
+
 Every report should be sliceable by:
 
 - project

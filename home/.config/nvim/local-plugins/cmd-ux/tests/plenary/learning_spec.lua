@@ -721,6 +721,19 @@ describe("cmd_ux learning and flow features", function()
     close_report_tab()
   end)
 
+  it("preview lines surface learned next choices and promoted paths", function()
+    learning.record_execute_state(core.resolve_line("Config reload"))
+    learning.record_execute_state(core.resolve_line("Config reload"))
+
+    local root_preview = table.concat(learning.preview_lines(core.resolve_line("")), "\n")
+    assert.is_truthy(root_preview:find("Promoted paths:", 1, true))
+    assert.is_truthy(root_preview:find("Config reload", 1, true))
+
+    local config_preview = table.concat(learning.preview_lines(core.resolve_line("Config")), "\n")
+    assert.is_truthy(config_preview:find("Learned next:", 1, true))
+    assert.is_truthy(config_preview:find("reload", 1, true))
+  end)
+
   it("derives deterministic flow proposals from repeated capability sequences", function()
     learning.record_execute_state(core.resolve_line("Project files"))
     learning.record_execute_state(core.resolve_line("Project grep"))

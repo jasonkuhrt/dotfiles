@@ -121,21 +121,120 @@ nag() {
 
 _print_banner() {
     local total="${1}" days="${2:-}"
-    local cyan='\033[36m' dim='\033[2m' bold='\033[1m' reset='\033[0m'
-    local yellow='\033[33m' magenta='\033[35m'
+    local d='\033[2m' r='\033[0m' b='\033[1m'
+    local c='\033[36m' y='\033[33m' m='\033[35m' w='\033[37m' g='\033[32m'
 
-    # Gentle nudge with a little character
-    printf '\n'
-    printf '  %b   ╭─────────────────────────────────────╮%b\n' "$dim" "$reset"
-    printf '  %b┌─┐│%b  %b★%b You have %b%s%b capabilities logged  %b│%b\n' "$dim" "$reset" "$yellow" "$reset" "$bold" "$total" "$reset" "$dim" "$reset"
-    printf '  %b│▒││%b' "$dim" "$reset"
+    local status_line
     if [[ -n "$days" ]]; then
-        printf '  %bLast checked %s days ago%b          %b│%b\n' "$dim" "$days" "$reset" "$dim" "$reset"
+        status_line="Last checked ${days} days ago"
     else
-        printf '  %bNever checked — take a peek!%b       %b│%b\n' "$dim" "$reset" "$dim" "$reset"
+        status_line="Never checked — take a peek!"
     fi
-    printf '  %b│░││%b  Run %b%bnesia%b to see what you forgot  %b│%b\n' "$dim" "$reset" "$magenta" "$bold" "$reset" "$dim" "$reset"
-    printf '  %b└─┘╰─────────────────────────────────────╯%b\n' "$dim" "$reset"
+
+    local idx=$(( RANDOM % 10 ))
+    printf '\n'
+    case $idx in
+    0) # Mount Robson — highest in the Canadian Rockies
+        printf '  %b        /\\%b\n' "$w" "$r"
+        printf '  %b       /  \\%b        %b★ %s capabilities logged%b\n' "$w" "$r" "$y" "$total" "$r"
+        printf '  %b    __/    \\__%b     %b%s%b\n' "$w" "$r" "$d" "$status_line" "$r"
+        printf '  %b   /  \\    /  \\%b\n' "$w" "$r"
+        printf '  %b  / /\\ \\  / /\\ \\%b   Run %b%bnesia%b to remember\n' "$w" "$r" "$m" "$b" "$r"
+        printf '  %b_/ /  \\ \\/ /  \\ \\_%b\n' "$w" "$r"
+        printf '  %b~~~~~~~~~~~~~~~~~~%b  %bMount Robson%b 3,954m\n' "$c" "$r" "$b" "$r"
+        printf '  %bmaps.apple.com/?ll=53.1147,-119.1553&q=Mount+Robson%b\n' "$d" "$r"
+        ;;
+    1) # Mount Assiniboine — Matterhorn of the Rockies
+        printf '  %b         /\\%b\n' "$w" "$r"
+        printf '  %b        /  \\%b       %b★ %s capabilities logged%b\n' "$w" "$r" "$y" "$total" "$r"
+        printf '  %b       / /\\ \\%b      %b%s%b\n' "$w" "$r" "$d" "$status_line" "$r"
+        printf '  %b      / /  \\ \\%b\n' "$w" "$r"
+        printf '  %b     / /    \\ \\%b    Run %b%bnesia%b to remember\n' "$w" "$r" "$m" "$b" "$r"
+        printf '  %b    /_/      \\_\\%b\n' "$w" "$r"
+        printf '  %b   ~~~~~~~~~~~~~~%b  %bMount Assiniboine%b 3,618m\n' "$c" "$r" "$b" "$r"
+        printf '  %bmaps.apple.com/?ll=50.8714,-115.6283&q=Mount+Assiniboine%b\n' "$d" "$r"
+        ;;
+    2) # Mount Columbia — highest in Alberta
+        printf '  %b      ____/\\____%b\n' "$w" "$r"
+        printf '  %b     /  ___  _  \\%b  %b★ %s capabilities logged%b\n' "$w" "$r" "$y" "$total" "$r"
+        printf '  %b    / _/   \\/  \\_\\%b %b%s%b\n' "$w" "$r" "$d" "$status_line" "$r"
+        printf '  %b   /_/           \\_\\%b\n' "$w" "$r"
+        printf '  %b  ~~~~~~~~~~~~~~~~~~~%b Run %b%bnesia%b to remember\n' "$c" "$r" "$m" "$b" "$r"
+        printf '  %bMount Columbia%b 3,747m\n' "$b" "$r"
+        printf '  %bmaps.apple.com/?ll=52.1497,-117.4381&q=Mount+Columbia%b\n' "$d" "$r"
+        ;;
+    3) # Castle Mountain — flat-topped castellated ridgeline
+        printf '  %b     ┌──┐  ┌──┐%b\n' "$w" "$r"
+        printf '  %b     │  │__│  │%b    %b★ %s capabilities logged%b\n' "$w" "$r" "$y" "$total" "$r"
+        printf '  %b    /│  │  │  │\\%b   %b%s%b\n' "$w" "$r" "$d" "$status_line" "$r"
+        printf '  %b   / └──┘  └──┘ \\%b\n' "$w" "$r"
+        printf '  %b  /              \\%b  Run %b%bnesia%b to remember\n' "$w" "$r" "$m" "$b" "$r"
+        printf '  %b  ~~~~~~~~~~~~~~~~%b\n' "$c" "$r"
+        printf '  %bCastle Mountain%b 2,766m\n' "$b" "$r"
+        printf '  %bmaps.apple.com/?ll=51.2642,-115.9225&q=Castle+Mountain%b\n' "$d" "$r"
+        ;;
+    4) # Mount Temple — pyramidal north face
+        printf '  %b       /\\%b\n' "$w" "$r"
+        printf '  %b      /  \\%b        %b★ %s capabilities logged%b\n' "$w" "$r" "$y" "$total" "$r"
+        printf '  %b     /    \\%b       %b%s%b\n' "$w" "$r" "$d" "$status_line" "$r"
+        printf '  %b    / /\\   \\%b\n' "$w" "$r"
+        printf '  %b   / /  \\   \\%b     Run %b%bnesia%b to remember\n' "$w" "$r" "$m" "$b" "$r"
+        printf '  %b  /_/    \\___\\%b\n' "$w" "$r"
+        printf '  %b  ~~~~~~~~~~~~~%b   %bMount Temple%b 3,544m\n' "$c" "$r" "$b" "$r"
+        printf '  %bmaps.apple.com/?ll=51.3472,-116.2078&q=Mount+Temple%b\n' "$d" "$r"
+        ;;
+    5) # Mount Rundle — iconic tilted slab above Banff
+        printf '  %b          /|%b\n' "$w" "$r"
+        printf '  %b         / |%b      %b★ %s capabilities logged%b\n' "$w" "$r" "$y" "$total" "$r"
+        printf '  %b        /  |%b      %b%s%b\n' "$w" "$r" "$d" "$status_line" "$r"
+        printf '  %b       /   |%b\n' "$w" "$r"
+        printf '  %b      /    |%b      Run %b%bnesia%b to remember\n' "$w" "$r" "$m" "$b" "$r"
+        printf '  %b     /     |%b\n' "$w" "$r"
+        printf '  %b    /______|%b\n' "$w" "$r"
+        printf '  %b  ~~~~~~~~~~%b     %bMount Rundle%b 2,949m\n' "$c" "$r" "$b" "$r"
+        printf '  %bmaps.apple.com/?ll=51.1311,-115.4736&q=Mount+Rundle%b\n' "$d" "$r"
+        ;;
+    6) # The Three Sisters — triple peaks near Canmore
+        printf '  %b     /\\    /\\    /\\%b\n' "$w" "$r"
+        printf '  %b    /  \\  /  \\  /  \\%b  %b★ %s capabilities logged%b\n' "$w" "$r" "$y" "$total" "$r"
+        printf '  %b   /    \\/    \\/    \\%b %b%s%b\n' "$w" "$r" "$d" "$status_line" "$r"
+        printf '  %b  /                  \\%b\n' "$w" "$r"
+        printf '  %b /____________________\\%b Run %b%bnesia%b to remember\n' "$w" "$r" "$m" "$b" "$r"
+        printf '  %b ~~~~~~~~~~~~~~~~~~~~~%b\n' "$c" "$r"
+        printf '  %bThe Three Sisters%b 2,936m\n' "$b" "$r"
+        printf '  %bmaps.apple.com/?ll=51.0467,-115.3781&q=Three+Sisters%b\n' "$d" "$r"
+        ;;
+    7) # Mount Edith Cavell — Angel Glacier
+        printf '  %b        /\\%b\n' "$w" "$r"
+        printf '  %b       /  \\%b       %b★ %s capabilities logged%b\n' "$w" "$r" "$y" "$total" "$r"
+        printf '  %b      / %b◇%b  \\%b      %b%s%b\n' "$w" "$c" "$w" "$r" "$d" "$status_line" "$r"
+        printf '  %b     / /  \\ \\%b\n' "$w" "$r"
+        printf '  %b    / / %b◇◇%b \\ \\%b    Run %b%bnesia%b to remember\n' "$w" "$c" "$w" "$r" "$m" "$b" "$r"
+        printf '  %b   /_/______\\_\\%b\n' "$w" "$r"
+        printf '  %b   ~~~~~~~~~~~~~%b  %bMount Edith Cavell%b 3,363m\n' "$c" "$r" "$b" "$r"
+        printf '  %bmaps.apple.com/?ll=52.6828,-117.8617&q=Mount+Edith+Cavell%b\n' "$d" "$r"
+        ;;
+    8) # Mount Fay — steep triangular face
+        printf '  %b       /\\%b\n' "$w" "$r"
+        printf '  %b      / |\\%b       %b★ %s capabilities logged%b\n' "$w" "$r" "$y" "$total" "$r"
+        printf '  %b     /  | \\%b      %b%s%b\n' "$w" "$r" "$d" "$status_line" "$r"
+        printf '  %b    /   |  \\%b\n' "$w" "$r"
+        printf '  %b   /  / | \\  \\%b   Run %b%bnesia%b to remember\n' "$w" "$r" "$m" "$b" "$r"
+        printf '  %b  /__/  |  \\__\\%b\n' "$w" "$r"
+        printf '  %b  ~~~~~~~~~~~~~~%b  %bMount Fay%b 3,235m\n' "$c" "$r" "$b" "$r"
+        printf '  %bmaps.apple.com/?ll=51.3250,-116.2822&q=Mount+Fay%b\n' "$d" "$r"
+        ;;
+    9) # Mount Athabasca — glaciated dome
+        printf '  %b      __/\\__%b\n' "$w" "$r"
+        printf '  %b     / /  \\ \\%b    %b★ %s capabilities logged%b\n' "$w" "$r" "$y" "$total" "$r"
+        printf '  %b    / / %b≈≈%b \\ \\%b   %b%s%b\n' "$w" "$c" "$w" "$r" "$d" "$status_line" "$r"
+        printf '  %b   / /  %b≈≈%b  \\ \\%b\n' "$w" "$c" "$w" "$r"
+        printf '  %b  /_/________\\_\\%b Run %b%bnesia%b to remember\n' "$w" "$r" "$m" "$b" "$r"
+        printf '  %b  ~~~~~~~~~~~~~~%b\n' "$c" "$r"
+        printf '  %bMount Athabasca%b 3,491m\n' "$b" "$r"
+        printf '  %bmaps.apple.com/?ll=52.2028,-117.2264&q=Mount+Athabasca%b\n' "$d" "$r"
+        ;;
+    esac
     printf '\n'
 }
 

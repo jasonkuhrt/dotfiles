@@ -193,4 +193,216 @@ describe("cmd_ux snacks adapter", function()
       end, items)
     )
   end)
+
+  it("treats a literally typed namespace space as semantic context", function()
+    local captured
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    snacks.open()
+
+    local fake_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      input = {
+        value = "Tab ",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    local items = captured.finder(captured, {
+      filter = { search = "Tab " },
+      picker = fake_picker,
+    })
+
+    assert.equal("Cmd UX: Tab ", fake_picker.opts.title)
+    assert.are.same(
+      { "close", "first", "goto", "last", "move", "new", "next", "only", "previous" },
+      vim.tbl_map(function(item)
+        return item.label
+      end, items)
+    )
+  end)
+
+  it("semantic backspace steps out of a root namespace into raw root search", function()
+    local captured
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    snacks.open({ line = "Tab " })
+
+    local fake_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      input = {
+        value = "",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    fake_picker.refresh = function(self)
+      self.items = captured.finder(captured, {
+        filter = { search = self.input:get() },
+        picker = self,
+      })
+    end
+
+    local backspace = captured.win.input.keys["<BS>"][1]
+    local result = backspace(fake_picker)
+
+    assert.equal("", result)
+    assert.equal("Tab", fake_picker.input.value)
+    assert.is_truthy(fake_picker.items)
+
+    fake_picker.input.value = "Ta"
+    local escaped = captured.finder(captured, {
+      filter = { search = fake_picker.input:get() },
+      picker = fake_picker,
+    })
+
+    assert.equal("Cmd UX: Commands", fake_picker.opts.title)
+    assert.equal("Tab", escaped[1].label)
+  end)
+
+  it("semantic backspace steps from a nested namespace to its parent token", function()
+    local captured
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    snacks.open({ line = "Search code " })
+
+    local fake_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      input = {
+        value = "",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    fake_picker.refresh = function(self)
+      self.items = captured.finder(captured, {
+        filter = { search = self.input:get() },
+        picker = self,
+      })
+    end
+
+    local backspace = captured.win.input.keys["<BS>"][1]
+    local result = backspace(fake_picker)
+
+    assert.equal("", result)
+    assert.equal("code", fake_picker.input.value)
+    assert.is_truthy(fake_picker.items)
+
+    fake_picker.input.value = "cod"
+    local escaped = captured.finder(captured, {
+      filter = { search = fake_picker.input:get() },
+      picker = fake_picker,
+    })
+
+    assert.equal("Cmd UX: Search cod", fake_picker.opts.title)
+    assert.equal("code", escaped[1].label)
+  end)
+
+  it("executes a semantic leaf on confirm", function()
+    local captured
+    local original_schedule = vim.schedule
+    local original_cmd = vim.cmd
+    local executed = {}
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    vim.schedule = function(cb)
+      cb()
+    end
+    vim.cmd = function(cmd)
+      executed[#executed + 1] = cmd
+    end
+
+    snacks.open({ line = "Tab " })
+
+    local fake_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      close = function(self)
+        self.closed = true
+      end,
+      input = {
+        value = "",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    local ok, err = pcall(function()
+      local items = captured.finder(captured, {
+        filter = { search = "" },
+        picker = fake_picker,
+      })
+      assert.equal("close", items[1].label)
+
+      captured.confirm(fake_picker, items[1])
+
+      assert.is_true(fake_picker.closed)
+      assert.are.same({ "Tab close" }, executed)
+    end)
+
+    vim.schedule = original_schedule
+    vim.cmd = original_cmd
+
+    if not ok then
+      error(err)
+    end
+  end)
 end)

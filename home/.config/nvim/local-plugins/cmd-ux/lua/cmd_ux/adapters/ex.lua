@@ -15,6 +15,7 @@ local core = require("cmd_ux.core")
 
 local M = {}
 local auto_advancing = false
+local last_cmdline = nil
 
 ---@param keys string
 local function feed(keys)
@@ -47,6 +48,12 @@ local function should_auto_advance(state)
   end
 
   return state.kind == "namespace" or state.kind == "hybrid" or state.requires_more
+end
+
+---@param current string
+---@return boolean
+local function is_backspacing(current)
+  return type(last_cmdline) == "string" and #current < #last_cmdline and last_cmdline:sub(1, #current) == current
 end
 
 local function reopen_blink_menu()
@@ -162,16 +169,21 @@ end
 ---@return boolean?
 function M.handle_cmdline_changed()
   if vim.fn.getcmdtype() ~= ":" then
+    last_cmdline = nil
     return
   end
 
-  local state = core.resolve_line(vim.fn.getcmdline())
-  if not should_auto_advance(state) then
+  local line = vim.fn.getcmdline()
+  local state = core.resolve_line(line)
+  if is_backspacing(line) or not should_auto_advance(state) then
+    last_cmdline = line
     return
   end
 
   auto_advancing = true
-  vim.fn.setcmdline(with_trailing_space(state))
+  local advanced = with_trailing_space(state)
+  vim.fn.setcmdline(advanced)
+  last_cmdline = advanced
   reopen_blink_menu()
   vim.schedule(function()
     auto_advancing = false
@@ -198,7 +210,9 @@ function M.open_cmdline(line)
   vim.schedule(function()
     vim.api.nvim_feedkeys(":", "n", false)
     vim.schedule(function()
-      vim.fn.setcmdline(line or "")
+      local value = line or ""
+      last_cmdline = value
+      vim.fn.setcmdline(value)
     end)
   end)
 end

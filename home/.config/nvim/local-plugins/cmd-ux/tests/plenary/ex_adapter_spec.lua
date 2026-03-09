@@ -120,10 +120,32 @@ describe("cmd_ux ex adapter", function()
     assert.stub(blink.show).was_called_with({ initial_selected_item_idx = 1 })
   end)
 
+  it("reopens blink when advancing a partial namespace root on tab", function()
+    local blink = install_blink(true)
+    vim.fn.getcmdline.returns("Con")
+
+    ex.handle_tab(fake_cmp("Config"))
+
+    assert.stub(vim.fn.setcmdline).was_called_with("Config ")
+    assert.stub(blink.hide).was_called(1)
+    assert.stub(blink.show).was_called_with({ initial_selected_item_idx = 1 })
+  end)
+
   it("reopens blink when advancing an exact namespace root on space", function()
     local blink = install_blink(true)
     vim.fn.getcmdline.returns("Config")
     ex.handle_space(fake_cmp())
+
+    assert.stub(vim.fn.setcmdline).was_called_with("Config ")
+    assert.stub(blink.hide).was_called(1)
+    assert.stub(blink.show).was_called_with({ initial_selected_item_idx = 1 })
+  end)
+
+  it("reopens blink when advancing a partial namespace root on space", function()
+    local blink = install_blink(true)
+    vim.fn.getcmdline.returns("Con")
+
+    ex.handle_space(fake_cmp("Config"))
 
     assert.stub(vim.fn.setcmdline).was_called_with("Config ")
     assert.stub(blink.hide).was_called(1)
@@ -139,6 +161,22 @@ describe("cmd_ux ex adapter", function()
     assert.stub(vim.fn.setcmdline).was_called_with("Tab ")
     assert.stub(blink.hide).was_called(1)
     assert.stub(blink.show).was_called_with({ initial_selected_item_idx = 1 })
+  end)
+
+  it("does not re-advance when backspacing over an auto-inserted namespace space", function()
+    local blink = install_blink(true)
+    local line = "Tab"
+    vim.fn.getcmdline.invokes(function()
+      return line
+    end)
+
+    ex.handle_cmdline_changed()
+    line = "Tab"
+    ex.handle_cmdline_changed()
+
+    assert.stub(vim.fn.setcmdline).was_called(1)
+    assert.stub(vim.fn.setcmdline).was_called_with("Tab ")
+    assert.stub(blink.hide).was_called(1)
   end)
 
   it("does not auto-advance executable leaves on cmdline change", function()
@@ -180,6 +218,17 @@ describe("cmd_ux ex adapter", function()
     vim.fn.getcmdline.returns("LeafCmd")
 
     ex.handle_tab(fake_cmp())
+
+    assert.stub(vim.api.nvim_feedkeys).was_not_called()
+    assert.stub(vim.fn.setcmdline).was_not_called()
+  end)
+
+  it("keeps space as literal fallback on exact leaves", function()
+    helpers.create_noarg_command("LeafCmd")
+    helpers.sync_cmd_ux()
+    vim.fn.getcmdline.returns("LeafCmd")
+
+    ex.handle_space(fake_cmp())
 
     assert.stub(vim.api.nvim_feedkeys).was_not_called()
     assert.stub(vim.fn.setcmdline).was_not_called()

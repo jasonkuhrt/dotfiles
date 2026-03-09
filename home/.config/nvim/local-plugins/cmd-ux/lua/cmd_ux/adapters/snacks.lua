@@ -61,6 +61,7 @@ local state_cache = {
   line = nil,
   state = nil,
 }
+local skip_canonicalize_once = false
 
 ---@return CmdUxExModule
 local function ex_adapter()
@@ -214,6 +215,11 @@ end
 ---@param picker? CmdUxSnacksPicker
 ---@param filter? { search?: string }
 local function canonicalize_typed_namespace(picker, filter)
+  if skip_canonicalize_once then
+    skip_canonicalize_once = false
+    return
+  end
+
   local state = current_state()
   if not should_canonicalize_typed_namespace(state) then
     return
@@ -229,6 +235,39 @@ local function canonicalize_typed_namespace(picker, filter)
   end
 
   update_input(picker)
+end
+
+---@param picker? CmdUxSnacksPicker
+---@return string
+local function semantic_backspace(picker)
+  if M.session.pending ~= "" or M.session.prefix == "" then
+    return "<BS>"
+  end
+
+  local state = current_state()
+  if not state.root then
+    return "<BS>"
+  end
+
+  local accepted = vim.deepcopy(state.accepted or {})
+  local pending = table.remove(accepted)
+
+  if pending then
+    M.session.prefix = state.root
+    if #accepted > 0 then
+      M.session.prefix = M.session.prefix .. " " .. table.concat(accepted, " ")
+    end
+    M.session.pending = pending
+  else
+    M.session.prefix = ""
+    M.session.pending = state.root
+  end
+
+  M.session.trailing_space = false
+  skip_canonicalize_once = true
+  invalidate_state()
+  refresh_picker(picker)
+  return ""
 end
 
 local function handoff_to_cmdline()
@@ -341,6 +380,14 @@ local function picker_opts()
     win = {
       input = {
         keys = {
+          ["<BS>"] = {
+            function(picker)
+              return semantic_backspace(picker)
+            end,
+            mode = { "i" },
+            expr = true,
+            desc = "Step out of the current semantic path",
+          },
           [";"] = {
             ---@param picker CmdUxSnacksPicker
             function(picker)
@@ -363,6 +410,14 @@ local function picker_opts()
       },
       list = {
         keys = {
+          ["<BS>"] = {
+            function(picker)
+              return semantic_backspace(picker)
+            end,
+            mode = { "n" },
+            expr = true,
+            desc = "Step out of the current semantic path",
+          },
           [";"] = {
             function(picker)
               picker:close()

@@ -130,9 +130,10 @@ It changes:
 Implementation split:
 
 - `lua/cmd_ux/lib/learning_store.lua` owns schema defaults, normalization, migration, and persisted store loading
+- `lua/cmd_ux/lib/learning_runtime.lua` owns runtime state, clock/test time, flush scheduling, store/session accessors, and lifecycle reset/reload
 - `lua/cmd_ux/lib/learning_recording.lua` owns persisted/session store mutation, signal recording, and the `record_*` write path
 - `lua/cmd_ux/lib/learning_scoring.lua` owns scoped score composition, mixed views, promotion selection, ranking, and learned top-* queries
-- `lua/cmd_ux/lib/learning.lua` owns runtime store/session orchestration and public composition over the extracted learning modules
+- `lua/cmd_ux/lib/learning.lua` owns public composition over the extracted learning modules
 - `lua/cmd_ux/lib/learning_candidates.lua` owns derived alias/quarantine/flow candidate synthesis over the learning API
 - `lua/cmd_ux/lib/learning_reports.lua` owns human/agent report assembly and preview text over the learning API
 
@@ -232,6 +233,7 @@ Learning data survives invalidation because usage history is orthogonal to comma
 - reports are assembled through `lua/cmd_ux/lib/learning_reports.lua`, not inline with persistence/ranking logic
 - scoped score composition, ranking, promotions, and top-* learned views run through `lua/cmd_ux/lib/learning_scoring.lua`, not inline with recording/store orchestration
 - signal mutation, history retention, and `record_*` behavior run through `lua/cmd_ux/lib/learning_recording.lua`, not inline with read-side scoring logic
+- runtime state, flush scheduling, and lifecycle reset/reload run through `lua/cmd_ux/lib/learning_runtime.lua`, not inline with scoring or recording logic
 - alias/quarantine/flow candidate synthesis runs through `lua/cmd_ux/lib/learning_candidates.lua`, not inline with persistence/ranking logic
 
 - `capabilities`

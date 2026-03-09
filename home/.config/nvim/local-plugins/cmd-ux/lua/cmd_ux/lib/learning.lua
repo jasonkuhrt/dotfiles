@@ -1,9 +1,4 @@
-local context = require("cmd_ux.lib.context")
-
 local M = {}
-
-local version = 5
-local learning_path = vim.fn.stdpath("cache") .. "/cmd-ux-learning.json"
 
 ---@class CmdUxLearningMetric
 ---@field buckets table<string, integer>
@@ -77,10 +72,6 @@ local learning_path = vim.fn.stdpath("cache") .. "/cmd-ux-learning.json"
 ---@field next_seq integer
 ---@field scopes table<string, CmdUxSessionScope>
 
----@type CmdUxLearningStore?
-local learning_state = nil
-local flush_scheduled = false
-local test_now = nil
 local candidates
 local choice_path_ids
 local context_parent_id
@@ -92,77 +83,28 @@ local path_prefixes
 local propagation_profile
 local semantic_node_id
 local split_node_path
----@type CmdUxSessionStore
-local session_state = {
-  next_seq = 1,
-  scopes = {},
-}
 
-local root_context = "<root>"
+local runtime = require("cmd_ux.lib.learning_runtime").build()
 
----@return integer
-local function now()
-  return test_now or os.time()
-end
-
-local store_api = require("cmd_ux.lib.learning_store").build({
-  learning_path = learning_path,
-  now = now,
-  version = version,
-})
-
-local default_state = store_api.default_state
-local empty_command_stat = store_api.empty_command_stat
-local empty_path_stat = store_api.empty_path_stat
-local empty_scope = store_api.empty_scope
-local empty_signal_stat = store_api.empty_signal_stat
-local empty_session_scope = store_api.empty_session_scope
-local empty_session_signal_stat = store_api.empty_session_signal_stat
-local empty_session_path_stat = store_api.empty_session_path_stat
-local load = store_api.load
-local normalize_int = store_api.normalize_int
-
----@return string
-local function today_key()
-  return tostring(os.date("%Y-%m-%d", now()))
-end
-
----@return CmdUxLearningStore
-local function ensure_state()
-  if not learning_state then
-    learning_state = load()
-  end
-  return learning_state
-end
-
-local function flush_now()
-  flush_scheduled = false
-  store_api.write(ensure_state())
-end
-
-local function schedule_flush()
-  if vim.env.CMD_UX_TEST == "1" then
-    flush_now()
-    return
-  end
-
-  if flush_scheduled then
-    return
-  end
-
-  flush_scheduled = true
-  vim.defer_fn(flush_now, 150)
-end
-
----@return string
-local function current_project_id()
-  return context.project_id()
-end
-
----@return CmdUxContextVector
-local function current_context_vector()
-  return context.current()
-end
+local current_context_vector = runtime.current_context_vector
+local current_project_id = runtime.current_project_id
+local empty_command_stat = runtime.empty_command_stat
+local empty_path_stat = runtime.empty_path_stat
+local empty_session_path_stat = runtime.empty_session_path_stat
+local empty_session_signal_stat = runtime.empty_session_signal_stat
+local empty_signal_stat = runtime.empty_signal_stat
+local ensure_scope = runtime.ensure_scope
+local ensure_session_scope = runtime.ensure_session_scope
+local ensure_state = runtime.ensure_state
+local get_scope = runtime.get_scope
+local get_session_scope = runtime.get_session_scope
+local get_session_state = runtime.get_session_state
+local learning_path = runtime.learning_path
+local normalize_int = runtime.normalize_int
+local now = runtime.now
+local root_context = runtime.root_context
+local schedule_flush = runtime.schedule_flush
+local today_key = runtime.today_key
 
 ---@param state ResolutionState
 ---@return string[]
@@ -189,43 +131,7 @@ local function all_context_keys(vector)
   return keys
 end
 
----@param scope_id string
----@return CmdUxLearningScope
-local function ensure_scope(scope_id)
-  local store = ensure_state()
-  store.scopes[scope_id] = store.scopes[scope_id] or empty_scope()
-  return store.scopes[scope_id]
-end
-
----@param scope_id string
----@return CmdUxLearningScope?
-local function get_scope(scope_id)
-  return ensure_state().scopes[scope_id]
-end
-
----@param scope_id string
----@return CmdUxSessionScope
-local function ensure_session_scope(scope_id)
-  session_state.scopes[scope_id] = session_state.scopes[scope_id] or empty_session_scope()
-  return session_state.scopes[scope_id]
-end
-
----@param scope_id string
----@return CmdUxSessionScope?
-local function get_session_scope(scope_id)
-  return session_state.scopes[scope_id]
-end
-
----@param current_active_day integer
----@param bucket string
----@return integer
-local function bucket_age(current_active_day, bucket)
-  local bucket_index = normalize_int(bucket)
-  if bucket_index <= 0 or current_active_day <= 0 or bucket_index > current_active_day then
-    return math.huge
-  end
-  return current_active_day - bucket_index
-end
+local bucket_age = runtime.bucket_age
 
 local recording = require("cmd_ux.lib.learning_recording").build({
   all_context_keys = all_context_keys,
@@ -245,9 +151,7 @@ local recording = require("cmd_ux.lib.learning_recording").build({
   ensure_scope = ensure_scope,
   ensure_session_scope = ensure_session_scope,
   ensure_state = ensure_state,
-  get_session_state = function()
-    return session_state
-  end,
+  get_session_state = get_session_state,
   normalize_int = normalize_int,
   now = now,
   path_prefixes = function(path)
@@ -452,40 +356,29 @@ function M.quarantine_lines(roots)
 end
 
 function M.path()
-  return learning_path
+  return runtime.path()
 end
 
 function M.flush()
-  flush_now()
+  runtime.flush()
 end
 
 function M.reload()
-  learning_state = load()
-  flush_scheduled = false
-  session_state = {
-    next_seq = 1,
-    scopes = {},
-  }
+  runtime.reload()
 end
 
 function M.reset()
-  learning_state = default_state()
-  flush_scheduled = false
-  session_state = {
-    next_seq = 1,
-    scopes = {},
-  }
-  schedule_flush()
+  runtime.reset()
 end
 
 ---@return CmdUxLearningStore
 function M.snapshot()
-  return vim.deepcopy(ensure_state())
+  return runtime.snapshot()
 end
 
 ---@param timestamp integer?
 function M.set_now_for_tests(timestamp)
-  test_now = timestamp
+  runtime.set_now_for_tests(timestamp)
 end
 
 return M

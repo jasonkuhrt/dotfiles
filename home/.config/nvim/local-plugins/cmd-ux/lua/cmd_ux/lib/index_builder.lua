@@ -54,7 +54,7 @@ local function is_shadowed_by_legacy_family(root)
   for semantic_root, prefixes in pairs(legacy_prefix_families_by_root) do
     if providers.by_root[semantic_root] then
       for _, prefix in ipairs(prefixes) do
-        if root ~= semantic_root and root ~= prefix and root:find("^" .. vim.pesc(prefix)) == 1 then
+        if root ~= semantic_root and root:find("^" .. vim.pesc(prefix)) == 1 then
           return true
         end
       end

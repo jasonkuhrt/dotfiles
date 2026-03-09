@@ -19,111 +19,319 @@ G='\033[32m'   # green
 _mountain() {
     local idx="${1:-$(( RANDOM % 10 ))}"
     case $idx in
-    0) cat <<'ART'
-        /\
-       /  \
-    __/    \__
-   /  \    /  \
-  / /\ \  / /\ \
-_/ /  \ \/ /  \ \_
-~~~~~~~~~~~~~~~~~~
+    0) # ═══ Mount Robson · 3,954m · Emperor of the Rockies ═══
+        # Massive pyramid rising from Berg Lake, glacier cascading down
+        printf '%b' "$W"
+        cat <<'ART'
+                                  ·
+                                 /·\
+                                / · \
+                             ·/ · · \·
+                            / · · · · \
+                          _/ · ·/\· · ·\_
+                         /· · ·/  \· · · \
+                      __/ · · / ·· \ · · ·\__
+                     / · · ·_/ ···· \_· · · · \
+                  __/ · · ·/ ░░░░░░░░ \· · · · \__
+               __/ · ·░░░░░░░░░░░░░░░░░░░░░· · · ·\__
 ART
-        printf '  %bMount Robson%b 3,954m  %bmaps.apple.com/?ll=53.1147,-119.1553&q=Mount+Robson%b\n' "$B" "$R" "$D" "$R"
+        printf '%b' "$R$D"
+        cat <<'ART'
+          ▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒
+         ▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓
+ART
+        printf '%b' "$R$G"
+        cat <<'ART'
+        ↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟
+ART
+        printf '%b' "$R$C"
+        cat <<'ART'
+        ≈~≈~~≈~≈≈~≈~≈≈~≈~≈≈~≈≈~~≈~≈≈~≈≈~≈~≈≈~≈≈~~≈~≈≈
+        ~≈≈~≈≈~≈    B e r g    L a k e    ≈~~≈~≈≈~≈~≈~≈
+        ≈~~≈~≈~≈≈~≈≈~~≈~≈≈~≈≈~≈≈~~≈~≈≈~≈~≈≈~≈~≈≈~~≈~≈≈
+ART
+        printf '%b' "$R"
+        printf '  %bMount Robson%b 3,954m · Emperor of the Rockies\n' "$B" "$R"
+        printf '  %bmaps.apple.com/?ll=53.1147,-119.1553&q=Mount+Robson%b\n' "$D" "$R"
         ;;
-    1) cat <<'ART'
-         /\
-        /  \
-       / /\ \
-      / /  \ \
-     / /    \ \
-    /_/      \_\
-   ~~~~~~~~~~~~~~
+    1) # ═══ Mount Assiniboine · 3,618m · Matterhorn of the Rockies ═══
+        # Sharp pyramid reflected in Lake Magog
+        printf '%b' "$W"
+        cat <<'ART'
+                            ·  ✦  ·
+                               /\
+                              /· \
+                             / ·· \
+                            / ·/\· \
+                           / ·/  \· \
+                          / ·/ ·· \· \
+                         / ·/  ··  \· \
+                        / ·/  ····  \· \
+                     __/ ·/ ········ \· \__
 ART
-        printf '  %bMount Assiniboine%b 3,618m  %bmaps.apple.com/?ll=50.8714,-115.6283&q=Mount+Assiniboine%b\n' "$B" "$R" "$D" "$R"
+        printf '%b' "$R$D"
+        cat <<'ART'
+                  __/▒▒▒/ ·········· \▒▒▒\__
+             ____/▒▒▒▒▒/··············\▒▒▒▒▒\____
+        ▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒··············▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓
+ART
+        printf '%b' "$R$C"
+        cat <<'ART'
+        ≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈
+        ≈≈▓▓▓▓≈▒▒▒▒≈··············≈▒▒▒▒▓▓▓▓▓≈≈≈≈≈≈≈≈≈
+        ≈≈≈≈▓▓≈≈▒▒▒≈·  ≈ Magog ≈  ·≈▒▒▒≈▓▓≈≈≈≈≈≈≈≈≈≈
+        ≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈
+ART
+        printf '%b' "$R"
+        printf '  %bMount Assiniboine%b 3,618m · Matterhorn of the Rockies\n' "$B" "$R"
+        printf '  %bmaps.apple.com/?ll=50.8714,-115.6283&q=Mount+Assiniboine%b\n' "$D" "$R"
         ;;
-    2) cat <<'ART'
-      ____/\____
-     /  ___  _  \
-    / _/   \/  \_\
-   /_/           \_\
-  ~~~~~~~~~~~~~~~~~~~
+    2) # ═══ Mount Columbia · 3,747m · Columbia Icefield ═══
+        # Broad summit with vast icefield stretching below
+        printf '%b' "$W"
+        cat <<'ART'
+                       · · · · · · · ·
+                    __/ · · · · · · · · \__
+                   / · · · · · · · · · · · \
+                __/ · · · · · · · · · · · · \__
+             __/ · · · · · · · · · · · · · · · \__
+          __/ · · · · · · · · · · · · · · · · · · \__
 ART
-        printf '  %bMount Columbia%b 3,747m  %bmaps.apple.com/?ll=52.1497,-117.4381&q=Mount+Columbia%b\n' "$B" "$R" "$D" "$R"
+        printf '%b' "$R$C"
+        cat <<'ART'
+       / ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ \
+      / ░░░░░░░░░░░░  C o l u m b i a  ░░░░░░░░░░░░░░ \
+     / ░░░░░░░░░░░░░░  I c e f i e l d  ░░░░░░░░░░░░░░ \
+    / ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ \
+ART
+        printf '%b' "$R$D"
+        cat <<'ART'
+   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+   ▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓
+ART
+        printf '%b' "$R$G"
+        cat <<'ART'
+   ↟↟↟↟↟  ↟↟↟↟  ↟↟↟↟↟↟↟  ↟↟↟↟↟  ↟↟↟  ↟↟↟↟↟↟  ↟↟↟↟  ↟↟
+ART
+        printf '%b' "$R"
+        printf '  %bMount Columbia%b 3,747m · Columbia Icefield\n' "$B" "$R"
+        printf '  %bmaps.apple.com/?ll=52.1497,-117.4381&q=Mount+Columbia%b\n' "$D" "$R"
         ;;
-    3) cat <<'ART'
-     ┌──┐  ┌──┐
-     │  │__│  │
-    /│  │  │  │\
-   / └──┘  └──┘ \
-  /              \
-  ~~~~~~~~~~~~~~~~
+    3) # ═══ Castle Mountain · 2,766m · Eisenhower Tower ═══
+        # Dramatic flat-topped towers like a medieval fortress
+        printf '%b' "$W"
+        cat <<'ART'
+           ┌─────┐     ┌───┐         ┌─────────┐
+           │·····│     │···│         │·········│
+           │·····│ ┌───┤···├───┐     │·········│
+        ┌──┤·····├─┤···│···│···├─────┤·········├──┐
+        │··│·····│·│···│···│···│·····│·········│··│
 ART
-        printf '  %bCastle Mountain%b 2,766m  %bmaps.apple.com/?ll=51.2642,-115.9225&q=Castle+Mountain%b\n' "$B" "$R" "$D" "$R"
+        printf '%b' "$R$D"
+        cat <<'ART'
+       ─┤▒▒│▒▒▒▒▒│▒│▒▒▒│▒▒▒│▒▒▒│▒▒▒▒▒│▒▒▒▒▒▒▒▒▒│▒▒├─
+      / ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ \
+     /▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\
+ART
+        printf '%b' "$R$G"
+        cat <<'ART'
+    ↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟
+    ↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟  Bow  Valley  ↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟
+ART
+        printf '%b' "$R"
+        printf '  %bCastle Mountain%b 2,766m · Eisenhower Tower\n' "$B" "$R"
+        printf '  %bmaps.apple.com/?ll=51.2642,-115.9225&q=Castle+Mountain%b\n' "$D" "$R"
         ;;
-    4) cat <<'ART'
-       /\
-      /  \
-     /    \
-    / /\   \
-   / /  \   \
-  /_/    \___\
-  ~~~~~~~~~~~~~
+    4) # ═══ Mount Temple · 3,544m · The Great Wall ═══
+        # Enormous triangular north face, highest in Lake Louise area
+        printf '%b' "$W"
+        cat <<'ART'
+                                ·
+                               /|\
+                              / | \
+                             /  |  \
+                            / · | · \
+                           /· · | · ·\
+                          /· ·  |  · ·\
+                         / · ·  |  · · \
+                        /· · · ·|· · · ·\
+                       / · · ·  |  · · · \
+                      /· · · · ·|· · · · ·\
+                   __/ · · · · ·|· · · · · \__
 ART
-        printf '  %bMount Temple%b 3,544m  %bmaps.apple.com/?ll=51.3472,-116.2078&q=Mount+Temple%b\n' "$B" "$R" "$D" "$R"
+        printf '%b' "$R$D"
+        cat <<'ART'
+                __/▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒\__
+           ____/▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒\____
+      ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+ART
+        printf '%b' "$R$C"
+        cat <<'ART'
+      ≈~≈~≈≈ Sentinel Pass ≈~≈≈≈≈ Larch Valley ≈~≈~≈≈~≈≈
+ART
+        printf '%b' "$R"
+        printf '  %bMount Temple%b 3,544m · The Great Wall\n' "$B" "$R"
+        printf '  %bmaps.apple.com/?ll=51.3472,-116.2078&q=Mount+Temple%b\n' "$D" "$R"
         ;;
-    5) cat <<'ART'
-          /|
-         / |
-        /  |
-       /   |
-      /    |
-     /     |
-    /______|
-  ~~~~~~~~~~
+    5) # ═══ Mount Rundle · 2,949m · The Tilted Giant ═══
+        # Iconic asymmetric ridge leaning over Banff, Bow River below
+        printf '%b' "$W"
+        cat <<'ART'
+                                              /·|
+                                             / ·|
+                                            /· ·|
+                                           / · ·|
+                                          /· · ·|
+                                         / · ·  |
+                                        /· · ·  |
+                                       / · · ·  |
+                                      /· · · ·  |
+                                     / · · · ·  |
+                                    /· · · · ·  |
 ART
-        printf '  %bMount Rundle%b 2,949m  %bmaps.apple.com/?ll=51.1311,-115.4736&q=Mount+Rundle%b\n' "$B" "$R" "$D" "$R"
+        printf '%b' "$R$D"
+        cat <<'ART'
+                                   /▒▒▒▒▒▒▒▒▒▒▒|
+                                  /▒▒▓▓▓▓▓▓▓▓▓▓|
+                           ______/▓▓▓▓▓▓▓▓▓▓▓▓▓▓|
+ART
+        printf '%b' "$R$C"
+        cat <<'ART'
+     ≈≈~≈~≈~≈~≈ B o w   R i v e r ≈~≈~≈~≈~≈~≈~≈≈~≈~≈≈~
+ART
+        printf '%b' "$R$G"
+        cat <<'ART'
+     ↟↟↟↟↟↟↟ Banff ↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟
+ART
+        printf '%b' "$R"
+        printf '  %bMount Rundle%b 2,949m · The Tilted Giant\n' "$B" "$R"
+        printf '  %bmaps.apple.com/?ll=51.1311,-115.4736&q=Mount+Rundle%b\n' "$D" "$R"
         ;;
-    6) cat <<'ART'
-     /\    /\    /\
-    /  \  /  \  /  \
-   /    \/    \/    \
-  /                  \
- /____________________\
- ~~~~~~~~~~~~~~~~~~~~~~
+    6) # ═══ The Three Sisters · 2,936m · Canmore Guardians ═══
+        # Triple peaks descending over the Bow Valley, town lights below
+        printf '%b' "$W"
+        cat <<'ART'
+              /\
+             / ·\        /\
+            / ·  \      / ·\        /\
+           / · ·  \    / ·  \      / ·\
+          / · · ·  \  / · ·  \    / ·  \
+         / · · · ·  \/ · · ·  \  / · ·  \
+        / · · · · · /\ · · · · \/ · · ·  \
+       / · · · · · / · \ · · · /\ · · · · \
+      / · · · · · / · · ·\ · ·/ · \ · · ·  \
 ART
-        printf '  %bThe Three Sisters%b 2,936m  %bmaps.apple.com/?ll=51.0467,-115.3781&q=Three+Sisters%b\n' "$B" "$R" "$D" "$R"
+        printf '%b' "$R$D"
+        cat <<'ART'
+     /▒▒▒▒▒▒▒▒▒▒/ ▒▒▒▒▒▒▒▒\▒▒/ ▒▒▒▒\▒▒▒▒▒▒\
+    /▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\
+ART
+        printf '%b' "$R$G"
+        cat <<'ART'
+   ↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟↟
+ART
+        printf '%b' "$R$Y"
+        cat <<'ART'
+   · · · · · · ·  C a n m o r e  · · · · · · · · ·
+ART
+        printf '%b' "$R"
+        printf '  %bThe Three Sisters%b 2,936m · Faith, Charity, Hope\n' "$B" "$R"
+        printf '  %bmaps.apple.com/?ll=51.0467,-115.3781&q=Three+Sisters%b\n' "$D" "$R"
         ;;
-    7) cat <<'ART'
-        /\
-       /  \
-      / ◇  \
-     / /  \ \
-    / / ◇◇ \ \
-   /_/______\_\
-   ~~~~~~~~~~~~~
+    7) # ═══ Mount Edith Cavell · 3,363m · Angel Glacier ═══
+        # The glacier forms angel wings in the dramatic cirque
+        printf '%b' "$W"
+        cat <<'ART'
+                           ·  ✦  ·
+                              /\
+                             /··\
+                            / ·· \
+                           / ·  · \
+                          / · ·· · \
+                         /· ·    · ·\
 ART
-        printf '  %bMount Edith Cavell%b 3,363m  %bmaps.apple.com/?ll=52.6828,-117.8617&q=Mount+Edith+Cavell%b\n' "$B" "$R" "$D" "$R"
+        printf '%b' "$R$C"
+        cat <<'ART'
+                        / ◇◇◇◇◇◇◇◇ \
+                       /◇◇  ◇◇◇◇  ◇◇\
+                      /◇◇ ◇◇    ◇◇ ◇◇\       Angel
+                     /◇◇◇◇  ◇◇◇◇  ◇◇◇◇\      Glacier
+                    / ◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇ \
+ART
+        printf '%b' "$R$D"
+        cat <<'ART'
+                 __/▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒\__
+            ____/▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\____
+       ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+ART
+        printf '%b' "$R$C"
+        cat <<'ART'
+       ≈≈≈~≈≈  Cavell Pond  ≈≈~≈≈≈≈~≈≈≈≈≈~≈≈≈≈≈≈≈~≈≈≈
+ART
+        printf '%b' "$R"
+        printf '  %bMount Edith Cavell%b 3,363m · Angel Glacier\n' "$B" "$R"
+        printf '  %bmaps.apple.com/?ll=52.6828,-117.8617&q=Mount+Edith+Cavell%b\n' "$D" "$R"
         ;;
-    8) cat <<'ART'
-       /\
-      / |\
-     /  | \
-    /   |  \
-   /  / | \  \
-  /__/  |  \__\
-  ~~~~~~~~~~~~~~
+    8) # ═══ Mount Fay · 3,235m · Valley of the Ten Peaks ═══
+        # Steep buttressed face above turquoise Moraine Lake
+        printf '%b' "$W"
+        cat <<'ART'
+                        · ✦ ·
+                          /\
+                         /|·\
+                        / | ·\
+                       /· |  ·\
+                      / · | · ·\           /\
+                     /· · | · · \         / ·\
+                    / · · | · · ·\     __/ · ·\__
+                   /· · ·/|\ · · ·\   / · · · · ·\
+                  / · · / | · \ · · \_/ · · · · · ·\
 ART
-        printf '  %bMount Fay%b 3,235m  %bmaps.apple.com/?ll=51.3250,-116.2822&q=Mount+Fay%b\n' "$B" "$R" "$D" "$R"
+        printf '%b' "$R$D"
+        cat <<'ART'
+               __/▒▒▒▒▒/ ▒|▒ \▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒\__
+          ____/▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\____
+ART
+        printf '%b' "$R$C"
+        cat <<'ART'
+     ≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈
+     ≈≈≈≈≈≈≈≈  M o r a i n e    L a k e  ≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈
+     ≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈
+ART
+        printf '%b' "$R"
+        printf '  %bMount Fay%b 3,235m · Valley of the Ten Peaks\n' "$B" "$R"
+        printf '  %bmaps.apple.com/?ll=51.3250,-116.2822&q=Mount+Fay%b\n' "$D" "$R"
         ;;
-    9) cat <<'ART'
-      __/\__
-     / /  \ \
-    / / ≈≈ \ \
-   / /  ≈≈  \ \
-  /_/________\_\
-  ~~~~~~~~~~~~~~
+    9) # ═══ Mount Athabasca · 3,491m · The Glaciated Throne ═══
+        # Dome with icefall cascading, Sunwapta Pass viewpoint
+        printf '%b' "$W"
+        cat <<'ART'
+                        · · · · ·
+                     __/ · · · · \__
+                    / · · · · · · · \
+                   / · · · · · · · · \
+                  / · · · · · · · · · \
 ART
-        printf '  %bMount Athabasca%b 3,491m  %bmaps.apple.com/?ll=52.2028,-117.2264&q=Mount+Athabasca%b\n' "$B" "$R" "$D" "$R"
+        printf '%b' "$R$C"
+        cat <<'ART'
+                 /░░░░░░░░░░░░░░░░░░░░░\
+                /░░░░░░░░░░░░░░░░░░░░░░░░\
+               /░░░≈≈░░░░≈≈≈░░░░≈≈░░░░░░░░\
+              /░░≈≈≈≈≈░░≈≈≈≈≈░░≈≈≈≈≈░░░░░░░░\
+             /░≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈░░░░░░░░\
+ART
+        printf '%b' "$R$D"
+        cat <<'ART'
+          __/▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒\__
+     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+ART
+        printf '%b' "$R$G"
+        cat <<'ART'
+     ↟↟↟  ↟↟↟↟  ↟↟  Sunwapta Pass  ↟↟  ↟↟↟↟↟  ↟↟↟  ↟↟
+ART
+        printf '%b' "$R"
+        printf '  %bMount Athabasca%b 3,491m · The Glaciated Throne\n' "$B" "$R"
+        printf '  %bmaps.apple.com/?ll=52.2028,-117.2264&q=Mount+Athabasca%b\n' "$D" "$R"
         ;;
     esac
 }

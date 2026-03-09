@@ -3,8 +3,8 @@ fish_add_path /opt/homebrew/bin
 fish_add_path /opt/homebrew/sbin
 
 if status is-interactive
-    # Gentle nudge if tips changelog hasn't been checked in 7+ days
-    tips nag 2>/dev/null
+    # Gentle nudge if nesia changelog hasn't been checked in 7+ days
+    nesia nag 2>/dev/null
 end
 
 # Prompt (Starship)
@@ -267,6 +267,11 @@ set -g fish_cursor_visual block
 # Provides: Ctrl+R (history), Ctrl+Alt+F (files), Ctrl+Alt+L (git log),
 #           Ctrl+Alt+S (git status), Ctrl+Alt+P (processes), Ctrl+V (variables)
 fzf_configure_bindings
+
+# Vi normal mode: [ and ] cycle cmux tabs (surfaces) via cmuxx
+# Overrides history-token-search (alt-up/down and ctrl+r remain)
+bind -M default \[ 'cmuxx prev-surface'
+bind -M default \] 'cmuxx next-surface'
 
 function fish_mode_prompt --description "Display Fish vi mode and start new prompts in normal mode"
     if not set -q __dotfiles_fish_vi_mode_bootstrapped

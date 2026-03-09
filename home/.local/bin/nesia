@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# @describe tips — personal capability changelog. Track what you set up so you don't forget it exists.
+# @describe nesia — personal capability changelog. Because you'll forget what you set up.
 
-DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/tips"
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/nesia"
 LOG_FILE="$DATA_DIR/log"
 LAST_SEEN="$DATA_DIR/last-seen"
 
@@ -35,13 +35,13 @@ show() {
     local total
     total="$(wc -l < "$LOG_FILE" | tr -d ' ')"
     if [[ "$total" -eq 0 ]]; then
-        printf 'No entries yet. Run: tips add <category> <description>\n'
+        printf 'No entries yet. Run: nesia add <category> <description>\n'
         return 0
     fi
     printf 'Recent capabilities (%s of %s):\n\n' "$(( total < argc_count ? total : argc_count ))" "$total"
     tail -n "$argc_count" "$LOG_FILE" | tail -r | _format_entries
     if [[ "$total" -gt "$argc_count" ]]; then
-        printf '\n  … run \033[1mtips all\033[0m for full history\n'
+        printf '\n  … run \033[1mnesia all\033[0m for full history\n'
     fi
 }
 
@@ -52,7 +52,7 @@ all() {
     local total
     total="$(wc -l < "$LOG_FILE" | tr -d ' ')"
     if [[ "$total" -eq 0 ]]; then
-        printf 'No entries yet. Run: tips add <category> <description>\n'
+        printf 'No entries yet. Run: nesia add <category> <description>\n'
         return 0
     fi
     printf 'All capabilities (%s entries):\n\n' "$total"
@@ -94,7 +94,7 @@ edit() {
     "${EDITOR:-nvim}" "$LOG_FILE"
 }
 
-# @cmd Check if tips is overdue and print a reminder banner (for shell startup)
+# @cmd Check if nesia is overdue and print a reminder banner (for shell startup)
 nag() {
     _ensure_log
 
@@ -134,7 +134,7 @@ _print_banner() {
     else
         printf '  %bNever checked — take a peek!%b       %b│%b\n' "$dim" "$reset" "$dim" "$reset"
     fi
-    printf '  %b│░││%b  Run %b%btips%b to see what you can do   %b│%b\n' "$dim" "$reset" "$magenta" "$bold" "$reset" "$dim" "$reset"
+    printf '  %b│░││%b  Run %b%bnesia%b to see what you forgot  %b│%b\n' "$dim" "$reset" "$magenta" "$bold" "$reset" "$dim" "$reset"
     printf '  %b└─┘╰─────────────────────────────────────╯%b\n' "$dim" "$reset"
     printf '\n'
 }

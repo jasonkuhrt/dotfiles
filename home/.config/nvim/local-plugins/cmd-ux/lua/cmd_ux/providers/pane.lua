@@ -13,15 +13,15 @@ local M = {
 ---@field examples string[]
 ---@field execute fun()
 
-local function smart_splits()
-  local ok, module = pcall(require, "smart-splits")
+local function cmux_nav()
+  local ok, module = pcall(require, "cmux_nav")
   if ok and type(module) == "table" then
     return module
   end
 end
 
-local function with_smart_split(method, fallback)
-  local module = smart_splits()
+local function with_cmux_nav(method, fallback)
+  local module = cmux_nav()
   if module and type(module[method]) == "function" then
     module[method]()
     return
@@ -37,7 +37,7 @@ local function focus_actions()
       help = "Move focus to the pane on the left.",
       examples = { "Pane focus left" },
       execute = function()
-        with_smart_split("move_cursor_left", function()
+        with_cmux_nav("move_left", function()
           vim.cmd("wincmd h")
         end)
       end,
@@ -48,7 +48,7 @@ local function focus_actions()
       help = "Move focus to the pane below.",
       examples = { "Pane focus down" },
       execute = function()
-        with_smart_split("move_cursor_down", function()
+        with_cmux_nav("move_down", function()
           vim.cmd("wincmd j")
         end)
       end,
@@ -59,7 +59,7 @@ local function focus_actions()
       help = "Move focus to the pane above.",
       examples = { "Pane focus up" },
       execute = function()
-        with_smart_split("move_cursor_up", function()
+        with_cmux_nav("move_up", function()
           vim.cmd("wincmd k")
         end)
       end,
@@ -70,7 +70,7 @@ local function focus_actions()
       help = "Move focus to the pane on the right.",
       examples = { "Pane focus right" },
       execute = function()
-        with_smart_split("move_cursor_right", function()
+        with_cmux_nav("move_right", function()
           vim.cmd("wincmd l")
         end)
       end,
@@ -86,7 +86,7 @@ local function resize_actions()
       help = "Adjust the current pane by moving the left boundary.",
       examples = { "Pane resize left" },
       execute = function()
-        with_smart_split("resize_left", function()
+        with_cmux_nav("resize_left", function()
           vim.cmd("vertical resize -5")
         end)
       end,
@@ -97,7 +97,7 @@ local function resize_actions()
       help = "Adjust the current pane by moving the bottom boundary.",
       examples = { "Pane resize down" },
       execute = function()
-        with_smart_split("resize_down", function()
+        with_cmux_nav("resize_down", function()
           vim.cmd("resize +2")
         end)
       end,
@@ -108,7 +108,7 @@ local function resize_actions()
       help = "Adjust the current pane by moving the top boundary.",
       examples = { "Pane resize up" },
       execute = function()
-        with_smart_split("resize_up", function()
+        with_cmux_nav("resize_up", function()
           vim.cmd("resize -2")
         end)
       end,
@@ -119,7 +119,7 @@ local function resize_actions()
       help = "Adjust the current pane by moving the right boundary.",
       examples = { "Pane resize right" },
       execute = function()
-        with_smart_split("resize_right", function()
+        with_cmux_nav("resize_right", function()
           vim.cmd("vertical resize +5")
         end)
       end,

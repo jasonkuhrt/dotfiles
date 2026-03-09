@@ -72,10 +72,13 @@ end
 local function execute_semantic_user_command(root, provider, args)
   local rendered = vim.trim(root .. " " .. (args or ""))
   local ok, state = pcall(require("cmd_ux.core").resolve_line, rendered)
+  local exec_ok, exec_err = pcall(provider.execute, args)
+  if not exec_ok then
+    error(exec_err)
+  end
   if ok and state and state.executable then
     require("cmd_ux.lib.learning").record_execute_state(state)
   end
-  provider.execute(args)
 end
 
 function M.reload()

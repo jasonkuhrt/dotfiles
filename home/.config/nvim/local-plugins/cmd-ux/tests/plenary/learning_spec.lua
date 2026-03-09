@@ -11,7 +11,9 @@ local flow_provider = require("cmd_ux.providers.flow")
 local helpers = require("tests.plenary.helpers")
 local index = require("cmd_ux.index")
 local learning = require("cmd_ux.lib.learning")
+local runtime = require("cmd_ux.lib.runtime")
 local pane_provider = require("cmd_ux.providers.pane")
+local project_provider = require("cmd_ux.providers.project")
 local recall_provider = require("cmd_ux.providers.recall")
 local tab_provider = require("cmd_ux.providers.tab")
 local types = require("cmd_ux.types")
@@ -714,6 +716,36 @@ describe("cmd_ux learning and flow features", function()
     eq("Project files", learning.recent_commands(5)[1].rendered)
 
     package.loaded["snacks"] = original_snacks
+  end)
+
+  it("does not learn a replayed command when execution fails", function()
+    helpers.drop_user_command("ExplodingReplayCmd")
+    vim.api.nvim_create_user_command("ExplodingReplayCmd", function()
+      error("boom")
+    end, {
+      desc = "Explodes for cmd-ux runtime tests",
+    })
+
+    local ok = pcall(runtime.execute_command, "ExplodingReplayCmd")
+
+    assert.is_false(ok)
+    eq(0, #learning.recent_commands(5))
+
+    helpers.drop_user_command("ExplodingReplayCmd")
+  end)
+
+  it("does not learn a semantic Ex command when provider execution fails", function()
+    local original_execute = project_provider.execute
+    project_provider.execute = function()
+      error("boom")
+    end
+
+    local ok = pcall(vim.cmd, "Project files")
+
+    project_provider.execute = original_execute
+
+    assert.is_false(ok)
+    eq(0, #learning.recent_commands(5))
   end)
 
   it("does not synthesize flows across long idle gaps", function()

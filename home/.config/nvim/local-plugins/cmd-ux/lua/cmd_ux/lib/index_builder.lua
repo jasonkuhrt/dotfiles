@@ -5,6 +5,15 @@ local nvim_commands = require("kit.nvim.commands")
 
 local M = {}
 
+---@type table<string, string[]>
+local legacy_prefix_families_by_root = {
+  Buffer = { "BufferLine" },
+  Debug = { "Dap", "DapUI" },
+  Git = { "Gitsigns" },
+  Session = { "Session" },
+  Test = { "Neotest" },
+}
+
 ---@param command table?
 ---@return string?
 local function command_desc(command)
@@ -39,37 +48,16 @@ local function command_source(root, user_commands, buffer_commands)
   return "builtin"
 end
 
----@param command table?
----@return boolean
-local function is_simple_flat_command(command)
-  if type(command) ~= "table" then
-    return false
-  end
-
-  local nargs = rawget(command, "nargs")
-  local complete = rawget(command, "complete")
-  local completion = rawget(command, "completion")
-
-  local has_args = type(nargs) == "string" and nargs ~= "0"
-  local has_completion = (type(complete) == "string" and complete ~= "")
-    or (type(completion) == "string" and completion ~= "")
-
-  return not has_args and not has_completion
-end
-
 ---@param root string
----@param user_commands table<string, table>
----@param buffer_commands table<string, table>
 ---@return boolean
-local function is_shadowed_by_semantic_root(root, user_commands, buffer_commands)
-  local command = buffer_commands[root] or user_commands[root]
-  if not is_simple_flat_command(command) then
-    return false
-  end
-
-  for semantic_root, _ in pairs(providers.by_root) do
-    if semantic_root ~= root and root:find("^" .. vim.pesc(semantic_root)) == 1 then
-      return true
+local function is_shadowed_by_legacy_family(root)
+  for semantic_root, prefixes in pairs(legacy_prefix_families_by_root) do
+    if providers.by_root[semantic_root] then
+      for _, prefix in ipairs(prefixes) do
+        if root ~= semantic_root and root ~= prefix and root:find("^" .. vim.pesc(prefix)) == 1 then
+          return true
+        end
+      end
     end
   end
   return false
@@ -105,7 +93,7 @@ function M.build_entries()
   local entries = {}
 
   for _, root in ipairs(util.discover_command_names()) do
-    if not is_shadowed_by_semantic_root(root, user_commands, buffer_commands) then
+    if not is_shadowed_by_legacy_family(root) then
       local provider = providers.get(root)
       local source = command_source(root, user_commands, buffer_commands)
       entries[#entries + 1] = types.index_entry({

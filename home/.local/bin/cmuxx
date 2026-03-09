@@ -81,12 +81,12 @@ workspace::new() {
         wt_branch=$(echo "$selection" | sed -n 's/.*\[\(.*\)\]/\1/p')
         _open_worktree "$wt_path" "$wt_branch"
     else
-        # Create a new worktree branched from main
-        local main_root
-        main_root=$(git worktree list | awk 'NR==1{print $1}')
-        local wt_path="${main_root}-${argc_name}"
+        # Create a new worktree branched from HEAD
+        local repo_root
+        repo_root=$(git worktree list | awk 'NR==1{print $1}')
+        local wt_path="${repo_root}-${argc_name}"
 
-        git worktree add -b "$argc_name" "$wt_path" main
+        git worktree add -b "$argc_name" "$wt_path" HEAD
         _open_worktree "$wt_path" "$argc_name"
     fi
 }

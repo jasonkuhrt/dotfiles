@@ -690,7 +690,8 @@ The engine should expose reports for humans and agents:
 
 Runtime boundary:
 
-- learning storage, scoring, and proposal truth stays in `lua/cmd_ux/lib/learning.lua`
+- learning storage, scoring, and ranking truth stays in `lua/cmd_ux/lib/learning.lua`
+- alias/quarantine/flow candidate synthesis stays in `lua/cmd_ux/lib/learning_candidates.lua`
 - human/agent report assembly and preview text stays in `lua/cmd_ux/lib/learning_reports.lua`
 
 Every report should be sliceable by:

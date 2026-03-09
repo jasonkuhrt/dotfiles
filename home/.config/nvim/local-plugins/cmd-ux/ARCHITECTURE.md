@@ -130,6 +130,7 @@ It changes:
 Implementation split:
 
 - `lua/cmd_ux/lib/learning.lua` owns persisted store I/O, recording, scoring, ranking, proposals, and public orchestration
+- `lua/cmd_ux/lib/learning_candidates.lua` owns derived alias/quarantine/flow candidate synthesis over the learning API
 - `lua/cmd_ux/lib/learning_reports.lua` owns human/agent report assembly and preview text over the learning API
 
 It does not change:
@@ -226,6 +227,7 @@ Learning data survives invalidation because usage history is orthogonal to comma
 `Cmdux` exposes the learning layer as first-class reports:
 
 - reports are assembled through `lua/cmd_ux/lib/learning_reports.lua`, not inline with persistence/ranking logic
+- alias/quarantine/flow candidate synthesis runs through `lua/cmd_ux/lib/learning_candidates.lua`, not inline with persistence/ranking logic
 
 - `capabilities`
 - `compare`

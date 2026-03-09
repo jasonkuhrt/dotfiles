@@ -248,7 +248,7 @@ fish_add_path /Users/jasonkuhrt/.codeium/windsurf/bin
 # Vi mode with hybrid insert (Ctrl+A/E still work in insert mode)
 # Conditional: skip in Zed's embedded terminal (conflicts with Zed keybindings)
 if test "$TERM_PROGRAM" != zed
-    fish_vi_key_bindings insert
+    fish_vi_key_bindings default
     bind -M insert -m default k,j cancel repaint-mode
     set -g fish_sequence_key_delay_ms 200
 
@@ -263,6 +263,18 @@ if test "$TERM_PROGRAM" != zed
     set -g fish_cursor_visual block
 else
     fish_default_key_bindings
+end
+
+function fish_mode_prompt --description "Display Fish vi mode and start new prompts in normal mode"
+    if not set -q __dotfiles_fish_vi_mode_bootstrapped
+        set -g __dotfiles_fish_vi_mode_bootstrapped 1
+        if test "$fish_key_bindings" = fish_vi_key_bindings
+            or test "$fish_key_bindings" = fish_hybrid_key_bindings
+            set fish_bind_mode default
+        end
+    end
+
+    fish_default_mode_prompt
 end
 
 # bun

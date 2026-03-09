@@ -567,7 +567,8 @@ Example: `lua print(1)`
 Plugin structure:
 
 - `lua/cmd_ux/core.lua`: line resolution and transition policy
-- `lua/cmd_ux/lib/learning.lua`: persistent learning, ranking, and orchestration
+- `lua/cmd_ux/lib/learning_store.lua`: learning schema defaults, normalization, migration, and persisted load path
+- `lua/cmd_ux/lib/learning.lua`: persistent learning runtime, ranking, and orchestration
 - `lua/cmd_ux/lib/learning_candidates.lua`: alias/quarantine/flow candidate synthesis
 - `lua/cmd_ux/lib/learning_reports.lua`: learned report assembly and preview text
 - `lua/cmd_ux/lib/runtime.lua`: shared execution helper for replay/context actions

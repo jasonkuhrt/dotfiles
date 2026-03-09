@@ -114,12 +114,26 @@ local function await_namespace(attempt)
   end, 80)
 end
 
-vim.schedule(function()
-  vim.api.nvim_input(":")
-  vim.defer_fn(function()
+local function await_cmdline_open(attempt)
+  if vim.fn.getcmdtype() == ":" and vim.fn.getcmdline() == "" then
     vim.api.nvim_input("Tab")
     await_namespace(1)
-  end, 120)
+    return
+  end
+
+  if attempt >= max_attempts then
+    fail(blink)
+    return
+  end
+
+  vim.defer_fn(function()
+    await_cmdline_open(attempt + 1)
+  end, 40)
+end
+
+vim.schedule(function()
+  vim.api.nvim_input(":")
+  await_cmdline_open(1)
 end)
 ]]):format(root, kit_root, penlight_root, penlight_rocks_root, blink_root)
 

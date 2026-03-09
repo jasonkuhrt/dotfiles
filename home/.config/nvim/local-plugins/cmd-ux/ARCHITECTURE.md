@@ -129,7 +129,8 @@ It changes:
 
 Implementation split:
 
-- `lua/cmd_ux/lib/learning.lua` owns persisted store I/O, recording, scoring, ranking, proposals, and public orchestration
+- `lua/cmd_ux/lib/learning_store.lua` owns schema defaults, normalization, migration, and persisted store loading
+- `lua/cmd_ux/lib/learning.lua` owns recording, scoring, ranking, runtime store/session orchestration, and public composition
 - `lua/cmd_ux/lib/learning_candidates.lua` owns derived alias/quarantine/flow candidate synthesis over the learning API
 - `lua/cmd_ux/lib/learning_reports.lua` owns human/agent report assembly and preview text over the learning API
 

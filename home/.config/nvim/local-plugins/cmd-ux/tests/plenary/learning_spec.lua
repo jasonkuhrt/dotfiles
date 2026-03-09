@@ -250,6 +250,19 @@ describe("cmd_ux learning and flow features", function()
     assert.is_truthy(stats_lines:find("Stored events: 64", 1, true))
   end)
 
+  it("round-trips the persisted learning store through flush and reload", function()
+    learning.record_execute_state(core.resolve_line("Config reload"))
+    learning.flush()
+    learning.reload()
+
+    local recent = learning.recent_commands(5)
+    eq("Config reload", recent[1].rendered)
+
+    local snapshot = learning.snapshot()
+    eq("Config reload", snapshot.events[1].rendered)
+    assert.is_truthy(snapshot.version >= 2)
+  end)
+
   it("prefers current project learning over cross-project history", function()
     local project_a = vim.fn.tempname()
     local project_b = vim.fn.tempname()

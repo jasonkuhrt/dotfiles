@@ -237,6 +237,23 @@ describe("cmd_ux learning and flow features", function()
     assert.is_true(vim.tbl_contains(transition_pairs, "TreeTest/refactor:rename"))
   end)
 
+  it("records frontier selections through the extracted recording API", function()
+    register_tree_provider("TreeTest")
+
+    learning.record_choice(resolver.resolve_line("TreeTest"), "refactor")
+
+    eq({ "refactor", "docs" }, labels(core.resolve_line("TreeTest").frontier))
+  end)
+
+  it("records rendered commands through the extracted recording API", function()
+    helpers.create_noarg_command("UsageRankAlpha")
+    helpers.sync_cmd_ux()
+
+    learning.record_rendered_command("UsageRankAlpha")
+
+    eq("UsageRankAlpha", learning.recent_commands(5)[1].rendered)
+  end)
+
   it("shows learned preview hints for ranked next choices", function()
     learning.record_execute_state(core.resolve_line("Config reload"))
 

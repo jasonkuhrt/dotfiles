@@ -222,6 +222,21 @@ describe("cmd_ux learning and flow features", function()
     assert.is_not.equal(unranked, ranked)
   end)
 
+  it("reports learned roots, transitions, and paths through the extracted scoring API", function()
+    register_tree_provider("TreeTest")
+
+    learning.record_execute_state(core.resolve_line("TreeTest refactor rename"))
+
+    eq("TreeTest", learning.top_roots(5)[1].root)
+    eq("TreeTest refactor rename", learning.top_paths(5)[1].rendered)
+
+    local transition_pairs = vim.tbl_map(function(item)
+      return ("%s:%s"):format(item.context, item.token)
+    end, learning.top_transitions(10))
+
+    assert.is_true(vim.tbl_contains(transition_pairs, "TreeTest/refactor:rename"))
+  end)
+
   it("shows learned preview hints for ranked next choices", function()
     learning.record_execute_state(core.resolve_line("Config reload"))
 

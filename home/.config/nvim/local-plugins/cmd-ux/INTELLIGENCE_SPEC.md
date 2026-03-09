@@ -691,7 +691,8 @@ The engine should expose reports for humans and agents:
 Runtime boundary:
 
 - persisted schema defaults, normalization, and migration stay in `lua/cmd_ux/lib/learning_store.lua`
-- learning runtime, scoring, and ranking truth stays in `lua/cmd_ux/lib/learning.lua`
+- scoped score composition, mixed views, promotion selection, ranking, and learned top-* queries stay in `lua/cmd_ux/lib/learning_scoring.lua`
+- learning runtime, recording, and public composition stay in `lua/cmd_ux/lib/learning.lua`
 - alias/quarantine/flow candidate synthesis stays in `lua/cmd_ux/lib/learning_candidates.lua`
 - human/agent report assembly and preview text stays in `lua/cmd_ux/lib/learning_reports.lua`
 

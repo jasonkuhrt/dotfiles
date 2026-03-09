@@ -1,5 +1,6 @@
 # cmd-ux command blocklist
 # One exact Ex command name per line.
+# Entries are opportunistic: absent commands are allowed and stay quiet.
 # Full-line comments and blank lines are allowed.
 # Keep entries sorted ascending.
 # Check from shell with: just cmd-ux-blocklist-check

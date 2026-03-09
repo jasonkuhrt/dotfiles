@@ -121,33 +121,73 @@ local function item_state(item)
   return item.next_state
 end
 
+---@param item CommandFrontierItem
+---@return CmdUxPickerItem
+local function picker_item(item)
+  return {
+    text = item.text,
+    token = item.token,
+    label = item.label,
+    desc = item.desc,
+    help = item.help,
+    examples = item.examples,
+    kind = item.kind,
+    executable = item.executable,
+    requires_more = item.requires_more,
+    slots = item.slots,
+    accept_line = item.accept_line,
+    promoted = item.promoted,
+    node_id = item.node_id,
+    lane = item.lane,
+    slot_values = item.slot_values,
+    safety = item.safety,
+    outcome = item.outcome,
+    capability = item.capability,
+    steps = item.steps,
+  }
+end
+
+---@param state ResolutionState
+---@return CmdUxPickerItem?
+local function exact_command_item(state)
+  if not state.root or not state.executable or state.pending ~= "" or state.trailing_space then
+    return nil
+  end
+
+  return {
+    text = state.rendered .. "  Exact command",
+    token = state.rendered,
+    label = state.rendered,
+    desc = "Exact command",
+    help = state.help,
+    examples = state.examples,
+    kind = state.kind,
+    executable = true,
+    requires_more = false,
+    slots = state.slots,
+    accept_line = state.rendered,
+    promoted = false,
+    node_id = "",
+    lane = "exact",
+    slot_values = state.slot_values,
+    safety = state.safety,
+    outcome = state.outcome,
+    capability = state.capability,
+    steps = state.steps,
+  }
+end
+
 ---@return CmdUxPickerItem[]
 local function current_items()
   local state = current_state()
   ---@type CmdUxPickerItem[]
   local items = {}
+  local exact_item = exact_command_item(state)
+  if exact_item then
+    items[#items + 1] = exact_item
+  end
   for _, item in ipairs(state.frontier) do
-    items[#items + 1] = {
-      text = item.text,
-      token = item.token,
-      label = item.label,
-      desc = item.desc,
-      help = item.help,
-      examples = item.examples,
-      kind = item.kind,
-      executable = item.executable,
-      requires_more = item.requires_more,
-      slots = item.slots,
-      accept_line = item.accept_line,
-      promoted = item.promoted,
-      node_id = item.node_id,
-      lane = item.lane,
-      slot_values = item.slot_values,
-      safety = item.safety,
-      outcome = item.outcome,
-      capability = item.capability,
-      steps = item.steps,
-    }
+    items[#items + 1] = picker_item(item)
   end
   return items
 end

@@ -8,6 +8,7 @@ describe("cmd_ux snacks adapter", function()
 
   before_each(function()
     helpers.ensure_setup()
+    helpers.drop_user_command("HybridFileCmd")
     helpers.sync_cmd_ux()
     snacks.session.prefix = ""
     snacks.session.pending = ""
@@ -17,6 +18,7 @@ describe("cmd_ux snacks adapter", function()
 
   after_each(function()
     Snacks = original_snacks
+    helpers.drop_user_command("HybridFileCmd")
     snacks.session.prefix = ""
     snacks.session.pending = ""
     snacks.session.trailing_space = false
@@ -192,6 +194,53 @@ describe("cmd_ux snacks adapter", function()
         return item.label
       end, items)
     )
+  end)
+
+  it("keeps an exact executable generic command above optional arg completions", function()
+    local captured
+
+    vim.api.nvim_create_user_command("HybridFileCmd", function() end, {
+      nargs = "?",
+      desc = "Hybrid file completion command for cmd-ux tests",
+      complete = "file",
+    })
+    helpers.sync_cmd_ux()
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    snacks.open()
+
+    local fake_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      input = {
+        value = "HybridFileCmd",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    local items = captured.finder(captured, {
+      filter = { search = "HybridFileCmd" },
+      picker = fake_picker,
+    })
+
+    assert.equal("HybridFileCmd", items[1].label)
+    assert.equal("Exact command", items[1].desc)
+    assert.equal("HybridFileCmd", items[1].accept_line)
+    assert.is_true(#items > 1)
   end)
 
   it("treats a literally typed namespace space as semantic context", function()

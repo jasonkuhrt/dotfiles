@@ -21,26 +21,6 @@ local function warn(message)
   vim.notify(message, vim.log.levels.WARN, { title = "Cmd UX" })
 end
 
----@param entries CmdUxBlocklistEntry[]
-local function schedule_live_validation(entries)
-  if vim.g.cmd_ux_disable_blocklist_live_validation == true or vim.env.CMD_UX_TEST == "1" then
-    return
-  end
-
-  vim.defer_fn(function()
-    local available = {}
-    for _, name in ipairs(vim.fn.getcompletion("", "command")) do
-      available[name] = true
-    end
-
-    for _, entry in ipairs(entries) do
-      if not available[entry.command] then
-        warn(("blocklist:%d: dead command %q — matches no command"):format(entry.line, entry.command))
-      end
-    end
-  end, 3000)
-end
-
 ---@param lines string[]
 ---@return CmdUxBlocklistEntry[]
 local function parse_lines(lines)
@@ -80,7 +60,6 @@ local function load()
   end
 
   local entries = parse_lines(lines)
-  schedule_live_validation(entries)
 
   local commands = {}
   local exact = {}
@@ -160,6 +139,7 @@ function M.append(commands)
   local lines = {
     "# cmd-ux command blocklist",
     "# One exact Ex command name per line.",
+    "# Entries are opportunistic: absent commands are allowed and stay quiet.",
     "# Full-line comments and blank lines are allowed.",
     "# Keep entries sorted ascending.",
     "# Check from shell with: just cmd-ux-blocklist-check",

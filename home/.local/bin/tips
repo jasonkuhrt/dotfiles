@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# @describe tips — personal capability changelog. Track what you set up so you don't forget it exists.
+
+LOG_FILE="${XDG_DATA_HOME:-$HOME/.local/share}/tips/log"
+
+_ensure_log() {
+    local dir
+    dir="$(dirname "$LOG_FILE")"
+    [[ -d "$dir" ]] || mkdir -p "$dir"
+    [[ -f "$LOG_FILE" ]] || touch "$LOG_FILE"
+}
+
+_format_entries() {
+    # tab-separated: date \t category \t description
+    # output: date  [category]  description
+    while IFS=$'\t' read -r date category description; do
+        printf '  %s  \033[36m[%s]\033[0m  %s\n' "$date" "$category" "$description"
+    done
+}
+
+# @cmd Show recent capability additions
+# @alias l
+# @arg count=10 Number of entries to show
+# @meta default-subcommand
+show() {
+    _ensure_log
+    local total
+    total="$(wc -l < "$LOG_FILE" | tr -d ' ')"
+    if [[ "$total" -eq 0 ]]; then
+        printf 'No entries yet. Run: tips add <category> <description>\n'
+        return 0
+    fi
+    printf 'Recent capabilities (%s of %s):\n\n' "$(( total < argc_count ? total : argc_count ))" "$total"
+    tail -n "$argc_count" "$LOG_FILE" | tail -r | _format_entries
+    if [[ "$total" -gt "$argc_count" ]]; then
+        printf '\n  … run \033[1mtips all\033[0m for full history\n'
+    fi
+}
+
+# @cmd Show all entries
+all() {
+    _ensure_log
+    local total
+    total="$(wc -l < "$LOG_FILE" | tr -d ' ')"
+    if [[ "$total" -eq 0 ]]; then
+        printf 'No entries yet. Run: tips add <category> <description>\n'
+        return 0
+    fi
+    printf 'All capabilities (%s entries):\n\n' "$total"
+    tail -r "$LOG_FILE" | _format_entries
+}
+
+# @cmd Add a new capability entry
+# @arg category! Category tag (e.g. fish, git, neovim, cli)
+# @arg description+ What you can now do
+add() {
+    _ensure_log
+    local date
+    date="$(date +%Y-%m-%d)"
+    printf '%s\t%s\t%s\n' "$date" "$argc_category" "${argc_description[*]}" >> "$LOG_FILE"
+    printf 'Added: %s [%s] %s\n' "$date" "$argc_category" "${argc_description[*]}"
+}
+
+# @cmd Search entries by keyword
+# @alias s
+# @arg query! Search term
+search() {
+    _ensure_log
+    local matches
+    matches="$(grep -i "$argc_query" "$LOG_FILE" || true)"
+    if [[ -z "$matches" ]]; then
+        printf 'No entries matching "%s"\n' "$argc_query"
+        return 0
+    fi
+    local count
+    count="$(printf '%s\n' "$matches" | wc -l | tr -d ' ')"
+    printf 'Matching "%s" (%s entries):\n\n' "$argc_query" "$count"
+    printf '%s\n' "$matches" | tail -r | _format_entries
+}
+
+# @cmd Edit the changelog file directly
+edit() {
+    _ensure_log
+    "${EDITOR:-nvim}" "$LOG_FILE"
+}
+
+eval "$(argc --argc-eval "$0" "$@")"

@@ -3,6 +3,7 @@
 ## Workflow Rules
 
 * Any repeatable project workflow must be exposed through the root `justfile`. If a workflow matters, add a `just` recipe for it.
+* When adding or changing a user-facing capability (keybinding, CLI tool, alias, fish function, neovim mapping, etc.), run `tips add <category> <description>` to log it.
 
 ## File Naming
 

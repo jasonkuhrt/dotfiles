@@ -59,9 +59,8 @@ end
 
 
 
-# Use ag to filter out git ignored files from fzf results
-
-set --export FZF_DEFAULT_COMMAND 'ag -g ""'
+# fzf: use fd for file listing (respects .gitignore, purpose-built for file enumeration)
+set --export FZF_DEFAULT_COMMAND 'fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
 
 # fzf Tokyo Night theme
 # Source: https://github.com/folke/tokyonight.nvim/blob/main/extras/fzf/tokyonight_night.sh
@@ -212,6 +211,9 @@ function zz --description "zmx: attach/create session named after current direct
     zmx attach (basename $PWD)
 end
 
+# zoxide: smart cd with frecency ranking (replaces jethrokuan/z)
+zoxide init fish | source
+
 # Dotfiles modules (fish/modules/*.fish)
 for f in ~/.config/fish/modules/*.fish
     source $f
@@ -246,24 +248,24 @@ fish_add_path /Users/jasonkuhrt/.codeium/windsurf/bin
 #
 
 # Vi mode with hybrid insert (Ctrl+A/E still work in insert mode)
-# Conditional: skip in Zed's embedded terminal (conflicts with Zed keybindings)
-if test "$TERM_PROGRAM" != zed
-    fish_vi_key_bindings default
-    bind -M insert -m default k,j cancel repaint-mode
-    set -g fish_sequence_key_delay_ms 200
+fish_vi_key_bindings default
+bind -M insert -m default k,j cancel repaint-mode
+set -g fish_sequence_key_delay_ms 200
 
-    # Ctrl+J/K navigate the tab-completion pager like arrow keys
-    bind -M pager \ck up-or-search
-    bind -M pager \cj down-or-search
+# Ctrl+J/K navigate the tab-completion pager like arrow keys
+bind -M pager \ck up-or-search
+bind -M pager \cj down-or-search
 
-    # Cursor shapes per mode (visual feedback)
-    set -g fish_cursor_default block
-    set -g fish_cursor_insert line
-    set -g fish_cursor_replace_one underscore
-    set -g fish_cursor_visual block
-else
-    fish_default_key_bindings
-end
+# Cursor shapes per mode (visual feedback)
+set -g fish_cursor_default block
+set -g fish_cursor_insert line
+set -g fish_cursor_replace_one underscore
+set -g fish_cursor_visual block
+
+# fzf.fish: must be called AFTER fish_vi_key_bindings, which replaces all bindings
+# Provides: Ctrl+R (history), Ctrl+Alt+F (files), Ctrl+Alt+L (git log),
+#           Ctrl+Alt+S (git status), Ctrl+Alt+P (processes), Ctrl+V (variables)
+fzf_configure_bindings
 
 function fish_mode_prompt --description "Display Fish vi mode and start new prompts in normal mode"
     if not set -q __dotfiles_fish_vi_mode_bootstrapped

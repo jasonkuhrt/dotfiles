@@ -125,7 +125,7 @@ abbr -a clpma 'claude plugin marketplace add'
 abbr -a clpml 'claude plugin marketplace list'
 abbr -a clpmu 'claude plugin marketplace update'
 abbr -a clpmr 'claude plugin marketplace remove'
-abbr -a l libra
+abbr -a l yazi
 
 # Modern Unix replacements (only expand in interactive mode, not scripts)
 abbr -a ls lsd

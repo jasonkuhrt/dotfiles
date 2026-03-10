@@ -29,6 +29,11 @@
             "type": "command",
             "command": "~/.claude/hooks/scripts/git-worktree-guard.sh",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/block-direct-playwright-test.sh",
+            "timeout": 5
           }
         ]
       }

@@ -1,4 +1,5 @@
 local core = require("cmd_ux.core")
+local index = require("cmd_ux.index")
 local learning = require("cmd_ux.lib.learning")
 local util = require("cmd_ux.util")
 
@@ -55,10 +56,12 @@ M.session = {
 
 ---@class CmdUxStateCache
 ---@field line string?
+---@field revision integer?
 ---@field state ResolutionState?
 ---@type CmdUxStateCache
 local state_cache = {
   line = nil,
+  revision = nil,
   state = nil,
 }
 local skip_canonicalize_once = false
@@ -76,6 +79,7 @@ end
 ---@return nil
 local function invalidate_state()
   state_cache.line = nil
+  state_cache.revision = nil
   state_cache.state = nil
 end
 
@@ -101,8 +105,10 @@ end
 ---@return ResolutionState
 local function current_state()
   local line = render_session()
-  if state_cache.line ~= line or not state_cache.state then
+  local revision = index.revision()
+  if state_cache.line ~= line or state_cache.revision ~= revision or not state_cache.state then
     state_cache.line = line
+    state_cache.revision = revision
     state_cache.state = core.resolve_line(line)
   end
   return assert(state_cache.state, "cmd_ux.snacks: state cache missing")
@@ -301,13 +307,17 @@ end
 ---@return boolean?
 local function apply_choice(picker, item)
   if not item then
-    return
+    return true
   end
 
   local next_state = item_state(item)
   learning.record_choice(current_state(), item)
   local action_type = "execute"
-  if next_state.kind == "namespace" or next_state.kind == "hybrid" or next_state.requires_more then
+  if
+    next_state.kind == "namespace"
+    or next_state.requires_more
+    or (next_state.kind == "hybrid" and not next_state.executable)
+  then
     action_type = "advance"
   elseif not next_state.executable then
     action_type = "refuse"
@@ -465,6 +475,7 @@ end
 ---@param opts? CmdUxSnacksOpenOpts
 function M.open(opts)
   opts = opts or {}
+  skip_canonicalize_once = false
   set_session_from_line(opts.line or render_session())
   invalidate_state()
   ---@type CmdUxSnacksApi

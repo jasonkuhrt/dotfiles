@@ -243,6 +243,77 @@ describe("cmd_ux snacks adapter", function()
     assert.is_true(#items > 1)
   end)
 
+  it("executes a hybrid executable generic command on confirm instead of advancing", function()
+    local captured
+    local original_schedule = vim.schedule
+    local original_cmd = vim.cmd
+    local executed = {}
+
+    vim.api.nvim_create_user_command("HybridFileCmd", function() end, {
+      nargs = "?",
+      desc = "Hybrid file completion command for cmd-ux tests",
+      complete = "file",
+    })
+    helpers.sync_cmd_ux()
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    vim.schedule = function(cb)
+      cb()
+    end
+    vim.cmd = function(cmd)
+      executed[#executed + 1] = cmd
+    end
+
+    snacks.open()
+
+    local fake_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      close = function(self)
+        self.closed = true
+      end,
+      input = {
+        value = "HybridFileCmd",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    local ok, err = pcall(function()
+      local items = captured.finder(captured, {
+        filter = { search = "HybridFileCmd" },
+        picker = fake_picker,
+      })
+      assert.equal("HybridFileCmd", items[1].label)
+      assert.equal("Exact command", items[1].desc)
+
+      captured.confirm(fake_picker, items[1])
+
+      assert.is_true(fake_picker.closed)
+      assert.are.same({ "HybridFileCmd" }, executed)
+    end)
+
+    vim.schedule = original_schedule
+    vim.cmd = original_cmd
+
+    if not ok then
+      error(err)
+    end
+  end)
+
   it("treats a literally typed namespace space as semantic context", function()
     local captured
 
@@ -453,5 +524,213 @@ describe("cmd_ux snacks adapter", function()
     if not ok then
       error(err)
     end
+  end)
+
+  -- ── Bug tests ──────────────────────────────────────────────────────
+
+  it("[BUG] confirm with nil item returns true to suppress default behavior", function()
+    -- Expected: When the user confirms with an empty picker list (no items),
+    -- apply_choice should return true so the snacks picker receives a
+    -- "handled" signal and doesn't try its own default confirmation logic.
+    -- Actual: apply_choice returns nil when item is nil (the early return
+    -- at snacks.lua:304 has no explicit return value), which means the
+    -- snacks confirm callback returns nil instead of true.
+    local captured
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    snacks.open()
+
+    local fake_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      close = function(self)
+        self.closed = true
+      end,
+      input = {
+        value = "",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    local result = captured.confirm(fake_picker, nil)
+    assert.is_true(result)
+  end)
+
+  it("[BUG] skip_canonicalize_once does not leak between picker sessions", function()
+    -- Expected: Opening a fresh picker should always allow canonicalization
+    -- on the first finder run, regardless of what happened in a previous session.
+    -- Actual: The module-level skip_canonicalize_once flag is set by
+    -- semantic_backspace (snacks.lua:289) and consumed in
+    -- canonicalize_typed_namespace (snacks.lua:241). But if the picker is
+    -- closed before refresh_picker calls the finder (snacks.lua:199-206
+    -- checks picker.closed), the flag persists. Since open() never resets
+    -- this flag, the next session's first canonicalization is silently skipped.
+    local captured
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    -- Session 1: Open with "Tab " (inside Tab namespace)
+    snacks.open({ line = "Tab " })
+
+    -- Simulate a picker that is already closed when backspace fires.
+    -- This happens when the user presses BS and Escape in quick succession,
+    -- or when an external event closes the picker between keypress and refresh.
+    local closed_picker = {
+      opts = captured,
+      closed = true,
+      update_titles = function() end,
+      input = {
+        value = "",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+      refresh = function() end,
+    }
+
+    -- Press BS with the closed picker. semantic_backspace sets
+    -- skip_canonicalize_once = true but refresh_picker returns early
+    -- because picker.closed is true, so the finder never runs and
+    -- the flag is never consumed.
+    local backspace = captured.win.input.keys["<BS>"][1]
+    backspace(closed_picker)
+
+    -- Reset session (simulates closing the picker and starting fresh)
+    snacks.session.prefix = ""
+    snacks.session.pending = ""
+    snacks.session.trailing_space = false
+
+    -- Session 2: Open a fresh picker
+    snacks.open()
+
+    local fresh_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      input = {
+        value = "Tab",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    -- Type "Tab" — should trigger canonicalization (auto-enter the Tab namespace)
+    local filter = { search = "Tab" }
+    captured.finder(captured, {
+      filter = filter,
+      picker = fresh_picker,
+    })
+
+    -- Canonicalization should have cleared the search and advanced the title
+    assert.equal("", filter.search)
+    assert.equal("Cmd UX: Tab ", fresh_picker.opts.title)
+  end)
+
+  it("[BUG] state_cache refreshes when index is invalidated mid-session", function()
+    -- Expected: When a new user command is created while the picker is open,
+    -- the next finder run should include it in the results, because the
+    -- index was invalidated by the create_user_command hook.
+    -- Actual: The snacks adapter's state_cache (snacks.lua:56-63) is keyed
+    -- only by the rendered line string. It does not track the index generation
+    -- or revision. When the index is invalidated, the cache still holds the
+    -- old state because the line ("") hasn't changed. current_state() returns
+    -- the stale cached state, so the new command is missing from the frontier.
+    local captured
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    snacks.open()
+
+    local fake_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      input = {
+        value = "",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    -- First finder run — populates the state cache at line ""
+    local items_before = captured.finder(captured, {
+      filter = { search = "" },
+      picker = fake_picker,
+    })
+
+    -- Verify BugCacheTestCmd does not exist yet
+    local has_before = false
+    for _, item in ipairs(items_before) do
+      if item.label == "BugCacheTestCmd" then
+        has_before = true
+        break
+      end
+    end
+    assert.is_false(has_before)
+
+    -- Create a new command mid-session.
+    -- This triggers index.invalidate() via the hook installed by index.install_hooks().
+    vim.api.nvim_create_user_command("BugCacheTestCmd", function() end, {
+      desc = "Created mid-session for cache stale test",
+    })
+
+    -- Second finder run — same line (""), but the index was invalidated.
+    local items_after = captured.finder(captured, {
+      filter = { search = "" },
+      picker = fake_picker,
+    })
+
+    -- The new command should now appear in the frontier
+    local has_after = false
+    for _, item in ipairs(items_after) do
+      if item.label == "BugCacheTestCmd" then
+        has_after = true
+        break
+      end
+    end
+
+    -- Cleanup
+    pcall(vim.api.nvim_del_user_command, "BugCacheTestCmd")
+
+    assert.is_true(has_after)
   end)
 end)

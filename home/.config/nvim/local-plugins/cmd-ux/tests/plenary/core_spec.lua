@@ -333,4 +333,23 @@ describe("cmd_ux semantic decisions", function()
     local state = core.resolve_line("IndexVisibleCmd")
     assert.is_true(state.executable)
   end)
+
+  -- ── Bug tests ──────────────────────────────────────────────────────
+
+  it("[REGRESSION] nargs='*' named trees remain namespace-first", function()
+    -- A generic command with nargs="*" and root-level named completions is
+    -- still treated as a namespace-first semantic tree. Neovim exposes no
+    -- reliable signal that the bare root should execute instead of requiring
+    -- a structured choice, so cmd-ux stays conservative here.
+    helpers.create_structured_test_command("TestCmdSpace")
+    helpers.sync_cmd_ux()
+
+    local state = core.resolve_line("TestCmdSpace")
+
+    eq("generic", state.provider)
+    eq("namespace", state.kind)
+    assert.is_false(state.executable)
+    assert.is_true(state.requires_more)
+    eq({ type = "advance", line = "TestCmdSpace " }, action(state, "enter"))
+  end)
 end)

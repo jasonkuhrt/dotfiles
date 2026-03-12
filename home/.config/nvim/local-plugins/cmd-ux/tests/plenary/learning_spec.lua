@@ -937,4 +937,90 @@ describe("cmd_ux learning and flow features", function()
     local reset = core.resolve_line("ResetRank")
     eq({ "ResetRankAlpha", "ResetRankBeta" }, labels(reset.frontier))
   end)
+
+  -- ── Performance threshold tests ─────────────────────────────────────
+
+  it("keeps large frontiers in alphabetical order when above the scoring threshold", function()
+    local created = {}
+    for i = 1, 60 do
+      local name = ("ThresholdCmd%03d"):format(i)
+      helpers.create_noarg_command(name)
+      created[#created + 1] = name
+    end
+    helpers.sync_cmd_ux()
+
+    -- Record heavy learning signal for the alphabetically last command
+    learning.record_execute_state(core.resolve_line("ThresholdCmd060"))
+    learning.record_execute_state(core.resolve_line("ThresholdCmd060"))
+    learning.record_execute_state(core.resolve_line("ThresholdCmd060"))
+
+    local state = core.resolve_line("ThresholdCmd")
+
+    -- With 60 items (above RANK_THRESHOLD=50), per-item scoring is skipped.
+    -- Frontier keeps its original alphabetical order from the index.
+    eq("ThresholdCmd001", state.frontier[1].label)
+    eq("ThresholdCmd060", state.frontier[60].label)
+
+    for _, name in ipairs(created) do
+      helpers.drop_user_command(name)
+    end
+    helpers.sync_cmd_ux()
+  end)
+
+  it("still scores and reorders frontiers at or below the scoring threshold", function()
+    local created = {}
+    for i = 1, 10 do
+      local name = ("BelowThresholdCmd%03d"):format(i)
+      helpers.create_noarg_command(name)
+      created[#created + 1] = name
+    end
+    helpers.sync_cmd_ux()
+
+    -- Record learning for the alphabetically last command
+    learning.record_execute_state(core.resolve_line("BelowThresholdCmd010"))
+    learning.record_execute_state(core.resolve_line("BelowThresholdCmd010"))
+
+    local state = core.resolve_line("BelowThresholdCmd")
+
+    -- With 10 items (below RANK_THRESHOLD=50), scoring IS applied.
+    -- The learned command floats to the top.
+    eq("BelowThresholdCmd010", state.frontier[1].label)
+
+    for _, name in ipairs(created) do
+      helpers.drop_user_command(name)
+    end
+    helpers.sync_cmd_ux()
+  end)
+
+  it("narrows a large frontier below the threshold and then scores it", function()
+    local created = {}
+    for i = 1, 60 do
+      local name = ("NarrowCmd%03d"):format(i)
+      helpers.create_noarg_command(name)
+      created[#created + 1] = name
+    end
+    -- Also add two with a different prefix to test the narrowing path
+    helpers.create_noarg_command("NarrowFew001")
+    helpers.create_noarg_command("NarrowFew002")
+    created[#created + 1] = "NarrowFew001"
+    created[#created + 1] = "NarrowFew002"
+    helpers.sync_cmd_ux()
+
+    -- Record learning for NarrowFew002
+    learning.record_execute_state(core.resolve_line("NarrowFew002"))
+    learning.record_execute_state(core.resolve_line("NarrowFew002"))
+
+    -- Full "Narrow" prefix has 62 items — above threshold, alphabetical
+    local wide = core.resolve_line("Narrow")
+    eq("NarrowCmd001", wide.frontier[1].label)
+
+    -- "NarrowFew" prefix has only 2 items — below threshold, scored
+    local narrow = core.resolve_line("NarrowFew")
+    eq("NarrowFew002", narrow.frontier[1].label)
+
+    for _, name in ipairs(created) do
+      helpers.drop_user_command(name)
+    end
+    helpers.sync_cmd_ux()
+  end)
 end)

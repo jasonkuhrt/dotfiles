@@ -16,6 +16,26 @@ local M = {}
 ---@param env CmdUxLearningScoringEnv
 ---@return table
 function M.build(env)
+  -- Scoring context: cached during rank_state to avoid repeated filesystem lookups.
+  -- When nil, falls through to the live env functions.
+  local scoring_ctx = { vector = nil, project_id = nil }
+
+  local function current_context_vector()
+    return scoring_ctx.vector or env.current_context_vector()
+  end
+
+  local function current_project_id()
+    return scoring_ctx.project_id or env.current_project_id()
+  end
+
+  -- Frontiers larger than this skip per-item scoring (kept in index order).
+  -- Learning ranking adds marginal value for large sets — users type to narrow first.
+  local RANK_THRESHOLD = 50
+
+  -- Cap the number of promotion candidates evaluated to bound worst-case cost
+  -- when the learning store has many recorded paths.
+  local PROMOTION_CANDIDATE_BUDGET = 32
+
   ---@param metric CmdUxLearningMetric?
   ---@param active_day integer
   ---@return integer
@@ -341,7 +361,7 @@ function M.build(env)
     session_context_stat_fn
   )
     local learning_cfg = config.get().learning
-    local project_id = env.current_project_id()
+    local project_id = current_project_id()
     local project_components = composed_scope_components(
       env.get_scope(project_id),
       env.get_session_scope(project_id),
@@ -453,7 +473,7 @@ function M.build(env)
   ---@param node_id string
   ---@return { exact_score: integer, relaxed_score: integer, recency: integer, exact_exec_recent: integer, relaxed_exec_recent: integer, rendered: string, depth: integer, exact_project_score: integer, exact_cross_score: integer, relaxed_project_score: integer, relaxed_cross_score: integer, exact_session_project_score: integer, exact_session_cross_score: integer, relaxed_session_project_score: integer, relaxed_session_cross_score: integer }
   local function mixed_path_view(vector, node_id)
-    local project_id = env.current_project_id()
+    local project_id = current_project_id()
     local learning_cfg = config.get().learning
 
     local function best_exact_path(scope, session_scope)
@@ -646,7 +666,7 @@ function M.build(env)
   ---@param item CommandFrontierItem
   ---@return { total_score: integer, recency: integer, context: CmdUxContextVector, node_id: string, parent_id: string?, transition: { exact_score: integer, relaxed_score: integer, recency: integer, exact: { score: integer, recency: integer, project_score: integer, cross_score: integer, session_project_score: integer, session_cross_score: integer, exact_score: integer, facet_score: integer, session_exact_score: integer, session_facet_score: integer, facet_key: string }, relaxed: { score: integer, recency: integer, project_score: integer, cross_score: integer, session_project_score: integer, session_cross_score: integer, exact_score: integer, facet_score: integer, session_exact_score: integer, session_facet_score: integer, facet_key: string } }, node: { score: integer, recency: integer, project_score: integer, cross_score: integer, session_project_score: integer, session_cross_score: integer, exact_score: integer, facet_score: integer, session_exact_score: integer, session_facet_score: integer, facet_key: string }, path: { exact_score: integer, relaxed_score: integer, recency: integer, exact_exec_recent: integer, relaxed_exec_recent: integer, rendered: string, depth: integer, exact_project_score: integer, exact_cross_score: integer, relaxed_project_score: integer, relaxed_cross_score: integer, exact_session_project_score: integer, exact_session_cross_score: integer, relaxed_session_project_score: integer, relaxed_session_cross_score: integer }? }
   local function item_score_components(state, item)
-    local vector = env.current_context_vector()
+    local vector = current_context_vector()
     local node_id = choice_node_id(state, item)
     if not node_id then
       return {
@@ -695,11 +715,11 @@ function M.build(env)
       return {}
     end
 
-    local vector = env.current_context_vector()
+    local vector = current_context_vector()
     local node_candidates = {}
     local seen = {}
     local store = env.ensure_state()
-    local project_id = env.current_project_id()
+    local project_id = current_project_id()
 
     local function collect_from_scope(scope_id)
       local scope = store.scopes[scope_id]
@@ -732,7 +752,10 @@ function M.build(env)
     end
 
     local ranked = {}
-    for _, node_id in ipairs(node_candidates) do
+    for idx, node_id in ipairs(node_candidates) do
+      if idx > PROMOTION_CANDIDATE_BUDGET then
+        break
+      end
       local view = mixed_path_view(vector, node_id)
       if view.rendered ~= "" and view.depth >= promotions_cfg.min_hops_saved then
         local execute_base = math.max(1, env.normalize_int(config.get().learning.propagation.execute[1]))
@@ -814,32 +837,40 @@ function M.build(env)
       return state
     end
 
+    -- Cache expensive context/project lookups for this call
+    scoring_ctx.vector = env.current_context_vector()
+    scoring_ctx.project_id = env.current_project_id()
+
     local ranked_state = vim.tbl_extend("force", {}, state)
     local structural = vim.deepcopy(state.frontier)
-    local original_order = {}
-    for index, item in ipairs(structural) do
-      original_order[item] = index
+
+    if #structural <= RANK_THRESHOLD then
+      -- Schwartzian transform: pre-compute scores once per item, then sort
+      -- by cached values. Avoids O(n log n) repeated item_score calls.
+      local scored = {}
+      for i, item in ipairs(structural) do
+        local s, r = item_score(state, item)
+        scored[i] = { item = item, score = s, recency = r, index = i }
+      end
+
+      table.sort(scored, function(a, b)
+        if a.score ~= b.score then
+          return a.score > b.score
+        end
+        if a.recency ~= b.recency then
+          return a.recency > b.recency
+        end
+        if a.index ~= b.index then
+          return a.index < b.index
+        end
+        return a.item.label < b.item.label
+      end)
+
+      for i, entry in ipairs(scored) do
+        structural[i] = entry.item
+      end
     end
-
-    table.sort(structural, function(left, right)
-      local left_score, left_recency = item_score(state, left)
-      local right_score, right_recency = item_score(state, right)
-
-      if left_score ~= right_score then
-        return left_score > right_score
-      end
-      if left_recency ~= right_recency then
-        return left_recency > right_recency
-      end
-
-      local left_index = original_order[left] or math.huge
-      local right_index = original_order[right] or math.huge
-      if left_index ~= right_index then
-        return left_index < right_index
-      end
-
-      return left.label < right.label
-    end)
+    -- else: keep index order for large frontiers — users type to narrow first
 
     local promotions = promoted_items(state)
     if #promotions > 0 then
@@ -851,13 +882,16 @@ function M.build(env)
       ranked_state.frontier = structural
     end
 
+    scoring_ctx.vector = nil
+    scoring_ctx.project_id = nil
+
     return ranked_state
   end
 
   ---@param limit integer
   ---@return { root: string, score: integer, last_seq: integer }[]
   local function top_roots(limit)
-    local vector = env.current_context_vector()
+    local vector = current_context_vector()
     local seen = {}
     local items = {}
     for _, scope in pairs(env.ensure_state().scopes) do
@@ -890,7 +924,7 @@ function M.build(env)
   ---@param limit integer
   ---@return { rendered: string, root: string, executed: integer, last_seq: integer }[]
   local function recent_commands(limit)
-    local project_id = env.current_project_id()
+    local project_id = current_project_id()
     local seen = {}
     local items = {}
 
@@ -947,7 +981,7 @@ function M.build(env)
   ---@param limit integer
   ---@return { context: string, token: string, selected: integer, executed: integer, last_seq: integer }[]
   local function top_transitions(limit)
-    local vector = env.current_context_vector()
+    local vector = current_context_vector()
     local context_keys = env.all_context_keys(vector)
     local seen = {}
     local items = {}
@@ -998,7 +1032,7 @@ function M.build(env)
   ---@param limit integer
   ---@return { rendered: string, node_id: string, score: integer, last_seq: integer, recent_exec: integer, depth: integer }[]
   local function top_paths(limit)
-    local vector = env.current_context_vector()
+    local vector = current_context_vector()
     local seen = {}
     local items = {}
 

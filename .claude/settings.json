@@ -8,18 +8,5 @@
     "allow": [
       "mcp__serena"
     ]
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Skill",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "claude/hooks/scripts/auto-approve-my-skills.sh"
-          }
-        ]
-      }
-    ]
   }
 }

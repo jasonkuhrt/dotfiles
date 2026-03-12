@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DASHBOARD_FLAG="--enable-web-dashboard"
+if [[ "${SERENA_DASHBOARD:-false}" == "true" ]]; then
+  DASHBOARD_VALUE="true"
+else
+  DASHBOARD_VALUE="false"
+fi
+
+exec uvx \
+  --from "git+https://github.com/oraios/serena" \
+  serena \
+  start-mcp-server \
+  --context codex \
+  --project-from-cwd \
+  "$DASHBOARD_FLAG" "$DASHBOARD_VALUE"

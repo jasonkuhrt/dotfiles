@@ -34,6 +34,7 @@ cursor-opacity          = 0.3
 #
 
 clipboard-paste-protection = false
+confirm-close-surface      = true
 
 #
 # Notifications & Bell
@@ -51,6 +52,26 @@ bell-features = attention
 keybind = ctrl+apostrophe=clear_screen
 keybind = shift+enter=text:\n
 
-# Split navigation/creation/management removed — cmux handles natively (⌥⌘+Arrows).
-# Ctrl+H/J/K/L freed for passthrough to apps (Neovim, fish, etc.).
-# See dotfiles-8sx epic for the full layered keybinding vision.
+# Internal cmux action surface.
+# These Hyper bindings are private implementation detail bindings used by:
+# - Karabiner's sticky Ctrl+0 cmux drive mode
+# - Neovim's repo-owned cmux-nav bridge
+#
+# They are intentionally not the user-facing keymap.
+keybind = shift+ctrl+alt+cmd+h=goto_split:left
+keybind = shift+ctrl+alt+cmd+j=goto_split:down
+keybind = shift+ctrl+alt+cmd+k=goto_split:up
+keybind = shift+ctrl+alt+cmd+l=goto_split:right
+
+keybind = shift+ctrl+alt+cmd+u=resize_split:left,3
+keybind = shift+ctrl+alt+cmd+i=resize_split:down,3
+keybind = shift+ctrl+alt+cmd+o=resize_split:up,3
+keybind = shift+ctrl+alt+cmd+p=resize_split:right,3
+
+keybind = shift+ctrl+alt+cmd+n=new_split:left
+keybind = shift+ctrl+alt+cmd+m=new_split:down
+keybind = shift+ctrl+alt+cmd+comma=new_split:up
+keybind = shift+ctrl+alt+cmd+period=new_split:right
+
+keybind = shift+ctrl+alt+cmd+z=toggle_split_zoom
+keybind = shift+ctrl+alt+cmd+x=close_surface

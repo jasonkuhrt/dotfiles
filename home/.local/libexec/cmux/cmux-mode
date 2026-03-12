@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cmux_bin="${CMUX_MODE_CMUX_BIN:-cmux}"
+osascript_bin="${CMUX_MODE_OSASCRIPT_BIN:-osascript}"
+status_key="keyboard"
+status_value="cmux"
+status_icon="keyboard"
+status_color="#0A84FF"
+
+run_cmux() {
+    "$cmux_bin" "$@"
+}
+
+run_cmux_json() {
+    "$cmux_bin" --json "$@"
+}
+
+set_mode_status() {
+    run_cmux set-status "$status_key" "$status_value" --icon "$status_icon" --color "$status_color" "$@" >/dev/null 2>&1 || true
+}
+
+clear_mode_status() {
+    run_cmux clear-status "$status_key" "$@" >/dev/null 2>&1 || true
+}
+
+cycle_workspace() {
+    local direction="$1"
+    local current_json list_json target_ref old_ref
+
+    current_json="$(run_cmux_json current-workspace)"
+    list_json="$(run_cmux_json list-workspaces)"
+
+    target_ref="$(
+        CURRENT_JSON="$current_json" LIST_JSON="$list_json" DIRECTION="$direction" python3 - <<'PY'
+import json
+import os
+import sys
+
+direction = os.environ["DIRECTION"]
+current_payload = json.loads(os.environ["CURRENT_JSON"] or "{}")
+list_payload = json.loads(os.environ["LIST_JSON"] or "[]")
+
+if isinstance(list_payload, dict):
+    for key in ("workspaces", "items", "data"):
+        if isinstance(list_payload.get(key), list):
+            list_payload = list_payload[key]
+            break
+    else:
+        list_payload = [list_payload]
+
+def workspace_ref(item):
+    if isinstance(item, str):
+        return item
+    if not isinstance(item, dict):
+        return None
+    return (
+        item.get("workspace_ref")
+        or item.get("selected_workspace_ref")
+        or item.get("ref")
+        or item.get("id")
+        or item.get("workspace_id")
+    )
+
+refs = [ref for ref in (workspace_ref(item) for item in list_payload) if ref]
+if not refs:
+    sys.exit(1)
+
+current_ref = workspace_ref(current_payload)
+try:
+    current_index = refs.index(current_ref)
+except ValueError:
+    current_index = 0
+
+delta = 1 if direction == "next" else -1
+print(refs[(current_index + delta) % len(refs)])
+PY
+    )"
+
+    old_ref="$(
+        CURRENT_JSON="$current_json" python3 - <<'PY'
+import json
+import os
+
+payload = json.loads(os.environ["CURRENT_JSON"] or "{}")
+if isinstance(payload, dict):
+    value = payload.get("workspace_ref") or payload.get("selected_workspace_ref") or payload.get("ref") or payload.get("workspace_id")
+    if value:
+        print(value)
+PY
+    )"
+
+    run_cmux select-workspace --workspace "$target_ref" >/dev/null
+
+    if [ -n "$old_ref" ] && [ "$old_ref" != "$target_ref" ]; then
+        clear_mode_status --workspace "$old_ref"
+    fi
+    set_mode_status --workspace "$target_ref"
+}
+
+dispatch_action() {
+    local action="$1"
+    local key=""
+
+    case "$action" in
+        focus-left) key="h" ;;
+        focus-down) key="j" ;;
+        focus-up) key="k" ;;
+        focus-right) key="l" ;;
+        resize-left) key="u" ;;
+        resize-down) key="i" ;;
+        resize-up) key="o" ;;
+        resize-right) key="p" ;;
+        split-left) key="n" ;;
+        split-down) key="m" ;;
+        split-up) key="," ;;
+        split-right) key="." ;;
+        zoom) key="z" ;;
+        close) key="x" ;;
+        *)
+            printf 'Unknown action: %s\n' "$action" >&2
+            return 1
+            ;;
+    esac
+
+    "$osascript_bin" <<OSA >/dev/null
+tell application "System Events"
+    keystroke "$key" using {command down, control down, option down, shift down}
+end tell
+OSA
+}
+
+usage() {
+    cat <<'EOF' >&2
+Usage: cmux-mode <enter|exit|workspace-next|workspace-prev|action ACTION>
+EOF
+}
+
+cmd="${1:-}"
+case "$cmd" in
+    enter)
+        set_mode_status
+        ;;
+    exit)
+        clear_mode_status
+        ;;
+    workspace-next)
+        cycle_workspace next
+        ;;
+    workspace-prev)
+        cycle_workspace prev
+        ;;
+    action)
+        shift
+        if [ $# -ne 1 ]; then
+            usage
+            exit 1
+        fi
+        dispatch_action "$1"
+        ;;
+    *)
+        usage
+        exit 1
+        ;;
+esac

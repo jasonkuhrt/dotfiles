@@ -7,6 +7,10 @@ return {
 
       local libraries = {
         {
+          path = vim.fn.stdpath("config") .. "/local-plugins/cmux-nav",
+          words = { "cmux_nav" },
+        },
+        {
           path = vim.fn.stdpath("config") .. "/local-plugins/cmd-ux",
           words = { "cmd_ux" },
         },

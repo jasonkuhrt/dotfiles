@@ -12,11 +12,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/scripts/flo-orphan-guard.sh",
-            "timeout": 5
-          },
-          {
-            "type": "command",
             "command": "~/.claude/hooks/scripts/skill-scripts-bun-only.sh",
             "timeout": 5
           },
@@ -63,21 +58,22 @@
     ],
     "Notification": [
       {
-        "matcher": "permission_prompt",
+        "matcher": "permission_prompt|idle_prompt|elicitation_dialog",
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/scripts/notify-ghostty.sh",
+            "command": "~/.claude/hooks/scripts/cmux-claude-hook.sh notification",
             "timeout": 5
           }
         ]
-      },
+      }
+    ],
+    "Stop": [
       {
-        "matcher": "idle_prompt",
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/scripts/notify-ghostty.sh",
+            "command": "~/.claude/hooks/scripts/cmux-claude-hook.sh stop",
             "timeout": 5
           }
         ]
@@ -88,6 +84,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "~/.claude/hooks/scripts/cmux-claude-hook.sh user-prompt-submit",
+            "timeout": 5
+          },
+          {
+            "type": "command",
             "command": "~/.claude/hooks/scripts/rename-terminal-tab.sh",
             "timeout": 5
           }
@@ -95,6 +96,15 @@
       }
     ],
     "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/cmux-claude-hook.sh session-start",
+            "timeout": 5
+          }
+        ]
+      },
       {
         "hooks": [
           {
@@ -118,6 +128,39 @@
             "type": "command",
             "command": "~/.claude/skills/flo_next/scripts/compact-recovery.sh",
             "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/cmux-claude-hook.sh session-end",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/cmux-claude-hook.sh precompact",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/cmux-claude-hook.sh subagent-stop",
+            "timeout": 5
           }
         ]
       }

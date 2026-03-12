@@ -116,7 +116,7 @@ wait_for_claude() {
 send_to_shell() {
   local surface="$1"
   local text="$2"
-  cmux send --surface "$surface" -- $'\x1b'"i${text}"
+  cmux send --surface "$surface" -- $'\x1b'"i${text}"$'\n'
 }
 
 dispatch() {
@@ -134,19 +134,19 @@ dispatch() {
   wait_for_shell "$surface_ref" || return 1
 
   # 3. Launch claude in interactive mode (vi-mode-safe send)
-  send_to_shell "$surface_ref" "claude\n"
+  send_to_shell "$surface_ref" "claude"
 
   # 4. Wait for Claude Code to be ready
   wait_for_claude "$surface_ref" || return 1
 
   # 5. Rename the session (before the task — task has unbounded turn time)
-  cmux send --surface "$surface_ref" "/rename $slug\n"
+  cmux send --surface "$surface_ref" -- "/rename $slug"$'\n'
 
   # 6. Wait for prompt again
   wait_for_claude "$surface_ref" || return 1
 
   # 7. Send the task prompt (read from file to handle escaping)
-  cmux send --surface "$surface_ref" "$(cat "$prompt_file")\n"
+  cmux send --surface "$surface_ref" -- "$(cat "$prompt_file")"$'\n'
 }
 ```
 

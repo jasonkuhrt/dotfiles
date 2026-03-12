@@ -1,0 +1,31 @@
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
+ask_for_approval = "never"
+sandbox = "danger-full-access"
+
+[projects."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat"]
+trust_level = "trusted"
+
+[projects."/Users/jasonkuhrt/projects/ushironoko/octorus"]
+trust_level = "trusted"
+
+[projects."/Users/jasonkuhrt/projects/jasonkuhrt/gh-pr-viewed-glob-safari"]
+trust_level = "trusted"
+
+[projects."/Users/jasonkuhrt/willems-game"]
+trust_level = "trusted"
+
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+
+[mcp_servers.serena]
+command = "/Users/jasonkuhrt/.local/libexec/serena-mcp"
+
+[mcp_servers.notion]
+url = "https://mcp.notion.com/mcp"
+
+# Re-enable when LINEAR_API_TOKEN is available in Codex's environment.
+#
+# [mcp_servers.linear]
+# url = "https://mcp.linear.app/mcp"
+# bearer_token_env_var = "LINEAR_API_TOKEN"

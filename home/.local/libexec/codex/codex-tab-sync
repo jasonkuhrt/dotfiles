@@ -1,0 +1,303 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+code_home="${CODEX2_CODEX_HOME:-${CODEX_HOME:-$HOME/.codex}}"
+cmux_bin="cmux"
+workspace_id=""
+surface_id=""
+cwd_hint=""
+parent_pid=""
+launch_epoch="0"
+log_offset="0"
+selector_kind="none"
+selector_value=""
+
+usage() {
+    printf 'usage: %s --workspace <id> --surface <id> --cwd <path> --parent-pid <pid> [options]\n' "${0##*/}" >&2
+    exit 64
+}
+
+while (($#)); do
+    case "$1" in
+        --code-home)
+            code_home="${2:-}"
+            shift 2
+            ;;
+        --cmux-bin)
+            cmux_bin="${2:-}"
+            shift 2
+            ;;
+        --workspace)
+            workspace_id="${2:-}"
+            shift 2
+            ;;
+        --surface)
+            surface_id="${2:-}"
+            shift 2
+            ;;
+        --cwd)
+            cwd_hint="${2:-}"
+            shift 2
+            ;;
+        --parent-pid)
+            parent_pid="${2:-}"
+            shift 2
+            ;;
+        --launch-epoch)
+            launch_epoch="${2:-0}"
+            shift 2
+            ;;
+        --log-offset)
+            log_offset="${2:-0}"
+            shift 2
+            ;;
+        --selector-kind)
+            selector_kind="${2:-none}"
+            shift 2
+            ;;
+        --selector-value)
+            selector_value="${2:-}"
+            shift 2
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+
+[ -n "$workspace_id" ] || usage
+[ -n "$surface_id" ] || usage
+[ -n "$cwd_hint" ] || usage
+[ -n "$parent_pid" ] || usage
+command -v "$cmux_bin" >/dev/null 2>&1 || exit 0
+
+session_index="$code_home/session_index.jsonl"
+sessions_dir="$code_home/sessions"
+snapshots_dir="$code_home/shell_snapshots"
+tui_log="$code_home/log/codex-tui.log"
+
+normalize_text() {
+    printf '%s' "$1" | tr '\n\r\t' '   ' | tr -s ' ' | sed 's/^ //; s/ $//'
+}
+
+is_uuid() {
+    [[ "${1:-}" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]
+}
+
+session_file_for_id() {
+    local session_id="$1"
+
+    [ -d "$sessions_dir" ] || return 0
+    find "$sessions_dir" -type f -name '*.jsonl' -print0 2>/dev/null \
+        | xargs -0 grep -Fl "\"id\":\"$session_id\"" 2>/dev/null \
+        | head -n 1
+}
+
+session_cwd_for_id() {
+    local session_id="$1"
+    local file
+
+    file="$(session_file_for_id "$session_id")"
+    [ -n "$file" ] || return 0
+
+    sed -n '1p' "$file" | jq -r 'select(.type == "session_meta") | .payload.cwd // empty' 2>/dev/null || true
+}
+
+session_matches_cwd() {
+    local session_id="$1"
+    local expected_cwd="$2"
+    local actual_cwd
+
+    [ -n "$expected_cwd" ] || return 0
+    actual_cwd="$(session_cwd_for_id "$session_id")"
+    [ -z "$actual_cwd" ] || [ "$actual_cwd" = "$expected_cwd" ]
+}
+
+latest_session_line_for_id() {
+    local session_id="$1"
+
+    [ -f "$session_index" ] || return 0
+    awk -v id="$session_id" '
+        index($0, "\"id\":\"" id "\"") { line = $0 }
+        END {
+            if (line != "") {
+                print line
+            }
+        }
+    ' "$session_index"
+}
+
+latest_thread_name_for_id() {
+    local session_id="$1"
+    local line
+
+    line="$(latest_session_line_for_id "$session_id")"
+    [ -n "$line" ] || return 0
+    printf '%s\n' "$line" | jq -r '.thread_name // empty' 2>/dev/null || true
+}
+
+latest_session_id_for_cwd() {
+    [ -f "$session_index" ] || return 0
+    tail -r "$session_index" | while IFS= read -r line; do
+        local session_id
+        session_id="$(printf '%s\n' "$line" | jq -r '.id // empty' 2>/dev/null || true)"
+        [ -n "$session_id" ] || continue
+        if session_matches_cwd "$session_id" "$cwd_hint"; then
+            printf '%s\n' "$session_id"
+            return 0
+        fi
+    done
+}
+
+latest_session_id_for_thread_name() {
+    local thread_name="$1"
+
+    [ -f "$session_index" ] || return 0
+    tail -r "$session_index" | while IFS= read -r line; do
+        local session_id line_thread_name
+        session_id="$(printf '%s\n' "$line" | jq -r '.id // empty' 2>/dev/null || true)"
+        line_thread_name="$(printf '%s\n' "$line" | jq -r '.thread_name // empty' 2>/dev/null || true)"
+        [ -n "$session_id" ] || continue
+        [ "$line_thread_name" = "$thread_name" ] || continue
+        if session_matches_cwd "$session_id" "$cwd_hint"; then
+            printf '%s\n' "$session_id"
+            return 0
+        fi
+    done
+}
+
+newest_snapshot_session_id() {
+    local best_id=""
+    local best_mtime=0
+
+    [ -d "$snapshots_dir" ] || return 0
+    while IFS= read -r -d '' file; do
+        local mtime session_id
+        mtime="$(stat -f '%m' "$file" 2>/dev/null || printf '0')"
+        [ "$mtime" -ge "$launch_epoch" ] || continue
+        session_id="$(basename "$file" .sh)"
+        is_uuid "$session_id" || continue
+        session_matches_cwd "$session_id" "$cwd_hint" || continue
+        if [ "$mtime" -ge "$best_mtime" ]; then
+            best_mtime="$mtime"
+            best_id="$session_id"
+        fi
+    done < <(find "$snapshots_dir" -type f -name '*.sh' -print0 2>/dev/null)
+
+    printf '%s\n' "$best_id"
+}
+
+thread_id_from_log_since_offset() {
+    local seen=()
+
+    [ -f "$tui_log" ] || return 0
+    while IFS= read -r session_id; do
+        local duplicate=0 existing
+        for existing in "${seen[@]}"; do
+            if [ "$existing" = "$session_id" ]; then
+                duplicate=1
+                break
+            fi
+        done
+        [ "$duplicate" -eq 0 ] || continue
+        seen+=("$session_id")
+        session_matches_cwd "$session_id" "$cwd_hint" || continue
+        printf '%s\n' "$session_id"
+        return 0
+    done < <(
+        tail -c +"$((log_offset + 1))" "$tui_log" 2>/dev/null \
+            | grep -oE 'thread_id=[0-9a-f-]+' \
+            | sed 's/^thread_id=//'
+    )
+}
+
+resolve_session_id() {
+    local session_id=""
+
+    case "$selector_kind" in
+        id)
+            printf '%s\n' "$selector_value"
+            return 0
+            ;;
+        thread)
+            session_id="$(latest_session_id_for_thread_name "$selector_value" || true)"
+            if [ -n "$session_id" ]; then
+                printf '%s\n' "$session_id"
+                return 0
+            fi
+            ;;
+        last)
+            session_id="$(latest_session_id_for_cwd || true)"
+            if [ -n "$session_id" ]; then
+                printf '%s\n' "$session_id"
+                return 0
+            fi
+            ;;
+    esac
+
+    local deadline=$((SECONDS + 20))
+    while kill -0 "$parent_pid" 2>/dev/null && [ "$SECONDS" -lt "$deadline" ]; do
+        session_id="$(newest_snapshot_session_id || true)"
+        if [ -n "$session_id" ]; then
+            printf '%s\n' "$session_id"
+            return 0
+        fi
+
+        session_id="$(thread_id_from_log_since_offset || true)"
+        if [ -n "$session_id" ]; then
+            printf '%s\n' "$session_id"
+            return 0
+        fi
+
+        sleep 0.25
+    done
+}
+
+rename_tab() {
+    local title="$1"
+    local normalized
+
+    normalized="$(normalize_text "$title")"
+    [ -n "$normalized" ] || return 0
+
+    "$cmux_bin" rename-tab \
+        --workspace "$workspace_id" \
+        --surface "$surface_id" \
+        --title "$normalized" >/dev/null 2>&1 || true
+}
+
+session_index_signature() {
+    stat -f '%m:%z' "$session_index" 2>/dev/null || printf '0:0'
+}
+
+watch_session_title() {
+    local session_id="$1"
+    local last_seen_signature=""
+    local last_title=""
+    local current_title=""
+
+    current_title="$(latest_thread_name_for_id "$session_id")"
+    if [ -n "$current_title" ]; then
+        rename_tab "$current_title"
+        last_title="$(normalize_text "$current_title")"
+    fi
+
+    while kill -0 "$parent_pid" 2>/dev/null; do
+        local current_signature
+        current_signature="$(session_index_signature)"
+        if [ "$current_signature" != "$last_seen_signature" ]; then
+            last_seen_signature="$current_signature"
+            current_title="$(latest_thread_name_for_id "$session_id")"
+            current_title="$(normalize_text "$current_title")"
+            if [ -n "$current_title" ] && [ "$current_title" != "$last_title" ]; then
+                rename_tab "$current_title"
+                last_title="$current_title"
+            fi
+        fi
+        sleep 0.25
+    done
+}
+
+session_id="$(resolve_session_id || true)"
+[ -n "$session_id" ] || exit 0
+watch_session_title "$session_id"

@@ -17,3 +17,4 @@ default_modes:
   - interactive
   - editing
 ignored_paths: []
+projects: []

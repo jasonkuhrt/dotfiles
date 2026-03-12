@@ -141,7 +141,7 @@ Custom overrides live in `symlink-roots/config/nvim/lua/plugins/`:
 - `lang.lua` — Language-specific overrides
 - `lua.lua` — Lua tooling glue (`lazydev`, `selene`, Mason ensure list)
 - `lsp.lua` — LSP config overrides
-- `smart-splits.lua` — Pane navigation (hjkl across kitty splits)
+- `cmux-nav.lua` — Pane navigation and resize (hjkl across cmux boundaries)
 - `snacks.lua` — Dashboard, picker, project config
 - `unnest.lua` — Unnest plugin
 - `zen-mode.lua` — Zen mode

@@ -1,6 +1,6 @@
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║  Declarative Keymap - Single Source of Truth                               ║
-# ║  Tools: zed, nvim, kitty, fish, cc (claude code)                           ║
+# ║  Tools: zed, nvim, cmux, fish, cc (claude code)                            ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 #
 # Navigation strategy (hjkl + modifier philosophy): see hjkl-navigation.md
@@ -45,75 +45,92 @@ pane:
   focus_up:
     desc: Focus pane above
     zed: "C-k"
-    nvim: "C-k"           # smart-splits.nvim (crosses nvim↔kitty)
-    kitty: "C-k"          # neighboring_window (passthrough when nvim focused)
+    nvim: "C-k"           # cmux-nav (crosses nvim↔cmux)
+    cmux: "C-0 k"
 
   focus_down:
     desc: Focus pane below
     zed: "C-j"
     nvim: "C-j"
-    kitty: "C-j"
+    cmux: "C-0 j"
 
   focus_left:
     desc: Focus pane left
     zed: "C-h"
     nvim: "C-h"
-    kitty: "C-h"
+    cmux: "C-0 h"
 
   focus_right:
     desc: Focus pane right
     zed: "C-l"
     nvim: "C-l"
-    kitty: "C-l"
+    cmux: "C-0 l"
 
   resize_up:
     desc: Resize pane up
-    nvim: "M-k"           # smart-splits.nvim
-    kitty: "M-k"          # kitten relative_resize.py
+    nvim: "M-k"           # cmux-nav
+    cmux: "C-0 r k"
 
   resize_down:
     desc: Resize pane down
     nvim: "M-j"
-    kitty: "M-j"
+    cmux: "C-0 r j"
 
   resize_left:
     desc: Resize pane left
     nvim: "M-h"
-    kitty: "M-h"
+    cmux: "C-0 r h"
 
   resize_right:
     desc: Resize pane right
     nvim: "M-l"
-    kitty: "M-l"
+    cmux: "C-0 r l"
 
   create_up:
     desc: Create split above
     zed: "C-D-k"          # pane::SplitUp
-    kitty: "C-D-k"        # launch --location=hsplit
+    cmux: "C-0 s k"
 
   create_down:
     desc: Create split below
     zed: "C-D-j"
-    kitty: "C-D-j"
+    cmux: "C-0 s j"
 
   create_left:
     desc: Create split left
     zed: "C-D-h"          # pane::SplitLeft
-    kitty: "C-D-h"        # launch --location=vsplit
+    cmux: "C-0 s h"
 
   create_right:
     desc: Create split right
     zed: "C-D-l"
-    kitty: "C-D-l"
+    cmux: "C-0 s l"
 
   zoom:
     desc: Zoom current pane
     zed: "<spc> z"
-    kitty: "C-D-z"        # toggle_layout stack
+    cmux: "C-0 z"
 
   close:
-    desc: Close pane (then window if last)
-    kitty: "D-w"           # close_window
+    desc: Close pane (host confirmation required)
+    cmux: "C-0 x"
+
+cmux_mode:
+  toggle:
+    desc: Enter or exit sticky cmux drive mode
+    cmux: "C-0"
+
+  exit:
+    desc: Exit sticky cmux drive mode
+    cmux: "<esc> / <cr> / C-0"
+
+  workspace_prev:
+    desc: Select previous workspace in sidebar order
+    cmux: "C-0 w k"
+
+  workspace_next:
+    desc: Select next workspace in sidebar order
+    cmux: "C-0 w j"
 
   close_all:
     desc: Close all items in pane
@@ -537,7 +554,7 @@ view:
   zoom:
     desc: Toggle zoom on current pane
     zed: "<spc> z"
-    kitty: "C-D-z"
+    cmux: "C-0 z"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # AI ASSIST
@@ -674,12 +691,12 @@ terminal:
   multiline_input:
     desc: Insert newline in input
     zed: "S-<cr>"
-    kitty: "S-<cr>"       # send_text \n
+    cmux: "S-<cr>"
     cc: "S-<cr>"
 
   clear_screen:
     desc: Clear terminal scrollback
-    kitty: "C-'"          # clear_terminal scroll active
+    cmux: "C-'"           # Ghostty clear_screen (read by cmux)
 
   exit_to_editor:
     desc: Return focus to editor

@@ -85,7 +85,7 @@ Important distinction: Lua does not become truly type-safe here. The closest equ
 Those relaxations were re-tested again on March 6, 2026 after the Lua QA/typing pass:
 
 - Re-enabling `multiple_statements` produced 0 Selene findings, so that relaxation was removed.
-- Re-enabling `mixed_table` still produced 34 warnings across normal Lazy.nvim plugin specs and keymap-style tables, including files like `plugins/editor.lua`, `plugins/lang.lua`, `plugins/smart-splits.lua`, and `cmd_ux/adapters/snacks.lua`.
+- Re-enabling `mixed_table` still produced 34 warnings across normal Lazy.nvim plugin specs and keymap-style tables, including files like `plugins/editor.lua`, `plugins/lang.lua`, `plugins/cmux-nav.lua`, and `cmd_ux/adapters/snacks.lua`.
 
 So the current posture is intentional, not stale:
 

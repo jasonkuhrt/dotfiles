@@ -4,73 +4,72 @@
 
 ## Philosophy
 
-hjkl is the universal navigation primitive across all tools. Modifiers scale scope consistently:
+hjkl stays the universal navigation primitive. The terminal host is now cmux, not
+Kitty, and the cross-boundary contract is explicit:
 
-| Modifier | Scope | Example |
-|----------|-------|---------|
-| **bare** | smallest unit | char, line, list item |
-| **Shift** | medium unit | half-page scroll, buffer switch |
-| **Ctrl** | cross-boundary | panes, splits, menu items |
-| **Alt** | structural change | resize pane borders |
-| **Ctrl+Cmd** | create | new pane/split |
+- `Ctrl+hjkl` = pane focus
+- `Alt+hjkl` = pane resize
+- `Ctrl+0` = enter sticky cmux drive mode
 
-`kj` is the universal escape chord (nvim insert, nvim command, nvim terminal, Fish insert).
-
-No exceptions: every navigable context uses j/k or Ctrl+j/k for vertical navigation.
+`kj` remains the universal escape chord for insert-like contexts.
 
 ## Complete Keymap
 
-| Modifier | h/Left | j/Down | k/Up | l/Right |
-|----------|--------|--------|------|---------|
+| Layer | h/Left | j/Down | k/Up | l/Right |
+|-------|--------|--------|------|---------|
 | bare | char left | line down | line up | char right |
 | Shift | prev buffer | half-page down | half-page up | next buffer |
 | Ctrl | pane left | pane down / menu next | pane up / menu prev | pane right |
 | Alt | resize left | resize down | resize up | resize right |
-| Ctrl+Cmd | split left | split down | split up | split right |
+| Ctrl+0 | enter sticky cmux mode | | | |
 
-### Special Keys
+### Cmux Drive Mode
 
-| Key | Action |
-|-----|--------|
-| `kj` | escape (nvim insert/command/terminal, Fish insert) |
-| `Ctrl+Cmd+Z` | zoom pane (Kitty) |
-| `Cmd+W` | close pane, then window (Kitty) |
-| `U` | redo |
-| `gJ` | join lines (displaced J default) |
-| `gh` | hover docs (displaced K default) |
+While sticky cmux mode is active, keys are owned by the cmux host layer and do
+not target the focused pane directly.
+
+| Keys | Action |
+|------|--------|
+| `h/j/k/l` | Focus pane left/down/up/right |
+| `r` then `h/j/k/l` | Resize pane left/down/up/right |
+| `s` then `h/j/k/l` | Create split left/down/up/right |
+| `w` then `j/k` | Next / previous workspace |
+| `z` | Toggle zoom |
+| `x` | Close surface (host confirmation required) |
+| `Esc` / `Enter` / `Ctrl+0` | Exit sticky cmux mode |
 
 ## Per-Tool Implementation
 
 ### Nvim
 
-Files: `nvim/lua/config/keymaps.lua`, `nvim/lua/plugins/smart-splits.lua`, `nvim/lua/plugins/blink-cmp.lua`
+Files: `nvim/lua/config/keymaps.lua`, `nvim/lua/plugins/cmux-nav.lua`, `nvim/lua/plugins/blink-cmp.lua`
 
 | Layer | Keys | Mechanism |
 |-------|------|-----------|
 | bare hjkl | native vim | built-in |
-| Shift J/K | half-page centered | `<C-d>zz` / `<C-u>zz` in keymaps.lua |
+| Shift J/K | half-page centered | `<C-d>zz` / `<C-u>zz` in `keymaps.lua` |
 | Shift H/L | buffer prev/next | LazyVim default |
-| Ctrl+hjkl | pane/split nav | smart-splits.nvim (crosses nvim↔Kitty via IS_NVIM user var) |
-| Alt+hjkl | resize | smart-splits.nvim |
-| Terminal Ctrl+hjkl | exit + navigate | `<C-\><C-n><C-h>` etc. in keymaps.lua |
-| Completion Ctrl+j/k | next/prev item | blink-cmp.lua override |
+| Ctrl+hjkl | pane/split nav | repo-owned `cmux-nav` (local split first, then cmux host action) |
+| Alt+hjkl | resize | repo-owned `cmux-nav` |
+| Terminal Ctrl+hjkl | exit + navigate | `<C-\\><C-n>` then normal-mode mapping |
+| Completion Ctrl+j/k | next/prev item | blink-cmp override |
 | Snacks picker Ctrl+j/k | list down/up | built-in default |
-| which-key, Neo-tree | bare j/k | native buffer navigation |
 
-Additional plugins:
-- **unnest.nvim** — prevents nested nvim in terminal buffers (redirects file opens to parent)
+### cmux
 
-### Kitty
-
-File: `kitty/kitty.conf`
+Files: `ghostty/config`, `karabiner/karabiner.json`, `~/.local/libexec/cmux/cmux-mode`
 
 | Layer | Keys | Mechanism |
 |-------|------|-----------|
-| Ctrl+hjkl | pane nav | `neighboring_window` (passthrough when nvim focused via `--when-focus-on var:IS_NVIM`) |
-| Alt+hjkl | resize | `kitten relative_resize.py` (same IS_NVIM passthrough) |
-| Ctrl+Cmd+hjkl | create pane | `launch --location=vsplit/hsplit --cwd=current` |
-| Ctrl+Cmd+Z | zoom | `toggle_layout stack` |
-| Cmd+W | close pane/window | `close_window` |
+| Ctrl+0 | sticky mode toggle | Karabiner variable-gated hard-grab mode |
+| hjkl inside mode | focus pane | hidden Ghostty/cmux Hyper bindings |
+| r + hjkl | resize pane | hidden Ghostty/cmux Hyper bindings |
+| s + hjkl | create split | hidden Ghostty/cmux Hyper bindings |
+| w + j/k | cycle workspaces | `cmux-mode` helper + cmux CLI |
+| z | zoom | hidden Ghostty/cmux Hyper binding |
+| x | close surface (confirmation pinned on) | hidden Ghostty/cmux Hyper binding |
+| Ctrl+' | clear screen | Ghostty `clear_screen` binding read by cmux |
+| Shift+Enter | literal newline | Ghostty `text:\\n` binding read by cmux |
 
 ### Fish
 
@@ -78,12 +77,8 @@ File: `fish/config.fish`
 
 | Layer | Keys | Mechanism |
 |-------|------|-----------|
-| bare hjkl | command line nav | `fish_vi_key_bindings insert` (vi normal mode after Escape) |
-| kj | exit insert → normal | `bind -M insert -m default k,j cancel repaint-mode` |
-
-Cursor shapes: line (insert), block (normal), underscore (replace).
-
-Disabled in Zed terminal (`TERM_PROGRAM != zed` guard).
+| bare hjkl | command line nav | `fish_vi_key_bindings insert` |
+| kj | exit insert -> normal | `bind -M insert -m default k,j cancel repaint-mode` |
 
 ### Zed
 
@@ -98,23 +93,21 @@ File: `zed/keymap.json`
 
 ## Limitations
 
-- **nvim terminal mode**: Ctrl+hjkl works directly (chains exit+navigate). `kj` only needed to enter normal mode for scrollback/search.
-- **nvim crash**: terminal sessions and scrollback lost. Fish command history persists (written to disk). Fundamental nvim limitation.
-- **Fish vi mode in Zed**: disabled — Zed terminal captures conflicting keys.
-- **K in non-LSP files**: falls back to `man`. Use `gh` for hover docs explicitly.
-- **Kitty edge wrap**: `at_edge = 'wrap'` not supported by smart-splits + Kitty. Navigation stops at edges.
-- **J/K in visual mode**: half-page scroll, not move-selection. Use `:m '>+1` for moving lines.
-- **Displaced defaults**: J (join lines) → `gJ`, K (hover/man) → `gh`.
+- `Ctrl+0` mode is frontmost-cmux only.
+- The mode is explicit and sticky. There is no inferred Neovim or shell mode sync.
+- Neovim terminal mode still relies on the existing escape-to-normal step before split navigation.
+- `J/K` in visual mode remain half-page scroll, not move-selection.
+- `gh` remains hover docs and `gJ` remains join lines.
 
 ## Files Reference
 
 | File | Owns |
 |------|------|
-| `nvim/lua/config/keymaps.lua` | Shift J/K, kj escape, terminal mode, displaced defaults |
-| `nvim/lua/plugins/smart-splits.lua` | Ctrl+hjkl nav, Alt+hjkl resize |
-| `nvim/lua/plugins/unnest.lua` | prevent nested nvim in terminal |
-| `nvim/lua/plugins/blink-cmp.lua` | Ctrl+j/k in completion popup |
-| `nvim/lua/config/autocmds.lua` | terminal auto-insert on focus |
-| `kitty/kitty.conf` | Ctrl+hjkl (non-nvim), Alt+hjkl (non-nvim), Ctrl+Cmd create, zoom, Cmd+W |
+| `nvim/lua/config/keymaps.lua` | Shift J/K, kj escape, terminal mode |
+| `nvim/lua/plugins/cmux-nav.lua` | Ctrl+hjkl nav, Alt+hjkl resize |
+| `nvim/local-plugins/cmux-nav/*` | cmux boundary bridge implementation + tests |
+| `ghostty/config` | hidden cmux action bindings + terminal bindings |
+| `karabiner/karabiner.json` | sticky `Ctrl+0` hard-grab mode |
+| `~/.local/libexec/cmux/cmux-mode` | workspace cycling + mode status + Neovim host action dispatch |
 | `fish/config.fish` | vi mode, kj escape, cursor shapes |
-| `zed/keymap.json` | Ctrl+hjkl panes, Ctrl+Cmd splits, Cmd docks, menu nav |
+| `zed/keymap.json` | Ctrl+hjkl panes, Ctrl+Cmd splits, Cmd docks |

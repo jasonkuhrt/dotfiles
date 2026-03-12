@@ -33,3 +33,7 @@ research/refs/
 
 # Generated Graffle code
 packages/*/src/graffle/
+
+# shan-managed (do not edit)
+.claude/skills/cmux
+# end shan-managed

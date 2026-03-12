@@ -152,8 +152,7 @@ cask "figma"
 
 # Development
 cask "zed"            # editor
-cask "ghostty"        # terminal (secondary)
-cask "kitty"          # terminal (primary — hjkl nav via smart-splits)
+cask "ghostty"        # terminal engine / config surface consumed by cmux
 cask "docker-desktop"
 cask "ngrok"
 

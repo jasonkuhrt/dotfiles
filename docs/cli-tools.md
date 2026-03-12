@@ -52,6 +52,8 @@ Full list in `home/dot_config/fish/config.fish`.
 | Search      | `tldr`       | Simplified man pages via `tlrc`       | `tldr tar`, `tldr git rebase`                   |
 | Search      | `z` (zoxide) | Jump to frecent directories           | `z proj` → `~/projects`                         |
 | **Git**     | `gh`         | GitHub CLI (PRs, issues, repos)       | `gh pr create`, `gh issue list`                 |
+| Git         | `git learn`  | Custom Git modernization coach        | `git learn switch`, `git cheat config`          |
+| AI          | `codex2`     | Codex wrapper with cmux tab sync      | `codex2`, `codex2 resume --last`                |
 | Git         | `git-crypt`  | Encrypt files in git transparently    | `git-crypt init`                                |
 | Git         | `git-delta`  | Better git diffs                      | (auto via gitconfig)                            |
 | Git         | `lazygit`    | Terminal UI for git                   | `lazygit`                                       |
@@ -86,3 +88,19 @@ Full list in `home/dot_config/fish/config.fish`.
 | **Info**    | `cal`        | 3-month calendar view                 | `cal`                                           |
 | Info        | `fastfetch`  | Fast system info overview             | `fastfetch`                                     |
 | Info        | `weather`    | Terminal weather forecast             | `weather` (Montreal) or `weather Tokyo`         |
+
+## Git Guardrails
+
+In interactive Fish, dangerous legacy Git commands are intentionally blocked:
+
+- `git checkout`
+- `git push --force`
+- `git reset --hard`
+
+Use the modern replacements instead:
+
+- `gco` or `git switch`
+- `git pf` or `git push --force-with-lease`
+- `git restore`, `git reset --soft`, `git revert`, `git reflog`
+
+If you truly need the raw command, bypass the Fish wrapper with `command git ...`.

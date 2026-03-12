@@ -46,6 +46,15 @@
     # Auto-squash commits prefixed with "fixup!" or "squash!" during interactive rebase
     # Workflow: `git commit --fixup <sha>` then `git rebase -i` auto-arranges them
     autoSquash = true
+    # Move descendant branch refs when rebasing parent branches in a stack
+    # Makes stacked branch rewrites much less manual
+    updateRefs = true
+
+[rerere]
+    # Reuse recorded conflict resolutions across repeated rebases/merges
+    enabled = true
+    # Apply remembered resolutions directly to the index when possible
+    autoUpdate = true
 
 [merge]
     # zdiff3: Shows (1) ours, (2) base (original), (3) theirs in conflicts
@@ -63,6 +72,10 @@
 [help]
     # When you typo a command, prompt "Did you mean X?" with option to run it
     autocorrect = prompt
+
+[include]
+    # Machine-local Git state lives here (for example maintenance registration)
+    path = ~/.config/git/local.gitconfig
 
 [branch]
     # `git branch` lists most recently committed branches first
@@ -94,7 +107,6 @@
 
 [alias]
     # ── Basics ──
-    co = checkout
     br = branch
     ci = commit
     st = status
@@ -102,7 +114,6 @@
 
     # ── Staging ──
     a = add
-    A = add --all
     aa = add --all
     ap = add --patch
     # Unstage files (opposite of git add)
@@ -161,8 +172,6 @@
     # ── Undo ──
     # Undo last commit, keep changes staged
     undo = reset --soft HEAD~1
-    # Discard all uncommitted changes (dangerous!)
-    nuke = reset --hard HEAD
 
     # ── Search ──
     # Search commit messages

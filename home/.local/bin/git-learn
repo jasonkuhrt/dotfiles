@@ -1,0 +1,492 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cmd_name="$(basename "$0")"
+topic="${1:-overview}"
+
+has_git_repo() {
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1
+}
+
+preferred_remote() {
+    if git remote get-url origin >/dev/null 2>&1; then
+        printf '%s\n' origin
+        return 0
+    fi
+
+    git remote 2>/dev/null | head -n 1
+}
+
+default_branch() {
+    local remote
+    remote="$(preferred_remote || true)"
+
+    if [[ -n "$remote" ]]; then
+        git symbolic-ref --quiet --short "refs/remotes/$remote/HEAD" 2>/dev/null | sed "s#^$remote/##" && return 0
+    fi
+
+    for candidate in main master; do
+        if git show-ref --verify --quiet "refs/heads/$candidate"; then
+            printf '%s\n' "$candidate"
+            return 0
+        fi
+    done
+
+    git config --default main --get init.defaultBranch 2>/dev/null || printf 'main\n'
+}
+
+current_branch() {
+    git branch --show-current 2>/dev/null || true
+}
+
+print_header() {
+    cat <<'EOF'
+Modern Git cheat sheet
+EOF
+}
+
+print_topics() {
+    cat <<'EOF'
+Topics:
+  overview   - old habits -> modern replacements
+  switch     - branch switching and file restore
+  force      - safe history rewrite pushes
+  fixup      - fixup commits and autosquash rebases
+  stack      - branch stacks, range-diff, safe force-push
+  worktree   - parallel work without stash churn
+  conflict   - conflict resolution and rerere
+  undo       - safe undo patterns
+  config     - what is enabled now vs frontier settings to add
+  all        - print every topic
+
+Usage:
+  git learn
+  git learn switch
+  git cheat fixup
+EOF
+}
+
+print_repo_context() {
+    if ! has_git_repo; then
+        return 0
+    fi
+
+    local branch default dirty
+    branch="$(current_branch)"
+    default="$(default_branch)"
+    dirty="clean"
+    if [[ -n "$(git status --short 2>/dev/null)" ]]; then
+        dirty="dirty"
+    fi
+
+    cat <<EOF
+Repo context:
+  branch:  ${branch:-detached}
+  default: ${default:-unknown}
+  state:   ${dirty}
+
+EOF
+}
+
+print_overview() {
+    cat <<'EOF'
+Old habit -> modern move
+
+  git checkout <branch>     -> git switch <branch>
+  git checkout -- <file>    -> git restore <file>
+  git checkout .            -> git restore .
+  git push --force          -> git pf / git push --force-with-lease
+  git commit --amend pile   -> git commit --fixup <commit>
+                               git rebase -i --autosquash
+  stash to context switch   -> git worktree add ../repo-foo -b foo
+  git reset --hard          -> git restore / git reset --soft / git revert
+  "looks fine after rebase" -> git range-diff origin/main...HEAD@{1} origin/main...HEAD
+
+High-value loop
+
+  1. switch branches with git switch or gco
+  2. stage intentionally with git add -p
+  3. repair old commits with git commit --fixup
+  4. restack with git rebase -i --autosquash
+  5. inspect rewritten history with git range-diff
+  6. push rewritten stacks with --force-with-lease
+
+Fast starts
+
+  git learn switch
+  git learn fixup
+  git learn worktree
+  git learn config
+EOF
+}
+
+print_switch() {
+    local default
+    default="$(has_git_repo && default_branch || printf 'main')"
+    cat <<EOF
+Switching
+
+Use:
+  git switch feature/foo
+  git switch -c feature/foo
+  git switch ${default}
+
+Restore files with:
+  git restore path/to/file
+  git restore .
+  git restore --source=HEAD~1 path/to/file
+
+Stop doing:
+  git checkout <branch>
+  git checkout -- <file>
+
+In your shell:
+  interactive git checkout is blocked on purpose
+  use command git checkout ... only as an escape hatch
+
+Your local shortcut:
+  gco           -> switch to repo default branch
+  gco <branch>  -> branch-focused switch
+
+Mental model:
+  switch = move HEAD to another branch
+  restore = put file content back to a chosen state
+EOF
+}
+
+print_force() {
+    cat <<'EOF'
+Force pushing rewritten history
+
+Use:
+  git pf
+  git push --force-with-lease
+
+Avoid:
+  git push --force
+  git push -f
+
+Why:
+  force-with-lease refuses to overwrite remote commits you do not have locally
+  plain force will happily clobber them
+
+Typical loop:
+  git fetch origin
+  git range-diff origin/main...HEAD@{1} origin/main...HEAD
+  git pf
+
+In your shell:
+  interactive git push --force is blocked on purpose
+  use command git push --force ... only as an escape hatch
+EOF
+}
+
+print_fixup() {
+    cat <<'EOF'
+Fixup workflow
+
+Goal:
+  Edit older commits without hand-editing todo lists.
+
+Use:
+  git commit --fixup <commit>
+  git rebase -i --autosquash <base>
+
+Example:
+  git log --oneline
+  git commit --fixup abc1234
+  git rebase -i --autosquash origin/main
+
+Why this is better:
+  fixup commits preserve momentum
+  autosquash places them correctly
+  you stop doing "amend the top commit until the stack is nonsense"
+
+Companion commands:
+  git commit --fixup=reword:<commit>
+  git rebase --continue
+  git range-diff origin/main...HEAD@{1} origin/main...HEAD
+EOF
+}
+
+print_stack() {
+    cat <<'EOF'
+Stacked branches
+
+Use:
+  git rebase --update-refs <base>
+  git range-diff old-base...old-head new-base...new-head
+  git push --force-with-lease
+
+Typical loop:
+  git fetch origin
+  git rebase --update-refs origin/main
+  git range-diff origin/main...HEAD@{1} origin/main...HEAD
+  git pf
+
+Why:
+  update-refs moves downstream branches when you rewrite a parent branch
+  range-diff tells you what changed semantically, not just by SHA
+  force-with-lease protects you from clobbering teammate work
+
+Avoid:
+  blind force-pushes
+  visually diffing rebased stacks commit by commit
+EOF
+}
+
+print_worktree() {
+    cat <<'EOF'
+Worktrees
+
+Use worktrees instead of stash-juggling.
+
+Commands:
+  git worktree list
+  git worktree add ../repo-fix -b fix/something
+  git worktree add ../repo-main main
+  git worktree remove ../repo-fix
+
+Best use cases:
+  reviewing one branch while coding on another
+  keeping main checked out clean
+  splitting risky experiments from active feature work
+
+Avoid:
+  stash/pop loops
+  branch switching in a dirty tree when the work deserves isolation
+EOF
+}
+
+print_conflict() {
+    cat <<'EOF'
+Conflict resolution
+
+Use:
+  git config --global merge.conflictStyle zdiff3
+  git config --global rerere.enabled true
+  git config --global rerere.autoUpdate true
+
+Workflow:
+  1. rebase or merge
+  2. resolve conflicts once
+  3. git add <resolved files>
+  4. git rebase --continue
+
+Why rerere matters:
+  Git remembers how you resolved a conflict before
+  repeated rebases stop being pure toil
+
+When confused:
+  git diff
+  git diff --staged
+  git restore --ours path
+  git restore --theirs path
+EOF
+}
+
+print_undo() {
+    cat <<'EOF'
+Undo safely
+
+Prefer:
+  git restore <file>              # throw away file edits
+  git restore --staged <file>     # unstage
+  git reset --soft HEAD~1         # undo commit, keep changes
+  git revert <commit>             # undo published commit
+  git reflog                      # recover almost anything
+
+In your shell:
+  interactive git reset --hard is blocked on purpose
+  use command git reset --hard ... only as an escape hatch
+
+Rule:
+  unpublished mistake -> reset/restore
+  published mistake   -> revert
+  "I lost something"  -> reflog first, panic later
+EOF
+}
+
+config_enabled() {
+    local key expected actual
+    key="$1"
+    expected="$2"
+    actual="$(git config --global --includes --get "$key" 2>/dev/null || true)"
+    [[ "$actual" == "$expected" ]]
+}
+
+maintenance_enabled() {
+    git config --global --includes --get-all maintenance.repo >/dev/null 2>&1
+}
+
+print_config() {
+    cat <<'EOF'
+Config status
+EOF
+
+    if config_enabled pull.rebase true; then
+        printf '  [x] pull.rebase=true\n'
+    else
+        printf '  [ ] pull.rebase=true\n'
+    fi
+    if config_enabled rebase.autosquash true; then
+        printf '  [x] rebase.autosquash=true\n'
+    else
+        printf '  [ ] rebase.autosquash=true\n'
+    fi
+    if config_enabled push.autoSetupRemote true; then
+        printf '  [x] push.autoSetupRemote=true\n'
+    else
+        printf '  [ ] push.autoSetupRemote=true\n'
+    fi
+    if config_enabled merge.conflictStyle zdiff3; then
+        printf '  [x] merge.conflictStyle=zdiff3\n'
+    else
+        printf '  [ ] merge.conflictStyle=zdiff3\n'
+    fi
+    if config_enabled diff.algorithm histogram; then
+        printf '  [x] diff.algorithm=histogram\n'
+    else
+        printf '  [ ] diff.algorithm=histogram\n'
+    fi
+    if config_enabled rerere.enabled true; then
+        printf '  [x] rerere.enabled=true\n'
+    else
+        printf '  [ ] rerere.enabled=true\n'
+    fi
+    if config_enabled rerere.autoUpdate true; then
+        printf '  [x] rerere.autoUpdate=true\n'
+    else
+        printf '  [ ] rerere.autoUpdate=true\n'
+    fi
+    if config_enabled rebase.updateRefs true; then
+        printf '  [x] rebase.updateRefs=true\n'
+    else
+        printf '  [ ] rebase.updateRefs=true\n'
+    fi
+    if maintenance_enabled; then
+        printf '  [x] git maintenance scheduler enabled\n'
+    else
+        printf '  [ ] git maintenance scheduler enabled\n'
+    fi
+
+    printf '\n'
+    printf 'Frontier upgrades to add next\n\n'
+
+    if ! config_enabled rerere.enabled true; then
+        printf '  git config --global rerere.enabled true\n'
+    fi
+    if ! config_enabled rerere.autoUpdate true; then
+        printf '  git config --global rerere.autoUpdate true\n'
+    fi
+    if ! config_enabled rebase.updateRefs true; then
+        printf '  git config --global rebase.updateRefs true\n'
+    fi
+    if ! maintenance_enabled; then
+        printf '  git maintenance start\n'
+    fi
+    if config_enabled rerere.enabled true && config_enabled rerere.autoUpdate true && config_enabled rebase.updateRefs true && maintenance_enabled; then
+        printf '  none in configured scope\n'
+    fi
+    printf '\n'
+
+    cat <<'EOF'
+Why these matter
+
+  rerere           -> remembers repeated conflict resolutions
+  updateRefs       -> restacks downstream branches when parents are rebased
+  maintenance      -> keeps big repos snappy over time
+EOF
+}
+
+print_all() {
+    print_overview
+    printf '\n'
+    print_switch
+    printf '\n'
+    print_force
+    printf '\n'
+    print_fixup
+    printf '\n'
+    print_stack
+    printf '\n'
+    print_worktree
+    printf '\n'
+    print_conflict
+    printf '\n'
+    print_undo
+    printf '\n'
+    print_config
+}
+
+case "$topic" in
+    overview|help|-h|--help)
+        print_header
+        printf '\n'
+        print_repo_context
+        print_overview
+        printf '\n'
+        print_topics
+        ;;
+    switch)
+        print_header
+        printf '\n'
+        print_repo_context
+        print_switch
+        ;;
+    force)
+        print_header
+        printf '\n'
+        print_repo_context
+        print_force
+        ;;
+    fixup)
+        print_header
+        printf '\n'
+        print_repo_context
+        print_fixup
+        ;;
+    stack)
+        print_header
+        printf '\n'
+        print_repo_context
+        print_stack
+        ;;
+    worktree)
+        print_header
+        printf '\n'
+        print_repo_context
+        print_worktree
+        ;;
+    conflict)
+        print_header
+        printf '\n'
+        print_repo_context
+        print_conflict
+        ;;
+    undo)
+        print_header
+        printf '\n'
+        print_repo_context
+        print_undo
+        ;;
+    config)
+        print_header
+        printf '\n'
+        print_config
+        ;;
+    all)
+        print_header
+        printf '\n'
+        print_repo_context
+        print_all
+        ;;
+    topics|list)
+        print_topics
+        ;;
+    *)
+        printf '%s: unknown topic "%s"\n\n' "$cmd_name" "$topic" >&2
+        print_topics >&2
+        exit 1
+        ;;
+esac

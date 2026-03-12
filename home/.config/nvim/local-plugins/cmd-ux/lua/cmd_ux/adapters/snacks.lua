@@ -130,7 +130,12 @@ end
 ---@param item CommandFrontierItem
 ---@return CmdUxPickerItem
 local function picker_item(item)
-  local picker = vim.deepcopy(item)
+  -- Shallow copy suffices: only next_state is mutated downstream,
+  -- and nested tables (slots, examples, steps) are read-only in the picker.
+  local picker = {}
+  for k, v in pairs(item) do
+    picker[k] = v
+  end
   picker.next_state = nil
   return picker
 end

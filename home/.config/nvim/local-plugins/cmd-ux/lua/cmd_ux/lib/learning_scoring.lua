@@ -18,7 +18,7 @@ local M = {}
 function M.build(env)
   -- Scoring context: cached during rank_state to avoid repeated filesystem lookups.
   -- When nil, falls through to the live env functions.
-  local scoring_ctx = { vector = nil, project_id = nil }
+  local scoring_ctx = { vector = nil, project_id = nil, parent_id = nil }
 
   local function current_context_vector()
     return scoring_ctx.vector or env.current_context_vector()
@@ -164,7 +164,7 @@ function M.build(env)
       return nil
     end
 
-    return table.concat(vim.list_extend({ state.root }, vim.deepcopy(state.accepted or {})), "/")
+    return state.root .. "/" .. table.concat(state.accepted, "/")
   end
 
   ---@param state ResolutionState
@@ -182,7 +182,7 @@ function M.build(env)
       return nil
     end
 
-    return table.concat(vim.list_extend({ state.root }, vim.deepcopy(state.accepted or {})), "/")
+    return state.root .. "/" .. table.concat(state.accepted, "/")
   end
 
   ---@param state ResolutionState
@@ -201,9 +201,11 @@ function M.build(env)
       return nil
     end
 
-    local tokens = vim.deepcopy(state.accepted or {})
-    tokens[#tokens + 1] = item.token
-    return table.concat(vim.list_extend({ state.root }, tokens), "/")
+    local accepted = state.accepted
+    if #accepted == 0 then
+      return state.root .. "/" .. item.token
+    end
+    return state.root .. "/" .. table.concat(accepted, "/") .. "/" .. item.token
   end
 
   ---@param scopes table<string, CmdUxLearningScope>
@@ -703,8 +705,21 @@ function M.build(env)
   ---@param item CommandFrontierItem
   ---@return integer, integer
   local function item_score(state, item)
-    local components = item_score_components(state, item)
-    return components.total_score, components.recency
+    local node_id = choice_node_id(state, item)
+    if not node_id then
+      return 0, 0
+    end
+
+    local vector = current_context_vector()
+    local parent_id = scoring_ctx.parent_id or context_parent_id(state)
+    local transition = parent_id and mixed_transition_view(vector, parent_id, node_id)
+    local node = mixed_node_view(vector, node_id)
+
+    if transition then
+      return (transition.exact_score * 8) + (transition.relaxed_score * 3) + (node.score * 2),
+        math.max(transition.recency, node.recency)
+    end
+    return node.score * 2, node.recency
   end
 
   ---@param state ResolutionState
@@ -837,9 +852,11 @@ function M.build(env)
       return state
     end
 
-    -- Cache expensive context/project lookups for this call
+    -- Cache expensive lookups for this call: context vector, project ID,
+    -- and parent_id (invariant across all items in the frontier).
     scoring_ctx.vector = env.current_context_vector()
     scoring_ctx.project_id = env.current_project_id()
+    scoring_ctx.parent_id = context_parent_id(state)
 
     local ranked_state = vim.tbl_extend("force", {}, state)
     local structural = vim.deepcopy(state.frontier)
@@ -884,6 +901,7 @@ function M.build(env)
 
     scoring_ctx.vector = nil
     scoring_ctx.project_id = nil
+    scoring_ctx.parent_id = nil
 
     return ranked_state
   end

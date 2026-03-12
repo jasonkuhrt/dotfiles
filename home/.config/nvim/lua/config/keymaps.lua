@@ -30,11 +30,6 @@ map("n", "n", "nzz", { desc = "Next match (centered)" })
 map("n", "N", "Nzz", { desc = "Prev match (centered)" })
 map("n", "G", "Gzz", { desc = "Go to bottom (centered)" })
 
--- Close buffer (Cmd+W passthrough from Kitty when nvim focused)
-map("n", "<D-w>", function()
-  Snacks.bufdelete()
-end, { desc = "Close buffer" })
-
 -- Find files
 map("n", "<leader>k", LazyVim.pick("files"), { desc = "Find Files (Root Dir)" })
 

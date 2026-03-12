@@ -100,7 +100,6 @@ Deploying symlinks is only half the job. A fresh machine also needs Homebrew, CL
 | `13-git-ssh.sh` | once | SSH key for GitHub |
 | `14-neovim-plugins.sh` | once | Neovim plugin install via lazy.nvim |
 | `16-yo-install.sh` | once | yo CLI tool |
-| `17-kitty-theme.sh` | once | Kitty terminal theme |
 | `18-wispr-flow-shortcut.sh` | on change | Wispr Flow keyboard shortcuts |
 
 "Once" scripts run on first deploy and never again. "On change" scripts re-run when their watched input files change.
@@ -125,7 +124,6 @@ home/
     ghostty/             # dir-symlink
     git/                 # dir-symlink
     karabiner/           # dir-symlink
-    kitty/               # dir-symlink
     lazygit/             # dir-symlink
     libra/               # dir-symlink
     lnav/                # dir-symlink

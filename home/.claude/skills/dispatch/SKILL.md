@@ -45,6 +45,51 @@ For each prompt you want to dispatch:
 8. **Wait for the Claude Code prompt** again
 9. **Send the task prompt**
 
+## Fallback: headless dispatch
+
+Use this only when:
+
+- the normal `cmux` interactive flow is unavailable or failing, and
+- the user is explicitly okay with a headless dispatch
+
+Do not silently substitute this for the main workflow.
+
+Headless dispatch means launching independent `claude -p` processes instead of
+interactive Claude Code sessions. This is acceptable only for prompts that are
+self-contained and do not require clarifying questions, interactive follow-up,
+or approval-gated tool use.
+
+Prefer this for:
+
+- second-opinion review passes
+- architecture critique
+- narrow textual analysis
+
+Avoid this for:
+
+- implementation work that may need clarification
+- tasks that rely on approvals or interactive tool use
+- long-running tasks where you expect back-and-forth with the spawned agent
+
+Recommended invocation pattern for review-only fallback:
+
+```bash
+claude -p \
+  --tools "" \
+  --no-session-persistence \
+  --permission-mode dontAsk \
+  "$PROMPT"
+```
+
+Notes:
+
+- `--tools ""` keeps the run truly headless and avoids tool/MCP variance.
+- The prompt must include all required context because the spawned process
+  cannot ask useful follow-up questions.
+- Treat each headless run as a one-shot review worker; poll the process and
+  collect stdout when it completes.
+- This is a fallback, not a replacement for the main `cmux` dispatch flow.
+
 ## Slug naming
 
 Keep slugs short (2-4 words), kebab-case, action-oriented:
@@ -195,6 +240,8 @@ rm /tmp/dispatch-1.txt /tmp/dispatch-2.txt
 - Each dispatched session is fully independent — it has no shared context
   with the current conversation. Include all necessary context in the prompt
   (branch name, worktree path, file paths, what was already done).
+- If you fall back to headless dispatch, confirm that the user is okay with a
+  non-interactive worker before launching it.
 - The slug appears in both the cmux tab and `claude --resume` history.
 - Sessions are interactive (not `-p` mode), so they can ask clarifying
   questions or use tools that require user approval.

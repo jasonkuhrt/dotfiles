@@ -859,9 +859,12 @@ function M.build(env)
     scoring_ctx.parent_id = context_parent_id(state)
 
     local ranked_state = vim.tbl_extend("force", {}, state)
-    local structural = vim.deepcopy(state.frontier)
+    local frontier = state.frontier
 
-    if #structural <= RANK_THRESHOLD then
+    if #frontier <= RANK_THRESHOLD then
+      -- Deep-copy only when we need to sort (mutates array order).
+      local structural = vim.deepcopy(frontier)
+
       -- Schwartzian transform: pre-compute scores once per item, then sort
       -- by cached values. Avoids O(n log n) repeated item_score calls.
       local scored = {}
@@ -886,17 +889,18 @@ function M.build(env)
       for i, entry in ipairs(scored) do
         structural[i] = entry.item
       end
+      frontier = structural
     end
     -- else: keep index order for large frontiers — users type to narrow first
 
     local promotions = promoted_items(state)
     if #promotions > 0 then
-      for _, item in ipairs(structural) do
+      for _, item in ipairs(frontier) do
         promotions[#promotions + 1] = item
       end
       ranked_state.frontier = promotions
     else
-      ranked_state.frontier = structural
+      ranked_state.frontier = frontier
     end
 
     scoring_ctx.vector = nil

@@ -246,7 +246,7 @@ function M.frontier(prefix)
   for _, root in ipairs(M.roots(prefix)) do
     local entry = M.entry(root)
     if entry then
-      items[#items + 1] = types.frontier_item(entry.item)
+      items[#items + 1] = entry.item -- already a CommandFrontierItem from index build
     end
   end
   return util.sort_by_label(items)

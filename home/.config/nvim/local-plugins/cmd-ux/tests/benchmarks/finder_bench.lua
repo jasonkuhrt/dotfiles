@@ -65,10 +65,13 @@ local function simulate_finder_call(session, search)
   local line = util.render_line(session)
   local state = core.resolve_line(line)
 
-  -- 3. current_items (deep-copy frontier + picker_item conversion)
+  -- 3. current_items (shallow-copy frontier + picker_item conversion)
   local items = {}
   for _, item in ipairs(state.frontier) do
-    local picker = vim.deepcopy(item)
+    local picker = {}
+    for k, v in pairs(item) do
+      picker[k] = v
+    end
     picker.next_state = nil
     items[#items + 1] = picker
   end

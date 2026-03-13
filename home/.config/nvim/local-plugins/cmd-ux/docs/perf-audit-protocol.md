@@ -135,3 +135,17 @@ Stop when all focus rows are under 16ms avg and 33ms p95.
 Round 2 halved `rank_root` cost; `finder_root_empty` is dominated by
 `resolve_line` (~2.3ms) + `deepcopy` (~0.7ms), so scoring improvements
 no longer move the needle at the finder level.
+
+### Round 3 — Triple normalization + deepcopy skip + benchmark alignment
+
+| Metric | Before | After |
+|---|---|---|
+| resolve_root_empty | 2.3ms | 0.15ms |
+| finder_root_empty | 3.3ms | 0.51ms |
+| rank_root | 0.76ms | 0.05ms |
+| type "Ben" from root | 3.0ms | 0.47ms |
+
+Eliminated triple `frontier_item` normalization in `resolve_line` (1,800
+redundant table allocations for 600 roots). Made `finalize_state` and
+`attach_provider` mutate in-place. Skipped `vim.deepcopy` in `rank_state`
+above threshold. Fixed benchmark to match production shallow-copy path.

@@ -421,6 +421,13 @@ local function normalize_frontier(items)
     error(("cmd_ux.types: expected frontier to be a list, got %s"):format(type(items)))
   end
 
+  -- Fast path: items already normalized by frontier_item (have lane + text fields).
+  -- Avoids re-allocating 600+ tables per resolve_line call.
+  local first = items[1]
+  if first and type(first.lane) == "string" and type(first.text) == "string" then
+    return items
+  end
+
   local result = {}
   for _, item in ipairs(items) do
     result[#result + 1] = M.frontier_item(item)
@@ -676,24 +683,23 @@ function M.unsupported_state(reason, spec)
   return M.state(next_state)
 end
 
----@param state ResolutionStateSpec|ResolutionState
+--- Finalize a ResolutionState by computing rendered strings.
+--- Mutates in-place — callers always pass freshly created states.
+---@param state ResolutionState
 ---@return ResolutionState
 function M.finalize_state(state)
-  local normalized = M.state(state)
+  state.rendered = util.render_command(state.root or "", state.accepted, state.pending, state.trailing_space)
+  state.rendered_display = state.rendered ~= "" and state.rendered or "<root>"
 
-  normalized.rendered =
-    util.render_command(normalized.root or "", normalized.accepted, normalized.pending, normalized.trailing_space)
-  normalized.rendered_display = normalized.rendered ~= "" and normalized.rendered or "<root>"
-
-  if normalized.root and #normalized.accepted > 0 then
-    normalized.current_label = normalized.accepted[#normalized.accepted]
-  elseif normalized.root and normalized.root ~= "" then
-    normalized.current_label = normalized.root
+  if state.root and #state.accepted > 0 then
+    state.current_label = state.accepted[#state.accepted]
+  elseif state.root and state.root ~= "" then
+    state.current_label = state.root
   else
-    normalized.current_label = "Commands"
+    state.current_label = "Commands"
   end
 
-  return normalized
+  return state
 end
 
 ---@param provider ProviderSpec|Provider
@@ -717,13 +723,14 @@ function M.provider(provider)
   return provider
 end
 
----@param state ResolutionStateSpec|ResolutionState
+--- Attach a provider ID to an already-normalized state.
+--- Mutates in-place — callers always pass freshly created states.
+---@param state ResolutionState
 ---@param provider_id string
 ---@return ResolutionState
 function M.attach_provider(state, provider_id)
-  local normalized = M.state(state)
-  normalized.provider = normalize_string(provider_id, "provider_id")
-  return normalized
+  state.provider = normalize_string(provider_id, "provider_id")
+  return state
 end
 
 return M

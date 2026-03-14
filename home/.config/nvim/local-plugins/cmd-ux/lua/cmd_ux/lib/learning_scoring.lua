@@ -36,6 +36,12 @@ function M.build(env)
   -- when the learning store has many recorded paths.
   local PROMOTION_CANDIDATE_BUDGET = 32
 
+  -- Score weights for combining transition and node signals.
+  -- Shared between item_score (hot path) and item_score_components (reports).
+  local W_TRANSITION_EXACT = 8
+  local W_TRANSITION_RELAXED = 3
+  local W_NODE = 2
+
   ---@param metric CmdUxLearningMetric?
   ---@param active_day integer
   ---@return integer
@@ -689,7 +695,9 @@ function M.build(env)
     local transition = parent_id and mixed_transition_view(vector, parent_id, node_id) or empty_transition_view()
     local node = mixed_node_view(vector, node_id)
     local path = item.promoted and mixed_path_view(vector, node_id) or nil
-    local total_score = (transition.exact_score * 8) + (transition.relaxed_score * 3) + (node.score * 2)
+    local total_score = (transition.exact_score * W_TRANSITION_EXACT)
+      + (transition.relaxed_score * W_TRANSITION_RELAXED)
+      + (node.score * W_NODE)
 
     return {
       total_score = total_score,
@@ -718,10 +726,12 @@ function M.build(env)
     local node = mixed_node_view(vector, node_id)
 
     if transition then
-      return (transition.exact_score * 8) + (transition.relaxed_score * 3) + (node.score * 2),
+      return (transition.exact_score * W_TRANSITION_EXACT)
+        + (transition.relaxed_score * W_TRANSITION_RELAXED)
+        + (node.score * W_NODE),
         math.max(transition.recency, node.recency)
     end
-    return node.score * 2, node.recency
+    return node.score * W_NODE, node.recency
   end
 
   ---@param state ResolutionState

@@ -5,6 +5,8 @@ local snacks = require("cmd_ux.adapters.snacks")
 
 describe("cmd_ux snacks adapter", function()
   local original_snacks
+  local original_schedule
+  local original_cmd
 
   before_each(function()
     helpers.ensure_setup()
@@ -14,9 +16,13 @@ describe("cmd_ux snacks adapter", function()
     snacks.session.pending = ""
     snacks.session.trailing_space = false
     original_snacks = Snacks
+    original_schedule = vim.schedule
+    original_cmd = vim.cmd
   end)
 
   after_each(function()
+    vim.schedule = original_schedule
+    vim.cmd = original_cmd
     Snacks = original_snacks
     helpers.drop_user_command("HybridFileCmd")
     snacks.session.prefix = ""
@@ -245,8 +251,6 @@ describe("cmd_ux snacks adapter", function()
 
   it("executes a hybrid executable generic command on confirm instead of advancing", function()
     local captured
-    local original_schedule = vim.schedule
-    local original_cmd = vim.cmd
     local executed = {}
 
     vim.api.nvim_create_user_command("HybridFileCmd", function() end, {
@@ -292,26 +296,17 @@ describe("cmd_ux snacks adapter", function()
       },
     }
 
-    local ok, err = pcall(function()
-      local items = captured.finder(captured, {
-        filter = { search = "HybridFileCmd" },
-        picker = fake_picker,
-      })
-      assert.equal("HybridFileCmd", items[1].label)
-      assert.equal("Exact command", items[1].desc)
+    local items = captured.finder(captured, {
+      filter = { search = "HybridFileCmd" },
+      picker = fake_picker,
+    })
+    assert.equal("HybridFileCmd", items[1].label)
+    assert.equal("Exact command", items[1].desc)
 
-      captured.confirm(fake_picker, items[1])
+    captured.confirm(fake_picker, items[1])
 
-      assert.is_true(fake_picker.closed)
-      assert.are.same({ "HybridFileCmd" }, executed)
-    end)
-
-    vim.schedule = original_schedule
-    vim.cmd = original_cmd
-
-    if not ok then
-      error(err)
-    end
+    assert.is_true(fake_picker.closed)
+    assert.are.same({ "HybridFileCmd" }, executed)
   end)
 
   it("treats a literally typed namespace space as semantic context", function()
@@ -465,8 +460,6 @@ describe("cmd_ux snacks adapter", function()
 
   it("executes a semantic leaf on confirm", function()
     local captured
-    local original_schedule = vim.schedule
-    local original_cmd = vim.cmd
     local executed = {}
 
     Snacks = {
@@ -505,25 +498,71 @@ describe("cmd_ux snacks adapter", function()
       },
     }
 
-    local ok, err = pcall(function()
-      local items = captured.finder(captured, {
-        filter = { search = "" },
-        picker = fake_picker,
-      })
-      assert.equal("close", items[1].label)
+    local items = captured.finder(captured, {
+      filter = { search = "" },
+      picker = fake_picker,
+    })
+    assert.equal("close", items[1].label)
 
-      captured.confirm(fake_picker, items[1])
+    captured.confirm(fake_picker, items[1])
 
-      assert.is_true(fake_picker.closed)
-      assert.are.same({ "Tab close" }, executed)
-    end)
+    assert.is_true(fake_picker.closed)
+    assert.are.same({ "Tab close" }, executed)
+  end)
 
-    vim.schedule = original_schedule
-    vim.cmd = original_cmd
+  -- ── Invariant tests ──────────────────────────────────────────────────
 
-    if not ok then
-      error(err)
-    end
+  it("picker items are mutation-isolated from index items", function()
+    -- picker_item() uses a shallow copy: mutating next_state on a picker
+    -- item must not affect the original frontier item or other picker items.
+    local captured
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    snacks.open({ line = "Tab " })
+
+    local fake_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      input = {
+        value = "",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    local items = captured.finder(captured, {
+      filter = { search = "" },
+      picker = fake_picker,
+    })
+
+    assert.is_true(#items >= 2)
+
+    -- Mutate the first item's next_state
+    items[1].next_state = { mutated = true }
+
+    -- Second item must not be affected
+    assert.is_nil(items[2].next_state)
+
+    -- Re-run the finder — fresh items must not carry the mutation
+    local fresh = captured.finder(captured, {
+      filter = { search = "" },
+      picker = fake_picker,
+    })
+
+    assert.is_nil(fresh[1].next_state)
   end)
 
   -- ── Bug tests ──────────────────────────────────────────────────────

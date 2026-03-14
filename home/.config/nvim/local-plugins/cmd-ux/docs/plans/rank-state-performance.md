@@ -269,17 +269,16 @@ Phase 3   Promotion budget               ~15 min    bounds worst-case
 Phases 1a and 1b can land in a single commit. Phase 2 is independent.
 Phase 3 is independent and only matters with real learning data.
 
-## Results (all phases landed)
+## Results (all phases + follow-up rounds landed)
 
-| Scenario | Before | After | Speedup |
-|---|---|---|---|
-| rank_root (601 items) | 640ms | 1.4ms | **457×** |
-| finder_root_empty (601 items) | 669ms | 3.3ms | **203×** |
-| finder_root_partial ("Ben") | 525ms | 4.2ms | **125×** |
-| type "Buffer" from root | 89ms avg | 0.8ms avg | **111×** |
-| type "Ben" from root | 546ms avg | 4.3ms avg | **127×** |
-| resolve_root_buffer (8 items) | 2.6ms | 0.13ms | **20×** |
-| finder_structured_branch | 0.02ms | 0.06ms | unchanged |
+| Scenario | Before | After (Phase 1-3) | After (all rounds) | Total Speedup |
+|---|---|---|---|---|
+| rank_root (601 items) | 640ms | 1.4ms | 0.05ms | **12,800×** |
+| resolve_root_empty (601 items) | ~43ms | ~2.3ms | 0.15ms | **287×** |
+| finder_root_empty (601 items) | 669ms | 3.3ms | 0.51ms | **1,312×** |
+| finder_root_partial ("Ben") | 525ms | 4.2ms | 0.45ms | **1,167×** |
+| type "Ben" from root | 546ms avg | 4.3ms avg | 0.47ms | **1,162×** |
+| type "Buffer" from root | 89ms avg | 0.8ms avg | 0.23ms | **387×** |
 
 All operations are well under the **16ms threshold for 60fps**.
 

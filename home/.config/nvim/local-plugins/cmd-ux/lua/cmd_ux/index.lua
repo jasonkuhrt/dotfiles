@@ -239,6 +239,10 @@ function M.roots(prefix)
   return result
 end
 
+--- Build a frontier of all roots matching `prefix`.
+--- Returns shared references to index-internal items — callers MUST NOT
+--- mutate the returned items.  The snacks adapter shallow-copies them via
+--- picker_item(); rank_state deep-copies only when sorting below threshold.
 ---@param prefix? string
 ---@return CommandFrontierItem[]
 function M.frontier(prefix)
@@ -246,7 +250,7 @@ function M.frontier(prefix)
   for _, root in ipairs(M.roots(prefix)) do
     local entry = M.entry(root)
     if entry then
-      items[#items + 1] = entry.item -- already a CommandFrontierItem from index build
+      items[#items + 1] = entry.item
     end
   end
   return util.sort_by_label(items)

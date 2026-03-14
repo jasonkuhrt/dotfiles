@@ -664,9 +664,11 @@ function M.build(env)
     }
   end
 
+  --- Full scoring breakdown for diagnostics/reports only — NOT on the hot path.
+  --- The hot-path equivalent is item_score() which inlines the score computation
+  --- and returns only (total_score, recency) without allocating a components table.
   ---@param state ResolutionState
   ---@param item CommandFrontierItem
-  ---@return { total_score: integer, recency: integer, context: CmdUxContextVector, node_id: string, parent_id: string?, transition: { exact_score: integer, relaxed_score: integer, recency: integer, exact: { score: integer, recency: integer, project_score: integer, cross_score: integer, session_project_score: integer, session_cross_score: integer, exact_score: integer, facet_score: integer, session_exact_score: integer, session_facet_score: integer, facet_key: string }, relaxed: { score: integer, recency: integer, project_score: integer, cross_score: integer, session_project_score: integer, session_cross_score: integer, exact_score: integer, facet_score: integer, session_exact_score: integer, session_facet_score: integer, facet_key: string } }, node: { score: integer, recency: integer, project_score: integer, cross_score: integer, session_project_score: integer, session_cross_score: integer, exact_score: integer, facet_score: integer, session_exact_score: integer, session_facet_score: integer, facet_key: string }, path: { exact_score: integer, relaxed_score: integer, recency: integer, exact_exec_recent: integer, relaxed_exec_recent: integer, rendered: string, depth: integer, exact_project_score: integer, exact_cross_score: integer, relaxed_project_score: integer, relaxed_cross_score: integer, exact_session_project_score: integer, exact_session_cross_score: integer, relaxed_session_project_score: integer, relaxed_session_cross_score: integer }? }
   local function item_score_components(state, item)
     local vector = current_context_vector()
     local node_id = choice_node_id(state, item)

@@ -15,9 +15,7 @@ local helpers = require("tests.plenary.helpers")
 
 local uv = vim.uv or vim.loop
 
-local function elapsed_ms(started)
-  return (uv.hrtime() - started) / 1e6
-end
+local elapsed_ms = helpers.elapsed_ms
 
 ---@param iterations integer
 ---@param fn fun()
@@ -139,24 +137,11 @@ end
 helpers.ensure_setup()
 
 local created = {}
-local function create_family(prefix, count, create)
-  for i = 1, count do
-    local name = ("%s%03d"):format(prefix, i)
-    created[#created + 1] = name
-    create(name)
-  end
-end
-local function cleanup()
-  for _, name in ipairs(created) do
-    helpers.drop_user_command(name)
-  end
-  created = {}
-end
 
-cleanup()
-create_family("BenchNoArg", 400, helpers.create_noarg_command)
-create_family("BenchStructured", 80, helpers.create_structured_test_command)
-create_family("BenchOptional", 40, helpers.create_optional_structured_test_command)
+helpers.cleanup_commands(created)
+helpers.create_family("BenchNoArg", 400, helpers.create_noarg_command, created)
+helpers.create_family("BenchStructured", 80, helpers.create_structured_test_command, created)
+helpers.create_family("BenchOptional", 40, helpers.create_optional_structured_test_command, created)
 helpers.sync_cmd_ux()
 
 local payload = index.get()
@@ -318,7 +303,7 @@ print("\n" .. string.rep("─", 100))
 print("Target: <33ms per keystroke for 30fps, <16ms for 60fps")
 print(("Roots in index: %d"):format(#payload.roots))
 
-cleanup()
+helpers.cleanup_commands(created)
 helpers.sync_cmd_ux()
 
 vim.cmd("qa!")

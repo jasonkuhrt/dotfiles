@@ -4,9 +4,7 @@ local helpers = require("tests.plenary.helpers")
 
 local uv = vim.uv or vim.loop
 
-local function elapsed_ms(started)
-  return (uv.hrtime() - started) / 1e6
-end
+local elapsed_ms = helpers.elapsed_ms
 
 ---@param iterations integer
 ---@param fn fun()
@@ -29,34 +27,16 @@ end
 
 local created = {}
 
----@param prefix string
----@param count integer
----@param create fun(name: string)
-local function create_family(prefix, count, create)
-  for index_nr = 1, count do
-    local name = ("%s%03d"):format(prefix, index_nr)
-    created[#created + 1] = name
-    create(name)
-  end
-end
-
-local function cleanup()
-  for _, name in ipairs(created) do
-    helpers.drop_user_command(name)
-  end
-  created = {}
-end
-
 local function print_result(name, iterations, metrics)
   print(("%-26s %4dx  total=%8.2fms  avg=%7.3fms"):format(name, iterations, metrics.total_ms, metrics.avg_ms))
 end
 
 helpers.ensure_setup()
-cleanup()
+helpers.cleanup_commands(created)
 
-create_family("BenchNoArg", 400, helpers.create_noarg_command)
-create_family("BenchStructured", 80, helpers.create_structured_test_command)
-create_family("BenchOptional", 40, helpers.create_optional_structured_test_command)
+helpers.create_family("BenchNoArg", 400, helpers.create_noarg_command, created)
+helpers.create_family("BenchStructured", 80, helpers.create_structured_test_command, created)
+helpers.create_family("BenchOptional", 40, helpers.create_optional_structured_test_command, created)
 helpers.sync_cmd_ux()
 
 local payload = index.get()
@@ -142,7 +122,7 @@ local resolve_many_unique_structured_roots = benchmark(20, function()
 end)
 print_result("resolve_many_unique_struct", 20, resolve_many_unique_structured_roots)
 
-cleanup()
+helpers.cleanup_commands(created)
 helpers.sync_cmd_ux()
 
 vim.cmd("qa!")

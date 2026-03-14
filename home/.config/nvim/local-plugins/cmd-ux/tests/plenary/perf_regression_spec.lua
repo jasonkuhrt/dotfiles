@@ -19,28 +19,12 @@ local uv = vim.uv or vim.loop
 
 local CREATED = {}
 
-local function create_family(prefix, count, create)
-  for i = 1, count do
-    local name = ("%s%03d"):format(prefix, i)
-    CREATED[#CREATED + 1] = name
-    create(name)
-  end
-end
-
-local function cleanup()
-  for _, name in ipairs(CREATED) do
-    helpers.drop_user_command(name)
-  end
-  CREATED = {}
-  helpers.sync_cmd_ux()
-end
-
 -- ── Fixture ─────────────────────────────────────────────────────────
 
 helpers.ensure_setup()
-create_family("PerfNoArg", 400, helpers.create_noarg_command)
-create_family("PerfStructured", 80, helpers.create_structured_test_command)
-create_family("PerfOptional", 40, helpers.create_optional_structured_test_command)
+helpers.create_family("PerfNoArg", 400, helpers.create_noarg_command, CREATED)
+helpers.create_family("PerfStructured", 80, helpers.create_structured_test_command, CREATED)
+helpers.create_family("PerfOptional", 40, helpers.create_optional_structured_test_command, CREATED)
 helpers.sync_cmd_ux()
 
 local root_count = #index.get().roots
@@ -53,16 +37,12 @@ describe("cmd_ux perf regression (" .. root_count .. " roots)", function()
   -- ── Thresholds ──────────────────────────────────────────────────
 
   -- These ceilings are 10-20x above measured values on a 2023 M2 Pro.
-  -- Actual: rank_root ~0.8ms, finder_root ~3.3ms, resolve_root ~2.3ms.
+  -- Actual: rank_root ~0.05ms, finder_root ~0.5ms, resolve_root ~0.15ms.
   -- The 640ms regression would blow through any of these.
   local RANK_ROOT_CEILING_MS = 50
   local FINDER_ROOT_CEILING_MS = 80
   local FINDER_PARTIAL_CEILING_MS = 80
   local RESOLVE_ROOT_CEILING_MS = 50
-
-  local function elapsed_ms(started)
-    return (uv.hrtime() - started) / 1e6
-  end
 
   --- Run fn N times after a warmup call, return median elapsed ms.
   ---@param iterations integer
@@ -75,7 +55,7 @@ describe("cmd_ux perf regression (" .. root_count .. " roots)", function()
     for i = 1, iterations do
       local t0 = uv.hrtime()
       fn()
-      samples[i] = elapsed_ms(t0)
+      samples[i] = helpers.elapsed_ms(t0)
     end
     table.sort(samples)
     return samples[math.ceil(iterations / 2)]
@@ -154,4 +134,5 @@ describe("cmd_ux perf regression (" .. root_count .. " roots)", function()
 end)
 
 -- Cleanup after all tests complete
-cleanup()
+helpers.cleanup_commands(CREATED)
+helpers.sync_cmd_ux()

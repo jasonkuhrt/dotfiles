@@ -294,4 +294,33 @@ function M.create_binary_cache_tree_command(name, depth)
   })
 end
 
+-- ── Benchmark / perf test utilities ──────────────────────────────────
+
+local uv = vim.uv or vim.loop
+
+---@param started integer  hrtime nanosecond timestamp
+---@return number elapsed_ms
+function M.elapsed_ms(started)
+  return (uv.hrtime() - started) / 1e6
+end
+
+---@param prefix string
+---@param count integer
+---@param create fun(name: string)
+---@param created string[]  accumulator for names (caller owns cleanup)
+function M.create_family(prefix, count, create, created)
+  for i = 1, count do
+    local name = ("%s%03d"):format(prefix, i)
+    created[#created + 1] = name
+    create(name)
+  end
+end
+
+---@param created string[]
+function M.cleanup_commands(created)
+  for _, name in ipairs(created) do
+    M.drop_user_command(name)
+  end
+end
+
 return M

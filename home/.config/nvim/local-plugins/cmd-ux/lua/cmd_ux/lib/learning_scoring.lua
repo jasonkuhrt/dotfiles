@@ -16,9 +16,10 @@ local M = {}
 ---@param env CmdUxLearningScoringEnv
 ---@return table
 function M.build(env)
-  -- Scoring context: cached during rank_state to avoid repeated filesystem lookups.
+  -- Scoring context: cached during rank_state to avoid repeated filesystem lookups
+  -- (current_context_vector and current_project_id both walk up to .git).
   -- When nil, falls through to the live env functions.
-  local scoring_ctx = { vector = nil, project_id = nil, parent_id = nil }
+  local scoring_ctx = { vector = nil, project_id = nil }
 
   local function current_context_vector()
     return scoring_ctx.vector or env.current_context_vector()
@@ -721,7 +722,7 @@ function M.build(env)
     end
 
     local vector = current_context_vector()
-    local parent_id = scoring_ctx.parent_id or context_parent_id(state)
+    local parent_id = context_parent_id(state)
     local transition = parent_id and mixed_transition_view(vector, parent_id, node_id)
     local node = mixed_node_view(vector, node_id)
 
@@ -864,23 +865,26 @@ function M.build(env)
       return state
     end
 
-    -- Cache expensive lookups for this call: context vector, project ID,
-    -- and parent_id (invariant across all items in the frontier).
+    -- Cache expensive lookups for this call: context vector and project ID
+    -- both walk up to .git via vim.fs.find — invariant across all items.
     scoring_ctx.vector = env.current_context_vector()
     scoring_ctx.project_id = env.current_project_id()
-    scoring_ctx.parent_id = context_parent_id(state)
 
     local ranked_state = vim.tbl_extend("force", {}, state)
     local frontier = state.frontier
 
     if #frontier <= RANK_THRESHOLD then
-      -- Deep-copy only when we need to sort (mutates array order).
-      local structural = vim.deepcopy(frontier)
+      -- Shallow array copy: sort reorders but never mutates individual items,
+      -- so we only need to copy references, not deep-copy item tables.
+      local sorted = {}
+      for i, item in ipairs(frontier) do
+        sorted[i] = item
+      end
 
       -- Schwartzian transform: pre-compute scores once per item, then sort
       -- by cached values. Avoids O(n log n) repeated item_score calls.
       local scored = {}
-      for i, item in ipairs(structural) do
+      for i, item in ipairs(sorted) do
         local s, r = item_score(state, item)
         scored[i] = { item = item, score = s, recency = r, index = i }
       end
@@ -899,9 +903,9 @@ function M.build(env)
       end)
 
       for i, entry in ipairs(scored) do
-        structural[i] = entry.item
+        sorted[i] = entry.item
       end
-      frontier = structural
+      frontier = sorted
     end
     -- else: keep index order for large frontiers — users type to narrow first
 
@@ -917,7 +921,6 @@ function M.build(env)
 
     scoring_ctx.vector = nil
     scoring_ctx.project_id = nil
-    scoring_ctx.parent_id = nil
 
     return ranked_state
   end

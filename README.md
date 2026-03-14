@@ -126,6 +126,7 @@ A macOS launchd agent runs `dotctl heal` every 5 minutes. Some applications repl
 
 ## Further Reading
 
+- [Karabiner](docs/karabiner.md) — mental model, failure layers, and recovery workflows
 - [Symlink platform](docs/symlink-platform.md) — lane model, capture policy, runtime state
 - [CLI tools](docs/cli-tools.md) — installed tools and shell abbreviations
 - [Neovim](docs/neovim.md) — LazyExtras, AI stack, plugin decisions

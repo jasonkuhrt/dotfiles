@@ -124,6 +124,216 @@ cmux-mode-check:
 
     printf 'PASS: cmux-mode-check\n'
 
+karabiner-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    fail=0
+
+    pass() {
+        printf "PASS: %s\n" "$1"
+    }
+
+    warn() {
+        printf "WARN: %s\n" "$1"
+    }
+
+    bad() {
+        printf "FAIL: %s\n" "$1"
+        fail=1
+    }
+
+    repo_cfg="$PWD/home/.config/karabiner/karabiner.json"
+    live_cfg="$HOME/.config/karabiner/karabiner.json"
+    log_file="$HOME/.local/share/karabiner/log/console_user_server.log"
+
+    if python3 -m json.tool "$repo_cfg" >/dev/null 2>&1; then
+        pass "Repo Karabiner config is valid JSON"
+    else
+        bad "Repo Karabiner config is invalid JSON: $repo_cfg"
+    fi
+
+    if [ -f "$live_cfg" ]; then
+        if cmp -s "$repo_cfg" "$live_cfg"; then
+            pass "Live Karabiner config matches repo config"
+        else
+            bad "Live Karabiner config differs from repo config"
+        fi
+    else
+        bad "Live Karabiner config not found at $live_cfg"
+    fi
+
+    if pgrep -f 'Karabiner-Core-Service' >/dev/null; then
+        pass "Karabiner core service is running"
+    else
+        bad "Karabiner core service is not running"
+    fi
+
+    if pgrep -f 'karabiner_console_user_server' >/dev/null; then
+        pass "Karabiner console user server is running"
+    else
+        bad "Karabiner console user server is not running"
+    fi
+
+    if pgrep -f 'Karabiner-DriverKit-VirtualHIDDevice' >/dev/null; then
+        pass "Karabiner virtual HID driver is running"
+    else
+        bad "Karabiner virtual HID driver is not running"
+    fi
+
+    if ! command -v karabiner_cli >/dev/null 2>&1; then
+        bad "karabiner_cli not found"
+    else
+        profile="$(karabiner_cli --show-current-profile-name 2>/dev/null || true)"
+        if [ -n "$profile" ]; then
+            pass "Karabiner current profile is '$profile'"
+        else
+            bad "Karabiner CLI could not read the current profile"
+        fi
+
+        devices_json="$(karabiner_cli --list-connected-devices 2>/dev/null || true)"
+        if [ -n "$devices_json" ] && printf '%s' "$devices_json" | jq empty >/dev/null 2>&1; then
+            device_count="$(printf '%s' "$devices_json" | jq 'length')"
+            if [ "$device_count" -gt 0 ]; then
+                pass "Karabiner CLI reports $device_count connected device(s)"
+            else
+                warn "Karabiner CLI reports zero connected devices"
+            fi
+
+            builtin_ok="$(printf '%s' "$devices_json" | jq -r 'any(.[]?; (.is_built_in_keyboard // false) == true)' 2>/dev/null || true)"
+            if [ "$builtin_ok" = "true" ]; then
+                pass "Karabiner CLI sees a built-in keyboard"
+            else
+                warn "Karabiner CLI does not currently report a built-in keyboard"
+            fi
+        else
+            warn "Karabiner CLI could not return connected devices"
+        fi
+    fi
+
+    active_rule_ok="$(jq -r '
+      any(
+        .profiles[]? | select(.selected == true);
+        any(
+          .complex_modifications.rules[]?;
+          .description == "Raycast Ctrl+J/K menu navigation"
+        )
+      )
+    ' "$live_cfg" 2>/dev/null || true)"
+    if [ "$active_rule_ok" = "true" ]; then
+        pass "Selected Karabiner profile contains the Raycast Ctrl+J/K rule"
+    else
+        bad "Selected Karabiner profile is missing the Raycast Ctrl+J/K rule"
+    fi
+
+    if [ -f "$log_file" ]; then
+        session_log="$(awk '
+            /\[info\] \[console_user_server\] version / { start = NR }
+            { lines[NR] = $0 }
+            END {
+                if (start == 0) {
+                    start = 1
+                }
+                for (i = start; i <= NR; i++) {
+                    print lines[i]
+                }
+            }
+        ' "$log_file")"
+        if printf '%s\n' "$session_log" | rg -q 'connect_failed|Permission denied'; then
+            warn "Current Karabiner console session contains connection errors"
+        else
+            pass "Current Karabiner console session is free of connection errors"
+        fi
+    else
+        warn "Karabiner console log not found at $log_file"
+    fi
+
+    if [ "$fail" -ne 0 ]; then
+        printf "\nResult: FAIL\n"
+        exit 1
+    fi
+
+    printf "\nResult: PASS\n"
+
+karabiner-reload:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    app="/Applications/Karabiner-Elements.app"
+
+    if [ ! -d "$app" ]; then
+        printf 'Karabiner-Elements.app not found at %s\n' "$app" >&2
+        exit 1
+    fi
+
+    open -a "$app"
+    sleep 2
+
+    if command -v karabiner_cli >/dev/null 2>&1; then
+        profile="$(karabiner_cli --show-current-profile-name 2>/dev/null || true)"
+        if [ -n "$profile" ]; then
+            karabiner_cli --select-profile "$profile" >/dev/null 2>&1 || true
+            printf 'Re-selected Karabiner profile: %s\n' "$profile"
+        else
+            printf 'Karabiner is open, but current profile could not be read yet\n'
+        fi
+    fi
+
+    just karabiner-check
+
+karabiner-log:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    log_file="$HOME/.local/share/karabiner/log/console_user_server.log"
+
+    if [ ! -f "$log_file" ]; then
+        printf 'Karabiner console log not found at %s\n' "$log_file" >&2
+        exit 1
+    fi
+
+    tail -n "${LINES:-80}" "$log_file"
+
+raycast-nav-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    karabiner_cfg="$PWD/home/.config/karabiner/karabiner.json"
+
+    python3 -m json.tool "$karabiner_cfg" >/dev/null
+
+    rule_ok=$(jq -r '
+      any(
+        .profiles[]?;
+        any(
+          .complex_modifications.rules[]?;
+          .description == "Raycast Ctrl+J/K menu navigation"
+          and (.manipulators | length) == 2
+          and any(
+            .manipulators[]?;
+            .from.key_code == "j"
+            and .from.modifiers.mandatory == ["control"]
+            and .to == [{"key_code":"down_arrow"}]
+            and any(.conditions[]?; .type == "frontmost_application_if" and .bundle_identifiers == ["^com\\.raycast\\.macos$"])
+          )
+          and any(
+            .manipulators[]?;
+            .from.key_code == "k"
+            and .from.modifiers.mandatory == ["control"]
+            and .to == [{"key_code":"up_arrow"}]
+            and any(.conditions[]?; .type == "frontmost_application_if" and .bundle_identifiers == ["^com\\.raycast\\.macos$"])
+          )
+        )
+      )
+    ' "$karabiner_cfg")
+
+    if [ "$rule_ok" != "true" ]; then
+        printf 'FAIL: Raycast Ctrl+J/K rule missing or malformed in %s\n' "$karabiner_cfg" >&2
+        exit 1
+    fi
+
+    printf 'PASS: raycast-nav-check\n'
+
 claude-cmux-check:
     #!/usr/bin/env bash
     set -euo pipefail

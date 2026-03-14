@@ -210,6 +210,7 @@ dotctl is an external package installed globally via Bun (`bun install -g dotctl
 
 ## Further Reading
 
+- [Karabiner](docs/karabiner.md) -- mental model, failure layers, and recovery workflows
 - [How it works](docs/how-it-works.md) -- detailed conventions and commands reference
 - [Symlink platform](docs/symlink-platform.md) -- lane model, capture policy, runtime state
 - [Manual setup](docs/manual-setup.md) -- post-bootstrap steps (GitHub auth, macOS settings)

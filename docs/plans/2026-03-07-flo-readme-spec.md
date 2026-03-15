@@ -10,7 +10,7 @@ Only the final section, "Temporary Implementation Notes", is intentionally non-f
 
 Flo is a work orchestration tool for source-controlled projects.
 
-It resolves a piece of work from a backend such as GitHub, Linear, or Beads, creates or reuses the right checkout for that work, prepares context for humans and agents, and opens that checkout in the right launcher surface.
+It resolves a piece of work from a backend such as GitHub or Linear, creates or reuses the right checkout for that work, prepares context for humans and agents, and opens that checkout in the right launcher surface.
 
 The primary runtime surface is `cmux`.
 The CLI is canonical.
@@ -49,13 +49,12 @@ flo start 123
 # Start work from an explicit backend
 flo start gh:123
 flo start linear:ENG-241
-flo start bead:parser/cleanup-import-resolution
 
 # Open an existing project or checkout
 flo open dotfiles
 flo open heartbeat@feat-auth
 
-# List active checkouts and workspaces
+# List active checkouts and runtime state
 flo list
 
 # End a piece of work
@@ -85,7 +84,6 @@ Examples:
 
 - GitHub issue
 - Linear issue
-- Bead in a local planning system
 
 Flo treats all of these as the same category of thing:
 something that can produce a title, canonical ID, branch hint, project association, and context payload.
@@ -115,6 +113,16 @@ Examples:
 
 Flo opens checkouts, not abstract repos.
 Every launcher integration keys off checkout identity.
+
+### Runtime Session
+
+A runtime session is the long-lived execution context for a checkout.
+
+For terminal-oriented launchers, this is the shell session and its child processes.
+Flo assumes a checkout can own a persistent runtime session that survives launcher restarts.
+
+Runtime sessions are not the source of truth for work identity.
+They are the execution substrate bound to a checkout.
 
 ### Launcher
 
@@ -153,7 +161,6 @@ Initial backend set:
 
 - GitHub issues
 - Linear issues
-- Beads
 
 Backend responsibilities:
 
@@ -199,12 +206,14 @@ Commands are designed so every higher-level surface can delegate to them rather 
 
 Flo can:
 
-- create or focus a workspace for a checkout
-- keep one workspace per checkout
+- create or focus the canonical workspace for a checkout
+- keep one runtime session per active checkout
+- restore the canonical workspace after a launcher restart without interrupting the underlying runtime session
 - make checkout-oriented work navigation fast
 
 `cmux` is not the source of truth for discovery or work state.
 It is a launcher target.
+The persistence mechanism beneath `cmux`, including a tool such as `zmx`, is a launcher implementation detail rather than a Flo core concept.
 
 ### Raycast
 
@@ -222,6 +231,42 @@ The intended relationship is:
 - Flo owns work resolution, checkout orchestration, and context generation.
 - The Claude skill consumes Flo state and context.
 - Backend logic lives in Flo, not inside the skill.
+- Skill actions such as `/dispatch` are defined in terms of Flo launcher state rather than inventing their own workspace model.
+
+## Runtime Sessions and Views
+
+Flo separates three identities:
+
+- work identity
+  The work item and the checkout it resolves to.
+- runtime identity
+  The persistent execution session attached to that checkout.
+- view identity
+  The launcher-specific presentation of that runtime session.
+
+For `cmux`, the view vocabulary is:
+
+- `home_view`
+  The canonical `cmux` workspace for a checkout's runtime session.
+  This is normative in v1.
+  `flo open` focuses it, launcher restore rebuilds it, and `/dispatch` expands from it.
+- `attached_views`
+  The full set of `cmux` views attached to the same runtime session.
+  This is defined now for future expansion but is not part of the v1 contract.
+- `invoking_view`
+  The exact `cmux` view from which a command was submitted.
+  This is defined now for future expansion but is not part of the v1 contract.
+- `last_focused_view`
+  A launcher heuristic for the most recently focused view.
+  This is defined now for future expansion but is not part of the v1 contract.
+
+The first implementation only requires `home_view`.
+That means the initial Flo workflow assumes one authoritative `cmux` workspace per persistent runtime session.
+Manual multi-view attachment is outside the product contract until `attached_views` and `invoking_view` become implemented concepts rather than reserved terms.
+
+This keeps the restart guarantee simple:
+restarting `cmux` must not imply restarting the work.
+The launcher rebinds the checkout's `home_view` to the already-running runtime session and the agent process continues as if the launcher restart never happened.
 
 ## Command Model
 
@@ -249,7 +294,6 @@ Examples:
 - `gh:123`
 - `gh:owner/repo#123`
 - `linear:ENG-241`
-- `bead:parser/cleanup-import-resolution`
 - `branch:feat/spike-cmux-launcher`
 - `dotfiles`
 - `heartbeat@feat-auth`
@@ -305,8 +349,8 @@ Expected behavior:
 
 - resolve a project or checkout target
 - present an interactive picker if needed
-- focus the existing `cmux` workspace when one exists
-- otherwise open the target checkout in `cmux`
+- focus the existing `home_view` when one exists
+- otherwise open the target checkout in `cmux` and establish its `home_view`
 
 ### End Work
 
@@ -345,6 +389,21 @@ What is fixed is the configuration model.
 - A second workflow engine inside the Claude skill
 - Forcing Raycast as the primary interface
 
+## Expansion Axes
+
+The initial contract is intentionally small, but the model is designed to expand without being redefined.
+
+Planned expansion axes include:
+
+- More work backends
+  Additional backend adapters should plug into the same work-item interface without changing checkout or launcher semantics.
+- Richer launcher view semantics
+  `attached_views`, `invoking_view`, and `last_focused_view` are already defined so Flo can later support explicit multi-view behavior without changing the vocabulary.
+- More frontends over the same core
+  Raycast, Claude skills, and future UI surfaces should remain adapters over the CLI and shared Flo state.
+- Richer end-of-work policy
+  Completion, archival, cleanup, and backend-specific closeout should expand from the same checkout-centric model rather than becoming separate workflows.
+
 ## Temporary Implementation Notes
 
 This section is temporary and exists only to align on the initial build plan.
@@ -380,6 +439,5 @@ Initial slice:
 - Claude skill integration on top of Flo state and context
 - experimental Raycast extension as a frontend over Flo core
 - Linear backend
-- Beads backend
+- richer launcher state including `attached_views` and `invoking_view`
 - end-of-work lifecycle and cleanup policy
-

@@ -542,6 +542,82 @@ claude-cmux-check:
 
     printf 'PASS: claude-cmux-check\n'
 
+cmux-zmx-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    helper="$PWD/home/.local/libexec/cmux/cmux-zmx-enter"
+    ghostty_cfg="$PWD/home/.config/ghostty/config"
+
+    bash -n "$helper"
+    grep -q '^command = direct:/Users/jasonkuhrt/.local/libexec/cmux/cmux-zmx-enter$' "$ghostty_cfg"
+
+    tmpdir="$(mktemp -d)"
+    trap 'rm -rf "$tmpdir"' EXIT
+
+    cp "$PWD/scripts/tests/fake-cmux.sh" "$tmpdir/cmux"
+    cp "$PWD/scripts/tests/fake-zmx.sh" "$tmpdir/zmx"
+    chmod +x "$tmpdir/cmux" "$tmpdir/zmx"
+
+    printf '%s\n' '#!/usr/bin/env bash' "printf 'shell:%s\\n' \"\$*\"" > "$tmpdir/fake-shell"
+    chmod +x "$tmpdir/fake-shell"
+
+    shell_output="$(
+        CMUX_ZMX_SHELL_BIN="$tmpdir/fake-shell" \
+        "$helper"
+    )"
+    printf '%s\n' "$shell_output" | grep -q '^shell:-l$'
+
+    log="$tmpdir/zmx.log"
+    state_dir="$tmpdir/state"
+    session_file="$tmpdir/session.json"
+    cmux_log="$tmpdir/cmux.log"
+    cmux_state="$tmpdir/cmux-state.json"
+    mkdir -p "$state_dir"
+
+    printf '%s\n' '{"windows":[{"workspaces":[{"panes":[{"surfaces":[{"id":"77777777-7777-7777-7777-777777777777","type":"terminal"}]}]}]}]}' > "$session_file"
+
+    CMUX_WORKSPACE_ID=workspace:1 \
+    CMUX_SURFACE_ID=surface:7 \
+    CMUX_ZMX_CMUX_BIN="$tmpdir/cmux" \
+    CMUX_ZMX_ZMX_BIN="$tmpdir/zmx" \
+    CMUX_ZMX_SHELL_BIN="$tmpdir/fake-shell" \
+    CMUX_ZMX_TEST_LOG="$log" \
+    CMUX_ZMX_SESSION_FILE="$session_file" \
+    CMUX_ZMX_STATE_DIR="$state_dir" \
+    CMUX_ZMX_CLEANUP_RETRIES=1 \
+    CMUX_ZMX_CLEANUP_SLEEP_SECS=0 \
+    CC_CMUX_TEST_LOG="$cmux_log" \
+    CC_CMUX_TEST_STATE="$cmux_state" \
+    "$helper"
+
+    grep -q '^attach cmux-surface-77777777-7777-7777-7777-777777777777 ' "$log"
+    ! grep -q '^kill ' "$log"
+    grep -q '"session_name": "cmux-surface-77777777-7777-7777-7777-777777777777"' \
+        "$state_dir/surfaces/77777777-7777-7777-7777-777777777777.json"
+
+    : > "$log"
+    printf '%s\n' '{"windows":[{"workspaces":[{"panes":[{"surfaces":[{"id":"11111111-1111-1111-1111-111111111111","type":"terminal"}]}]}]}]}' > "$session_file"
+
+    CMUX_WORKSPACE_ID=workspace:1 \
+    CMUX_SURFACE_ID=surface:7 \
+    CMUX_ZMX_CMUX_BIN="$tmpdir/cmux" \
+    CMUX_ZMX_ZMX_BIN="$tmpdir/zmx" \
+    CMUX_ZMX_SHELL_BIN="$tmpdir/fake-shell" \
+    CMUX_ZMX_TEST_LOG="$log" \
+    CMUX_ZMX_SESSION_FILE="$session_file" \
+    CMUX_ZMX_STATE_DIR="$state_dir" \
+    CMUX_ZMX_CLEANUP_RETRIES=1 \
+    CMUX_ZMX_CLEANUP_SLEEP_SECS=0 \
+    CC_CMUX_TEST_LOG="$cmux_log" \
+    CC_CMUX_TEST_STATE="$cmux_state" \
+    "$helper"
+
+    grep -q '^attach cmux-surface-77777777-7777-7777-7777-777777777777 ' "$log"
+    grep -q '^kill cmux-surface-77777777-7777-7777-7777-777777777777$' "$log"
+
+    printf 'PASS: cmux-zmx-check\n'
+
 fish-check:
     #!/usr/bin/env bash
     set -euo pipefail

@@ -46,6 +46,15 @@ confirm-close-surface      = true
 bell-features = attention
 
 #
+# Terminal session persistence
+#
+# Every new terminal surface enters through the cmux/zmx bridge.
+# Outside cmux it falls back to the normal shell.
+#
+
+command = direct:/Users/jasonkuhrt/.local/libexec/cmux/cmux-zmx-enter
+
+#
 # Keybindings
 #
 

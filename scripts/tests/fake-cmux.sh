@@ -10,6 +10,7 @@ surface_seven_uuid="77777777-7777-7777-7777-777777777777"
 workspace_uuid="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 workspace_two_uuid="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
 workspace_three_uuid="cccccccc-cccc-cccc-cccc-cccccccccccc"
+pane_seven_uuid="pane-77777777"
 
 current_workspace_ref() {
     if [ -n "$workspace_state" ] && [ -f "$workspace_state" ]; then
@@ -39,23 +40,21 @@ workspace_json() {
 
 printf '%s\n' "$*" >> "$log"
 
+json=0
 while (($#)); do
     case "${1:-}" in
         --id-format)
             shift 2
+            ;;
+        --json)
+            json=1
+            shift
             ;;
         *)
             break
             ;;
     esac
 done
-
-if [ "${1:-}" = "--json" ]; then
-    shift
-    json=1
-else
-    json=0
-fi
 
 cmd="${1:-}"
 shift || true
@@ -141,6 +140,21 @@ case "$cmd" in
     new-split)
         printf '[{"surface_id":"%s","surface_ref":"surface:1"},{"surface_id":"%s","surface_ref":"surface:2"}]\n' \
             "$surface_one_uuid" "$surface_two_uuid" > "$state"
+        ;;
+    tree)
+        while (($#)); do
+            case "$1" in
+                --workspace)
+                    shift 2
+                    ;;
+                *)
+                    shift
+                    ;;
+            esac
+        done
+        cat <<EOF
+{"windows":[{"id":"window-aaaa","ref":"window:1","current":true,"visible":true,"selected_workspace_ref":"workspace:1","workspaces":[{"id":"$workspace_uuid","ref":"workspace:1","title":"workspace-one","selected":true,"active":true,"index":0,"panes":[{"id":"$pane_seven_uuid","ref":"pane:70","index":0,"active":true,"focused":true,"surface_ids":["$surface_seven_uuid"],"surface_refs":["surface:7"],"selected_surface_id":"$surface_seven_uuid","selected_surface_ref":"surface:7","surface_count":1,"surfaces":[{"id":"$surface_seven_uuid","ref":"surface:7","type":"terminal","title":"surface-seven","pane_id":"$pane_seven_uuid","pane_ref":"pane:70","index":0,"index_in_pane":0,"selected":true,"selected_in_pane":true,"focused":true,"active":true,"here":true,"url":null}]}]}]}]}
+EOF
         ;;
     send|send-key|close-surface|focus-pane|resize-pane|break-pane|join-pane|rename-tab)
         if [ "$json" -eq 1 ]; then

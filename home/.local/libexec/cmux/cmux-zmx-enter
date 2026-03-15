@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cmux_bin="${CMUX_ZMX_CMUX_BIN:-cmux}"
+zmx_bin="${CMUX_ZMX_ZMX_BIN:-zmx}"
+shell_bin="${CMUX_ZMX_SHELL_BIN:-${SHELL:-/bin/zsh}}"
+session_file="${CMUX_ZMX_SESSION_FILE:-$HOME/Library/Application Support/cmux/session-com.cmuxterm.app.json}"
+state_dir="${CMUX_ZMX_STATE_DIR:-$HOME/.local/state/cmux-zmx}"
+tree_retries="${CMUX_ZMX_TREE_RETRIES:-8}"
+tree_retry_sleep="${CMUX_ZMX_TREE_RETRY_SLEEP_SECS:-0.1}"
+cleanup_retries="${CMUX_ZMX_CLEANUP_RETRIES:-8}"
+cleanup_sleep="${CMUX_ZMX_CLEANUP_SLEEP_SECS:-0.15}"
+surface_hint="${CMUX_SURFACE_ID:-}"
+workspace_hint="${CMUX_WORKSPACE_ID:-}"
+
+fallback_shell() {
+  exec "$shell_bin" -l
+}
+
+have_cmd() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+json_first() {
+  local filter="$1"
+  jq -r "$filter // empty" 2>/dev/null
+}
+
+discover_surface_json() {
+  local attempt=0
+
+  while (( attempt < tree_retries )); do
+    local tree_json=""
+    local match=""
+
+    tree_json="$("$cmux_bin" --json --id-format both tree --workspace "$workspace_hint" 2>/dev/null || true)"
+    if [[ -n "$tree_json" ]]; then
+      match="$(
+        printf '%s\n' "$tree_json" \
+          | jq -c --arg surface "$surface_hint" \
+            'first(.. | objects | select(.type? == "terminal" and ((.ref? == $surface) or (.id? == $surface))))'
+      )" || true
+      if [[ -n "$match" && "$match" != "null" ]]; then
+        printf '%s\n' "$match"
+        return 0
+      fi
+    fi
+
+    attempt=$((attempt + 1))
+    sleep "$tree_retry_sleep"
+  done
+
+  return 1
+}
+
+surface_exists_in_saved_session() {
+  if [[ -z "${surface_id:-}" ]]; then
+    return 0
+  fi
+
+  if [[ ! -f "$session_file" ]]; then
+    return 0
+  fi
+
+  if ! have_cmd jq; then
+    return 0
+  fi
+
+  jq -e --arg id "$surface_id" 'first(.. | objects | select(.id? == $id))' "$session_file" >/dev/null 2>&1
+}
+
+cleanup_session_if_surface_gone() {
+  local attempt=0
+
+  while (( attempt < cleanup_retries )); do
+    if surface_exists_in_saved_session; then
+      return 0
+    fi
+
+    attempt=$((attempt + 1))
+    sleep "$cleanup_sleep"
+  done
+
+  "$zmx_bin" kill "$session_name" >/dev/null 2>&1 || true
+  rm -f "$state_file"
+}
+
+if [[ "${CMUX_ZMX_DISABLE:-0}" == "1" ]]; then
+  fallback_shell
+fi
+
+if [[ -z "$surface_hint" || -z "$workspace_hint" ]]; then
+  fallback_shell
+fi
+
+if ! have_cmd "$cmux_bin" || ! have_cmd "$zmx_bin" || ! have_cmd jq; then
+  fallback_shell
+fi
+
+surface_json="$(discover_surface_json || true)"
+if [[ -z "$surface_json" ]]; then
+  fallback_shell
+fi
+
+surface_id="$(printf '%s\n' "$surface_json" | json_first '.id')"
+surface_ref="$(printf '%s\n' "$surface_json" | json_first '.ref')"
+pane_id="$(printf '%s\n' "$surface_json" | json_first '.pane_id')"
+pane_ref="$(printf '%s\n' "$surface_json" | json_first '.pane_ref')"
+
+if [[ -z "$surface_id" || -z "$pane_id" ]]; then
+  fallback_shell
+fi
+
+surface_id_lower="$(printf '%s' "$surface_id" | tr '[:upper:]' '[:lower:]')"
+session_name="cmux-surface-${surface_id_lower}"
+state_file="$state_dir/surfaces/$surface_id.json"
+
+mkdir -p "$(dirname "$state_file")"
+cat > "$state_file" <<EOF
+{
+  "session_name": "$session_name",
+  "workspace_ref": "$workspace_hint",
+  "pane_ref": "$pane_ref",
+  "pane_id": "$pane_id",
+  "surface_ref": "$surface_ref",
+  "surface_id": "$surface_id"
+}
+EOF
+
+export CMUX_ZMX_SESSION_NAME="$session_name"
+export CMUX_ZMX_PANE_ID="$pane_id"
+export CMUX_ZMX_PANE_REF="$pane_ref"
+export CMUX_ZMX_SURFACE_ID="$surface_id"
+export CMUX_ZMX_SURFACE_REF="$surface_ref"
+export SHELL="$shell_bin"
+
+attach_rc=0
+"$zmx_bin" attach "$session_name" "$shell_bin" -l || attach_rc=$?
+cleanup_session_if_surface_gone
+exit "$attach_rc"

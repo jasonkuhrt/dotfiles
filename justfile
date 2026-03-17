@@ -719,6 +719,12 @@ git-maintenance-check:
 
     printf 'PASS: git-maintenance-check\n'
 
+git-agent-blocking-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    just --justfile /Users/jasonkuhrt/projects/jasonkuhrt/git-agent/justfile check
+
 git-dx-check: fish-check git-learn-check git-guardrail-check git-maintenance-check
     @true
 

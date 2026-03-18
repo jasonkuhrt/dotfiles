@@ -22,6 +22,11 @@
           },
           {
             "type": "command",
+            "command": "~/.claude/hooks/scripts/git-agent-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
             "command": "~/.claude/hooks/scripts/git-worktree-guard.sh",
             "timeout": 5
           },
@@ -29,13 +34,18 @@
             "type": "command",
             "command": "~/.claude/hooks/scripts/block-direct-playwright-test.sh",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/block-direct-tsc.sh",
+            "timeout": 5
           }
         ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit",
+        "matcher": "Write|Edit|MultiEdit",
         "hooks": [
           {
             "type": "command",
@@ -47,7 +57,7 @@
     ],
     "PermissionRequest": [
       {
-        "matcher": "Skill|mcp__.*",
+        "matcher": ".*",
         "hooks": [
           {
             "type": "command",
@@ -170,5 +180,23 @@
   "syntaxHighlightingDisabled": false,
   "alwaysThinkingEnabled": true,
   "autoUpdatesChannel": "latest",
-  "skipDangerousModePermissionPrompt": true
+  "skipDangerousModePermissionPrompt": true,
+  "effortLevel": "high",
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  },
+  "enabledPlugins": {
+    "claude-md-management@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true,
+    "playground@claude-plugins-official": true,
+    "plannotator@plannotator": true,
+    "Notion@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "explanatory-output-style@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true
+  }
 }

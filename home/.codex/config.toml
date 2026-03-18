@@ -15,6 +15,9 @@ trust_level = "trusted"
 [projects."/Users/jasonkuhrt/willems-game"]
 trust_level = "trusted"
 
+[projects."/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles"]
+trust_level = "trusted"
+
 [mcp_servers.figma]
 url = "https://mcp.figma.com/mcp"
 
@@ -23,6 +26,12 @@ command = "/Users/jasonkuhrt/.local/libexec/serena-mcp"
 
 [mcp_servers.notion]
 url = "https://mcp.notion.com/mcp"
+
+[mcp_servers.linear]
+url = "https://mcp.linear.app/mcp"
+
+[features]
+multi_agent = true
 
 # Re-enable when LINEAR_API_TOKEN is available in Codex's environment.
 #

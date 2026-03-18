@@ -26,7 +26,32 @@ prev_surface() {
 # @alias ws
 workspace() { :; }
 
-# Derive workspace name from a git branch: linear ID > slug > empty
+# Shorten a hyphen-separated slug to fit the sidebar title width
+_shorten_slug() {
+    local slug="$1" max="${2:-14}"
+    if (( ${#slug} <= max )); then
+        printf '%s' "$slug"
+        return
+    fi
+    # Take hyphen-separated segments that fit within max length
+    local result=""
+    local IFS='-'
+    local parts
+    read -ra parts <<< "$slug"
+    local part
+    for part in "${parts[@]}"; do
+        if [[ -z "$result" ]]; then
+            result="$part"
+        elif (( ${#result} + 1 + ${#part} <= max )); then
+            result="$result-$part"
+        else
+            break
+        fi
+    done
+    printf '%s' "$result"
+}
+
+# Derive workspace name from a git branch: linear ID > shortened slug > empty
 _name_from_branch() {
     local branch="$1"
     if [[ -z "$branch" || "$branch" == "HEAD" ]]; then
@@ -37,16 +62,20 @@ _name_from_branch() {
     if [[ -n "$linear_id" ]]; then
         echo "$linear_id"
     else
-        echo "${branch##*/}"
+        _shorten_slug "${branch##*/}"
     fi
 }
 
 # Create a cmux workspace for a worktree path + branch, launch Claude Code, and switch to it.
 _open_worktree() {
-    local wt_path="$1" wt_branch="$2"
+    local wt_path="$1" wt_branch="$2" label="${3:-}"
 
     local name
-    name=$(_name_from_branch "$wt_branch")
+    if [[ -n "$label" ]]; then
+        name="$label"
+    else
+        name=$(_name_from_branch "$wt_branch")
+    fi
 
     local uuid
     uuid=$(cmux new-workspace | awk '{print $2}')
@@ -70,6 +99,7 @@ _open_worktree() {
 
 # @cmd Create a workspace from a worktree — pick via fzf, or create a new one with a branch name
 # @alias n
+# @option --label Short label for the workspace sidebar (overrides branch-derived name)
 # @arg name  Branch name for a new worktree (omit to pick existing via fzf)
 workspace::new() {
     if [[ -z "${argc_name:-}" ]]; then
@@ -79,7 +109,7 @@ workspace::new() {
         local wt_path wt_branch
         wt_path=$(echo "$selection" | awk '{print $1}')
         wt_branch=$(echo "$selection" | sed -n 's/.*\[\(.*\)\]/\1/p')
-        _open_worktree "$wt_path" "$wt_branch"
+        _open_worktree "$wt_path" "$wt_branch" "${argc_label:-}"
     else
         # Create a new worktree branched from HEAD
         local repo_root
@@ -87,7 +117,7 @@ workspace::new() {
         local wt_path="${repo_root}-${argc_name}"
 
         git worktree add -b "$argc_name" "$wt_path" HEAD
-        _open_worktree "$wt_path" "$argc_name"
+        _open_worktree "$wt_path" "$argc_name" "${argc_label:-}"
     fi
 }
 

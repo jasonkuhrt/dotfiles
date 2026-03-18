@@ -1,7 +1,25 @@
 #!/usr/bin/env bash
-# Shape Claude hook events into compact cmux notifications plus persistent
-# workspace status. De-duplicate repeated notifications so blocked/waiting
-# states do not spam the notification tray.
+# Shape Claude hook events into compact cmux sidebar status and notifications.
+# De-duplicate repeated notifications so blocked/waiting states do not spam.
+#
+# Known cmux-side limitations (not fixable from this hook):
+#
+# WORKAROUND(cmux): Claude Code calls `cmux claude-hook notification` natively,
+#   generating "Claude is waiting for your input" in the sidebar. Verified by piping
+#   JSON to `cmux claude-hook notification` directly. The `sidebarShowNotificationMessage`
+#   macOS default (confirmed in cmux#1612) can suppress this:
+#     defaults write com.cmuxterm.app sidebarShowNotificationMessage -bool false
+#   See also: cmux#923 (Claude Code popup notifications), cmux#1022 (sidebar config).
+#
+# WORKAROUND(cmux): Sidebar cwd is rendered natively. The speculative default
+#   `sidebarShowCwd` follows the `sidebarShowPorts` naming pattern but is unverified:
+#     defaults write com.cmuxterm.app sidebarShowCwd -bool false
+#   Tracked: cmux#1022 (make sidebar items configurable).
+#
+# TODO(cmux): Status entries (set-status) are workspace-scoped. Multiple Claude
+#   sessions in the same workspace overwrite each other's status keys. State files
+#   are now surface-keyed (fixed), but status display still fights.
+#   Tracked: cmux#1338 (richer sidebar metadata with surface-level scoping).
 
 set -euo pipefail
 
@@ -53,20 +71,36 @@ truncate_text() {
     return 0
   fi
 
-  printf '%s...' "${text:0:$((max - 3))}"
+  # Truncate at word boundary when possible
+  local trimmed="${text:0:$((max - 3))}"
+  if [[ "$trimmed" =~ ^(.*[[:space:]])[^[:space:]]+$ ]]; then
+    printf '%s...' "${BASH_REMATCH[1]% }"
+  else
+    printf '%s...' "$trimmed"
+  fi
 }
 
-join_with_pipe() {
-  local left="$1"
-  local right="$2"
-
-  if [[ -n "$left" && -n "$right" ]]; then
-    printf '%s | %s' "$left" "$right"
-  elif [[ -n "$left" ]]; then
-    printf '%s' "$left"
+# Format seconds into compact human-readable duration
+format_duration() {
+  local secs="$1"
+  if (( secs < 60 )); then
+    printf '%ds' "$secs"
+  elif (( secs < 3600 )); then
+    printf '%dm %ds' $((secs / 60)) $((secs % 60))
   else
-    printf '%s' "$right"
+    printf '%dh %dm' $((secs / 3600)) $(( (secs % 3600) / 60 ))
   fi
+}
+
+# Strip common filler words from prompts for shorter card summaries
+strip_filler() {
+  printf '%s' "$1" | sed -E \
+    -e 's/^([Pp]lease |[Cc]an you |[Cc]ould you |[Ii] want you to |[Ii] need you to |[Gg]o ahead and )//' \
+    -e 's/ (how we can|how to|of my|of the|of our) / /g' \
+    -e 's/ (further|also|just|really|actually|basically) / /g' \
+    -e 's/ (the|a|an) / /g' \
+    -e 's/  +/ /g' \
+    -e 's/^ //; s/ $//'
 }
 
 sanitize_key() {
@@ -156,8 +190,51 @@ summarize_prompt() {
     return 0
   fi
 
-  printf '%s' "$(truncate_text 72 "$summary")"
+  summary="$(strip_filler "$summary")"
+  printf '%s' "$(truncate_text 28 "$summary")"
 }
+
+# --- Elapsed timer (background updater) ---
+
+_elapsed_pid_file() {
+  printf '%s/elapsed-pid-%s' "$state_dir" "$(sanitize_key "$state_key_source")"
+}
+
+_kill_elapsed_updater() {
+  local pid_file
+  pid_file="$(_elapsed_pid_file)"
+  if [[ -f "$pid_file" ]]; then
+    local pid
+    pid=$(cat "$pid_file" 2>/dev/null || true)
+    if [[ -n "$pid" ]]; then
+      kill "$pid" 2>/dev/null || true
+    fi
+    rm -f "$pid_file"
+  fi
+}
+
+_start_elapsed_updater() {
+  _kill_elapsed_updater
+  local start_ts pid_file
+  start_ts=$(date +%s)
+  pid_file="$(_elapsed_pid_file)"
+  mkdir -p "$state_dir"
+  (
+    trap 'exit 0' TERM INT
+    while true; do
+      sleep 30
+      now=$(date +%s)
+      elapsed=$((now - start_ts))
+      label="working $(format_duration "$elapsed")"
+      "$cmux_bin" set-status claude "$label" --icon gearshape.2 --color "#0A84FF" \
+        ${workspace_id:+--workspace "$workspace_id"} 2>/dev/null || break
+    done
+  ) </dev/null >/dev/null 2>&1 &
+  disown $! 2>/dev/null || true
+  echo $! > "$pid_file"
+}
+
+# --- Parse hook input ---
 
 current_notification_type="$(normalize_text "$(json_value '.notification_type')")"
 current_message="$(normalize_text "$(json_value '.message')")"
@@ -167,7 +244,6 @@ current_source="$(normalize_text "$(json_value '.source')")"
 current_trigger="$(normalize_text "$(json_value '.trigger')")"
 current_reason="$(normalize_text "$(json_value '.reason')")"
 current_session_id="$(normalize_text "$(json_value '.session_id')")"
-raw_json="$(printf '%s\n' "$input" | jq -c . 2>/dev/null || printf '%s' "$input")"
 
 cwd_value="$(json_value '.cwd')"
 project_name=""
@@ -176,21 +252,22 @@ if [[ -n "$cwd_value" ]]; then
 fi
 
 state_dir="$HOME/.claude/.cmux-hook-state"
-state_key_source="$workspace_id"
-if [[ -z "$state_key_source" ]]; then
-  state_key_source="${surface_id:-global}"
-fi
+# Key state by surface, not workspace — multiple Claude sessions can share a workspace
+# and must not stomp each other's prompt summaries, working_since, or signatures.
+state_key_source="${surface_id:-${workspace_id:-global}}"
 state_file="$state_dir/$(sanitize_key "$state_key_source").json"
 
 last_notify_signature=""
 last_status_signature=""
 last_prompt_summary=""
 last_session_id=""
+working_since=""
 if [[ -f "$state_file" ]]; then
   last_notify_signature="$(jq -r '.last_notify_signature // empty' "$state_file" 2>/dev/null || true)"
   last_status_signature="$(jq -r '.last_status_signature // empty' "$state_file" 2>/dev/null || true)"
   last_prompt_summary="$(jq -r '.last_prompt_summary // empty' "$state_file" 2>/dev/null || true)"
   last_session_id="$(jq -r '.last_session_id // empty' "$state_file" 2>/dev/null || true)"
+  working_since="$(jq -r '.working_since // empty' "$state_file" 2>/dev/null || true)"
 fi
 
 effective_session_id="$current_session_id"
@@ -198,15 +275,8 @@ if [[ -z "$effective_session_id" ]]; then
   effective_session_id="$last_session_id"
 fi
 
-session_short=""
-if [[ -n "$effective_session_id" ]]; then
-  session_short="${effective_session_id:0:7}"
-fi
-
-subtitle_base="$(join_with_pipe "$project_name" "${session_short:+session $session_short}")"
-if [[ -z "$subtitle_base" ]]; then
-  subtitle_base="Claude Code"
-fi
+# Notification subtitle: project name only — no session IDs
+subtitle_base="${project_name:-Claude Code}"
 
 save_state() {
   mkdir -p "$state_dir"
@@ -215,16 +285,19 @@ save_state() {
     --arg last_status_signature "$last_status_signature" \
     --arg last_prompt_summary "$last_prompt_summary" \
     --arg last_session_id "$effective_session_id" \
+    --arg working_since "$working_since" \
     '{
       last_notify_signature: $last_notify_signature,
       last_status_signature: $last_status_signature,
       last_prompt_summary: $last_prompt_summary,
-      last_session_id: $last_session_id
+      last_session_id: $last_session_id,
+      working_since: $working_since
     }' > "$state_file"
 }
 
 remove_state() {
   rm -f "$state_file"
+  _kill_elapsed_updater
 }
 
 main_status_value=""
@@ -240,6 +313,7 @@ flash_enabled=0
 status_only=0
 should_clear_statuses=0
 should_clear_progress=0
+should_clear_agent_status=0
 
 case "$hook_subcommand:$current_notification_type" in
   user-prompt-submit:*)
@@ -251,93 +325,107 @@ case "$hook_subcommand:$current_notification_type" in
       main_status_icon="gearshape.2"
       main_status_color="#0A84FF"
       detail_status_value="$prompt_summary"
+      working_since="$(date +%s)"
     else
       status_only=1
     fi
     ;;
   stop:*)
-    main_status_value="ready"
-    main_status_icon="checkmark.circle"
-    main_status_color="#34C759"
-    detail_status_value=""
-    event_title="Claude finished"
-    if [[ -n "$last_prompt_summary" ]]; then
+    _kill_elapsed_updater
+    duration_label=""
+    if [[ -n "$working_since" && "$working_since" =~ ^[0-9]+$ ]]; then
+      now_ts=$(date +%s)
+      elapsed_secs=$((now_ts - working_since))
+      duration_label=" ($(format_duration "$elapsed_secs"))"
+      working_since=""
+    fi
+    # Absence of status = ready (implicit)
+    event_title="Done${duration_label}"
+    if [[ -n "$last_prompt_summary" && ${#last_prompt_summary} -ge 4 ]]; then
       event_body="$last_prompt_summary"
     else
       event_body="Ready for next prompt"
     fi
     notify_enabled=1
     should_clear_progress=1
+    should_clear_agent_status=1
     ;;
   notification:permission_prompt)
+    _kill_elapsed_updater
     permission_detail="$(extract_permission_detail "$current_message")"
     main_status_value="blocked"
     main_status_icon="hand.raised"
     main_status_color="#FF9F0A"
-    detail_status_value="$permission_detail"
+    detail_status_value="$(truncate_text 28 "$permission_detail")"
     event_title="Permission required"
-    event_body="$(truncate_text 96 "$permission_detail")"
+    event_body="$(truncate_text 48 "$permission_detail")"
     notify_enabled=1
     flash_enabled=1
     should_clear_progress=1
     ;;
   notification:elicitation_dialog)
-    input_detail="$(truncate_text 72 "${current_message:-Claude is waiting for your answer}")"
+    _kill_elapsed_updater
+    input_detail="$(truncate_text 28 "${current_message:-Waiting for answer}")"
     main_status_value="input"
     main_status_icon="questionmark.circle"
     main_status_color="#0A84FF"
     detail_status_value="$input_detail"
     event_title="Claude needs input"
-    event_body="$input_detail"
+    event_body="$(truncate_text 48 "${current_message:-Waiting for your answer}")"
     notify_enabled=1
     flash_enabled=1
     should_clear_progress=1
     ;;
   notification:idle_prompt)
-    main_status_value="waiting"
-    main_status_icon="ellipsis.bubble"
-    main_status_color="#0A84FF"
-    detail_status_value=""
+    _kill_elapsed_updater
+    # Absence of status = idle (implicit)
     should_clear_progress=1
+    should_clear_agent_status=1
+    working_since=""
     ;;
   notification:*)
-    detail_status_value="$(truncate_text 72 "${current_message:-Needs attention}")"
+    _kill_elapsed_updater
+    detail_status_value="$(truncate_text 28 "${current_message:-Needs attention}")"
     main_status_value="attention"
     main_status_icon="bell"
     main_status_color="#0A84FF"
-    event_title="${current_title:-Claude notification}"
-    event_body="$detail_status_value"
+    event_title="${current_title:-Notification}"
+    event_body="$(truncate_text 48 "${current_message:-Needs attention}")"
     notify_enabled=1
     flash_enabled=1
     should_clear_progress=1
     ;;
   session-start:*)
     start_source="${current_source:-startup}"
-    main_status_value="ready"
-    main_status_icon="checkmark.circle"
-    main_status_color="#34C759"
-    detail_status_value=""
+    # Absence of status = ready (implicit)
     should_clear_progress=1
+    should_clear_agent_status=1
     last_notify_signature=""
-    cmux_log_event info "session-start:${start_source} ${raw_json}"
+    working_since=""
+    case "$start_source" in
+      resume) cmux_log_event info "Session resumed" ;;
+      *)      cmux_log_event info "Session started" ;;
+    esac
     ;;
   precompact:*)
-    compact_trigger="${current_trigger:-${current_source:-auto}}"
+    _kill_elapsed_updater
     main_status_value="compacting"
     main_status_icon="arrow.clockwise.circle"
     main_status_color="#FF9F0A"
-    detail_status_value="$(truncate_text 48 "${compact_trigger} compact")"
+    detail_status_value=""
     should_clear_progress=1
-    cmux_log_event info "precompact:${compact_trigger} ${raw_json}"
+    cmux_log_event info "Context compacted"
     ;;
   session-end:*)
-    end_reason="${current_reason:-other}"
+    _kill_elapsed_updater
     should_clear_statuses=1
     should_clear_progress=1
-    cmux_log_event info "session-end:${end_reason} ${raw_json}"
+    working_since=""
+    cmux_log_event info "Session ended"
     ;;
   subagent-stop:*)
-    cmux_log_event info "subagent-stop ${raw_json}"
+    agent_type="$(json_value '.agent_type')"
+    cmux_log_event info "Subagent done: ${agent_type:-unknown}"
     status_only=1
     ;;
 esac
@@ -377,15 +465,17 @@ if (( status_only == 1 )); then
   exit 0
 fi
 
-desired_status_signature="${main_status_value}|${detail_status_value}|${effective_session_id}"
-if [[ "$desired_status_signature" != "$last_status_signature" ]]; then
-  set_status "claude" "$main_status_value" "$main_status_icon" "$main_status_color"
-  if [[ -n "$detail_status_value" ]]; then
-    set_status "claude-detail" "$detail_status_value" "$detail_status_icon" "$detail_status_color"
-  else
-    clear_status "claude-detail"
+if (( should_clear_agent_status == 0 )); then
+  desired_status_signature="${main_status_value}|${detail_status_value}|${effective_session_id}"
+  if [[ "$desired_status_signature" != "$last_status_signature" ]]; then
+    set_status "claude" "$main_status_value" "$main_status_icon" "$main_status_color"
+    if [[ -n "$detail_status_value" ]]; then
+      set_status "claude-detail" "$detail_status_value" "$detail_status_icon" "$detail_status_color"
+    else
+      clear_status "claude-detail"
+    fi
+    last_status_signature="$desired_status_signature"
   fi
-  last_status_signature="$desired_status_signature"
 fi
 
 if (( notify_enabled == 1 )); then
@@ -399,8 +489,16 @@ if (( notify_enabled == 1 )); then
   fi
 fi
 
-if [[ "$hook_subcommand" != "session-start" && "$hook_subcommand" != "precompact" && "$hook_subcommand" != "session-end" && "$hook_subcommand" != "subagent-stop" ]]; then
-  cmux_log_event info "${hook_subcommand}:${current_notification_type:-main} ${raw_json}"
+# Clear agent status for implicit states (ready/idle — absence = no activity)
+if (( should_clear_agent_status == 1 )); then
+  clear_status "claude"
+  clear_status "claude-detail"
+  last_status_signature=""
+fi
+
+# Start elapsed timer AFTER setting initial "working" status
+if [[ "$hook_subcommand" == "user-prompt-submit" && -n "${main_status_value:-}" ]]; then
+  _start_elapsed_updater
 fi
 
 save_state

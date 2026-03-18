@@ -26,6 +26,7 @@ Use Serena MCP tools (`find_symbol`, `find_referencing_symbols`, `get_symbols_ov
 
 ## Information Quality
 
+* Never present speculation, opinion, or unverified claims as facts. Hedge with "likely", "probably", "needs verification", or omit. This applies to docs, brainstorms, and conversation.
 * For documentation lookups, use this order: matching local skill/reference docs → ref MCP → local indexed docs/source clone → web search.
 * HALT if docs remain unavailable after: matching local skill/reference docs → ref MCP → local indexed docs → propose creating local docs. Don't proceed with partial knowledge.
 * Use ref MCP first for library docs once you've ruled out a matching local skill. If insufficient, clone to `~/repo-references/<name>/` and read source.

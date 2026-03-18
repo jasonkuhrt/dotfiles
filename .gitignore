@@ -16,6 +16,12 @@ Brewfile.lock.json
 # Claude transcripts (generated output)
 **/.claude/transcripts/
 
+# Claude local settings (machine-specific)
+CLAUDE.local.md
+
+# Build/test caches
+.cache/
+
 # Claude skills tmp dir (runtime state, never committed)
 .clauding/
 

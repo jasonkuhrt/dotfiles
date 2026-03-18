@@ -11,12 +11,8 @@ return {
           words = { "cmux_nav" },
         },
         {
-          path = vim.fn.stdpath("config") .. "/local-plugins/cmd-ux",
-          words = { "cmd_ux" },
-        },
-        {
-          path = vim.fn.stdpath("config") .. "/local-plugins/kit",
-          words = { "kit" },
+          path = vim.fn.expand("~/projects/jasonkuhrt/cmdux/lua"),
+          words = { "cmdux" },
         },
       }
 

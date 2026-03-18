@@ -5,6 +5,12 @@ local collections = require("kit.collections")
 local M = {}
 
 ---@param state ResolutionState
+---@return boolean
+local function is_blocked_mode(state)
+  return state.mode == "ambiguity" or state.mode == "miss_recovery"
+end
+
+---@param state ResolutionState
 ---@param label string?
 ---@return CommandFrontierItem?
 local function find_frontier_item(state, label)
@@ -35,6 +41,9 @@ function M.selected_choice(cmp, state)
       return frontier_item
     end
     return item.label
+  end
+  if is_blocked_mode(state) then
+    return nil
   end
   if state.frontier and state.frontier[1] then
     return state.frontier[1]
@@ -77,6 +86,10 @@ end
 function M.decide_current(state, intent)
   if state.kind == "unsupported" then
     return { type = "fallback" }
+  end
+
+  if is_blocked_mode(state) then
+    return { type = "refuse", message = state.refusal_reason or state.help }
   end
 
   if intent == "space" then

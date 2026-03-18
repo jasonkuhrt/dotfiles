@@ -14,7 +14,6 @@ local learning = require("cmd_ux.lib.learning")
 local resolver = require("cmd_ux.lib.resolver")
 local runtime = require("cmd_ux.lib.runtime")
 local pane_provider = require("cmd_ux.providers.pane")
-local project_provider = require("cmd_ux.providers.project")
 local recall_provider = require("cmd_ux.providers.recall")
 local tab_provider = require("cmd_ux.providers.tab")
 local types = require("cmd_ux.types")
@@ -156,6 +155,8 @@ describe("cmd_ux learning and flow features", function()
     helpers.drop_user_command("UsageRankAlpha")
     helpers.drop_user_command("UsageRankBeta")
     helpers.drop_user_command("AaaNoiseCandidate")
+    helpers.drop_user_command("CasePath")
+    helpers.drop_user_command("Casepath")
     helpers.drop_user_command("ResetRankAlpha")
     helpers.drop_user_command("ResetRankBeta")
     helpers.drop_user_command("TreeTest")
@@ -171,6 +172,8 @@ describe("cmd_ux learning and flow features", function()
     helpers.drop_user_command("UsageRankAlpha")
     helpers.drop_user_command("UsageRankBeta")
     helpers.drop_user_command("AaaNoiseCandidate")
+    helpers.drop_user_command("CasePath")
+    helpers.drop_user_command("Casepath")
     helpers.drop_user_command("ResetRankAlpha")
     helpers.drop_user_command("ResetRankBeta")
     helpers.drop_user_command("TreeTest")
@@ -202,7 +205,7 @@ describe("cmd_ux learning and flow features", function()
 
     local state = core.resolve_line("UsageRank")
 
-    eq({ "UsageRankBeta", "UsageRankAlpha" }, labels(state.frontier))
+    eq({ "UsageRankBeta", "UsageRankAlpha" }, vim.list_slice(labels(state.frontier), 1, 2))
   end)
 
   it("returns a ranked copy without mutating the input frontier", function()
@@ -216,9 +219,9 @@ describe("cmd_ux learning and flow features", function()
 
     local ranked = learning.rank_state(unranked)
 
-    eq({ "UsageRankAlpha", "UsageRankBeta" }, original)
-    eq({ "UsageRankAlpha", "UsageRankBeta" }, labels(unranked.frontier))
-    eq({ "UsageRankBeta", "UsageRankAlpha" }, labels(ranked.frontier))
+    eq({ "UsageRankAlpha", "UsageRankBeta" }, vim.list_slice(original, 1, 2))
+    eq(original, labels(unranked.frontier))
+    eq({ "UsageRankBeta", "UsageRankAlpha" }, vim.list_slice(labels(ranked.frontier), 1, 2))
     assert.is_not.equal(unranked, ranked)
   end)
 
@@ -235,6 +238,20 @@ describe("cmd_ux learning and flow features", function()
     end, learning.top_transitions(10))
 
     assert.is_true(vim.tbl_contains(transition_pairs, "TreeTest/refactor:rename"))
+  end)
+
+  it("keeps hot-path item scoring aligned with diagnostic score components", function()
+    register_tree_provider("TreeTest")
+
+    learning.record_execute_state(core.resolve_line("TreeTest refactor rename"))
+
+    local state = core.resolve_line("TreeTest")
+    local item = state.frontier[1]
+    local total_score, recency = learning.item_score_for_tests(state, item)
+    local components = learning.item_score_components_for_tests(state, item)
+
+    eq(components.total_score, total_score)
+    eq(components.recency, recency)
   end)
 
   it("records frontier selections through the extracted recording API", function()
@@ -677,6 +694,7 @@ describe("cmd_ux learning and flow features", function()
   it("cmdux completion exposes the new learning commands", function()
     eq({ "blocklist" }, cmdux_provider.complete("Cmdux bl"))
     eq({ "capabilities" }, cmdux_provider.complete("Cmdux cap"))
+    eq({ "collisions" }, cmdux_provider.complete("Cmdux col"))
     eq({ "compare" }, cmdux_provider.complete("Cmdux comp"))
     assert.is_true(vim.tbl_contains(cmdux_provider.complete("Cmdux ex"), "explain"))
     eq({ "forest" }, cmdux_provider.complete("Cmdux fo"))
@@ -693,6 +711,8 @@ describe("cmd_ux learning and flow features", function()
 
   it("cmdux reports surface transitions noise and deterministic suggestions", function()
     helpers.create_noarg_command("AaaNoiseCandidate")
+    helpers.create_noarg_command("CasePath")
+    helpers.create_noarg_command("Casepath")
     helpers.sync_cmd_ux()
 
     learning.record_execute_state(core.resolve_line("Config reload"))
@@ -764,6 +784,15 @@ describe("cmd_ux learning and flow features", function()
     assert.is_truthy(capability_lines:find("buffer.write_current", 1, true))
     assert.is_truthy(capability_lines:find("config.reload", 1, true))
     close_report_tab()
+
+    cmdux_provider.execute("collisions")
+    local collision_lines = table.concat(current_lines(), "\n")
+    assert.is_truthy(collision_lines:find("CasePath", 1, true))
+    assert.is_truthy(collision_lines:find("Casepath", 1, true))
+    close_report_tab()
+
+    helpers.drop_user_command("CasePath")
+    helpers.drop_user_command("Casepath")
   end)
 
   it("preview lines surface learned next choices and promoted paths", function()
@@ -830,15 +859,19 @@ describe("cmd_ux learning and flow features", function()
     helpers.drop_user_command("ExplodingReplayCmd")
   end)
 
-  it("does not learn a semantic Ex command when provider execution fails", function()
-    local original_execute = project_provider.execute
-    project_provider.execute = function()
-      error("boom")
-    end
+  it("does not learn a semantic Ex command when the resolved semantic action fails", function()
+    local original_snacks = package.loaded["snacks"]
+    package.loaded["snacks"] = {
+      picker = {
+        files = function()
+          error("boom")
+        end,
+      },
+    }
 
     local ok = pcall(vim.cmd, "Project files")
 
-    project_provider.execute = original_execute
+    package.loaded["snacks"] = original_snacks
 
     assert.is_false(ok)
     eq(0, #learning.recent_commands(5))

@@ -4,6 +4,7 @@ local stub = require("luassert.stub")
 
 local helpers = require("tests.plenary.helpers")
 local ex = require("cmd_ux.adapters.ex")
+local interaction_session = require("cmd_ux.lib.interaction_session")
 
 local function fake_cmp(selected)
   return {
@@ -24,6 +25,7 @@ end
 
 describe("cmd_ux ex adapter", function()
   local original_blink
+  local original_snacks
 
   local function install_blink(visible)
     local blink = {
@@ -59,8 +61,10 @@ describe("cmd_ux ex adapter", function()
     helpers.drop_user_command("LeafCmd")
     helpers.drop_user_command("TestCmdSpace")
     helpers.sync_cmd_ux()
+    interaction_session.reset()
 
     original_blink = package.loaded["blink.cmp"]
+    original_snacks = package.loaded["cmd_ux.adapters.snacks"]
     stub(vim.fn, "getcmdtype")
     vim.fn.getcmdtype.returns(":")
     stub(vim.fn, "getcmdline")
@@ -74,6 +78,7 @@ describe("cmd_ux ex adapter", function()
 
   after_each(function()
     package.loaded["blink.cmp"] = original_blink
+    package.loaded["cmd_ux.adapters.snacks"] = original_snacks
 
     vim.fn.getcmdtype:revert()
     vim.fn.getcmdline:revert()
@@ -85,6 +90,7 @@ describe("cmd_ux ex adapter", function()
     helpers.drop_user_command("LeafCmd")
     helpers.drop_user_command("TestCmdSpace")
     helpers.sync_cmd_ux()
+    interaction_session.reset()
   end)
 
   it("reopens blink when advancing an exact namespace root on enter", function()
@@ -105,6 +111,7 @@ describe("cmd_ux ex adapter", function()
     ex.handle_enter(fake_cmp("Config"))
 
     assert.stub(vim.fn.setcmdline).was_called_with("Config ")
+    assert.equal("Config ", interaction_session.render())
     assert.stub(blink.hide).was_called(1)
     assert.stub(blink.show).was_called_with({ initial_selected_item_idx = 1 })
   end)
@@ -159,6 +166,7 @@ describe("cmd_ux ex adapter", function()
     ex.handle_cmdline_changed()
 
     assert.stub(vim.fn.setcmdline).was_called_with("Tab ")
+    assert.equal("Tab ", interaction_session.render())
     assert.stub(blink.hide).was_called(1)
     assert.stub(blink.show).was_called_with({ initial_selected_item_idx = 1 })
   end)
@@ -210,6 +218,22 @@ describe("cmd_ux ex adapter", function()
 
     assert.stub(vim.api.nvim_feedkeys).was_called()
     assert.stub(vim.fn.setcmdline).was_called_with("LeafCmd")
+    assert.equal("LeafCmd", interaction_session.render())
+  end)
+
+  it("refuses ambiguous root execution until an exact variant is selected", function()
+    helpers.create_noarg_command("CasePath")
+    helpers.create_noarg_command("Casepath")
+    helpers.sync_cmd_ux()
+    vim.fn.getcmdline.returns("CasePath")
+
+    ex.handle_enter(fake_cmp())
+
+    assert
+      .stub(vim.notify)
+      .was_called_with("Resolve the case-fold collision by choosing an exact variant.", vim.log.levels.WARN, { title = "Cmd UX" })
+    assert.stub(vim.api.nvim_feedkeys).was_not_called()
+    assert.stub(vim.fn.setcmdline).was_not_called()
   end)
 
   it("keeps tab as noop on exact leaves", function()
@@ -232,5 +256,33 @@ describe("cmd_ux ex adapter", function()
 
     assert.stub(vim.api.nvim_feedkeys).was_not_called()
     assert.stub(vim.fn.setcmdline).was_not_called()
+  end)
+
+  it("opens cmdline from the shared interaction session when no line is passed", function()
+    interaction_session.begin("Config ")
+
+    ex.open_cmdline()
+
+    assert.stub(vim.fn.setcmdline).was_called_with("Config ")
+  end)
+
+  it("seeds the shared interaction session before handing off to the picker", function()
+    local opened = 0
+    local received_opts
+    local session_before = interaction_session.current().session_id
+    package.loaded["cmd_ux.adapters.snacks"] = {
+      open = function(opts)
+        opened = opened + 1
+        received_opts = opts
+      end,
+    }
+    vim.fn.getcmdline.returns("Search code ")
+
+    ex.handoff_to_picker()
+
+    assert.equal(1, opened)
+    assert.are.same({ preserve_session = true }, received_opts)
+    assert.equal("Search code ", interaction_session.render())
+    assert.equal(session_before, interaction_session.current().session_id)
   end)
 end)

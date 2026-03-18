@@ -1,4 +1,5 @@
 local core = require("cmd_ux.core")
+local interaction_session = require("cmd_ux.lib.interaction_session")
 local modules = require("kit.modules")
 
 ---@class CmdUxBlinkCmp
@@ -23,6 +24,13 @@ local function feed(keys)
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "n", false)
 end
 
+---@param line string?
+local function set_cmdline(line)
+  local value = line or ""
+  interaction_session.sync_from_line(value)
+  vim.fn.setcmdline(value)
+end
+
 ---@param state ResolutionState
 ---@return string
 local function with_trailing_space(state)
@@ -31,24 +39,6 @@ local function with_trailing_space(state)
     line = line .. " "
   end
   return line
-end
-
----@param state ResolutionState
----@return boolean
-local function should_auto_advance(state)
-  if auto_advancing or vim.fn.getcmdtype() ~= ":" then
-    return false
-  end
-
-  if not state.root or state.pending ~= "" or state.trailing_space then
-    return false
-  end
-
-  if state.provider == "generic" then
-    return false
-  end
-
-  return state.kind == "namespace" or state.kind == "hybrid" or state.requires_more
 end
 
 ---@param current string
@@ -93,7 +83,7 @@ local function apply_action(action)
   end
 
   if action.line then
-    vim.fn.setcmdline(action.line)
+    set_cmdline(action.line)
   end
 
   if action.type == "set" then
@@ -119,7 +109,7 @@ local function handle(cmp, intent)
     return
   end
 
-  local state = core.resolve_line(vim.fn.getcmdline())
+  local state = interaction_session.sync_from_line(vim.fn.getcmdline())
   if not state.root and state.pending == "" and #state.frontier == 0 then
     return
   end
@@ -129,15 +119,19 @@ local function handle(cmp, intent)
   if has_pending_choice then
     local choice = core.selected_choice(cmp, state)
     if choice then
-      return apply_action(core.decide_choice(state, choice, intent))
+      local action = select(1, interaction_session.decide_choice(choice, intent))
+      return apply_action(action)
     end
     if not state.root then
-      return apply_action({ type = "refuse", message = "Command does not exist." })
+      local action = select(1, interaction_session.decide_current(intent))
+      return apply_action(action)
     end
-    return apply_action(core.decide_current(state, intent))
+    local action = select(1, interaction_session.decide_current(intent))
+    return apply_action(action)
   end
 
-  return apply_action(core.decide_current(state, intent))
+  local action = select(1, interaction_session.decide_current(intent))
+  return apply_action(action)
 end
 
 ---@param cmp unknown
@@ -159,7 +153,7 @@ function M.handle_space(cmp)
     return
   end
 
-  local state = core.resolve_line(vim.fn.getcmdline())
+  local state = interaction_session.sync_from_line(vim.fn.getcmdline())
   if not core.should_intercept_space(state) then
     return
   end
@@ -175,15 +169,15 @@ function M.handle_cmdline_changed()
   end
 
   local line = vim.fn.getcmdline()
-  local state = core.resolve_line(line)
-  if is_backspacing(line) or not should_auto_advance(state) then
+  local state = interaction_session.sync_from_line(line)
+  if auto_advancing or is_backspacing(line) or not interaction_session.should_auto_advance_namespace(state) then
     last_cmdline = line
     return
   end
 
   auto_advancing = true
   local advanced = with_trailing_space(state)
-  vim.fn.setcmdline(advanced)
+  set_cmdline(advanced)
   last_cmdline = advanced
   reopen_blink_menu()
   vim.schedule(function()
@@ -198,11 +192,12 @@ function M.handoff_to_picker()
   end
 
   local line = vim.fn.getcmdline()
+  interaction_session.sync_from_line(line)
   local esc = vim.api.nvim_replace_termcodes("<C-c>", true, false, true)
   vim.api.nvim_feedkeys(esc, "n", false)
 
   vim.schedule(function()
-    require("cmd_ux.adapters.snacks").open({ line = line })
+    require("cmd_ux.adapters.snacks").open({ preserve_session = true })
   end)
 end
 
@@ -211,9 +206,9 @@ function M.open_cmdline(line)
   vim.schedule(function()
     vim.api.nvim_feedkeys(":", "n", false)
     vim.schedule(function()
-      local value = line or ""
+      local value = line or interaction_session.render()
       last_cmdline = value
-      vim.fn.setcmdline(value)
+      set_cmdline(value)
     end)
   end)
 end

@@ -1,5 +1,6 @@
 local cache = require("cmd_ux.lib.index_cache")
 local index_builder = require("cmd_ux.lib.index_builder")
+local semantic_search = require("cmd_ux.lib.semantic_search")
 local types = require("cmd_ux.types")
 local util = require("cmd_ux.util")
 local providers = require("cmd_ux.providers")
@@ -13,6 +14,8 @@ local cache_path = vim.fn.stdpath("cache") .. "/cmd-ux-command-index.json"
 ---@field current? CommandIndex
 ---@field generation integer
 ---@field revision integer
+---@field root_collisions CmdUxCaseCollision[]
+---@field root_collision_by_key table<string, CmdUxCaseCollision>
 ---@field root_nodes table<string, CommandNode>
 ---@field live_command_maps? { revision: integer, user_commands: table<string, table>, buffer_commands: table<string, table> }
 ---@field buffer_command_signature? string
@@ -20,6 +23,8 @@ local state = {
   current = nil,
   generation = 0,
   revision = 0,
+  root_collisions = {},
+  root_collision_by_key = {},
   root_nodes = {},
   live_command_maps = nil,
   buffer_command_signature = nil,
@@ -75,6 +80,103 @@ local function command_scope_signature(commands)
   return table.concat(parts, "\30")
 end
 
+---@param entries CommandIndexEntry[]
+---@return CmdUxCaseCollision[], table<string, CmdUxCaseCollision>
+local function root_case_collisions(entries)
+  local groups = {}
+  for _, entry in ipairs(entries or {}) do
+    local label = entry.item.label
+    local key = label:lower()
+    groups[key] = groups[key] or {}
+    groups[key][#groups[key] + 1] = {
+      label = label,
+      path = entry.root,
+    }
+  end
+
+  local collisions = {}
+  local collision_by_key = {}
+  for canonical, group in pairs(groups) do
+    if #group > 1 then
+      local labels = {}
+      local labels_seen = {}
+      local paths = {}
+      for _, variant in ipairs(group) do
+        paths[#paths + 1] = variant.path
+        if not labels_seen[variant.label] then
+          labels_seen[variant.label] = true
+          labels[#labels + 1] = variant.label
+        end
+      end
+
+      if #labels > 1 then
+        table.sort(labels)
+        table.sort(paths)
+        local collision = {
+          canonical = canonical,
+          labels = labels,
+          parent = "<root>",
+          paths = paths,
+          scope = "root",
+        }
+        collisions[#collisions + 1] = collision
+        collision_by_key[canonical] = collision
+      end
+    end
+  end
+
+  table.sort(collisions, function(left, right)
+    return left.canonical < right.canonical
+  end)
+
+  return collisions, collision_by_key
+end
+
+---@param current? CommandIndex
+local function sync_root_collision_state(current)
+  local collisions, collision_by_key = root_case_collisions(current and current.entries or {})
+  state.root_collisions = collisions
+  state.root_collision_by_key = collision_by_key
+end
+
+---@param current CommandIndex
+local function schedule_semantic_search_warm(current)
+  if #vim.api.nvim_list_uis() == 0 then
+    return
+  end
+
+  local revision = state.revision
+  if semantic_search.ready(revision) or semantic_search.warming(revision) then
+    return
+  end
+
+  semantic_search.schedule_warm(revision, current)
+end
+
+---@param prefix string
+---@return CommandFrontierItem[]
+local function semantic_search_loading_frontier(prefix)
+  return {
+    types.frontier_item({
+      token = prefix,
+      label = "Searching semantic descendants...",
+      kind = "leaf",
+      desc = "Cmd UX is warming the descendant-search corpus for root-miss search.",
+      help = table.concat({
+        "Cmd UX is warming descendant search.",
+        "",
+        "Root-only search stays responsive while the broader semantic corpus finishes loading.",
+        "The picker will refresh automatically when the descendant index is ready.",
+      }, "\n"),
+      examples = prefix ~= "" and { prefix } or {},
+      executable = false,
+      requires_more = false,
+      accept_line = "",
+      lane = "status",
+    }),
+  }
+end
+
 ---@return CommandIndex
 function M.build()
   state.generation = state.generation + 1
@@ -91,6 +193,7 @@ function M.build()
     generation = state.generation,
     entries = entries,
   })
+  sync_root_collision_state(state.current)
   cache.write(cache_path, cache_version, assert(state.current))
 
   return assert(state.current, "cmd_ux.index: missing index after build")
@@ -98,8 +201,11 @@ end
 
 function M.invalidate()
   state.current = nil
+  state.root_collisions = {}
+  state.root_collision_by_key = {}
   state.root_nodes = {}
   state.live_command_maps = nil
+  semantic_search.invalidate()
 end
 
 function M.install_hooks()
@@ -150,6 +256,7 @@ function M.get()
     state.current = cached
     state.generation = cached.generation
     state.revision = state.revision + 1
+    sync_root_collision_state(cached)
     state.root_nodes = {}
     state.live_command_maps = nil
     state.buffer_command_signature = command_scope_signature(nvim_commands.get_buffer_commands(0))
@@ -254,6 +361,60 @@ function M.frontier(prefix)
     end
   end
   return util.sort_by_label(items)
+end
+
+---@param prefix? string
+---@return CommandFrontierItem[]
+function M.search_frontier(prefix)
+  local shallow = M.frontier(prefix)
+  if prefix == nil or prefix == "" then
+    return shallow
+  end
+
+  local root_collision = M.root_case_collision(prefix)
+  if #shallow > 0 and not root_collision then
+    return shallow
+  end
+
+  local current = M.get()
+  if root_collision then
+    return semantic_search.frontier(state.revision, current, prefix, state.root_collision_by_key)
+  end
+
+  if #shallow > 0 then
+    return shallow
+  end
+
+  if #vim.api.nvim_list_uis() > 0 and not semantic_search.ready(state.revision) then
+    schedule_semantic_search_warm(current)
+    return semantic_search_loading_frontier(prefix)
+  end
+
+  return semantic_search.frontier(state.revision, current, prefix, state.root_collision_by_key)
+end
+
+---@return CmdUxCaseCollision[]
+function M.case_collisions()
+  local current = M.get()
+  local collisions = {}
+  for _, collision in ipairs(state.root_collisions) do
+    collisions[#collisions + 1] = collision
+  end
+  for _, collision in ipairs(semantic_search.case_collisions(state.revision, current)) do
+    collisions[#collisions + 1] = collision
+  end
+  return collisions
+end
+
+---@param root_input string
+---@return CmdUxCaseCollision?
+function M.root_case_collision(root_input)
+  if root_input == "" then
+    return nil
+  end
+
+  M.get()
+  return state.root_collision_by_key[root_input:lower()]
 end
 
 function M.cache_path()

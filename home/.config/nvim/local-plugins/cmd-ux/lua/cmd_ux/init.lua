@@ -2,6 +2,8 @@ local blocklist = require("cmd_ux.blocklist")
 local capability_catalog = require("cmd_ux.lib.capability_catalog")
 local config = require("cmd_ux.config")
 local index = require("cmd_ux.index")
+local interaction_session = require("cmd_ux.lib.interaction_session")
+local learning = require("cmd_ux.lib.learning")
 local providers = require("cmd_ux.providers")
 ---@type Provider
 local buffer_provider = require("cmd_ux.providers.buffer")
@@ -71,7 +73,17 @@ end
 ---@param args string
 local function execute_semantic_user_command(root, provider, args)
   local rendered = vim.trim(root .. " " .. (args or ""))
-  local ok, state = pcall(require("cmd_ux.core").resolve_line, rendered)
+  local ok, state = pcall(interaction_session.begin, rendered)
+
+  if ok and state and state.executable and state.execute then
+    local exec_ok, exec_err = pcall(state.execute)
+    if not exec_ok then
+      error(exec_err)
+    end
+    learning.record_execute_state(state)
+    return
+  end
+
   local exec_ok, exec_err = pcall(provider.execute, args)
   if not exec_ok then
     error(exec_err)
@@ -85,7 +97,7 @@ local function execute_semantic_user_command(root, provider, args)
     return
   end
   if ok and state and state.executable then
-    require("cmd_ux.lib.learning").record_execute_state(state)
+    learning.record_execute_state(state)
   end
 end
 
@@ -101,7 +113,7 @@ function M.setup(opts)
   capability_catalog.register_all()
 
   if did_setup then
-    require("cmd_ux.lib.learning").reload()
+    learning.reload()
     return
   end
   did_setup = true

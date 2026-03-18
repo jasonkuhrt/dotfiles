@@ -1,6 +1,7 @@
 ---@diagnostic disable: undefined-field, undefined-global
 
 local helpers = require("tests.plenary.helpers")
+local interaction_session = require("cmd_ux.lib.interaction_session")
 local snacks = require("cmd_ux.adapters.snacks")
 
 describe("cmd_ux snacks adapter", function()
@@ -12,9 +13,7 @@ describe("cmd_ux snacks adapter", function()
     helpers.ensure_setup()
     helpers.drop_user_command("HybridFileCmd")
     helpers.sync_cmd_ux()
-    snacks.session.prefix = ""
-    snacks.session.pending = ""
-    snacks.session.trailing_space = false
+    interaction_session.reset()
     original_snacks = Snacks
     original_schedule = vim.schedule
     original_cmd = vim.cmd
@@ -25,9 +24,7 @@ describe("cmd_ux snacks adapter", function()
     vim.cmd = original_cmd
     Snacks = original_snacks
     helpers.drop_user_command("HybridFileCmd")
-    snacks.session.prefix = ""
-    snacks.session.pending = ""
-    snacks.session.trailing_space = false
+    interaction_session.reset()
   end)
 
   it("reruns the finder from the live search text instead of matcher pattern", function()
@@ -96,6 +93,58 @@ describe("cmd_ux snacks adapter", function()
 
     assert.is_true(#filtered > 0)
     assert.equal("Config", filtered[1].label)
+  end)
+
+  it("preserves non-renderable session state when reopening with preserve_session", function()
+    local captured
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    interaction_session.begin("Tab ")
+    assert.is_true(interaction_session.semantic_backspace())
+    assert.equal("Tab", interaction_session.render())
+
+    snacks.open({ preserve_session = true })
+
+    local fake_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      input = {
+        value = "Tab",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    local first_filter = { search = "Tab" }
+    captured.finder(captured, {
+      filter = first_filter,
+      picker = fake_picker,
+    })
+
+    assert.equal("Tab", first_filter.search)
+    assert.equal("Cmd UX: Tab", fake_picker.opts.title)
+
+    local second_filter = { search = "Tab" }
+    captured.finder(captured, {
+      filter = second_filter,
+      picker = fake_picker,
+    })
+
+    assert.equal("", second_filter.search)
+    assert.equal("Cmd UX: Tab ", fake_picker.opts.title)
   end)
 
   it("advances a namespace root into its semantic children on confirm", function()
@@ -202,7 +251,7 @@ describe("cmd_ux snacks adapter", function()
     )
   end)
 
-  it("keeps an exact executable generic command above optional arg completions", function()
+  it("keeps an exact executable generic command cheap until optional arg space is requested", function()
     local captured
 
     vim.api.nvim_create_user_command("HybridFileCmd", function() end, {
@@ -246,7 +295,52 @@ describe("cmd_ux snacks adapter", function()
     assert.equal("HybridFileCmd", items[1].label)
     assert.equal("Exact command", items[1].desc)
     assert.equal("HybridFileCmd", items[1].accept_line)
-    assert.is_true(#items > 1)
+    assert.are.equal(1, #items)
+  end)
+
+  it("shows optional arg completions once a generic hybrid root has a trailing space", function()
+    local captured
+
+    vim.api.nvim_create_user_command("HybridFileCmd", function() end, {
+      nargs = "?",
+      desc = "Hybrid file completion command for cmd-ux tests",
+      complete = "file",
+    })
+    helpers.sync_cmd_ux()
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    snacks.open({ line = "HybridFileCmd " })
+
+    local fake_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      input = {
+        value = "",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    local items = captured.finder(captured, {
+      filter = { search = "" },
+      picker = fake_picker,
+    })
+
+    assert.is_true(#items > 0)
+    assert.is_not.equal("Exact command", items[1].desc)
   end)
 
   it("executes a hybrid executable generic command on confirm instead of advancing", function()
@@ -269,6 +363,7 @@ describe("cmd_ux snacks adapter", function()
       },
     }
 
+    ---@diagnostic disable-next-line: duplicate-set-field
     vim.schedule = function(cb)
       cb()
     end
@@ -393,6 +488,7 @@ describe("cmd_ux snacks adapter", function()
 
     assert.equal("", result)
     assert.equal("Tab", fake_picker.input.value)
+    assert.equal("Tab", interaction_session.render())
     assert.is_truthy(fake_picker.items)
 
     fake_picker.input.value = "Ta"
@@ -458,6 +554,105 @@ describe("cmd_ux snacks adapter", function()
     assert.equal("code", escaped[1].label)
   end)
 
+  it("ctrl-h mirrors semantic backspace in the picker input", function()
+    local captured
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    snacks.open({ line = "Tab " })
+
+    local fake_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      input = {
+        value = "",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    fake_picker.refresh = function(self)
+      self.items = captured.finder(captured, {
+        filter = { search = self.input:get() },
+        picker = self,
+      })
+    end
+
+    local ctrl_h = captured.win.input.keys["<C-h>"][1]
+    local result = ctrl_h(fake_picker)
+
+    assert.equal("", result)
+    assert.equal("Tab", fake_picker.input.value)
+    assert.is_truthy(fake_picker.items)
+  end)
+
+  it("ctrl-l drills into the selected namespace from the picker input", function()
+    local captured
+
+    Snacks = {
+      picker = {
+        pick = function(opts)
+          captured = opts
+          return opts
+        end,
+      },
+    }
+
+    snacks.open()
+
+    local fake_picker = {
+      opts = captured,
+      closed = false,
+      update_titles = function() end,
+      input = {
+        value = "Ta",
+        get = function(self)
+          return self.value
+        end,
+        set = function(self, pattern, search)
+          self.value = search or pattern or self.value
+        end,
+      },
+    }
+
+    fake_picker.refresh = function(self)
+      self.items = captured.finder(captured, {
+        filter = { search = self.input:get() },
+        picker = self,
+      })
+    end
+
+    local root_items = captured.finder(captured, {
+      filter = { search = "Ta" },
+      picker = fake_picker,
+    })
+
+    fake_picker.current = function()
+      return root_items[1]
+    end
+
+    local ctrl_l = captured.win.input.keys["<C-l>"][1]
+    ctrl_l(fake_picker)
+
+    assert.equal("", fake_picker.input.value)
+    assert.equal("Cmd UX: Tab ", fake_picker.opts.title)
+    assert.equal("Tab ", interaction_session.render())
+    assert.is_truthy(fake_picker.items)
+    assert.equal("close", fake_picker.items[1].label)
+  end)
+
   it("executes a semantic leaf on confirm", function()
     local captured
     local executed = {}
@@ -471,6 +666,7 @@ describe("cmd_ux snacks adapter", function()
       },
     }
 
+    ---@diagnostic disable-next-line: duplicate-set-field
     vim.schedule = function(cb)
       cb()
     end
@@ -609,15 +805,11 @@ describe("cmd_ux snacks adapter", function()
     assert.is_true(result)
   end)
 
-  it("[BUG] skip_canonicalize_once does not leak between picker sessions", function()
-    -- Expected: Opening a fresh picker should always allow canonicalization
-    -- on the first finder run, regardless of what happened in a previous session.
-    -- Actual: The module-level skip_canonicalize_once flag is set by
-    -- semantic_backspace (snacks.lua:289) and consumed in
-    -- canonicalize_typed_namespace (snacks.lua:241). But if the picker is
-    -- closed before refresh_picker calls the finder (snacks.lua:199-206
-    -- checks picker.closed), the flag persists. Since open() never resets
-    -- this flag, the next session's first canonicalization is silently skipped.
+  it("does not leak namespace canonicalization suppression between picker sessions", function()
+    -- A semantic backspace should suppress exactly one follow-up namespace
+    -- canonicalization within the current interaction session. Starting a fresh
+    -- picker session must clear that suppression, even if the previous picker
+    -- closed before its deferred refresh could consume it.
     local captured
 
     Snacks = {
@@ -651,17 +843,14 @@ describe("cmd_ux snacks adapter", function()
       refresh = function() end,
     }
 
-    -- Press BS with the closed picker. semantic_backspace sets
-    -- skip_canonicalize_once = true but refresh_picker returns early
-    -- because picker.closed is true, so the finder never runs and
-    -- the flag is never consumed.
+    -- Press BS with the closed picker. The session records one suppressed
+    -- canonicalize pass, but refresh_picker returns early because picker.closed
+    -- is true, so the suppression is not consumed before the session ends.
     local backspace = captured.win.input.keys["<BS>"][1]
     backspace(closed_picker)
 
     -- Reset session (simulates closing the picker and starting fresh)
-    snacks.session.prefix = ""
-    snacks.session.pending = ""
-    snacks.session.trailing_space = false
+    interaction_session.reset()
 
     -- Session 2: Open a fresh picker
     snacks.open()

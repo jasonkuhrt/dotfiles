@@ -19,7 +19,7 @@ local kit_root = %q
 local penlight_root = %q
 local penlight_rocks_root = %q
 local blink_root = %q
-local max_attempts = 25
+	local max_attempts = 50
 
 local function labels(blink)
   local result = {}
@@ -114,12 +114,15 @@ local function await_namespace(attempt)
   end, 80)
 end
 
-local function await_cmdline_open(attempt)
-  if vim.fn.getcmdtype() == ":" and vim.fn.getcmdline() == "" then
-    vim.api.nvim_input("Tab")
-    await_namespace(1)
-    return
-  end
+	local function await_cmdline_open(attempt)
+	  if vim.fn.getcmdtype() == ":" and vim.fn.getcmdline() == "" then
+	    -- Give the cmdline integration one more tick to attach before typing.
+	    vim.defer_fn(function()
+	      vim.api.nvim_input("Tab")
+	      await_namespace(1)
+	    end, 40)
+	    return
+	  end
 
   if attempt >= max_attempts then
     fail(blink)

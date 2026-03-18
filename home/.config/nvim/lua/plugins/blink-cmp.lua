@@ -1,5 +1,5 @@
 local function is_blocked_command(name)
-  return require("cmd_ux.blocklist").is_blocked(name)
+  return require("cmdux.blocklist").is_blocked(name)
 end
 
 return {
@@ -24,19 +24,19 @@ return {
           ["<C-k>"] = { "select_prev", "fallback" },
           ["<CR>"] = {
             function(cmp)
-              return require("cmd_ux").handle_enter(cmp)
+              return require("cmdux").handle_enter(cmp)
             end,
             "fallback",
           },
           ["<Tab>"] = {
             function(cmp)
-              return require("cmd_ux").handle_tab(cmp)
+              return require("cmdux").handle_tab(cmp)
             end,
             "fallback",
           },
           ["<Space>"] = {
             function(cmp)
-              return require("cmd_ux").handle_space(cmp)
+              return require("cmdux").handle_space(cmp)
             end,
             "fallback",
           },

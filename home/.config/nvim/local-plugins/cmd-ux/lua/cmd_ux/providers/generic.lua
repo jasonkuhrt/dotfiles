@@ -34,6 +34,12 @@ local optional_named_root_limit = 12
 local repeatable_overlap_threshold = 0.75
 local repeatable_probe_limit = 4
 local max_named_frontier_cache_entries = 64
+local deferred_optional_root_frontier_types = {
+  dir = true,
+  dir_in_path = true,
+  file = true,
+  file_in_path = true,
+}
 
 ---@type fun(summary: GenericCommandSummary, accepted: string[], seen_signatures?: table<string, boolean>): CommandFrontierItem[]?
 local infer_named_frontier
@@ -548,6 +554,7 @@ function M.describe_root(root)
   local summary = command_summary(root)
   local parsed = summary.parsed
   local nargs = parsed and parsed.nargs or "0"
+  local min_required = util.min_required_args(nargs)
   local completion_type = effective_completion_type(summary)
   local inferred_frontier = infer_named_frontier(summary, {})
   if inferred_frontier then
@@ -568,9 +575,8 @@ function M.describe_root(root)
     })
   end
 
-  local root_matches = completion_matches(summary, root .. " ", "")
-  local kind = (#root_matches > 0 and util.min_required_args(nargs) == 0) and "hybrid" or "leaf"
-  local requires_more = util.min_required_args(nargs) > 0
+  local kind = (completion_type ~= "" and min_required == 0) and "hybrid" or "leaf"
+  local requires_more = min_required > 0
 
   return types.node({
     token = root,
@@ -580,7 +586,7 @@ function M.describe_root(root)
       summary.desc,
       "",
       "Completion type: " .. (completion_type ~= "" and completion_type or "none"),
-      "Required arguments: " .. tostring(util.min_required_args(nargs)),
+      "Required arguments: " .. tostring(min_required),
     }, "\n"),
     examples = { root },
     executable = not requires_more,
@@ -608,14 +614,6 @@ function M.resolve(ctx)
   local arg_count = #ctx.accepted + (ctx.pending ~= "" and 1 or 0)
   local base_line = util.render_command(ctx.root, ctx.accepted, ctx.pending, ctx.trailing_space)
   local completion_type = effective_completion_type(summary)
-  local match_line = base_line
-  if ctx.pending == "" then
-    match_line = util.render_command(ctx.root, ctx.accepted, "", true)
-  end
-  local matches = completion_matches(summary, match_line, ctx.pending)
-  local frontier = build_arg_items(match_line, matches)
-  local path_valid, invalid_token = validate_path(summary, ctx, completion_type)
-  local pending_is_named = completion_type == "custom" and ctx.pending ~= "" and #matches > 0
   local current_node = root_node
 
   if #ctx.accepted > 0 then
@@ -627,6 +625,26 @@ function M.resolve(ctx)
       examples = { base_line },
     })
   end
+
+  local inferred_frontier = infer_named_frontier(summary, ctx.accepted)
+  if inferred_frontier then
+    return inferred_named_state(summary, ctx, completion_type, inferred_frontier)
+  end
+
+  local suppress_optional_root_frontier = #ctx.accepted == 0
+    and ctx.pending == ""
+    and not ctx.trailing_space
+    and min_required == 0
+    and deferred_optional_root_frontier_types[completion_type] == true
+
+  local match_line = base_line
+  if ctx.pending == "" then
+    match_line = util.render_command(ctx.root, ctx.accepted, "", true)
+  end
+  local matches = suppress_optional_root_frontier and {} or completion_matches(summary, match_line, ctx.pending)
+  local frontier = suppress_optional_root_frontier and {} or build_arg_items(match_line, matches)
+  local path_valid, invalid_token = validate_path(summary, ctx, completion_type)
+  local pending_is_named = completion_type == "custom" and ctx.pending ~= "" and #matches > 0
 
   if not path_valid then
     return types.state_from_node(current_node, {
@@ -643,11 +661,6 @@ function M.resolve(ctx)
       refusal_reason = "Unknown command token: " .. tostring(invalid_token),
       frontier = frontier,
     })
-  end
-
-  local inferred_frontier = infer_named_frontier(summary, ctx.accepted)
-  if inferred_frontier then
-    return inferred_named_state(summary, ctx, completion_type, inferred_frontier)
   end
 
   if ctx.pending ~= "" and is_structured(summary, completion_type) and #matches == 0 then

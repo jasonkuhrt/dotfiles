@@ -1,8 +1,8 @@
 local core = require("cmd_ux.core")
-local index = require("cmd_ux.index")
-local learning = require("cmd_ux.lib.learning")
-local util = require("cmd_ux.util")
+local interaction_session = require("cmd_ux.lib.interaction_session")
 
+---@class CmdUxSnacksModule
+---@field open fun(opts?: CmdUxSnacksOpenOpts): unknown
 local M = {}
 
 ---@class CmdUxSnacksPickerInput
@@ -22,9 +22,13 @@ local M = {}
 ---@class CmdUxSnacksPicker
 ---@field closed boolean
 ---@field input CmdUxSnacksPickerInput
+---@field items? CmdUxPickerItem[]
 ---@field opts CmdUxSnacksPickerOptions
+---@field current? fun(self: CmdUxSnacksPicker): CmdUxPickerItem?
 ---@field refresh fun(self: CmdUxSnacksPicker)
+---@field semantic_ready_autocmd? integer
 ---@field close fun(self: CmdUxSnacksPicker)
+---@field selected? fun(self: CmdUxSnacksPicker, opts?: { fallback?: boolean }): CmdUxPickerItem[]
 
 ---@class CmdUxSnacksPreviewContext
 ---@field item? CmdUxPickerItem
@@ -32,39 +36,13 @@ local M = {}
 
 ---@class CmdUxSnacksOpenOpts
 ---@field line? string
+---@field preserve_session? boolean
 
 ---@class CmdUxSnacksApi
 ---@field picker { pick: fun(opts: table<string, unknown>): unknown }
 
----@class CmdUxSnacksModule
----@field session CmdUxSession
----@field open fun(opts?: CmdUxSnacksOpenOpts): unknown
-
----@class CmdUxSession
----@field prefix string
----@field pending string
----@field trailing_space boolean
----@type CmdUxSession
-M.session = {
-  prefix = "",
-  pending = "",
-  trailing_space = false,
-}
-
 ---@class CmdUxPickerItem: CommandFrontierItem
 ---@field next_state ResolutionState?
-
----@class CmdUxStateCache
----@field line string?
----@field revision integer?
----@field state ResolutionState?
----@type CmdUxStateCache
-local state_cache = {
-  line = nil,
-  revision = nil,
-  state = nil,
-}
-local skip_canonicalize_once = false
 
 ---@return CmdUxExModule
 local function ex_adapter()
@@ -73,45 +51,17 @@ end
 
 ---@return string
 local function render_session()
-  return util.render_line(M.session)
-end
-
----@return nil
-local function invalidate_state()
-  state_cache.line = nil
-  state_cache.revision = nil
-  state_cache.state = nil
+  return interaction_session.render()
 end
 
 ---@param line? string
 local function set_session_from_line(line)
-  local state = core.resolve_line(line or "")
-  invalidate_state()
-  if not state.root then
-    M.session.prefix = ""
-    M.session.pending = state.pending or ""
-    M.session.trailing_space = false
-    return
-  end
-
-  M.session.prefix = state.root
-  if #state.accepted > 0 then
-    M.session.prefix = M.session.prefix .. " " .. table.concat(state.accepted, " ")
-  end
-  M.session.pending = state.pending or ""
-  M.session.trailing_space = state.trailing_space == true
+  return interaction_session.sync_from_line(line or "")
 end
 
 ---@return ResolutionState
 local function current_state()
-  local line = render_session()
-  local revision = index.revision()
-  if state_cache.line ~= line or state_cache.revision ~= revision or not state_cache.state then
-    state_cache.line = line
-    state_cache.revision = revision
-    state_cache.state = core.resolve_line(line)
-  end
-  return assert(state_cache.state, "cmd_ux.snacks: state cache missing")
+  return interaction_session.resolve_current()
 end
 
 ---@param item? CmdUxPickerItem
@@ -123,7 +73,7 @@ local function item_state(item)
   if item.next_state then
     return item.next_state
   end
-  item.next_state = core.accept_choice(current_state(), item)
+  item.next_state = interaction_session.preview_choice(item)
   return item.next_state
 end
 
@@ -195,19 +145,82 @@ local function current_title()
   return "Cmd UX: " .. label
 end
 
+local refresh_picker
+
 ---@param picker? CmdUxSnacksPicker
-local function update_input(picker)
-  if not picker or picker.closed then
+local function clear_semantic_ready_autocmd(picker)
+  if not picker or not picker.semantic_ready_autocmd then
     return
   end
-  if picker.input:get() == M.session.pending then
+
+  pcall(vim.api.nvim_del_autocmd, picker.semantic_ready_autocmd)
+  picker.semantic_ready_autocmd = nil
+end
+
+---@param picker CmdUxSnacksPicker
+local function ensure_semantic_ready_autocmd(picker)
+  if picker.semantic_ready_autocmd then
     return
   end
-  picker.input:set("", M.session.pending)
+
+  local original_close = picker.close
+  picker.close = function(self)
+    clear_semantic_ready_autocmd(self)
+    return original_close(self)
+  end
+
+  picker.semantic_ready_autocmd = vim.api.nvim_create_autocmd("User", {
+    pattern = "CmdUxSemanticSearchReady",
+    callback = function()
+      if picker.closed then
+        clear_semantic_ready_autocmd(picker)
+        return
+      end
+      refresh_picker(picker)
+    end,
+  })
+end
+
+---@param picker CmdUxSnacksPicker
+---@return CmdUxPickerItem?
+local function selected_item(picker)
+  if type(picker.selected) == "function" then
+    local ok, items = pcall(function()
+      return picker:selected({ fallback = true })
+    end)
+    if ok and type(items) == "table" and items[1] then
+      return items[1]
+    end
+  end
+
+  if type(picker.current) == "function" then
+    local ok, item = pcall(function()
+      return picker:current()
+    end)
+    if ok and item then
+      return item
+    end
+  end
+
+  if picker.items and picker.items[1] then
+    return picker.items[1]
+  end
 end
 
 ---@param picker? CmdUxSnacksPicker
-local function refresh_picker(picker)
+local function update_input(picker)
+  local session = interaction_session.current()
+  if not picker or picker.closed then
+    return
+  end
+  if picker.input:get() == session.pending then
+    return
+  end
+  picker.input:set("", session.pending)
+end
+
+---@param picker? CmdUxSnacksPicker
+refresh_picker = function(picker)
   if not picker or picker.closed then
     return
   end
@@ -218,50 +231,17 @@ end
 
 ---@param search string?
 local function sync_pending(search)
-  local pending = search or ""
-  if pending == M.session.pending then
+  if not interaction_session.set_pending(search) then
     return
   end
-  M.session.pending = pending
-  M.session.trailing_space = false
-  invalidate_state()
-end
-
----@param state ResolutionState
----@return boolean
-local function should_canonicalize_typed_namespace(state)
-  if M.session.pending == "" then
-    return false
-  end
-
-  if not state.root or state.pending ~= "" or state.trailing_space then
-    return false
-  end
-
-  if state.provider == "generic" then
-    return false
-  end
-
-  return state.kind == "namespace" or state.kind == "hybrid" or state.requires_more
 end
 
 ---@param picker? CmdUxSnacksPicker
 ---@param filter? { search?: string }
 local function canonicalize_typed_namespace(picker, filter)
-  if skip_canonicalize_once then
-    skip_canonicalize_once = false
+  if not interaction_session.canonicalize_typed_namespace() then
     return
   end
-
-  local state = current_state()
-  if not should_canonicalize_typed_namespace(state) then
-    return
-  end
-
-  M.session.prefix = state.rendered
-  M.session.pending = ""
-  M.session.trailing_space = true
-  invalidate_state()
 
   if filter then
     filter.search = ""
@@ -273,84 +253,52 @@ end
 ---@param picker? CmdUxSnacksPicker
 ---@return string
 local function semantic_backspace(picker)
-  if M.session.pending ~= "" or M.session.prefix == "" then
+  if not interaction_session.semantic_backspace() then
     return "<BS>"
   end
 
-  local state = current_state()
-  if not state.root then
-    return "<BS>"
-  end
-
-  local accepted = vim.deepcopy(state.accepted or {})
-  local pending = table.remove(accepted)
-
-  if pending then
-    M.session.prefix = state.root
-    if #accepted > 0 then
-      M.session.prefix = M.session.prefix .. " " .. table.concat(accepted, " ")
-    end
-    M.session.pending = pending
-  else
-    M.session.prefix = ""
-    M.session.pending = state.root
-  end
-
-  M.session.trailing_space = false
-  skip_canonicalize_once = true
-  invalidate_state()
   refresh_picker(picker)
   return ""
 end
 
 local function handoff_to_cmdline()
-  ex_adapter().open_cmdline(render_session())
+  ex_adapter().open_cmdline()
+end
+
+local apply_choice
+
+---@param picker CmdUxSnacksPicker
+---@return boolean?
+local function drill_in(picker)
+  return apply_choice(picker, selected_item(picker))
 end
 
 ---@param picker CmdUxSnacksPicker
 ---@param item? CmdUxPickerItem
 ---@return boolean?
-local function apply_choice(picker, item)
+apply_choice = function(picker, item)
   if not item then
     return true
   end
 
-  local next_state = item_state(item)
-  learning.record_choice(current_state(), item)
-  local action_type = "execute"
-  if
-    next_state.kind == "namespace"
-    or next_state.requires_more
-    or (next_state.kind == "hybrid" and not next_state.executable)
-  then
-    action_type = "advance"
-  elseif not next_state.executable then
-    action_type = "refuse"
-  end
-
-  if action_type == "refuse" then
-    local refusal_reason = next_state.refusal_reason
-    if not refusal_reason or refusal_reason == "" then
-      refusal_reason = "Command is not executable yet."
-    end
-    vim.notify(refusal_reason, vim.log.levels.WARN, { title = "Cmd UX" })
+  local action, next_state = interaction_session.decide_choice(item, "enter")
+  if action.type == "refuse" then
+    vim.notify(action.message or "Command is not executable yet.", vim.log.levels.WARN, { title = "Cmd UX" })
     return true
   end
 
-  if action_type == "execute" then
-    learning.record_execute_state(next_state)
-    local rendered = next_state.rendered
+  if action.type == "execute" then
     picker:close()
     vim.schedule(function()
-      vim.cmd(rendered)
+      vim.cmd(action.line or next_state.rendered)
     end)
     return true
   end
 
-  M.session.prefix = next_state.rendered
-  M.session.pending = ""
-  M.session.trailing_space = true
-  invalidate_state()
+  if action.type ~= "advance" and action.type ~= "set" then
+    return true
+  end
+
   refresh_picker(picker)
   return true
 end
@@ -362,7 +310,7 @@ local function picker_opts()
     live = true,
     title = current_title(),
     pattern = "",
-    search = M.session.pending,
+    search = interaction_session.current().pending,
     prompt = "> ",
     focus = "input",
     layout = {
@@ -425,6 +373,21 @@ local function picker_opts()
             expr = true,
             desc = "Step out of the current semantic path",
           },
+          ["<C-h>"] = {
+            function(picker)
+              return semantic_backspace(picker)
+            end,
+            mode = { "i" },
+            expr = true,
+            desc = "Step out of the current semantic path",
+          },
+          ["<C-l>"] = {
+            function(picker)
+              return drill_in(picker)
+            end,
+            mode = { "i" },
+            desc = "Drill into the selected semantic path",
+          },
           [";"] = {
             ---@param picker CmdUxSnacksPicker
             function(picker)
@@ -455,6 +418,21 @@ local function picker_opts()
             expr = true,
             desc = "Step out of the current semantic path",
           },
+          ["<C-h>"] = {
+            function(picker)
+              return semantic_backspace(picker)
+            end,
+            mode = { "n" },
+            expr = true,
+            desc = "Step out of the current semantic path",
+          },
+          ["<C-l>"] = {
+            function(picker)
+              return drill_in(picker)
+            end,
+            mode = { "n" },
+            desc = "Drill into the selected semantic path",
+          },
           [";"] = {
             function(picker)
               picker:close()
@@ -468,6 +446,7 @@ local function picker_opts()
     ---@param picker CmdUxSnacksPicker
     on_show = function(picker)
       update_input(picker)
+      ensure_semantic_ready_autocmd(picker)
     end,
     ---@param picker CmdUxSnacksPicker
     ---@param item? CmdUxPickerItem
@@ -480,9 +459,13 @@ end
 ---@param opts? CmdUxSnacksOpenOpts
 function M.open(opts)
   opts = opts or {}
-  skip_canonicalize_once = false
-  set_session_from_line(opts.line or render_session())
-  invalidate_state()
+  if opts.preserve_session then
+    if opts.line ~= nil then
+      set_session_from_line(opts.line)
+    end
+  else
+    interaction_session.begin(opts.line or render_session())
+  end
   ---@type CmdUxSnacksApi
   local snacks = Snacks
   return snacks.picker.pick(picker_opts())

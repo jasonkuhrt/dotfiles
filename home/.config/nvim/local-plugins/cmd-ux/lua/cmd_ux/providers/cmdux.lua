@@ -17,6 +17,7 @@ local function help_lines()
     "Cmdux commands:",
     "- Cmdux blocklist",
     "- Cmdux capabilities",
+    "- Cmdux collisions",
     "- Cmdux compare <left> -- <right>",
     "- Cmdux explain [line]",
     "- Cmdux forest",
@@ -41,6 +42,7 @@ local function help_lines()
     "Compare shows why one command path currently outranks another in the active context.",
     "Inbox surfaces actionable alias, shortcut, ranking, and noise proposals.",
     "Forest prints the semantic command forest across all registered namespace providers.",
+    "Collisions audits case-folded command/path collisions that make semantic lookup ambiguous.",
     "Capabilities shows the typed action substrate used by Flow and future synthesis.",
     "Quarantine surfaces exact-hide candidates and can append them to the blocklist.",
     "Blocklist opens the exact-hide list that shapes the indexed root set.",
@@ -75,6 +77,26 @@ local function show_capabilities()
     lines[#lines + 1] = ("- %s  [%s]  %s"):format(capability.id, capability.safety, capability.desc)
   end
   report.open("Cmd UX Capabilities", lines)
+end
+
+local function show_collisions()
+  local lines = {
+    "Cmd UX case collisions",
+    "",
+  }
+  local collisions = index.case_collisions()
+  if #collisions == 0 then
+    lines[#lines + 1] = "No case-fold collisions detected in the semantic forest."
+  else
+    for _, collision in ipairs(collisions) do
+      lines[#lines + 1] = ("- %s  [parent=%s]  variants=%s"):format(
+        collision.canonical,
+        collision.parent,
+        table.concat(collision.paths, " <> ")
+      )
+    end
+  end
+  report.open("Cmd UX Collisions", lines)
 end
 
 ---@param raw_line string?
@@ -219,6 +241,15 @@ local function tree()
       examples = { "Cmdux capabilities" },
       executable = true,
       execute = show_capabilities,
+    }),
+    collisions = types.node({
+      token = "collisions",
+      kind = "leaf",
+      desc = "Audit case-fold collisions across semantic roots and namespaces",
+      help = table.concat(help_lines(), "\n"),
+      examples = { "Cmdux collisions" },
+      executable = true,
+      execute = show_collisions,
     }),
     compare = types.node({
       token = "compare",
@@ -373,6 +404,7 @@ function M.describe_root(root)
       "Cmdux help",
       "Cmdux inbox",
       "Cmdux compare",
+      "Cmdux collisions",
       "Cmdux forest",
       "Cmdux explain",
       "Cmdux stats",

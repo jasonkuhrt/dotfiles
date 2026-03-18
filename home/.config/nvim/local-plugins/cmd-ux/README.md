@@ -70,21 +70,29 @@ Rich root semantics are resolved lazily when a specific command becomes active. 
 
 2. `CommandIndex`
    - persists and reloads that inventory
-   - answers root existence and prefix frontier queries
+   - answers root existence, root ambiguity, and shallow root-prefix queries
    - intentionally does not eagerly build full semantic root trees
 
-3. Lazy semantic resolution
+3. revision-cached semantic search corpus
+   - lazily walks the semantic forest into searchable full paths such as `Project files` or `PrefixFamilyCmd copy-path`
+   - lets root search find downstream candidates without first entering their namespace
+   - records nested semantic collisions for `Cmdux collisions` and deep-search diagnostics
+   - warms on-demand after an actual interactive root miss instead of on picker open, so shallow root typing stays cold-cheap
+   - is rebuilt automatically when the active index revision changes
+
+4. Lazy semantic resolution
    - resolves detailed root semantics only for the currently active command family
    - delegates to dedicated providers first
    - falls back to conservative generic inference when no dedicated provider exists
 
-4. Surface adapters
+5. Surface adapters
    - Ex adapter and Snacks adapter consume the same root inventory and semantic resolution pipeline
    - surfaces do not rediscover commands independently
 
 This split is the current performance boundary:
 
 - inventory work should scale with total command count
+- root-only typing should stay on inventory-grade data
 - semantic work should scale with the active command family only
 
 ### Cache and invalidation model
@@ -99,6 +107,11 @@ There are multiple cache layers, each with a narrow contract:
 - in-memory root semantic cache
   - stores lazily described root nodes per current active index revision
   - cleared whenever the command inventory is invalidated or rebuilt
+
+- persisted semantic search cache
+  - stores the derived descendant-search corpus for the current inventory build identity
+  - lets later sessions reuse downstream root-search matches without re-walking the full semantic forest
+  - is invalidated automatically when the persisted inventory build identity changes
 
 - generic provider revision cache
   - reuses the live `nvim_get_commands({})` and `nvim_buf_get_commands(0, {})` results already fetched during inventory build when available
@@ -458,8 +471,11 @@ It is a semantic command composer.
 Behavior:
 
 - root frontier shows commands, not raw metadata blobs
+- typed root search also finds full downstream semantic paths
 - confirm on `namespace` or `hybrid` advances deeper
 - confirm on safe `leaf` executes directly
+- `<C-l>` drills into the selected semantic item
+- `<C-h>` steps back out of the current namespace
 - `;` hands off the current semantic session into the native Ex cmdline
 - preview content is built for the selected item only; it is not eagerly precomputed for the whole frontier
 - ranked ordering follows learned usage, not just alphabetical fallback

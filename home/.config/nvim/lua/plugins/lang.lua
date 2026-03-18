@@ -54,7 +54,7 @@ return {
   },
 
   -- Disable markdownlint globally (too noisy for casual markdown / Claude Code prompts).
-  -- Re-enable per-project via .nvim.lua if needed.
+  -- Re-enable per-project via .nvim/config.json if needed.
   {
     "mfussenegger/nvim-lint",
     opts = {
@@ -62,6 +62,25 @@ return {
         markdown = {},
       },
     },
+  },
+
+  {
+    "neovim/nvim-lspconfig",
+    opts = function(_, opts)
+      local jsonls = opts.servers.jsonls
+      if not jsonls then
+        return
+      end
+
+      jsonls.settings = jsonls.settings or {}
+      jsonls.settings.json = jsonls.settings.json or {}
+      jsonls.settings.json.schemas = jsonls.settings.json.schemas or {}
+
+      table.insert(jsonls.settings.json.schemas, {
+        fileMatch = { ".nvim/config.json" },
+        url = vim.uri_from_fname(vim.fn.expand("~/.config/nvim/schemas/project-config.schema.json")),
+      })
+    end,
   },
 
   -- Mason: ensure useful tools are installed

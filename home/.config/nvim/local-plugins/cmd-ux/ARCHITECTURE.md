@@ -38,6 +38,7 @@ It answers:
 
 - root existence
 - root prefix frontier queries
+- root case-collision detection for ambiguous exact tokens
 - root entry lookup
 - lazy root description lookup
 
@@ -48,6 +49,28 @@ It also owns:
 - live generic command maps reused by the generic provider
 
 The persisted cache stores only inventory-grade data. It does not store semantic trees.
+
+### 2.5 Semantic Search Corpus
+
+Root search is not limited to shallow root prefixes anymore.
+
+`cmd-ux` lazily builds a revision-scoped semantic search corpus from the live
+forest:
+
+- root commands stay searchable as roots
+- semantic descendants become searchable as full paths such as `Project files`
+- open-ended arg frontiers are intentionally excluded
+- nested namespace case-fold collisions are recorded for collision auditing
+
+This corpus is descendant-search state. Root-only lookup and root-only
+collision detection stay in the index layer so ordinary root typing never
+needs a deep semantic walk. The live in-memory corpus is tied to the active
+index revision, and the derived search payload is also persisted under the
+current inventory build identity so later sessions can reuse it instead of
+re-walking the forest from scratch. In interactive sessions, cmd-ux now warms
+this descendant corpus only after a true root miss, so picker open and shallow
+root typing stay on inventory-grade work until the user actually asks for
+downstream search.
 
 ## 3. Semantic Resolution
 
@@ -154,6 +177,7 @@ Both interactive surfaces consume the same core:
 Both ask the core for `ResolutionState`.
 Both use the same transition policy.
 Both benefit from the same learning-ranked frontier ordering.
+Both read the same semantic-search and collision diagnostics.
 
 ## Cache Boundaries
 
@@ -184,6 +208,8 @@ Stores:
 
 - generic provider command summaries
 - generic inference helpers tied to the active revision
+- semantic search corpus entries tied to the active revision
+- case-collision diagnostics tied to the active revision
 
 Validity rule:
 

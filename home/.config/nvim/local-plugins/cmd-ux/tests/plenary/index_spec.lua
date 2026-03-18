@@ -2,6 +2,7 @@
 
 local helpers = require("tests.plenary.helpers")
 local index = require("cmd_ux.index")
+local semantic_search = require("cmd_ux.lib.semantic_search")
 local providers = require("cmd_ux.providers")
 local types = require("cmd_ux.types")
 local nvim_commands = require("kit.nvim.commands")
@@ -54,6 +55,8 @@ describe("cmd_ux index cache", function()
     helpers.drop_user_command("ShapeShiftCmd")
     helpers.drop_user_command("MapReuseCmdOne")
     helpers.drop_user_command("MapReuseCmdTwo")
+    helpers.drop_user_command("CasePath")
+    helpers.drop_user_command("Casepath")
     helpers.drop_user_command("BufferLineCloseLeft")
     helpers.drop_user_command("BufferLineCycleNext")
     helpers.drop_user_command("BufferLine")
@@ -73,6 +76,8 @@ describe("cmd_ux index cache", function()
     helpers.drop_user_command("ShapeShiftCmd")
     helpers.drop_user_command("MapReuseCmdOne")
     helpers.drop_user_command("MapReuseCmdTwo")
+    helpers.drop_user_command("CasePath")
+    helpers.drop_user_command("Casepath")
     helpers.drop_user_command("BufferLineCloseLeft")
     helpers.drop_user_command("BufferLineCycleNext")
     helpers.drop_user_command("BufferLine")
@@ -179,6 +184,161 @@ describe("cmd_ux index cache", function()
     helpers.create_noarg_command("ShapeShiftCmd")
 
     assert.are.equal("leaf", index.describe_root("ShapeShiftCmd").kind)
+  end)
+
+  it("surfaces case-fold collisions and annotates ambiguous root results", function()
+    helpers.create_noarg_command("CasePath")
+    helpers.create_noarg_command("Casepath")
+
+    local collision = index.root_case_collision("CasePath")
+    assert.is_not_nil(collision)
+    ---@cast collision CmdUxCaseCollision
+    assert.are.same({ "CasePath", "Casepath" }, collision.paths)
+
+    local frontier = index.search_frontier("casepath")
+    assert.is_true(vim.tbl_contains(labels(frontier), "CasePath"))
+    assert.is_true(vim.tbl_contains(labels(frontier), "Casepath"))
+
+    local ambiguous
+    for _, item in ipairs(frontier) do
+      if item.label == "CasePath" then
+        ambiguous = item
+        break
+      end
+    end
+
+    assert.is_truthy(ambiguous)
+    assert.is_truthy(ambiguous.desc:find("case%-collision", 1) ~= nil)
+  end)
+
+  it("keeps shallow root-prefix search independent from deep semantic resolution", function()
+    local original_resolve = providers.resolve
+    ---@diagnostic disable-next-line: duplicate-set-field
+    providers.resolve = function()
+      error("root-prefix search should not resolve semantic descendants")
+    end
+
+    local ok, result = pcall(function()
+      return labels(index.search_frontier("w"))
+    end)
+
+    providers.resolve = original_resolve
+
+    if not ok then
+      error(result)
+    end
+
+    assert.is_true(vim.tbl_contains(result, "wall"))
+    assert.is_true(vim.tbl_contains(result, "wq"))
+    assert.is_true(vim.tbl_contains(result, "write"))
+  end)
+
+  it("does not warm semantic descendants on interactive root-only access", function()
+    local original_list_uis = vim.api.nvim_list_uis
+    local original_schedule_warm = semantic_search.schedule_warm
+    local scheduled = 0
+
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.api.nvim_list_uis = function()
+      return { { chan = 1 } }
+    end
+    ---@diagnostic disable-next-line: duplicate-set-field
+    semantic_search.schedule_warm = function()
+      scheduled = scheduled + 1
+    end
+
+    local ok, result = pcall(function()
+      return labels(index.search_frontier("w"))
+    end)
+
+    vim.api.nvim_list_uis = original_list_uis
+    semantic_search.schedule_warm = original_schedule_warm
+
+    if not ok then
+      error(result)
+    end
+
+    assert.are.equal(0, scheduled)
+    assert.is_true(vim.tbl_contains(result, "wall"))
+    assert.is_true(vim.tbl_contains(result, "wq"))
+    assert.is_true(vim.tbl_contains(result, "write"))
+  end)
+
+  it("reloads descendant search results from the persisted semantic cache", function()
+    helpers.create_prefix_family_command("PrefixFamilyVisibleCmd")
+
+    local initial = labels(index.search_frontier("copy-path"))
+    assert.is_true(vim.tbl_contains(initial, "PrefixFamilyVisibleCmd copy-path"))
+
+    semantic_search.invalidate()
+
+    local original_resolve = providers.resolve
+    ---@diagnostic disable-next-line: duplicate-set-field
+    providers.resolve = function()
+      error("persisted semantic search cache should avoid rebuilding descendants")
+    end
+
+    local ok, result = pcall(function()
+      return labels(index.search_frontier("copy-path"))
+    end)
+
+    providers.resolve = original_resolve
+
+    if not ok then
+      error(result)
+    end
+
+    assert.is_true(vim.tbl_contains(result, "PrefixFamilyVisibleCmd copy-path"))
+  end)
+
+  it("returns a loading frontier instead of synchronously building deep search on an interactive root miss", function()
+    helpers.create_prefix_family_command("PrefixFamilyVisibleCmd")
+    semantic_search.invalidate()
+
+    local original_list_uis = vim.api.nvim_list_uis
+    local original_ready = semantic_search.ready
+    local original_warming = semantic_search.warming
+    local original_schedule_warm = semantic_search.schedule_warm
+    local original_frontier = semantic_search.frontier
+    local scheduled = 0
+
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.api.nvim_list_uis = function()
+      return { { chan = 1 } }
+    end
+    ---@diagnostic disable-next-line: duplicate-set-field
+    semantic_search.ready = function()
+      return false
+    end
+    ---@diagnostic disable-next-line: duplicate-set-field
+    semantic_search.warming = function()
+      return false
+    end
+    ---@diagnostic disable-next-line: duplicate-set-field
+    semantic_search.schedule_warm = function()
+      scheduled = scheduled + 1
+    end
+    ---@diagnostic disable-next-line: duplicate-set-field
+    semantic_search.frontier = function()
+      error("interactive root miss should not synchronously build deep semantic search")
+    end
+
+    local ok, result = pcall(function()
+      return index.search_frontier("copy-path")
+    end)
+
+    vim.api.nvim_list_uis = original_list_uis
+    semantic_search.ready = original_ready
+    semantic_search.warming = original_warming
+    semantic_search.schedule_warm = original_schedule_warm
+    semantic_search.frontier = original_frontier
+
+    if not ok then
+      error(result)
+    end
+
+    assert.is_true(scheduled > 0)
+    assert.are.equal("Searching semantic descendants...", result[1].label)
   end)
 
   it("reuses live command maps across generic roots within one active index revision", function()

@@ -1,7 +1,7 @@
 set quiet
 
 dotctl := "DOTFILES_REPO_ROOT=" + justfile_directory() + " dotctl"
-lua_paths := "home/.config/nvim/lua home/.config/nvim/local-plugins/cmux-nav/lua home/.config/nvim/local-plugins/cmux-nav/tests home/.config/nvim/local-plugins/cmd-ux/lua home/.config/nvim/local-plugins/cmd-ux/tests home/.config/nvim/local-plugins/file-ops/lua home/.config/nvim/local-plugins/file-ops/tests home/.config/nvim/local-plugins/kit/lua"
+lua_paths := "home/.config/nvim/lua home/.config/nvim/local-plugins/cmux-nav/lua home/.config/nvim/local-plugins/cmux-nav/tests home/.config/nvim/local-plugins/file-ops/lua home/.config/nvim/local-plugins/file-ops/tests home/.config/nvim/local-plugins/kit/lua"
 cmux_nav_plugin_path := "home/.config/nvim/local-plugins/cmux-nav"
 cmd_ux_blocklist_path := "home/.config/nvim/cmd-ux-command-blocklist.txt"
 cmd_ux_plugin_path := "home/.config/nvim/local-plugins/cmd-ux"
@@ -896,7 +896,77 @@ cmd-ux-test:
 
     CMD_UX_TEST=1 XDG_CONFIG_HOME="$PWD/home/.config" XDG_CACHE_HOME="$cache_dir" nvim --headless -u NONE \
         --cmd "set runtimepath^=$plenary" \
-        -c "lua require('plenary.test_harness').test_directory('$plugin_root/tests/plenary', { minimal_init = '$plugin_root/tests/minimal_init.lua', sequential = true })"
+        -c "lua require('plenary.test_harness').test_directory('$plugin_root/tests/plenary', { minimal_init = '$plugin_root/tests/minimal_init.lua', sequential = true, timeout = 120000 })"
+
+cmd-ux-test-loop runs='3':
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    failures=0
+    runs="{{ runs }}"
+
+    for i in $(seq 1 "$runs"); do
+        printf 'run %d/%d: cmd-ux-test\n' "$i" "$runs"
+        if ! just --justfile "$PWD/justfile" cmd-ux-test; then
+            failures=$((failures + 1))
+        fi
+    done
+
+    if [ "$failures" -gt 0 ]; then
+        printf 'FAIL: %d/%d runs failed for cmd-ux-test\n' "$failures" "$runs" >&2
+        exit 1
+    fi
+
+    printf 'PASS: %d/%d runs passed for cmd-ux-test\n' "$runs" "$runs"
+
+cmd-ux-test-spec spec:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    plugin_root="$PWD/{{ cmd_ux_plugin_path }}"
+    plenary="${PLENARY_PATH:-$HOME/.local/share/nvim/lazy/plenary.nvim}"
+    cache_dir="$(mktemp -d)"
+    spec_dir="$(mktemp -d)"
+    state_dir="$(mktemp -d)"
+    trap 'rm -rf "$cache_dir" "$spec_dir" "$state_dir"' EXIT
+
+    if [ ! -d "$plenary" ]; then
+        printf 'FAIL: plenary.nvim not found at %s\n' "$plenary" >&2
+        exit 1
+    fi
+
+    spec_path="$plugin_root/tests/plenary/{{ spec }}"
+    if [ ! -f "$spec_path" ]; then
+        printf 'FAIL: spec not found at %s\n' "$spec_path" >&2
+        exit 1
+    fi
+
+    printf 'dofile([[%s]])\n' "$spec_path" > "$spec_dir/$(basename "$spec_path")"
+
+    CMD_UX_TEST=1 XDG_CONFIG_HOME="$PWD/home/.config" XDG_CACHE_HOME="$cache_dir" XDG_STATE_HOME="$state_dir" nvim --headless -u NONE \
+        --cmd "set runtimepath^=$plenary" \
+        -c "lua require('plenary.test_harness').test_directory('$spec_dir', { minimal_init = '$plugin_root/tests/minimal_init.lua', sequential = true, timeout = 120000 })"
+
+cmd-ux-test-spec-loop spec runs='20':
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    failures=0
+    runs="{{ runs }}"
+
+    for i in $(seq 1 "$runs"); do
+        printf 'run %d/%d: %s\n' "$i" "$runs" "{{ spec }}"
+        if ! just --justfile "$PWD/justfile" cmd-ux-test-spec "{{ spec }}"; then
+            failures=$((failures + 1))
+        fi
+    done
+
+    if [ "$failures" -gt 0 ]; then
+        printf 'FAIL: %d/%d runs failed for %s\n' "$failures" "$runs" "{{ spec }}" >&2
+        exit 1
+    fi
+
+    printf 'PASS: %d/%d runs passed for %s\n' "$runs" "$runs" "{{ spec }}"
 
 cmux-nav-test:
     #!/usr/bin/env bash
@@ -957,6 +1027,124 @@ cmd-ux-bench-finder:
     CMD_UX_TEST=1 XDG_CONFIG_HOME="$PWD/home/.config" XDG_CACHE_HOME="$cache_dir" nvim --headless -u NONE \
         -c "lua dofile('$plugin_root/tests/minimal_init.lua')" \
         -c "lua dofile('$plugin_root/tests/benchmarks/finder_bench.lua')"
+
+cmd-ux-proof-wq-regression:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    plugin_rel="{{ cmd_ux_plugin_path }}"
+    plenary="${PLENARY_PATH:-$HOME/.local/share/nvim/lazy/plenary.nvim}"
+    baseline_dir="$(mktemp -d /tmp/cmdux-retro-XXXXXX)"
+    current_cache="$(mktemp -d)"
+    baseline_cache="$(mktemp -d)"
+    script="$(mktemp /tmp/cmdux-retro-script-XXXXXX.lua)"
+
+    cleanup() {
+        git worktree remove --force "$baseline_dir" >/dev/null 2>&1 || rm -rf "$baseline_dir"
+        rm -rf "$current_cache" "$baseline_cache" "$script"
+    }
+    trap cleanup EXIT
+
+    if [ ! -d "$plenary" ]; then
+        printf 'FAIL: plenary.nvim not found at %s\n' "$plenary" >&2
+        exit 1
+    fi
+
+    printf '%s\n' \
+        'local plugin_root = assert(vim.env.CMD_UX_PLUGIN_ROOT, "CMD_UX_PLUGIN_ROOT is required")' \
+        'dofile(plugin_root .. "/tests/minimal_init.lua")' \
+        '' \
+        'local core = require("cmd_ux.core")' \
+        'local index = require("cmd_ux.index")' \
+        'local semantic_search_ok, semantic_search = pcall(require, "cmd_ux.lib.semantic_search")' \
+        'local helpers = require("tests.plenary.helpers")' \
+        '' \
+        'local uv = vim.uv or vim.loop' \
+        '' \
+        'local function elapsed_ms(started)' \
+        '  return (uv.hrtime() - started) / 1e6' \
+        'end' \
+        '' \
+        'local function labels(items)' \
+        '  return vim.tbl_map(function(item)' \
+        '    return item.label' \
+        '  end, items)' \
+        'end' \
+        '' \
+        'helpers.ensure_setup()' \
+        '' \
+        'local original_list_uis = vim.api.nvim_list_uis' \
+        'local original_schedule_warm = semantic_search_ok and semantic_search.schedule_warm or nil' \
+        'local scheduled = 0' \
+        '' \
+        '---@diagnostic disable-next-line: duplicate-set-field' \
+        'vim.api.nvim_list_uis = function()' \
+        '  return { { chan = 1 } }' \
+        'end' \
+        'if semantic_search_ok then' \
+        '  ---@diagnostic disable-next-line: duplicate-set-field' \
+        '  semantic_search.schedule_warm = function()' \
+        '    scheduled = scheduled + 1' \
+        '  end' \
+        'end' \
+        '' \
+        'local wq_started = uv.hrtime()' \
+        'local wq_state = core.resolve_line("wq")' \
+        'local wq_ms = elapsed_ms(wq_started)' \
+        '' \
+        'local root_started = uv.hrtime()' \
+        'local root_items = type(index.search_frontier) == "function" and index.search_frontier("w") or {}' \
+        'local root_ms = elapsed_ms(root_started)' \
+        'local root_labels = labels(root_items)' \
+        '' \
+        'vim.api.nvim_list_uis = original_list_uis' \
+        'if semantic_search_ok then' \
+        '  semantic_search.schedule_warm = original_schedule_warm' \
+        'end' \
+        '' \
+        'print(' \
+        '  ("wq ms=%.3f frontier=%d kind=%s provider=%s executable=%s"):format(' \
+        '    wq_ms,' \
+        '    #wq_state.frontier,' \
+        '    wq_state.kind,' \
+        '    wq_state.provider,' \
+        '    tostring(wq_state.executable)' \
+        '  )' \
+        ')' \
+        'print(' \
+        '  ("root-w ms=%.3f scheduled=%s matches=%d has_wq=%s has_write=%s"):format(' \
+        '    root_ms,' \
+        '    (semantic_search_ok and type(index.search_frontier) == "function") and tostring(scheduled) or "unsupported",' \
+        '    #root_labels,' \
+        '    tostring(vim.tbl_contains(root_labels, "wq")),' \
+        '    tostring(vim.tbl_contains(root_labels, "write"))' \
+        '  )' \
+        ')' \
+        >"$script"
+
+    git worktree add --detach "$baseline_dir" HEAD >/dev/null
+
+    run_probe() {
+        local repo_root="$1"
+        local cache_dir="$2"
+        local label="$3"
+
+        (
+            cd "$repo_root"
+            CMD_UX_TEST=1 \
+            CMD_UX_PLUGIN_ROOT="$repo_root/$plugin_rel" \
+            XDG_CONFIG_HOME="$repo_root/home/.config" \
+            XDG_CACHE_HOME="$cache_dir" \
+            nvim --headless -u NONE \
+                --cmd "set runtimepath^=$plenary" \
+                -c "lua dofile('$script')" \
+                -c "qa!"
+        ) 2>&1 | sed "s/^/$label /"
+    }
+
+    run_probe "$PWD" "$current_cache" "working-tree:"
+    printf '\n'
+    run_probe "$baseline_dir" "$baseline_cache" "head:"
 
 hooks-install:
     bash scripts/git-hooks/install-pre-commit.sh

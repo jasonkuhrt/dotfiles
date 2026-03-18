@@ -18,6 +18,12 @@ local resolution_kinds = {
   arg = true,
 }
 
+local resolution_modes = {
+  default = true,
+  ambiguity = true,
+  miss_recovery = true,
+}
+
 local safety_kinds = {
   safe = true,
   reversible = true,
@@ -34,6 +40,11 @@ local safety_kinds = {
 ---| "root"
 ---| "unsupported"
 ---| CommandKind
+
+---@alias ResolutionMode
+---| "default"
+---| "ambiguity"
+---| "miss_recovery"
 
 ---@class CommandSlot
 ---@field name string
@@ -142,6 +153,7 @@ local safety_kinds = {
 
 ---@class ResolutionState
 ---@field kind ResolutionKind
+---@field mode ResolutionMode
 ---@field root? string
 ---@field root_input? string
 ---@field desc string
@@ -170,6 +182,7 @@ local safety_kinds = {
 
 ---@class ResolutionStateSpec
 ---@field kind ResolutionKind
+---@field mode? ResolutionMode
 ---@field root? string
 ---@field root_input? string
 ---@field desc? string
@@ -198,6 +211,7 @@ local safety_kinds = {
 
 ---@class ResolutionStatePatch
 ---@field kind? ResolutionKind
+---@field mode? ResolutionMode
 ---@field root? string
 ---@field root_input? string
 ---@field desc? string
@@ -534,6 +548,7 @@ function M.state(spec)
 
   return {
     kind = normalize_kind(spec.kind, resolution_kinds, "resolution kind"),
+    mode = normalize_kind(spec.mode or "default", resolution_modes, "resolution mode"),
     root = optional_string(spec.root, "state.root"),
     root_input = optional_string(spec.root_input, "state.root_input"),
     desc = normalize_string(spec.desc, "state.desc"),
@@ -572,6 +587,7 @@ function M.state_from_node(node, spec)
   ---@type ResolutionStateSpec
   local next_state = {
     kind = spec.kind or normalized.kind,
+    mode = spec.mode or "default",
     root = spec.root,
     root_input = spec.root_input,
     desc = spec.desc ~= nil and spec.desc or normalized.desc,
@@ -617,6 +633,7 @@ function M.root_state(spec)
   ---@type ResolutionStateSpec
   local next_state = {
     kind = "root",
+    mode = spec.mode or "default",
     root = spec.root,
     root_input = spec.root_input,
     desc = spec.desc or "Command root",
@@ -654,6 +671,7 @@ function M.unsupported_state(reason, spec)
   ---@type ResolutionStateSpec
   local next_state = {
     kind = "unsupported",
+    mode = spec.mode or "default",
     root = spec.root,
     root_input = spec.root_input,
     desc = spec.desc or reason,

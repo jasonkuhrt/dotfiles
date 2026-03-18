@@ -10,6 +10,7 @@
 
 local core = require("cmd_ux.core")
 local index = require("cmd_ux.index")
+local semantic_search = require("cmd_ux.lib.semantic_search")
 local util = require("cmd_ux.util")
 local helpers = require("tests.plenary.helpers")
 
@@ -97,6 +98,27 @@ local function print_result(name, iterations, metrics)
   )
 end
 
+---@param fn fun()
+local function with_interactive_ui(fn)
+  local original_list_uis = vim.api.nvim_list_uis
+  local original_schedule = vim.schedule
+  ---@diagnostic disable-next-line: duplicate-set-field
+  vim.api.nvim_list_uis = function()
+    return { { chan = 1 } }
+  end
+  ---@diagnostic disable-next-line: duplicate-set-field
+  vim.schedule = function() end
+
+  local ok, err = pcall(fn)
+
+  vim.api.nvim_list_uis = original_list_uis
+  vim.schedule = original_schedule
+
+  if not ok then
+    error(err)
+  end
+end
+
 --- Simulates progressive typing: "B", "Bu", "Buf", "Buff", "Buffe", "Buffer"
 --- Returns per-character timing samples.
 ---@param prefix string  -- session prefix (e.g. "" for root, "Tab " for namespace)
@@ -147,6 +169,31 @@ helpers.sync_cmd_ux()
 local payload = index.get()
 print(("cmd_ux finder benchmark (%d roots)"):format(#payload.roots))
 print(string.rep("─", 100))
+
+-- ── 0. Cold single-keystroke root queries ───────────────────────────
+
+print("\n[0] Cold single-keystroke root queries (fresh semantic-search state)")
+
+local cold_root_w = benchmark(10, function()
+  index.refresh()
+  simulate_finder_call({ prefix = "", pending = "", trailing_space = false }, "w")
+end)
+print_result('cold finder "w" from root', 10, cold_root_w)
+
+local cold_root_path = benchmark(10, function()
+  index.refresh()
+  simulate_finder_call({ prefix = "", pending = "", trailing_space = false }, "path")
+end)
+print_result('cold finder "path" from root', 10, cold_root_path)
+
+local interactive_cold_root_path = benchmark(10, function()
+  index.refresh()
+  semantic_search.invalidate()
+  with_interactive_ui(function()
+    simulate_finder_call({ prefix = "", pending = "", trailing_space = false }, "path")
+  end)
+end)
+print_result('interactive cold finder "path"', 10, interactive_cold_root_path)
 
 -- ── 1. Core resolve_line (baseline, no deep-copy) ───────────────────
 

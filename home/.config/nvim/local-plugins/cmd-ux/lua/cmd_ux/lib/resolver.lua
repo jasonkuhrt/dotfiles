@@ -67,7 +67,7 @@ end
 ---@param prefix string
 ---@return CommandFrontierItem[]
 local function root_frontier(prefix)
-  return index.frontier(prefix)
+  return index.search_frontier(prefix)
 end
 
 ---@param frontier CommandFrontierItem[]?
@@ -121,9 +121,30 @@ function M.resolve_line(line)
     return types.finalize_state(state)
   end
 
+  local root_collision = index.root_case_collision(parsed.root_input)
+  if root_collision and #parsed.tokens == 1 and not parsed.trailing_space then
+    local state = types.root_state({
+      mode = "ambiguity",
+      help = table.concat({
+        "Choose a command or semantic path.",
+        "",
+        ("Case-fold collision detected: %s."):format(table.concat(root_collision.paths, ", ")),
+        "Pick the exact variant you want before executing or descending.",
+      }, "\n"),
+      refusal_reason = "Resolve the case-fold collision by choosing an exact variant.",
+      root_input = parsed.root_input,
+      frontier = root_frontier(parsed.root_input),
+      pending = parsed.root_input,
+      raw = line,
+    })
+    return types.finalize_state(state)
+  end
+
   if not index.has(parsed.root_input) then
     local state = types.root_state({
-      help = "Choose a command.",
+      mode = "miss_recovery",
+      help = "Choose a command or semantic path.",
+      refusal_reason = "Command does not exist yet. Pick a recovery path or keep typing.",
       root_input = parsed.root_input,
       frontier = root_frontier(parsed.root_input),
       pending = parsed.root_input,
@@ -174,11 +195,30 @@ function M.accept_token(state, token)
   return M.resolve_line(next_line)
 end
 
+---@param root string
+---@return ResolutionState
+local function accept_exact_root_choice(root)
+  local resolved = providers.resolve(root, snapshot(root, {}, "", false, root))
+  resolved.root = root
+  resolved.accepted = {}
+  resolved.pending = ""
+  resolved.trailing_space = false
+  resolved.raw = root
+  return types.finalize_state(resolved)
+end
+
 ---@param state ResolutionState
 ---@param choice string|CommandFrontierItem
 ---@return ResolutionState
 function M.accept_choice(state, choice)
   if type(choice) == "table" then
+    if not state.root then
+      local accept_line = choice.accept_line or choice.label or ""
+      if accept_line ~= "" and index.root_case_collision(accept_line) then
+        return accept_exact_root_choice(accept_line)
+      end
+    end
+
     if choice.accept_line and choice.accept_line ~= "" then
       return M.resolve_line(choice.accept_line)
     end

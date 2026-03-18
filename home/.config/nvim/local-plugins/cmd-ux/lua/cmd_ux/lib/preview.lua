@@ -1,4 +1,5 @@
 local strings = require("kit.strings")
+local index = require("cmd_ux.index")
 local learning = require("cmd_ux.lib.learning")
 
 local M = {}
@@ -14,6 +15,9 @@ function M.build(state)
   end
 
   lines[#lines + 1] = "Kind: " .. (state.kind or "unknown")
+  if state.mode and state.mode ~= "default" then
+    lines[#lines + 1] = "Mode: " .. state.mode
+  end
   lines[#lines + 1] = "Executable now: " .. strings.bool_text(state.executable == true)
   lines[#lines + 1] = "Safety: " .. (state.safety or "safe")
 
@@ -27,6 +31,15 @@ function M.build(state)
     lines[#lines + 1] = ("Shortcut lane: %d promoted path%s"):format(shortcut_count, shortcut_count == 1 and "" or "s")
   end
 
+  if not state.root and (state.pending or "") ~= "" then
+    local collision = index.root_case_collision(state.pending)
+    if collision then
+      lines[#lines + 1] = "Case collision detected in root search:"
+      lines[#lines + 1] = "- " .. table.concat(collision.paths, " <> ")
+      lines[#lines + 1] = "- See `Cmdux collisions` for the full audit."
+    end
+  end
+
   for _, line in ipairs(learning.preview_lines(state)) do
     lines[#lines + 1] = line
   end
@@ -34,8 +47,8 @@ function M.build(state)
   if state.slots and #state.slots > 0 then
     lines[#lines + 1] = ""
     lines[#lines + 1] = "Slots:"
-    for index, slot in ipairs(state.slots) do
-      local value = state.slot_values and state.slot_values[index] or ""
+    for slot_index, slot in ipairs(state.slots) do
+      local value = state.slot_values and state.slot_values[slot_index] or ""
       local detail = slot.desc ~= "" and (" - " .. slot.desc) or ""
       lines[#lines + 1] = ("- <%s:%s>%s"):format(slot.name, slot.kind ~= "" and slot.kind or "value", detail)
       if value ~= "" then

@@ -18,6 +18,7 @@ describe("cmd_ux semantic decisions", function()
   before_each(function()
     helpers.ensure_setup()
     helpers.drop_user_command("LeafCmd")
+    helpers.drop_user_command("HybridFileCmd")
     helpers.drop_user_command("NeedArgCmd")
     helpers.drop_user_command("TestCmdSpace")
     helpers.drop_user_command("OptionalTestCmd")
@@ -27,6 +28,8 @@ describe("cmd_ux semantic decisions", function()
     helpers.drop_user_command("NestedRepeatCmd")
     helpers.drop_user_command("CyclicStructuredCmd")
     helpers.drop_user_command("PrefixFamilyCmd")
+    helpers.drop_user_command("CasePath")
+    helpers.drop_user_command("Casepath")
     helpers.drop_user_command("EnumChoiceCmd")
     helpers.drop_user_command("IndexVisibleCmd")
     helpers.sync_cmd_ux()
@@ -34,6 +37,7 @@ describe("cmd_ux semantic decisions", function()
 
   after_each(function()
     helpers.drop_user_command("LeafCmd")
+    helpers.drop_user_command("HybridFileCmd")
     helpers.drop_user_command("NeedArgCmd")
     helpers.drop_user_command("TestCmdSpace")
     helpers.drop_user_command("OptionalTestCmd")
@@ -43,6 +47,8 @@ describe("cmd_ux semantic decisions", function()
     helpers.drop_user_command("NestedRepeatCmd")
     helpers.drop_user_command("CyclicStructuredCmd")
     helpers.drop_user_command("PrefixFamilyCmd")
+    helpers.drop_user_command("CasePath")
+    helpers.drop_user_command("Casepath")
     helpers.drop_user_command("EnumChoiceCmd")
     helpers.drop_user_command("IndexVisibleCmd")
     helpers.sync_cmd_ux()
@@ -76,6 +82,41 @@ describe("cmd_ux semantic decisions", function()
     eq({ type = "execute", line = "LeafCmd" }, action(state, "enter"))
     eq({ type = "noop" }, action(state, "tab"))
     assert.is_false(core.should_intercept_space(state))
+  end)
+
+  it("keeps exact optional generic roots executable without eagerly loading arg completions", function()
+    vim.api.nvim_create_user_command("HybridFileCmd", function() end, {
+      nargs = "?",
+      desc = "Hybrid file completion command for cmd-ux tests",
+      complete = "file",
+    })
+    helpers.sync_cmd_ux()
+
+    local state = core.resolve_line("HybridFileCmd")
+
+    eq("generic", state.provider)
+    eq("hybrid", state.kind)
+    eq({}, state.frontier)
+    eq({ type = "execute", line = "HybridFileCmd" }, action(state, "enter"))
+    eq({ type = "advance", line = "HybridFileCmd " }, action(state, "tab"))
+    eq({ type = "advance", line = "HybridFileCmd " }, action(state, "space"))
+
+    local spaced = core.resolve_line("HybridFileCmd ")
+    assert.is_true(#spaced.frontier > 0)
+  end)
+
+  it("keeps exact builtin file-style roots cheap until a space requests completions", function()
+    local state = core.resolve_line("wq")
+
+    eq("generic", state.provider)
+    eq("hybrid", state.kind)
+    eq({}, state.frontier)
+    eq({ type = "execute", line = "wq" }, action(state, "enter"))
+    eq({ type = "advance", line = "wq " }, action(state, "tab"))
+    eq({ type = "advance", line = "wq " }, action(state, "space"))
+
+    local spaced = core.resolve_line("wq ")
+    assert.is_true(#spaced.frontier > 0)
   end)
 
   it("treats required named generic roots as namespaces", function()
@@ -284,6 +325,81 @@ describe("cmd_ux semantic decisions", function()
         return item.label
       end, state.frontier)
     )
+  end)
+
+  it("finds downstream semantic paths from root search", function()
+    helpers.create_prefix_family_command("PrefixFamilyCmd")
+    helpers.sync_cmd_ux()
+
+    local state = core.resolve_line("path")
+    eq("root", state.kind)
+    eq("miss_recovery", state.mode)
+    eq(
+      { type = "refuse", message = "Command does not exist yet. Pick a recovery path or keep typing." },
+      action(state, "enter")
+    )
+    assert.is_truthy(core.preview_text(state):find("Mode: miss_recovery", 1, true))
+    assert.is_true(vim.tbl_contains(
+      vim.tbl_map(function(item)
+        return item.label
+      end, state.frontier),
+      "PrefixFamilyCmd copy-path"
+    ))
+    assert.is_true(vim.tbl_contains(
+      vim.tbl_map(function(item)
+        return item.label
+      end, state.frontier),
+      "PrefixFamilyCmd copy-path-relative"
+    ))
+
+    local target
+    for _, item in ipairs(state.frontier) do
+      if item.label == "PrefixFamilyCmd copy-path" then
+        target = item
+        break
+      end
+    end
+
+    eq({ type = "advance", line = "PrefixFamilyCmd copy-path " }, choice(state, target, "enter"))
+  end)
+
+  it("keeps exact case-colliding roots in search mode until a variant is chosen", function()
+    helpers.create_noarg_command("CasePath")
+    helpers.create_noarg_command("Casepath")
+    helpers.sync_cmd_ux()
+
+    local state = core.resolve_line("CasePath")
+    eq("root", state.kind)
+    eq("ambiguity", state.mode)
+    eq("CasePath", state.pending)
+    assert.is_truthy(state.help:find("Case%-fold collision detected", 1) ~= nil)
+    eq(
+      { type = "refuse", message = "Resolve the case-fold collision by choosing an exact variant." },
+      action(state, "enter")
+    )
+    assert.is_truthy(core.preview_text(state):find("Mode: ambiguity", 1, true))
+    assert.is_true(vim.tbl_contains(
+      vim.tbl_map(function(item)
+        return item.label
+      end, state.frontier),
+      "CasePath"
+    ))
+    assert.is_true(vim.tbl_contains(
+      vim.tbl_map(function(item)
+        return item.label
+      end, state.frontier),
+      "Casepath"
+    ))
+
+    local target
+    for _, item in ipairs(state.frontier) do
+      if item.label == "CasePath" then
+        target = item
+        break
+      end
+    end
+
+    eq({ type = "execute", line = "CasePath" }, choice(state, target, "enter"))
   end)
 
   it("executes the final structured generic leaf when the path is complete", function()

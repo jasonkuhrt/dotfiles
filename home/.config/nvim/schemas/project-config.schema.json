@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/jasonkuhrt/dotfiles/main/home/.config/nvim/schemas/project-config.schema.json",
+  "title": "Neovim Project Config",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri-reference",
+      "description": "Optional schema URI for editor autocomplete and validation."
+    },
+    "snacks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "picker": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "exclude": {
+              "type": "array",
+              "description": "Glob patterns excluded from Snacks files, grep, and explorer sources for this project.",
+              "items": {
+                "type": "string"
+              },
+              "default": []
+            }
+          }
+        }
+      }
+    }
+  }
+}

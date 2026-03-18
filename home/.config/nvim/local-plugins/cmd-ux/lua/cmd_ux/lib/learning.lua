@@ -315,6 +315,19 @@ function M.explain_lines(line)
   return reports.explain_lines(line)
 end
 
+---@param state ResolutionState
+---@param item CommandFrontierItem
+---@return integer, integer
+function M.item_score_for_tests(state, item)
+  return item_score(state, item)
+end
+
+---@param state ResolutionState
+---@param item CommandFrontierItem
+function M.item_score_components_for_tests(state, item)
+  return item_score_components(state, item)
+end
+
 ---@param roots string[]
 ---@return string[]
 function M.stats_lines(roots)

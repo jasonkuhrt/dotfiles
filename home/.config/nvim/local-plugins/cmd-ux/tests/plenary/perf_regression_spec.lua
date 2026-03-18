@@ -12,6 +12,7 @@ local core = require("cmd_ux.core")
 local helpers = require("tests.plenary.helpers")
 local index = require("cmd_ux.index")
 local learning = require("cmd_ux.lib.learning")
+local semantic_search = require("cmd_ux.lib.semantic_search")
 local resolver = require("cmd_ux.lib.resolver")
 local util = require("cmd_ux.util")
 
@@ -43,6 +44,8 @@ describe("cmd_ux perf regression (" .. root_count .. " roots)", function()
   local FINDER_ROOT_CEILING_MS = 80
   local FINDER_PARTIAL_CEILING_MS = 80
   local RESOLVE_ROOT_CEILING_MS = 50
+  local COLD_ROOT_PREFIX_CEILING_MS = 80
+  local INTERACTIVE_ROOT_MISS_CEILING_MS = 80
 
   --- Run fn N times after a warmup call, return median elapsed ms.
   ---@param iterations integer
@@ -59,6 +62,47 @@ describe("cmd_ux perf regression (" .. root_count .. " roots)", function()
     end
     table.sort(samples)
     return samples[math.ceil(iterations / 2)]
+  end
+
+  --- Run fn N times from a cold semantic-search state and return median elapsed ms.
+  ---@param iterations integer
+  ---@param fn fun()
+  ---@return number median_ms
+  local function median_cold_of(iterations, fn)
+    local samples = {}
+    for i = 1, iterations do
+      index.refresh()
+      helpers.reset_learning()
+      collectgarbage("collect")
+      local t0 = uv.hrtime()
+      fn()
+      samples[i] = helpers.elapsed_ms(t0)
+    end
+    table.sort(samples)
+    return samples[math.ceil(iterations / 2)]
+  end
+
+  --- Run fn while simulating an interactive UI without letting scheduled
+  --- background warming block the benchmark itself.
+  ---@param fn fun()
+  local function with_interactive_ui(fn)
+    local original_list_uis = vim.api.nvim_list_uis
+    local original_schedule = vim.schedule
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.api.nvim_list_uis = function()
+      return { { chan = 1 } }
+    end
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.schedule = function() end
+
+    local ok, err = pcall(fn)
+
+    vim.api.nvim_list_uis = original_list_uis
+    vim.schedule = original_schedule
+
+    if not ok then
+      error(err)
+    end
   end
 
   -- ── Tests ───────────────────────────────────────────────────────
@@ -87,6 +131,38 @@ describe("cmd_ux perf regression (" .. root_count .. " roots)", function()
       ("resolve_line('') took %.1fms (ceiling %dms)"):format(ms, RESOLVE_ROOT_CEILING_MS)
     )
   end)
+
+  it("cold root-prefix query ('w') after refresh under " .. COLD_ROOT_PREFIX_CEILING_MS .. "ms", function()
+    local ms = median_cold_of(5, function()
+      core.resolve_line("w")
+    end)
+
+    assert.is_true(
+      ms < COLD_ROOT_PREFIX_CEILING_MS,
+      ("cold resolve_line('w') took %.1fms (ceiling %dms)"):format(ms, COLD_ROOT_PREFIX_CEILING_MS)
+    )
+  end)
+
+  it(
+    "interactive root-miss query ('path') returns a loading frontier under " .. INTERACTIVE_ROOT_MISS_CEILING_MS .. "ms",
+    function()
+      local ms = median_cold_of(5, function()
+        semantic_search.invalidate()
+        with_interactive_ui(function()
+          local state = core.resolve_line("path")
+          assert.are.equal("Searching semantic descendants...", state.frontier[1].label)
+        end)
+      end)
+
+      assert.is_true(
+        ms < INTERACTIVE_ROOT_MISS_CEILING_MS,
+        ("interactive cold resolve_line('path') took %.1fms (ceiling %dms)"):format(
+          ms,
+          INTERACTIVE_ROOT_MISS_CEILING_MS
+        )
+      )
+    end
+  )
 
   it("full finder path (empty root) under " .. FINDER_ROOT_CEILING_MS .. "ms", function()
     local ms = median_of(20, function()

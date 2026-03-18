@@ -865,26 +865,24 @@ function M.build(env)
       return state
     end
 
-    -- Cache expensive lookups for this call: context vector and project ID
-    -- both walk up to .git via vim.fs.find — invariant across all items.
-    scoring_ctx.vector = env.current_context_vector()
-    scoring_ctx.project_id = env.current_project_id()
+    local typed_root_search = not state.root and (state.pending or "") ~= ""
 
-    local ranked_state = vim.tbl_extend("force", {}, state)
-    local frontier = state.frontier
+    ---@param frontier CommandFrontierItem[]
+    ---@param limit integer
+    ---@return CommandFrontierItem[]
+    local function sort_frontier_prefix(frontier, limit)
+      if limit <= 1 then
+        return frontier
+      end
 
-    if #frontier <= RANK_THRESHOLD then
-      -- Shallow array copy: sort reorders but never mutates individual items,
-      -- so we only need to copy references, not deep-copy item tables.
       local sorted = {}
       for i, item in ipairs(frontier) do
         sorted[i] = item
       end
 
-      -- Schwartzian transform: pre-compute scores once per item, then sort
-      -- by cached values. Avoids O(n log n) repeated item_score calls.
       local scored = {}
-      for i, item in ipairs(sorted) do
+      for i = 1, limit do
+        local item = sorted[i]
         local s, r = item_score(state, item)
         scored[i] = { item = item, score = s, recency = r, index = i }
       end
@@ -905,11 +903,42 @@ function M.build(env)
       for i, entry in ipairs(scored) do
         sorted[i] = entry.item
       end
-      frontier = sorted
+
+      return sorted
+    end
+
+    -- Cache expensive lookups for this call: context vector and project ID
+    -- both walk up to .git via vim.fs.find — invariant across all items.
+    scoring_ctx.vector = env.current_context_vector()
+    scoring_ctx.project_id = env.current_project_id()
+
+    local ranked_state = vim.tbl_extend("force", {}, state)
+    local frontier = state.frontier
+
+    if typed_root_search then
+      local prefix = state.pending or ""
+      local root_prefix_count = 0
+      for _, item in ipairs(frontier) do
+        if
+          type(item.label) == "string"
+          and item.label:find(" ", 1, true) == nil
+          and item.label:find("^" .. vim.pesc(prefix)) ~= nil
+        then
+          root_prefix_count = root_prefix_count + 1
+        else
+          break
+        end
+      end
+
+      if root_prefix_count <= RANK_THRESHOLD then
+        frontier = sort_frontier_prefix(frontier, root_prefix_count)
+      end
+    elseif #frontier <= RANK_THRESHOLD then
+      frontier = sort_frontier_prefix(frontier, #frontier)
     end
     -- else: keep index order for large frontiers — users type to narrow first
 
-    local promotions = promoted_items(state)
+    local promotions = typed_root_search and {} or promoted_items(state)
     if #promotions > 0 then
       for _, item in ipairs(frontier) do
         promotions[#promotions + 1] = item

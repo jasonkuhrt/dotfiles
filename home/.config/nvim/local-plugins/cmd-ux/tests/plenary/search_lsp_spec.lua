@@ -101,7 +101,7 @@ describe("cmd_ux search and lsp namespaces", function()
   end)
 
   it("lsp exposes a rich semantic tree and refuses unsupported leaves", function()
-    local state = core.resolve_line("Lsp")
+    local state = core.resolve_line("Lsp ")
     eq({ "diagnostics", "hover", "jump", "refactor", "references", "symbols" }, labels(state.frontier))
     eq({ "refactor", "references" }, lsp_provider.complete("Lsp re"))
     eq({ "action" }, lsp_provider.complete("Lsp refactor ac"))

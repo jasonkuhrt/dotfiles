@@ -1,0 +1,2 @@
+#!/bin/sh
+exec cmux browser open "$1"

@@ -37,6 +37,9 @@ set --export SLASH_COMMAND_TOOL_CHAR_BUDGET 30000
 # Docs: https://code.claude.com/docs/en/agent-teams
 set --export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS 1
 
+# Plannotator: open in cmux browser instead of OS default
+set --export PLANNOTATOR_BROWSER "$HOME/.local/bin/plannotator-browser"
+
 # Direnv: lazy-load only when needed (saves ~130ms startup)
 # Auto-activates if .envrc exists in current dir, otherwise run `direnv-init`
 set -gx DIRENV_LOG_FORMAT ""  # Silence "loading" messages

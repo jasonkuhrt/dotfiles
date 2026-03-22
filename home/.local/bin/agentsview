@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+binary="${HOME}/.local/share/agentsview/bin/agentsview"
+
+if [ ! -x "$binary" ]; then
+    printf 'agentsview is not installed yet. Run: just agentsview-install\n' >&2
+    exit 1
+fi
+
+exec "$binary" "$@"

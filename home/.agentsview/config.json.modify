@@ -1,0 +1,23 @@
+#!/bin/bash
+# Merge repo-managed agentsview settings with machine-local runtime keys.
+#
+# Managed keys (from config.json): applied on deploy.
+# Preserved keys (generated or edited locally): cursor_secret, auth_token,
+# github_token, and any other runtime-only settings the app writes.
+
+set -euo pipefail
+
+managed_json="$(cat "$DOTCTL_SOURCE")"
+
+if [ -t 0 ]; then
+    current_json='{}'
+else
+    current_contents="$(cat)"
+    if [ -z "$current_contents" ]; then
+        current_json='{}'
+    else
+        current_json="$current_contents"
+    fi
+fi
+
+printf '%s' "$current_json" | jq --argjson managed "$managed_json" '. * $managed'

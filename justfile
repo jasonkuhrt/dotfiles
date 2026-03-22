@@ -1311,6 +1311,21 @@ fn-wispr-qa:
 
     printf "\nResult: PASS\n"
 
+
+agentsview-install:
+    DOTFILES_ROOT={{ justfile_directory() }} bash scripts/setup/after/onchange/19-agentsview.sh
+
+agentsview-version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    printf 'Pinned: %s\n' "$(tr -d '[:space:]' < scripts/data/agentsview-version.txt)"
+    if [ -x "$HOME/.local/share/agentsview/bin/agentsview" ]; then
+        "$HOME/.local/share/agentsview/bin/agentsview" version
+    else
+        printf 'Installed: not installed\n'
+    fi
+
 [private]
 brew:
     brew bundle --file=scripts/data/Brewfile

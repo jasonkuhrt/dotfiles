@@ -50,6 +50,8 @@ Use `.spread` when an application writes runtime state alongside your config (lo
 ```
 home/
   .aws/                  # dir-symlink (contains credentials.age)
+  .agentsview/           # spread (shared config, local DB/uploads/runtime keys)
+    .spread
   .bookmarks/            # dir-symlink (bookmarks sync config)
   .claude/               # spread (skills, rules, hooks — runtime writes transcripts/)
     .spread
@@ -98,6 +100,7 @@ After scripts configure the system:
 - `12-skills-sync.sh` — Claude Code skill installation
 - `13-git-ssh.sh` — SSH key for GitHub
 - `14-neovim-plugins.sh` — Neovim plugin install via lazy.nvim
+- `19-agentsview.sh` — pinned `agentsview` CLI install into `~/.local/share/agentsview`
 
 ## Heal Agent
 

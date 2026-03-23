@@ -3,10 +3,13 @@ name: cmux
 description: >-
   Reference for cmux, the terminal app built on libghostty. Use whenever the user
   mentions cmux, terminal tabs, surfaces, workspaces, splits, pane navigation, the
-  cmux CLI, cmux-mode, or terminal multiplexer operations. Also use when working with
-  Ghostty config (cmux reads it), Karabiner cmux drive mode, or Fish/Neovim keybindings
-  for terminal navigation. Even if the user just says "tabs" or "switch tabs" in a
-  terminal context, this skill applies.
+  cmux CLI, cmux-mode, or terminal multiplexer operations. Critical: always consult
+  this skill before running any cmux command that creates windows or workspaces —
+  `new-window` (OS window) and `new-workspace` (sidebar tab) are different commands
+  and confusing them is the most common mistake. Also use when working with Ghostty
+  config (cmux reads it), Karabiner cmux drive mode, or Fish/Neovim keybindings for
+  terminal navigation. Even if the user just says "open a window", "new tab", or
+  "switch tabs" in a terminal context, this skill applies.
 ---
 
 # cmux Reference
@@ -44,12 +47,38 @@ cmux --json identify       # structured output with caller + focused surface inf
 
 ### Environment Variables (auto-set in cmux terminals)
 
-| Variable | Purpose |
-|---|---|
-| `CMUX_WORKSPACE_ID` | Default for `--workspace` in all commands |
-| `CMUX_SURFACE_ID` | Default for `--surface` |
-| `CMUX_TAB_ID` | Default for `--tab` in `tab-action`/`rename-tab` |
-| `CMUX_SOCKET_PATH` | Override socket path (default `/tmp/cmux.sock`) |
+| Variable            | Purpose                                          |
+| ------------------- | ------------------------------------------------ |
+| `CMUX_WORKSPACE_ID` | Default for `--workspace` in all commands        |
+| `CMUX_SURFACE_ID`   | Default for `--surface`                          |
+| `CMUX_TAB_ID`       | Default for `--tab` in `tab-action`/`rename-tab` |
+| `CMUX_SOCKET_PATH`  | Override socket path (default `/tmp/cmux.sock`)  |
+
+## Creating Windows vs Workspaces
+
+These are **different commands** — confusing them is the most common mistake.
+
+| User says                              | Command                           | What it does                                        |
+| -------------------------------------- | --------------------------------- | --------------------------------------------------- |
+| "open a new window", "new cmux window" | `cmux new-window`                 | Opens a new **OS-level window**                     |
+| "new workspace", "new tab" (sidebar)   | `cmux new-workspace --cwd <path>` | Opens a new **workspace tab** in the current window |
+
+```bash
+cmux new-window                        # new OS window
+cmux new-workspace --cwd /some/path    # new sidebar workspace in current window
+```
+
+`--cwd` sets the starting directory for `new-workspace`. `new-window` does NOT accept `--cwd`.
+
+To open a new window at a specific directory, create the window then cd in its terminal:
+
+```bash
+WIN_ID=$(cmux new-window | awk '{print $2}')
+sleep 0.3
+WS_ID=$(cmux --json list-windows | python3 -c "import json,sys; ws=[w for w in json.load(sys.stdin) if w['id']=='$WIN_ID']; print(ws[0]['selected_workspace_id'] if ws else '')")
+cmux send --workspace "$WS_ID" "cd /target/dir"
+cmux send-key --workspace "$WS_ID" Enter
+```
 
 ## Tab (Surface) Switching
 
@@ -88,11 +117,23 @@ The tmux-compat commands `next-window` and `previous-window` switch **workspaces
 
 Full CLI help: `cmux --help`. Add `--json` to most commands for structured output.
 
+### Window Management
+
+```bash
+cmux new-window                       # new OS-level window
+cmux list-windows
+cmux focus-window --window <ref>
+cmux close-window --window <ref>
+```
+
 ### Workspace Navigation
 
 ```bash
+cmux new-workspace --cwd <path>       # new workspace in current window
 cmux list-workspaces
 cmux select-workspace --workspace <ref>
+cmux rename-workspace <title>
+cmux close-workspace --workspace <ref>
 cmux next-window              # next workspace (tmux compat name)
 cmux previous-window          # prev workspace (tmux compat name)
 ```
@@ -147,6 +188,18 @@ See `references/integration.md` for detailed architecture of how Karabiner, Ghos
 - **Karabiner cmux drive mode**: sticky Ctrl+0 sets `cmux_mode=1`. Bare keys dispatch via `~/.local/libexec/cmux/cmux-mode`.
 - **cmux-mode script**: bridges Karabiner actions to cmux by sending Hyper-key combos via osascript or calling cmux CLI directly.
 - **Fish vi mode**: can bind keys in normal mode (`bind -M default`) to call cmux CLI.
+
+## Opening Files
+
+```bash
+# Open a markdown file in the formatted viewer (split panel, live reload)
+cmux markdown open path/to/file.md
+
+# Open a directory as a new workspace
+cmux path/to/dir
+```
+
+**Important**: `cmux open` is NOT a command. For `.md` files use `cmux markdown open <path>`. For directories just pass the path directly as the first argument.
 
 ## Common Patterns
 

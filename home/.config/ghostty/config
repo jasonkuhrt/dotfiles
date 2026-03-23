@@ -23,8 +23,10 @@ macos-titlebar-proxy-icon = hidden
 #
 # Cursor
 #
+# Keep Fish vi insert mode clearly thinner than normal-mode block cursor.
+#
 
-adjust-cursor-thickness = 9
+adjust-cursor-thickness = 0
 cursor-style-blink      = false
 cursor-opacity          = 0.3
 

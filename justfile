@@ -516,31 +516,79 @@ claude-cmux-check:
     notify_count_after="$(grep -c '^notify ' "$log" 2>/dev/null || true)"
     [ $((notify_count_before + 1)) -eq "$notify_count_after" ]
 
-    grep -q '^notify --title Permission required --subtitle dotfiles | session abc1234 --body Read permission --workspace workspace:1 --surface 11111111-1111-1111-1111-111111111111$' "$log"
-    grep -q '^notify --title Claude finished --subtitle dotfiles | session abc1234 --body Fix YAML export in OS DB sync --workspace workspace:1 --surface 11111111-1111-1111-1111-111111111111$' "$log"
+    grep -q '^notify --title Permission required --subtitle dotfiles --body Read permission --workspace workspace:1 --surface 11111111-1111-1111-1111-111111111111$' "$log"
+    grep -Eq '^notify --title Done \([0-9]+s\) --subtitle dotfiles --body Fix YAML export in OS DB \.\.\. --workspace workspace:1 --surface 11111111-1111-1111-1111-111111111111$' "$log"
     grep -q '^set-status claude working --icon gearshape.2 --color #0A84FF --workspace workspace:1$' "$log"
-    grep -q '^set-status claude-detail Fix YAML export in OS DB sync --icon text.bubble --color #8E8E93 --workspace workspace:1$' "$log"
+    grep -q '^set-status claude-detail Fix YAML export in OS DB ... --icon text.bubble --color #8E8E93 --workspace workspace:1$' "$log"
     grep -q '^set-status claude blocked --icon hand.raised --color #FF9F0A --workspace workspace:1$' "$log"
     grep -q '^set-status claude-detail Read permission --icon text.bubble --color #8E8E93 --workspace workspace:1$' "$log"
-    grep -q '^set-status claude ready --icon checkmark.circle --color #34C759 --workspace workspace:1$' "$log"
-    grep -q '^set-status claude waiting --icon ellipsis.bubble --color #0A84FF --workspace workspace:1$' "$log"
     grep -q '^set-status claude compacting --icon arrow.clockwise.circle --color #FF9F0A --workspace workspace:1$' "$log"
-    grep -q '^set-status claude-detail auto compact --icon text.bubble --color #8E8E93 --workspace workspace:1$' "$log"
     grep -q '^trigger-flash --workspace workspace:1 --surface 11111111-1111-1111-1111-111111111111$' "$log"
     grep -q '^clear-status claude --workspace workspace:1$' "$log"
     grep -q '^clear-status claude-detail --workspace workspace:1$' "$log"
-    detail_prompt_count="$(grep -c '^set-status claude-detail Fix YAML export in OS DB sync --icon text.bubble --color #8E8E93 --workspace workspace:1$' "$log" 2>/dev/null || true)"
+    detail_prompt_count="$(grep -c '^set-status claude-detail Fix YAML export in OS DB ... --icon text.bubble --color #8E8E93 --workspace workspace:1$' "$log" 2>/dev/null || true)"
     [ "$detail_prompt_count" -eq 1 ]
-    grep -q '^log --level info --source claude-hook --workspace workspace:1 -- session-start:startup' "$log"
-    grep -q '^log --level info --source claude-hook --workspace workspace:1 -- user-prompt-submit:main' "$log"
-    grep -q '^log --level info --source claude-hook --workspace workspace:1 -- notification:permission_prompt' "$log"
-    grep -q '^log --level info --source claude-hook --workspace workspace:1 -- stop:main' "$log"
-    grep -q '^log --level info --source claude-hook --workspace workspace:1 -- notification:idle_prompt' "$log"
-    grep -q '^log --level info --source claude-hook --workspace workspace:1 -- precompact:auto' "$log"
-    grep -q '^log --level info --source claude-hook --workspace workspace:1 -- subagent-stop' "$log"
-    grep -q '^log --level info --source claude-hook --workspace workspace:1 -- session-end:clear' "$log"
+    grep -q '^log --level info --source claude-hook --workspace workspace:1 -- Session started$' "$log"
+    grep -q '^log --level info --source claude-hook --workspace workspace:1 -- Context compacted$' "$log"
+    grep -q '^log --level info --source claude-hook --workspace workspace:1 -- Subagent done: unknown$' "$log"
+    grep -q '^log --level info --source claude-hook --workspace workspace:1 -- Session ended$' "$log"
 
     printf 'PASS: claude-cmux-check\n'
+
+claude-dispatch-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    script="$PWD/home/.claude/skills/dispatch/dispatch.sh"
+
+    bash -n "$script"
+
+    tmpdir="$(mktemp -d)"
+    trap 'rm -rf "$tmpdir"' EXIT
+
+    log="$tmpdir/cmux.log"
+    state="$tmpdir/state.json"
+    workspace_state="$tmpdir/workspace.txt"
+    prompt="$tmpdir/prompt.txt"
+    home_dir="$tmpdir/home"
+    fake_cmux="$tmpdir/cmux"
+    fake_claude="$tmpdir/claude"
+
+    cp "$PWD/scripts/tests/fake-cmux.sh" "$fake_cmux"
+    chmod +x "$fake_cmux"
+    mkdir -p "$home_dir"
+
+    printf '%s\n' 'Fix the flaky tests.' > "$prompt"
+    printf 'workspace:1\n' > "$workspace_state"
+
+    printf '%s\n' \
+      '#!/usr/bin/env bash' \
+      'set -euo pipefail' \
+      'printf "%s\n" "$*" >> "${FAKE_CLAUDE_LOG:?}"' > "$fake_claude"
+    chmod +x "$fake_claude"
+
+    output="$(
+        PATH="$tmpdir:$PATH" \
+        HOME="$home_dir" \
+        FAKE_CLAUDE_LOG="$tmpdir/claude.log" \
+        CC_CMUX_TEST_LOG="$log" \
+        CC_CMUX_TEST_STATE="$state" \
+        CC_CMUX_TEST_WORKSPACES_STATE="$workspace_state" \
+        CMUX_WORKSPACE_ID=workspace:1 \
+        "$script" "fix-tests" "$prompt" /tmp/myapp
+    )"
+
+    printf '%s\n' "$output" | grep -Eq '^Dispatched: workspace-one › fix-tests \(resume: claude --resume [0-9a-f-]+\)$'
+    grep -q '^list-workspaces$' "$log"
+    grep -q '^list-status --workspace workspace:1$' "$log"
+    grep -q '^set-status dispatch-group ● --icon circle.fill --color #FF6B6B --workspace workspace:1$' "$log"
+    grep -Eq "^new-workspace --command bash '/tmp/dispatch-fix-tests\\.[A-Za-z0-9]+\\.sh'$" "$log"
+    grep -q '^rename-workspace --workspace workspace:60 workspace-one › fix-tests$' "$log"
+    grep -q '^set-status dispatch-group ● --icon circle.fill --color #FF6B6B --workspace workspace:60$' "$log"
+    grep -q '^set-status dispatch-origin ↑ workspace-one --icon arrow.up.circle --color #FF6B6B --workspace workspace:60$' "$log"
+    grep -q '^reorder-workspace --workspace workspace:60 --after workspace:1$' "$log"
+
+    printf 'PASS: claude-dispatch-check\n'
 
 cmux-zmx-check:
     #!/usr/bin/env bash

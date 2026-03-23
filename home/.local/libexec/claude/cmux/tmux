@@ -4,6 +4,14 @@ set -euo pipefail
 cmux_bin="${CC_CMUX_CMUX_BIN:-cmux}"
 jq_bin="${CC_CMUX_JQ_BIN:-jq}"
 
+# Surfaces created by cmd_split_window that need a Ctrl-C mode reset before
+# the first text send.  Fish vi-mode starts in normal mode ([N]) and
+# interprets sent text as vi commands — Ctrl-C resets to a clean insert-mode
+# prompt at the TTY level, no timing dependencies.
+# Uses marker files because each tmux shim invocation is a separate process.
+_CC_CMUX_VIFIX_DIR="${TMPDIR:-/tmp}/cc-cmux-vifix"
+mkdir -p "${_CC_CMUX_VIFIX_DIR}" 2>/dev/null || true
+
 debug() {
     if [[ -z "${CC_CMUX_DEBUG:-}" ]]; then
         return 0
@@ -111,8 +119,8 @@ pane_ref_from_surface() {
 }
 
 list_surface_refs() {
-    cmux_json list-pane-surfaces --workspace "$(current_workspace_ref)" \
-        | "${jq_bin}" -r '.. | objects | (.surface_id? // .surface_uuid? // .surface_ref? // empty)' \
+    cmux_json list-panes --workspace "$(current_workspace_ref)" \
+        | "${jq_bin}" -r '.panes[]?.surface_ids[]? // empty' \
         | awk 'NF { print }' \
         | sort -u
 }
@@ -221,7 +229,6 @@ cmd_split_window() {
     local target=""
     local print_pane=0
     local format=""
-    local before after new_surface_ref
 
     while (($#)); do
         case "$1" in
@@ -257,23 +264,28 @@ cmd_split_window() {
         esac
     done
 
-    before="$(list_surface_refs || true)"
-    "${cmux_bin}" new-split "${direction}" --workspace "$(current_workspace_ref)" --surface "$(surface_ref_from_target "${target}")" >/dev/null
-    after="$(list_surface_refs || true)"
+    local workspace_ref
+    workspace_ref="$(current_workspace_ref)"
 
-    new_surface_ref="$(
-        comm -13 <(printf '%s\n' "${before}" | awk 'NF { print }' | sort -u) \
-                 <(printf '%s\n' "${after}" | awk 'NF { print }' | sort -u) \
-        | head -n 1
-    )"
+    # Use cmux new-split which creates a split pane in one atomic call.
+    # This replaces the old new-surface + drag-surface-to-split two-step which
+    # was broken (drag fails with "Surface not found") and stole focus.
+    local split_result
+    split_result="$(cmux_json new-split "${direction}" --workspace "${workspace_ref}")"
 
-    if [[ -z "${new_surface_ref}" ]]; then
-        die "could not resolve new cmux surface after split-window"
+    local new_surface_id
+    new_surface_id="$(printf '%s\n' "${split_result}" | first_json_value '.surface_id? // .surface_ref?')"
+
+    if [[ -z "${new_surface_id}" ]]; then
+        die "could not resolve new cmux surface after new-split"
     fi
+
+    # Track this surface for vi-mode Ctrl-C reset on first send-keys.
+    touch "${_CC_CMUX_VIFIX_DIR}/${new_surface_id}" 2>/dev/null || true
 
     if (( print_pane == 1 )); then
         local pane_id
-        pane_id="$(tmux_pane_id_from_surface "${new_surface_ref}")"
+        pane_id="$(tmux_pane_id_from_surface "${new_surface_id}")"
         case "${format}" in
             ''|'#{pane_id}')
                 printf '%s\n' "${pane_id}"
@@ -290,6 +302,12 @@ flush_pending_text() {
     local pending="$2"
 
     if [[ -n "${pending}" ]]; then
+        # Vi-mode safety: send Ctrl-C to newly created surfaces to reset shell
+        # to a clean insert-mode prompt. Only fires once per surface.
+        if [[ -f "${_CC_CMUX_VIFIX_DIR}/${surface_ref}" ]]; then
+            "${cmux_bin}" send --workspace "$(current_workspace_ref)" --surface "${surface_ref}" $'\003'
+            rm -f "${_CC_CMUX_VIFIX_DIR}/${surface_ref}" 2>/dev/null || true
+        fi
         "${cmux_bin}" send --workspace "$(current_workspace_ref)" --surface "${surface_ref}" "${pending}"
     fi
 }

@@ -19,27 +19,38 @@ Run a headless review via the Codex CLI (`codex exec review` or `codex exec`) us
 
 Reviews the current branch changes against the base branch. This is the common case — the user just finished work and wants a review.
 
+`codex exec review` does NOT produce a "last agent message" that `-o` can capture — the review content appears inline in stdout. So we capture stdout to a raw log and extract the review from it.
+
 ```bash
 TIMESTAMP=$(date +%Y%m%dT%H%M%S)
 OUT_FILE=".tmp/codex-review-${TIMESTAMP}.md"
+RAW_LOG="/tmp/codex-review-${TIMESTAMP}.raw.log"
 mkdir -p .tmp
 
 # Detect base branch
 BASE=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||' || echo "develop")
 
+# Run review — capture ALL output (do NOT use -o, it produces empty files)
 codex exec review \
   --full-auto \
   -m gpt-5.4 \
   --base "$BASE" \
-  -o "$OUT_FILE" \
-  2>&1
+  2>&1 | tee "$RAW_LOG"
+
+# Extract review: everything after the last bare "codex" marker line,
+# excluding the "Warning: no last agent message" trailer
+awk '/^codex$/ { found=NR; content="" }
+     found && NR>found { content = content $0 "\n" }
+     END { printf "%s", content }' "$RAW_LOG" \
+  | sed '/^Warning: no last agent message/d' \
+  > "$OUT_FILE"
 ```
 
 ### 2. Document review (file argument provided)
 
-Reviews a specific file — a plan, design doc, RFC, architecture proposal, etc. Uses `codex exec` (not `review` subcommand) with a prompt that reads and critiques the file.
+Reviews a specific file — a plan, design doc, RFC, architecture proposal, etc. Uses `codex exec` (not `review` subcommand) with a prompt that tells Codex to write the review file directly via apply_patch.
 
-**Important:** Do NOT use `-o` here. The prompt tells Codex to write the review to `$OUT_FILE` via file write (apply_patch). Adding `-o` would overwrite the full review with just the agent's final summary message.
+Do NOT use `-o` here either — the prompt tells Codex to write the review to `$OUT_FILE` via file write. Adding `-o` would overwrite the full review with just a summary.
 
 ```bash
 TIMESTAMP=$(date +%Y%m%dT%H%M%S)
@@ -58,8 +69,9 @@ codex exec \
 
 1. Run the appropriate codex command in the background (`run_in_background: true`)
 2. Wait for completion via `TaskOutput`
-3. Read the output file
-4. Present the review to the user
+3. Read the output file (`$OUT_FILE`)
+4. If the output file is empty or missing, fall back to reading the raw log (`$RAW_LOG`) — the review content is at the end of the log after the last `codex` marker line
+5. Present the review to the user
 
 ## Flags reference
 
@@ -68,8 +80,9 @@ codex exec \
 | `--full-auto`     | No approval prompts, workspace-write sandbox            |
 | `-m gpt-5.4`      | OpenAI's strongest model (user's max plan)              |
 | `--base <branch>` | Code review: diff against this branch                   |
-| `-o <file>`       | Write the agent's final message to this file            |
 | `--ephemeral`     | Optional: skip session persistence for faster execution |
+
+**Do NOT use `-o`** — `codex exec review` does not emit a "last agent message" so `-o` always writes an empty file. Capture stdout instead.
 
 ## Important
 

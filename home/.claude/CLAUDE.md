@@ -51,6 +51,19 @@ Use Serena MCP tools (`find_symbol`, `find_referencing_symbols`, `get_symbols_ov
 
 * Always use the `shan` CLI to manage skills. Never directly modify `~/.claude/skills/` or `~/.claude/skills-library/`.
 
+## Agent Teams (MANDATORY)
+
+**The ONLY way to spawn agents is through teams. No exceptions. No workarounds.**
+
+* Call `TeamCreate` ONCE at session start (or on first need). Every agent for the rest of the session is a named team member.
+* The Agent tool MUST always include `team_name` and `name` parameters. If you catch yourself about to call Agent without these, STOP.
+* NEVER use `run_in_background: true` without `team_name` + `name`. This pattern is BANNED.
+* NEVER use foreground/sync subagents. Also BANNED.
+* The user MUST be able to `SendMessage` to any agent by name. If they can't, you did it wrong.
+* Use `TaskCreate`/`TaskUpdate` to track all agent work.
+* Maintain bilateral communication — relay bugs, requirement changes, and coordination via `SendMessage`. Never fire-and-forget.
+* If the Agent tool doesn't support `team_name` in some edge case, explain to the user and find an alternative. Do not silently fall back to bare subagents.
+
 ## Claude Code Internals
 
 * Never directly edit Claude Code internal JSON files (`installed_plugins.json`, `known_marketplaces.json`, `sessions-index.json`, internal `settings.json`). Use the supported CLI/REPL surfaces (`/plugin`, `/settings`, marketplace commands, etc.).

@@ -2,8 +2,8 @@
 # Guard: Block branch-switching git operations. These change the entire
 # working tree, destroying other agents' in-progress work.
 #
-# Always blocked: git checkout <branch>, git switch, git stash
-# Always allowed: git checkout -- <file>, git commit, git push, git pull, etc.
+# Always blocked: git checkout <branch>, git switch, state-changing git stash
+# Always allowed: git checkout -- <file>, git stash list, git stash show, git commit, git push, git pull, etc.
 #
 # For cross-branch work, use: git worktree add /tmp/wt-<branch> <branch>
 
@@ -16,9 +16,13 @@ if [ -z "$COMMAND" ]; then exit 0; fi
 
 IS_DANGEROUS=false
 
-# git stash (any subcommand)
+# git stash — allow read-only inspection commands
 if echo "$COMMAND" | grep -qE '^\s*git\s+stash(\s|$)'; then
-  IS_DANGEROUS=true
+  if echo "$COMMAND" | grep -qE '^\s*git\s+stash\s+(list|show)(\s|$)'; then
+    :
+  else
+    IS_DANGEROUS=true
+  fi
 fi
 
 # git switch

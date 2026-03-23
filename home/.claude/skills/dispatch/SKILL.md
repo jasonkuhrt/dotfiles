@@ -86,153 +86,15 @@ Keep slugs short (2-4 words), kebab-case, action-oriented:
 
 ## Implementation
 
+The dispatch script lives at `~/.claude/skills/dispatch/dispatch.sh`.
+
 ```bash
-# Palette for dispatch grouping — visually distinct, sidebar-friendly
-DISPATCH_COLORS=(
-  "#FF6B6B"  # red
-  "#8B5CF6"  # purple
-  "#F59E0B"  # amber
-  "#10B981"  # emerald
-  "#3B82F6"  # blue
-  "#EC4899"  # pink
-  "#14B8A6"  # teal
-  "#F97316"  # orange
-)
-
-# Get the title of a workspace by its ref (e.g. "workspace:7" → "dotfiles")
-get_workspace_title() {
-  local ws_ref="$1"
-  cmux list-workspaces 2>/dev/null \
-    | grep "$ws_ref" \
-    | sed -E 's/^[* ]+workspace:[0-9]+ +//' \
-    | sed 's/ *\[selected\] *$//'
-}
-
-# Track the tail of the current dispatch batch for adjacency ordering.
-# First dispatch goes after the parent; subsequent ones chain after siblings.
-_DISPATCH_LAST_WS=""
-
-# Pick a dispatch-group color not already used by any workspace
-pick_group_color() {
-  local taken=()
-  while IFS= read -r ws; do
-    local c
-    c=$(cmux list-status --workspace "$ws" 2>/dev/null \
-        | grep "^dispatch-group=" | grep -oE 'color=#[0-9A-Fa-f]+' | sed 's/color=//')
-    [[ -n "$c" ]] && taken+=("$c")
-  done < <(cmux list-workspaces 2>/dev/null | grep -oE 'workspace:[0-9]+')
-
-  for color in "${DISPATCH_COLORS[@]}"; do
-    local used=false
-    for t in "${taken[@]}"; do
-      [[ "$color" == "$t" ]] && used=true && break
-    done
-    $used || { echo "$color"; return; }
-  done
-  echo "${DISPATCH_COLORS[0]}"  # all taken — cycle
-}
-
-dispatch() {
-  local slug="$1"
-  local prompt_file="$2"
-  local cwd="${3:-$(pwd)}"
-
-  # Resolve claude's absolute path — the --command shell may lack full PATH
-  local claude_bin
-  claude_bin=$(command -v claude)
-
-  # Pre-generate a session UUID so we can name the session externally
-  local session_id
-  session_id=$(uuidgen | tr '[:upper:]' '[:lower:]')
-
-  # Derive the project dir where CC stores the session JSONL
-  local project_dir
-  project_dir=$(echo "$cwd" | tr '/' '-')
-  local jsonl="$HOME/.claude/projects/${project_dir}/${session_id}.jsonl"
-
-  # Write launcher script.
-  # 1. Fork a background job that waits for the JSONL to appear, then appends
-  #    the two rename entries (custom-title + agent-name). This mimics what
-  #    /rename does internally, without needing cmux send.
-  # 2. exec claude with --session-id and the prompt from file.
-  local launcher="/tmp/dispatch-${slug}.sh"
-  cat > "$launcher" << LAUNCHER
-#!/usr/bin/env bash
-cd $(printf '%q' "$cwd")
-
-# Background: name the session once JSONL exists
-(
-  for i in \$(seq 1 60); do
-    [[ -f $(printf '%q' "$jsonl") ]] && break
-    sleep 0.5
-  done
-  if [[ -f $(printf '%q' "$jsonl") ]]; then
-    printf '%s\n' '{"type":"custom-title","customTitle":"${slug}","sessionId":"${session_id}"}' >> $(printf '%q' "$jsonl")
-    printf '%s\n' '{"type":"agent-name","agentName":"${slug}","sessionId":"${session_id}"}' >> $(printf '%q' "$jsonl")
-  fi
-) &
-
-exec ${claude_bin} --session-id '${session_id}' -- "\$(cat $(printf '%q' "$prompt_file"))"
-LAUNCHER
-  chmod +x "$launcher"
-
-  # --- Resolve parent workspace ---
-  local caller_ws="${CMUX_WORKSPACE_ID:-}"
-  local parent_title=""
-
-  if [[ -n "$caller_ws" ]]; then
-    parent_title=$(get_workspace_title "$caller_ws")
-  fi
-
-  # --- Workspace naming ---
-  # Prefix with parent title so children are instantly recognizable
-  local ws_title
-  if [[ -n "$parent_title" ]]; then
-    ws_title="${parent_title} › ${slug}"
-  else
-    ws_title="$slug"
-  fi
-
-  # --- Workspace grouping ---
-  # Match parent's dispatch-group color, or pick a fresh one for both
-  local group_color=""
-
-  if [[ -n "$caller_ws" ]]; then
-    group_color=$(cmux list-status --workspace "$caller_ws" 2>/dev/null \
-                  | grep "^dispatch-group=" | grep -oE 'color=#[0-9A-Fa-f]+' | sed 's/color=//')
-  fi
-
-  if [[ -z "$group_color" ]]; then
-    group_color=$(pick_group_color)
-    # Parent has no color yet — set it
-    if [[ -n "$caller_ws" ]]; then
-      cmux set-status "dispatch-group" "●" --icon "circle.fill" --color "$group_color" --workspace "$caller_ws"
-    fi
-  fi
-
-  # --- Create workspace ---
-  local ws_id
-  ws_id=$(cmux new-workspace --command "bash '${launcher}'" 2>&1 | awk '{print $2}')
-
-  # --- Name + position + metadata ---
-  cmux rename-workspace --workspace "$ws_id" "$ws_title"
-  cmux set-status "dispatch-group" "●" --icon "circle.fill" --color "$group_color" --workspace "$ws_id"
-
-  # Show parent origin on child sidebar card (visible even when name truncates)
-  if [[ -n "$parent_title" ]]; then
-    cmux set-status "dispatch-origin" "↑ ${parent_title}" --icon "arrow.up.circle" --color "$group_color" --workspace "$ws_id"
-  fi
-
-  # Reorder adjacent: place after parent (first dispatch) or after last sibling
-  if [[ -n "$caller_ws" ]]; then
-    local after_ws="${_DISPATCH_LAST_WS:-$caller_ws}"
-    cmux reorder-workspace --workspace "$ws_id" --after "$after_ws"
-    _DISPATCH_LAST_WS="$ws_id"
-  fi
-
-  echo "Dispatched: ${ws_title} (resume: claude --resume ${session_id})"
-}
+# Usage:
+~/.claude/skills/dispatch/dispatch.sh <slug> <prompt-file> [cwd]
 ```
+
+For multiple dispatches in sequence, the script exports `DISPATCH_LAST_WS` so
+subsequent calls chain adjacently in the sidebar.
 
 ### Writing prompt files
 
@@ -251,25 +113,19 @@ PROMPT_EOF
 ```bash
 # Task 1
 cat > /tmp/dispatch-1.txt << 'PROMPT_EOF'
-Run the importer e2e tests in ~/projects/heartbeat-chat/Heartbeat-subimp-ui.
-Start by running npm run gen:persona, then
-npm run test:e2e -- --project app -- grep "importer".
-Fix any failures and commit.
+Run the importer e2e tests. Fix any failures and commit.
 PROMPT_EOF
 
-dispatch "e2e-importer-fixes" "/tmp/dispatch-1.txt" \
-  ~/projects/heartbeat-chat/Heartbeat-subimp-ui
+~/.claude/skills/dispatch/dispatch.sh "e2e-importer-fixes" /tmp/dispatch-1.txt ~/projects/myapp
 
 # Task 2
 cat > /tmp/dispatch-2.txt << 'PROMPT_EOF'
-Push feat/hea-3849-subimp-ui and monitor CI checks on PR #822.
-Fix any failures, commit, and re-push until green.
+Push and monitor CI checks on PR #822. Fix failures and re-push until green.
 PROMPT_EOF
 
-dispatch "ci-check-push" "/tmp/dispatch-2.txt" \
-  ~/projects/heartbeat-chat/Heartbeat-subimp-ui
+~/.claude/skills/dispatch/dispatch.sh "ci-check-push" /tmp/dispatch-2.txt ~/projects/myapp
 
-# Clean up temp files
+# Clean up
 rm /tmp/dispatch-1.txt /tmp/dispatch-2.txt
 ```
 
@@ -328,4 +184,8 @@ claude -p \
 - To resume after disconnect: `claude --resume <slug>` or `claude -c` in the
   task's directory.
 - Dispatches are instant and parallel — no sequential boot waiting.
-- Clean up temp files after dispatch: `rm /tmp/dispatch-*.txt /tmp/dispatch-*.sh`
+- Clean up temp prompt files after dispatch: `rm /tmp/dispatch-*.txt`
+- The launcher script is temporary and removed automatically by `dispatch.sh`
+- To open a markdown file for viewing, use `cmux markdown open <path>` — not
+  `cmux open <path>` (which only works for directories). The markdown viewer
+  renders formatted content with live reload.

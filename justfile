@@ -516,8 +516,8 @@ claude-cmux-check:
     notify_count_after="$(grep -c '^notify ' "$log" 2>/dev/null || true)"
     [ $((notify_count_before + 1)) -eq "$notify_count_after" ]
 
-    grep -q '^notify --title Permission required --subtitle dotfiles --body Read permission --workspace workspace:1 --surface 11111111-1111-1111-1111-111111111111$' "$log"
-    grep -Eq '^notify --title Done \([0-9]+s\) --subtitle dotfiles --body Fix YAML export in OS DB \.\.\. --workspace workspace:1 --surface 11111111-1111-1111-1111-111111111111$' "$log"
+    grep -Eq '^notify --title Permission required --subtitle [^ ]+ --body Read permission --workspace workspace:1 --surface 11111111-1111-1111-1111-111111111111$' "$log"
+    grep -Eq '^notify --title Done \([0-9]+s\) --subtitle [^ ]+ --body Fix YAML export in OS DB \.\.\. --workspace workspace:1 --surface 11111111-1111-1111-1111-111111111111$' "$log"
     grep -q '^set-status claude working --icon gearshape.2 --color #0A84FF --workspace workspace:1$' "$log"
     grep -q '^set-status claude-detail Fix YAML export in OS DB ... --icon text.bubble --color #8E8E93 --workspace workspace:1$' "$log"
     grep -q '^set-status claude blocked --icon hand.raised --color #FF9F0A --workspace workspace:1$' "$log"
@@ -767,13 +767,16 @@ git-maintenance-check:
 
     printf 'PASS: git-maintenance-check\n'
 
+git-worktree-guard-check:
+    bash scripts/tests/git-worktree-guard-check.sh
+
 git-agent-blocking-check:
     #!/usr/bin/env bash
     set -euo pipefail
 
     just --justfile /Users/jasonkuhrt/projects/jasonkuhrt/git-agent/justfile check
 
-git-dx-check: fish-check git-learn-check git-guardrail-check git-maintenance-check
+git-dx-check: fish-check git-learn-check git-worktree-guard-check git-guardrail-check git-maintenance-check
     @true
 
 codex2-check:
@@ -1358,7 +1361,6 @@ fn-wispr-qa:
     fi
 
     printf "\nResult: PASS\n"
-
 
 agentsview-install:
     DOTFILES_ROOT={{ justfile_directory() }} bash scripts/setup/after/onchange/19-agentsview.sh

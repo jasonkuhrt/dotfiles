@@ -109,9 +109,11 @@ pick_group_color() {
 
   for color in "${DISPATCH_COLORS[@]}"; do
     local used=false
-    for t in "${taken[@]}"; do
-      [[ "$color" == "$t" ]] && used=true && break
-    done
+    if (( ${#taken[@]} > 0 )); then
+      for t in "${taken[@]}"; do
+        [[ "$color" == "$t" ]] && used=true && break
+      done
+    fi
     $used || { echo "$color"; return; }
   done
   echo "${DISPATCH_COLORS[0]}"

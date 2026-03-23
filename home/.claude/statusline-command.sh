@@ -183,14 +183,34 @@ if command -v git-agent &>/dev/null; then
         elif [ "$off" -eq 7 ]; then
             printf " \033[2m│\033[0m \033[2mgit\033[0m \033[1;31m✗\033[0m"
         else
-            printf " \033[2m│\033[0m \033[2mgit\033[0m"
-            [ "$ga_c"   = "off" ] && printf " \033[1;31mc\033[0m"
-            [ "$ga_p"   = "off" ] && printf " \033[1;31mp\033[0m"
-            [ "$ga_co"  = "off" ] && printf " \033[1;31mco\033[0m"
-            [ "$ga_s"   = "off" ] && printf " \033[1;31ms\033[0m"
-            [ "$ga_prc" = "off" ] && printf " \033[1;31mpr.c\033[0m"
-            [ "$ga_prd" = "off" ] && printf " \033[1;31mpr.d\033[0m"
-            [ "$ga_prm" = "off" ] && printf " \033[1;31mpr.m\033[0m"
+            printf " \033[2m│\033[0m"
+            # Git ops namespace (c, p, co, s)
+            git_off=0
+            [ "$ga_c"  = "off" ] && ((git_off++))
+            [ "$ga_p"  = "off" ] && ((git_off++))
+            [ "$ga_co" = "off" ] && ((git_off++))
+            [ "$ga_s"  = "off" ] && ((git_off++))
+            if [ "$git_off" -eq 4 ]; then
+                printf " \033[1;31mgit\033[0m"
+            else
+                printf " \033[2mgit\033[0m"
+                [ "$ga_c"  = "off" ] && printf " \033[1;31mc\033[0m"
+                [ "$ga_p"  = "off" ] && printf " \033[1;31mp\033[0m"
+                [ "$ga_co" = "off" ] && printf " \033[1;31mco\033[0m"
+                [ "$ga_s"  = "off" ] && printf " \033[1;31ms\033[0m"
+            fi
+            # PR ops namespace (pr.c, pr.d, pr.m)
+            pr_off=0
+            [ "$ga_prc" = "off" ] && ((pr_off++))
+            [ "$ga_prd" = "off" ] && ((pr_off++))
+            [ "$ga_prm" = "off" ] && ((pr_off++))
+            if [ "$pr_off" -eq 3 ]; then
+                printf " \033[1;31mpr\033[0m"
+            elif [ "$pr_off" -gt 0 ]; then
+                [ "$ga_prc" = "off" ] && printf " \033[1;31mpr.c\033[0m"
+                [ "$ga_prd" = "off" ] && printf " \033[1;31mpr.d\033[0m"
+                [ "$ga_prm" = "off" ] && printf " \033[1;31mpr.m\033[0m"
+            fi
         fi
     fi
 fi

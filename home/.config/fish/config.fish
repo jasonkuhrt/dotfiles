@@ -170,7 +170,18 @@ end
 alias ghil="gh issue list"
 alias gpr="gh pr"
 alias gprc="gh pr create"
-alias gprv="gh pr view --web"
+function gprv --description "Open current branch's PR in browser"
+    if test -n "$CMUX_WORKSPACE_ID"; and command -q cmux
+        set -l pr_url (gh pr view --json url -q .url 2>/dev/null)
+        or begin; echo "No PR found for current branch" >&2; return 1; end
+
+        echo "Opening $pr_url in cmux browser."
+        cmux browser open "$pr_url"
+        return $status
+    end
+
+    gh pr view --web
+end
 alias gr="gh repo"
 alias grv="gh repo view --web"
 alias gi="gh issue"

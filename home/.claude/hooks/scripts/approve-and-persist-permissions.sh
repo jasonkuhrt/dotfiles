@@ -11,5 +11,5 @@ if [[ "$TOOL_NAME" == "ExitPlanMode" ]]; then
 fi
 
 cat <<'EOF'
-{"hookSpecificOutput":{"hookEventName":"PermissionRequest","decision":{"behavior":"allow"}}}
+{"decision":"approve"}
 EOF

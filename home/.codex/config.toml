@@ -18,6 +18,9 @@ trust_level = "trusted"
 [projects."/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles"]
 trust_level = "trusted"
 
+[projects."/Users/jasonkuhrt/projects/heartbeat-chat"]
+trust_level = "trusted"
+
 [mcp_servers.figma]
 url = "https://mcp.figma.com/mcp"
 

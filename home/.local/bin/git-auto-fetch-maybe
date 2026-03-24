@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# git-auto-fetch-maybe — background-fetch if tracking refs are stale
+#
+# Called from fish prompt hook and Claude Code statusline.
+# Safe to call frequently — throttled by FETCH_LOG mtime.
+
+set -euo pipefail
+
+dir="${1:-$PWD}"
+
+# Must be inside a git work tree
+git_dir=$(git -C "$dir" rev-parse --git-dir 2>/dev/null) || exit 0
+
+# Resolve to absolute path
+git_dir=$(cd "$dir" && cd "$git_dir" && pwd)
+
+# Must be writable
+[[ -w "$git_dir" ]] || exit 0
+
+# Per-repo disable
+[[ -f "$git_dir/NO_AUTO_FETCH" ]] && exit 0
+
+# Staleness check
+interval="${GIT_AUTO_FETCH_INTERVAL:-300}"
+fetch_log="$git_dir/FETCH_LOG"
+
+if [[ -f "$fetch_log" ]]; then
+    now=$(date +%s)
+    last_fetch=$(stat -f %m "$fetch_log" 2>/dev/null) || last_fetch=0
+    (( now - last_fetch < interval )) && exit 0
+fi
+
+# Stamp the log before fetching (prevents concurrent fetches)
+date -R > "$fetch_log"
+
+# Background fetch — no auth prompts, no terminal interaction
+(
+    GIT_TERMINAL_PROMPT=0 \
+    GIT_SSH_COMMAND="command ssh -o BatchMode=yes" \
+        git -C "$dir" fetch --all --quiet 2>/dev/null >> "$fetch_log"
+) &
+disown

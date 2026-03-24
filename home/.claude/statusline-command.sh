@@ -18,6 +18,7 @@ _statusline_trap() {
 
 # ── Directory (repo-rooted, truncated to 3 levels) ──────────
 cwd=$(echo "$input" | jq -r '.cwd')
+git-auto-fetch-maybe "$cwd" &>/dev/null &
 dir="${cwd/#$HOME/~}"
 
 git_root=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null || true)

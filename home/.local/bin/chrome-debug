@@ -154,4 +154,95 @@ status() {
     fi
 }
 
+# ── Deep Dive ─────────────────────────────────────────────────────────────────
+#
+# chrome-debug: driving your real Chrome profile with dev-browser
+#
+# THE PROBLEM
+#
+#   Since Chrome 136 (mid-2024), --remote-debugging-port requires --user-data-dir
+#   pointing to a non-default directory. Chrome silently ignores the flag if you
+#   try it on your default profile. This was a security hardening — attackers were
+#   using remote debugging to steal cookies from default profiles via App-Bound
+#   Encryption bypass.
+#
+#   So the only way to get CDP (Chrome DevTools Protocol) access was a separate
+#   profile — meaning no cookies, no extensions, no logins. You'd have to
+#   re-authenticate everywhere.
+#
+# THE NEW MECHANISM (CHROME M144+)
+#
+#   Chrome 144 introduced a permission-based alternative:
+#
+#   1. Navigate to chrome://inspect/#remote-debugging
+#   2. Check "Allow remote debugging for this browser instance"
+#   3. Chrome starts listening on port 9222
+#   4. When a tool tries to connect via CDP, Chrome shows an "Allow remote
+#      debugging?" dialog
+#   5. User clicks "Allow" → CDP connection establishes
+#   6. Chrome shows "Chrome is being controlled by automated test software" banner
+#
+#   This works with your real default profile — all your cookies, extensions, and
+#   logins intact. The catch: the dialog appears every single connection, and
+#   Chrome's team closed the persistence request
+#   (https://github.com/ChromeDevTools/chrome-devtools-mcp/issues/825) as "not
+#   planned" for security reasons.
+#
+# WHAT CHROME-DEBUG DOES
+#
+#   It automates the dialog click so the flow is zero-friction:
+#
+#     chrome-debug connect
+#
+#   Steps (all automated):
+#
+#   1. Opens chrome://inspect/#remote-debugging via AppleScript and enables the
+#      checkbox if it's off
+#   2. Reads Chrome window bounds via AppleScript (bounds of window 1)
+#   3. Starts dev-browser --connect in background — this initiates a CDP WebSocket
+#      connection, which triggers Chrome's permission dialog
+#   4. Waits 3 seconds for the dialog to render
+#   5. Calculates the "Allow" button position — 62.8% across, 59.4% down within
+#      the Chrome window bounds. These percentages are stable regardless of window
+#      size (verified at 1300x800, 900x600, and 1300x800 again)
+#   6. Clicks it with usecomputer click -x <X> -y <Y> (takes real cursor control
+#      for ~1 second)
+#   7. dev-browser's CDP connection completes — it can now drive your real Chrome
+#
+# WHY USECOMPUTER AND NOT APPLESCRIPT
+#
+#   The permission dialog is Chrome-internal UI (rendered by Chrome's own
+#   compositor, not a native macOS dialog). AppleScript keystroke return doesn't
+#   reach it — it's not in the native accessibility tree as a focusable button. We
+#   verified this empirically: count of sheets returned 0, keystroke return had no
+#   effect. The usecomputer CLI does OS-level cursor movement and mouse clicks,
+#   which Chrome does accept.
+#
+# THE COORDINATE MATH
+#
+#   From measurements on the actual dialog:
+#     Window: 1300px wide, 800px tall
+#     Allow button center: 816px across, 475px down
+#     Percentages: 62.8% across, 59.4% down
+#
+#   For any window at position (left, top) with size (width, height):
+#     click_x = left + width * 0.628
+#     click_y = top + height * 0.594
+#
+# DEPENDENCIES
+#
+#   - Google Chrome 146+ (anything M144+ works)
+#   - dev-browser — the CLI that actually uses the CDP connection
+#   - usecomputer — OS-level click automation
+#     (~/.npm-global/lib/node_modules/usecomputer/dist/darwin-arm64/usecomputer)
+#   - osascript — macOS built-in, for AppleScript JS execution and window bounds
+#   - argc — CLI framework
+#
+# FILE LOCATION
+#
+#   ~/projects/jasonkuhrt/dotfiles/home/.local/bin/chrome-debug
+#     → symlinked to ~/.local/bin/chrome-debug
+#
+# ──────────────────────────────────────────────────────────────────────────────
+
 eval "$(argc --argc-eval "$0" "$@")"

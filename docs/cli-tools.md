@@ -84,6 +84,7 @@ Full list in `home/dot_config/fish/config.fish`.
 | Email       | `imapfilter` | Server-side email filtering           | (see config)                                    |
 | Email       | `mbsync`     | Sync IMAP to local Maildir            | `mbsync -a`                                     |
 | Email       | `notmuch`    | Index and search email                | `notmuch search tag:inbox`                      |
+| **Passwords** | `apw`      | CLI for Apple Passwords (iCloud Keychain) | `apw pw list authentication.td.com` — see [apw notes](#apw-apple-passwords-cli) |
 | **macOS**   | `dockutil`   | Manage Dock programmatically          | `dockutil --add /Applications/App.app`          |
 | macOS       | `mas`        | Mac App Store CLI                     | `mas install 497799835` (Xcode)                 |
 | **Info**    | `cal`        | 3-month calendar view                 | `cal`                                           |
@@ -105,3 +106,46 @@ Use the modern replacements instead:
 - `git restore`, `git reset --soft`, `git revert`, `git reflog`
 
 If you truly need the raw command, bypass the Fish wrapper with `command git ...`.
+
+## apw (Apple Passwords CLI)
+
+[bendews/apw](https://github.com/bendews/apw) provides CLI access to Apple Passwords (iCloud Keychain). It runs a local daemon that communicates with the macOS Passwords helper binary.
+
+### Status: Broken on macOS 15.4+
+
+As of macOS 15.4, Apple added XProtect rules that block the Passwords helper binary from being called by unsigned applications. The `apw auth` command hangs indefinitely because the helper exits immediately under XProtect enforcement.
+
+- **Issue:** [bendews/apw#10](https://github.com/bendews/apw/issues/10) — "`apw auth` does not work on Mac OS 15.4"
+- **Root cause:** Apple's XProtect anti-malware framework now restricts execution of the Passwords helper to signed/allowlisted applications. The same restriction broke the iCloud Passwords browser extension in unsigned browsers (e.g. Zen Browser).
+- **Maintainer status:** Considering Apple Developer signing ($150 AUD) and requesting allowlist inclusion, but has not done so yet. No timeline.
+- **Workaround:** None that preserves system security. Disabling SIP works but is not acceptable.
+
+### Watch for
+
+- A new `apw` release that includes Apple code signing — this would likely resolve the XProtect block
+- Changes to [bendews/apw#10](https://github.com/bendews/apw/issues/10) comments
+- macOS updates that may change XProtect behavior (one user on 15.7.1 reported it spontaneously started working, cause unknown)
+
+### Usage (when working)
+
+```bash
+brew services start bendews/tap/apw   # start daemon (auto-starts on boot)
+apw auth                               # authenticate (Touch ID / password, once per boot)
+apw pw list authentication.td.com      # query password as JSON
+apw pw                                 # interactive password browser
+apw otp                                # interactive OTP browser
+```
+
+### Interim alternative
+
+Use the macOS `security` CLI with the local login keychain (not iCloud Keychain):
+
+```bash
+# Store a credential (one-time)
+security add-internet-password -s "authentication.td.com" -a "rosekuhrt" -w "<password>" -l "TD"
+
+# Retrieve it
+security find-internet-password -s "authentication.td.com" -w
+```
+
+This does not sync with iCloud Keychain — password changes in the Passwords app must be manually re-added.

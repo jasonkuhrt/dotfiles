@@ -6,6 +6,7 @@ tap "planetscale/tap"
 tap "polidog/kilar"
 tap "assimelha/tap"
 tap "manaflow-ai/cmux"
+tap "bendews/tap"
 tap "neurosnap/tap"
 tap "mdsakalu/tap"
 
@@ -97,8 +98,9 @@ brew "glow"          # render markdown in terminal
 # `glow` covers terminal markdown; removed disabled `mdcat`
 brew "pandoc"        # document converter
 
-# Encryption
+# Encryption & passwords
 brew "age"           # file encryption and key management
+brew "bendews/tap/apw"  # Apple Passwords CLI (iCloud Keychain access)
 
 # System utilities
 brew "watch"         # run command repeatedly

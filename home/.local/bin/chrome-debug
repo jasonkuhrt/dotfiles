@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# @describe Connect dev-browser to Chrome's default profile via permission-based remote debugging.
+
+# ── LLM Usage Guide ────────────────────────────────────────────────────────────
+#
+# WHAT IT DOES
+#   Connects dev-browser to a running Chrome instance using your default profile
+#   (not a separate --user-data-dir). Uses Chrome M144+'s permission-based remote
+#   debugging feature at chrome://inspect/#remote-debugging.
+#
+# WHY IT EXISTS
+#   Since Chrome 136, --remote-debugging-port requires --user-data-dir, which
+#   means you can't debug with your default profile (cookies, extensions, history).
+#   Chrome M144+ added chrome://inspect/#remote-debugging as an alternative, but
+#   it shows an "Allow" dialog on every new connection. This CLI automates that
+#   dialog so dev-browser can attach to your real browsing session hands-free.
+#
+# HOW IT WORKS
+#   1. Navigates to chrome://inspect/#remote-debugging via AppleScript
+#   2. Enables the remote debugging checkbox if not already on
+#   3. Starts dev-browser --connect in background (triggers the permission dialog)
+#   4. Calculates the "Allow" button position: 62.8% across, 59.4% down within
+#      the Chrome window bounds (works at any window size)
+#   5. Clicks it with usecomputer CLI
+#   6. dev-browser CDP connection establishes
+#
+# DEPENDENCIES
+#   Google Chrome (146+), dev-browser, usecomputer (at $USECOMPUTER or default
+#   path ~/.npm-global/lib/node_modules/usecomputer/dist/darwin-arm64/usecomputer),
+#   osascript (macOS), argc.
+#
+# EXAMPLES
+#   chrome-debug connect   # full connect flow: enable debugging, click Allow, attach
+#   chrome-debug status    # check if Chrome is listening on port 9222
+#
+# LIMITATIONS
+#   macOS only. Chrome must have at least one window open. The usecomputer click
+#   takes real cursor control for ~1 second — do not move the mouse during connect.
+#
+# ────────────────────────────────────────────────────────────────────────────────
+
+USECOMPUTER="${USECOMPUTER:-$HOME/.npm-global/lib/node_modules/usecomputer/dist/darwin-arm64/usecomputer}"
+
+# ── Helpers ───────────────────────────────────────────────
+
+die() { printf '\033[31merror:\033[0m %s\n' "$1" >&2; exit 1; }
+info() { printf '\033[2m%s\033[0m\n' "$1"; }
+
+get_chrome_bounds() {
+    osascript -e '
+    tell application "Google Chrome"
+        set AppleScript'\''s text item delimiters to ","
+        set b to bounds of window 1
+        return (b as text)
+    end tell
+    ' 2>/dev/null
+}
+
+allow_button_coords() {
+    local bounds="$1"
+    local left top right bottom width height
+    IFS=',' read -r left top right bottom <<< "$bounds"
+    width=$((right - left))
+    height=$((bottom - top))
+    # Allow button center: 62.8% across, 59.4% down within the Chrome window
+    local x y
+    x=$(echo "$left + $width * 0.628" | bc | cut -d. -f1)
+    y=$(echo "$top + $height * 0.594" | bc | cut -d. -f1)
+    echo "$x,$y"
+}
+
+# ── Preflight ─────────────────────────────────────────────
+
+# @cmd Connect dev-browser to Chrome's default profile via remote debugging.
+#   Enables chrome://inspect/#remote-debugging, starts dev-browser --connect, and
+#   auto-clicks the permission dialog's "Allow" button using usecomputer.
+connect() {
+    command -v dev-browser >/dev/null || die "dev-browser not found"
+    [[ -x "$USECOMPUTER" ]] || die "usecomputer not found at $USECOMPUTER"
+    pgrep -x "Google Chrome" >/dev/null || die "Chrome is not running"
+
+    # Ensure chrome://inspect/#remote-debugging is open and enabled
+    info "Enabling remote debugging..."
+    osascript -e 'tell application "Google Chrome" to open location "chrome://inspect/#remote-debugging"' 2>/dev/null
+    sleep 1
+    local enabled
+    enabled=$(osascript -e '
+    tell application "Google Chrome"
+        tell active tab of front window
+            execute javascript "document.querySelector(\"#remote-debugging-enabled\").checked"
+        end tell
+    end tell
+    ' 2>/dev/null || echo "false")
+
+    if [[ "$enabled" != "true" ]]; then
+        info "Toggling checkbox on..."
+        osascript -e '
+        tell application "Google Chrome"
+            tell active tab of front window
+                execute javascript "document.querySelector(\"#remote-debugging-enabled\").click()"
+            end tell
+        end tell
+        ' 2>/dev/null
+        sleep 1
+    fi
+
+    # Get window bounds and calculate Allow button position
+    local bounds coords click_x click_y
+    bounds=$(get_chrome_bounds) || die "Could not read Chrome window bounds"
+    coords=$(allow_button_coords "$bounds")
+    IFS=',' read -r click_x click_y <<< "$coords"
+    info "Chrome bounds: $bounds → Allow button at ($click_x, $click_y)"
+
+    # Start dev-browser in background (will trigger the permission dialog)
+    info "Starting dev-browser --connect..."
+    dev-browser --connect --timeout 30 <<'SCRIPT' > /tmp/chrome-debug-result.out 2>&1 &
+const tabs = await browser.listPages();
+console.log(JSON.stringify(tabs, null, 2));
+SCRIPT
+    local bg_pid=$!
+
+    # Wait for dialog to appear, then click Allow
+    sleep 3
+    osascript -e 'tell application "Google Chrome" to activate' 2>/dev/null
+    sleep 0.3
+    "$USECOMPUTER" click -x "$click_x" -y "$click_y"
+    info "Clicked Allow"
+
+    # Wait for dev-browser to finish
+    wait "$bg_pid" || true
+    local result
+    result=$(cat /tmp/chrome-debug-result.out)
+
+    if echo "$result" | grep -q '"url"'; then
+        printf '\033[32m✓ Connected to Chrome default profile\033[0m\n'
+        echo "$result"
+    else
+        die "Connection failed: $result"
+    fi
+}
+
+# @cmd Check if Chrome is listening on port 9222 (remote debugging active).
+status() {
+    pgrep -x "Google Chrome" >/dev/null || die "Chrome is not running"
+    local listening
+    listening=$(lsof -nP -iTCP:9222 -sTCP:LISTEN 2>/dev/null | grep -c Chrome || true)
+    if [[ "$listening" -gt 0 ]]; then
+        printf '\033[32m✓ Chrome is listening on port 9222\033[0m\n'
+    else
+        printf '\033[33m✗ Chrome is not listening on port 9222\033[0m\n'
+        echo "  Run: chrome-debug connect"
+    fi
+}
+
+eval "$(argc --argc-eval "$0" "$@")"

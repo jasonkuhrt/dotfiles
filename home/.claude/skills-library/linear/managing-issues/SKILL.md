@@ -1,5 +1,5 @@
 ---
-name: linear_managing-issues
+name: linear:managing-issues
 description: Compatibility alias for projects that still reference `linear_managing-issues`. Use when searching, creating, updating, or commenting on Linear issues.
 ---
 

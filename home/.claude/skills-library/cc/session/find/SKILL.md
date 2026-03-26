@@ -1,5 +1,5 @@
 ---
-name: cc-session-search
+name: cc:session:find
 description: Search Claude Code conversation history. Use when user asks "where did I discuss X", "when did we talk about X", "find the conversation about X", or wants to continue previous work.
 ---
 

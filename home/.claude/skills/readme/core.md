@@ -17,11 +17,14 @@ A paragraph that merely restates an API in prose is negative value — it wastes
 ## Source Truth Priority
 
 1. CLAUDE.md / AGENTS.md / .claude/rules/ — design intent (highest)
-2. README.md / CONTRIBUTING.md (existing) — preserve voice, badges, contributing
-3. package.json / manifest — name, description, deps
-4. Public API surface — exports, types, domain vocabulary
-5. Test files — usage examples, expected behavior
-6. Git log — motivation, trajectory
+2. Design specs, brainstorm decisions, memory files — when code doesn't exist yet (README-driven development)
+3. README.md / CONTRIBUTING.md (existing) — preserve voice, badges, contributing
+4. package.json / manifest — name, description, deps
+5. Public API surface — exports, types, domain vocabulary
+6. Test files — usage examples, expected behavior
+7. Git log — motivation, trajectory
+
+When source code doesn't exist yet (new package, pre-implementation), the source truth is the design spec — brainstorm decisions, spec files, reference implementations, or memory files. The README is the first artifact, not derived from code. This is README-driven development: write the README to the shape you want, then implement to match it.
 
 Every claim must trace to a source. No evidence → no claim.
 

@@ -24,10 +24,10 @@ Render a transcript as a readable conversation log — user messages, Claude's p
 
 **Arguments:**
 
-| Argument   | Description                                                                    |
-| ---------- | ------------------------------------------------------------------------------ |
-| `[target]` | Session ID/prefix, file path, or omit for interactive picker.                  |
-| `--show`   | Add detail layers: `results`, `diffs`, `thinking`, `trace`, `all` (CSV list).  |
+| Argument   | Description                                                                   |
+| ---------- | ----------------------------------------------------------------------------- |
+| `[target]` | Session ID/prefix, file path, or omit for interactive picker.                 |
+| `--show`   | Add detail layers: `results`, `diffs`, `thinking`, `trace`, `all` (CSV list). |
 
 **Output:** `.claude/transcripts/<session-id>.print.md`
 
@@ -205,10 +205,9 @@ Undo/redo fully supported for all move operations via composite history entries.
 
 Run aspect-based health checks. Default: detect + auto-fix. Use `--no-fix` for report-only mode.
 
-**13 aspects:** broken-symlink (with git rename detection), state-drift, new-leaf, stale-router, orphaned-router, orphaned-scope, stale-gitignore, frontmatter-mismatch, name-conflict, duplicate-name, shadow, stale-shadow, cross-scope-install.
+**14 aspects:** agent-mirror, broken-symlink (with git rename detection), state-drift, new-leaf, stale-router, orphaned-router, orphaned-scope, stale-gitignore, frontmatter-mismatch, name-conflict, duplicate-name, shadow, stale-shadow, cross-scope-install.
 
 ```bash
 shan skills doctor                             # detect + auto-fix
 shan skills doctor --no-fix                    # report only
 ```
-

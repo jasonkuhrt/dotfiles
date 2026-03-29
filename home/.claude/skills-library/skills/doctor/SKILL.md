@@ -25,6 +25,6 @@ bun x @jasonkuhrt/shan skills doctor
 bun x @jasonkuhrt/shan skills doctor --no-fix
 ```
 
-## 13 Diagnostic Aspects
+## 14 Diagnostic Aspects
 
-broken-symlink (with git rename detection), state-drift, new-leaf, stale-router, orphaned-router, orphaned-scope, stale-gitignore, frontmatter-mismatch, name-conflict, duplicate-name, shadow, stale-shadow, cross-scope-install.
+agent-mirror, broken-symlink (with git rename detection), state-drift, new-leaf, stale-router, orphaned-router, orphaned-scope, stale-gitignore, frontmatter-mismatch, name-conflict, duplicate-name, shadow, stale-shadow, cross-scope-install.

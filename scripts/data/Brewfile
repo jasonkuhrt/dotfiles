@@ -101,6 +101,7 @@ brew "pandoc"        # document converter
 # Encryption & passwords
 brew "age"           # file encryption and key management
 brew "bendews/tap/apw"  # Apple Passwords CLI (iCloud Keychain access)
+brew "oath-toolkit"  # TOTP code generation from keychain-stored secrets (oathtool)
 
 # System utilities
 brew "watch"         # run command repeatedly

@@ -1,7 +1,7 @@
 model = "gpt-5.4"
 model_reasoning_effort = "xhigh"
-ask_for_approval = "never"
-sandbox = "danger-full-access"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
 
 [projects."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat"]
 trust_level = "trusted"
@@ -19,6 +19,9 @@ trust_level = "trusted"
 trust_level = "trusted"
 
 [projects."/Users/jasonkuhrt/projects/heartbeat-chat"]
+trust_level = "trusted"
+
+[projects."/Users/jasonkuhrt/projects/jasonkuhrt/meos"]
 trust_level = "trusted"
 
 [mcp_servers.figma]

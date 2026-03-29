@@ -9,6 +9,7 @@
 [init]
     # Default branch name for new repos
     defaultBranch = main
+	templateDir = /Users/jasonkuhrt/.config/git-hooks/init-template
 
 [core]
     # Use delta for all paged output (diff, log, show, blame)

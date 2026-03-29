@@ -84,6 +84,7 @@ Full list in `home/dot_config/fish/config.fish`.
 | Email       | `imapfilter` | Server-side email filtering           | (see config)                                    |
 | Email       | `mbsync`     | Sync IMAP to local Maildir            | `mbsync -a`                                     |
 | Email       | `notmuch`    | Index and search email                | `notmuch search tag:inbox`                      |
+| **Messages** | `imsg`      | Messages.app CLI (read, watch, send)  | `imsg watch --json`, `imsg history --chat-id 1` |
 | **Passwords** | `apw`      | CLI for Apple Passwords (iCloud Keychain) | `apw pw list authentication.td.com` — see [apw notes](#apw-apple-passwords-cli) |
 | **macOS**   | `dockutil`   | Manage Dock programmatically          | `dockutil --add /Applications/App.app`          |
 | macOS       | `mas`        | Mac App Store CLI                     | `mas install 497799835` (Xcode)                 |

@@ -72,6 +72,12 @@ Rules:
 - Title area badges: use sparingly. CI status and npm version are useful. Vanity metrics are not.
 - If the project has a doc site, API Overview should be a signpost to it, not a competitor.
 
+## Honest Positioning
+
+When the project combines known approaches rather than inventing something new, say so. "Not a novel algorithm — the best existing approaches, packaged cleanly" is better than overclaiming novelty. State what's new (the combination, the packaging, the integration) and what's adopted (the algorithm, the scoring constants, the protocol). The Knowledge Delta Rule catches factual overreach; this catches tonal overreach.
+
+Similarly, be honest about what the consumer builds vs what's automatic. If the consumer defines three things and the engine provides four things, say that. Don't imply magic where there's configuration.
+
 ## Anti-Slop Scan
 
 __Banned words__ — search and remove every instance:

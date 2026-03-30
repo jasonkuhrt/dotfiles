@@ -63,17 +63,17 @@ __Grounding__: 1-3 sentences establishing what domain this project operates in, 
 
 __Problem__: 2-4 sentences. No jargon. A developer who has never heard of this project should understand what sucks. Be concrete: name the specific pain, not a category of pain.
 
-__Solution__: ≤3 paragraphs. Only terms already introduced or common knowledge. NOT a feature list. Describe the approach and the key insight, not the feature set.
+__Solution__: ≤3 paragraphs. Only terms already introduced or common knowledge. NOT a feature list. Describe the approach and the key insight, not the feature set. Each paragraph should answer a specific pain from the Problem section — if Problem names four pains, Solution should address all four. A Solution that doesn't map back to the Problem is disconnected. Solution explains WHY the approach works; Concepts explains HOW it's structured. Implementation architecture (subsystem names, internal decomposition) belongs in Concepts, not Solution.
 
 __Quickstart__: Prerequisites → install → first meaningful use → what just happened. Copy-pasteable. Every step produces visible output. Under 5 minutes. Assume a completely fresh machine. Explain rationales beyond commands — not just "run this" but why.
 
-__Concepts__: Narrative prose following topological sort. Bold-lead definitions woven into flowing paragraphs. [`term`](#term) links after first introduction. Reader builds complete mental model by reading linearly. This is the hardest section — it must teach, not list.
+__Concepts__: Narrative prose following topological sort. Bold-lead definitions woven into flowing paragraphs. [`term`](#term) links after first introduction. Reader builds complete mental model by reading linearly. This is the hardest section — it must teach, not list. For libraries, each concept should lead with a code block showing creation or usage before the prose explanation — the code IS the introduction, the prose adds understanding. Introduce each concept exactly once; do not briefly introduce a concept in one section and then fully define it later. If the Concepts code blocks are sufficient, Usage can be reduced or omitted — do not duplicate code across sections.
 
 __Usage__: 3-7 examples for libraries, 1-3 for small tools. Each solves a real task. Code must be copy-pasteable or clearly marked illustrative. Each example has a one-sentence motivation ("When you need to X, use Y").
 
 __API Overview__: Table of exports with one-line descriptions is the ceiling. Point to generated reference. Do not duplicate the full API inline.
 
-__Glossary__: Every domain term introduced in the README. Alphabetical. `####` headings for anchor targets. One concise definition each. The glossary is reinforcement, not the place of first introduction.
+__Glossary__: Every domain term introduced in the README. Alphabetical. `####` headings for anchor targets. One concise definition each. The glossary is reinforcement, not the place of first introduction. The glossary is not limited to API exports — it covers the full domain vocabulary, including system terms that have no direct API representation (e.g., "scope" as a runtime concept, "namespace" as an emergent structural property). If a reader needs to understand a term to use the system, it belongs in the glossary regardless of whether it maps to a constructor or type.
 
 ## README Anti-Patterns
 
@@ -97,3 +97,15 @@ A README that exhaustively documents ranking formula coefficients and temporal d
 ### Forward References
 
 "The [`scope tree`](#scope-tree) determines which [`commands`](#command) are visible." — but neither term has been introduced yet. Two undefined terms in one sentence.
+
+### Duplicate Introduction
+
+A concept briefly introduced in one section ("Module Tree" as a structural overview) and then fully defined later ("Module" as a concept). The reader encounters the concept twice with overlapping information and must mentally merge them. Introduce each concept exactly once, where it belongs in the topological sort.
+
+### User-Action Language in Library Docs
+
+"When the user types a character, the frontier narrows." The library doesn't know about users — it knows about its API inputs. Describe behavior in terms of API calls: "when `input(char)` is called, the frontier refilters." User-facing descriptions belong in surface/UI docs, not library internals.
+
+### Dismissive Scale Assumptions
+
+"The frontier is usually <100 items, so performance doesn't matter." This dismisses the library's generality. State scale and audience as design context instead: "Designed for command vocabularies of 10-10,000 commands." Clarify intended use cases and scale ranges — they're part of a library's design tradeoffs. But don't use them to wave away concerns.

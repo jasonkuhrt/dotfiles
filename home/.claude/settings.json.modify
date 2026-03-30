@@ -2,7 +2,8 @@
 # Merge managed keys into settings.json, preserving CC runtime state.
 #
 # Managed keys (from settings.json): overwritten on deploy.
-# Preserved keys (CC runtime, never touched): permissions, enabledPlugins
+# Runtime-accumulated keys (e.g. permissions.allow, enabledPlugins): preserved
+# via recursive merge — dotfiles values win for shared keys, runtime-only keys kept.
 #
 # Convention: DOTCTL_SOURCE points to the managed data file.
 # Stdin contains current target content.

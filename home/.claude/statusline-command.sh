@@ -58,7 +58,7 @@ fi
 # ── Git dirty + unpushed ──────────────────────────────────────
 if [ -n "$branch" ]; then
     dirty=$(git -C "$cwd" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
-    [ "$dirty" -gt 0 ] 2>/dev/null && printf " \033[1;33m%s△\033[0m" "$dirty"
+    [ "$dirty" -gt 0 ] 2>/dev/null && printf " \033[1;33m%s △\033[0m" "$dirty"
     unpushed=$(git -C "$cwd" rev-list @{upstream}..HEAD --count 2>/dev/null || true)
     [ "${unpushed:-0}" -gt 0 ] 2>/dev/null && printf " \033[1;32m%s⇡\033[0m" "$unpushed"
 fi

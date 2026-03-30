@@ -273,7 +273,6 @@ bind -M pager \cj down-or-search
 # Cursor shapes per mode (visual feedback)
 set -g fish_cursor_default block
 set -g fish_cursor_insert line
-set -g fish_cursor_replace_one underscore
 set -g fish_cursor_visual block
 
 # fzf.fish: must be called AFTER fish_vi_key_bindings, which replaces all bindings
@@ -281,12 +280,16 @@ set -g fish_cursor_visual block
 #           Ctrl+Alt+S (git status), Ctrl+Alt+P (processes), Ctrl+V (variables)
 fzf_configure_bindings
 
+# Disable replace mode (unused)
+bind -M default r ''
+bind -M default R ''
+
 # Vi normal mode: [ and ] cycle cmux tabs (surfaces) via cmuxx
 # Overrides history-token-search (alt-up/down and ctrl+r remain)
 bind -M default \[ 'cmuxx prev-surface'
 bind -M default \] 'cmuxx next-surface'
 
-function fish_mode_prompt --description "Display Fish vi mode and start new prompts in normal mode"
+function fish_mode_prompt --description "Display vi mode as a single Tokyo Night colored letter"
     if not set -q __dotfiles_fish_vi_mode_bootstrapped
         set -g __dotfiles_fish_vi_mode_bootstrapped 1
         if test "$fish_key_bindings" = fish_vi_key_bindings
@@ -295,7 +298,21 @@ function fish_mode_prompt --description "Display Fish vi mode and start new prom
         end
     end
 
-    fish_default_mode_prompt
+    switch $fish_bind_mode
+        case default
+            set_color --bold 7aa2f7
+            echo -n 'N '
+        case insert
+            set_color --bold 9ece6a
+            echo -n 'I '
+        case visual
+            set_color --bold bb9af7
+            echo -n 'V '
+        case '*'
+            set_color --bold 7aa2f7
+            echo -n 'N '
+    end
+    set_color normal
 end
 
 # bun

@@ -17,7 +17,7 @@ description: >-
 cmux is a terminal application built on **libghostty** (not a Ghostty wrapper — it's its own app).
 
 - Bundle ID: `com.cmuxterm.app`
-- CLI: `/usr/local/bin/cmux` (Unix socket at `/tmp/cmux.sock`)
+- CLI: `/usr/local/bin/cmux` (Unix socket at `~/Library/Application Support/cmux/cmux.sock`)
 - Version: check with `cmux version`
 
 ## Object Model
@@ -38,7 +38,10 @@ Window          macOS window
 
 ### Referencing Objects
 
-Commands accept short refs (`surface:14`), UUIDs, or zero-based indexes.
+Commands accept short refs (`surface:14`) and UUIDs. Indexes are also technically
+accepted but **never use them** — indexes are positional and change when workspaces are
+reordered, created, or closed. Always use refs (`workspace:13`, `surface:4`) or UUIDs.
+For targeting by name, use `find-window` to resolve to a ref first.
 
 ```bash
 cmux identify              # caller's full context (window, workspace, pane, surface, tab)
@@ -82,7 +85,7 @@ cmux send-key --workspace "$WS_ID" Enter
 
 ## Tab (Surface) Switching
 
-**There is no `next-tab` or `focus-surface` CLI command.** The `surface.focus` API method exists in capabilities but is not exposed as a CLI command (as of v0.61).
+**There is no `next-tab` or `focus-surface` CLI command.** The `surface.focus` API method exists in capabilities but is not exposed as a CLI command.
 
 ### Approach 1: cmux CLI (native, no osascript)
 
@@ -167,6 +170,57 @@ cmux read-screen --scrollback --lines 100  # include scrollback
 cmux send "text"                           # type text into surface
 cmux send-key <key>                        # send keypress
 ```
+
+**`cmux send` targets the caller's workspace by default.** The `--workspace` flag accepts
+refs (`workspace:13`) or UUIDs — **not names**. Passing a workspace name as a positional
+arg silently sends it as text to the caller's own terminal. Always use
+`--workspace <ref>` for cross-workspace sends.
+
+### Workspace Name Resolution
+
+`--workspace` does not resolve workspace names. Use `find-window` to look up a ref by title:
+
+```bash
+cmux find-window "Importer Fixes"              # human-readable: workspace:13  "Importer Fixes"
+cmux --json find-window "Importer Fixes"       # structured: .matches[].ref
+```
+
+`find-window` does substring matching against workspace titles. Add `--content` to also
+search terminal content. Add `--select` to focus the first match.
+
+#### Cross-workspace send pattern
+
+Always resolve by name before sending. Never cache refs across turns — workspaces can be
+deleted and recreated at any time.
+
+```bash
+# Resolve name → ref, then send
+ws_ref=$(cmux --json find-window "Remaining Fixes" | jq -r '.matches[0].ref')
+cmux send --workspace "$ws_ref" "message text"
+```
+
+If a send fails because the workspace no longer exists, re-resolve by name:
+
+```bash
+# Send attempt fails → workspace was deleted/recreated
+cmux send --workspace "$ws_ref" "message"  # → error
+
+# Re-resolve: find-window picks up the new workspace with the same semantic name
+ws_ref=$(cmux --json find-window "Remaining Fixes" | jq -r '.matches[0].ref')
+```
+
+**If `find-window` returns no matches or multiple ambiguous matches, STOP.** Never send
+to a workspace you're not confident is the intended target. Instead, tell the user:
+
+- What name you searched for
+- What `find-window` returned (all matches with their names and refs, or empty)
+- That you cannot reliably identify the target workspace
+
+Let the user resolve the ambiguity. Blindly sending to the wrong workspace is worse than
+not sending at all.
+
+Never use `cmux send "workspace-name" "message"` — this sends both strings as text to the
+caller's own workspace.
 
 ### Metadata & Status
 

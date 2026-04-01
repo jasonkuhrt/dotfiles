@@ -9,6 +9,8 @@ description: >-
   run in their own Claude session. This is agent-invokeable only — the agent
   uses it to launch work, not the user directly. Always prefer this over
   asking the user to copy-paste prompts into new terminals.
+dependencies:
+  - cmux
 ---
 
 # Dispatch
@@ -16,6 +18,10 @@ description: >-
 Launch Claude Code sessions in new cmux workspaces. Each dispatch creates an
 isolated workspace, starts claude with the prompt, and never steals focus from
 the user's current terminal.
+
+This skill depends on `cmux`. Turning `dispatch` on through shan should also
+turn on `cmux`, because every real dispatch workflow uses the cmux CLI and its
+workspace model.
 
 ## When to use
 
@@ -223,3 +229,7 @@ cmux read-screen --workspace "$ws_ref" --scrollback --lines 50
 - To open a markdown file for viewing, use `cmux markdown open <path>` — not
   `cmux open <path>` (which only works for directories). The markdown viewer
   renders formatted content with live reload.
+- For CI check workflows, dispatched agents can follow the `gh/pr` checks skill
+  which provides a complete analyze-fix-push-watch loop.
+- Dispatched agents that need to poll (CI status, deploy health, etc.) can use
+  `/loop` for recurring checks rather than implementing manual polling.

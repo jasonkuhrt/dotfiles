@@ -3,6 +3,7 @@ set -euo pipefail
 
 cmux_bin="${CC_CMUX_CMUX_BIN:-cmux}"
 jq_bin="${CC_CMUX_JQ_BIN:-jq}"
+split_preserve_focus="${CC_CMUX_SPLIT_PRESERVE_FOCUS:-1}"
 
 # Surfaces created by cmd_split_window that need a Ctrl-C mode reset before
 # the first text send.  Fish vi-mode starts in normal mode ([N]) and
@@ -114,8 +115,10 @@ tmux_pane_id_from_surface() {
 pane_ref_from_surface() {
     local surface_ref="$1"
 
+    # Use .caller specifically — the recursive first_json_value can return
+    # the focused pane (from a different workspace) instead of the caller's.
     cmux_json identify --workspace "$(current_workspace_ref)" --surface "${surface_ref}" \
-        | first_json_value '.pane_id? // .pane_uuid? // .pane_ref?'
+        | "${jq_bin}" -r '.caller.pane_ref // .caller.pane_id // empty'
 }
 
 list_surface_refs() {
@@ -225,20 +228,14 @@ cmd_list_panes() {
 }
 
 cmd_split_window() {
-    local direction="down"
     local target=""
     local print_pane=0
     local format=""
 
     while (($#)); do
         case "$1" in
-            -h)
-                direction="right"
-                shift
-                ;;
-            -v)
-                direction="down"
-                shift
+            -h|-v)
+                shift  # direction is irrelevant for tabs
                 ;;
             -t)
                 target="${2:-}"
@@ -267,21 +264,22 @@ cmd_split_window() {
     local workspace_ref
     workspace_ref="$(current_workspace_ref)"
 
-    # Use cmux new-split which creates a split pane in one atomic call.
-    # This replaces the old new-surface + drag-surface-to-split two-step which
-    # was broken (drag fails with "Surface not found") and stole focus.
-    local split_result
-    split_result="$(cmux_json new-split "${direction}" --workspace "${workspace_ref}")"
+    local create_result
+    create_result="$(cmux_json new-surface --workspace "${workspace_ref}")"
 
     local new_surface_id
-    new_surface_id="$(printf '%s\n' "${split_result}" | first_json_value '.surface_id? // .surface_ref?')"
+    new_surface_id="$(printf '%s\n' "${create_result}" | "${jq_bin}" -r '.surface_ref // .surface_id // empty')"
 
     if [[ -z "${new_surface_id}" ]]; then
-        die "could not resolve new cmux surface after new-split"
+        die "could not resolve new cmux surface after new-surface"
     fi
 
     # Track this surface for vi-mode Ctrl-C reset on first send-keys.
     touch "${_CC_CMUX_VIFIX_DIR}/${new_surface_id}" 2>/dev/null || true
+
+    # No focus restore needed. new-surface creates the tab without selecting
+    # it or changing the globally focused surface. The user stays wherever
+    # they are — possibly a completely different workspace.
 
     if (( print_pane == 1 )); then
         local pane_id

@@ -3,7 +3,6 @@ set -euo pipefail
 
 cmux_bin="${CC_CMUX_CMUX_BIN:-cmux}"
 jq_bin="${CC_CMUX_JQ_BIN:-jq}"
-split_preserve_focus="${CC_CMUX_SPLIT_PRESERVE_FOCUS:-1}"
 
 # Surfaces created by cmd_split_window that need a Ctrl-C mode reset before
 # the first text send.  Fish vi-mode starts in normal mode ([N]) and
@@ -59,7 +58,9 @@ current_surface_ref() {
         return 0
     fi
 
-    cmux_json identify | first_json_value '.surface_id? // .surface_uuid? // .surface_ref?'
+    # Use .caller specifically — recursive first_json_value can return
+    # the focused surface (from a different workspace) instead of the caller's.
+    cmux_json identify | "${jq_bin}" -r '.caller.surface_ref // .caller.surface_id // empty'
 }
 
 surface_ref_from_target() {
@@ -428,7 +429,10 @@ cmd_kill_pane() {
         esac
     done
 
-    "${cmux_bin}" close-surface --workspace "$(current_workspace_ref)" --surface "$(surface_ref_from_target "${target}")" >/dev/null
+    local surface_ref
+    surface_ref="$(surface_ref_from_target "${target}")"
+    rm -f "${_CC_CMUX_VIFIX_DIR}/${surface_ref}" 2>/dev/null || true
+    "${cmux_bin}" close-surface --workspace "$(current_workspace_ref)" --surface "${surface_ref}" >/dev/null
 }
 
 cmd_select_pane() {

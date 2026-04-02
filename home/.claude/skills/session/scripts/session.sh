@@ -84,6 +84,7 @@ resolve_session_key() {
 # --- Session template ---
 
 REQUIRED_SESSION_SECTIONS=("Mission" "Decisions" "Tasks")
+REQUIRED_TASK_SECTIONS=("Active" "Todo" "Done")
 
 session_template() {
   local session_key="$1"
@@ -96,8 +97,40 @@ session_template() {
 
 ## Tasks
 
-- [ ] Capture the current mission.
+### Current List
+
+- \`main\`
 EOF
+}
+
+task_list_template() {
+  local list_name="$1"
+  cat <<EOF
+# Task List: $list_name
+
+### Active
+
+- [ ] Capture the current mission.
+
+### Todo
+
+### Done
+EOF
+}
+
+extract_current_list_name() {
+  local session_file="$1"
+
+  awk '
+    /^### Current List$/ { in_current_list = 1; next }
+    /^### / && in_current_list { exit }
+    in_current_list {
+      if (match($0, /`([^`]+)`/)) {
+        print substr($0, RSTART + 1, RLENGTH - 2)
+        exit
+      }
+    }
+  ' "$session_file"
 }
 
 # --- Reconciliation engine ---
@@ -236,6 +269,13 @@ _reconcile_session_directory() {
     _report_fixed "created reviews/"
   fi
 
+  if [[ -d "$session_dir/tasks" ]]; then
+    _report_ok "tasks/ exists"
+  else
+    mkdir -p "$session_dir/tasks"
+    _report_fixed "created tasks/"
+  fi
+
   local session_file="$session_dir/SESSION.md"
   if [[ -f "$session_file" ]]; then
     _report_ok "SESSION.md exists"
@@ -243,6 +283,18 @@ _reconcile_session_directory() {
     mkdir -p "$session_dir"
     session_template "$session_key" >"$session_file"
     _report_fixed "created SESSION.md from template"
+  fi
+
+  local current_list
+  current_list="$(extract_current_list_name "$session_file")"
+  if [[ -n "$current_list" ]]; then
+    local task_file="$session_dir/tasks/$current_list.md"
+    if [[ -f "$task_file" ]]; then
+      _report_ok "tasks/$current_list.md exists"
+    else
+      task_list_template "$current_list" >"$task_file"
+      _report_fixed "created tasks/$current_list.md from template"
+    fi
   fi
 }
 
@@ -271,8 +323,30 @@ _reconcile_active_symlink() {
   fi
 }
 
+_validate_task_list_md() {
+  local task_file="$1" list_name="$2"
+
+  if [[ ! -f "$task_file" ]]; then
+    _report_error "current task file missing: tasks/$list_name.md"
+    return 0
+  fi
+
+  local missing=()
+  for section in "${REQUIRED_TASK_SECTIONS[@]}"; do
+    if ! grep -qE "^### ${section}$" "$task_file"; then
+      missing+=("$section")
+    fi
+  done
+
+  if [[ ${#missing[@]} -eq 0 ]]; then
+    _report_ok "tasks/$list_name.md has all required sections"
+  else
+    _report_error "tasks/$list_name.md missing sections: ${missing[*]}"
+  fi
+}
+
 _validate_session_md() {
-  local session_file="$1" session_key="$2"
+  local session_file="$1" session_key="$2" session_dir="$3"
 
   if [[ ! -f "$session_file" ]]; then
     return 0
@@ -290,6 +364,21 @@ _validate_session_md() {
   else
     _report_error "SESSION.md missing sections: ${missing[*]} (regenerate with: rm SESSION.md && session sync)"
   fi
+
+  if ! grep -qE '^### Current List$' "$session_file"; then
+    _report_error "SESSION.md missing \`### Current List\` under \`## Tasks\`"
+    return 0
+  fi
+
+  local current_list
+  current_list="$(extract_current_list_name "$session_file")"
+  if [[ -z "$current_list" ]]; then
+    _report_error "SESSION.md has \`### Current List\` but no selected task-list name"
+    return 0
+  fi
+
+  _report_ok "SESSION.md selects current task list: $current_list"
+  _validate_task_list_md "$session_dir/tasks/$current_list.md" "$current_list"
 }
 
 reconcile() {
@@ -336,7 +425,7 @@ reconcile() {
 
   if [[ "$_mode" == "doctor" ]]; then
     _section "Validating SESSION.md content..."
-    _validate_session_md "$session_dir/SESSION.md" "$session_key"
+    _validate_session_md "$session_dir/SESSION.md" "$session_key" "$session_dir"
 
     printf '\n--- Summary ---\n'
     printf '  OK: %d  FIXED: %d  ERROR: %d\n' "$_ok_count" "$_fixed_count" "$_error_count"
@@ -349,20 +438,28 @@ reconcile() {
 
 # @cmd Show current session wiring for this checkout
 status() {
-  local repo_root_path main_root branch_name session_key
+  local repo_root_path main_root branch_name session_key session_dir session_file current_list
   repo_root_path=$(repo_root)
   main_root=$(main_worktree)
   branch_name=$(current_branch)
   session_key=$(resolve_session_key "$branch_name")
+  session_dir="$main_root/.sessions/$session_key"
+  session_file="$session_dir/SESSION.md"
+  current_list=""
+  if [[ -f "$session_file" ]]; then
+    current_list="$(extract_current_list_name "$session_file")"
+  fi
 
   echo "repo_root=$repo_root_path"
   echo "main_worktree=$main_root"
   echo "branch=${branch_name:-DETACHED}"
   echo "session_key=$session_key"
   echo "shared_sessions_root=$main_root/.sessions"
-  echo "session_dir=$main_root/.sessions/$session_key"
+  echo "session_dir=$session_dir"
   echo "local_sessions_path=$repo_root_path/.sessions"
   echo "local_session_path=$repo_root_path/.session"
+  echo "current_task_list=${current_list:-}"
+  echo "current_task_file=${current_list:+$session_dir/tasks/$current_list.md}"
 }
 
 # @cmd Sync the current checkout's session wiring

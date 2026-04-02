@@ -1,27 +1,42 @@
 ---
-name: land
+name: session:thread:land
 description: >-
-  Use when the user says "/land", "are you done", "is this actually done",
-  "can we close this", "is there anything still open", "are there loose
-  ends", or otherwise wants a real completion audit across a long meandering
-  thread. This skill performs an unresolved-thread sweep before answering.
+  Use when the user says "/session:thread:land", "are you done", "is this
+  actually done", "can we close this", "is there anything still open", "are
+  there loose ends", or otherwise wants a real completion audit for the
+  thread-scoped task and, when appropriate, a real landing pass through
+  commit, push, and CI.
 ---
 
-# Land
+# Session Thread Land
 
 Use this skill when the user is not asking for a status recap in general.
 Use it when they want an honest completion verdict.
+
+This skill is thread-scoped by default.
+It answers whether the work requested in this conversation is done, not whether
+the entire branch, issue, or session mission is done, unless the user explicitly
+asks for branch-level or issue-level closure.
 
 This is not a vibe check.
 This is not "the tests I remember are green."
 This is a closure audit.
 It is also a missed-value sweep.
+It is also a landing workflow.
 
 ## Purpose
 
 Answer one question truthfully:
 
 `Is the work actually done, with no meaningful loose ends hidden by the thread's complexity?`
+
+And if the user's intent is to actually land the work, carry it through the real
+finish line:
+
+- commit your work
+- push it
+- let CI run
+- deal with commit-time or CI-time rejections instead of pretending the thread ended cleanly
 
 The point is to catch unresolved threads that often survive long chats:
 
@@ -38,6 +53,15 @@ The point is to catch unresolved threads that often survive long chats:
 
 Do not answer from the latest assistant message alone.
 
+Scope precedence is strict:
+
+1. the user's scope in this thread
+2. explicit scope corrections from the user
+3. the broader branch, issue, or `.session` mission
+
+If the thread scope is narrower than the active `.session` mission, the thread
+scope wins.
+
 Build the answer from:
 
 1. the user's latest durable goal
@@ -48,6 +72,8 @@ Build the answer from:
 6. session/task/loop state if those mechanisms were used
 
 If earlier assistant framing conflicts with the user's corrections, discard it.
+If broader `.session` state conflicts with a narrower thread-scoped ask, do not
+let the broader state veto the thread verdict.
 
 ## Required Sweep
 
@@ -73,8 +99,25 @@ When relevant, inspect:
 - the active named task file under `.session/tasks/<name>.md`
 - the latest verification results that matter to the task
 
+Use `.session` as corroborating evidence, not as an automatic scope expander.
+Inspect the task file that matches the thread-scoped work when one exists.
+Do not escalate to broader closeout tasks unless the user explicitly asks to
+land the whole branch or issue.
+
 If something is still open, say so directly.
 If something valuable was discovered but skipped, surface it directly.
+
+## Landing Includes
+
+When the user is asking to actually land the work, landing means:
+
+- the completion audit passes
+- your hunks are committed
+- the branch is pushed so CI can run
+- CI is checked
+- any commit hook rejection or CI rejection caused by your landing attempt is handled instead of ignored
+
+Do not treat "I made a commit" as equivalent to landing.
 
 ## Completion Standard
 
@@ -84,13 +127,81 @@ You may answer "yes, done" only if all of these are true:
 - requested reviews or follow-up fixes are done
 - required checks were run, or any unrun checks are explicitly non-blocking
 - no meaningful unresolved thread remains from the conversation
-- session/loop/task state does not falsely imply unfinished work
+- session/loop/task state does not falsely imply unfinished work for the
+  thread-scoped task
 
 You must still surface missed value even when the answer is "yes, done."
 That missed value does not automatically make the verdict "no" unless it was
 actually part of the agreed scope or an implied closure obligation.
 
 If any one of these fails, the answer is "not fully done."
+
+## Multi-Agent Commit Rule
+
+Other agents may be changing the repo around you constantly.
+
+Your commit responsibility is:
+
+- commit all of your hunks
+- ignore changes that are not yours
+
+Default behavior:
+
+- prefer normal file-level staging when the touched files are cleanly yours
+- use hunk-level staging only when needed to avoid swallowing someone else's work
+
+Hunk-level staging is acceptable, but not the norm.
+
+If the repo is a PR/worktree with active parallel changes and untangling is more
+than a few seconds of work:
+
+- do not get fancy
+- do not sink time into perfect separation
+- it is acceptable to let a few extra hunks into the commit
+- when that happens, tell the user exactly what you know about the over-commit so they can relay it or coordinate with another agent
+
+Do not waste landing time on heroic staging surgery in a repo that is still moving.
+
+## Rejection Handling
+
+If the commit step rejects:
+
+- fix the rejection when it is reasonably attributable to the landing attempt
+- rerun the step
+- do not report "landed" while the commit is still blocked
+
+If CI rejects after push:
+
+- treat that as not landed yet
+- fix or clearly surface the failure
+- rerun or wait for the relevant CI proof before claiming completion
+
+The point of `/session:thread:land` is to finish the work, not to stop at the first gate.
+
+## Landing Announcement
+
+When a landed notification, chime, or voice announcement is used, do not use a
+generic label like:
+
+- `landed`
+- `done`
+- `branch landed`
+
+Instead, synthesize a short semantic title from the actual thread scope, for
+example:
+
+- `tree library landed`
+- `page template timeline landed`
+- `session task workflow landed`
+
+Rules:
+
+- derive it from the user's durable thread goal, not from the latest sub-question
+- keep it short and concrete
+- prefer the feature or system name plus `landed` or `complete`
+- if the thread title is ambiguous, fall back to the clearest current workstream, not a generic phrase
+
+If voice is used, the spoken phrase should use that semantic title too.
 
 ## Output Contract
 
@@ -116,7 +227,7 @@ Then use exactly these sections:
 - only completed, real things
 
 `Open`
-- every remaining loose end that matters
+- every remaining loose end that matters to the requested thread scope
 - if none, write `- none`
 
 `Missed Value`
@@ -130,6 +241,8 @@ Then use exactly these sections:
 - concrete verification and state checks
 - name checks that passed
 - name checks that still fail or were not run
+- if a commit or push happened, include the commit and CI state
+- if an over-commit happened, say what extra hunks were likely included
 
 `Next`
 - if done, say the thread can close
@@ -154,9 +267,13 @@ Then use exactly these sections:
 - do not answer only from tests
 - do not confuse "my code is done" with "the thread is done"
 - do not treat a stale task list as harmless
+- do not let broader branch or `.session` tasks override an explicit narrower
+  thread scope
 - do not claim completion while an acknowledged finding remains open
 - do not collapse "not done" into vague hedging
 - do not suppress valuable observations just because the agent previously chose not to mention them
+- do not pretend a local commit is the end of landing
+- do not spend excessive time surgically untangling a hot multi-agent worktree when a few extra hunks plus a clear disclosure is the better trade
 
 ## Example Shape
 
@@ -169,9 +286,6 @@ Done
 Open
 - session task file still shows an unchecked item
 - report still lists old verification status
-
-Missed Value
-- there is a clean follow-up property test for cross-root descendant pairs that was not requested at the time
 
 Evidence
 - `npm run --silent test:base` passed

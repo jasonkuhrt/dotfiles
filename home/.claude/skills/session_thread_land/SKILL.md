@@ -52,6 +52,7 @@ The point is to catch unresolved threads that often survive long chats:
 ## Source Of Truth
 
 Do not answer from the latest assistant message alone.
+Do not answer from the latest cluster of events alone.
 
 Scope precedence is strict:
 
@@ -75,6 +76,46 @@ If earlier assistant framing conflicts with the user's corrections, discard it.
 If broader `.session` state conflicts with a narrower thread-scoped ask, do not
 let the broader state veto the thread verdict.
 
+## Long Transcript Protocol
+
+When the thread is long, meandering, or has changed direction multiple times,
+you must reconstruct the thread before giving a verdict.
+
+This is mandatory. Do not skip it just because the most recent repo state looks
+clean.
+
+Build a compact internal map of:
+
+1. the original ask
+2. each major scope correction from the user
+3. every durable acceptance criterion the user added later
+4. every promised follow-up or "I will do X next" commitment made by the agent
+5. every review finding, concern, or objection that changed the bar
+6. every side thread that might have become part of the real expected closeout
+
+Then decide the verdict from that reconstructed thread, not from recency.
+
+If the recent repo state is clean but the reconstructed thread still contains
+unresolved obligations, the verdict is not done.
+
+## Recentness Bias Guard
+
+Recent activity is evidence, not scope.
+
+Never let these override the larger thread by default:
+
+- the latest commit
+- the latest push
+- the latest file touched
+- the latest user sub-question
+- the latest assistant recap
+
+Before saying `Done verdict: yes`, explicitly sanity-check:
+
+- "What earlier promises or findings would be invisible if I looked only at the last 10 turns?"
+- "What did the user care about 50 turns ago that still matters now?"
+- "What value or obligation got buried by later execution chatter?"
+
 ## Required Sweep
 
 Before answering, perform a deliberate unresolved-thread sweep.
@@ -90,6 +131,7 @@ Check for:
 - loop/session state that still implies unfinished work
 - hidden adoption work that the user explicitly deferred
 - useful insights, cleanup, leverage, or follow-on opportunities discovered during the work but never surfaced because the agent self-filtered them away
+- earlier commitments or concerns that disappeared from the recent conversation but were never explicitly resolved or dropped
 
 When relevant, inspect:
 
@@ -106,6 +148,7 @@ land the whole branch or issue.
 
 If something is still open, say so directly.
 If something valuable was discovered but skipped, surface it directly.
+If something was buried by thread length, resurrect it explicitly.
 
 ## Landing Includes
 
@@ -243,6 +286,7 @@ Then use exactly these sections:
 - name checks that still fail or were not run
 - if a commit or push happened, include the commit and CI state
 - if an over-commit happened, say what extra hunks were likely included
+- include at least one note showing that the verdict considered earlier thread commitments, not just recent landing events
 
 `Next`
 - if done, say the thread can close
@@ -265,6 +309,7 @@ Then use exactly these sections:
 
 - do not answer only from memory
 - do not answer only from tests
+- do not answer mainly from the latest part of a long transcript
 - do not confuse "my code is done" with "the thread is done"
 - do not treat a stale task list as harmless
 - do not let broader branch or `.session` tasks override an explicit narrower

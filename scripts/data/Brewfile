@@ -71,6 +71,7 @@ brew "gh"            # GitHub CLI
 brew "git-delta"     # better diffs (also in gitconfig)
 brew "git-crypt"     # transparent file encryption
 brew "lazygit"       # terminal UI for git
+brew "worktrunk"     # git worktree manager (parallel AI agents)
 brew "zmx"           # terminal session persistence
 brew "zsm"           # TUI session manager for zmx
 brew "pre-commit"    # git hooks framework
@@ -150,6 +151,7 @@ cask "meetingbar"     # calendar in menubar
 cask "cleanshot"      # screenshot tool
 cask "loom"           # screen recording
 cask "notion"
+cask "obsidian"       # local-first markdown notes / knowledge vault
 cask "linear-linear"
 cask "figma"
 

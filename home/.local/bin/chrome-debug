@@ -125,7 +125,9 @@ SCRIPT
     sleep 3
     osascript -e 'tell application "Google Chrome" to activate' 2>/dev/null
     sleep 0.3
-    "$USECOMPUTER" click -x "$click_x" -y "$click_y"
+    # Equals form so negative coordinates (Chrome on a secondary monitor at
+    # negative offsets) aren't parsed as flags by usecomputer.
+    "$USECOMPUTER" click -x="$click_x" -y="$click_y"
     info "Clicked Allow"
 
     # Wait for dev-browser to finish

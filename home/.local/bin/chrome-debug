@@ -125,9 +125,11 @@ SCRIPT
     sleep 3
     osascript -e 'tell application "Google Chrome" to activate' 2>/dev/null
     sleep 0.3
-    # Equals form so negative coordinates (Chrome on a secondary monitor at
-    # negative offsets) aren't parsed as flags by usecomputer.
-    "$USECOMPUTER" click -x="$click_x" -y="$click_y"
+    # Positional "x,y" form. usecomputer's flag parser rejects both -x=VALUE
+    # and -x VALUE-with-negatives (treats "-50" as an unknown flag). The
+    # positional target accepts negative coordinates fine — important for
+    # Chrome on a secondary monitor at negative offsets.
+    "$USECOMPUTER" click "$click_x,$click_y"
     info "Clicked Allow"
 
     # Wait for dev-browser to finish

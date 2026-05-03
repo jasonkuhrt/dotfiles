@@ -158,6 +158,7 @@ cask "figma"
 
 # Development
 cask "zed"            # editor
+cask "visual-studio-code" # editor (configured via dotfiles + vscode-neovim)
 cask "ghostty"        # terminal engine / config surface consumed by cmux
 cask "docker-desktop"
 cask "ngrok"

@@ -189,3 +189,10 @@ map("t", "<C-h>", [[<C-\><C-n><C-h>]], { desc = "Move to left split/pane" })
 map("t", "<C-j>", [[<C-\><C-n><C-j>]], { desc = "Move to below split/pane" })
 map("t", "<C-k>", [[<C-\><C-n><C-k>]], { desc = "Move to above split/pane" })
 map("t", "<C-l>", [[<C-\><C-n><C-l>]], { desc = "Move to right split/pane" })
+
+-- ──────────────────────────────────────────────────────────────────────────
+-- VS Code-mode chord overrides (chrome dispatches via vscode.action())
+-- ──────────────────────────────────────────────────────────────────────────
+if vim.g.vscode then
+  require("config.vscode_keymaps")
+end

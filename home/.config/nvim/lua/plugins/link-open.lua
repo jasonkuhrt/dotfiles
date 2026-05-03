@@ -8,6 +8,10 @@
 ---@field [1] string
 ---@field keys LinkOpenKeySpec[]
 
+if vim.g.vscode then
+  return {}
+end
+
 ---@type LinkOpenLazyPluginSpec[]
 return {
   {

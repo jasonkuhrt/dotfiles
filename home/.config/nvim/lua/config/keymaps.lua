@@ -23,7 +23,13 @@ map({ "n", "v" }, "K", "<C-u>zz", { desc = "Half-page up" })
 
 -- Displaced defaults for J/K
 map("n", "gJ", "J", { desc = "Join lines" })
-map("n", "gh", vim.lsp.buf.hover, { desc = "Hover docs" })
+map("n", "gh", function()
+  if vim.g.vscode then
+    require("vscode").action("editor.action.showHover")
+  else
+    vim.lsp.buf.hover()
+  end
+end, { desc = "Hover docs" })
 
 -- Search centering
 map("n", "n", "nzz", { desc = "Next match (centered)" })
@@ -31,23 +37,43 @@ map("n", "N", "Nzz", { desc = "Prev match (centered)" })
 map("n", "G", "Gzz", { desc = "Go to bottom (centered)" })
 
 -- Find files
-map("n", "<leader>k", LazyVim.pick("files"), { desc = "Find Files (Root Dir)" })
+map("n", "<leader>k", function()
+  if vim.g.vscode then
+    require("vscode").action("workbench.action.quickOpen")
+  else
+    LazyVim.pick("files")()
+  end
+end, { desc = "Find Files (Root Dir)" })
 
 -- Start/end of line
 map({ "n", "v" }, "H", "^", { desc = "Start of line" })
 map({ "n", "v" }, "L", "$", { desc = "End of line" })
 
--- Command palette / command line (swapped: : = palette, ; = ex command)
-map("n", ":", function()
-  require("cmdux").open_picker()
+-- Command palette / command line
+-- Aligned with Zed convention: ; opens command palette, : opens vim ex cmdline.
+-- Terminal nvim: ; → cmdux picker, : → vim ex cmdline (default). Cycle preserved
+--   via cmdline-mode mappings below: from cmdline `;` escalates to palette, `:` exits.
+-- VS Code: ; → VS Code's command palette. : is disabled (ex cmdline unreachable
+--   by design — anything ex would do should be a VS Code extension instead).
+map("n", ";", function()
+  if vim.g.vscode then
+    require("vscode").action("workbench.action.showCommands")
+  else
+    require("cmdux").open_picker()
+  end
 end, { desc = "Command palette" })
-map("n", ";", ":", { desc = "Command line" })
-map("c", ";", function()
-  require("cmdux").handoff_from_cmdline()
-end, { desc = "Escalate to command palette" })
-map("c", ":", "<C-c>", { desc = "Back to normal" })
-map("c", "<BS>", cmdline_backspace_or_noop, { expr = true, desc = "Keep empty cmdline open" })
-map("c", "<C-h>", cmdline_backspace_or_noop, { expr = true, desc = "Keep empty cmdline open" })
+
+if vim.g.vscode then
+  map("n", ":", "<Nop>", { desc = "(ex cmdline disabled in VS Code)" })
+else
+  -- Cmdline-mode mappings only meaningful in terminal nvim
+  map("c", ";", function()
+    require("cmdux").handoff_from_cmdline()
+  end, { desc = "Escalate to command palette" })
+  map("c", ":", "<C-c>", { desc = "Back to normal" })
+  map("c", "<BS>", cmdline_backspace_or_noop, { expr = true, desc = "Keep empty cmdline open" })
+  map("c", "<C-h>", cmdline_backspace_or_noop, { expr = true, desc = "Keep empty cmdline open" })
+end
 
 -- External command shortcut
 map("n", "!", ":!", { desc = "External command" })

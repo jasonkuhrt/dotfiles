@@ -19,14 +19,17 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 -- Auto-enter insert mode when focusing a terminal buffer
-vim.api.nvim_create_autocmd({ "TermOpen", "BufEnter", "WinEnter" }, {
-  group = vim.api.nvim_create_augroup("terminal_insert", { clear = true }),
-  pattern = "term://*",
-  callback = function()
-    if vim.bo.buftype == "terminal" then
-      vim.cmd("startinsert")
-    end
-  end,
-})
+-- (terminal-nvim only; VS Code's terminal isn't an nvim term buffer)
+if not vim.g.vscode then
+  vim.api.nvim_create_autocmd({ "TermOpen", "BufEnter", "WinEnter" }, {
+    group = vim.api.nvim_create_augroup("terminal_insert", { clear = true }),
+    pattern = "term://*",
+    callback = function()
+      if vim.bo.buftype == "terminal" then
+        vim.cmd("startinsert")
+      end
+    end,
+  })
 
-require("config.image_open").setup()
+  require("config.image_open").setup()
+end

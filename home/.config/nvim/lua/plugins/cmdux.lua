@@ -5,6 +5,10 @@
 ---@field priority integer
 ---@field config fun()
 
+if vim.g.vscode then
+  return {}
+end
+
 ---@type CmduxLazyPluginSpec[]
 return {
   {

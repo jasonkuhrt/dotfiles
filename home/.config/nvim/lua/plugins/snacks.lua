@@ -113,9 +113,15 @@ return {
   {
     "folke/snacks.nvim",
     init = function()
+      if vim.g.vscode then
+        return
+      end
       project.setup_snacks_runtime_sync()
     end,
     opts = function(_, opts)
+      if vim.g.vscode then
+        return opts
+      end
       opts = vim.tbl_deep_extend("force", opts or {}, vim.deepcopy(snacks_opts))
       project.merge_snacks_picker_opts(opts)
       return opts

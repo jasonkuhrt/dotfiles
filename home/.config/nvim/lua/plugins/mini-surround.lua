@@ -4,7 +4,7 @@
 -- work in both terminal nvim AND VS Code (operate on text via nvim's mechanism).
 
 return {
-  "echasnovski/mini.surround",
+  "nvim-mini/mini.surround",
   opts = {
     mappings = {
       add = "ms",

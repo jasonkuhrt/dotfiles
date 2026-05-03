@@ -1,63 +1,105 @@
 # Git Worktree
 
-Create isolated git worktrees with environment auto-detection. Handles path resolution, branch creation, dependency install, common tool file copying, and Claude Code pre-trust.
+Worktree management is handled by [worktrunk](https://worktrunk.dev) (`wt`). It automates the full lifecycle: creation, path naming, hook execution, build cache sharing, and cleanup.
 
-## Create Worktree
-
-Callers provide `BRANCH_NAME` and optionally `BASE_REF`.
-
-### Step 1: Detect Base Ref
-
-If caller provided `BASE_REF`, skip to Step 2.
+## Quick Reference
 
 ```bash
-PATHS=$(bash scripts/worktree-resolve-paths "$BRANCH_NAME")
+wt switch --create <branch>            # Create worktree + branch
+wt switch --create <branch> --base @   # Branch from current HEAD
+wt switch <branch>                     # Switch to existing worktree
+wt switch -                            # Switch to previous worktree
+wt switch pr:123                       # Checkout a GitHub PR
+wt list                                # Status across all worktrees
+wt list --full                         # Include CI status + summaries
+wt merge                               # Squash + rebase + merge + cleanup
+wt remove                              # Remove current worktree
+wt step copy-ignored                   # Copy build caches to current worktree
 ```
 
-If `isWorktree` is `true`, check for uncommitted changes (`git status --porcelain`) and ask:
+## Session Integration
 
-| Selection             | Action                                             |
-| --------------------- | -------------------------------------------------- |
-| Branch from here      | `BASE_REF` = current branch                        |
-| Branch + commit first | Run commit flow, `BASE_REF` = current branch       |
-| Branch from trunk     | `cd` to `mainRepo`, `git pull`, `BASE_REF` = trunk |
-
-If not in a worktree: `BASE_REF` = trunk (develop/main).
-
-### Step 2: Create + Install
+When creating worktrees through the session system:
 
 ```bash
-PATHS=$(bash scripts/worktree-resolve-paths "$BRANCH_NAME")
-MAIN_REPO=$(echo "$PATHS" | jq -r '.mainRepo')
-WORKTREE_DIR=$(echo "$PATHS" | jq -r '.worktreeDir')
-
-cd "$MAIN_REPO"
-git worktree add "$WORKTREE_DIR" -b "$BRANCH_NAME" "$BASE_REF"
+session thread create my-feature --worktree              # Uses worktrunk under the hood
+session thread create my-feature --worktree --base develop
+session thread done my-feature --rm-worktree             # Removal via worktrunk
 ```
 
-Auto-detect and run project setup:
+Session calls `wt switch --create` and then runs `session sync` in the new worktree. Worktrunk handles path naming, dependency installation, and build cache copying via its hook system.
 
-| Marker           | Command           |
-| ---------------- | ----------------- |
-| `package.json`   | `npm install`     |
-| `Cargo.toml`     | `cargo build`     |
-| `go.mod`         | `go mod download` |
-| `pyproject.toml` | `poetry install`  |
+## Project Configuration
 
-### Step 3: Copy Environment
+Place project-specific hooks in `.config/wt.toml` (committed):
+
+```toml
+[pre-start]
+install = "npm ci"
+
+[post-start]
+server = "npm run dev -- --port {{ branch | hash_port }}"
+
+[pre-merge]
+test = "npm test"
+
+[list]
+url = "http://localhost:{{ branch | hash_port }}"
+```
+
+User-level config lives at `~/.config/worktrunk/config.toml`:
+
+```toml
+# Worktree path template
+worktree-path = "{{ repo_path }}/../{{ repo }}.{{ branch | sanitize }}"
+
+# LLM commit message generation
+[commit.generation]
+command = "CLAUDECODE= MAX_THINKING_TOKENS=0 claude -p --no-session-persistence --model=haiku --tools='' --disable-slash-commands --setting-sources='' --system-prompt=''"
+```
+
+## Build Cache Sharing
+
+Worktrunk's `wt step copy-ignored` copies gitignored files (node_modules, target/, .env) between worktrees. Use `.worktreeinclude` to restrict which files are copied:
+
+```
+node_modules/
+.env
+.env.local
+target/
+```
+
+Wire it as a hook:
+
+```toml
+[post-start]
+cache = "wt step copy-ignored"
+```
+
+## Port Isolation
+
+The `hash_port` filter generates deterministic ports (10000-19999) from branch names. Same branch always gets the same port.
+
+```toml
+[post-start]
+server = "npm run dev -- --port {{ branch | hash_port }}"
+
+[pre-remove]
+server = "lsof -ti :{{ branch | hash_port }} -sTCP:LISTEN | xargs kill 2>/dev/null || true"
+```
+
+## Parallel Agents
 
 ```bash
-bash scripts/worktree-copy-env "$CURRENT_DIR" "$WORKTREE_DIR"
+wt switch -x claude -c feature-a -- 'Add user authentication'
+wt switch -x claude -c feature-b -- 'Fix the pagination bug'
+wt switch -x claude -c feature-c -- 'Write tests for the API'
 ```
 
-Auto-detects and copies common tool files. Run `scripts/worktree-copy-env --help` for the list. For project-specific files beyond what the script handles, copy them manually after the script runs.
+## Legacy Scripts
 
-### Step 4: Pre-Trust in Claude Code
+The following scripts predate worktrunk adoption and are superseded:
 
-```bash
-bash scripts/worktree-pre-trust "$WORKTREE_DIR"
-```
-
-### Step 5: Report
-
-Output the worktree path and suggest the user open it in their editor. If direnv is present, note that a **fresh Claude Code session is required** (direnv env vars are inherited at shell startup, not hot-reloaded into running sessions).
+- `scripts/worktree-resolve-paths` — replaced by worktrunk's `worktree-path` template
+- `scripts/worktree-copy-env` — replaced by `wt step copy-ignored` + `.worktreeinclude`
+- `scripts/worktree-pre-trust` — still used for Claude Code directory trust (not covered by worktrunk)

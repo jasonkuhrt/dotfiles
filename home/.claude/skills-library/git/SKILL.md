@@ -13,7 +13,7 @@ Sync local git state with remote: pull trunk, merge feature branches, push, sync
 - [Flow diagram](reference/sync/flow.d2)
 
 ### Worktree
-Create isolated git worktrees with environment auto-detection, dependency install, and Claude Code pre-trust.
+Git worktree management is handled by [worktrunk](https://worktrunk.dev) (`wt`). Session's `--worktree` flag delegates to worktrunk. For standalone worktree creation outside sessions, use `wt switch --create` directly.
 - [Overview](reference/worktree/overview.md)
 - [Worktree vs branch comparison](reference/worktree/worktree-comparison.md)
 
@@ -39,8 +39,6 @@ Safe concurrent git commits from parallel agents using `git commit -- <paths>`.
 - `scripts/sync-gather-tags.sh` — Gather tag conflicts between local and remote
 
 ### Worktree
-- `scripts/worktree-resolve-paths` — Resolve worktree-related paths (JSON output)
-- `scripts/worktree-copy-env` — Auto-detect and copy common gitignored files to new worktree
 - `scripts/worktree-pre-trust` — Pre-trust directory in Claude Code (~/.claude.json)
 
 ## Schemas

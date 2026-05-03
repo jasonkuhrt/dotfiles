@@ -150,6 +150,7 @@ cask "raycast"        # launcher (Spotlight replacement)
 cask "meetingbar"     # calendar in menubar
 cask "cleanshot"      # screenshot tool
 cask "loom"           # screen recording
+cask "1password"      # password manager
 cask "notion"
 cask "obsidian"       # local-first markdown notes / knowledge vault
 cask "linear-linear"

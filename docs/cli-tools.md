@@ -57,6 +57,7 @@ Full list in `home/dot_config/fish/config.fish`.
 | Git         | `git-crypt`  | Encrypt files in git transparently    | `git-crypt init`                                |
 | Git         | `git-delta`  | Better git diffs                      | (auto via gitconfig)                            |
 | Git         | `lazygit`    | Terminal UI for git                   | `lazygit`                                       |
+| Git         | `wt`         | Git worktree manager ([docs](worktrunk.md)) | `wt switch -c feat`, `wt list`, `wt merge` |
 | Git         | `onefetch`   | Git repo stats (neofetch for repos)   | `onefetch` (run in any repo)                    |
 | Git         | `pre-commit` | Git hooks framework                   | `pre-commit install`                            |
 | AI          | `agentsview` | Browse and search local agent sessions | `agentsview`, `just agentsview-install`         |

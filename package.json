@@ -1,8 +1,0 @@
-{
-  "name": "dotfiles",
-  "private": true,
-  "workspaces": ["packages/*"],
-  "dependencies": {
-    "yaml": "^2.8.2"
-  }
-}

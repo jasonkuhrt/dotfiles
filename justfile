@@ -124,6 +124,52 @@ cmux-mode-check:
 
     printf 'PASS: cmux-mode-check\n'
 
+cmux-upstream-audit:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    repo="${CMUX_REPO_PATH:-$HOME/repo-references/cmux}"
+    if [ ! -d "$repo/.git" ]; then
+        printf 'FAIL: cmux repo not found at %s\n' "$repo" >&2
+        exit 1
+    fi
+
+    printf 'Local checkout: %s\n' "$repo"
+    git -C "$repo" remote -v
+    git -C "$repo" status --short --branch
+
+    fork_json="$(gh repo view jasonkuhrt/cmux --json nameWithOwner,isFork,parent,url 2>/dev/null || true)"
+    if [ -n "$fork_json" ]; then
+        printf 'GitHub fork: %s\n' "$(
+            printf '%s' "$fork_json" | jq -r '.url + " (isFork=" + (.isFork | tostring) + ", parent=" + (.parent.nameWithOwner // "none") + ")"'
+        )"
+    else
+        printf 'GitHub fork: none\n'
+    fi
+
+    query_issue() {
+        local number="$1"
+        gh api graphql \
+            -f owner='manaflow-ai' \
+            -f name='cmux' \
+            -F number="$number" \
+            -f query='query($owner:String!,$name:String!,$number:Int!){ repository(owner:$owner,name:$name){ issue(number:$number){ number title state url timelineItems(first:100,itemTypes:[CROSS_REFERENCED_EVENT]){ nodes{ ... on CrossReferencedEvent { source { __typename ... on PullRequest { number title state isDraft url repository { nameWithOwner } } } } } } } } }'
+    }
+
+    for issue in 1900 1418 1884 1200 1472 2319; do
+        payload="$(query_issue "$issue")"
+        title="$(printf '%s' "$payload" | jq -r '.data.repository.issue.title')"
+        state="$(printf '%s' "$payload" | jq -r '.data.repository.issue.state')"
+        url="$(printf '%s' "$payload" | jq -r '.data.repository.issue.url')"
+        printf '\n#%s %s [%s]\n%s\n' "$issue" "$title" "$state" "$url"
+        linked="$(printf '%s' "$payload" | jq -r '.data.repository.issue.timelineItems.nodes[]? | select(.source.__typename == "PullRequest") | "- PR #\(.source.number) \(.source.title) [\(.source.state)\(if .source.isDraft then ", draft" else "" end)] \(.source.url)"')"
+        if [ -n "$linked" ]; then
+            printf '%s\n' "$linked"
+        else
+            printf 'No linked PRs\n'
+        fi
+    done
+
 karabiner-check:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -373,7 +419,6 @@ claude-cmux-check:
     chmod +x "$tmpdir/cmux"
     home_dir="$tmpdir/home"
     mkdir -p "$home_dir"
-
     pane_id="$(
         CC_CMUX_CMUX_BIN="$tmpdir/cmux" \
         CC_CMUX_TEST_LOG="$log" \
@@ -427,6 +472,8 @@ claude-cmux-check:
 
     grep -q 'send --workspace workspace:1 --surface 22222222-2222-2222-2222-222222222222 echo hi' "$log"
     grep -q 'send-key --workspace workspace:1 --surface 22222222-2222-2222-2222-222222222222 enter' "$log"
+    grep -q '^--id-format both --json new-split right --workspace workspace:1 --surface 11111111-1111-1111-1111-111111111111$' "$log"
+    grep -q '^focus-pane --workspace workspace:1 --pane pane-11111111$' "$log"
     grep -q 'focus-pane --workspace workspace:1 --pane pane-22222222' "$log"
     grep -q 'close-surface --workspace workspace:1 --surface 22222222-2222-2222-2222-222222222222' "$log"
 
@@ -556,7 +603,7 @@ claude-dispatch-check:
 
     cp "$PWD/scripts/tests/fake-cmux.sh" "$fake_cmux"
     chmod +x "$fake_cmux"
-    mkdir -p "$home_dir"
+    mkdir -p /tmp/myapp
 
     printf '%s\n' 'Fix the flaky tests.' > "$prompt"
     printf 'workspace:1\n' > "$workspace_state"
@@ -569,8 +616,8 @@ claude-dispatch-check:
 
     output="$(
         PATH="$tmpdir:$PATH" \
-        HOME="$home_dir" \
         FAKE_CLAUDE_LOG="$tmpdir/claude.log" \
+        DISPATCH_READY_SLEEP_SECS=0 \
         CC_CMUX_TEST_LOG="$log" \
         CC_CMUX_TEST_STATE="$state" \
         CC_CMUX_TEST_WORKSPACES_STATE="$workspace_state" \
@@ -582,11 +629,25 @@ claude-dispatch-check:
     grep -q '^list-workspaces$' "$log"
     grep -q '^list-status --workspace workspace:1$' "$log"
     grep -q '^set-status dispatch-group ● --icon circle.fill --color #FF6B6B --workspace workspace:1$' "$log"
-    grep -Eq "^new-workspace --command bash '/tmp/dispatch-fix-tests\\.[A-Za-z0-9]+\\.sh'$" "$log"
-    grep -q '^rename-workspace --workspace workspace:60 workspace-one › fix-tests$' "$log"
+    grep -q '^new-workspace --name workspace-one › fix-tests --cwd /tmp/myapp$' "$log"
+    grep -q '^--json --id-format both tree --workspace workspace:60$' "$log"
+    python3 -c 'import pathlib, sys; data = pathlib.Path(sys.argv[1]).read_text(); needle = "send --workspace workspace:60 --surface surface:7 \x03"; needle in data or (_ for _ in ()).throw(SystemExit("missing Ctrl-C priming send"))' "$log"
+    grep -Eq '^send --workspace workspace:60 --surface surface:7 bash /.*/dispatch-fix-tests\.[A-Za-z0-9]+/launch\.sh$' "$log"
+    grep -q '^send-key --workspace workspace:60 --surface surface:7 enter$' "$log"
     grep -q '^set-status dispatch-group ● --icon circle.fill --color #FF6B6B --workspace workspace:60$' "$log"
     grep -q '^set-status dispatch-origin ↑ workspace-one --icon arrow.up.circle --color #FF6B6B --workspace workspace:60$' "$log"
     grep -q '^reorder-workspace --workspace workspace:60 --after workspace:1$' "$log"
+
+    launcher_path="$(python3 -c 'import pathlib, re, sys; data = pathlib.Path(sys.argv[1]).read_text(); match = re.search(r"^send --workspace workspace:60 --surface surface:7 bash (/.*/dispatch-fix-tests\.[A-Za-z0-9]+/launch\.sh)$", data, re.M); match or (_ for _ in ()).throw(SystemExit("missing launcher send")); print(match.group(1))' "$log")"
+    session_id="$(printf '%s\n' "$output" | sed -nE 's/^Dispatched: .* \(resume: claude --resume ([0-9a-f-]+)\)$/\1/p')"
+    [ -n "$session_id" ]
+
+    PATH="$tmpdir:$PATH" \
+    FAKE_CLAUDE_LOG="$tmpdir/claude.log" \
+    "$launcher_path"
+
+    grep -Eq "^--session-id ${session_id} --name fix-tests -- Fix the flaky tests\.$" "$tmpdir/claude.log"
+    [ ! -e "$launcher_path" ]
 
     printf 'PASS: claude-dispatch-check\n'
 

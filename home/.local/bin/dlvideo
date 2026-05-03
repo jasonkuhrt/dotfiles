@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+raw="${*:-$(pbpaste)}"
+
+# Word-split on whitespace (incl. newlines) into URL array.
+# Disable globbing so URL chars like ? aren't expanded against the filesystem.
+set -f
+# shellcheck disable=SC2206
+urls=( $raw )
+set +f
+
+if [[ ${#urls[@]} -eq 0 ]]; then
+    printf 'usage: dlvideo [URL...]\n  no URLs given and clipboard is empty\n' >&2
+    exit 1
+fi
+
+exec yt-dlp -P "$HOME/Downloads" "${urls[@]}"

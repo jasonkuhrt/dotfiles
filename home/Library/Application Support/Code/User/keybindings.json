@@ -1,6 +1,8 @@
-// VSCode keybindings aligned with Zed keymap (home/.config/zed/keymap.json)
-// Non-vim bindings live here. Vim-mode (normal/visual/insert) bindings live
-// in settings.json under vim.* arrays.
+// VS Code chrome keybindings.
+// Vim-mode bindings live in nvim's init.lua, loaded into VS Code via the
+// vscode-neovim extension. settings.json no longer contains vim.* keys.
+// This file holds chrome operations: dock toggles, pane navigation, list/menu
+// nav, terminal exit, welcome-screen leader chords (when no editor is open).
 [
   //
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Docks & Panels (match Zed cmd-h/j/l)
@@ -92,18 +94,22 @@
 
   //
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Empty / Welcome leader chords (mirror vim leader)
-  //   Scoped to !editorIsOpen so they only fire when no editor is focused.
-  //   These give you a working "leader" experience on the home/welcome screen
-  //   where VSCodeVim cannot fire (no editor → no normal mode → no leader).
+  //   Scoped to !editorIsOpen so they only fire when no editor is focused —
+  //   vscode-neovim attaches to text editors; without one, no vim mode and
+  //   no leader. These chrome bindings give a working "leader" experience
+  //   on the welcome screen using the same chords as the in-editor scheme.
+  //
+  //   Updated for the new 5-prefix architecture (g LSP, q git, m match,
+  //   t toggle/panel, , config). Panels now use t-prefix instead of space-p.
   //
   { "key": "space k", "command": "workbench.action.quickOpen", "when": "!editorIsOpen && !inputFocus" },
   { "key": "space o", "command": "workbench.action.openRecent", "when": "!editorIsOpen && !inputFocus" },
   { "key": "space shift+o", "command": "projectManager.listProjects", "when": "!editorIsOpen && !inputFocus" },
   { "key": "space j", "command": "workbench.action.tasks.runTask", "when": "!editorIsOpen && !inputFocus" },
-  { "key": "space p g", "command": "workbench.view.scm", "when": "!editorIsOpen && !inputFocus" },
-  { "key": "space p p", "command": "workbench.files.action.focusFilesExplorer", "when": "!editorIsOpen && !inputFocus" },
-  { "key": "space p t", "command": "workbench.action.terminal.focus", "when": "!editorIsOpen && !inputFocus" },
-  { "key": "space p e", "command": "workbench.panel.markers.view.focus", "when": "!editorIsOpen && !inputFocus" },
+  { "key": "t e", "command": "workbench.files.action.focusFilesExplorer", "when": "!editorIsOpen && !inputFocus" },
+  { "key": "t g", "command": "workbench.view.scm", "when": "!editorIsOpen && !inputFocus" },
+  { "key": "t t", "command": "workbench.action.terminal.focus", "when": "!editorIsOpen && !inputFocus" },
+  { "key": "t d", "command": "workbench.panel.markers.view.focus", "when": "!editorIsOpen && !inputFocus" },
   { "key": ";", "command": "workbench.action.showCommands", "when": "!editorIsOpen && !inputFocus" },
 
   //
@@ -148,6 +154,6 @@
   { "key": "r",           "command": "renameFile",                   "when": "filesExplorerFocus && foldersViewVisible && !inputFocus" },
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Duplicate lines in visual mode (Zed parity)
-  { "key": "cmd+j", "command": "editor.action.copyLinesDownAction", "when": "editorTextFocus && vim.mode == 'Visual'" },
-  { "key": "cmd+k", "command": "editor.action.copyLinesUpAction",   "when": "editorTextFocus && vim.mode == 'Visual'" }
+  { "key": "cmd+j", "command": "editor.action.copyLinesDownAction", "when": "editorTextFocus && neovim.mode == 'visual'" },
+  { "key": "cmd+k", "command": "editor.action.copyLinesUpAction",   "when": "editorTextFocus && neovim.mode == 'visual'" }
 ]

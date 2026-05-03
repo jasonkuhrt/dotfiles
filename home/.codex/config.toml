@@ -1,28 +1,49 @@
-model = "gpt-5.4"
+model = "gpt-5.5"
 model_reasoning_effort = "xhigh"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
 
-[projects."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat"]
+
+notify = ["/Users/jasonkuhrt/.codex/plugins/cache/openai-bundled/computer-use/1.0.758/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
+
+[projects."/Users/jasonkuhrt/projects"]
 trust_level = "trusted"
 
-[projects."/Users/jasonkuhrt/projects/ushironoko/octorus"]
-trust_level = "trusted"
+# [projects."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat"]
+# trust_level = "trusted"
 
-[projects."/Users/jasonkuhrt/projects/jasonkuhrt/gh-pr-viewed-glob-safari"]
-trust_level = "trusted"
+# [projects."/Users/jasonkuhrt/projects/ushironoko/octorus"]
+# trust_level = "trusted"
+
+# [projects."/Users/jasonkuhrt/projects/jasonkuhrt/gh-pr-viewed-glob-safari"]
+# trust_level = "trusted"
 
 [projects."/Users/jasonkuhrt/willems-game"]
 trust_level = "trusted"
 
-[projects."/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/projects/heartbeat-chat"]
-trust_level = "trusted"
-
 [projects."/Users/jasonkuhrt/projects/jasonkuhrt/meos"]
 trust_level = "trusted"
+
+[projects."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat"]
+trust_level = "trusted"
+
+[projects."/Users/jasonkuhrt/projects/jasonkuhrt/flo"]
+trust_level = "trusted"
+
+[projects."/Users/jasonkuhrt/me"]
+trust_level = "trusted"
+
+[projects."/Users/jasonkuhrt/projects/jasonkuhrt/kitz"]
+trust_level = "trusted"
+
+# [projects."/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles"]
+# trust_level = "trusted"
+
+# [projects."/Users/jasonkuhrt/projects/heartbeat-chat"]
+# trust_level = "trusted"
+
+# [projects."/Users/jasonkuhrt/projects/jasonkuhrt/meos"]
+# trust_level = "trusted"
 
 [mcp_servers.figma]
 url = "https://mcp.figma.com/mcp"
@@ -37,7 +58,52 @@ url = "https://mcp.notion.com/mcp"
 url = "https://mcp.linear.app/mcp"
 
 [features]
+codex_hooks = true
 multi_agent = true
+memories = true
+
+[plugins."linear@openai-curated"]
+enabled = true
+
+[plugins."github@openai-curated"]
+enabled = true
+
+[plugins."hookify@hookify-local"]
+enabled = true
+
+[plugins."computer-use@openai-bundled"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."notion@openai-curated"]
+enabled = true
+
+[plugins."gmail@openai-curated"]
+enabled = true
+
+[plugins."google-calendar@openai-curated"]
+enabled = true
+
+[plugins."browser-use@openai-bundled"]
+enabled = true
+
+[marketplaces.openai-bundled]
+last_updated = "2026-05-02T14:39:34Z"
+source_type = "local"
+source = "/Users/jasonkuhrt/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[marketplaces.openai-primary-runtime]
+last_updated = "2026-04-30T22:02:55Z"
+source_type = "local"
+source = "/Users/jasonkuhrt/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
 
 # Re-enable when LINEAR_API_TOKEN is available in Codex's environment.
 #

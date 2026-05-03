@@ -46,6 +46,18 @@ lua-fmt-check:
 lua-fmt:
     stylua {{ lua_paths }}
 
+# Sync VS Code extensions from scripts/data/vscode-extensions.txt manifest.
+# Installs anything missing; skips already-installed; loudly warns on local
+# (jasonkuhrt.*) extensions which need manual builds.
+vscode-extensions-sync:
+    DOTFILES_ROOT="$PWD" bash scripts/setup/after/once/15-vscode-extensions.sh
+
+# Export current VS Code extensions to the manifest. Run after installing
+# new extensions to keep the dotfiles canonical list in sync.
+vscode-extensions-export:
+    code --list-extensions | sort > scripts/data/vscode-extensions.txt
+    @printf 'Wrote scripts/data/vscode-extensions.txt (%s extensions)\n' "$(wc -l < scripts/data/vscode-extensions.txt | tr -d ' ')"
+
 # Headless smoke test of nvim config. Verifies init.lua + lazy + plugins load
 # cleanly with no errors on stderr. Exits 0 on success, 1 on errors.
 # Note: only tests terminal mode (vim.g.vscode unset). VS Code mode requires

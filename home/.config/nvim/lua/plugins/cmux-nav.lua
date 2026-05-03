@@ -5,6 +5,10 @@
 ---@field priority integer
 ---@field keys table[]
 
+if vim.g.vscode then
+  return {}
+end
+
 ---@type CmuxNavLazyPluginSpec[]
 return {
   {

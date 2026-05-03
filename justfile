@@ -46,6 +46,36 @@ lua-fmt-check:
 lua-fmt:
     stylua {{ lua_paths }}
 
+# Headless smoke test of nvim config. Verifies init.lua + lazy + plugins load
+# cleanly with no errors on stderr. Exits 0 on success, 1 on errors.
+# Note: only tests terminal mode (vim.g.vscode unset). VS Code mode requires
+# vscode-neovim's runtime; verify interactively in VS Code.
+nvim-smoke:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    err_log="$(mktemp)"
+    trap 'rm -f "$err_log"' EXIT
+
+    # Boot nvim, register VeryLazy autocmd to quit once plugins are loaded,
+    # capture stderr separately. Timeout via background kill in case something hangs.
+    nvim --headless \
+        -c "lua vim.api.nvim_create_autocmd('User', {pattern='VeryLazy', once=true, callback=function() vim.cmd('qa') end})" \
+        > /dev/null 2> "$err_log" &
+    nvim_pid=$!
+    ( sleep 15 && kill $nvim_pid 2>/dev/null ) &
+    timeout_pid=$!
+    wait $nvim_pid 2>/dev/null || true
+    kill $timeout_pid 2>/dev/null || true
+
+    if grep -qiE "(error|fail|^E[0-9]+:)" "$err_log"; then
+        printf 'FAIL: errors during nvim load:\n' >&2
+        cat "$err_log" >&2
+        exit 1
+    fi
+
+    printf 'PASS: nvim config loads cleanly (terminal mode)\n'
+
 cmux-mode-check:
     #!/usr/bin/env bash
     set -euo pipefail

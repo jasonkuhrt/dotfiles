@@ -1,9 +1,20 @@
 -- VS Code-mode-only keymaps. Loaded by keymaps.lua when vim.g.vscode is true.
--- These dispatch VS Code commands via vscode.action() instead of running
--- nvim-native plugins/functions. Plain-vim chords (motions, q* git via
--- gitsigns, mm match, mini.surround, etc.) come through keymaps.lua and
--- work the same in both modes — only chords that need VS Code chrome
--- belong here.
+-- These dispatch VS Code commands via vscode.action() and OVERRIDE the
+-- terminal-nvim mappings from keymaps.lua wherever the underlying plugin
+-- isn't loaded under VS Code (lspconfig, gitsigns, diffview, octo, gitlinker,
+-- aerial, trouble are all gated off in VS Code mode by LazyVim's vscode
+-- extras whitelist or our own gating).
+--
+-- What works the same in both modes (no override needed here): pure-vim
+-- motions and operators, mini.surround (m s/m d/m r/m f/m F/m h), `mm` match
+-- bracket, basic centering (n/N/J/K/G zz), text objects (vi(/va{/vif).
+--
+-- What this file overrides: cmdline palette dispatch, find-widget for n/N
+-- and / and ?, folding to VS Code's editor.fold*, navigation history,
+-- leader top-level + sub-menus (q/d/s), visual J/K, q-prefix git (gitsigns
+-- replaced by VS Code's git extension commands), t-prefix toggle/panel
+-- (snacks/aerial/trouble replaced by chrome dispatches), `r` rename, gh
+-- hover, , config menu.
 
 local vscode = require("vscode")
 local map = vim.keymap.set

@@ -58,7 +58,7 @@ Start with:
 * Type definitions (.d.ts files)
 * Actual implementation files
 
-Use Serena MCP's symbolic tools for efficient navigation.
+Use LSP tools or Grep for efficient navigation.
 
 ## Update existing package
 

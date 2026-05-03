@@ -27,10 +27,10 @@ PR_NUMBER=$(echo "$SETUP_OUTPUT" | jq -r '.pr_number')
 BRANCH=$(echo "$SETUP_OUTPUT" | jq -r '.branch')
 ```
 
-Create the tmp directory and write execution guide to `.claude/tmp/test-resolve-review-guide.md`:
+Create the tmp directory and write execution guide to `.tmp/test-resolve-review-guide.md`:
 
 ```bash
-mkdir -p .claude/tmp
+mkdir -p .tmp
 ```
 
 ```markdown
@@ -75,7 +75,7 @@ Setting up test fixtures...
   ✓ Added 3 review threads
   ✓ Added 2 PR comments
 
-Guide written to: .claude/tmp/test-resolve-review-guide.md
+Guide written to: .tmp/test-resolve-review-guide.md
 
 Run: /resolve-review --self --pr=$PR_NUMBER
 

@@ -63,15 +63,15 @@ Example:
 {
   "permissions": {
     "allow": [
-      "mcp__serena",
       "mcp__claude-in-chrome",
-      "mcp__effect-docs"
+      "mcp__effect-docs",
+      "mcp__ref"
     ]
   }
 }
 ```
 
-Fully qualified names (e.g., `mcp__serena__find_symbol`) only needed to allow specific tools while denying others from the same server.
+Fully qualified names (e.g., `mcp__ref__ref_read_url`) only needed to allow specific tools while denying others from the same server.
 
 **Note:** Issue [#3107](https://github.com/anthropics/claude-code/issues/3107) (July 2025) claimed wildcards weren't supported, but current docs confirm both patterns are valid and equivalent.
 

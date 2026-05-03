@@ -143,24 +143,27 @@ shan skills                         # default: list
 shan skills list                    # explicit
 ```
 
-### `skills on <targets> [--scope user] [--strict]`
+### `skills on <targets> [--scope user] [--strict] [--fail-on-missing-dependencies]`
 
-Turn on one or more skills or groups. Targets are comma-separated colon-syntax names.
+Turn on one or more skills or groups. Targets are comma-separated colon-syntax names. Missing dependency closures are auto-activated by default.
 
 ```bash
 shan skills on playwright                     # single skill
 shan skills on ts                             # entire group
 shan skills on ts:tooling,playwright,linear    # batch
 shan skills on --scope user git               # user-level
+shan skills on dispatch --fail-on-missing-dependencies
 ```
 
-### `skills off [targets] [--scope user] [--strict]`
+### `skills off [targets] [--scope user] [--strict] [--cascade-dependencies] [--fail-on-dependents]`
 
-Turn off skills. No targets = reset all pluggable skills.
+Turn off skills. No targets = reset all pluggable skills. Dependents cascade by default; dependencies only cascade when requested.
 
 ```bash
 shan skills off playwright                    # single skill
 shan skills off ts                            # entire group
+shan skills off cmux --fail-on-dependents     # refuse if active dependents exist
+shan skills off dispatch --cascade-dependencies
 shan skills off                               # reset: off ALL pluggable
 shan skills off --scope user                  # reset at user level
 ```
@@ -177,7 +180,7 @@ Undo the last N operations (default 1). Restores outfit to pre-operation snapsho
 
 Redo the last N undone operations (default 1).
 
-### `skills move <axis> <direction> <targets> [--scope user] [--strict]`
+### `skills move <axis> <direction> <targets> [--scope user] [--strict] [--cascade-dependencies]`
 
 Migrate skills between scopes or commitments. Targets are comma-separated colon-syntax names. Atomic batch: all-or-nothing validation.
 
@@ -194,6 +197,7 @@ Migrate skills between scopes or commitments. Targets are comma-separated colon-
 ```bash
 shan skills move scope down playwright         # user library → project library
 shan skills move scope up playwright           # project library → user library
+shan skills move scope up dispatch --cascade-dependencies
 shan skills move commitment up playwright      # pluggable → core (copy to outfit)
 shan skills move commitment down playwright    # core → pluggable (auto-install)
 shan skills move scope down tips,linear        # batch move
@@ -201,13 +205,13 @@ shan skills move scope down tips,linear        # batch move
 
 Undo/redo fully supported for all move operations via composite history entries.
 
-### `skills doctor [--no-fix]`
+### `doctor skills [--no-fix]`
 
 Run aspect-based health checks. Default: detect + auto-fix. Use `--no-fix` for report-only mode.
 
-**14 aspects:** agent-mirror, broken-symlink (with git rename detection), state-drift, new-leaf, stale-router, orphaned-router, orphaned-scope, stale-gitignore, frontmatter-mismatch, name-conflict, duplicate-name, shadow, stale-shadow, cross-scope-install.
+**18 aspects:** agent-mirror, broken-symlink (with git rename detection), state-drift, new-leaf, stale-router, orphaned-router, orphaned-scope, stale-gitignore, frontmatter-mismatch, name-conflict, duplicate-name, shadow, stale-shadow, cross-scope-install, dependency-declaration, dependency-cycle, dependency-active-graph.
 
 ```bash
-shan skills doctor                             # detect + auto-fix
-shan skills doctor --no-fix                    # report only
+shan doctor skills                             # detect + auto-fix
+shan doctor skills --no-fix                    # report only
 ```

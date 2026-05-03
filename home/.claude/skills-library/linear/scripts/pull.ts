@@ -6,7 +6,7 @@
  *   bun ~/.claude/skills/linear/scripts/pull.ts
  *
  * Fetches teams, workflow states, labels, and users from Linear API
- * and writes to .claude/tmp/linear/workspace.yaml
+ * and writes to .tmp/linear/workspace.yaml
  */
 import { client } from '/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/packages/linear/src/client.ts'
 import { parseArgs } from 'node:util'
@@ -25,7 +25,7 @@ const { values } = parseArgs({
 if (values.help) {
   console.log(`Usage: bun ~/.claude/skills/linear/scripts/pull.ts
 
-Pulls workspace data from Linear API and caches to .claude/tmp/linear/workspace.yaml
+Pulls workspace data from Linear API and caches to .tmp/linear/workspace.yaml
 
 This includes:
   - Organization metadata
@@ -119,7 +119,7 @@ const cacheData = {
 }
 
 // Write to cache file
-const cacheDir = path.join(process.cwd(), `.claude/tmp/linear`)
+const cacheDir = path.join(process.cwd(), `.tmp/linear`)
 const cachePath = path.join(cacheDir, `workspace.yaml`)
 
 fs.mkdirSync(cacheDir, { recursive: true })

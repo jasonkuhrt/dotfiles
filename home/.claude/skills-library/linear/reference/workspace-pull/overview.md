@@ -31,7 +31,7 @@ The script is idempotent - safe to run multiple times.
 Per `cc_skills-tmp-dir` convention:
 
 ```
-.claude/tmp/linear/workspace.yaml   # READ-ONLY cache pulled from Linear API
+.tmp/linear/workspace.yaml   # READ-ONLY cache pulled from Linear API
 ```
 
 ## Cache Format
@@ -66,7 +66,7 @@ pulledAt: 2026-01-28T12:00:00Z
 ## How Other Skills Use This
 
 1. Skill needs workspace data (state UUID, user lookup, etc.)
-2. Check for `.claude/tmp/linear/workspace.yaml`
+2. Check for `.tmp/linear/workspace.yaml`
 3. If missing → invoke workspace-pull → wait → continue
 4. Use cached data for validation/mapping
 
@@ -90,5 +90,5 @@ Pulled workspace data for heartbeat-chat
   Users: 12
   Total states: 18
   Total labels: 15
-Written to .claude/tmp/linear/workspace.yaml
+Written to .tmp/linear/workspace.yaml
 ```

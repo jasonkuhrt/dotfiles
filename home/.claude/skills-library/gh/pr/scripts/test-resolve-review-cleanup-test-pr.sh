@@ -32,7 +32,7 @@ echo "Removing test fixture file if present..." >&2
 rm -f test-fixture-file.ts
 
 echo "Removing temp guide file..." >&2
-rm -f .claude/tmp/test-resolve-review-guide.md
-rmdir .claude/tmp 2>/dev/null || true
+rm -f .tmp/test-resolve-review-guide.md
+rmdir .tmp 2>/dev/null || true
 
 echo "Cleanup complete." >&2

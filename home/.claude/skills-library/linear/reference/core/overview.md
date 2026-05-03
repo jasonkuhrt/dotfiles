@@ -35,13 +35,13 @@ Linear skills require validated workspace data (teams, states, users, labels). T
 ### Cache Location
 
 ```
-.claude/tmp/linear/workspace.yaml   # READ-ONLY, pulled from Linear API
+.tmp/linear/workspace.yaml   # READ-ONLY, pulled from Linear API
 ```
 
 ### Dependency Flow
 
 1. Skill needs workspace data (state UUID, user lookup, etc.)
-2. Check for `.claude/tmp/linear/workspace.yaml`
+2. Check for `.tmp/linear/workspace.yaml`
 3. If missing → invoke workspace-pull → wait → continue
 4. Use cached data for validation/mapping
 

@@ -38,10 +38,15 @@ Compare the source truth checklist against what the README covers:
 
 Run checks from `~/.claude/skills/readme/core.md` and `~/.claude/skills/readme/core-readme.md` (respects Focus — whole README, or scoped to named sections):
 
-- G1 section order
+- G1 section order (base sections)
 - G2 semantic term ordering
 - G3 heading density (from core.md)
 - G4 term linking
+- G5 conditional sections — run trigger detection against the source code. If a trigger is met but the corresponding section is missing, that is a G5 violation (same severity as missing Quickstart). Specifically check:
+  - Does the source import from 2+ runtime systems? → Architecture required
+  - Does the source use `Effect.withSpan`, `tracer.startActiveSpan`, or `@opentelemetry/*`? → Observability required
+  - Does the source export 3+ `Data.TaggedError` or custom Error classes? → Error Reference required
+- G6 API Reference depth — is there an external docs site? If not, the README must be the full reference.
 - Anti-slop scan (from core.md)
 - Contextual links (from core.md)
 

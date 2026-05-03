@@ -21,6 +21,11 @@ DISPATCH_COLORS=(
 slug="${1:?Usage: dispatch.sh <slug> <prompt-file> [cwd]}"
 prompt_file="${2:?Usage: dispatch.sh <slug> <prompt-file> [cwd]}"
 cwd="${3:-$(pwd)}"
+ready_sleep_secs="${DISPATCH_READY_SLEEP_SECS:-0.35}"
+tree_retries="${DISPATCH_TREE_RETRIES:-80}"
+tree_retry_sleep_secs="${DISPATCH_TREE_RETRY_SLEEP_SECS:-0.10}"
+launch_started=0
+launcher_dir=""
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -31,6 +36,7 @@ require_cmd() {
 
 require_cmd cmux
 require_cmd claude
+require_cmd jq
 require_cmd uuidgen
 
 if [[ ! -f "$prompt_file" ]]; then
@@ -38,40 +44,36 @@ if [[ ! -f "$prompt_file" ]]; then
   exit 1
 fi
 
-# Resolve claude binary
-claude_bin=$(command -v claude)
+if [[ ! -d "$cwd" ]]; then
+  echo "Error: cwd does not exist: $cwd" >&2
+  exit 1
+fi
 
-# Pre-generate session UUID
-session_id=$(uuidgen | tr '[:upper:]' '[:lower:]')
-
-# Derive project dir for JSONL path
-project_dir=$(echo "$cwd" | tr '/' '-')
-jsonl="$HOME/.claude/projects/${project_dir}/${session_id}.jsonl"
-
-# Write launcher script
-launcher="$(mktemp "/tmp/dispatch-${slug}.XXXXXX.sh")"
-cleanup() {
-  rm -f "$launcher"
-}
-trap cleanup EXIT
-cat > "$launcher" << LAUNCHER
-#!/usr/bin/env bash
-cd $(printf '%q' "$cwd")
-
-# Background: name the session once JSONL exists
-(
-  for i in \$(seq 1 60); do
-    [[ -f $(printf '%q' "$jsonl") ]] && break
-    sleep 0.5
-  done
-  if [[ -f $(printf '%q' "$jsonl") ]]; then
-    printf '%s\n' '{"type":"custom-title","customTitle":"${slug}","sessionId":"${session_id}"}' >> $(printf '%q' "$jsonl")
-    printf '%s\n' '{"type":"agent-name","agentName":"${slug}","sessionId":"${session_id}"}' >> $(printf '%q' "$jsonl")
+cleanup_launcher() {
+  if [[ "$launch_started" -eq 0 && -n "$launcher_dir" && -d "$launcher_dir" ]]; then
+    rm -rf "$launcher_dir"
   fi
-) &
+}
+trap cleanup_launcher EXIT
 
-exec ${claude_bin} --session-id '${session_id}' -- "\$(cat $(printf '%q' "$prompt_file"))"
-LAUNCHER
+claude_bin="$(command -v claude)"
+session_id="$(uuidgen | tr '[:upper:]' '[:lower:]')"
+launcher_dir="$(mktemp -d "${TMPDIR:-/tmp}/dispatch-${slug}.XXXXXX")"
+launcher="$launcher_dir/launch.sh"
+launch_prompt="$launcher_dir/prompt.txt"
+cp "$prompt_file" "$launch_prompt"
+
+cat > "$launcher" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd $(printf '%q' "$cwd")
+prompt_file=$(printf '%q' "$launch_prompt")
+prompt="\$(cat "\$prompt_file")"
+rm -f "\$prompt_file" "\$0"
+rmdir $(printf '%q' "$launcher_dir") 2>/dev/null || true
+exec $(printf '%q' "$claude_bin") --session-id $(printf '%q' "$session_id") --name $(printf '%q' "$slug") --effort max -- "\$prompt"
+EOF
 chmod +x "$launcher"
 
 # --- Resolve parent workspace ---
@@ -132,18 +134,64 @@ if [[ -z "$group_color" ]]; then
   fi
 fi
 
+# --- Resolve caller's window ---
+# new-workspace creates in the macOS-focused window, which may not be the
+# caller's window. Resolve the caller's window from CMUX_WORKSPACE_ID so we
+# can move the workspace to the right place after creation.
+caller_window=""
+if [[ -n "$caller_ws" ]]; then
+  # Use the window UUID, not window:index — indices shift when workspaces move.
+  # First try selected_workspace_id (fast path — works when caller is the active tab).
+  caller_window=$(cmux --json list-windows 2>/dev/null \
+    | jq -r --arg ws "$caller_ws" '.[] | select(.selected_workspace_id == $ws) | .id' 2>/dev/null || true)
+  # If that missed (caller tab not selected), search all windows via tree.
+  if [[ -z "$caller_window" ]]; then
+    for win_id in $(cmux --json list-windows 2>/dev/null | jq -r '.[].id' 2>/dev/null); do
+      if cmux --json tree --window "$win_id" 2>/dev/null | jq -e --arg ws "$caller_ws" '.. | objects | select(.id? == $ws)' >/dev/null 2>&1; then
+        caller_window="$win_id"
+        break
+      fi
+    done
+  fi
+fi
+
 # --- Create workspace ---
-# Parse workspace ref from output like "OK workspace:60"
-ws_line=$(cmux new-workspace --command "bash '${launcher}'" 2>&1)
-ws_id=$(echo "$ws_line" | grep -oE 'workspace:[0-9]+' | head -1)
+ws_line="$(cmux new-workspace --name "$ws_title" --cwd "$cwd" 2>&1)"
+ws_id="$(printf '%s\n' "$ws_line" | grep -oE 'workspace:[0-9]+' | head -1)"
 
 if [[ -z "$ws_id" ]]; then
   echo "Error: failed to create workspace. Output: $ws_line" >&2
   exit 1
 fi
 
-# --- Name + position + metadata ---
-cmux rename-workspace --workspace "$ws_id" "$ws_title"
+# Move to caller's window if it was created in the wrong one
+if [[ -n "$caller_window" ]]; then
+  cmux move-workspace-to-window --workspace "$ws_id" --window "$caller_window" 2>/dev/null || true
+fi
+
+surface_ref=""
+for _ in $(seq 1 "$tree_retries"); do
+  tree_json="$(cmux --json --id-format both tree --workspace "$ws_id" 2>/dev/null || true)"
+  surface_ref="$(printf '%s\n' "$tree_json" | jq -r 'first(.. | objects | select(.type? == "terminal") | (.ref? // .surface_ref? // .id? // .surface_id?)) // empty' 2>/dev/null || true)"
+  if [[ -n "$surface_ref" ]]; then
+    break
+  fi
+  sleep "$tree_retry_sleep_secs"
+done
+
+if [[ -z "$surface_ref" ]]; then
+  echo "Error: workspace $ws_id never exposed a terminal surface" >&2
+  exit 1
+fi
+
+sleep "$ready_sleep_secs"
+cmux send --workspace "$ws_id" --surface "$surface_ref" $'\003'
+sleep 0.05
+cmux send --workspace "$ws_id" --surface "$surface_ref" "bash $(printf '%q' "$launcher")"
+cmux send-key --workspace "$ws_id" --surface "$surface_ref" enter
+launch_started=1
+
+# --- Position + metadata ---
 cmux set-status "dispatch-group" "●" --icon "circle.fill" --color "$group_color" --workspace "$ws_id"
 
 if [[ -n "$parent_title" ]]; then

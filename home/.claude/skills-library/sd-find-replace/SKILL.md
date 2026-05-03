@@ -1,6 +1,6 @@
 ---
 name: sd-find-replace
-description: Use when performing batch find/replace in text files, batch renaming, or pattern substitution. Not for code symbol renaming (use Serena).
+description: Use when performing batch find/replace in text files, batch renaming, or pattern substitution.
 ---
 
 # sd Find Replace
@@ -45,7 +45,6 @@ See [reference/sd-patterns.md](reference/sd-patterns.md) for regex patterns, cap
 
 | Situation                      | Use Instead                              |
 | ------------------------------ | ---------------------------------------- |
-| Code symbol renaming           | `mcp__serena__rename_symbol` (LSP-aware) |
 | Need to review each occurrence | Edit tool (see context)                  |
 | Single known location          | Edit tool                                |
 | Need lookahead/lookbehind      | Edit tool (sd doesn't support these)     |

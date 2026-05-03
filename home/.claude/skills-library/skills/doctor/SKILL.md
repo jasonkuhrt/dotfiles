@@ -16,15 +16,15 @@ Run aspect-based diagnostics on the skill outfit via the shan CLI.
 ### Detect + auto-fix (default)
 
 ```bash
-bun x @jasonkuhrt/shan skills doctor
+bun x @jasonkuhrt/shan doctor skills
 ```
 
 ### Report only (no changes)
 
 ```bash
-bun x @jasonkuhrt/shan skills doctor --no-fix
+bun x @jasonkuhrt/shan doctor skills --no-fix
 ```
 
-## 14 Diagnostic Aspects
+## 18 Diagnostic Aspects
 
-agent-mirror, broken-symlink (with git rename detection), state-drift, new-leaf, stale-router, orphaned-router, orphaned-scope, stale-gitignore, frontmatter-mismatch, name-conflict, duplicate-name, shadow, stale-shadow, cross-scope-install.
+agent-mirror, broken-symlink (with git rename detection), state-drift, new-leaf, stale-router, orphaned-router, orphaned-scope, stale-gitignore, frontmatter-mismatch, name-conflict, duplicate-name, shadow, stale-shadow, cross-scope-install, dependency-declaration, dependency-cycle, dependency-active-graph.

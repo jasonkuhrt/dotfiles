@@ -81,7 +81,7 @@ REQUIRED SUB-SKILL: flowlist (Reading operation)
    3. Else: continue
 
 9. PUSH - Trigger CI and start background watch.
-   1. `git add -A && git commit -m "fix: <description>"`
+   1. `git add <files-edited-during-fix> && git commit -m "fix: <description>"`
    2. `git push`
    3. Clear _Batch_ and addressed set
    4. Output: "Pushed. Watching CI in background..."
@@ -128,3 +128,4 @@ REQUIRED SUB-SKILL: flowlist (Reading operation)
 - **Log parsing**: CI logs can be verbose. Focus on the first error and stack trace.
 - **Rate limits**: `gh pr checks --watch` handles polling efficiently. Manual polling should use 15s+ intervals.
 - **Parallel fixes**: If you identify multiple failures upfront, you can fix them all locally before pushing once, minimizing CI round-trips.
+- **Simple watch alternative**: For pure "watch and report" scenarios (no active fixing), `/loop 15s gh pr checks --json name,state,bucket` can replace the manual `poll_or_work` loop.

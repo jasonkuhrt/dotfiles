@@ -72,7 +72,7 @@ Look for existing `FINDINGS.*.md` files in the QA directory. The new file is `FI
 
 For each group within the selected tier ceiling, execute the criteria checks against the codebase.
 
-**How to check:** Read relevant source files, use Serena for symbol navigation, grep for patterns, run commands (lint, typecheck) as appropriate. Each criterion is a judgment call — evaluate it and record what you find.
+**How to check:** Read relevant source files, grep for patterns, run commands (lint, typecheck) as appropriate. Each criterion is a judgment call — evaluate it and record what you find.
 
 **Important:**
 

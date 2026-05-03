@@ -69,40 +69,20 @@ These combine freely with target:
 * all READMEs × full rewrite from source
 * one README × just the concepts section
 
-## Announce Before Acting
+## Announce, Don't Block
 
-After determining operation, target, focus, and files, announce the plan and wait for confirmation:
+After determining operation, target, focus, and files, announce the plan and execute immediately. Don't wait for confirmation — the announcement is for transparency, not gating.
 
 ```
-Operation: CREATE
-Target: packages/cmx
-Files: README.md + CONTRIBUTING.md
-Focus: whole (new files from scratch)
-Proceed?
+README: UPDATE × packages/cmx × CONTRIBUTING.md × development workflow section
 ```
 
 ```
-Operation: UPDATE
-Target: 5 packages affected by PR #42 (core, fs, test, release, cmx)
-Files: README.md
-Focus: sections affected by PR changes
-Proceed?
+README: CREATE × packages/cmx × README.md + CONTRIBUTING.md × whole
 ```
 
 ```
-Operation: UPDATE
-Target: packages/cmx
-Files: CONTRIBUTING.md
-Focus: development workflow section (build tool changed)
-Proceed?
-```
-
-```
-Operation: REVIEW
-Target: packages/cmx
-Files: README.md + CONTRIBUTING.md
-Focus: whole
-Proceed?
+README: REVIEW × 5 packages affected by PR #42 × README.md × affected sections
 ```
 
 If you cannot confidently determine any dimension, ask. Do not guess.

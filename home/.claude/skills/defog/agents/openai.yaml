@@ -1,0 +1,4 @@
+interface:
+  display_name: "Defog"
+  short_description: "Turn dense agent output into plain English"
+  default_prompt: "Use $defog to turn this dense answer into a short plain-English version."

@@ -2,9 +2,9 @@
 
 Rules specific to README.md files. Use alongside `~/.claude/skills/readme/core.md` (shared quality rules).
 
-## G1: Required Sections in Fixed Order
+## G1: Required Sections
 
-Every README has these sections in this order. None may be omitted. Structure goes broadest to most specific — cognitive funneling.
+Every README has these base sections in this order. None may be omitted. Structure goes broadest to most specific — cognitive funneling.
 
 | # | Section               | Purpose                                                                                     |
 | - | --------------------- | ------------------------------------------------------------------------------------------- |
@@ -14,11 +14,54 @@ Every README has these sections in this order. None may be omitted. Structure go
 | 4 | __Solution__          | How this solves it. Three paragraphs max. No undefined terms.                               |
 | 5 | __Quickstart__        | Get running in <5 minutes. Copy-pasteable. Every step must succeed.                         |
 | 6 | __Concepts__          | Mental model. Narrative prose, dependency-ordered. Not a concept-per-heading dump.           |
-| 7 | __Usage__             | Common tasks solved with real, copy-pasteable examples.                                     |
-| 8 | __API Overview__      | Brief surface area. Points to reference docs, not exhaustive inline.                        |
-| 9 | __Glossary__          | Every domain term, alphabetical, one definition each.                                       |
+| 7 | _(conditional sections — see G5)_ | |
+| 8 | __Usage__             | Common tasks solved with real, copy-pasteable examples.                                     |
+| 9 | __API Reference__     | Every public export: type signature, purpose, configuration. See G6.                        |
+| 10 | __Glossary__         | Every domain term, alphabetical, one definition each.                                       |
 
-__Monorepo root exception:__ Replace Quickstart with __Getting Started__ (workspace setup + choosing a package), replace API Overview with __Package Index__ (table of packages with one-line descriptions), and adapt Concepts to cover architecture and how packages relate. The other sections apply as-is.
+__Monorepo root exception:__ Replace Quickstart with __Getting Started__ (workspace setup + choosing a package), replace API Reference with __Package Index__ (table of packages with one-line descriptions), and adapt Concepts to cover architecture and how packages relate. The other sections apply as-is.
+
+## G5: Conditional Sections
+
+These sections are **required** when their trigger condition is met. They are not optional extras — they are demanded by what the library does. Detect triggers during source truth extraction (step 2 of create/update). Conditional sections appear between Concepts and Usage, in this order when multiple apply.
+
+| Section | Trigger | Content |
+|---|---|---|
+| __Architecture__ | Library bridges two or more systems, creates runtime artifacts (functions, processes, connections), or has non-obvious execution lifecycle | What the library creates at runtime and why. How concepts in system A map to system B. Lifecycle diagrams showing control flow. Mapping tables are mandatory for bridge libraries — the mapping IS the library's value. |
+| __Observability__ | Library emits OTel spans, metrics, structured logs, or other telemetry | Exhaustive span/metric reference tables (name, source, kind, attributes, when present). Trace tree diagrams showing parent-child relationships. Configuration guidance for collectors. Correlation guidance across trace boundaries. |
+| __Error Reference__ | Library exports 3+ typed error classes, or errors are a primary debugging/recovery interface | Every error: when it fires, what it means, retryable vs terminal, recovery path. Table format. Not just names and one-liners — full operational semantics. |
+
+### Trigger detection
+
+During source truth extraction, actively check for these signals:
+
+**Architecture triggers:**
+- Imports from 2+ distinct runtime systems (e.g., `effect` + `inngest`, `effect` + `stripe`)
+- Creates runtime artifacts: background functions, event listeners, database connections, subscriptions, scheduled tasks
+- Has an execution lifecycle that involves multiple phases (setup → run → teardown, or request → suspend → resume)
+- Internal callbacks or engine interfaces that map between systems
+
+**Observability triggers:**
+- Uses `Effect.withSpan`, `tracer.startActiveSpan`, or any OTel span creation API
+- Imports from `@opentelemetry/*` or `@effect/opentelemetry`
+- Has span attributes defined in code
+- Emits structured logs with correlation IDs
+
+**Error Reference triggers:**
+- Exports `Data.TaggedError` classes, custom Error subclasses, or error unions
+- Errors surface as the primary debugging interface (defects, typed channels, or catch patterns)
+- Error recovery requires caller knowledge (which are retryable, which are terminal, what to inspect)
+
+When a trigger is detected, the corresponding section is **required** — not suggested, not optional. Omitting it is a G5 violation equivalent to omitting Quickstart.
+
+## G6: API Reference Depth
+
+The API Reference section scales to the documentation surface:
+
+- **When an external docs site exists** (generated typedoc, doc site URL in package.json): table of exports with one-line descriptions. Link to the full reference. The README is a signpost.
+- **When the README is the sole documentation** (no docs site, no generated reference): full inline reference. Every public export with type signatures, every configuration option with type/default/description, every type alias with purpose. The README IS the reference — there is nowhere else to look.
+
+Detect which mode applies during source truth extraction. Check for `docs` scripts in package.json, `typedoc.json`, doc site URLs in `homepage` field, or `docs/` directories with generated content. Absence of all of these means the README is the sole surface.
 
 ## G2: Semantic Term Ordering
 
@@ -71,7 +114,13 @@ __Concepts__: Narrative prose following topological sort. Bold-lead definitions 
 
 __Usage__: 3-7 examples for libraries, 1-3 for small tools. Each solves a real task. Code must be copy-pasteable or clearly marked illustrative. Each example has a one-sentence motivation ("When you need to X, use Y").
 
-__API Overview__: Table of exports with one-line descriptions is the ceiling. Point to generated reference. Do not duplicate the full API inline.
+__Architecture__ (conditional, see G5): Opens with what the library creates at runtime — concrete artifacts like functions, connections, or background processes. Then maps concepts between the bridged systems using tables or diagrams. Includes lifecycle diagrams showing control flow for non-obvious execution paths (suspend/resume, multi-phase, signal-based coordination). The mapping table is mandatory for bridge libraries: left column is system A concept, right column is system B mechanism. ASCII diagrams are preferred over prose for flow descriptions.
+
+__Observability__ (conditional, see G5): Opens with the trace architecture — how many trace trees, why they're separate (if they are), what nests inside what. Then an exhaustive span reference: table of every span with name, source (which layer creates it), kind, root status, attributes, and when each attribute is present vs absent. Then OTel configuration guidance (how to register a provider, what the library does by default). Then correlation guidance (how to connect related traces across boundaries). Example queries for common debugging tasks are a bonus.
+
+__Error Reference__ (conditional, see G5): Table format with columns: error name, when it fires, what it means, recovery path. "When it fires" must name the API operations that can raise this error. "Recovery path" must distinguish retryable (transient) from terminal (configuration/logic error). Not just type names and descriptions — full operational semantics.
+
+__API Reference__: Scales per G6. When the README is the sole documentation surface, this is the full reference: every public function with signature and purpose, every configuration type with option/type/default/description columns, every exported type with purpose. When an external docs site exists, this is a signpost table.
 
 __Glossary__: Every domain term introduced in the README. Alphabetical. `####` headings for anchor targets. One concise definition each. The glossary is reinforcement, not the place of first introduction. The glossary is not limited to API exports — it covers the full domain vocabulary, including system terms that have no direct API representation (e.g., "scope" as a runtime concept, "namespace" as an emergent structural property). If a reader needs to understand a term to use the system, it belongs in the glossary regardless of whether it maps to a constructor or type.
 

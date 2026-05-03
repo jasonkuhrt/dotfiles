@@ -12,6 +12,10 @@ allowed-tools:
 
 This is the entry point for managing skills. Based on the user's intent, route to the appropriate sub-skill:
 
+`skills` is a callable namespace root. Turning on `skills` equips both this router
+and the descendant skills under `skills:*` through namespace targeting; it does
+not need explicit `dependencies` frontmatter for those descendants.
+
 ## Sub-skills
 
 - **/skills:change** — All mutations: turn skills on/off, undo/redo changes

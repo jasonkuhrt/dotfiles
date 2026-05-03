@@ -33,6 +33,7 @@ Every claim must trace to a source. No evidence → no claim.
 | Archetype      | Signals                             | Emphasis                                      |
 | -------------- | ----------------------------------- | --------------------------------------------- |
 | __Library__    | Exports, types, no bin              | Concepts + API surface + quickstart           |
+| __Bridge__     | Imports from 2+ runtime systems, maps concepts between them, creates runtime artifacts | Architecture (mapping tables, lifecycle diagrams) + Observability (if instrumented) + Error Reference (if typed errors) + Concepts + API surface. The mapping documentation IS the library's value — without it the library is a black box. |
 | __CLI tool__   | `bin` field, argc/commander, --help | Quickstart + usage tasks + command reference  |
 | __Monorepo__   | Multiple packages, workspace config | Orientation + package taxonomy + architecture |
 | __App/system__ | Services, entry points, infra       | Architecture + setup + guides                 |

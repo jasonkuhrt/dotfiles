@@ -22,9 +22,10 @@ bun x @jasonkuhrt/shan skills list
 Shows:
 
 - Core skills (user + project)
-- Pluggable on skills with scope and token cost
+- Pluggable on skills with scope, own cost, and dependency-closure cost
 - Pluggable off skills (available in library)
 - Total budget usage
+- ASCII dependency graph with shared-node markers
 
 ### Show history
 
@@ -42,3 +43,6 @@ Shows the operation log: what was turned on/off and when.
   - `[project]` = in `.claude/skills/`
 - **Pluggable (off)**: In the library but not currently equipped.
 - **Budget**: Approximate token cost of all model-visible skills.
+- **`own=<n>`**: Approximate cost of the skill's own frontmatter.
+- **`deps=<n>`**: Deduped transitive dependency-closure cost excluding the skill itself.
+- **Dependency graph**: Active dependency graph rendered as ASCII.

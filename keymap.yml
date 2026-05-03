@@ -1,9 +1,23 @@
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║  Declarative Keymap - Single Source of Truth                               ║
-# ║  Tools: zed, nvim, cmux, fish, cc (claude code)                            ║
+# ║  Tools: zed, nvim, vscode, cmux, fish, cc (claude code)                    ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 #
+# Post-vscode-neovim migration architecture:
+# VS Code's vim layer is provided by vscode-neovim, which executes the nvim
+# init.lua. Therefore the `nvim` column governs both terminal nvim AND VS Code
+# vim-mode behavior. The `vscode` column is only populated where a chord
+# dispatches a VS Code-specific command (via vscode.action()) that does NOT
+# apply in terminal nvim — typically PR review, GitHub-link, or chrome ops.
+#
 # Navigation strategy (hjkl + modifier philosophy): see hjkl-navigation.md
+#
+# Prefix architecture (single-key, sans-leader):
+#   g    LSP/goto              (vim convention; LazyVim defaults)
+#   q    git                   (replaces vim's macro recording — unused)
+#   m    match/surround        (Helix-style; replaces vim's mark-set on most letters)
+#   t    toggle/panel          (replaces <leader>p* and <leader>t*)
+#   ,    config menu           (Zed/VSCodeVim convention)
 #
 # Legend:
 #   C-x    = ctrl+x
@@ -98,7 +112,7 @@ pane:
 
   create_left:
     desc: Create split left
-    zed: "C-D-h"          # pane::SplitLeft
+    zed: "C-D-h"
     cmux: "C-0 s h"
 
   create_right:
@@ -132,18 +146,8 @@ cmux_mode:
     desc: Select next workspace in sidebar order
     cmux: "C-0 w j"
 
-  close_all:
-    desc: Close all items in pane
-    zed: "<spc> w '"
-    nvim: "?"
-
-  pin_tab:
-    desc: Pin current tab
-    zed: "<spc> w p"
-    nvim: "-"
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# DOCK/PANEL TOGGLES
+# DOCKS (CHROME — Zed-only)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 dock:
@@ -163,28 +167,6 @@ dock:
     desc: Close all docks
     zed: "<spc> p P"
 
-panel:
-  project:
-    desc: Toggle project/file panel
-    zed: "<spc> p p"
-    nvim: "<spc> p p"
-
-  git:
-    desc: Toggle git panel
-    zed: "<spc> p g"
-
-  terminal:
-    desc: Toggle terminal panel
-    zed: "<spc> p t"
-
-  outline:
-    desc: Toggle outline panel
-    zed: "<spc> p o"
-
-  diagnostics:
-    desc: Toggle diagnostics panel
-    zed: "<spc> p e"
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # PALETTES & FINDERS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -192,35 +174,39 @@ panel:
 palette:
   commands:
     desc: Command palette
-    zed: ";"
-    nvim: ":"
+    zed: ":"
+    nvim: ":"             # cmdux picker in terminal; showCommands in VS Code via vscode-neovim
     cc: "/"
+
+  ex_command:
+    desc: Vim ex command
+    zed: ";"
+    nvim: ";"             # remapped from :
 
   files:
     desc: File finder / quick open
     zed: "<spc> k"
-    nvim: "<spc> <spc>"       # also <spc> f f
-    cc: "-"
+    nvim: "<spc> k"       # LazyVim.pick("files") — also <spc> <spc>
 
   symbols_buffer:
     desc: Symbols in current buffer
     zed: "<spc> l"
-    nvim: "<spc> s s"
+    nvim: "<spc> ss"      # LazyVim snacks symbols
 
   symbols_project:
     desc: Symbols across project
     zed: "<spc> L"
-    nvim: "<spc> s S"
+    nvim: "<spc> sS"      # LazyVim snacks symbols (workspace)
 
   tasks:
     desc: Task runner
     zed: "<spc> j"
-    nvim: "-"                 # no built-in equivalent
+    nvim: "-"             # no built-in equivalent
 
   recent_projects:
     desc: Open recent project
     zed: "<spc> o"
-    nvim: "<spc> f p"
+    nvim: "<spc> fp"      # LazyVim snacks projects
 
 menu:
   next:
@@ -240,56 +226,53 @@ menu:
 motion:
   scroll_up:
     desc: Scroll up (half page, centered)
-    zed: "K"
-    nvim: "K"             # remapped to <C-u>zz
+    zed: "K"               # +zz via SendKeystrokes
+    nvim: "K"              # remapped to <C-u>zz
 
   scroll_down:
     desc: Scroll down (half page, centered)
-    zed: "J"
-    nvim: "J"             # remapped to <C-d>zz
+    zed: "J"               # +zz via SendKeystrokes
+    nvim: "J"              # remapped to <C-d>zz
 
   buffer_prev:
     desc: Previous buffer
-    nvim: "H"             # LazyVim default
+    zed: "[ b"             # if Zed supports; else gap
+    nvim: "[b"             # LazyVim default
 
   buffer_next:
     desc: Next buffer
-    nvim: "L"             # LazyVim default
+    zed: "] b"
+    nvim: "]b"             # LazyVim default
 
   doc_start:
     desc: Go to start of document
-    zed: "D-K"
+    zed: "g g"
     nvim: "gg"
 
   doc_end:
     desc: Go to end of document (centered)
-    zed: "D-J"
-    nvim: "G"             # remapped to Gzz
+    zed: "G"               # +zz via SendKeystrokes
+    nvim: "G"              # remapped to Gzz
 
   line_start:
     desc: Go to start of line (first non-blank)
     zed: "H"
-    nvim: "^"
+    nvim: "H"              # remapped from <C-u>; remaps to ^
 
   line_end:
     desc: Go to end of line
     zed: "L"
-    nvim: "$"
+    nvim: "L"              # remapped from <C-d>; remaps to $
 
   sneak_forward:
-    desc: Sneak/leap forward
+    desc: Sneak/leap forward (single-char jump)
     zed: "f"
-    nvim: "s"             # flash.nvim
+    nvim: "s"              # flash.nvim default; user uses f/F via custom
 
   sneak_backward:
     desc: Sneak/leap backward
     zed: "F"
     nvim: "S"
-
-  matching:
-    desc: Go to matching bracket
-    zed: "w"
-    nvim: "%"
 
   history_back:
     desc: Go back in jump history
@@ -301,60 +284,123 @@ motion:
     zed: "]"
     nvim: "C-i"
 
+  word_forward:
+    desc: Word forward (vim default — preserved as primitive)
+    zed: "w"
+    nvim: "w"
+
+  word_back:
+    desc: Word back
+    zed: "b"
+    nvim: "b"
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# CODE NAVIGATION
+# CODE NAVIGATION (LSP — g-prefix, vim convention)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 code:
-  goto_definition_split:
-    desc: Go to definition (split)
-    zed: "q"
-
   goto_definition:
-    desc: Go to definition (in place)
-    zed: "m D"
-    nvim: "gd"
+    desc: Go to definition
+    zed: "g d"
+    nvim: "gd"             # LazyVim/lspconfig default
 
-  goto_type_definition_split:
-    desc: Go to type definition (split)
-    zed: "m t"
+  goto_definition_split:
+    desc: Go to definition (in split)
+    zed: "g D"             # if Zed supports split; else gap
+    nvim: "gD"             # LazyVim — actually goto_declaration; split TBD
+
+  goto_declaration:
+    desc: Go to declaration
+    nvim: "gD"             # LazyVim default
 
   goto_type_definition:
-    desc: Go to type definition (in place)
-    zed: "m T"
+    desc: Go to type definition
+    zed: "g y"             # if Zed supports; else gap
+    nvim: "gy"             # LazyVim default
+
+  goto_implementation:
+    desc: Go to implementation
+    nvim: "gI"             # LazyVim default
 
   find_references:
     desc: Find all references
-    zed: "m r"
-    nvim: "gr"
-
-  diagnostic_next:
-    desc: Go to next diagnostic
-    zed: "m j"
-    nvim: "]d"
-
-  diagnostic_prev:
-    desc: Go to previous diagnostic
-    zed: "m K"
-    nvim: "[d"
+    zed: "g r"
+    nvim: "gr"             # LazyVim default
 
   hover:
     desc: Hover docs
-    nvim: "gh"            # displaced from K (now half-page scroll)
+    zed: "g h"             # if Zed supports; else fallback to <spc> k
+    nvim: "gh"             # custom (displaced from K which is half-page up)
 
-  join_lines:
-    desc: Join lines
-    nvim: "gJ"            # displaced from J (now half-page scroll)
+  diagnostic_next:
+    desc: Go to next diagnostic
+    zed: "] d"
+    nvim: "]d"             # LazyVim default
+
+  diagnostic_prev:
+    desc: Go to previous diagnostic
+    zed: "[ d"
+    nvim: "[d"             # LazyVim default
+
+  signature_help:
+    desc: LSP signature help
+    nvim: "gK"             # LazyVim default
 
   code_actions:
     desc: Show code actions
     zed: "<spc> ."
-    nvim: "<spc> ."
+    nvim: "<spc> ."        # LazyVim's <spc>ca alias
 
   rename:
     desc: Rename symbol
     zed: "r"
-    nvim: "<spc> rn"
+    nvim: "r"              # vim.lsp.buf.rename; replaces vim's r<char> primitive
+    cc: "-"                # no LSP context
+
+  rename_alt:
+    desc: Rename symbol (LazyVim canonical chord; alias for r)
+    nvim: "<spc> cr"
+
+  join_lines:
+    desc: Join lines (vim's J primitive, displaced from J which is now half-page)
+    nvim: "gJ"
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# MATCH / SURROUND (m-prefix — Helix-style)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+match:
+  match_bracket:
+    desc: Go to matching bracket (replaces ergonomic use of %)
+    zed: "m m"
+    nvim: "mm"             # vim's % under the hood
+    # vim's % remains as default escape hatch
+
+  text_object_inside:
+    desc: Select inside text object (e.g., mi( — uses vim built-in i textobject)
+    zed: "m i <obj>"
+    nvim: "mi <obj>"       # backed by vim's i<obj>; obj ∈ ( { [ " ' p w s f c a etc.
+
+  text_object_around:
+    desc: Select around text object (e.g., ma{ — uses vim built-in a textobject)
+    zed: "m a <obj>"
+    nvim: "ma <obj>"
+
+surround:
+  add:
+    desc: Add surrounding pair around selection
+    zed: "m s <pair>"
+    nvim: "ms <pair>"      # mini.surround configured for m-prefix
+
+  delete:
+    desc: Delete surrounding pair
+    zed: "m d <pair>"
+    nvim: "md <pair>"
+
+  replace:
+    desc: Replace surrounding pair
+    zed: "m r <old> <new>"
+    nvim: "mr <old> <new>"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # EDITING
@@ -372,126 +418,273 @@ edit:
     nvim: "U"             # remapped from C-r
 
   duplicate_up:
-    desc: Duplicate line/selection up
-    zed: "D-k"            # visual mode
+    desc: Duplicate line/selection up (visual mode)
+    zed: "D-k"
 
   duplicate_down:
-    desc: Duplicate line/selection down
-    zed: "D-j"            # visual mode
+    desc: Duplicate line/selection down (visual mode)
+    zed: "D-j"
+
+  visual_line:
+    desc: Enter visual-line mode (select whole lines)
+    zed: "V"               # reverted from SelectEnclosingSymbol — vim primitive preserved
+    nvim: "V"              # default
 
   select_expand:
-    desc: Expand selection to larger syntax node
-    zed: "v"              # visual mode, also }
+    desc: Expand selection to larger syntax node (visual mode)
+    zed: "v"               # also }
+    nvim: "<C-space>"      # treesitter incremental selection; LazyVim default
 
   select_shrink:
-    desc: Shrink selection to smaller syntax node
-    zed: "{"              # visual mode
+    desc: Shrink selection to smaller syntax node (visual mode)
+    zed: "{"
+    nvim: "<bs>"           # treesitter incremental selection
 
-  select_enclosing:
-    desc: Select enclosing symbol
-    zed: "V"
+  select_enclosing_function:
+    desc: Select enclosing function body (treesitter text-object)
+    zed: "v i f"           # via treesitter LSP / Zed text objects
+    nvim: "vif"            # treesitter-textobjects (already installed)
+
+  select_enclosing_class:
+    desc: Select enclosing class
+    nvim: "vic"
 
   fold_toggle:
     desc: Toggle fold
     zed: "z o"
     nvim: "za"
 
+  fold_close:
+    desc: Close fold
+    zed: "z c"
+    nvim: "zc"
+
+  fold_all:
+    desc: Fold all
+    zed: "z M"
+    nvim: "zM"
+
+  unfold_all:
+    desc: Unfold all
+    zed: "z R"
+    nvim: "zR"
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # SEARCH
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 search:
+  buffer:
+    desc: Search in buffer (vim default)
+    zed: "/"
+    nvim: "/"
+
   buffer_replace:
     desc: Search & replace in buffer
-    zed: "?"
-    nvim: ":%s/"
+    zed: "?"               # buffer search/replace
+    nvim: ":%s/"           # vim ex substitution
 
   project:
-    desc: Search in project (new tab)
-    zed: "D-?"
-    nvim: "?"
+    desc: Search across project (find-in-files)
+    zed: "D-?"             # <spc> s in VSCodeVim era
+    nvim: "<spc> sg"       # LazyVim grep
 
   next:
     desc: Go to next match (centered)
-    zed: "n"
-    nvim: "n"             # remapped to nzz
+    zed: "n"               # +zz via SendKeystrokes
+    nvim: "n"              # remapped to nzz
 
   prev:
     desc: Go to previous match (centered)
-    zed: "N"
-    nvim: "N"             # remapped to Nzz
+    zed: "N"               # +zz via SendKeystrokes
+    nvim: "N"              # remapped to Nzz
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# GIT
+# GIT (q-prefix — replaces vim's macro recording on q)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 git:
   hunk_next:
     desc: Go to next hunk
-    zed: "g j"
-    nvim: "]c"
+    zed: "q j"
+    nvim: "qj"             # gitsigns next_hunk
 
   hunk_prev:
     desc: Go to previous hunk
-    zed: "g k"
-    nvim: "[c"
+    zed: "q k"
+    nvim: "qk"             # gitsigns prev_hunk
 
   branch:
-    desc: Switch branch
-    zed: "g b"
+    desc: Switch / pick branch
+    zed: "q b"
+    nvim: "qb"             # via lazygit (snacks)
+
+  panel:
+    desc: Toggle git panel / lazygit float
+    zed: "q w"
+    nvim: "qw"             # Snacks.lazygit() in nvim
 
   diff:
-    desc: Show diff panel
-    zed: "g d"
+    desc: Show diff (panel or file)
+    zed: "q d"
+    nvim: "qd"             # diffview.nvim
 
   hunk_toggle:
-    desc: Toggle hunk visibility
-    zed: "g o"
+    desc: Toggle inline hunk visibility
+    zed: "q o"
+    nvim: "qo"             # gitsigns toggle_signs / preview_hunk_inline
 
   hunk_expand_all:
-    desc: Expand all hunks
-    zed: "g O"
+    desc: Expand all inline hunks
+    zed: "q O"
+    nvim: "qO"
 
   stage_toggle:
-    desc: Toggle staged
-    zed: "g a"
+    desc: Toggle staged (range)
+    zed: "q a"
+    nvim: "qa"             # gitsigns stage_hunk
 
   stage_all:
     desc: Stage all
-    zed: "g A"
+    zed: "q A"
+    nvim: "qA"             # via lazygit
 
   restore:
-    desc: Restore hunk
-    zed: "g u"
+    desc: Restore range (revert hunk)
+    zed: "q u"
+    nvim: "qu"             # gitsigns reset_hunk
 
   restore_file:
     desc: Restore file
-    zed: "g U"
+    zed: "q U"
+    nvim: "qU"             # via lazygit
 
   commit:
     desc: Commit
-    zed: "g c"
+    zed: "q c"
+    nvim: "qc"             # via lazygit
 
   push:
     desc: Push
-    zed: "g p"
+    zed: "q p"
+    nvim: "qp"             # via lazygit
 
   push_force:
     desc: Force push
-    zed: "g P"
+    zed: "q P"
+    nvim: "qP"             # via lazygit
+
+  blame:
+    desc: Toggle blame for current line
+    zed: "q B"             # if Zed supports; else gap
+    nvim: "qB"             # gitsigns toggle_current_line_blame
+
+  log_graph:
+    desc: Git history / graph view
+    zed: "-"               # no Zed equivalent (gap)
+    nvim: "ql"             # diffview.nvim history
+
+  pr_open:
+    desc: Open / review pull request
+    zed: "-"
+    nvim: "qr"             # octo.nvim
+    vscode: "q r"          # extension.openPrGitProvider
+
+  pr_diff_next:
+    desc: Next PR diff
+    zed: "-"
+    nvim: "qn"             # octo.nvim
+    vscode: "q n"          # pr.goToNextDiffInPr
+
+  pr_diff_prev:
+    desc: Prev PR diff
+    zed: "-"
+    nvim: "qN"             # octo.nvim
+    vscode: "q N"          # pr.goToPreviousDiffInPr
+
+  copy_github_link:
+    desc: Copy GitHub link for current line/selection
+    zed: "-"
+    nvim: "qy"             # gitlinker.nvim
+    vscode: "q y"          # extension.copyGitHubLinkToClipboard
+
+  open_in_github:
+    desc: Open current line/selection in GitHub web
+    zed: "-"
+    nvim: "qY"             # gitlinker.nvim browse
+    vscode: "q Y"          # extension.openInGitHub
+
+  # qf fetch, qs/qS stash/pop reachable via lazygit TUI keys (no dedicated chord)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# CONFIGURATION (LEADER: ,)
+# TOGGLE / PANELS (t-prefix — unified, replaces <leader>p* and <leader>t*)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+toggle:
+  explorer:
+    desc: Toggle file explorer / project panel
+    zed: "t e"
+    nvim: "te"             # Snacks.explorer()
+
+  git_panel:
+    desc: Toggle git panel / lazygit float
+    zed: "t g"
+    nvim: "tg"             # Snacks.lazygit() (alias to qw)
+
+  terminal:
+    desc: Toggle terminal panel
+    zed: "t t"
+    nvim: "tt"             # Snacks.terminal()
+
+  outline:
+    desc: Toggle outline panel
+    zed: "t o"
+    nvim: "to"             # aerial.nvim
+
+  diagnostics:
+    desc: Toggle diagnostics panel
+    zed: "t d"
+    nvim: "td"             # trouble.nvim
+
+  inlay_hints:
+    desc: Toggle inlay hints
+    zed: "t h"
+    nvim: "th"             # vim.lsp.inlay_hint
+
+  code_lens:
+    desc: Toggle code lens
+    zed: "t c"
+    nvim: "tc"
+
+  word_wrap:
+    desc: Toggle word wrap / soft wrap
+    zed: "t w"
+    nvim: "tw"             # set wrap!
+
+  blame_inline:
+    desc: Toggle inline blame
+    zed: "t b"
+    nvim: "tb"             # gitsigns toggle_current_line_blame (alias to qB)
+
+  close_panels:
+    desc: Close all panels / docks
+    zed: "t P"
+    nvim: "tP"
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# CONFIGURATION (,-prefix)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 config:
   settings:
     desc: Open settings
     zed: ", ,"
+    nvim: ",,"             # :e $MYVIMRC or similar
 
   keymap:
     desc: Open keymap
     zed: ", k"
+    nvim: ",k"             # :e ~/.config/nvim/lua/config/keymaps.lua
 
   keymap_default:
     desc: Open default keymap
@@ -532,29 +725,7 @@ config:
   restart_lsp:
     desc: Restart language server
     zed: ", r"
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# TOGGLES (LEADER: <spc> t)
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-toggle:
-  inlay_hints:
-    desc: Toggle inlay hints
-    zed: "<spc> t h"
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# VIEW
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-view:
-  centered_layout:
-    desc: Toggle centered/focus layout
-    zed: "<spc> f"
-
-  zoom:
-    desc: Toggle zoom on current pane
-    zed: "<spc> z"
-    cmux: "C-0 z"
+    nvim: ",r"             # :LspRestart
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # AI ASSIST
@@ -578,7 +749,7 @@ ai:
     zed: "<spc> r t"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# PROJECT PANEL
+# PROJECT PANEL (chrome — Zed; nvim equivalent in snacks.explorer)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 project_panel:
@@ -639,7 +810,7 @@ project_panel:
     zed: "S-<cr>"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# GIT PANEL
+# GIT PANEL (chrome — Zed)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 git_panel:

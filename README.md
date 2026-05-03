@@ -65,8 +65,6 @@ home/
     starship.toml        # file symlink
     ...
   .gitconfig             # file symlink
-  .serena/               # spread (config; Serena writes logs/, memories/)
-    .spread
   .ssh/                  # spread (config + known_hosts; SSH writes sockets/)
     .spread
   Library/               # spread
@@ -132,6 +130,7 @@ A macOS launchd agent runs `dotctl heal` every 5 minutes. Some applications repl
 - [Karabiner](docs/karabiner.md) — mental model, failure layers, and recovery workflows
 - [Symlink platform](docs/symlink-platform.md) — lane model, capture policy, runtime state
 - [CLI tools](docs/cli-tools.md) — installed tools and shell abbreviations
+- [Worktrunk](docs/worktrunk.md) — git worktree manager for parallel AI agents
 - [Neovim](docs/neovim.md) — LazyExtras, AI stack, plugin decisions
 - [Known limitations](docs/known-limitations.md) — workarounds and manual intervention
 - [Decisions](DECISIONS.md) — architecture decision records

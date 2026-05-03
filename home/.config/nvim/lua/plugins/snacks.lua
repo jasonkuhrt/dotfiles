@@ -4,6 +4,25 @@ end
 
 local project = require("config.project")
 
+-- Recursively set open/expanded state on a directory node and all descendants.
+-- When opening, expand each dir to materialize children from disk before recursing.
+local function set_open_recursive(tree, node, open)
+  if not node or not node.dir then
+    return
+  end
+  node.open = open
+  if open then
+    tree:expand(node)
+  else
+    node.expanded = false
+  end
+  for _, child in pairs(node.children or {}) do
+    if child.dir then
+      set_open_recursive(tree, child, open)
+    end
+  end
+end
+
 local snacks_opts = {
   dashboard = {
     preset = {
@@ -34,6 +53,21 @@ local snacks_opts = {
         min_width = 80,
       },
     },
+    actions = {
+      explorer_toggle_recursive = function(picker, item)
+        if not item or not item.dir then
+          return
+        end
+        local Tree = require("snacks.explorer.tree")
+        local Actions = require("snacks.explorer.actions")
+        local node = Tree:find(item.file)
+        if not node then
+          return
+        end
+        set_open_recursive(Tree, node, not node.open)
+        Actions.update(picker, { target = item.file, refresh = true })
+      end,
+    },
     sources = {
       files = {
         hidden = true,
@@ -51,6 +85,13 @@ local snacks_opts = {
         },
         matcher = {
           fuzzy = true,
+        },
+        win = {
+          list = {
+            keys = {
+              ["<S-CR>"] = "explorer_toggle_recursive",
+            },
+          },
         },
       },
       commands = {

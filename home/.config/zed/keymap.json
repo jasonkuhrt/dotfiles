@@ -404,7 +404,7 @@
     }
   },
   {
-    "context": "Editor && edit_prediction_conflict",
+    "context": "Editor && (edit_prediction && (showing_completions || in_leading_whitespace))",
     "bindings": {
       "shift-enter": "editor::AcceptEditPrediction"
     }
@@ -509,14 +509,17 @@
       "U": "editor::Redo",
       "u": "vim::Undo",
       "r": "editor::Rename",
-      "q": "editor::GoToDefinitionSplit",
-      "m d": "editor::GoToDefinitionSplit",
-      "m D": "editor::GoToDefinition",
-      "m t": "editor::GoToTypeDefinitionSplit",
-      "m T": "editor::GoToTypeDefinition",
+      "m d": "editor::GoToDefinition",
+      "m D": "editor::GoToDefinitionSplit",
+      "m t": "editor::GoToTypeDefinition",
+      "m T": "editor::GoToTypeDefinitionSplit",
       "m r": "editor::FindAllReferences",
       "m j": "editor::GoToDiagnostic",
       "m K": "editor::GoToPreviousDiagnostic",
+      "m c p": "workspace::CopyRelativePath",
+      "m c P": "workspace::CopyPath",
+      "space q q": "editor::ToggleCodeActions",
+      "space q o": "editor::OrganizeImports",
       "space z": ["action::Sequence", ["workspace::ToggleCenteredLayout", "workspace::ToggleZoom"]],
       ///
       // ─ Unsure about these ones
@@ -528,7 +531,14 @@
     "context": "vim_mode == normal",
     "bindings": {
       "space .": "editor::ToggleCodeActions",
-      "z o": "editor::ToggleFold"
+      // ── Folding (vim z-chord)
+      "z o": "editor::ToggleFold",
+      "z a": "editor::ToggleFold",
+      "z c": "editor::Fold",
+      "z O": "editor::UnfoldRecursive",
+      "z C": "editor::FoldRecursive",
+      "z M": "editor::FoldAll",
+      "z R": "editor::UnfoldAll"
     }
   },
   // {

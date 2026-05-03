@@ -103,16 +103,20 @@
       "ctrl-cmd-f": ["action::Sequence", ["workspace::ToggleCenteredLayout", "workspace::ToggleZoom"]]
     }
   },
+  // Toggle/panel prefix (t*) — replaces former <space>p* panel menu and
+  // <space>t* toggle menu. Single-key prefix per the dotfiles 5-prefix
+  // architecture (g LSP, q git, m match/surround, t toggle/panel, , config).
   {
     "context": "vim_mode == normal || (vim_mode == helix_normal && !menu) || ChangesList || EmptyPane || SharedScreen || MarkdownPreview || KeyContextView || Welcome || ProjectPanel || GitPanel || Diagnostics || (Terminal && vi_mode)",
     "bindings": {
-      "space p P": "workspace::CloseAllDocks",
-      "space p g": "git_panel::ToggleFocus",
-      "space p t": "terminal_panel::ToggleFocus",
-      "space p p": "project_panel::ToggleFocus",
-      "space p o": "outline_panel::ToggleFocus",
-      "space p c": "collab_panel::ToggleFocus",
-      "space p e": "diagnostics::Deploy" // "e" aligns with m e
+      "t e": "project_panel::ToggleFocus", // explorer
+      "t g": "git_panel::ToggleFocus",
+      "t t": "terminal_panel::ToggleFocus",
+      "t o": "outline_panel::ToggleFocus",
+      "t d": "diagnostics::Deploy", // diagnostics panel
+      "t P": "workspace::CloseAllDocks", // close panels
+      "t w": "editor::ToggleSoftWrap",
+      "t b": "editor::ToggleGitBlameInline"
     }
   },
 
@@ -324,29 +328,38 @@
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Git
   //
   //
+  // Git prefix (q*) — replaces former g* git block. Frees g-prefix for
+  // vim-convention LSP/goto. q* replaces vim's macro recording on q
+  // (user does not record).
+  // Fixed two bugs from the previous block:
+  //   1. q k now correctly dispatches fn-_qk1 (GoToPreviousHunk). Old g k
+  //      mistakenly used fn-_gj1 so it went to next hunk.
+  //   2. The post-jump centering uses `z z` (matches the n/N centering
+  //      pattern in the search section). Old block used `g Z` which is
+  //      not a centering chord.
   {
     "context": "vim_mode == normal || (Terminal && vi_mode) || GitPanel || ProjectPanel || CollabPanel || OutlinePanel || ChatPanel || VimControl || EmptyPane || SharedScreen || MarkdownPreview || KeyContextView || DebugPanel || Diagnostics",
     "bindings": {
       // ━ NAVIGATE
-      "fn-_gj1": "editor::GoToHunk",
-      "g j": ["workspace::SendKeystrokes", "fn-_gj1 g Z"],
-      "fn-_gk1": "editor::GoToPreviousHunk",
-      "g k": ["workspace::SendKeystrokes", "fn-_gj1 g Z"],
-      "g b": "git::Switch", // branch palette
-      "g w": "git_panel::ToggleFocus",
-      "g d": "git::Diff", // opens panel
+      "fn-_qj1": "editor::GoToHunk",
+      "q j": ["workspace::SendKeystrokes", "fn-_qj1 z z"],
+      "fn-_qk1": "editor::GoToPreviousHunk",
+      "q k": ["workspace::SendKeystrokes", "fn-_qk1 z z"],
+      "q b": "git::Switch", // branch palette
+      "q w": "git_panel::ToggleFocus",
+      "q d": "git::Diff", // opens panel
       // ━ SEE
-      "g o": "editor::ToggleSelectedDiffHunks", // ala "z o" folding
-      "g O": "editor::ExpandAllDiffHunks",
+      "q o": "editor::ToggleSelectedDiffHunks", // ala "z o" folding
+      "q O": "editor::ExpandAllDiffHunks",
       // ━ REVIEW
-      "g a": "git::ToggleStaged", // "a" for add
-      "g A": "git::StageAll",
-      "g u": "git::Restore", // "u" for undo
-      "g U": "git::RestoreFile", // "u" for undo
+      "q a": "git::ToggleStaged", // "a" for add
+      "q A": "git::StageAll",
+      "q u": "git::Restore", // "u" for undo
+      "q U": "git::RestoreFile",
       // ━ COMMIT
-      "g c": "git::Commit",
-      "g p": "git::Push", // todo: once Zed has a git::sync command then use that here
-      "g P": "git::ForcePush"
+      "q c": "git::Commit",
+      "q p": "git::Push", // todo: once Zed has a git::sync command, use that
+      "q P": "git::ForcePush"
     }
   },
   {
@@ -421,14 +434,23 @@
     "context": "Editor && (vim_mode == normal || vim_mode == visual)",
     "bindings": {
       "cmd-K": "vim::StartOfDocument",
-      "K": "vim::ScrollUp",
+      // J/K/G/n/N all chain `z z` to keep the cursor vertically centered after
+      // half-page or jump motions (matches terminal nvim's centering behavior).
+      "K": ["workspace::SendKeystrokes", "ctrl-u z z"],
       "L": "vim::EndOfLine",
-      "J": "vim::ScrollDown",
+      "J": ["workspace::SendKeystrokes", "ctrl-d z z"],
+      "G": ["workspace::SendKeystrokes", "G z z"],
       "cmd-J": "vim::EndOfDocument",
-      "u": "vim::MoveToPrevious",
+      // `u` is undo only — line 510 had `u: vim::Undo` which was being
+      // shadowed by an earlier `u: vim::MoveToPrevious`. The shadow is
+      // removed. Use cl<char> if you need vim's replace-char (since r is
+      // now LSP rename per the chord architecture).
       "H": "vim::StartOfLine",
       "[": "pane::GoBack",
-      "]": "pane::GoForward"
+      "]": "pane::GoForward",
+      // Buffer prev/next via vim-style bracket chord
+      "[ b": "pane::ActivatePrevItem",
+      "] b": "pane::ActivateNextItem"
       // "ctrl-k": "vim::PageUp",
       // "ctrl-j": "vim::PageDown"
     }
@@ -496,11 +518,23 @@
       "shift-backspace": "vim::DeleteRight"
     }
   },
+  // Removed `V → SelectEnclosingSymbol` — V is preserved as vim's default
+  // visual-line mode (Decision #4 = B). Enclosing-symbol selection is
+  // reachable via treesitter syntax-node chords (`v` from visual mode
+  // expands to larger node, see Editor && vim_mode == visual block).
+  // ── LSP/goto (g-prefix) — vim convention restored. The previous m-prefix
+  //    LSP block has been removed; m-prefix is now Helix-style match/surround
+  //    (Decision #2.c).
   {
-    "context": "Editor && vim_mode == normal",
+    "context": "Editor && (vim_mode == normal || vim_mode == visual)",
     "bindings": {
-      "V": "editor::SelectEnclosingSymbol"
-      // "?": "pane::DeploySearch",
+      "g d": "editor::GoToDefinition",
+      "g D": "editor::GoToDefinitionSplit",
+      "g r": "editor::FindAllReferences",
+      "g I": "editor::GoToImplementation",
+      "g y": "editor::GoToTypeDefinition",
+      "g Y": "editor::GoToTypeDefinitionSplit",
+      "g h": "editor::Hover"
     }
   },
   {
@@ -509,22 +543,21 @@
       "U": "editor::Redo",
       "u": "vim::Undo",
       "r": "editor::Rename",
-      "m d": "editor::GoToDefinition",
-      "m D": "editor::GoToDefinitionSplit",
-      "m t": "editor::GoToTypeDefinition",
-      "m T": "editor::GoToTypeDefinitionSplit",
-      "m r": "editor::FindAllReferences",
-      "m j": "editor::GoToDiagnostic",
-      "m K": "editor::GoToPreviousDiagnostic",
+      // ── Match (m-prefix, Helix-style)
+      "m m": "vim::Matching",
+      // ── Utilities (kept on m-prefix; not surround/match-related but
+      //    don't collide with mini.surround's mappings)
       "m c p": "workspace::CopyRelativePath",
       "m c P": "workspace::CopyPath",
+      // ── Diagnostic nav (vim/LazyVim convention)
+      "] d": "editor::GoToDiagnostic",
+      "[ d": "editor::GoToPreviousDiagnostic",
+      // ── Misc
       "space q q": "editor::ToggleCodeActions",
       "space q o": "editor::OrganizeImports",
-      "space z": ["action::Sequence", ["workspace::ToggleCenteredLayout", "workspace::ToggleZoom"]],
-      ///
-      // ─ Unsure about these ones
-      //
-      "w": "vim::Matching"
+      "space z": ["action::Sequence", ["workspace::ToggleCenteredLayout", "workspace::ToggleZoom"]]
+      // Removed `w → vim::Matching` — w is preserved as vim's default word
+      // motion (Decision #3 = D). Match-bracket lives at `m m` above.
     }
   },
   {
@@ -555,10 +588,12 @@
   //
   //
   //
+  // Inlay hints toggle moved to the new t-prefix block (above) as `t h`.
+  // The old `space t h` chord is removed.
   {
     "context": "Editor && (vim_mode == normal || vim_mode == visual)",
     "bindings": {
-      "space t h": "editor::ToggleInlayHints"
+      "t h": "editor::ToggleInlayHints"
     }
   },
   //

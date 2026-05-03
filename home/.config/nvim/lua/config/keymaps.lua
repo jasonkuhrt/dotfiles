@@ -84,7 +84,11 @@ map("n", "!", ":!", { desc = "External command" })
 -- ──────────────────────────────────────────────────────────────────────────
 map("n", "r", function()
   if vim.g.vscode then
-    require("vscode").action("editor.action.rename")
+    -- jason.renameTight strips import { foo as bar } aliases that tsserver
+    -- inserts despite typescript.preferences.useAliasesForRenames=false.
+    -- See TS issue #29026; setting is a partial mitigation. Provided by
+    -- the local jasonkuhrt.utils VS Code extension.
+    require("vscode").action("jason.renameTight")
   else
     vim.lsp.buf.rename()
   end

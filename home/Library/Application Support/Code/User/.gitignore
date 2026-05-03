@@ -1,0 +1,7 @@
+/globalStorage/
+/workspaceStorage/
+/History/
+/sync/
+/chatLanguageModels.json
+/mcp.json
+*.workbench-cycler-backup-*

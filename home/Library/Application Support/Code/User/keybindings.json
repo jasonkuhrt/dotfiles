@@ -1,0 +1,153 @@
+// VSCode keybindings aligned with Zed keymap (home/.config/zed/keymap.json)
+// Non-vim bindings live here. Vim-mode (normal/visual/insert) bindings live
+// in settings.json under vim.* arrays.
+[
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Docks & Panels (match Zed cmd-h/j/l)
+  //
+  { "key": "cmd+h", "command": "workbench.action.toggleSidebarVisibility" },
+  { "key": "cmd+h", "command": "-workbench.action.hideEditor" },
+  // cmd+l cycles layout presets forward: all → explorer → full-terminal → all.
+  // cmd+shift+l cycles the same sequence in reverse.
+  // Handled by workbench-cycler extension; see /Users/jasonkuhrt/projects/jasonkuhrt/workbench-cycler.
+  { "key": "cmd+l", "command": "workbenchCycler.nextInSequence",
+    "args": { "sequence": ["all", "explorer", "full-terminal"] } },
+  { "key": "cmd+shift+l", "command": "workbenchCycler.nextInSequence",
+    "args": { "sequence": ["full-terminal", "explorer", "all"] } },
+  { "key": "cmd+j", "command": "workbench.action.togglePanel" },
+  { "key": "shift+cmd+h", "command": "workbench.files.action.focusFilesExplorer" },
+
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Editor Splits (ctrl-cmd-h/j/k/l)
+  //
+  { "key": "ctrl+cmd+h", "command": "workbench.action.splitEditorLeft" },
+  { "key": "ctrl+cmd+l", "command": "workbench.action.splitEditorRight" },
+  { "key": "ctrl+cmd+k", "command": "workbench.action.splitEditorUp" },
+  { "key": "ctrl+cmd+j", "command": "workbench.action.splitEditorDown" },
+
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Pane Navigation (ctrl-h/j/k/l)
+  //
+  { "key": "ctrl+h", "command": "workbench.action.navigateLeft" },
+  { "key": "ctrl+l", "command": "workbench.action.navigateRight" },
+  { "key": "ctrl+k", "command": "workbench.action.navigateUp", "when": "!suggestWidgetVisible && !inQuickOpen && !codeActionMenuVisible && !parameterHintsVisible && !referenceSearchVisible" },
+  { "key": "ctrl+j", "command": "workbench.action.navigateDown", "when": "!suggestWidgetVisible && !inQuickOpen && !codeActionMenuVisible && !parameterHintsVisible && !referenceSearchVisible" },
+  // Mac convention: cmd-k clears terminal screen (replaces lost ctrl-l)
+  { "key": "cmd+k", "command": "workbench.action.terminal.clear", "when": "terminalFocus" },
+
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Menus: ctrl-j/k next/prev (universal menu idiom)
+  //   Applied to every surface VSCode exposes as a navigable list/menu.
+  //
+  // Suggestion (autocomplete) widget
+  { "key": "ctrl+j", "command": "selectNextSuggestion", "when": "suggestWidgetVisible" },
+  { "key": "ctrl+k", "command": "selectPrevSuggestion", "when": "suggestWidgetVisible" },
+  // Quick Open (cmd-p, cmd-shift-p, etc.)
+  { "key": "ctrl+j", "command": "workbench.action.quickOpenSelectNext", "when": "inQuickOpen" },
+  { "key": "ctrl+k", "command": "workbench.action.quickOpenSelectPrevious", "when": "inQuickOpen" },
+  // Generic list/tree — plain j/k/h/l/J/K/H since these surfaces have no vim
+  // and no text input. Covers: Explorer, Search results, Problems, References panel,
+  // Outline, SCM, Debug, Extensions, Keybindings editor.
+  // Tradeoff accepted: loses type-ahead filename search in Explorer.
+  { "key": "j", "command": "list.focusDown", "when": "listFocus && !inputFocus" },
+  { "key": "k", "command": "list.focusUp", "when": "listFocus && !inputFocus" },
+  { "key": "shift+j", "command": "list.focusLast", "when": "listFocus && !inputFocus" },
+  { "key": "shift+k", "command": "list.focusFirst", "when": "listFocus && !inputFocus" },
+  { "key": "h", "command": "list.collapse", "when": "listFocus && !inputFocus" },
+  { "key": "l", "command": "list.expand", "when": "listFocus && !inputFocus" },
+  { "key": "shift+h", "command": "list.collapseAll", "when": "listFocus && !inputFocus" },
+  // Code action menu (space q q / cmd-.)
+  { "key": "ctrl+j", "command": "selectNextCodeAction", "when": "codeActionMenuVisible" },
+  { "key": "ctrl+k", "command": "selectPrevCodeAction", "when": "codeActionMenuVisible" },
+  // Parameter hints — switch between function overloads
+  { "key": "ctrl+j", "command": "showNextParameterHint", "when": "parameterHintsVisible && parameterHintsMultipleSignatures" },
+  { "key": "ctrl+k", "command": "showPrevParameterHint", "when": "parameterHintsVisible && parameterHintsMultipleSignatures" },
+  // References peek view (alt-F12 / peek popup)
+  { "key": "ctrl+j", "command": "goToNextReferenceFromEmbeddedEditor", "when": "referenceSearchVisible" },
+  { "key": "ctrl+k", "command": "goToPreviousReferenceFromEmbeddedEditor", "when": "referenceSearchVisible" },
+
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Open (Zed: cmd-o recent, alt-cmd-o file)
+  //
+  { "key": "cmd+o", "command": "workbench.action.openRecent" },
+  { "key": "cmd+o", "command": "-workbench.action.files.openFileFolder" },
+  { "key": "alt+cmd+o", "command": "workbench.action.files.openFileFolder" },
+
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Search in new editor (cmd-?)
+  //
+  { "key": "shift+cmd+/", "command": "workbench.action.findInFiles" },
+
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Terminal exit with ctrl-' (Zed parity)
+  //
+  { "key": "ctrl+'", "command": "workbench.action.terminal.focus", "when": "!terminalFocus" },
+  { "key": "ctrl+'", "command": "workbench.action.focusActiveEditorGroup", "when": "terminalFocus" },
+
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Never close the last editor (keep workbench non-empty)
+  //   Default cmd-w is unbound only when this would be the last editor anywhere. In any
+  //   other state, default closeActiveEditor still applies.
+  { "key": "cmd+w", "command": "-workbench.action.closeActiveEditor", "when": "groupActiveEditorCount == 1 && !multipleEditorGroups" },
+
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Empty / Welcome leader chords (mirror vim leader)
+  //   Scoped to !editorIsOpen so they only fire when no editor is focused.
+  //   These give you a working "leader" experience on the home/welcome screen
+  //   where VSCodeVim cannot fire (no editor → no normal mode → no leader).
+  //
+  { "key": "space k", "command": "workbench.action.quickOpen", "when": "!editorIsOpen && !inputFocus" },
+  { "key": "space o", "command": "workbench.action.openRecent", "when": "!editorIsOpen && !inputFocus" },
+  { "key": "space shift+o", "command": "projectManager.listProjects", "when": "!editorIsOpen && !inputFocus" },
+  { "key": "space j", "command": "workbench.action.tasks.runTask", "when": "!editorIsOpen && !inputFocus" },
+  { "key": "space p g", "command": "workbench.view.scm", "when": "!editorIsOpen && !inputFocus" },
+  { "key": "space p p", "command": "workbench.files.action.focusFilesExplorer", "when": "!editorIsOpen && !inputFocus" },
+  { "key": "space p t", "command": "workbench.action.terminal.focus", "when": "!editorIsOpen && !inputFocus" },
+  { "key": "space p e", "command": "workbench.panel.markers.view.focus", "when": "!editorIsOpen && !inputFocus" },
+  { "key": ";", "command": "workbench.action.showCommands", "when": "!editorIsOpen && !inputFocus" },
+
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Misc Zed parity
+  //
+  { "key": "cmd+j", "command": "-editor.action.joinLines" },
+  { "key": "shift+cmd+j", "command": "-workbench.action.search.toggleQueryDetails", "when": "searchViewletVisible" },
+  { "key": "cmd+alt+shift+m", "command": "jason.toggleProblemsVisibility", "when": "editorTextFocus" },
+
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Find widget: Ctrl+/ closes from search input
+  //   Escape hatch for the "/ opens find, want a quick close without moving hands"
+  //   pattern. `/` itself remains free to type literally in the search query.
+  //
+  { "key": "ctrl+/", "command": "closeFindWidget", "when": "editorFocus && findWidgetVisible" },
+
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Explorer delete (via jasonkuhrt.explorer-delete extension)
+  //   Both route to system trash (recoverable from Finder). `d` confirms, `D` skips.
+  //   `!inputFocus` guards against triggering while renaming a file inline.
+  //
+  { "key": "d",       "command": "explorerDelete.confirmTrash", "when": "filesExplorerFocus && !inputFocus" },
+  { "key": "shift+d", "command": "explorerDelete.forceTrash",   "when": "filesExplorerFocus && !inputFocus" },
+
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Explorer: Enter / Shift+Enter = dig in / dig out
+  //   Provided by jasonkuhrt.utils. Enter opens every dir at the shallowest
+  //   level that still has a closed dir; Shift+Enter closes every open dir
+  //   at the deepest level. At the boundaries the cycle resets — digging in
+  //   past the deepest state collapses everything, digging out past the
+  //   shallowest expands everything (BFS-bounded, skipping node_modules etc).
+  //
+  //   Enter is split: on a folder it digs (global navigation), on a file it
+  //   opens the file (selection-scoped). The when-clause discriminator is
+  //   `explorerResourceIsFolder` — re-evaluated on focus change, so arrowing
+  //   between files and dirs swaps the enter target live.
+  //
+  { "key": "enter",       "command": "-renameFile",                  "when": "filesExplorerFocus && foldersViewVisible && !inputFocus" },
+  { "key": "enter",       "command": "jason.explorerDigIn",          "when": "filesExplorerFocus && !inputFocus && explorerResourceIsFolder" },
+  { "key": "enter",       "command": "list.select",                  "when": "filesExplorerFocus && !inputFocus && !explorerResourceIsFolder" },
+  { "key": "shift+enter", "command": "jason.explorerDigOut",         "when": "filesExplorerFocus && !inputFocus" },
+  { "key": "r",           "command": "renameFile",                   "when": "filesExplorerFocus && foldersViewVisible && !inputFocus" },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Duplicate lines in visual mode (Zed parity)
+  { "key": "cmd+j", "command": "editor.action.copyLinesDownAction", "when": "editorTextFocus && vim.mode == 'Visual'" },
+  { "key": "cmd+k", "command": "editor.action.copyLinesUpAction",   "when": "editorTextFocus && vim.mode == 'Visual'" }
+]

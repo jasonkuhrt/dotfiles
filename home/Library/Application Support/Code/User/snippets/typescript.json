@@ -1,0 +1,46 @@
+{
+  // Place your snippets for typescript here. Each snippet is defined under a snippet name and has a prefix, body and
+  // description. The prefix is what is used to trigger the snippet and the body will be expanded and inserted. Possible variables are:
+  // $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders. Placeholders with the
+  // same ids are connected.
+  // Example:
+  // "Print to console": {
+  // 	"prefix": "log",
+  // 	"body": [
+  // 		"console.log('$1');",
+  // 		"$2"
+  // 	],
+  // 	"description": "Log output to console"
+  // }
+  "Arrow function": {
+    "prefix": "@f",
+    "body": ["($1) => {$0}"],
+    "description": "Create an arrow function"
+  },
+  "Async Arrow function": {
+    "prefix": "@fa",
+    "body": ["async ($1) => {$0}"],
+    "description": "Create an async arrow function"
+  },
+  "statement function": {
+    "prefix": "@fs",
+    "body": ["function $1($2):$3 {$0}"],
+    "description": "Create a function statement"
+  },
+  "jest describe": {
+    "prefix": "@describe",
+    "body": ["describe('$1', () => {$0})"]
+  },
+  "jest it": {
+    "prefix": "@it",
+    "body": ["it('$1', () => {$0})"]
+  },
+  "jest expect": {
+    "prefix": "@expect",
+    "body": ["expect($1)$0"]
+  },
+  "exported function": {
+    "prefix": "@exf",
+    "body": ["export const $1 = ($2) => {$0}"]
+  }
+}

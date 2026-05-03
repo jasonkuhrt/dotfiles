@@ -1,0 +1,506 @@
+{
+  // ──────────────────────────────────────────── Theme & UI
+  "workbench.colorTheme": "Tokyo Night",
+  "workbench.iconTheme": "vscode-seedling-icon-theme",
+  "workbench.productIconTheme": "icons-carbon",
+  "workbench.fontAliasing": "default",
+  "workbench.startupEditor": "welcomePageInEmptyWorkbench",
+  "workbench.statusBar.visible": true,
+  "workbench.tree.indent": 16,
+  "workbench.tree.renderIndentGuides": "none",
+  "workbench.editor.enablePreview": false,
+  "workbench.editor.enablePreviewFromQuickOpen": false,
+  "workbench.editor.untitled.hint": "hidden",
+  // Native replacement for old `customizeUI.stylesheet` monkey-patch
+  "workbench.editor.editorActionsLocation": "hidden",
+  // ── UI chrome minimization (keyboard-driven, reclaim screen real estate)
+  "workbench.activityBar.location": "hidden",
+  "workbench.layoutControl.enabled": false,
+  "window.commandCenter": false,
+
+  // ──────────────────────────────────────────── Editor
+  "editor.fontFamily": "Fira Code",
+  "editor.fontLigatures": true,
+  "editor.fontSize": 15,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": false,
+  "editor.minimap.enabled": false,
+  "editor.cursorStyle": "line",
+  "editor.cursorBlinking": "solid",
+  "editor.smoothScrolling": true,
+  "editor.lineNumbers": "on",
+  "editor.wordWrap": "off",
+  "editor.wordSeparators": "/\\()\"':,.;<>~!@#$%^&*|+=[]{}`?-",
+  "editor.renderLineHighlight": "none",
+  "editor.renderWhitespace": "none",
+  "editor.renderControlCharacters": true,
+  "editor.selectionHighlight": false,
+  "editor.multiCursorModifier": "alt",
+  "editor.lightbulb.enabled": "off",
+  "editor.inlayHints.enabled": "off",
+  "editor.inlineSuggest.enabled": true,
+  // Multi-line edit predictions, render side-by-side, allow code shifting around the cursor
+  "editor.inlineSuggest.edits.allowCodeShifting": "always",
+  "editor.inlineSuggest.edits.renderSideBySide": "auto",
+  "editor.inlineSuggest.suppressSuggestions": true,
+  "editor.suggest.preview": true,
+  "editor.suggest.localityBonus": true,
+  "editor.formatOnSave": true,
+  "editor.formatOnType": false,
+  "editor.formatOnPaste": true,
+  "editor.defaultFormatter": "dprint.dprint",
+  "editor.codeActionsOnSave": {
+    "source.addMissingImports": "explicit",
+    "source.fixAll.eslint": "explicit",
+  },
+  "editor.accessibilitySupport": "off",
+
+  // ── Cmd+click and go-to-def: always navigate, never peek.
+  //    Defaults peek when there are multiple candidates (interface + impl,
+  //    re-exports). "goto" forces navigation to the best match.
+  "editor.gotoLocation.multipleDefinitions": "goto",
+  "editor.gotoLocation.multipleTypeDefinitions": "goto",
+  "editor.gotoLocation.multipleDeclarations": "goto",
+  "editor.gotoLocation.multipleImplementations": "goto",
+  "editor.gotoLocation.multipleReferences": "goto",
+  "editor.definitionLinkOpensInPeek": false,
+
+  // ──────────────────────────────────────────── Vim
+  "vim.showmodename": false,
+  "vim.useSystemClipboard": true,
+  "vim.leader": "<space>",
+  "vim.foldfix": true,
+  "vim.sneak": true,
+  "vim.surround": false,
+  "vim.highlightedyank.enable": true,
+  "vim.highlightedyank.duration": 200,
+  "vim.insertModeKeyBindings": [
+    { "before": ["k", "j"], "after": ["<Esc>"] },
+  ],
+  "vim.visualModeKeyBindings": [
+    { "before": ["H"], "after": ["^"] },
+    { "before": ["L"], "after": ["$"] },
+    { "before": ["J"], "commands": [
+      { "command": "editorScroll", "args": { "to": "down", "by": "halfPage", "revealCursor": true, "select": true } }
+    ] },
+    { "before": ["K"], "commands": [
+      { "command": "editorScroll", "args": { "to": "up",   "by": "halfPage", "revealCursor": true, "select": true } }
+    ] },
+    // ── q exits visual mode (Zed parity)
+    { "before": ["q"], "after": ["<Esc>"] },
+    { "before": ["v"], "commands": ["editor.action.smartSelect.expand"] },
+    { "before": ["}"], "commands": ["editor.action.smartSelect.expand"] },
+    { "before": ["{"], "commands": ["editor.action.smartSelect.shrink"] },
+    { "before": ["w"], "after": ["%"] },
+    { "before": ["r"], "commands": ["jason.renameTight"] },
+    { "before": ["U"], "after": ["<C-r>"] },
+    // ── Search selected text across project (visual mode only)
+    { "before": ["<leader>", "s"], "commands": ["workbench.action.findInFilesWithSelectedText"] },
+    // ── `/` in visual mode: open find+replace widget scoped to the selection
+    { "before": ["/"], "commands": [
+      "editor.action.startFindReplaceAction",
+      { "command": "editor.actions.findWithArgs", "args": { "searchString": "", "findInSelection": true } }
+    ] },
+  ],
+  "vim.normalModeKeyBindings": [
+    // ── Motion (H/J/K/L, Zed parity)
+    { "before": ["H"], "after": ["^"] },
+    { "before": ["L"], "after": ["$"] },
+    { "before": ["J"], "after": ["<C-d>"] },
+    { "before": ["K"], "after": ["<C-u>"] },
+    // ── Redo with U
+    { "before": ["U"], "after": ["<C-r>"] },
+    // ── Command palette with ;
+    { "before": [";"], "commands": ["workbench.action.showCommands"] },
+    // ── `/` opens VS Code find widget with empty query (overrides vim's own /)
+    { "before": ["/"], "commands": [
+      { "command": "editor.actions.findWithArgs", "args": { "searchString": "" } }
+    ] },
+    // ── Back/forward navigation pairs
+    { "before": ["["], "commands": ["workbench.action.navigateBack"] },
+    { "before": ["]"], "commands": ["workbench.action.navigateForward"] },
+    // ── m-prefix: goto / diagnostics (lower=same pane, upper=variant)
+    { "before": ["m", "j"], "commands": ["editor.action.marker.next"] },
+    { "before": ["m", "K"], "commands": ["editor.action.marker.prev"] },
+    { "before": ["m", "d"], "commands": ["editor.action.revealDefinition"] },
+    { "before": ["m", "D"], "commands": ["editor.action.revealDefinitionAside"] },
+    { "before": ["m", "t"], "commands": ["editor.action.goToTypeDefinition"] },
+    { "before": ["m", "T"], "commands": ["editor.action.peekTypeDefinition"] },
+    { "before": ["m", "r"], "commands": ["editor.action.goToReferences"] },
+    // ── Rename / fold / syntax select
+    { "before": ["r"], "commands": ["jason.renameTight"] },
+    // ── Folding (vim z-chord)
+    { "before": ["z", "o"], "commands": ["editor.toggleFold"] },
+    { "before": ["z", "a"], "commands": ["editor.toggleFold"] },
+    { "before": ["z", "c"], "commands": ["editor.fold"] },
+    { "before": ["z", "O"], "commands": ["editor.unfoldRecursively"] },
+    { "before": ["z", "C"], "commands": ["editor.foldRecursively"] },
+    { "before": ["z", "M"], "commands": ["editor.foldAll"] },
+    { "before": ["z", "R"], "commands": ["editor.unfoldAll"] },
+    { "before": ["z", "j"], "commands": ["editor.gotoNextFold"] },
+    { "before": ["z", "k"], "commands": ["editor.gotoPreviousFold"] },
+    { "before": ["V"], "commands": ["editor.action.smartSelect.expand"] },
+    { "before": ["w"], "commands": ["editor.action.jumpToBracket"] },
+    // ── Leader: space p — Panels / docks
+    { "before": ["<leader>", "p", "p"], "commands": ["workbench.files.action.focusFilesExplorer"] },
+    { "before": ["<leader>", "p", "g"], "commands": ["workbench.view.scm"] },
+    { "before": ["<leader>", "p", "t"], "commands": ["workbench.action.terminal.focus"] },
+    { "before": ["<leader>", "p", "o"], "commands": ["outline.focus"] },
+    { "before": ["<leader>", "p", "e"], "commands": ["workbench.panel.markers.view.focus"] },
+    { "before": ["<leader>", "p", "P"], "commands": ["workbench.action.closePanel"] },
+    // ── Leader: space w — Windows / panes
+    { "before": ["<leader>", "w", "h"], "commands": ["workbench.action.navigateLeft"] },
+    { "before": ["<leader>", "w", "l"], "commands": ["workbench.action.navigateRight"] },
+    { "before": ["<leader>", "w", "k"], "commands": ["workbench.action.navigateUp"] },
+    { "before": ["<leader>", "w", "j"], "commands": ["workbench.action.navigateDown"] },
+    { "before": ["<leader>", "w", "s"], "commands": ["workbench.action.splitEditorRight"] },
+    { "before": ["<leader>", "w", "a"], "commands": ["workbench.action.splitEditorDown"] },
+    { "before": ["<leader>", "w", "'"], "commands": ["workbench.action.closeEditorsInGroup"] },
+    { "before": ["<leader>", "w", "p"], "commands": ["workbench.action.pinEditor"] },
+    // ── Leader: top-level
+    { "before": ["<leader>", "k"], "commands": ["workbench.action.quickOpen"] },
+    { "before": ["<leader>", "l"], "commands": ["workbench.action.gotoSymbol"] },
+    { "before": ["<leader>", "L"], "commands": ["workbench.action.showAllSymbols"] },
+    { "before": ["<leader>", "j"], "commands": ["workbench.action.tasks.runTask"] },
+    { "before": ["<leader>", "o"], "commands": ["workbench.action.openRecent"] },
+    { "before": ["<leader>", "O"], "commands": ["projectManager.listProjects"] },
+    { "before": ["<leader>", "."], "commands": ["editor.action.quickFix"] },
+    { "before": ["<leader>", "z"], "commands": ["workbench.action.toggleZenMode"] },
+    { "before": ["<leader>", "t", "h"], "commands": ["editor.action.toggleInlayHints"] },
+    { "before": ["<leader>", "t", "c"], "commands": ["jason.toggleCodeLens"] },
+    { "before": ["<leader>", "t", "p"], "commands": ["jason.toggleProblemsVisibility"] },
+    { "before": ["<leader>", ","], "commands": ["editor.action.toggleWordWrap"] },
+    // ── Leader: space q — Quickfix / code actions
+    //    Only the `apply: "first"` variants chain saveAll — those run synchronously
+    //    (no picker UI). Interactive variants (qq / qr / leader-.) cannot reliably
+    //    chain saveAll because the picker/rename UI is async; rely on
+    //    `files.refactoring.autoSave` (multi-file) or manual save for single-file.
+    { "before": ["<leader>", "q", "q"], "commands": ["editor.action.quickFix"] },
+    { "before": ["<leader>", "q", "i"], "commands": [
+      { "command": "editor.action.codeAction", "args": { "kind": "source.addMissingImports", "apply": "first" } },
+      "workbench.action.files.saveAll"
+    ] },
+    { "before": ["<leader>", "q", "o"], "commands": [
+      { "command": "editor.action.codeAction", "args": { "kind": "source.organizeImports", "apply": "first" } },
+      "workbench.action.files.saveAll"
+    ] },
+    { "before": ["<leader>", "q", "u"], "commands": [
+      { "command": "editor.action.codeAction", "args": { "kind": "source.removeUnusedImports", "apply": "first" } },
+      "workbench.action.files.saveAll"
+    ] },
+    { "before": ["<leader>", "q", "f"], "commands": [
+      { "command": "editor.action.codeAction", "args": { "kind": "source.fixAll", "apply": "first" } },
+      "workbench.action.files.saveAll"
+    ] },
+    { "before": ["<leader>", "q", "r"], "commands": ["editor.action.refactor"] },
+    // ── Leader: space d — Debug family
+    { "before": ["<leader>", "d", "d"], "commands": ["workbench.action.debug.start"] },
+    { "before": ["<leader>", "d", "b"], "commands": ["editor.debug.action.toggleBreakpoint"] },
+    { "before": ["<leader>", "d", "l"], "commands": ["editor.debug.action.toggleLogpoint"] },
+    { "before": ["<leader>", "d", "c"], "commands": ["workbench.action.debug.continue"] },
+    { "before": ["<leader>", "d", "s"], "commands": ["workbench.action.debug.stepOver"] },
+    { "before": ["<leader>", "d", "i"], "commands": ["workbench.action.debug.stepInto"] },
+    { "before": ["<leader>", "d", "o"], "commands": ["workbench.action.debug.stepOut"] },
+    { "before": ["<leader>", "d", "t"], "commands": ["workbench.action.debug.stop"] },
+    { "before": ["<leader>", "d", "r"], "commands": ["workbench.action.debug.restart"] },
+    // ── Search: native find widget instead of vim status-bar /
+    { "before": ["/"], "commands": ["actions.find"] },
+    { "before": ["n"], "commands": ["editor.action.nextMatchFindAction"] },
+    { "before": ["N"], "commands": ["editor.action.previousMatchFindAction"] },
+    // ── Leader: space s — Search family
+    { "before": ["?"], "commands": ["workbench.action.findInFiles"] },
+    { "before": ["<leader>", "s"], "commands": ["workbench.action.findInFiles"] },
+    { "before": ["<leader>", "S"], "commands": ["search.action.openNewEditor"] },
+    { "before": ["<leader>", "*"], "commands": [
+      "editor.action.addSelectionToNextFindMatch",
+      "workbench.action.findInFiles"
+    ] },
+    { "before": ["<leader>", "s", "r"], "commands": ["workbench.action.replaceInFiles"] },
+    // ── m-prefix: copy path (lower=relative, upper=absolute)
+    { "before": ["m", "c", "p"], "commands": ["copyRelativeFilePath"] },
+    { "before": ["m", "c", "P"], "commands": ["copyFilePath"] },
+    // ── Git (g-prefix)
+    // Navigation
+    { "before": ["g", "j"], "commands": ["workbench.action.editor.nextChange"] },
+    { "before": ["g", "k"], "commands": ["workbench.action.editor.previousChange"] },
+    // Staging & reverting
+    { "before": ["g", "a"], "commands": ["git.stageSelectedRanges"] },
+    { "before": ["g", "A"], "commands": ["git.stage"] },
+    { "before": ["g", "u"], "commands": ["git.revertSelectedRanges"] },
+    { "before": ["g", "U"], "commands": ["git.clean"] },
+    // Diff & blame
+    { "before": ["g", "d"], "commands": ["git.openChange"] },
+    { "before": ["g", "B"], "commands": ["editor.action.toggleBlame"] },
+    // Branch & remote
+    { "before": ["g", "b"], "commands": ["git.checkout"] },
+    { "before": ["g", "f"], "commands": ["git.fetch"] },
+    { "before": ["g", "p"], "commands": ["git.push"] },
+    { "before": ["g", "P"], "commands": ["git.pushForce"] },
+    { "before": ["g", "s"], "commands": ["git.stash"] },
+    { "before": ["g", "S"], "commands": ["git.stashPop"] },
+    // Views
+    { "before": ["g", "w"], "commands": ["workbench.view.scm"] },
+    { "before": ["g", "c"], "commands": ["workbench.scm.focus"] },
+    { "before": ["g", "l"], "commands": ["git-graph.view"] },
+    { "before": ["g", "h"], "commands": ["timeline.focus"] },
+    // GitHub
+    { "before": ["g", "o"], "commands": ["extension.openInGitHub"] },
+    { "before": ["g", "O"], "commands": ["extension.openPrGitProvider"] },
+    { "before": ["g", "y"], "commands": ["extension.copyGitHubLinkToClipboard"] },
+    // PR review (GitHub PR extension)
+    { "before": ["g", "r"], "commands": ["pr.openAllDiffs"] },
+    { "before": ["g", "n"], "commands": ["pr.goToNextDiffInPr"] },
+    { "before": ["g", "N"], "commands": ["pr.goToPreviousDiffInPr"] },
+    // ── Config (,-prefix)
+    { "before": [",", ","], "commands": ["workbench.action.openSettings"] },
+    { "before": [",", "k"], "commands": ["workbench.action.openGlobalKeybindings"] },
+    { "before": [",", "K"], "commands": ["workbench.action.openDefaultKeybindingsFile"] },
+    { "before": [",", "s"], "commands": ["workbench.action.openSnippets"] },
+    { "before": [",", "t"], "commands": ["workbench.action.tasks.openUserTasks"] },
+    { "before": [",", "space"], "commands": ["editor.action.toggleWordWrap"] },
+    { "before": [",", "R"], "commands": ["workbench.action.reloadWindow"] },
+    { "before": [",", "r"], "commands": ["typescript.restartTsServer"] },
+  ],
+
+  // ──────────────────────────────────────────── Files & search
+  "files.autoSave": "onFocusChange",
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.associations": { "*.log": "plaintext" },
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.coverage": true,
+    "**/.DS_Store": true,
+    "**/.git": true,
+    "**/.hg": true,
+    "**/.pytest_cache": true,
+    "**/.serverless": true,
+    "**/.svn": true,
+    "**/CVS": true,
+  },
+  "search.exclude": {
+    "**/*.tsbuildinfo": true,
+    "**/pnpm-lock.yaml": true,
+    "**/prisma/migrations": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.next": true,
+    "**/coverage": true,
+    "**/node_modules": true,
+    "**/*.min.js": true,
+    "**/bun.lock": true,
+  },
+  "search.smartCase": true,
+  "search.defaultViewMode": "tree",
+  "search.sortOrder": "modified",
+  "search.searchEditor.reusePriorSearchConfiguration": true,
+  "search.searchEditor.defaultNumberOfContextLines": 2,
+  "editor.find.autoFindInSelection": "multiline",
+  "editor.find.addExtraSpaceOnTop": false,
+  "explorer.confirmDragAndDrop": false,
+  "explorer.confirmDelete": false,
+
+  // ──────────────────────────────────────────── Project Manager
+  //   sortList "Tags" groups projects by their first tag (alphabetical: fav, personal, ref, work).
+  //   Sidebar tree view: adds a PROJECTS panel in the activity bar for one-click switching.
+  "projectManager.sortList": "Tags",
+  "projectManager.treeview.visibility": true,
+
+  // ──────────────────────────────────────────── Terminal
+  "terminal.integrated.fontSize": 14,
+  "terminal.integrated.lineHeight": 1.25,
+  "terminal.integrated.defaultProfile.linux": "fish",
+  "terminal.integrated.defaultProfile.osx": "fish",
+  "terminal.integrated.profiles.osx": {
+    "zsh": null,
+    "bash": { "path": "bash" },
+    "tmux": null,
+    "pwsh": null,
+    "fish": { "path": "fish", "args": ["-l"] },
+  },
+  "terminal.integrated.enableMultiLinePasteWarning": false,
+  "terminal.integrated.commandsToSkipShell": [
+    "workbench.action.navigateLeft",
+    "workbench.action.navigateRight",
+    "workbench.action.navigateUp",
+    "workbench.action.navigateDown",
+  ],
+  "terminal.external.osxExec": "iTerm.app",
+
+  // ──────────────────────────────────────────── Git / GitHub
+  "git.confirmSync": false,
+  "git.autofetch": true,
+  "git.enableSmartCommit": true,
+  "github.autoPublish": true,
+
+  // GitHub PR extension: keep API usage predictable. The extension spends the
+  // account-wide GitHub GraphQL quota; huge PRs can fan out through file,
+  // comment, review-thread, and webview polling queries.
+  "githubPullRequests.devMode": true,
+  "githubPullRequests.webviewRefreshInterval": 600,
+
+  // Disable Copilot/Coding Agent surfaces inside the PR extension. These add
+  // background polling paths that are separate from normal Copilot completions.
+  "githubPullRequests.experimental.chat": false,
+  "githubPullRequests.codingAgent.enabled": false,
+  "githubPullRequests.codingAgent.uiIntegration": false,
+
+  // Keep the PR tree local-branch-only. The default broad queries refresh
+  // "created by me", "waiting for review", Copilot PRs, and all-open buckets.
+  "githubPullRequests.queries": [
+    {
+      "label": "Local Pull Request Branches",
+      "query": "default",
+    },
+  ],
+  "githubIssues.queries": [],
+  "githubPullRequests.remotes": ["origin"],
+  "githubPullRequests.notifications": "off",
+  "githubPullRequests.autoRepositoryDetection": "workspace",
+
+  // Huge-PR review ergonomics: avoid extra reveal/filter/comment expansion work
+  // while still keeping the PR file tree layout usable on demand.
+  "githubPullRequests.fileListLayout": "tree",
+  "githubPullRequests.pullBranch": "never",
+  "githubPullRequests.hideViewedFiles": false,
+  "githubPullRequests.fileAutoReveal": false,
+  "githubPullRequests.commentExpandState": "collapseAll",
+  "github-actions.org-features": true,
+
+  // ──────────────────────────────────────────── Languages
+  "typescript.format.enable": false,
+  "typescript.suggestionActions.enabled": false,
+  "typescript.suggest.completeFunctionCalls": false,
+  // Disable `import { foo as bar }` aliasing during F2 rename. These entries
+  // are a *partial* mitigation, not a complete fix. Stock tsserver is known
+  // to still insert aliases in multiple scenarios despite the preference:
+  // https://github.com/microsoft/TypeScript/issues/29026 (open since 2018).
+  // When rename still aliases, fix the binding by hand — the preference
+  // cannot currently enforce zero-alias rename everywhere.
+  "typescript.preferences.useAliasesForRenames": false,
+  "javascript.preferences.useAliasesForRenames": false,
+  "typescript.preferGoToSourceDefinition": true,
+  "js/ts.experimental.useTsgo": true,
+  "typescript.referencesCodeLens.enabled": true,
+  "typescript.referencesCodeLens.showOnAllFunctions": true,
+  "typescript.implementationsCodeLens.enabled": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.tsc.autoDetect": "off",
+  "typescript.tsserver.maxTsServerMemory": 8192,
+  // Inlay hints — volume up. Globally suppressed via editor.inlayHints.enabled,
+  // toggled on with `space t h` (or ", e" for diagnostics). When on, show all of these.
+  "typescript.inlayHints.parameterNames.enabled": "all",
+  "typescript.inlayHints.parameterNames.suppressWhenArgumentMatchesName": true,
+  "typescript.inlayHints.parameterTypes.enabled": true,
+  "typescript.inlayHints.propertyDeclarationTypes.enabled": true,
+  "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+  "typescript.inlayHints.enumMemberValues.enabled": true,
+  "typescript.inlayHints.variableTypes.enabled": true,
+  "typescript.inlayHints.variableTypes.suppressWhenTypeMatchesName": true,
+  "javascript.format.enable": false,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "javascript.inlayHints.parameterNames.enabled": "all",
+  "javascript.inlayHints.parameterNames.suppressWhenArgumentMatchesName": true,
+  "javascript.inlayHints.parameterTypes.enabled": true,
+  "javascript.inlayHints.propertyDeclarationTypes.enabled": true,
+  "javascript.inlayHints.functionLikeReturnTypes.enabled": true,
+  "javascript.inlayHints.enumMemberValues.enabled": true,
+  "javascript.inlayHints.variableTypes.enabled": true,
+  "yaml.schemas": {
+    "http://json.schemastore.org/circleciconfig": "/*/**/.circleci/*",
+  },
+  "vscode-graphql.showExecCodelens": false,
+  "emmet.showAbbreviationSuggestions": false,
+  "emmet.showExpandedAbbreviation": "never",
+
+  // ──────────────────────────────────────────── Task autodetect (silence noise)
+  "npm.autoDetect": "off",
+  "gulp.autoDetect": "off",
+  "grunt.autoDetect": "off",
+  "jake.autoDetect": "off",
+
+  // ──────────────────────────────────────────── Markdown
+  // ── Open .md files directly into the preview editor (skip source buffer; Cmd+K V toggles to source)
+  "workbench.editorAssociations": {
+    "*.md": "vscode.markdown.preview.editor",
+  },
+  // ── Scroll linking: fully decoupled (editor and preview scroll independently)
+  "markdown.preview.scrollEditorWithPreview": false,
+  "markdown.preview.scrollPreviewWithEditor": false,
+  // ── Preview readability: serif body font, generous size + line-height for sustained reading
+  "markdown.preview.fontSize": 17,
+  "markdown.preview.lineHeight": 1.7,
+  "markdown.preview.fontFamily": "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  // ── Markdown links open in the preview pane (stay in reading mode)
+  "markdown.preview.openMarkdownLinks": "inPreview",
+  // ── GitHub-flavored rendering: single newlines → <br>, smart quotes/dashes
+  "markdown.preview.breaks": true,
+  "markdown.preview.typographer": true,
+  // ── Don't draw the editor-cursor marker bar in the preview (read-only mode)
+  "markdown.preview.markEditorSelection": false,
+  // ── Auto-update inbound links when an .md file is moved/renamed
+  "markdown.updateLinksOnFileMove.enabled": "always",
+  "markdown.updateLinksOnFileMove.enableForDirectories": true,
+  // ── Validate broken file/header links inline
+  "markdown.validate.enabled": true,
+  "markdown.validate.fragmentLinks.enabled": "warning",
+  "markdown.validate.fileLinks.enabled": "warning",
+  "markdown.validate.referenceLinks.enabled": "warning",
+  // ── Drag-drop & paste files → auto-insert image/link markdown
+  "markdown.editor.drop.enabled": "smart",
+  "markdown.editor.filePaste.enabled": "smart",
+  "markdown.editor.pasteUrlAsFormattedLink.enabled": "smartWithSelection",
+  // ── Per-language: prose-friendly editor behavior
+  "[markdown]": {
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "strings": "off",
+      "other": "off"
+    },
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "editor.unicodeHighlight.invisibleCharacters": false,
+    "editor.renderWhitespace": "all"
+  },
+
+  // ──────────────────────────────────────────── Misc
+  "zenMode.fullScreen": false,
+  "security.workspace.trust.untrustedFiles": "open",
+  "redhat.telemetry.enabled": true,
+  "debug.javascript.autoAttachFilter": "disabled",
+  "chat.mcp.gallery.enabled": true,
+  "extensions.ignoreRecommendations": true,
+  "update.mode": "start",
+  // Already default; explicit for documentation purposes
+  "github.copilot.nextEditSuggestions.enabled": true,
+  "github.copilot.nextEditSuggestions.extendedRange": true,
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": true,
+    "markdown": true,
+    "scminput": true,
+  },
+
+  // ──────────────────────────────────────────── GitHub Copilot (experimental tab-complete)
+  "github.copilot.editor.enableAutoCompletions": true,
+  "github.copilot.nextEditSuggestions.fixes": true,
+  // Per-language enable. Default true for all; explicitly opt out of plaintext/markdown
+  // commits if you don't want suggestions during prose writing.
+  "github.copilot.enable": {
+    "*": true,
+    "scminput": false
+  },
+  "remote.SSH.useLocalServer": false,
+  "remote.SSH.defaultExtensions": ["gitpod.gitpod-remote-ssh"],
+  "remote.SSH.remotePlatform": {
+    "Development": "linux",
+    "dev": "linux",
+  },
+  "github.copilot.chat.notebook.enhancedNextEditSuggestions.enabled": true,
+  "errorLens.enabled": true,
+  "editor.codeLens": false,
+  "gitlens.ai.model": "vscode",
+  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+  "problems.visibility": true,
+  "security.promptForLocalFileProtocolHandling": false,
+}

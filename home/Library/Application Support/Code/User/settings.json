@@ -503,4 +503,7 @@
   "gitlens.ai.vscode.model": "copilot:gpt-4.1",
   "problems.visibility": true,
   "security.promptForLocalFileProtocolHandling": false,
+
+  // ──────────────────────────────────────────── vscode-neovim
+  "vscode-neovim.neovimExecutablePaths.darwin": "/opt/homebrew/bin/nvim",
 }

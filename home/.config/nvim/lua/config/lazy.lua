@@ -36,6 +36,9 @@ lazy.setup({
     { import = "lazyvim.plugins.extras.formatting.prettier" },
     { import = "lazyvim.plugins.extras.linting.eslint" },
 
+    -- VS Code mode (whitelist plugins safe to run under vscode-neovim)
+    { import = "lazyvim.plugins.extras.vscode" },
+
     -- Custom plugins
     { import = "plugins" },
   },

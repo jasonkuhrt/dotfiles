@@ -40,6 +40,13 @@ research/refs/
 # Generated Graffle code
 packages/*/src/graffle/
 
+# Python bytecode (generated runtime cache; never useful to commit)
+__pycache__/
+*.pyc
+
+# Manual config backups (e.g., user-saved snapshots before risky edits)
+*_backup.json
+
 # shan-managed (do not edit)
 .codex/skills
 # end shan-managed

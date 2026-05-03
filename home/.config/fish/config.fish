@@ -37,6 +37,10 @@ set --export SLASH_COMMAND_TOOL_CHAR_BUDGET 30000
 # Docs: https://code.claude.com/docs/en/agent-teams
 set --export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS 1
 
+# Claude Code: flicker-free alt-screen rendering with virtualized scrollback
+# Added in v2.1.89
+set --export CLAUDE_CODE_NO_FLICKER 1
+
 # Plannotator: open in cmux browser instead of OS default
 set --export PLANNOTATOR_BROWSER "$HOME/.local/bin/plannotator-browser"
 
@@ -171,13 +175,17 @@ alias ghil="gh issue list"
 alias gpr="gh pr"
 alias gprc="gh pr create"
 function gprv --description "Open current branch's PR in browser"
-    if test -n "$CMUX_WORKSPACE_ID"; and command -q cmux
-        set -l pr_url (gh pr view --json url -q .url 2>/dev/null)
-        or begin; echo "No PR found for current branch" >&2; return 1; end
+    set -l pr_url (gh pr view --json url -q .url 2>/dev/null)
+    or begin; echo "No PR found for current branch" >&2; return 1; end
 
-        echo "Opening $pr_url in cmux browser."
-        cmux browser open "$pr_url"
-        return $status
+    if test -n "$CMUX_WORKSPACE_ID"; and command -q cmux
+        set -l workspace_ref (cmux current-workspace 2>/dev/null | string trim)
+        if test -n "$workspace_ref"
+            echo "Opening $pr_url in cmux browser."
+            cmux browser open --workspace "$workspace_ref" "$pr_url"
+            and return 0
+            echo "cmux browser open failed; falling back to system browser." >&2
+        end
     end
 
     gh pr view --web
@@ -331,3 +339,7 @@ fish_add_path "$HOME/go/bin"
 # Gentle nudge if nesia changelog hasn't been checked in 7+ days
 # Must be after PATH setup since nesia lives in ~/.local/bin
 nesia nag 2>/dev/null
+
+# Added by OrbStack: command-line tools and integration
+# This won't be added again if you remove it.
+source ~/.orbstack/shell/init2.fish 2>/dev/null || :

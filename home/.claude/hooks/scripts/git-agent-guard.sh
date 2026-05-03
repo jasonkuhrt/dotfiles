@@ -273,7 +273,7 @@ def classify_tokens(tokens):
         if pr_subcommand == "create":
             add_gate("pr-create")
         elif pr_subcommand in {"close", "merge"}:
-            add_gate("pr-destroy")
+            add_gate("pr-close")
         elif pr_subcommand == "comment":
             add_gate("pr-comment")
         return
@@ -329,7 +329,7 @@ PY
     printf 'pr-create\n'
   fi
   if matches_gh_pr_subcommand close || matches_shell_wrapped_gh_pr_subcommand close || matches_gh_pr_subcommand merge || matches_shell_wrapped_gh_pr_subcommand merge; then
-    printf 'pr-destroy\n'
+    printf 'pr-close\n'
   fi
   if matches_gh_pr_subcommand comment || matches_shell_wrapped_gh_pr_subcommand comment; then
     printf 'pr-comment\n'
@@ -371,7 +371,7 @@ read_gate() {
 
   case "$gate" in
     commit) printf 'off\n' ;;
-    push|checkout|stash|pr-create|pr-destroy|pr-comment) printf 'off\n' ;;
+    push|checkout|stash|pr-create|pr-close|pr-comment) printf 'off\n' ;;
     *) printf 'off\n' ;; # cov-ignore
   esac
 }
@@ -383,7 +383,7 @@ gate_label() {
     checkout) printf 'git checkout / git switch' ;;
     stash) printf 'git stash' ;;
     pr-create) printf 'gh pr create' ;;
-    pr-destroy) printf 'gh pr close / gh pr merge' ;;
+    pr-close) printf 'gh pr close / gh pr merge' ;;
     pr-comment) printf 'gh pr comment' ;;
     *) printf '%s' "$1" ;; # cov-ignore
   esac
@@ -392,16 +392,8 @@ gate_label() {
 print_current_state() {
   local gate
 
-  for gate in commit push checkout stash pr-create pr-destroy pr-comment; do
+  for gate in commit push checkout stash pr-create pr-close pr-comment; do
     printf '  %-12s %s\n' "${gate}:" "$(read_gate "$gate")"
-  done
-}
-
-print_missing_state() {
-  local gate
-
-  for gate in commit push checkout stash pr-create pr-destroy pr-comment; do
-    printf '  %-12s missing\n' "${gate}:"
   done
 }
 
@@ -424,19 +416,8 @@ EOF
 }
 
 if [[ ! -f "$state_file" ]]; then
-  cat >&2 <<EOF
-BLOCKED: git-agent state is missing for this repository.
-
-Claude Code Bash git and gh writes default to denied until git-agent state exists.
-
-Current state:
-$(print_missing_state)
-
-Human commands:
-  git agent install
-  git agent on
-EOF
-  exit 2
+  # git-agent is not installed for this repository — the guard does not apply.
+  exit 0
 fi
 
 printf '%s\n' "$needed_gates" | while IFS= read -r gate; do

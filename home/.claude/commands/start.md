@@ -26,24 +26,14 @@ description: Initialize Claude session with project awareness
 
 ## Instructions
 
-1. __Activate Serena project__:
-   * Call `mcp__serena__activate_project` with the current working directory name as the project name
-   * If activation fails (project not registered), note this but continue - Serena tools will work with the directory path instead
-   * On success: "✓ Serena project activated"
-
-2. __Load configuration files WITHOUT showing errors__:
+1. __Load configuration files WITHOUT showing errors__:
    * FIRST use Bash to check which files exist (e.g., `ls ./CLAUDE.md 2>/dev/null` or `test -f ./CLAUDE.md && echo "exists"`)
    * THEN only Read files that were confirmed to exist
    * Required files: ~/.claude/CLAUDE.md
-   * Optional files: ./CLAUDE.md, ./.claude/serena-prompt.md
+   * Optional files: ./CLAUDE.md
    * DO NOT attempt to Read optional files that don't exist
-   * Note: Serena MCP now has built-in instructions (no separate file needed)
 
-3. __Confirm awareness of loaded configurations__:
-   * For Serena: "✓ Serena MCP tools instructions loaded - will use symbolic tools for intelligent code reading"
-   * If project ./.claude/serena-prompt.md was found: "✓ Project-specific Serena overrides loaded"
-
-4. __Confirm personal configuration awareness__:
+2. __Confirm personal configuration awareness__:
    * Explicitly state: "✓ Personal configuration from ~/.claude/CLAUDE.md is active"
    * List 2-3 key principles from the user's personal CLAUDE.md to prove awareness, such as:
      * Core work style preferences (e.g., ADHD considerations, no flattery)
@@ -51,12 +41,12 @@ description: Initialize Claude session with project awareness
      * Important rules (e.g., never guess APIs, verify everything)
    * Confirm: "✓ Personal commands from ~/.claude/commands/ are available"
 
-5. __Acknowledge project configuration__:
+3. __Acknowledge project configuration__:
    * If ./CLAUDE.md exists: Confirm project-specific standards are loaded
-   * Note any available MCP servers (ref, serena, effect-docs, etc.)
+   * Note any available MCP servers (ref, effect-docs, etc.)
    * Reference the current project name from the working directory
 
-6. __Focus area handling__:
+4. __Focus area handling__:
    If argument is provided: "$ARGUMENTS"
 
    __Check if argument is an integer (GitHub issue number)__:
@@ -84,15 +74,13 @@ description: Initialize Claude session with project awareness
 __General start__ (`/start`):
 
 ```
-✓ Serena project activated
-✓ Serena MCP tools instructions loaded
 ✓ Personal configuration from ~/.claude/CLAUDE.md is active, including:
   - ADHD-aware work style: breaking down tasks into smaller iterations
   - Technical preferences: ESM modules only, no CJS, prefer unknown over any
   - Critical rule: Never guess APIs - always verify in source code
 ✓ Personal commands from ~/.claude/commands/ are available
 ✓ Project standards from ./CLAUDE.md loaded (if present)
-✓ MCP servers available: ref (docs), serena (code analysis), effect-docs (Effect documentation)
+✓ MCP servers available: ref (docs), effect-docs (Effect documentation)
 
 Ready to assist with [current project name] development.
 ```
@@ -100,12 +88,10 @@ Ready to assist with [current project name] development.
 __Issue-focused start__ (`/start 37`):
 
 ```
-✓ Serena project activated
-✓ Serena MCP tools instructions loaded
 ✓ Personal configuration from ~/.claude/CLAUDE.md is active
 ✓ Personal commands from ~/.claude/commands/ are available
 ✓ Project standards from ./CLAUDE.md loaded
-✓ MCP servers available: ref, serena, effect-docs
+✓ MCP servers available: ref, effect-docs
 
 ## Focus: Issue #37
 

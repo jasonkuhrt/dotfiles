@@ -1,7 +1,7 @@
--- Build keybinder-glimpse menus.json by walking nvim's keymap registry per mode.
+-- Build key-binder-glimpse menus.json by walking nvim's keymap registry per mode.
 -- Run via the `just glimpse-build` recipe (or directly: nvim --headless -l <this>).
 --
--- Output: ${XDG_CONFIG_HOME:-$HOME/.config}/keybinder-glimpse/menus.json
+-- Output: ${XDG_CONFIG_HOME:-$HOME/.config}/key-binder-glimpse/menus.json
 --
 -- Why this lives in dotfiles, not in the extension: the menus reflect the
 -- user's personal chord scheme, which lives in nvim config. The extension
@@ -125,7 +125,7 @@ local function write_export()
 
   local home = os.getenv('HOME') or vim.fn.expand('~')
   local xdg = os.getenv('XDG_CONFIG_HOME') or (home .. '/.config')
-  local out_dir = xdg .. '/keybinder-glimpse'
+  local out_dir = xdg .. '/key-binder-glimpse'
   local out_path = out_dir .. '/menus.json'
   vim.fn.mkdir(out_dir, 'p')
 

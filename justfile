@@ -64,7 +64,7 @@ vscode-extensions-export:
 # ~/.config/neovim-glimpse/menus.json. Run after editing keymaps.lua /
 # vscode_keymaps.lua to refresh the menu data the VS Code extension reads.
 glimpse-build:
-    cd ~/projects/jasonkuhrt/keybinder-glimpse && bun run build-menus
+    cd ~/projects/jasonkuhrt/key-binder-glimpse && bun run build-menus
 
 # Legacy fallback: build menus.json from nvim's keymap registry directly,
 # without going through KeyBinder. Useful only for diagnosing whether a

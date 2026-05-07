@@ -58,6 +58,35 @@ vscode-extensions-export:
     code --list-extensions | sort > scripts/data/vscode-extensions.txt
     @printf 'Wrote scripts/data/vscode-extensions.txt (%s extensions)\n' "$(wc -l < scripts/data/vscode-extensions.txt | tr -d ' ')"
 
+# Build neovim-glimpse's menus.json from the current nvim chord scheme.
+# Walks vim.api.nvim_get_keymap for each mode (with vim.g.vscode forced on so
+# the VS Code chord overrides load), groups by prefix, writes JSON to
+# ~/.config/neovim-glimpse/menus.json. Run after editing keymaps.lua /
+# vscode_keymaps.lua to refresh the menu data the VS Code extension reads.
+glimpse-build:
+    cd ~/projects/jasonkuhrt/keybinder-glimpse && bun run build-menus
+
+# Legacy fallback: build menus.json from nvim's keymap registry directly,
+# without going through KeyBinder. Useful only for diagnosing whether a
+# missing chord is a KeyBinder config gap or a problem in the picker.
+glimpse-build-from-nvim:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    err_log="$(mktemp)"
+    trap 'rm -f "$err_log"' EXIT
+    nvim --headless \
+        -c "lua dofile('scripts/build-glimpse-menus.lua')" \
+        2> "$err_log" &
+    nvim_pid=$!
+    ( sleep 20 && kill $nvim_pid 2>/dev/null ) &
+    timeout_pid=$!
+    wait $nvim_pid 2>/dev/null || true
+    kill $timeout_pid 2>/dev/null || true
+    if [ -s "$err_log" ]; then
+        printf 'Errors during build:\n' >&2
+        cat "$err_log" >&2
+    fi
+
 # Headless smoke test of nvim config. Verifies init.lua + lazy + plugins load
 # cleanly with no errors on stderr. Exits 0 on success, 1 on errors.
 # Note: only tests terminal mode (vim.g.vscode unset). VS Code mode requires

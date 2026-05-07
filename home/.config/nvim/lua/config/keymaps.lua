@@ -195,8 +195,12 @@ map("t", "<C-k>", [[<C-\><C-n><C-k>]], { desc = "Move to above split/pane" })
 map("t", "<C-l>", [[<C-\><C-n><C-l>]], { desc = "Move to right split/pane" })
 
 -- ──────────────────────────────────────────────────────────────────────────
--- VS Code-mode chord overrides (chrome dispatches via vscode.action())
+-- VS Code-mode chord overrides
 -- ──────────────────────────────────────────────────────────────────────────
+-- KeyBinder-emitted (generated from ~/.config/key-binder/config.ts via
+-- `key-binder sync`). Replaces the previous hand-authored
+-- ~/.config/nvim/lua/config/vscode_keymaps.lua, which is now obsolete.
+-- See https://github.com/jasonkuhrt/key-binder
 if vim.g.vscode then
-  require("config.vscode_keymaps")
+  require("key-binder.keymaps")
 end

@@ -12,7 +12,9 @@
 
 -- Same vscode-mode loading dance as build-glimpse-menus.lua — set the
 -- flag + stub the vscode module so vscode_keymaps.lua's chord scheme
--- registers in headless mode.
+-- registers in headless mode. Each script runs in its own Lua state so
+-- the LSP's duplicate-set-field warning is a workspace-level false positive.
+---@diagnostic disable-next-line: duplicate-set-field
 package.preload['vscode'] = function()
   return setmetatable({}, {
     __index = function() return function() end end,

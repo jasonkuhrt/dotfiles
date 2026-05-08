@@ -1,5 +1,13 @@
 std = "selene.nvim"
 
+# Generated lua emit from KeyBinder lives at the path below. Not subject
+# to handwritten-style rules — single-line `vim.keymap.set` calls are the
+# emit format and intentional. See ~/projects/jasonkuhrt/key-binder for
+# the source-of-truth TS config that produces this lua.
+exclude = [
+    "home/.config/nvim/lua/key-binder/**",
+]
+
 [lints]
 # lazy.nvim plugin specs are intentionally mixed tables in upstream style.
 mixed_table = "allow"

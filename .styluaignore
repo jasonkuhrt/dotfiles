@@ -1,0 +1,3 @@
+# Generated lua emit from KeyBinder. Single-line `vim.keymap.set` calls
+# are the emit format and intentional. See ~/projects/jasonkuhrt/key-binder.
+home/.config/nvim/lua/key-binder/

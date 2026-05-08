@@ -13,7 +13,9 @@
 -- and is only present when nvim is embedded by VS Code. Here we provide a
 -- no-op shim so `require('vscode')` succeeds and `vscode.action(...)` etc.
 -- are callable but do nothing — we only care about REGISTERING the keymaps,
--- not dispatching them.
+-- not dispatching them. Each script runs in its own Lua state so the LSP's
+-- duplicate-set-field warning is a workspace-level false positive.
+---@diagnostic disable-next-line: duplicate-set-field
 package.preload['vscode'] = function()
   return setmetatable({}, {
     __index = function() return function() end end,

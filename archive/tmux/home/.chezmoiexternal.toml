@@ -1,4 +1,0 @@
-[".config/tmux/plugins/tpm"]
-    type = "git-repo"
-    url = "https://github.com/RyanMacG/tpm-redux.git"
-    refreshPeriod = "168h"

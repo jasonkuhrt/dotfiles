@@ -79,6 +79,14 @@ glimpse-smoke:
 glimpse-done:
     cd ~/projects/jasonkuhrt/key-binder-glimpse && bun run done
 
+# Tier 3 real-VS-Code launch test for key-binder-glimpse. Downloads VS
+# Code (cached after first run), pre-installs vscode-neovim, runs mocha
+# inside the launched extension host. Slow (~30s first run, ~1s after);
+# kept separate from `glimpse-done` so the fast gate stays fast. Run
+# this before publication or after touching activation/manifest code.
+glimpse-tier3:
+    cd ~/projects/jasonkuhrt/key-binder-glimpse && bun run test:electron
+
 # Legacy fallback: build menus.json from nvim's keymap registry directly,
 # without going through KeyBinder. Useful only for diagnosing whether a
 # missing chord is a KeyBinder config gap or a problem in the picker.

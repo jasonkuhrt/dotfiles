@@ -13,8 +13,6 @@ tmux was removed to simplify terminal workflow around native terminal features a
 - `home/dot_config/tmux/`
 - `home/dot_config/gitmux/`
 - `home/dot_config/starship-tmux.toml`
-- `home/.chezmoiexternal.toml` (TPM source)
-- `home/.chezmoiscripts/run_once_after_15-tmux-plugins.sh.tmpl`
 - `home/dot_claude/exact_skills/tmux/`
 - `home/dot_claude/exact_skills-library/tmux/`
 - `research/ghostty-tmux-integration.md`
@@ -31,6 +29,6 @@ The archive preserves original directory structure under `archive/tmux/` to keep
 If tmux is needed again:
 
 1. Restore archived files back to their original paths.
-2. Re-add `tmux` (and any related packages) to `home/Brewfile`.
+2. Re-add `tmux` (and any related packages) to the active Brewfile.
 3. Reintroduce tmux shell/config/docs wiring in active dotfiles.
-4. Run `chezmoi apply` and verify with `command -v tmux`.
+4. Apply via your current dotfiles tool and verify with `command -v tmux`.

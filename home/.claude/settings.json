@@ -150,15 +150,6 @@
             "timeout": 30
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/scripts/session-start-promise-tracker.sh",
-            "timeout": 5
-          }
-        ]
       }
     ],
     "SessionEnd": [

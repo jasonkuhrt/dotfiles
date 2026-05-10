@@ -4,6 +4,16 @@
 
 When automating login to a site that uses TOTP (authenticator app) 2FA and the credentials are in the macOS Passwords app (iCloud Keychain).
 
+## Apple Passwords CLI status
+
+Do not use `apw` for this workflow on Jason's machine. It was tested on 2026-05-09 and removed from Homebrew because the daemon/auth flow was not reliable:
+
+- `apw pw list <domain>` reached the daemon but returned status 9 with `Missing encryption key. Reauthenticate with apw auth`.
+- `apw auth` opened/unblocked the Passwords.app auth surface but hung instead of completing and provisioning the encryption key.
+- The installed helper had to be stopped with `brew services stop apw` and the formula removed with `brew uninstall apw`.
+
+Prefer the stable macOS `security` CLI for agent-readable local Keychain items, and use Passwords.app UI copy actions for iCloud-synced Apple Passwords entries.
+
 ## Prerequisites
 
 - The human must provide the TOTP Setup URL. This is found by:

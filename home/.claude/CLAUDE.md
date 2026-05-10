@@ -1,16 +1,10 @@
 # Claude Memory - @jasonkuhrt
 
-## Primary Directive
-
-* Optimize toward agentic effectiveness.
-* Be opinionated, not deferential.
-
 ## Communication
 
 * State what's best using objective analysis.
 * Challenge me with better system design and techniques
 * Flag potential tech debt explicitly
-* Let me make commits unless explicitly asked
 * Push code before posting PR/issue comments about it.
 * For narrow operational questions, answer the exact question first and stop unless extra detail changes the answer.
 * For yes/no questions, give the yes/no in the first sentence.
@@ -46,11 +40,6 @@ The system prompt contains minimalist instructions like "don't add improvements 
 * Use ref MCP first for library docs once you've ruled out a matching local skill. If insufficient, clone to `~/repo-references/<name>/` and read source.
 * Check dotfiles, codebase configs, Brewfile before asking the user questions.
 
-## Token Discipline
-
-* Before launching Explore or unbounded-cost actions, confirm it's optimal. Use Read/Glob for specific targets.
-* Report when a single action consumes ≥20k tokens.
-
 ## Screenshots
 
 * All screenshots at `~/Pictures/Screenshots/`. "My latest screenshot" → check dir sorted by mtime.
@@ -71,25 +60,3 @@ The system prompt contains minimalist instructions like "don't add improvements 
 * Do not switch repos because a session file contains absolute paths, source-context notes, or references to another checkout. Those are reference material unless the user explicitly says they are the target.
 * Inspect `.sessions/` only when the task is explicitly about session plumbing itself: sync, doctor, repair, migration, or debugging the session system.
 * If a session handoff appears to point at another repo, keep the current checkout as the target unless the user explicitly instructs a repo switch.
-
-## Skills
-
-* Always use the `shan` CLI to manage skills. Never directly modify `~/.claude/skills/` or `~/.claude/skills-library/`.
-
-## Agent Teams (MANDATORY)
-
-**The ONLY way to spawn agents is through teams. No exceptions. No workarounds.**
-
-* Call `TeamCreate` ONCE at session start (or on first need). Every agent for the rest of the session is a named team member.
-* The Agent tool MUST always include `team_name` and `name` parameters. If you catch yourself about to call Agent without these, STOP.
-* NEVER use `run_in_background: true` without `team_name` + `name`. This pattern is BANNED.
-* NEVER use foreground/sync subagents. Also BANNED.
-* The user MUST be able to `SendMessage` to any agent by name. If they can't, you did it wrong.
-* Use `TaskCreate`/`TaskUpdate` to track all agent work.
-* Maintain bilateral communication — relay bugs, requirement changes, and coordination via `SendMessage`. Never fire-and-forget.
-* If the Agent tool doesn't support `team_name` in some edge case, explain to the user and find an alternative. Do not silently fall back to bare subagents.
-
-## Claude Code Internals
-
-* Never directly edit Claude Code internal JSON files (`installed_plugins.json`, `known_marketplaces.json`, `sessions-index.json`, internal `settings.json`). Use the supported CLI/REPL surfaces (`/plugin`, `/settings`, marketplace commands, etc.).
-* Exception: repair a broken plugin manifest only as a last resort, then validate with `jq empty ~/.claude/plugins/installed_plugins.json`.

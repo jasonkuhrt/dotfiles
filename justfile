@@ -58,13 +58,26 @@ vscode-extensions-export:
     code --list-extensions | sort > scripts/data/vscode-extensions.txt
     @printf 'Wrote scripts/data/vscode-extensions.txt (%s extensions)\n' "$(wc -l < scripts/data/vscode-extensions.txt | tr -d ' ')"
 
-# Build neovim-glimpse's menus.json from the current nvim chord scheme.
-# Walks vim.api.nvim_get_keymap for each mode (with vim.g.vscode forced on so
-# the VS Code chord overrides load), groups by prefix, writes JSON to
-# ~/.config/neovim-glimpse/menus.json. Run after editing keymaps.lua /
-# vscode_keymaps.lua to refresh the menu data the VS Code extension reads.
+# Build key-binder-glimpse's menus.json from the user's KeyBinder config
+# (~/.config/key-binder/config.ts). Runs the IR → MenusFile transform and
+# writes ~/.config/key-binder-glimpse/menus.json. Run after editing
+# config.ts to refresh the picker data the VS Code extension reads.
 glimpse-build:
     cd ~/projects/jasonkuhrt/key-binder-glimpse && bun run build-menus
+
+# Headless smoke check: config loads, IR is non-empty, transform produces a
+# valid MenusFile, every context has items, warnings stay below threshold.
+# Cheap (no VS Code, no GUI). Closes the verification gap that would have
+# caught the obsidian schema drift before it reached production.
+glimpse-smoke:
+    cd ~/projects/jasonkuhrt/key-binder-glimpse && bun run smoke
+
+# The "done" gate for key-binder-glimpse: unit tests + typecheck + smoke.
+# Nothing is "done" without this passing. Includes the lua semantic test
+# (B1) which exercises the patch against a vscode-neovim mock — the test
+# that would have caught the __keyBinderGlimpsePatched bug.
+glimpse-done:
+    cd ~/projects/jasonkuhrt/key-binder-glimpse && bun run done
 
 # Legacy fallback: build menus.json from nvim's keymap registry directly,
 # without going through KeyBinder. Useful only for diagnosing whether a

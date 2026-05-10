@@ -2,7 +2,18 @@
 
 `acal` is the canonical agent surface for Apple Calendar (read + write). Single signed binary, EventKit-native, JSON-first. Lives in tier-2 of `computer-use.md` (CLI-driveable APIs); also exposed as MCP server (`mcp__acal__*`).
 
-Source: https://github.com/Helmi/acal-apple-calendar-cli — installed via `brew install helmi/tap/acal`. MCP registered user-scope (`/Users/jasonkuhrt/.claude.json`).
+Source: https://github.com/Helmi/acal-apple-calendar-cli. MCP registered user-scope (`/Users/jasonkuhrt/.claude.json`).
+
+**Currently running a self-built fork** at `~/projects/Helmi/acal-apple-calendar-cli/` carrying a fix for `--scope this/future` silently no-op'ing on recurring events. Upstream PR: <https://github.com/Helmi/acal-apple-calendar-cli/pull/10>. Once merged + released to brew, revert to `brew install helmi/tap/acal`. Until then:
+
+```bash
+cd ~/projects/Helmi/acal-apple-calendar-cli
+git pull
+swift build -c release
+cp .build/release/acal /opt/homebrew/bin/acal
+```
+
+Brew install was uninstalled (`brew uninstall helmi/tap/acal`) to avoid clobbering the fork binary on `brew bundle`. Not in Brewfile.
 
 ## Canonical mapping — what "calendar" means
 

@@ -4,7 +4,8 @@ approval_policy = "never"
 sandbox_mode = "danger-full-access"
 
 
-notify = ["/Users/jasonkuhrt/.codex/plugins/cache/openai-bundled/computer-use/1.0.758/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
+
+notify = ["/Users/jasonkuhrt/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
 
 [projects."/Users/jasonkuhrt/projects"]
 trust_level = "trusted"
@@ -48,12 +49,6 @@ trust_level = "trusted"
 [mcp_servers.figma]
 url = "https://mcp.figma.com/mcp"
 
-[mcp_servers.serena]
-command = "/Users/jasonkuhrt/.local/libexec/serena-mcp"
-
-[mcp_servers.notion]
-url = "https://mcp.notion.com/mcp"
-
 [mcp_servers.linear]
 url = "https://mcp.linear.app/mcp"
 
@@ -84,7 +79,7 @@ enabled = true
 enabled = true
 
 [plugins."notion@openai-curated"]
-enabled = true
+enabled = false
 
 [plugins."gmail@openai-curated"]
 enabled = true
@@ -95,15 +90,26 @@ enabled = true
 [plugins."browser-use@openai-bundled"]
 enabled = true
 
+[plugins."chrome@openai-bundled"]
+enabled = true
+
 [marketplaces.openai-bundled]
-last_updated = "2026-05-02T14:39:34Z"
+last_updated = "2026-05-10T15:16:27Z"
 source_type = "local"
 source = "/Users/jasonkuhrt/.codex/.tmp/bundled-marketplaces/openai-bundled"
 
 [marketplaces.openai-primary-runtime]
-last_updated = "2026-04-30T22:02:55Z"
+last_updated = "2026-05-07T21:03:22Z"
 source_type = "local"
 source = "/Users/jasonkuhrt/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+
+[hooks.state]
+
+[hooks.state."/Users/jasonkuhrt/.codex/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:e1c6eb46673007b3042531fb2660c9834e9dadafaf8eb4040fb846c67c12410d"
+
+[hooks.state."/Users/jasonkuhrt/.codex/hooks.json:stop:0:0"]
+trusted_hash = "sha256:5210c633c3eb979002fc980cbf92a86327538a3e6ca2f6d142608701f587a530"
 
 # Re-enable when LINEAR_API_TOKEN is available in Codex's environment.
 #

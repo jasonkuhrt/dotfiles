@@ -143,6 +143,8 @@ acal events list --from 2026-05-09T00:00:00-04:00 --to 2026-05-09T23:59:59-04:00
 acal calendars create --name "Summer 26" --source iCloud --color "#FFCC00"   # fork-only: create on a specific source
 acal events create --calendar "Accounting" --title "Bernard rent" \
   --start 2026-06-02T09:00:00-04:00 --end 2026-06-02T09:15:00-04:00 --timezone America/Toronto
+acal events create ... --location "Royal Tyrrell Museum" \                   # fork-only: structured (Maps-clickable) location
+  --location-lat=51.4793524 --location-lon=-112.7900615
 acal events update --id <event-id> --start 2026-06-02T10:00:00-04:00
 acal events delete --id <event-id>
 
@@ -163,3 +165,4 @@ acal schema                # full CLI command contract (use to discover flags be
 - Never pass bare `YYYY-MM-DD` to `--start`/`--end` for `events create` — silently shifts events 1 day earlier in any zone west of UTC. Always use `T12:00:00-04:00` ISO form (see "Date input gotchas").
 - Never use positional event-ID syntax (`acal events get <id>`, `acal events delete <id>`) — silently rejected. Use `--id <id>`.
 - Never assume `--timezone` rescues bare-date parsing — it only sets the stored timezone field, not how `--start`/`--end` are interpreted.
+- Never try to auto-geocode an address inside acal (CLGeocoder, MapKit). Apple's geocoding APIs silently time out from a CLI invocation on macOS 26.2+ — they require an entitled host app with Location TCC, which a bare swift binary does not hold. Pass coords explicitly via `--location-lat=<deg> --location-lon=<deg>` (note `=` syntax — negative longitudes start with `-` and ArgumentParser otherwise consumes them as flags). Geocode externally (Nominatim, copy from Maps.app, etc.) and store the result alongside the address text.

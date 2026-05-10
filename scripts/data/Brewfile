@@ -9,6 +9,7 @@ tap "manaflow-ai/cmux"
 tap "bendews/tap"
 tap "neurosnap/tap"
 tap "mdsakalu/tap"
+tap "bro3886/tap"
 
 # ═══════════════════════════════════════════════════════════
 # CLI Tools
@@ -62,8 +63,9 @@ brew "gum"           # shell script UI components
 brew "just"          # command runner (modern make alternative)
 brew "up"            # interactive piping (Ultimate Plumber)
 
-# Apple Shortcuts
+# Apple ecosystem CLIs (EventKit/Shortcuts/iCloud-native tools — preferred over AppleScript for speed)
 brew "electrikmilk/cherri/cherri"  # compile .cherri to .shortcut files
+brew "bro3886/tap/ical"  # macOS Calendar.app CLI (EventKit-native, like rem for Reminders)
 
 # Git & GitHub
 brew "git"

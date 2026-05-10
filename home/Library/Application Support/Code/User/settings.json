@@ -309,4 +309,18 @@
 
   // ──────────────────────────────────────────── vscode-neovim
   "vscode-neovim.neovimExecutablePaths.darwin": "/opt/homebrew/bin/nvim",
+
+  // `kj` insert-mode escape. The nvim `inoremap kj <Esc>` in keymaps.lua
+  // never reaches nvim's chord engine under vscode-neovim — the typing
+  // manager performs optimistic local insertion before nvim sees the keys,
+  // so the chord never fires. compositeKeys intercepts at the VS Code
+  // layer with a debounced wait (compositeTimeout, default 200ms) and
+  // dispatches the chord whole. Mode-aware: only engages in insert mode,
+  // so normal-mode `k` / `j` motions are NOT affected.
+  "vscode-neovim.compositeKeys": {
+    "kj": {
+      "command": "vscode-neovim.escape",
+      "args": []
+    }
+  }
 }

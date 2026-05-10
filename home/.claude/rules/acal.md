@@ -11,7 +11,10 @@ cd ~/projects/Helmi/acal-apple-calendar-cli
 git pull
 swift build -c release
 cp .build/release/acal /opt/homebrew/bin/acal
+codesign --force --sign - /opt/homebrew/bin/acal   # re-sign adhoc after cp; otherwise macOS SIGKILLs on first run
 ```
+
+**Why the `codesign` step matters.** `swift build` produces an adhoc-signed binary at `.build/release/acal`. `cp` does NOT preserve the embedded code signature in a form macOS continues to trust — on the next invocation from `/opt/homebrew/bin/acal`, AMFI/library-validation SIGKILLs the process (exit 137, no stderr, intermittent before the signature settles). `codesign --force --sign -` re-applies the adhoc signature at the new path and restores trust. Symptom if you forget: `acal <anything>` exits 137 silently; running `~/projects/Helmi/acal-apple-calendar-cli/.build/release/acal <same args>` works.
 
 Brew install was uninstalled (`brew uninstall helmi/tap/acal`) to avoid clobbering the fork binary on `brew bundle`. Not in Brewfile.
 
@@ -131,11 +134,13 @@ When creating/updating a recurring event, pass the same structured shape. Don't 
 ```bash
 # Read
 acal calendars list
+acal calendars sources                # fork-only: list EKSources (iCloud, Local, Exchange, ...)
 acal events list --from 2026-05-09 --to 2026-05-16
 acal events list --from 2026-05-09 --to 2026-05-09 --calendar "Work" --calendar "Anca/Jason"
 acal events list --from 2026-05-09T00:00:00-04:00 --to 2026-05-09T23:59:59-04:00 --output-timezone America/Toronto
 
 # Write — see "Date input gotchas" above; ALWAYS use ISO-8601 with explicit offset.
+acal calendars create --name "Summer 26" --source iCloud --color "#FFCC00"   # fork-only: create on a specific source
 acal events create --calendar "Accounting" --title "Bernard rent" \
   --start 2026-06-02T09:00:00-04:00 --end 2026-06-02T09:15:00-04:00 --timezone America/Toronto
 acal events update --id <event-id> --start 2026-06-02T10:00:00-04:00

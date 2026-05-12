@@ -322,5 +322,6 @@
       "command": "vscode-neovim.escape",
       "args": []
     }
-  }
+  },
+  "window.confirmSaveUntitledWorkspace": false
 }

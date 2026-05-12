@@ -206,3 +206,9 @@
 
 [url "git@github.com:jasonkuhrt/"]
     insteadOf = me:
+[credential "https://github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential

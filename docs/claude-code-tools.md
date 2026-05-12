@@ -37,15 +37,10 @@ Quick reference for all Claude Code plugins, MCP servers, and hooks in this setu
 
 ## Hooks
 
+cmux Claude integration (status, notifications, Feed approvals, session restore) is handled natively by the cmux-bundled `claude` wrapper at `/Applications/cmux.app/Contents/Resources/bin/claude`, which injects `--session-id` and `--settings` to install its own hooks. Fish wires the wrapper via a `function claude` in `home/.config/fish/config.fish`. See [cmux agent-hooks docs](https://raw.githubusercontent.com/manaflow-ai/cmux/main/docs/agent-hooks.md).
+
 | Event             | Matcher          | Script                              | What it does                                       |
 | ----------------- | ---------------- | ----------------------------------- | -------------------------------------------------- |
 | PermissionRequest | `Skill\|mcp__.*` | `approve-and-persist-permissions.sh` | Auto-approves and persists plugin/MCP permissions   |
-| Notification      | `permission_prompt\|idle_prompt\|elicitation_dialog` | `cmux-claude-hook.sh notification` | Sends compact cmux notifications for blocked/input events, keeps `idle_prompt` as status-only, updates workspace status, falls back to local notification outside cmux |
-| Stop              | —                | `cmux-claude-hook.sh stop`          | Fires when Claude finishes responding; sends a compact completion notification plus workspace status |
-| UserPromptSubmit  | —                | `cmux-claude-hook.sh user-prompt-submit` | Marks the workspace as working and stores a short prompt summary for later ready/waiting states |
-| SessionStart      | —                | `session-start-resume-info.sh`      | Shows resume command on session start               |
-| SessionStart      | —                | `cmux-claude-hook.sh session-start` | Resets workspace Claude status to ready at session start |
-| SessionStart      | —                | `compact-recovery.sh`               | Recovers epic context after compaction              |
-| PreCompact        | —                | `cmux-claude-hook.sh precompact`    | Marks the workspace as compacting before context compaction |
-| SessionEnd        | —                | `cmux-claude-hook.sh session-end`   | Clears Claude-specific workspace status on session exit |
-| SubagentStop      | —                | `cmux-claude-hook.sh subagent-stop` | Logs subagent completions into cmux without user-facing notification noise |
+| UserPromptSubmit  | —                | `rename-terminal-tab.sh`            | Renames the terminal tab to the latest prompt summary |
+| SessionStart      | —                | `compact-name-restore.sh`           | Restores workspace name after compaction            |

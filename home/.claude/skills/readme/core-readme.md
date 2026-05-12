@@ -2,6 +2,37 @@
 
 Rules specific to README.md files. Use alongside `~/.claude/skills/readme/core.md` (shared quality rules).
 
+## Cardinal Rule: Public/Private Surface Separation
+
+**HARD RULE. NO EXCEPTIONS WITHOUT EXPLICIT USER OVERRIDE.**
+
+Every README emitted by this skill ships to OSS consumers who do NOT have the author's filesystem, sibling repositories, personal helpers, or local dev conventions. The following are PROHIBITED in every README under this skill's control:
+
+1. __Local filesystem paths.__ No `~/projects/...`, no `/Users/...`, no absolute paths to the author's machine. `~/.config/<package-name>/` is allowed ONLY when documenting the package's own default config path — verify against the package's own code, not author convention.
+2. __Relative paths to sibling repositories.__ No `[other-package](../other-package)`, no `[../sibling]` cross-repo links. Cross-references between OSS packages use NPM package names in backticks: `` `@scope/package` ``. URLs to canonical OSS locations (npm, GitHub) may be added only when the URL is known to be stable and public.
+3. __Phrasings that assume the reader shares the author's filesystem layout.__ No "one of three sibling projects in `~/projects/<user>/`", no "in my dotfiles", no "next to the other repos", no "as you can see in the parent directory", no "the user's config", no "Jason's setup".
+4. __Author-private helpers named as if canonical.__ If the author has a personal helper (e.g. a `vsmap()` lua helper in their nvim config), do NOT name it in OSS docs as though it were a documented upstream API. Either omit it or describe the behavior generically (what it does, not what the author calls it).
+5. __Any sentence that requires author-local context to parse.__ __Litmus test:__ Would a stranger clone this package from npm into a fresh filesystem and understand this sentence? If no, it is a violation.
+
+### Where private context properly lives
+
+Agent memory, personal notes, CLAUDE.md, CLAUDE.local.md, internal dev docs that are NOT shipped with the package. The split between agent-private context and OSS-shipping surface is a hard boundary; the README is unambiguously on the public side.
+
+### Mandatory verification (before declaring create or update done)
+
+Run this grep against the resulting README — for each file written or modified:
+
+```bash
+grep -nE '(\.\./[a-zA-Z]|~/projects|/Users/|sibling project|in my dotfiles|in the user|in the author|next to the other|in the parent directory)' <readme-file>
+```
+
+Treat ANY match as a Cardinal Rule violation that must be resolved before completion. The ONLY acceptable matches are:
+
+- `~/.config/<package-name>/` referencing the package's own documented default config path (verified against the package's source)
+- `../` inside a fenced code block that is illustrating a consumer's own project layout (e.g., a test file importing `../src/extension.ts`) — must be unambiguous from surrounding context
+
+When unsure whether a match is legitimate, strip it. The cost of removing a legitimate path is zero. The cost of leaking author-private context into a published OSS surface is real and durable.
+
 ## G1: Required Sections
 
 Every README has these base sections in this order. None may be omitted. Structure goes broadest to most specific — cognitive funneling.
@@ -158,3 +189,7 @@ A concept briefly introduced in one section ("Module Tree" as a structural overv
 ### Dismissive Scale Assumptions
 
 "The frontier is usually <100 items, so performance doesn't matter." This dismisses the library's generality. State scale and audience as design context instead: "Designed for command vocabularies of 10-10,000 commands." Clarify intended use cases and scale ranges — they're part of a library's design tradeoffs. But don't use them to wave away concerns.
+
+### Private Surface Leakage
+
+Cross-references to sibling repos via `[../sibling-name]` markdown links, "sibling project in `~/projects/<user>/`" framing, "in my dotfiles" / "in the user's config" phrasing, or naming author-private helpers (a personal `vsmap()` lua helper, etc.) as if they were canonical upstream APIs. The README is OSS-bound; consumers don't have the author's filesystem or private helpers. Use NPM package names for cross-references (`` `@scope/package` ``). Describe behavior generically rather than naming personal helpers. See Cardinal Rule at the top of this file — and run the mandatory grep before declaring done.

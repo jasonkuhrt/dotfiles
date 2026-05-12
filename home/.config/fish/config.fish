@@ -249,8 +249,21 @@ set --export GITHUB_HANDLE jasonkuhrt
 set -gx NPM_GLOBAL "$HOME/.npm-global"
 set -gx PNPM_HOME "$HOME/Library/pnpm"
 
-# Keep the managed Claude wrapper ahead of the updater-managed binary in ~/.local/bin.
-set -gx PATH "$HOME/.local/libexec/claude/bin" "$HOME/.local/bin" "$NPM_GLOBAL/bin" "$PNPM_HOME" $PATH
+set -gx PATH "$HOME/.local/bin" "$NPM_GLOBAL/bin" "$PNPM_HOME" $PATH
+
+# Mirror cmux's bash/zsh shell integration for fish: wrap `claude` with the
+# bundled cmux wrapper so it can inject --session-id/--settings (hooks +
+# auto-resume). Native fish integration tracked upstream at
+# https://github.com/manaflow-ai/cmux/pull/1528.
+if set -q CMUX_SURFACE_ID; and test -x /Applications/cmux.app/Contents/Resources/bin/claude
+    function claude --description "cmux-bundled claude wrapper"
+        /Applications/cmux.app/Contents/Resources/bin/claude $argv
+    end
+    # cmux's tmux shim — Claude Code spawns subagents via the tmux protocol.
+    if test -d "$HOME/.cmuxterm/claude-teams-bin"; and not contains "$HOME/.cmuxterm/claude-teams-bin" $PATH
+        set -gx PATH "$HOME/.cmuxterm/claude-teams-bin" $PATH
+    end
+end
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/jasonkuhrt/google-cloud-sdk/path.fish.inc' ]; . '/Users/jasonkuhrt/google-cloud-sdk/path.fish.inc'; end

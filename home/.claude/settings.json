@@ -1,17 +1,6 @@
 {
-  "statusLine": {
-    "type": "command",
-    "command": "wt list statusline --format=claude-code"
-  },
   "cleanupPeriodDays": 999999,
   "includeCoAuthoredBy": false,
-  "syntaxHighlightingDisabled": false,
-  "alwaysThinkingEnabled": true,
-  "autoUpdatesChannel": "latest",
-  "skipDangerousModePermissionPrompt": true,
-  "effortLevel": "high",
-  "preferredNotifChannel": "ghostty",
-  "enableAllProjectMcpServers": true,
   "permissions": {
     "allow": [
       "Bash",
@@ -49,6 +38,7 @@
       "/Users/jasonkuhrt"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "hooks": {
     "PreToolUse": [
       {
@@ -133,6 +123,29 @@
       }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "wt list statusline --format=claude-code"
+  },
+  "enabledPlugins": {
+    "Notion@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "explanatory-output-style@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "impeccable@impeccable": true,
+    "plannotator@plannotator": true,
+    "playground@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "superpowers-dev@superpowers-marketplace": true,
+    "tsgo-lsp@jasonkuhrt": true,
+    "worktrunk@worktrunk": true
+  },
   "extraKnownMarketplaces": {
     "impeccable": {
       "source": {
@@ -161,23 +174,11 @@
       }
     }
   },
-  "enabledPlugins": {
-    "Notion@claude-plugins-official": true,
-    "claude-code-setup@claude-plugins-official": true,
-    "claude-md-management@claude-plugins-official": true,
-    "code-review@claude-plugins-official": true,
-    "code-simplifier@claude-plugins-official": true,
-    "explanatory-output-style@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true,
-    "hookify@claude-plugins-official": true,
-    "impeccable@impeccable": true,
-    "plannotator@plannotator": true,
-    "playground@claude-plugins-official": true,
-    "plugin-dev@claude-plugins-official": true,
-    "ralph-loop@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true,
-    "superpowers-dev@superpowers-marketplace": true,
-    "tsgo-lsp@jasonkuhrt": true,
-    "worktrunk@worktrunk": true
-  }
+  "syntaxHighlightingDisabled": false,
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "high",
+  "autoUpdatesChannel": "latest",
+  "skipDangerousModePermissionPrompt": true,
+  "preferredNotifChannel": "ghostty",
+  "skipAutoPermissionPrompt": true
 }

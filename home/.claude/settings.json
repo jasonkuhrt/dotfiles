@@ -1,10 +1,53 @@
 {
   "statusLine": {
     "type": "command",
-    "command": "bash ~/.claude/statusline-command.sh"
+    "command": "wt list statusline --format=claude-code"
   },
   "cleanupPeriodDays": 999999,
   "includeCoAuthoredBy": false,
+  "syntaxHighlightingDisabled": false,
+  "alwaysThinkingEnabled": true,
+  "autoUpdatesChannel": "latest",
+  "skipDangerousModePermissionPrompt": true,
+  "effortLevel": "high",
+  "preferredNotifChannel": "ghostty",
+  "enableAllProjectMcpServers": true,
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Edit",
+      "MultiEdit",
+      "Write",
+      "Read(~/**)",
+      "Read(//tmp/**)",
+      "WebFetch",
+      "WebSearch",
+      "Skill(code-review:*)",
+      "Skill(hookify:*)",
+      "mcp__claude-in-chrome",
+      "mcp__effect-docs",
+      "mcp__ref",
+      "mcp__Ref",
+      "Skill(cc-writing-skills)",
+      "Skill(flowlist)",
+      "Skill(tmux)",
+      "Skill(tips)",
+      "Skill(dotfiles_doctor)",
+      "Skill(shan)",
+      "mcp__linear",
+      "Skill(draft)",
+      "mcp__figma",
+      "mcp__Claude_Preview",
+      "mcp__plugin_Notion_notion",
+      "mcp__mcp-registry",
+      "mcp__Claude_in_Chrome"
+    ],
+    "deny": [],
+    "defaultMode": "auto",
+    "additionalDirectories": [
+      "/Users/jasonkuhrt"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -89,27 +132,51 @@
       }
     ]
   },
-  "extraKnownMarketplaces": {},
-  "syntaxHighlightingDisabled": false,
-  "alwaysThinkingEnabled": true,
-  "autoUpdatesChannel": "latest",
-  "skipDangerousModePermissionPrompt": true,
-  "effortLevel": "high",
-  "permissions": {
-    "defaultMode": "acceptEdits"
+  "extraKnownMarketplaces": {
+    "impeccable": {
+      "source": {
+        "source": "github",
+        "repo": "pbakaus/impeccable"
+      },
+      "autoUpdate": true
+    },
+    "jasonkuhrt": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/jasonkuhrt/projects/jasonkuhrt/claude-marketplace"
+      },
+      "autoUpdate": true
+    },
+    "plannotator": {
+      "source": {
+        "source": "github",
+        "repo": "backnotprop/plannotator"
+      }
+    },
+    "worktrunk": {
+      "source": {
+        "source": "github",
+        "repo": "max-sixty/worktrunk"
+      }
+    }
   },
   "enabledPlugins": {
+    "Notion@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
     "code-review@claude-plugins-official": true,
-    "hookify@claude-plugins-official": true,
-    "plugin-dev@claude-plugins-official": true,
-    "playground@claude-plugins-official": true,
-    "plannotator@plannotator": true,
-    "Notion@claude-plugins-official": true,
     "code-simplifier@claude-plugins-official": true,
     "explanatory-output-style@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true,
-    "claude-code-setup@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true
+    "hookify@claude-plugins-official": true,
+    "impeccable@impeccable": true,
+    "plannotator@plannotator": true,
+    "playground@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "superpowers-dev@superpowers-marketplace": true,
+    "tsgo-lsp@jasonkuhrt": true,
+    "worktrunk@worktrunk": true
   }
 }

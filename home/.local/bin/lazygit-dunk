@@ -1,0 +1,196 @@
+#!/usr/bin/env bun
+
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
+
+type Comment = {
+  id: number;
+  file: string;
+  line: number;
+  range: [number, number];
+  anchor: string;
+  body: string;
+};
+
+type CommentsFile = {
+  schema: 1;
+  comments: Comment[];
+};
+
+const commandName = "lazygit-dunk";
+
+const usage = `Usage:
+  ${commandName} --file <path> --line <line> --range <start:end> --body <text>
+
+Options:
+  --repo <path>       Repo root. Defaults to git rev-parse --show-toplevel.
+  --body-stdin        Read the comment body from stdin instead of --body.
+`;
+
+function fail(message: string): never {
+  console.error(`${commandName}: ${message}`);
+  process.exit(1);
+}
+
+function parseArgs(argv: string[]) {
+  const result: Record<string, string | boolean> = {};
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (!arg.startsWith("--")) {
+      fail(`unexpected argument: ${arg}\n${usage}`);
+    }
+
+    const key = arg.slice(2);
+    if (key === "body-stdin") {
+      result[key] = true;
+      continue;
+    }
+
+    const value = argv[index + 1];
+    if (value === undefined || value.startsWith("--")) {
+      fail(`missing value for --${key}\n${usage}`);
+    }
+    result[key] = value;
+    index += 1;
+  }
+  return result;
+}
+
+function runGitRoot(): string {
+  const proc = Bun.spawnSync(["git", "rev-parse", "--show-toplevel"], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  if (!proc.success) {
+    fail("could not resolve git repo root");
+  }
+  return proc.stdout.toString().trim();
+}
+
+function positiveInt(value: unknown, name: string): number {
+  if (typeof value !== "string" || !/^[1-9]\d*$/.test(value)) {
+    fail(`${name} must be a positive integer`);
+  }
+  return Number(value);
+}
+
+function parseRange(value: unknown): [number, number] {
+  if (typeof value !== "string") {
+    fail("--range is required");
+  }
+
+  const match = value.match(/^([1-9]\d*)[:-]([1-9]\d*)$/);
+  if (!match) {
+    fail("--range must look like <start:end> or <start-end>");
+  }
+
+  const start = Number(match[1]);
+  const end = Number(match[2]);
+  if (start > end) {
+    fail("--range start must not exceed end");
+  }
+  return [start, end];
+}
+
+function repoRelativePath(repoRoot: string, file: unknown): string {
+  if (typeof file !== "string" || file.length === 0) {
+    fail("--file is required");
+  }
+  if (isAbsolute(file)) {
+    fail("--file must be repo-relative");
+  }
+
+  const absolute = resolve(repoRoot, file);
+  const rel = relative(repoRoot, absolute);
+  if (rel === "" || rel.startsWith("..")) {
+    fail("--file must stay inside the repo");
+  }
+  return rel;
+}
+
+function splitLines(text: string): string[] {
+  return text.split("\n").map((line) => line.replace(/\s+$/, ""));
+}
+
+function computeAnchor(lines: string[], line: number): string {
+  if (line < 1 || line > lines.length) {
+    fail(`line ${line} is outside the current post-image`);
+  }
+
+  const above = line > 1 ? lines[line - 2] : "";
+  const target = lines[line - 1];
+  const below = line < lines.length ? lines[line] : "";
+  return createHash("sha256").update([above, target, below].join("\n")).digest("hex").slice(0, 16);
+}
+
+function readUtf8(path: string, label: string): string {
+  try {
+    return readFileSync(path, "utf8");
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    fail(`could not read ${label}: ${detail}`);
+  }
+}
+
+function readComments(path: string): CommentsFile {
+  if (!existsSync(path)) {
+    return { schema: 1, comments: [] };
+  }
+
+  let parsed: CommentsFile;
+  try {
+    parsed = JSON.parse(readUtf8(path, path)) as CommentsFile;
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    fail(`${path} is not valid JSON: ${detail}`);
+  }
+  if (parsed.schema !== 1 || !Array.isArray(parsed.comments)) {
+    fail(`${path} is not a dunk schema v1 comments file`);
+  }
+  return parsed;
+}
+
+function writeComments(path: string, file: CommentsFile) {
+  mkdirSync(dirname(path), { recursive: true });
+  const tempPath = `${path}.${process.pid}.${Date.now().toString(36)}.tmp`;
+  const sorted = {
+    schema: 1,
+    comments: [...file.comments].sort((a, b) => a.id - b.id),
+  };
+  writeFileSync(tempPath, `${JSON.stringify(sorted, null, 2)}\n`, "utf8");
+  renameSync(tempPath, path);
+}
+
+const args = parseArgs(Bun.argv.slice(2));
+const repoRoot = resolve(String(args.repo ?? runGitRoot()));
+const file = repoRelativePath(repoRoot, args.file);
+const line = positiveInt(args.line, "--line");
+const range = parseRange(args.range);
+const body = args["body-stdin"] ? await Bun.stdin.text() : String(args.body ?? "");
+
+if (body.trim().length === 0) {
+  fail("comment body is empty");
+}
+
+const fileContent = readUtf8(join(repoRoot, file), file);
+const anchor = computeAnchor(splitLines(fileContent), line);
+const commentsPath = join(repoRoot, ".dunk", "comments.json");
+const commentsFile = readComments(commentsPath);
+const id = commentsFile.comments.reduce((max, comment) => Math.max(max, comment.id), 0) + 1;
+
+const comment: Comment = {
+  id,
+  file,
+  line,
+  range,
+  anchor,
+  body,
+};
+
+writeComments(commentsPath, {
+  schema: 1,
+  comments: [...commentsFile.comments, comment],
+});
+
+console.log(`Added dunk comment #${id} on ${file}:${range[0]}-${range[1]}`);

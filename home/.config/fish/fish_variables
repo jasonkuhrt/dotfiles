@@ -11,4 +11,4 @@ SETUVAR _fisher_patrickf1_2F_fzf_2E_fish_files:\x7e/\x2econfig/fish/functions/_f
 SETUVAR _fisher_plugins:jorgebucaran/fisher\x1epatrickf1/fzf\x2efish
 SETUVAR _fisher_upgraded_to_4_4:\x1d
 SETUVAR fish_greeting:
-SETUVAR fish_user_paths:/Users/jasonkuhrt/go/bin\x1e/Users/jasonkuhrt/\x2ecargo/bin\x1e/opt/homebrew/sbin\x1e/opt/homebrew/bin
+SETUVAR fish_user_paths:/Users/jasonkuhrt/\x2elocal/bin\x1e/Users/jasonkuhrt/go/bin\x1e/Users/jasonkuhrt/\x2ecargo/bin\x1e/opt/homebrew/sbin\x1e/opt/homebrew/bin

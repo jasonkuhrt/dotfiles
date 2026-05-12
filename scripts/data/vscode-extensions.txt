@@ -16,6 +16,7 @@ github.vscode-pull-request-github
 graphql.vscode-graphql
 graphql.vscode-graphql-syntax
 hashicorp.terraform
+jasonkuhrt.dunk
 jasonkuhrt.explorer-delete
 jasonkuhrt.utils
 jasonkuhrt.workbench-cycler

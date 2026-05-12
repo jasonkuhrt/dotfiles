@@ -32,3 +32,20 @@ keybinding:
   universal:
     scrollUpMain: K
     scrollDownMain: J
+
+customCommands:
+  - key: '@'
+    context: 'staging, stagingSecondary, patchBuilding'
+    description: 'Add Dunk comment'
+    prompts:
+      - type: 'input'
+        title: 'Dunk comment'
+        key: 'Body'
+    command: >
+      lazygit-dunk
+      --file {{.SelectedPatch.FileName | quote}}
+      --line {{.SelectedPatch.CurrentHunkEndLineNumber}}
+      --range "{{.SelectedPatch.CurrentHunkStartLineNumber}}:{{.SelectedPatch.CurrentHunkEndLineNumber}}"
+      --body {{.Form.Body | quote}}
+    loadingText: 'Adding Dunk comment'
+    output: popup

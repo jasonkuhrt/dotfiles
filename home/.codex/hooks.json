@@ -20,6 +20,15 @@
             "command": "bun ~/.codex/hooks/loop_stop_continue.ts"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/jasonkuhrt/.local/bin/plannotator",
+            "timeout": 345600
+          }
+        ]
       }
     ]
   }

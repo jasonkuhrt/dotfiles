@@ -94,7 +94,7 @@ enabled = true
 enabled = true
 
 [marketplaces.openai-bundled]
-last_updated = "2026-05-10T15:16:27Z"
+last_updated = "2026-05-10T15:28:05Z"
 source_type = "local"
 source = "/Users/jasonkuhrt/.codex/.tmp/bundled-marketplaces/openai-bundled"
 

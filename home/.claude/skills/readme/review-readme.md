@@ -38,6 +38,11 @@ Compare the source truth checklist against what the README covers:
 
 Run checks from `~/.claude/skills/readme/core.md` and `~/.claude/skills/readme/core-readme.md` (respects Focus — whole README, or scoped to named sections):
 
+- **Cardinal Rule: Public/Private Surface Separation** — RUN THIS GREP FIRST:
+  ```bash
+  grep -nE '(\.\./[a-zA-Z]|~/projects|/Users/|sibling project|in my dotfiles|in the user|in the author|next to the other|in the parent directory)' README.md
+  ```
+  Any match is a violation unless it's unambiguously inside a code block illustrating a consumer's own project layout. Report every match in the findings under Quality violations with HIGH severity. See Cardinal Rule in `core-readme.md` for the full prohibitions.
 - G1 section order (base sections)
 - G2 semantic term ordering
 - G3 heading density (from core.md)

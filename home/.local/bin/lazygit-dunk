@@ -1,7 +1,14 @@
 #!/usr/bin/env bun
 
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 
 type Comment = {
@@ -19,13 +26,45 @@ type CommentsFile = {
 };
 
 const commandName = "lazygit-dunk";
+const SENTINEL_ANCHOR = "0000000000000000";
+const COMMIT_FILE_PREFIX = "@commit:";
+const EXTENSIONS_BLOB_FILENAME = "lazygit-dunk.protocol.md";
+const TITLE_AUGMENT = " (extended with lazygit support)";
 
 const usage = `Usage:
-  ${commandName} --file <path> --line <line> --range <start:end> --body <text>
+  ${commandName} --mode line   --file <path> --line <n> --range <s:e> [--commit <sha>|--staged] --body <text>
+  ${commandName} --mode file   --file <path> [--commit <sha>|--staged] --body <text>
+  ${commandName} --mode commit --commit <sha> --body <text>
+  ${commandName} skill path
 
-Options:
+Subcommands:
+  skill path          Print the wrapped agent skill to stdout. Reads upstream
+                      via "dunk skill path", augments its H1 title with
+                      "${TITLE_AUGMENT}", and injects the custom-extensions
+                      blob directly under the title. Install with:
+                        ${commandName} skill path > <skills-dir>/dunk-review.md
+
+Options (any mode):
   --repo <path>       Repo root. Defaults to git rev-parse --show-toplevel.
+  --commit <sha>      Optional in line/file modes; required in commit mode.
+                      Presence sets in=commit:<sha>.
+  --staged            Optional in line/file modes; mutually exclusive with --commit.
+                      Presence sets in=staged. Absence + no --commit sets in=dirty.
   --body-stdin        Read the comment body from stdin instead of --body.
+
+Modes:
+  line    Line-anchored comment. Requires --file/--line/--range.
+          Anchor is real (SHA over working-tree triple) IFF in=dirty;
+          sentinel otherwise (in=staged or in=commit:<sha>).
+
+  file    File-level or dir-level comment, auto-detected via stat (working tree)
+          or git-ls-tree (commit context).
+
+  commit  Whole-commit comment. Encodes "${COMMIT_FILE_PREFIX}<sha>" in the file field.
+
+The output JSON entries embed [on=<scope>; in=<context>] in the body. Agents
+must read the protocol doc to interpret these markers. The doc is intentionally
+NOT auto-injected into .dunk/comments.json — install it as an agent rule instead.
 `;
 
 function fail(message: string): never {
@@ -42,7 +81,7 @@ function parseArgs(argv: string[]) {
     }
 
     const key = arg.slice(2);
-    if (key === "body-stdin") {
+    if (key === "body-stdin" || key === "staged") {
       result[key] = true;
       continue;
     }
@@ -109,13 +148,23 @@ function repoRelativePath(repoRoot: string, file: unknown): string {
   return rel;
 }
 
+function validateCommitSha(value: unknown): string {
+  if (typeof value !== "string" || !/^[0-9a-f]{7,40}$/i.test(value)) {
+    fail("--commit must be a 7- to 40-character hex SHA");
+  }
+  return value.toLowerCase();
+}
+
 function splitLines(text: string): string[] {
   return text.split("\n").map((line) => line.replace(/\s+$/, ""));
 }
 
 function computeAnchor(lines: string[], line: number): string {
   if (line < 1 || line > lines.length) {
-    fail(`line ${line} is outside the current post-image`);
+    fail(
+      `line ${line} is outside the current post-image (${lines.length} lines). ` +
+        `Deletion-only lines cannot be anchored; comment on an adjacent context line.`,
+    );
   }
 
   const above = line > 1 ? lines[line - 2] : "";
@@ -130,6 +179,33 @@ function readUtf8(path: string, label: string): string {
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
     fail(`could not read ${label}: ${detail}`);
+  }
+}
+
+function detectFileOrDir(
+  repoRoot: string,
+  file: string,
+  commitSha: string | null,
+): "file" | "dir" {
+  if (commitSha) {
+    const proc = Bun.spawnSync(
+      ["git", "-C", repoRoot, "ls-tree", commitSha, "--", file],
+      { stdout: "pipe", stderr: "pipe" },
+    );
+    if (!proc.success) {
+      return "file";
+    }
+    const output = proc.stdout.toString().trim();
+    if (output.length === 0) {
+      return "file";
+    }
+    const parts = output.split(/\s+/);
+    return parts[1] === "tree" ? "dir" : "file";
+  }
+  try {
+    return statSync(join(repoRoot, file)).isDirectory() ? "dir" : "file";
+  } catch {
+    return "file";
   }
 }
 
@@ -162,35 +238,143 @@ function writeComments(path: string, file: CommentsFile) {
   renameSync(tempPath, path);
 }
 
+function nextId(comments: Comment[]): number {
+  return comments.reduce((max, c) => Math.max(max, c.id), 0) + 1;
+}
+
+function getUpstreamDunkSkillPath(): string {
+  const proc = Bun.spawnSync(["dunk", "skill", "path"], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  if (!proc.success) {
+    fail("could not resolve upstream dunk skill path — is dunk installed?");
+  }
+  return proc.stdout.toString().trim();
+}
+
+function injectExtensionsUnderTitle(upstream: string, extensionsBlob: string): string {
+  // Find the first H1 line, augment with parens, and insert the extensions
+  // blob directly after it. Treats everything else in the upstream as opaque.
+  const titleRegex = /^(# .+)$/m;
+  const match = upstream.match(titleRegex);
+  if (!match || match.index === undefined) {
+    fail("upstream skill has no H1 title — cannot inject extensions");
+  }
+
+  const originalTitle = match[1];
+  const augmentedTitle = `${originalTitle}${TITLE_AUGMENT}`;
+  const titleStart = match.index;
+  const titleEnd = titleStart + originalTitle.length;
+
+  const before = upstream.slice(0, titleStart);
+  const after = upstream.slice(titleEnd);
+
+  return `${before}${augmentedTitle}\n\n${extensionsBlob.trimEnd()}\n${after}`;
+}
+
+function printSkillPath(): never {
+  const ourExtensionsPath = join(dirname(import.meta.path), EXTENSIONS_BLOB_FILENAME);
+  if (!existsSync(ourExtensionsPath)) {
+    fail(`extensions blob not found at ${ourExtensionsPath}`);
+  }
+  const upstreamSkillPath = getUpstreamDunkSkillPath();
+  if (!existsSync(upstreamSkillPath)) {
+    fail(`upstream dunk skill not found at ${upstreamSkillPath}`);
+  }
+
+  const upstream = readUtf8(upstreamSkillPath, upstreamSkillPath);
+  const extensionsBlob = readUtf8(ourExtensionsPath, ourExtensionsPath);
+  process.stdout.write(injectExtensionsUnderTitle(upstream, extensionsBlob));
+  process.exit(0);
+}
+
+// Subcommand dispatch (positional args before any --flags).
+if (Bun.argv[2] === "skill" && Bun.argv[3] === "path") {
+  printSkillPath();
+}
+
 const args = parseArgs(Bun.argv.slice(2));
+const mode = String(args.mode ?? "line");
 const repoRoot = resolve(String(args.repo ?? runGitRoot()));
-const file = repoRelativePath(repoRoot, args.file);
-const line = positiveInt(args.line, "--line");
-const range = parseRange(args.range);
 const body = args["body-stdin"] ? await Bun.stdin.text() : String(args.body ?? "");
+const commitSha = args.commit !== undefined ? validateCommitSha(args.commit) : null;
+const staged = args.staged === true;
 
 if (body.trim().length === 0) {
   fail("comment body is empty");
 }
+if (staged && commitSha) {
+  fail("--staged and --commit are mutually exclusive");
+}
 
-const fileContent = readUtf8(join(repoRoot, file), file);
-const anchor = computeAnchor(splitLines(fileContent), line);
+const inContext = commitSha ? `commit:${commitSha}` : staged ? "staged" : "dirty";
+const isWorkingTreeAnchorable = !commitSha && !staged;
+
+let commentFile: string;
+let commentLine: number;
+let commentRange: [number, number];
+let commentAnchor: string;
+let onScope: "line" | "file" | "dir" | "commit";
+
+if (mode === "line") {
+  commentFile = repoRelativePath(repoRoot, args.file);
+  commentLine = positiveInt(args.line, "--line");
+  commentRange = parseRange(args.range);
+  if (isWorkingTreeAnchorable) {
+    // Only case where dunk's working-tree-based drift check is meaningful.
+    const fileContent = readUtf8(join(repoRoot, commentFile), commentFile);
+    commentAnchor = computeAnchor(splitLines(fileContent), commentLine);
+  } else {
+    // Line numbers refer to index or commit content, not working tree.
+    // A working-tree anchor here would silently lie. Sentinel it explicitly.
+    commentAnchor = SENTINEL_ANCHOR;
+  }
+  onScope = "line";
+} else if (mode === "file") {
+  commentFile = repoRelativePath(repoRoot, args.file);
+  commentLine = 1;
+  commentRange = [1, 1];
+  commentAnchor = SENTINEL_ANCHOR;
+  onScope = detectFileOrDir(repoRoot, commentFile, commitSha);
+} else if (mode === "commit") {
+  if (!commitSha) {
+    fail("--mode commit requires --commit <sha>");
+  }
+  commentFile = `${COMMIT_FILE_PREFIX}${commitSha}`;
+  commentLine = 1;
+  commentRange = [1, 1];
+  commentAnchor = SENTINEL_ANCHOR;
+  onScope = "commit";
+} else {
+  fail(`unknown --mode ${mode}. Expected one of: line, file, commit.`);
+}
+
+const bodyWithMarkers = `[on=${onScope}; in=${inContext}] ${body}`;
+
 const commentsPath = join(repoRoot, ".dunk", "comments.json");
-const commentsFile = readComments(commentsPath);
-const id = commentsFile.comments.reduce((max, comment) => Math.max(max, comment.id), 0) + 1;
+const existingFile = readComments(commentsPath);
+const id = nextId(existingFile.comments);
 
-const comment: Comment = {
+const newComment: Comment = {
   id,
-  file,
-  line,
-  range,
-  anchor,
-  body,
+  file: commentFile,
+  line: commentLine,
+  range: commentRange,
+  anchor: commentAnchor,
+  body: bodyWithMarkers,
 };
 
 writeComments(commentsPath, {
   schema: 1,
-  comments: [...commentsFile.comments, comment],
+  comments: [...existingFile.comments, newComment],
 });
 
-console.log(`Added dunk comment #${id} on ${file}:${range[0]}-${range[1]}`);
+const where =
+  onScope === "commit"
+    ? `commit ${commitSha?.slice(0, 10)}`
+    : onScope === "line"
+      ? `${commentFile}:${commentRange[0]}-${commentRange[1]}`
+      : `${onScope} ${commentFile}`;
+
+console.log(`Added dunk comment #${id} [on=${onScope}; in=${inContext}] on ${where}`);

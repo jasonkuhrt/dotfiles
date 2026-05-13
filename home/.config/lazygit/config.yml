@@ -34,18 +34,127 @@ keybinding:
     scrollDownMain: J
 
 customCommands:
-  - key: '@'
-    context: 'staging, stagingSecondary, patchBuilding'
-    description: 'Add Dunk comment'
+  # UPSTREAM-FIXME: stash → commitFiles drill-in gives a wrong commit SHA.
+  #
+  # lazygit's session_state_loader resolves SelectedCommit via a 3-way
+  # switch on IsCurrentOrParent(LocalCommits|SubCommits|ReflogCommits). When
+  # commitFiles is drilled in from the Stash panel, none of those branches
+  # match, so the default falls through to LocalCommits.GetSelected() —
+  # i.e. whatever happens to be cursored in [5] Commits, unrelated to the
+  # stash you're viewing. SelectedCommit.Hash is silently a plausible but
+  # WRONG SHA in that one path.
+  #
+  # Code: pkg/gui/services/custom_commands/session_state_loader.go:271-279
+  # Fix would be ~15 lines: special-case commitFiles by reading its own
+  # GetRef() before falling back to the 3-way switch. Holding off until
+  # there's a real need — Jason doesn't use lazygit's stash flow.
+  #
+  # Practical guidance: do NOT press ';' inside a commitFiles view that
+  # was drilled in from the Stash panel — it would encode an unrelated
+  # SHA into .dunk/comments.json. Every other drill-in source (LocalCommits,
+  # SubCommits, ReflogCommits) works correctly.
+
+  # LINE mode, dirty: working-tree-vs-index (real anchor against working tree)
+  - key: ';'
+    context: 'staging'
+    description: 'Add Dunk line comment (dirty)'
     prompts:
       - type: 'input'
-        title: 'Dunk comment'
+        title: 'Dunk line comment (dirty)'
         key: 'Body'
     command: >
-      lazygit-dunk
+      dunk-lazygit
+      --mode line
       --file {{.SelectedPatch.FileName | quote}}
-      --line {{.SelectedPatch.CurrentHunkEndLineNumber}}
-      --range "{{.SelectedPatch.CurrentHunkStartLineNumber}}:{{.SelectedPatch.CurrentHunkEndLineNumber}}"
+      --line {{.SelectedPatch.CurrentLineNumber}}
+      --range "{{.SelectedPatch.SelectedStartLineNumber}}:{{.SelectedPatch.SelectedEndLineNumber}}"
       --body {{.Form.Body | quote}}
-    loadingText: 'Adding Dunk comment'
-    output: popup
+    loadingText: 'Adding Dunk line comment'
+    output: log
+
+  # LINE mode, staged: index-vs-HEAD (sentinel anchor — index content ≠ working tree)
+  - key: ';'
+    context: 'stagingSecondary'
+    description: 'Add Dunk line comment (staged)'
+    prompts:
+      - type: 'input'
+        title: 'Dunk line comment (staged)'
+        key: 'Body'
+    command: >
+      dunk-lazygit
+      --mode line
+      --file {{.SelectedPatch.FileName | quote}}
+      --line {{.SelectedPatch.CurrentLineNumber}}
+      --range "{{.SelectedPatch.SelectedStartLineNumber}}:{{.SelectedPatch.SelectedEndLineNumber}}"
+      --staged
+      --body {{.Form.Body | quote}}
+    loadingText: 'Adding Dunk line comment (staged)'
+    output: log
+
+  # LINE mode, in commit: patch builder drilled in from a commit
+  - key: ';'
+    context: 'patchBuilding'
+    description: 'Add Dunk line comment (in commit)'
+    prompts:
+      - type: 'input'
+        title: 'Dunk line comment (in commit)'
+        key: 'Body'
+    command: >
+      dunk-lazygit
+      --mode line
+      --file {{.SelectedPatch.FileName | quote}}
+      --line {{.SelectedPatch.CurrentLineNumber}}
+      --range "{{.SelectedPatch.SelectedStartLineNumber}}:{{.SelectedPatch.SelectedEndLineNumber}}"
+      --commit {{.SelectedCommit.Hash | quote}}
+      --body {{.Form.Body | quote}}
+    loadingText: 'Adding Dunk line comment (in commit)'
+    output: log
+
+  # FILE/DIR mode, dirty: working tree
+  - key: ';'
+    context: 'files'
+    description: 'Add Dunk file/dir comment (dirty)'
+    prompts:
+      - type: 'input'
+        title: 'Dunk file/dir comment (dirty)'
+        key: 'Body'
+    command: >
+      dunk-lazygit
+      --mode file
+      --file {{.SelectedPath | quote}}
+      --body {{.Form.Body | quote}}
+    loadingText: 'Adding Dunk file/dir comment'
+    output: log
+
+  # FILE/DIR mode, in commit: drilled into a commit's files
+  - key: ';'
+    context: 'commitFiles'
+    description: 'Add Dunk file/dir comment (in commit)'
+    prompts:
+      - type: 'input'
+        title: 'Dunk file/dir comment (in commit)'
+        key: 'Body'
+    command: >
+      dunk-lazygit
+      --mode file
+      --file {{.SelectedPath | quote}}
+      --commit {{.SelectedCommit.Hash | quote}}
+      --body {{.Form.Body | quote}}
+    loadingText: 'Adding Dunk file/dir comment (in commit)'
+    output: log
+
+  # COMMIT mode: whole commit annotation from any commits panel
+  - key: ';'
+    context: 'commits, subCommits, reflogCommits'
+    description: 'Add Dunk commit-level comment'
+    prompts:
+      - type: 'input'
+        title: 'Dunk commit-level comment'
+        key: 'Body'
+    command: >
+      dunk-lazygit
+      --mode commit
+      --commit {{.SelectedCommit.Hash | quote}}
+      --body {{.Form.Body | quote}}
+    loadingText: 'Adding Dunk commit-level comment'
+    output: log

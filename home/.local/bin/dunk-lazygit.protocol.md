@@ -74,7 +74,7 @@ markers don't change the resolution mechanism — only how to read entries.
 Regenerate this skill any time `dunk` or the extension definition changes:
 
 ```
-lazygit-dunk skill path > <your-skills-dir>/dunk-review.md
+dunk-lazygit skill path > <your-skills-dir>/dunk-review.md
 ```
 
 ---

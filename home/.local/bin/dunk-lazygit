@@ -25,10 +25,10 @@ type CommentsFile = {
   comments: Comment[];
 };
 
-const commandName = "lazygit-dunk";
+const commandName = "dunk-lazygit";
 const SENTINEL_ANCHOR = "0000000000000000";
 const COMMIT_FILE_PREFIX = "@commit:";
-const EXTENSIONS_BLOB_FILENAME = "lazygit-dunk.protocol.md";
+const EXTENSIONS_BLOB_FILENAME = "dunk-lazygit.protocol.md";
 const TITLE_AUGMENT = " (extended with lazygit support)";
 
 const usage = `Usage:

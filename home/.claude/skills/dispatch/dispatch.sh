@@ -21,7 +21,6 @@ DISPATCH_COLORS=(
 slug="${1:?Usage: dispatch.sh <slug> <prompt-file> [cwd]}"
 prompt_file="${2:?Usage: dispatch.sh <slug> <prompt-file> [cwd]}"
 cwd="${3:-$(pwd)}"
-ready_sleep_secs="${DISPATCH_READY_SLEEP_SECS:-0.35}"
 tree_retries="${DISPATCH_TREE_RETRIES:-80}"
 tree_retry_sleep_secs="${DISPATCH_TREE_RETRY_SLEEP_SECS:-0.10}"
 launch_started=0
@@ -76,21 +75,39 @@ exec $(printf '%q' "$claude_bin") --session-id $(printf '%q' "$session_id") --na
 EOF
 chmod +x "$launcher"
 
-# --- Resolve parent workspace ---
+# --- Resolve caller context from a single tree snapshot ---
+# CMUX_WORKSPACE_ID is a UUID inside cmux terminals (verified via `cmux
+# identify`: workspace_id is a UUID, workspace_ref is `workspace:N`). A single
+# `cmux tree --all --json` snapshot exposes every workspace's UUID, ref, and
+# title plus each window's selected workspace, so one call resolves all three
+# caller facts we need:
+#   parent_title     — caller workspace's title, for `{parent} › {slug}` naming
+#   caller_window    — the window containing the caller, for placement (new
+#                      workspaces land in the macOS-focused window, which may
+#                      differ from the caller's window)
+#   user_selected_ws — that window's currently-selected workspace, captured
+#                      BEFORE creation so we can restore the user's view after
+#                      the PTY warm-up focus
+# Keying on the workspace UUID (`.id`) is required: list-workspaces prints
+# refs, so grepping it for a UUID caller never matches.
 caller_ws="${CMUX_WORKSPACE_ID:-}"
 parent_title=""
-
-get_workspace_title() {
-  local ws_ref="$1"
-  cmux list-workspaces 2>/dev/null \
-    | grep -E "^[* ]+${ws_ref}( |$)" \
-    | sed -E 's/^[* ]+workspace:[0-9]+ +//' \
-    | sed 's/ *\[selected\] *$//' \
-    || true
-}
+caller_window=""
+user_selected_ws=""
 
 if [[ -n "$caller_ws" ]]; then
-  parent_title=$(get_workspace_title "$caller_ws")
+  tree_all_json="$(cmux --json --id-format both tree --all 2>/dev/null || true)"
+  if [[ -n "$tree_all_json" ]]; then
+    parent_title=$(printf '%s\n' "$tree_all_json" \
+      | jq -r --arg ws "$caller_ws" '.windows[].workspaces[] | select(.id == $ws) | (.title // empty)' 2>/dev/null \
+      | head -1 || true)
+    caller_window=$(printf '%s\n' "$tree_all_json" \
+      | jq -r --arg ws "$caller_ws" '.windows[] | select(.workspaces[].id == $ws) | .id' 2>/dev/null \
+      | head -1 || true)
+    user_selected_ws=$(printf '%s\n' "$tree_all_json" \
+      | jq -r --arg ws "$caller_ws" '.windows[] | select(.workspaces[].id == $ws) | .selected_workspace_ref' 2>/dev/null \
+      | head -1 || true)
+  fi
 fi
 
 # --- Workspace naming ---
@@ -134,27 +151,6 @@ if [[ -z "$group_color" ]]; then
   fi
 fi
 
-# --- Resolve caller's window ---
-# new-workspace creates in the macOS-focused window, which may not be the
-# caller's window. Resolve the caller's window from CMUX_WORKSPACE_ID so we
-# can move the workspace to the right place after creation.
-caller_window=""
-if [[ -n "$caller_ws" ]]; then
-  # Use the window UUID, not window:index — indices shift when workspaces move.
-  # First try selected_workspace_id (fast path — works when caller is the active tab).
-  caller_window=$(cmux --json list-windows 2>/dev/null \
-    | jq -r --arg ws "$caller_ws" '.[] | select(.selected_workspace_id == $ws) | .id' 2>/dev/null || true)
-  # If that missed (caller tab not selected), search all windows via tree.
-  if [[ -z "$caller_window" ]]; then
-    for win_id in $(cmux --json list-windows 2>/dev/null | jq -r '.[].id' 2>/dev/null); do
-      if cmux --json tree --window "$win_id" 2>/dev/null | jq -e --arg ws "$caller_ws" '.. | objects | select(.id? == $ws)' >/dev/null 2>&1; then
-        caller_window="$win_id"
-        break
-      fi
-    done
-  fi
-fi
-
 # --- Create workspace ---
 ws_line="$(cmux new-workspace --name "$ws_title" --cwd "$cwd" 2>&1)"
 ws_id="$(printf '%s\n' "$ws_line" | grep -oE 'workspace:[0-9]+' | head -1)"
@@ -170,25 +166,64 @@ if [[ -n "$caller_window" ]]; then
 fi
 
 surface_ref=""
+pane_ref=""
 for _ in $(seq 1 "$tree_retries"); do
   tree_json="$(cmux --json --id-format both tree --workspace "$ws_id" 2>/dev/null || true)"
   surface_ref="$(printf '%s\n' "$tree_json" | jq -r 'first(.. | objects | select(.type? == "terminal") | (.ref? // .surface_ref? // .id? // .surface_id?)) // empty' 2>/dev/null || true)"
-  if [[ -n "$surface_ref" ]]; then
+  pane_ref="$(printf '%s\n' "$tree_json" | jq -r 'first(.. | objects | select(.type? == "terminal") | (.pane_ref? // .pane_id?)) // empty' 2>/dev/null || true)"
+  if [[ -n "$surface_ref" && -n "$pane_ref" ]]; then
     break
   fi
   sleep "$tree_retry_sleep_secs"
 done
 
-if [[ -z "$surface_ref" ]]; then
+if [[ -z "$surface_ref" || -z "$pane_ref" ]]; then
   echo "Error: workspace $ws_id never exposed a terminal surface" >&2
   exit 1
 fi
 
-sleep "$ready_sleep_secs"
-cmux send --workspace "$ws_id" --surface "$surface_ref" $'\003'
-sleep 0.05
-cmux send --workspace "$ws_id" --surface "$surface_ref" "bash $(printf '%q' "$launcher")"
-cmux send-key --workspace "$ws_id" --surface "$surface_ref" enter
+# --- Warm the PTY, restore focus, then atomic-send the launcher ---
+# cmux 0.64.6 lazy-spawns terminal PTYs on first focus. Until then, `cmux send`
+# and `cmux send-key` succeed (queued) but never reach a shell. There is NO
+# `shell.ready` / `pty.spawned` event on `cmux events` and no flag on
+# `new-workspace` that bypasses this. Audited alternatives (`--command`,
+# `--layout` with embedded command, `paste-buffer`, `respawn-pane --command`)
+# all hit either the lazy-PTY race or the vi-NORMAL trap below — none of them
+# can replace the four-step dance: focus → restore → reset-mode → send.
+#
+# Step 1: focus-pane spawns the PTY. `surface-health.in_window` flips true
+# while focused, but reverts to false on the restore step, so it cannot be
+# used as a readiness signal — we still need the prompt-glyph poll.
+cmux focus-pane --workspace "$ws_id" --pane "$pane_ref" >/dev/null 2>&1 || true
+
+# Step 2: poll read-screen for fish's prompt glyph. Fresh fish typically
+# converges in 1-2 polls (~100-200ms). `❮` and `❯` are fish's vi-mode prompt
+# glyphs; `$ ` / `% ` are bash/zsh fallbacks for non-fish users.
+fish_ready_retries="${DISPATCH_FISH_READY_RETRIES:-50}"
+fish_ready_sleep="${DISPATCH_FISH_READY_SLEEP_SECS:-0.10}"
+for _ in $(seq 1 "$fish_ready_retries"); do
+  screen="$(cmux read-screen --workspace "$ws_id" --surface "$surface_ref" --lines 5 2>/dev/null || true)"
+  if [[ "$screen" == *"❮"* || "$screen" == *"❯"* || "$screen" == *"\$ "* || "$screen" == *"% "* ]]; then
+    break
+  fi
+  sleep "$fish_ready_sleep"
+done
+
+# Step 3: restore the user's view. `focus-pane` selects the new workspace
+# inside the user's window — verified empirically. select-workspace puts the
+# view back before we send anything, so the user's focus never moves.
+if [[ -n "$user_selected_ws" && "$user_selected_ws" != "$ws_id" ]]; then
+  cmux select-workspace --workspace "$user_selected_ws" >/dev/null 2>&1 || true
+fi
+
+# Step 4: ATOMIC send — `\003` (Ctrl-C) resets fish out of vi-NORMAL into
+# INSERT (fresh fish sessions land in NORMAL when vi-mode is enabled; first
+# letters of `echo …` would otherwise be consumed as motions), the launcher
+# command body follows, and the trailing `\n` fires Enter. One socket
+# round-trip; no race window between the mode reset and the command body.
+# (`cmux send --help`: "Escape sequences: \n and \r send Enter".)
+cmux send --workspace "$ws_id" --surface "$surface_ref" \
+  $'\003'"bash $(printf '%q' "$launcher")"$'\n' >/dev/null 2>&1 || true
 launch_started=1
 
 # --- Position + metadata ---

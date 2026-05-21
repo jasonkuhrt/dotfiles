@@ -18,6 +18,27 @@
   "workbench.layoutControl.enabled": false,
   "window.commandCenter": false,
 
+  // ── View layout: containers pinned to the Auxiliary Bar (right); search to a custom sidebar.
+  //    Mirrors `views.customizations` in state.vscdb so the layout follows dotfiles to any
+  //    machine and survives a state-DB reset. `terminal` stays as its own container here so
+  //    the terminal view never re-nests inside the chat container.
+  "workbench.views.customizations": {
+    "viewContainerLocations": {
+      "workbench.views.service.sidebar.c28e3b73-2832-41b7-b340-efefea9f6b6f": 0,
+      "refactorPreview": 2,
+      "workbench.panel.repl": 2,
+      "workbench.panel.markers": 2,
+      "workbench.panel.output": 2,
+      "terminal": 2,
+      "~remote.forwardedPortsContainer": 2,
+      "workbench.panel.comments": 2
+    },
+    "viewLocations": {
+      "workbench.view.search": "workbench.views.service.sidebar.c28e3b73-2832-41b7-b340-efefea9f6b6f"
+    },
+    "viewContainerBadgeEnablementStates": {}
+  },
+
   // ──────────────────────────────────────────── Editor
   "editor.fontFamily": "Fira Code",
   "editor.fontLigatures": true,

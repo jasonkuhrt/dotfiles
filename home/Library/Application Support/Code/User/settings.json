@@ -321,7 +321,7 @@
     "dev": "linux",
   },
   "github.copilot.chat.notebook.enhancedNextEditSuggestions.enabled": true,
-  "errorLens.enabled": true,
+  "errorLens.enabled": false,
   "editor.codeLens": false,
   "gitlens.ai.model": "vscode",
   "gitlens.ai.vscode.model": "copilot:gpt-4.1",

@@ -6,11 +6,11 @@ return {
   "pwntester/octo.nvim",
   dependencies = {
     "nvim-lua/plenary.nvim",
-    "nvim-telescope/telescope.nvim",
     "nvim-tree/nvim-web-devicons",
   },
   config = function()
-    require("octo").setup()
+    -- Telescope is disabled (see plugins/editor.lua); use the Snacks picker instead.
+    require("octo").setup({ picker = "snacks" })
   end,
   cmd = "Octo",
   -- Chords wired in keymaps.lua at task 8 (qr, qn, qN).

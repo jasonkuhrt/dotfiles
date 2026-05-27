@@ -1,0 +1,2 @@
+# GitHub CLI extensions managed by dotfiles.
+dlvhdr/gh-enhance

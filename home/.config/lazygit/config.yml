@@ -4,35 +4,44 @@ gui:
   # Source: https://github.com/folke/tokyonight.nvim/blob/main/extras/lazygit/tokyonight_night.yml
   theme:
     activeBorderColor:
-      - '#7aa2f7'  # blue
+      - '#7aa2f7' # blue
       - bold
     inactiveBorderColor:
-      - '#565f89'  # comment
+      - '#565f89' # comment
     searchingActiveBorderColor:
-      - '#e0af68'  # yellow
+      - '#e0af68' # yellow
       - bold
     optionsTextColor:
-      - '#7aa2f7'  # blue
+      - '#7aa2f7' # blue
     selectedLineBgColor:
-      - '#283457'  # visual selection
+      - '#283457' # visual selection
     cherryPickedCommitFgColor:
-      - '#7aa2f7'  # blue
+      - '#7aa2f7' # blue
     cherryPickedCommitBgColor:
-      - '#bb9af7'  # magenta
+      - '#bb9af7' # magenta
     markedBaseCommitFgColor:
-      - '#7aa2f7'  # blue
+      - '#7aa2f7' # blue
     markedBaseCommitBgColor:
-      - '#e0af68'  # yellow
+      - '#e0af68' # yellow
     unstagedChangesColor:
-      - '#f7768e'  # red
+      - '#f7768e' # red
     defaultFgColor:
-      - '#c0caf5'  # fg
-
+      - '#c0caf5' # fg
+git:
+  # `pagers` is a LIST (this fork's schema — see `lazygit --config`).
+  # delta reads its own behaviour (navigate, line-numbers, hyperlinks,
+  # theme) from ~/.gitconfig's [delta] section; this only names the
+  # command. side-by-side is NOT inherited — it's set on core.pager in
+  # ~/.gitconfig, so the terminal gets two columns and lazygit stays
+  # unified. --paging=never stops delta spawning its own less, leaving
+  # lazygit in control of scrolling.
+  pagers:
+    - colorArg: always
+      pager: delta --paging=never
 keybinding:
   universal:
     scrollUpMain: K
     scrollDownMain: J
-
 customCommands:
   # UPSTREAM-FIXME: stash → commitFiles drill-in gives a wrong commit SHA.
   #
@@ -63,15 +72,10 @@ customCommands:
         title: 'Dunk line comment (dirty)'
         key: 'Body'
     command: >
-      dunk-lazygit
-      --mode line
-      --file {{.SelectedPatch.FileName | quote}}
-      --line {{.SelectedPatch.CurrentLineNumber}}
-      --range "{{.SelectedPatch.SelectedStartLineNumber}}:{{.SelectedPatch.SelectedEndLineNumber}}"
-      --body {{.Form.Body | quote}}
+      dunk-lazygit --mode line --file {{.SelectedPatch.FileName | quote}} --line {{.SelectedPatch.CurrentLineNumber}} --range "{{.SelectedPatch.SelectedStartLineNumber}}:{{.SelectedPatch.SelectedEndLineNumber}}" --body {{.Form.Body | quote}}
+
     loadingText: 'Adding Dunk line comment'
     output: log
-
   # LINE mode, staged: index-vs-HEAD (sentinel anchor — index content ≠ working tree)
   - key: ';'
     context: 'stagingSecondary'
@@ -81,16 +85,10 @@ customCommands:
         title: 'Dunk line comment (staged)'
         key: 'Body'
     command: >
-      dunk-lazygit
-      --mode line
-      --file {{.SelectedPatch.FileName | quote}}
-      --line {{.SelectedPatch.CurrentLineNumber}}
-      --range "{{.SelectedPatch.SelectedStartLineNumber}}:{{.SelectedPatch.SelectedEndLineNumber}}"
-      --staged
-      --body {{.Form.Body | quote}}
+      dunk-lazygit --mode line --file {{.SelectedPatch.FileName | quote}} --line {{.SelectedPatch.CurrentLineNumber}} --range "{{.SelectedPatch.SelectedStartLineNumber}}:{{.SelectedPatch.SelectedEndLineNumber}}" --staged --body {{.Form.Body | quote}}
+
     loadingText: 'Adding Dunk line comment (staged)'
     output: log
-
   # LINE mode, in commit: patch builder drilled in from a commit
   - key: ';'
     context: 'patchBuilding'
@@ -100,16 +98,10 @@ customCommands:
         title: 'Dunk line comment (in commit)'
         key: 'Body'
     command: >
-      dunk-lazygit
-      --mode line
-      --file {{.SelectedPatch.FileName | quote}}
-      --line {{.SelectedPatch.CurrentLineNumber}}
-      --range "{{.SelectedPatch.SelectedStartLineNumber}}:{{.SelectedPatch.SelectedEndLineNumber}}"
-      --commit {{.SelectedCommit.Hash | quote}}
-      --body {{.Form.Body | quote}}
+      dunk-lazygit --mode line --file {{.SelectedPatch.FileName | quote}} --line {{.SelectedPatch.CurrentLineNumber}} --range "{{.SelectedPatch.SelectedStartLineNumber}}:{{.SelectedPatch.SelectedEndLineNumber}}" --commit {{.SelectedCommit.Hash | quote}} --body {{.Form.Body | quote}}
+
     loadingText: 'Adding Dunk line comment (in commit)'
     output: log
-
   # FILE/DIR mode, dirty: working tree
   - key: ';'
     context: 'files'
@@ -119,13 +111,10 @@ customCommands:
         title: 'Dunk file/dir comment (dirty)'
         key: 'Body'
     command: >
-      dunk-lazygit
-      --mode file
-      --file {{.SelectedPath | quote}}
-      --body {{.Form.Body | quote}}
+      dunk-lazygit --mode file --file {{.SelectedPath | quote}} --body {{.Form.Body | quote}}
+
     loadingText: 'Adding Dunk file/dir comment'
     output: log
-
   # FILE/DIR mode, in commit: drilled into a commit's files
   - key: ';'
     context: 'commitFiles'
@@ -135,14 +124,10 @@ customCommands:
         title: 'Dunk file/dir comment (in commit)'
         key: 'Body'
     command: >
-      dunk-lazygit
-      --mode file
-      --file {{.SelectedPath | quote}}
-      --commit {{.SelectedCommit.Hash | quote}}
-      --body {{.Form.Body | quote}}
+      dunk-lazygit --mode file --file {{.SelectedPath | quote}} --commit {{.SelectedCommit.Hash | quote}} --body {{.Form.Body | quote}}
+
     loadingText: 'Adding Dunk file/dir comment (in commit)'
     output: log
-
   # COMMIT mode: whole commit annotation from any commits panel
   - key: ';'
     context: 'commits, subCommits, reflogCommits'
@@ -152,9 +137,7 @@ customCommands:
         title: 'Dunk commit-level comment'
         key: 'Body'
     command: >
-      dunk-lazygit
-      --mode commit
-      --commit {{.SelectedCommit.Hash | quote}}
-      --body {{.Form.Body | quote}}
+      dunk-lazygit --mode commit --commit {{.SelectedCommit.Hash | quote}} --body {{.Form.Body | quote}}
+
     loadingText: 'Adding Dunk commit-level comment'
     output: log

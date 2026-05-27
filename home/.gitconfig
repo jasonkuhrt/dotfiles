@@ -12,8 +12,11 @@
 	templateDir = /Users/jasonkuhrt/.config/git-hooks/init-template
 
 [core]
-    # Use delta for all paged output (diff, log, show, blame)
-    pager = delta
+    # Use delta for all paged output (diff, log, show, blame).
+    # --side-by-side lives HERE, not in [delta], so the two-column view is
+    # a wide-terminal opt-in. lazygit invokes delta without it (see its
+    # config.yml) and so renders unified — side-by-side cramps TUI panes.
+    pager = delta --side-by-side
     # Global gitignore location
     excludesfile = ~/.config/git/ignore
     # Cache untracked files - speeds up `git status` in large repos
@@ -92,14 +95,39 @@
     diffFilter = delta --color-only
 
 [delta]
+    # Tokyo Night theme — diff colors + syntax-theme, defined as the
+    # named feature below so it can be swapped (storm/moon/day variants).
+    features = tokyonight
     # Use n/N to jump between diff sections
     navigate = true
-    # Two-column diff view (left=old, right=new)
-    side-by-side = true
+    # side-by-side is intentionally NOT set here: a value in the main
+    # [delta] section overrides features AND can't be turned off per-pager,
+    # so it would force two columns on lazygit too. It's opt-in via
+    # core.pager instead (terminal yes, lazygit no).
     # Show line numbers
     line-numbers = true
     # Make file paths clickable in supported terminals (e.g., iTerm2, Ghostty)
     hyperlinks = true
+
+# Tokyo Night (night variant). Diff colors are the official values from
+# folke/tokyonight.nvim → extras/delta/tokyonight_night.gitconfig — the
+# same source as the lazygit theme. syntax-theme = tokyonight_night needs
+# the matching tmTheme installed in bat: it lives at
+# ~/.config/bat/themes/tokyonight_night.tmTheme and is registered via
+# `bat cache --build`. delta shares bat's theme cache.
+[delta "tokyonight"]
+    syntax-theme                  = tokyonight_night
+    minus-style                   = syntax "#4a272f"
+    minus-non-emph-style          = syntax "#4a272f"
+    minus-emph-style              = syntax "#713137"
+    minus-empty-line-marker-style = syntax "#4a272f"
+    line-numbers-minus-style      = "#914c54"
+    plus-style                    = syntax "#243e4a"
+    plus-non-emph-style           = syntax "#243e4a"
+    plus-emph-style               = syntax "#2c5a66"
+    plus-empty-line-marker-style  = syntax "#243e4a"
+    line-numbers-plus-style       = "#449dab"
+    line-numbers-zero-style       = "#3b4261"
 
 # ─────────────────────────────────────────────────────────────
 # Aliases

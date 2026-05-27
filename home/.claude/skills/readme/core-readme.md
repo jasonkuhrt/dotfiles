@@ -48,7 +48,7 @@ Every README has these base sections in this order. None may be omitted. Structu
 | 7 | _(conditional sections — see G5)_ | |
 | 8 | __Usage__             | Common tasks solved with real, copy-pasteable examples.                                     |
 | 9 | __API Reference__     | Every public export: type signature, purpose, configuration. See G6.                        |
-| 10 | __Glossary__         | Every domain term, alphabetical, one definition each.                                       |
+| 10 | __Glossary__         | Bounded-context Ubiquitous Language. Every domain term, alphabetical, one prose meaning each. See G7. |
 
 __Monorepo root exception:__ Replace Quickstart with __Getting Started__ (workspace setup + choosing a package), replace API Reference with __Package Index__ (table of packages with one-line descriptions), and adapt Concepts to cover architecture and how packages relate. The other sections apply as-is.
 
@@ -129,6 +129,57 @@ Domain terms in prose use backtick links to the glossary: `` [`term`](#term) ``.
 
 Visually distinct from external links and plain code references. Use liberally after a term's first introduction. Glossary entries use `####` headings for anchor targets.
 
+## G7: Glossary as Ubiquitous Language
+
+The Glossary is not a glossary in the colloquial sense (a friendly index of terms). It is the bounded context's __Ubiquitous Language__ (DDD): the canonical, shared vocabulary that domain stakeholders and implementers use to talk about the system. The package's Glossary IS its UL. Apply UL discipline.
+
+### G7.1: Domain concepts, not implementation constructs
+
+Each entry names a concept the bounded context uses to think. Code identifiers (class names, type names, method names) appear in the Term cell only when the identifier IS the canonical name of the concept — when the team says "the Builder" they mean exactly the thing typed `Builder`. When the identifier is incidental to the concept (a specific signature, a generic parameter, a private helper), the Term is the plain-prose name and the code identifier lives in API Reference instead.
+
+Type-parameter signatures, generics, and call signatures never appear in the Term cell.
+
+### G7.2: Prose meanings, no code in the meaning
+
+The meaning is plain prose that explains what the concept IS. The meaning has NO inline code spans, NO type signatures, NO method calls, NO parameter lists, NO API call shapes, NO schema imports, NO library type names. If the concept's "what it is" cannot be expressed without code, the entry is in the wrong section — that material belongs in API Reference or Concepts.
+
+__Mechanical test:__ strip every backtick-quoted token from the meaning. If the remaining prose still defines the concept, the entry is correct. If the prose collapses into "is a `Foo` that takes `Bar`", the entry is an API restatement and must be rewritten.
+
+### G7.3: One row per canonical concept
+
+No synonyms. No "also known as". No "X (alias: Y)". No aspirational alternative names. The team has one canonical name per concept; the Glossary records it. If two names compete in the codebase, the Glossary decides which is canonical — and the loser is renamed in code, not preserved as an alias here.
+
+### G7.4: Meaning only — no rationale, examples, rules, or prohibitions
+
+The Glossary defines; it does not argue, illustrate, or constrain. Rationale lives in Concepts. Examples live in Usage. Operational rules and constraints live in API Reference and Implementation Constraints. Design history lives in commit messages. A Glossary entry that begins explaining why a decision was made, when to use the concept, or what NOT to do has drifted out of the Glossary.
+
+### G7.5: Cross-references between entries use plain prose
+
+When one entry's meaning references another term, use the ordinary lowercase form of the concept in the prose. Render an in-section link via `[term](#term)` if the jump helps, but do not render the reference as code unless the referenced term itself is a code identifier under G7.1.
+
+### G7.6: A domain stakeholder must be able to read it
+
+Product managers, designers, partner-team engineers, and other non-implementers read the Glossary to understand the package's domain. They do not read type signatures. If a meaning requires TypeScript generic literacy, Effect combinator knowledge, or familiarity with a third-party API to parse, the meaning is wrong. Rewrite it in terms a domain stakeholder can read.
+
+The exception is bounded-context-native vocabulary: terms whose meaning is intrinsic to the bounded context's domain (e.g. "fail channel" in an Effect-ecosystem package, "tagged class" in a Schema-driven library). These are the bounded context's words, not generic programming jargon. They are admissible without further grounding because the bounded context's stakeholders already share them.
+
+### G7.7: The Glossary is the contract for vocabulary
+
+When two team members disagree about what a term means, the Glossary decides. A change to a term's meaning is a domain change, requiring deliberate review. A change to a term's name is a domain rename, requiring code-side migration. Treat Glossary edits with the same care as renaming a public type.
+
+### Relationship to a project-wide `UBIQUITOUS_LANGUAGE.md`
+
+Some projects maintain a separate `UBIQUITOUS_LANGUAGE.md` at the repository or bounded-context root. The two artifacts have different shapes and overlapping content:
+
+| Artifact | Shape | Audience |
+| --- | --- | --- |
+| `UBIQUITOUS_LANGUAGE.md` | Strict two-column table. No headings, no preamble, no anchor targets. | Project-wide / bounded-context-wide |
+| README Glossary | `####` headings as anchor targets. Otherwise identical discipline. | Package-internal, integrated with the README's prose |
+
+The README Glossary uses headings because the README's body links into it via anchors; the project-wide UL file uses a flat table because nothing links into it. The textual discipline (G7.1-G7.7) is the same for both.
+
+When a project-wide UL file exists, the README Glossary's names and meanings must match it for every term that appears in both. The README Glossary may add package-local terms not in the project-wide UL — these are the package's internal vocabulary. The reverse (terms in the project-wide UL that don't appear in this package's README) is normal and not a violation.
+
 ## Section Guidance
 
 __Title + One-liner__: Generate 5 candidates. Pick the one naming something unique to THIS project. Two tests: (1) could this describe a different project? If yes, reject it. (2) Can a developer understand it without reading further? If it requires domain knowledge to parse, simplify. No jargon in the one-liner.
@@ -153,7 +204,7 @@ __Error Reference__ (conditional, see G5): Table format with columns: error name
 
 __API Reference__: Scales per G6. When the README is the sole documentation surface, this is the full reference: every public function with signature and purpose, every configuration type with option/type/default/description columns, every exported type with purpose. When an external docs site exists, this is a signpost table.
 
-__Glossary__: Every domain term introduced in the README. Alphabetical. `####` headings for anchor targets. One concise definition each. The glossary is reinforcement, not the place of first introduction. The glossary is not limited to API exports — it covers the full domain vocabulary, including system terms that have no direct API representation (e.g., "scope" as a runtime concept, "namespace" as an emergent structural property). If a reader needs to understand a term to use the system, it belongs in the glossary regardless of whether it maps to a constructor or type.
+__Glossary__: The bounded context's Ubiquitous Language for this package. See G7 for the full discipline. Mechanics: every domain term introduced in the README, alphabetical, `####` heading per term as anchor target, one prose meaning each. The Glossary is reinforcement, not the place of first introduction. It is not limited to API exports — it covers the full domain vocabulary, including system terms with no direct API representation (e.g. "scope" as a runtime concept, "namespace" as an emergent structural property). If a reader needs to understand a term to use the system, it belongs in the Glossary regardless of whether the term maps to a constructor or type. Per G7.2, meanings contain no inline code spans, type signatures, or API call shapes — those live in API Reference.
 
 ## README Anti-Patterns
 
@@ -181,6 +232,28 @@ A README that exhaustively documents ranking formula coefficients and temporal d
 ### Duplicate Introduction
 
 A concept briefly introduced in one section ("Module Tree" as a structural overview) and then fully defined later ("Module" as a concept). The reader encounters the concept twice with overlapping information and must mentally merge them. Introduce each concept exactly once, where it belongs in the topological sort.
+
+### Glossary-as-API-Index
+
+A Glossary whose entries restate type signatures, list parameter shapes, or describe configuration options. Symptom: the meaning makes sense only after reading code; strip its backtick-quoted tokens and the prose collapses (G7.2 mechanical test).
+
+```markdown
+#### Builder
+A function `(ctx: LoaderContext) => Effect<A, E, R>` passed to `loader`, `beforeLoad`, `searchValidator`, or `paramsValidator`.
+```
+
+That is API Reference content shaped as a Glossary entry. Fix: rewrite as a domain meaning.
+
+```markdown
+#### Builder
+A function from a route's per-call context to an Effect. Each callback wrapper takes one. The Builder is where domain code lives; the wrapper is mechanical.
+```
+
+The fix's meaning still informs a developer, still says what the thing IS, and a non-implementer can read it.
+
+### Glossary with Rationale
+
+A Glossary entry that explains why a design decision was made, when to use the concept, or what NOT to do. Symptom: the entry has more than one substantive sentence beyond the meaning. Fix: move the rationale to Concepts, the usage advice to Usage, the constraints to API Reference or Implementation Constraints. The Glossary holds the meaning; nothing else.
 
 ### User-Action Language in Library Docs
 

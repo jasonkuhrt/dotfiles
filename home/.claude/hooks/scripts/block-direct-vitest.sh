@@ -11,7 +11,7 @@ command="$1"
 direct_vitest_pattern='(^|[;&|][;&|]?[[:space:]]*)((npx|bunx)[[:space:]]+|npm[[:space:]]+exec[[:space:]]+|pnpm[[:space:]]+exec[[:space:]]+)?vitest[[:space:]]+(run|watch|bench|list)([[:space:]]|$)'
 
 if ! [[ "$command" =~ $direct_vitest_pattern ]]; then
-  echo '{"decision": "allow"}'
+  echo '{}'
   exit 0
 fi
 

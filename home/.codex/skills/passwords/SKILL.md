@@ -1,6 +1,6 @@
 ---
 name: passwords
-description: Use when Codex needs the user's secrets, Apple Passwords.app, or macOS Keychain for credential reads/writes without exposing secrets. Prefer the `security` CLI credential cache first for recurring agent logins, falling back to Passwords.app only on cache miss or verification/update. Triggers include "$passwords", "$secrets", "secrets skill", "use Passwords", "open my pw app", "copy password from Passwords", "save/update this password", "use my security cli", "unlock Passwords", or any login/workflow where credentials live in Apple Passwords.
+description: Use when Codex needs the user's secrets, Apple Passwords.app, macOS Keychain, or saved 2FA/TOTP verification codes for credential reads/writes without exposing secrets. Prefer the `security` CLI credential cache first for recurring agent username/password logins, falling back to Passwords.app on cache miss, verification/update, or MFA code prompts. Triggers include "$passwords", "$secrets", "secrets skill", "use Passwords", "open my pw app", "copy password from Passwords", "copy 2FA code from Passwords", "save/update this password", "use my security cli", "unlock Passwords", or any login/workflow where credentials live in Apple Passwords.
 ---
 
 # Passwords
@@ -126,6 +126,23 @@ After Passwords.app is unlocked:
 
 Do not silently "fix" or guess usernames. Use what Passwords.app provides unless the user explicitly corrects it.
 
+## Copy A Verification Code
+
+The user usually keeps TOTP/2FA verification codes in Passwords.app on the same entry as the username/password. When a browser login reaches a one-time code prompt, check Passwords.app before stopping for user intervention.
+
+After Passwords.app is unlocked:
+
+1. Search for and select the same site, app, service, or account entry used for the login.
+2. If the user already has Passwords.app open with the right entry selected, use that entry directly.
+3. Use the Passwords.app UI copy affordance for `Code` when available.
+4. Do not read, print, summarize, or store the generated code.
+5. Paste the code directly into the destination UI.
+6. Clear the clipboard immediately after pasting.
+
+Do not cache TOTP seeds or generated verification codes in `agent-credential:<service>` Keychain items. The cache is only for recurring username/password login fields.
+
+Verification codes expire quickly. If the first pasted code is rejected or the timer is near expiry, refresh the Passwords.app item and retry once with the newly generated code. If the entry has no code, the prompt requires a non-TOTP approval, or the refreshed code fails, stop and report the exact visible state.
+
 ## Write A Credential
 
 Use Passwords.app writes only for explicit credential-management requests, such as "save this password", "update this login", "create an entry for this site", or "delete the stale entry".
@@ -148,7 +165,8 @@ If a write would replace an existing password, ask for direct confirmation unles
 5. If cached, use the cached username and copy the cached password with the copy helper. Paste the password directly into the destination field and clear the clipboard.
 6. If missing, open Passwords.app, select the correct entry, save it into the cache with the save-selected helper, then use the cache for the login.
 7. Submit only when the user has clearly asked to log in.
-8. Stop on MFA, CAPTCHA, identity proofing, or invalid-login errors and report the exact visible state.
+8. On MFA/TOTP one-time code prompts, follow `Copy A Verification Code` before asking the user to intervene.
+9. Stop on CAPTCHA, passkey/hardware approval, non-TOTP identity proofing, missing/failing verification code, or invalid-login errors and report the exact visible state.
 
 If the site rejects the login, do not retry with guesses. Government and financial portals can lock accounts after repeated failures.
 

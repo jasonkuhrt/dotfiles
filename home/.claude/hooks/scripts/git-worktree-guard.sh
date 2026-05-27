@@ -45,6 +45,13 @@ if [ "$IS_DANGEROUS" = false ]; then
 fi
 
 WORKTREE=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+
+# Reference-repo checkouts under ~/repo-references/ are read-mostly source
+# clones, not shared WIP worktrees. Branch switching there is fine.
+case "$WORKTREE" in
+  "$HOME"/repo-references/*) exit 0 ;;
+esac
+
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || BRANCH="unknown"
 
 cat >&2 <<ERRMSG

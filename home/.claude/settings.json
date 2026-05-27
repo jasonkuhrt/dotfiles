@@ -73,6 +73,41 @@
             "type": "command",
             "command": "~/.claude/hooks/scripts/block-direct-tsc.sh",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/block-sleep-poll-loops.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/block-gh-pr-checks-watch.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/block-stack-log-grep-ready.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Monitor",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/block-stack-log-grep-ready.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__claude-in-chrome__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/claude-in-chrome-guard.sh",
+            "timeout": 5
           }
         ]
       }
@@ -117,6 +152,11 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/scripts/compact-name-restore.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/session-start-session-id.sh",
             "timeout": 5
           }
         ]

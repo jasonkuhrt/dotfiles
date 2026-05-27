@@ -1316,6 +1316,9 @@ fn-wispr-qa:
 agentsview-install:
     DOTFILES_ROOT={{ justfile_directory() }} bash scripts/setup/after/onchange/19-agentsview.sh
 
+gh-extensions-sync:
+    DOTFILES_ROOT={{ justfile_directory() }} bash scripts/setup/after/onchange/21-gh-extensions.sh
+
 agentsview-version:
     #!/usr/bin/env bash
     set -euo pipefail

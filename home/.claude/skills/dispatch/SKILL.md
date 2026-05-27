@@ -256,6 +256,41 @@ ws_ref=$(cmux --json find-window "E2E Importer Fixes" | jq -r '.matches[0].ref')
 cmux read-screen --workspace "$ws_ref" --scrollback --lines 50
 ```
 
+### When `find-window` finds nothing — the agent is probably a *surface*
+
+`find-window` matches **workspace and window titles only** — not surface (tab)
+titles. A dispatched agent starts as its own workspace, but the user routinely
+**moves it into another workspace's tab strip as a surface** to group agents.
+Once moved, `find-window "<the dispatch slug>"` returns zero — the slug is now a
+*surface* title, and the workspace it lives in has a different title. The refs
+printed by `dispatch.sh` also go stale after such a move.
+
+So a zero from `find-window` is not "agent gone" — search the surfaces:
+
+```bash
+# Find the surface ref by its title (the dispatch slug). Surface titles may be
+# prefixed with an activity glyph (e.g. "✳ "), so match as a substring.
+surface_ref=$(cmux --json tree | jq -r '
+  [ .. | objects
+    | select(.type? == "terminal" and ((.title? // "") | test("NX Envar Rename"; "i"))) ]
+  | if length == 1 then .[0].ref else "" end')
+```
+
+`cmux send`, `send-key`, and `read-screen` all accept `--surface <id|ref|index>`
+exactly like `--workspace`:
+
+```bash
+cmux send --surface "$surface_ref" "Also fix the timezone handling"
+cmux send-key --surface "$surface_ref" enter
+cmux read-screen --surface "$surface_ref" --scrollback --lines 50
+```
+
+Notes:
+- In cmux JSON, the human label is `.title` — **not `.name`**. `jq '.matches[].name'`
+  / `jq '.workspaces[].name'` silently yields `null`; use `.title`.
+- The surface-search is also subject to the "exactly one match or don't send"
+  rule above — if the tree search yields zero or many, surface it to the user.
+
 ## Important notes
 
 - Each dispatched session is fully independent — include all necessary context

@@ -45,3 +45,20 @@ The QuickJS sandbox blocks:
 For downloads, use CDP: `Page.setDownloadBehavior` with `behavior: 'allow'` and `downloadPath`.
 
 For passing data between bash and browser scripts, write to `~/.dev-browser/tmp/` from bash, read via `readFile()` in the sandbox.
+
+## Daemon wedge — silent hangs (the `--timeout`-never-fires tell)
+
+**Symptom:** `dev-browser --connect` (and anything on it, e.g. `td`) hangs with **no output**, and `--timeout` **never fires** — client processes pile up for *hours*. A real Chrome/CDP connect failure would time out; timeouts never firing across every client means they're all stuck on the **wedged daemon**.
+
+**Diagnose:** `ps -Ao pid,etime,command | grep '[d]ev-browser'` — multiple clients hung far past their `--timeout`.
+
+**Fix** (restart the daemon — it's shared, so get user OK first; clears the wedge AND re-matches a freshly-updated CLI):
+
+```bash
+kill -KILL "$(pgrep -f '[d]aemon.mjs')"
+rm -f ~/.dev-browser/daemon.sock ~/.dev-browser/daemon.pid
+```
+
+The next `dev-browser` call spawns a fresh daemon. **Verified 2026-05-31:** a wedged daemon — *not* the Chrome-148 `/json` 404 — was the real blocker for `td open`; the restart fixed it instantly after ~3h of chasing the wrong layer.
+
+**Don't chase `/json`.** Chrome M144+'s `chrome://inspect` "Allow remote debugging" toggle is **WebSocket-only — `/json/version` 404s by design** (it's the only way to debug the default/logged-in profile, since Chrome 136 blocked `--remote-debugging-port` on the default profile). dev-browser already handles this: on a 404 it reads the `ws://…/devtools/browser/<id>` URL from `~/Library/Application Support/Google/Chrome/DevToolsActivePort`. So a `/json` 404 is **expected and handled** — if it's hanging, suspect the daemon, not discovery. (Also: passing a `ws://` URL to `--connect` does NOT work — dev-browser forces the path to `/json/version` on whatever URL it's given, so always pass `http://…` or no URL.)

@@ -1361,3 +1361,32 @@ task-dump *args:
 [private]
 task-open *args:
     bun x @jasonkuhrt/shan task open {{ args }}
+
+browser-probe := "research/browser-native-host-prototype/host/agent-browser-host.ts"
+
+browser-probe-serve:
+    bun {{ browser-probe }} serve
+
+browser-probe-status:
+    bun {{ browser-probe }} status
+
+browser-probe-snapshot:
+    bun {{ browser-probe }} snapshot
+
+browser-probe-locate selector:
+    bun {{ browser-probe }} locate "{{ selector }}"
+
+browser-probe-navigate url:
+    bun {{ browser-probe }} navigate "{{ url }}"
+
+browser-probe-click selector:
+    bun {{ browser-probe }} click "{{ selector }}"
+
+browser-probe-fill selector text:
+    bun {{ browser-probe }} fill "{{ selector }}" "{{ text }}"
+
+browser-probe-native-click selector:
+    bun {{ browser-probe }} native-click "{{ selector }}"
+
+browser-probe-native-type text:
+    bun {{ browser-probe }} native-type "{{ text }}"

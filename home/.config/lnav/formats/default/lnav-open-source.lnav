@@ -1,0 +1,16 @@
+#
+# @synopsis: lnav-open-source
+# @description: Open the source file for the focused log message.
+#
+
+;SELECT raise_error('Unable to locate source file: ' || log_src_file,
+                    'Log message could not be found',
+                    'Use :add-source-path to add a path to search for source code.')
+   FROM lnav_focused_msg
+  WHERE log_msg_src IS NULL
+
+;SELECT jget(log_msg_src, '/file', NULL) AS file_path,
+        jget(log_msg_src, '/begin_line', NULL) AS begin_line
+   FROM lnav_focused_msg
+;SELECT unparse_url(json_object('scheme', 'file', 'path', $file_path, 'fragment', format('L%d', $begin_line))) AS url
+:xopen $url

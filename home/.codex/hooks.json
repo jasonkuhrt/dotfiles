@@ -1,17 +1,5 @@
 {
   "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup|resume",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bun ~/.codex/hooks/session_start_load_claude_rules.ts",
-            "statusMessage": "Loading .claude rules"
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "hooks": [

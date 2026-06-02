@@ -219,6 +219,7 @@
   "effortLevel": "high",
   "autoUpdatesChannel": "latest",
   "skipDangerousModePermissionPrompt": true,
+  "skipWorkflowUsageWarning": true,
   "preferredNotifChannel": "ghostty",
   "skipAutoPermissionPrompt": true
 }

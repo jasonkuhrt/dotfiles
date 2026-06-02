@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Agent Browser Probe",
+  "description": "Prototype extension for CLI control of the current signed-in browser profile without CDP.",
+  "version": "0.1.0",
+  "permissions": ["tabs", "scripting"],
+  "host_permissions": ["<all_urls>", "http://127.0.0.1:17361/*", "ws://127.0.0.1:17361/*"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://127.0.0.1:17361 ws://127.0.0.1:17361"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

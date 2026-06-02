@@ -222,5 +222,6 @@ brew "ffmpeg"        # media processing (yazi video previews)
 brew "viu"           # terminal image viewer (Ghostty/libghostty-friendly)
 brew "chafa"         # terminal image renderer (reliable fallback)
 brew "imagemagick"   # image processing
+brew "imgdiff"       # pixel-by-pixel image diffing for screenshot review
 brew "poppler"       # PDF rendering (yazi PDF previews)
 brew "resvg"         # SVG rendering (yazi SVG previews)

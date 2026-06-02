@@ -46,7 +46,6 @@
                     },
                     {
                         "description": "Tap fn to toggle sticky fn; hold fn for normal fn behavior",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "from": {
@@ -61,7 +60,6 @@
                     },
                     {
                         "description": "Sticky Ctrl+0 cmux drive mode",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "conditions": [
@@ -143,7 +141,6 @@
                     },
                     {
                         "description": "Exit sticky cmux drive mode",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "conditions": [
@@ -219,7 +216,6 @@
                     },
                     {
                         "description": "Sticky cmux drive mode top-level actions",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "conditions": [
@@ -510,7 +506,6 @@
                     },
                     {
                         "description": "Sticky cmux drive mode resize prefix",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "conditions": [
@@ -664,7 +659,6 @@
                     },
                     {
                         "description": "Sticky cmux drive mode split prefix",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "conditions": [
@@ -818,7 +812,6 @@
                     },
                     {
                         "description": "Sticky cmux drive mode workspace prefix",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "conditions": [
@@ -892,7 +885,6 @@
                     },
                     {
                         "description": "Sticky cmux drive mode clears invalid prefixes",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "conditions": [
@@ -2734,7 +2726,6 @@
                     },
                     {
                         "description": "Sticky cmux drive mode swallows unmapped keys",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "conditions": [

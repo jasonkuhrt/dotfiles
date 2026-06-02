@@ -85,7 +85,7 @@ enabled = false
 enabled = true
 
 [plugins."google-calendar@openai-curated"]
-enabled = true
+enabled = false
 
 [plugins."browser-use@openai-bundled"]
 enabled = true

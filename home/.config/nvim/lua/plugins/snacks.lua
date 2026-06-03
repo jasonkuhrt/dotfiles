@@ -4,6 +4,13 @@ end
 
 local project = require("config.project")
 
+-- Pickers respect `.gitignore` by default (gitignored files are opt-in via the
+-- `i` / `<a-i>` toggle_ignored keymap — e.g. to surface a gitignored `.session/`).
+-- These excludes always apply, INCLUDING when ignored files are toggled on, so
+-- the giant gitignored trees (`node_modules`, `.git`) never flood the index even
+-- in opt-in mode — fd `-E` excludes apply regardless of `--no-ignore`.
+local picker_exclude = { "node_modules", ".git" }
+
 -- Recursively set open/expanded state on a directory node and all descendants.
 -- When opening, expand each dir to materialize children from disk before recursing.
 local function set_open_recursive(tree, node, open)
@@ -45,7 +52,6 @@ local snacks_opts = {
     },
   },
   picker = {
-    hidden = true,
     layout = {
       layout = {
         width = 0.7,
@@ -71,14 +77,14 @@ local snacks_opts = {
     sources = {
       files = {
         hidden = true,
-        ignored = true,
+        exclude = picker_exclude,
       },
       grep = {
-        ignored = true,
+        exclude = picker_exclude,
       },
       explorer = {
         hidden = true,
-        ignored = true,
+        exclude = picker_exclude,
         layout = {
           preset = "sidebar",
           preview = "main",

@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+    cat <<'EOF'
+Usage: duti-sync [--check|--dry-run] [config.yml]
+
+Sync macOS default file handlers from a YAML config through duti.
+Defaults to $XDG_CONFIG_HOME/duti.yml, or ~/.config/duti.yml when XDG_CONFIG_HOME is unset.
+
+Options:
+  --check    Report drift and exit non-zero when any handler differs.
+  --dry-run  Print planned duti changes without applying them.
+  -h, --help Show this help.
+EOF
+}
+
+mode="apply"
+default_config_path="${XDG_CONFIG_HOME:-$HOME/.config}/duti.yml"
+config_path=""
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+    --check)
+        mode="check"
+        ;;
+    --dry-run)
+        mode="dry-run"
+        ;;
+    -h | --help)
+        usage
+        exit 0
+        ;;
+    -*)
+        printf 'Unknown option: %s\n' "$1" >&2
+        usage >&2
+        exit 2
+        ;;
+    *)
+        if [ -n "$config_path" ]; then
+            printf 'Unexpected argument: %s\n' "$1" >&2
+            usage >&2
+            exit 2
+        fi
+        config_path="$1"
+        ;;
+    esac
+    shift
+done
+
+if [ -z "$config_path" ]; then
+    config_path="$default_config_path"
+fi
+
+if [ ! -f "$config_path" ]; then
+    printf 'Config file not found: %s\n' "$config_path" >&2
+    exit 1
+fi
+
+for command in duti yq; do
+    if ! command -v "$command" >/dev/null 2>&1; then
+        printf 'Required command not found: %s\n' "$command" >&2
+        exit 1
+    fi
+done
+
+# shellcheck disable=SC2016
+query='
+  .handlers[] |
+  . as $handler |
+  ($handler.extensions // [])[] |
+  [., $handler.bundleId, ($handler.role // "all")] |
+  @tsv
+'
+
+entry_count=0
+drift_count=0
+failure_count=0
+
+while IFS=$'\t' read -r extension bundle_id role || [ -n "${extension:-}" ]; do
+    entry_count=$((entry_count + 1))
+
+    if [ -z "${extension:-}" ] || [ -z "${bundle_id:-}" ]; then
+        printf 'Invalid config entry: extension and bundleId are required\n' >&2
+        failure_count=$((failure_count + 1))
+        continue
+    fi
+
+    extension="${extension#.}"
+    role="${role:-all}"
+
+    current="$(duti -x "$extension" 2>/dev/null | tail -n 1 || true)"
+
+    if [ "$current" = "$bundle_id" ]; then
+        printf 'skip .%s -> %s\n' "$extension" "$bundle_id"
+        continue
+    fi
+
+    drift_count=$((drift_count + 1))
+
+    case "$mode" in
+    check)
+        printf 'drift .%s: %s -> %s\n' "$extension" "${current:-<none>}" "$bundle_id"
+        ;;
+    dry-run)
+        printf 'would set .%s -> %s (%s)\n' "$extension" "$bundle_id" "$role"
+        ;;
+    apply)
+        if duti -s "$bundle_id" ".$extension" "$role"; then
+            printf 'set .%s -> %s\n' "$extension" "$bundle_id"
+        else
+            printf 'failed .%s -> %s\n' "$extension" "$bundle_id" >&2
+            failure_count=$((failure_count + 1))
+        fi
+        ;;
+    esac
+done < <(yq -r "$query" "$config_path")
+
+if [ "$entry_count" -eq 0 ]; then
+    printf 'No default app handlers found in %s\n' "$config_path" >&2
+    exit 1
+fi
+
+if [ "$failure_count" -gt 0 ]; then
+    exit 1
+fi
+
+if [ "$mode" = "check" ] && [ "$drift_count" -gt 0 ]; then
+    exit 1
+fi

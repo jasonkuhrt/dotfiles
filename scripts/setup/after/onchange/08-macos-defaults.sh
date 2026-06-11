@@ -1,11 +1,16 @@
 #!/bin/bash
 set -e
 
+# dotctl:watch home/.config/duti.yml
+
 source "$DOTFILES_ROOT/scripts/lib/helpers.sh"
 
 if [[ "$OSTYPE" != darwin* ]]; then
     exit 0
 fi
+
+DEFAULT_APPS_FILE="$DOTFILES_ROOT/home/.config/duti.yml"
+DUTI_SYNC="$DOTFILES_ROOT/home/.local/bin/duti-sync"
 
 header "macOS Defaults"
 
@@ -48,6 +53,15 @@ set_default "com.apple.driver.AppleBluetoothMultitouch.trackpad" "Clicking" "-bo
 
 info "Configuring Mission Control..."
 set_default "com.apple.dock" "mru-spaces" "-bool" "false" "Disable auto-rearrange Spaces"
+
+info "Configuring file default apps..."
+if [ ! -x "$DUTI_SYNC" ]; then
+    warn "duti-sync not executable, skipping file default apps"
+elif "$DUTI_SYNC" "$DEFAULT_APPS_FILE"; then
+    task "File default apps synced"
+else
+    warn "File default app sync failed"
+fi
 
 info "Checking iCloud Desktop & Documents..."
 icloud_desktop=$(defaults read com.apple.finder FXICloudDriveDesktop 2>/dev/null || echo "0")

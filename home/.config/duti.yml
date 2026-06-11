@@ -1,0 +1,30 @@
+handlers:
+  - id: zed-code
+    bundleId: dev.zed.Zed
+    role: all
+    extensions:
+      - ts
+      - tsx
+      - js
+      - jsx
+      - mjs
+      - cjs
+      - json
+      - md
+      - mdx
+      - yml
+      - yaml
+      - toml
+      - css
+      - scss
+      - vue
+      - svelte
+      - go
+      - rs
+      - py
+      - sh
+      - zsh
+      - lua
+      - sql
+      - prisma
+      - graphql

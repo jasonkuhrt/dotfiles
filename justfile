@@ -26,6 +26,12 @@ doctor:
 explain target:
     {{ dotctl }} explain {{ target }}
 
+macos-default-apps:
+    home/.local/bin/duti-sync home/.config/duti.yml
+
+macos-default-apps-check:
+    home/.local/bin/duti-sync --check home/.config/duti.yml
+
 lua-check: lua-lint lua-lsp-check lua-fmt-check
 
 lua-lint:

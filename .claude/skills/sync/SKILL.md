@@ -44,10 +44,8 @@ Full dotfiles sync: commit, rebase, converge with `just up`, then push.
    - Run `git status` again
    - If new intentional source changes appeared, commit them before pushing
 
-7. **Push the data and git remotes**
+7. **Push**
    ```bash
-   bd dolt pull
-   bd dolt push
    git push
    git status
    ```

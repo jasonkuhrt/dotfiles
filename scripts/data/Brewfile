@@ -119,7 +119,6 @@ brew "duti"          # default document and URL handlers
 # brew "polidog/kilar/kilar"  # interactive port/process manager
 
 # Database
-brew "dolt"                        # git for data
 brew "planetscale/tap/pscale"
 
 # Cloud

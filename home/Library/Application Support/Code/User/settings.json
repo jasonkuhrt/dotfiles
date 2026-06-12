@@ -244,7 +244,7 @@
   "jake.autoDetect": "off",
 
   // ──────────────────────────────────────────── Markdown
-  // ── Open .md files directly into the preview editor (skip source buffer; Cmd+K V toggles to source)
+  // ── Open .md files directly into the preview editor (skip source buffer; Cmd+K V toggles source ⇄ preview)
   "workbench.editorAssociations": {
     "*.md": "vscode.markdown.preview.editor",
   },

@@ -8,7 +8,7 @@
 # class of bug — different PRs have different workflow shapes.
 #
 # The canonical poll is `bash ~/.claude/skills/gh-ci/scripts/wait-ci.sh
-# <PR_NUMBER>` (run under the Monitor tool). It anchors to the PR head SHA,
+# <PR_NUMBER>` or the same shared skill path for the current harness. It anchors to the PR head SHA,
 # reads `statusCheckRollup`, and only exits green after the all-green rollup
 # stays stable long enough to catch delayed matrix/fanout checks.
 
@@ -38,9 +38,9 @@ read -r -d '' MSG <<'EOF' || true
 
 `gh pr checks --watch` / `--fail-fast` and count-based polls of `gh pr checks` are banned. They exit as soon as the *visible* checks settle, so heavy workflows that queue 30-90s after push are missed entirely — the agent reports the PR green when it isn't. Different PRs have different workflow shapes, so counting check-runs has no robust threshold either.
 
-Use the canonical poll instead, under the Monitor tool:
+Use the canonical poll instead through the `gh-ci` skill's harness-kind route:
 
-  Monitor: bash ~/.claude/skills/gh-ci/scripts/wait-ci.sh <PR_NUMBER>
+  bash ~/.claude/skills/gh-ci/scripts/wait-ci.sh <PR_NUMBER>
 
 For a one-shot authoritative status without polling, use:
 

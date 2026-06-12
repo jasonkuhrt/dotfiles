@@ -4,8 +4,7 @@
 #
 # Claude Code provides three modern primitives for "watch X until Y":
 #  - `/loop <interval> <prompt>` — re-invokes the agent on a cron, each
-#    iteration becomes a chat message. Required for CI polling (see
-#    memory: `feedback_use_loop_for_ci.md`).
+#    iteration becomes a chat message.
 #  - `Monitor` tool — long-running shell command, each stdout line
 #    becomes a notification, exit ends the watch.
 #  - `Bash run_in_background: true` — one-shot completion notification.
@@ -54,7 +53,7 @@ read -r -d '' MSG <<'EOF' || true
 
 This Bash command is a sleep-driven polling loop, which Claude Code's harness cannot surface progress for — only the final exit appears as a notification. Use one of the modern primitives instead:
 
-1. `/loop <interval> <prompt>` — recurring re-invocation. Each tick is a chat message, so you see progress and can react. **Required for CI polling** (see memory `feedback_use_loop_for_ci.md`): `/loop 1m gh pr checks <N>`.
+1. `/loop <interval> <prompt>` — recurring re-invocation. Each tick is a chat message, so you see progress and can react.
 2. `Monitor` tool — single long-running shell command; each stdout line is a notification, exit ends the watch. Pick this when you need to react per-event (e.g. emit per terminal CI check, halt on first failure) and stay outside the conversation cadence.
 3. `Bash run_in_background: true` — one completion notification only. Pick this when you genuinely just need "tell me when this single thing finishes" with no intermediate signals.
 

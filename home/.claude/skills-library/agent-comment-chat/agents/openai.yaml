@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Comment Chat"
+  short_description: "Poll @agent comments as chat messages"
+  default_prompt: "Use $agent-comment-chat to poll @agent comments in the current file and resolve them."

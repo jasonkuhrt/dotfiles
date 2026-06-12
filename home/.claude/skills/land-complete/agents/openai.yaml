@@ -1,0 +1,4 @@
+interface:
+  display_name: "Land Complete"
+  short_description: "Land, merge, and clean up PR worktrees"
+  default_prompt: "Use $land-complete to orchestrate $land-pr, $gh-ci, remote merge on green, and $land-merged cleanup."

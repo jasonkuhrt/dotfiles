@@ -7,15 +7,13 @@
 # are even created.
 #
 # Exit codes:
-#   0 — all visible checks green after the stable grace window
+#   0 — all visible checks green and relevant current-head workflow runs completed green
 #   1 — at least one check failed/cancelled/timed out/action-required
 #   2 — stale head or merge conflict; rerun/fix before polling further
 #   3 — usage error
 #
 # Env tunables:
-#   GH_CI_GRACE — seconds the all-green rollup must stay stable before exit
-#                 (default 90; catches late-created matrix/fanout checks)
-#   GH_CI_POLL  — poll interval seconds (default 30)
+#   GH_CI_POLL  — poll interval seconds (default 120)
 #
 # allow-sleep-poll: this script is the canonical CI poll.
 
@@ -33,16 +31,15 @@ if [ $# -gt 0 ]; then
   echo "NOTE: workflow-name arguments are ignored; statusCheckRollup is authoritative for PR CI."
 fi
 
-stable_grace="${GH_CI_GRACE:-90}"
-poll_interval="${GH_CI_POLL:-30}"
+poll_interval="${GH_CI_POLL:-120}"
 
 initial_json=$(gh pr view "$pr_number" --json headRefName,headRefOid,mergeable,mergeStateStatus)
 head_branch=$(jq -r '.headRefName' <<<"$initial_json")
 head_sha=$(jq -r '.headRefOid' <<<"$initial_json")
+repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
 
 prev_signature=""
-stable_since=0
-printed_visible_green=0
+printed_waiting_green=0
 
 normalize_checks() {
   jq -c '
@@ -88,6 +85,73 @@ normalize_checks() {
   '
 }
 
+normalize_workflow_runs() {
+  gh api "repos/$repo/actions/runs?head_sha=$head_sha&per_page=100" |
+    jq -c '
+      def has($xs; $x): ($xs | index($x)) != null;
+
+      [
+        .workflow_runs[]? |
+        (.status // "unknown" | ascii_downcase) as $status |
+        (.conclusion // "" | ascii_downcase) as $conclusion |
+        {
+          id: (.id | tostring),
+          name: (.name // .display_title // "workflow"),
+          event: (.event // ""),
+          state: $status,
+          conclusion: $conclusion,
+          createdAt: (.created_at // ""),
+          startedAt: (.run_started_at // ""),
+          updatedAt: (.updated_at // ""),
+          url: (.html_url // ""),
+          terminal: ($status == "completed"),
+          success: (
+            $status == "completed"
+            and has(["success", "neutral", "skipped"]; $conclusion)
+          ),
+          failure: (
+            $status == "completed"
+            and has(["failure", "cancelled", "timed_out", "action_required", "startup_failure", "stale"]; $conclusion)
+          )
+        }
+      ]
+    '
+}
+
+workflow_run_job_count() {
+  local run_id="$1"
+
+  gh api "repos/$repo/actions/runs/$run_id/jobs?per_page=1" --jq '.total_count // 0' 2>/dev/null ||
+    printf 'unknown'
+}
+
+filter_ignorable_workflow_runs() {
+  local runs="$1"
+  local ignored_ids=()
+  local run_id
+  local job_count
+  local ignored_json
+
+  while IFS= read -r run_id; do
+    if [ -z "$run_id" ]; then
+      continue
+    fi
+
+    job_count=$(workflow_run_job_count "$run_id")
+    if [ "$job_count" = "0" ]; then
+      ignored_ids+=("$run_id")
+    fi
+  done < <(jq -r '.[] | select(.terminal and .event == "pull_request_target" and .conclusion == "cancelled") | .id' <<<"$runs")
+
+  if [ "${#ignored_ids[@]}" -eq 0 ]; then
+    printf '%s\n' "$runs"
+    return
+  fi
+
+  ignored_json=$(printf '%s\n' "${ignored_ids[@]}" | jq -R . | jq -s .)
+  jq -c --argjson ignored "$ignored_json" '[.[] | select(.id as $id | ($ignored | index($id) | not))]' <<<"$runs"
+}
+
 summarize_checks() {
   jq -r '
     sort_by(.workflow, .name)
@@ -103,9 +167,25 @@ summarize_checks() {
   '
 }
 
+summarize_workflow_runs() {
+  jq -r '
+    sort_by(.event, .name)
+    | group_by(.event + "\u0000" + .name)
+    | .[]
+    | {
+        event: .[0].event,
+        name: .[0].name,
+        total: length,
+        states: (map(.state + ":" + .conclusion) | unique | join(",")),
+        latestCreated: (map(.createdAt) | max // ""),
+        latestUpdated: (map(.updatedAt) | max // "")
+      }
+    | "workflow-run / \(.event) / \(.name) total=\(.total) states=\(.states) latestCreated=\(.latestCreated) latestUpdated=\(.latestUpdated)"
+  '
+}
+
 while true; do
   raw=$(gh pr view "$pr_number" --json headRefName,headRefOid,mergeable,mergeStateStatus,statusCheckRollup)
-  now=$(date +%s)
 
   current_sha=$(jq -r '.headRefOid' <<<"$raw")
   current_branch=$(jq -r '.headRefName' <<<"$raw")
@@ -123,12 +203,27 @@ while true; do
   fi
 
   checks=$(normalize_checks <<<"$raw")
+  raw_workflow_runs=$(normalize_workflow_runs)
+  workflow_runs=$(filter_ignorable_workflow_runs "$raw_workflow_runs")
   total=$(jq 'length' <<<"$checks")
-  signature=$(jq -S -c 'sort_by(.workflow, .name, .state, .conclusion, .url)' <<<"$checks")
+  raw_workflow_run_total=$(jq 'length' <<<"$raw_workflow_runs")
+  workflow_run_total=$(jq 'length' <<<"$workflow_runs")
+  ignored_workflow_run_total=$((raw_workflow_run_total - workflow_run_total))
+  signature=$(
+    jq -S -c \
+      -n \
+      --argjson checks "$checks" \
+      --argjson workflowRuns "$workflow_runs" \
+      --argjson ignoredWorkflowRunTotal "$ignored_workflow_run_total" \
+      '{
+        checks: ($checks | sort_by(.workflow, .name, .state, .conclusion, .url)),
+        workflowRuns: ($workflowRuns | sort_by(.event, .name, .createdAt, .state, .conclusion, .url)),
+        ignoredWorkflowRunTotal: $ignoredWorkflowRunTotal
+      }'
+  )
 
   if [ "$signature" != "$prev_signature" ]; then
-    stable_since="$now"
-    printed_visible_green=0
+    printed_waiting_green=0
     printf '%s\n' "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
     printf 'PR #%s head=%s branch=%s merge=%s\n' "$pr_number" "${head_sha:0:10}" "$current_branch" "$merge_state"
     if [ "$total" -eq 0 ]; then
@@ -136,30 +231,54 @@ while true; do
     else
       summarize_checks <<<"$checks"
     fi
+    if [ "$workflow_run_total" -eq 0 ]; then
+      printf 'pending: no current-head workflow runs visible yet\n'
+    else
+      summarize_workflow_runs <<<"$workflow_runs"
+    fi
+    if [ "$ignored_workflow_run_total" -gt 0 ]; then
+      printf 'ignored: %s cancelled pull_request_target workflow run(s) with zero jobs\n' "$ignored_workflow_run_total"
+    fi
     prev_signature="$signature"
   fi
 
   failures=$(jq -r '.[] | select(.failure) | [.name, .conclusion, .url] | @tsv' <<<"$checks")
-  if [ -n "$failures" ]; then
+  workflow_failures=$(jq -r '.[] | select(.failure) | [.name, .conclusion, .url] | @tsv' <<<"$workflow_runs")
+  if [ -n "$failures" ] || [ -n "$workflow_failures" ]; then
     echo "=== FAILED ==="
-    printf '%s\n' "$failures" | while IFS=$'\t' read -r name conclusion url; do
-      printf '  %s -> %s (%s)\n' "$name" "$conclusion" "$url"
-    done
+    if [ -n "$failures" ]; then
+      printf '%s\n' "$failures" | while IFS=$'\t' read -r name conclusion url; do
+        printf '  check %s -> %s (%s)\n' "$name" "$conclusion" "$url"
+      done
+    fi
+    if [ -n "$workflow_failures" ]; then
+      printf '%s\n' "$workflow_failures" | while IFS=$'\t' read -r name conclusion url; do
+        printf '  workflow %s -> %s (%s)\n' "$name" "$conclusion" "$url"
+      done
+    fi
     exit 1
   fi
 
   success_count=$(jq '[.[] | select(.success)] | length' <<<"$checks")
+  workflow_run_success_count=$(jq '[.[] | select(.success)] | length' <<<"$workflow_runs")
   if [ "$total" -gt 0 ] && [ "$success_count" -eq "$total" ]; then
-    stable_for=$((now - stable_since))
-    remaining=$((stable_grace - stable_for))
-    if [ "$remaining" -le 0 ]; then
+    if [ "$workflow_run_total" -gt 0 ] && [ "$workflow_run_success_count" -eq "$workflow_run_total" ]; then
       echo "=== ALL GREEN ==="
-      echo "PR #$pr_number head ${head_sha:0:10}: $total checks successful after ${stable_grace}s stable grace."
+      echo "PR #$pr_number head ${head_sha:0:10}: $total checks successful; $workflow_run_total current-head workflow runs completed successfully."
       exit 0
     fi
-    if [ "$printed_visible_green" -eq 0 ]; then
-      echo "VISIBLE GREEN: $total checks successful; waiting ${remaining}s stable grace for late fanout."
-      printed_visible_green=1
+    if [ "$workflow_run_total" -eq 0 ] && [ "$raw_workflow_run_total" -gt 0 ]; then
+      echo "=== ALL GREEN ==="
+      echo "PR #$pr_number head ${head_sha:0:10}: $total checks successful; no relevant current-head workflow runs remain after ignoring $ignored_workflow_run_total no-job dashboard run(s)."
+      exit 0
+    fi
+    if [ "$printed_waiting_green" -eq 0 ]; then
+      if [ "$workflow_run_total" -eq 0 ]; then
+        echo "VISIBLE GREEN: $total checks successful; waiting for current-head workflow runs to appear."
+      else
+        echo "VISIBLE GREEN: $total checks successful; waiting for $workflow_run_total current-head workflow runs to finish."
+      fi
+      printed_waiting_green=1
     fi
   fi
 

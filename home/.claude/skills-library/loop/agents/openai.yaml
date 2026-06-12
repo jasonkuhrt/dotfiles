@@ -1,0 +1,7 @@
+interface:
+  display_name: "/loop"
+  short_description: "Keep Codex going in this session until explicitly escaped"
+  default_prompt: "Use $loop to manage a session-scoped stop-hook loop for this Codex session. Only activate when the definition of done is clear; otherwise reject or propose the exact done condition first."
+
+policy:
+  allow_implicit_invocation: true

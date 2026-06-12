@@ -1,0 +1,4 @@
+interface:
+  display_name: "Land Worktree"
+  short_description: "Prepare the worktree and pushed branch"
+  default_prompt: "Use $land-worktree to resolve task context, normalize a detached base worktree when needed, create or attach a task branch, commit intended dirty work, and push the branch upstream."

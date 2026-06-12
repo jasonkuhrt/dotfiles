@@ -21,7 +21,7 @@ Before branch naming or commit messages, resolve the current task context.
 
 If the user provides a PR URL/number, issue ID, branch name, title, or other explicit target in the same message as this skill invocation, use that explicit target.
 
-If the skill invocation is bare, such as `/land-worktree` or "prepare the worktree", use the current chat context as the primary source of truth:
+If the skill invocation is bare, such as "prepare the worktree", use the current chat context as the primary source of truth:
 
 - Prefer the most recent issue, subissue, PR, or branch that the user and agent explicitly agreed represents the current scope.
 - Prefer a later narrowed subissue over an older parent issue when the chat says the subissue exists so the branch can honestly match the work.
@@ -81,7 +81,7 @@ If `git branch --show-current` is empty, handle detached `HEAD` before continuin
 
    If the worktree is dirty, do not fast-forward underneath dirty changes. Attach the task branch at the current detached `HEAD`, preserve the dirty work, and report that the branch started from an older base.
 
-4. Infer the branch name from the resolved task context when possible. For a Linear issue, prefer `claude/<lowercase-issue-id>-<short-title-slug>`, for example `claude/hea-4554-page-editor-target-overlays`. If the task does not provide enough naming signal, ask for a branch name.
+4. Infer the branch name from the resolved task context when possible. For a Linear issue, prefer `<lowercase-issue-id>-<short-title-slug>`, for example `hea-4554-page-editor-target-overlays`. If no Linear issue is available, use `<short-title-slug>` with no agent prefix. If the task does not provide enough naming signal, ask for a branch name.
 
 5. Before creating the branch, check for collisions:
 

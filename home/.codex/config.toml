@@ -37,6 +37,18 @@ trust_level = "trusted"
 [projects."/Users/jasonkuhrt/projects/jasonkuhrt/kitz"]
 trust_level = "trusted"
 
+[projects."/Users/jasonkuhrt/projects/jasonkuhrt/key-binder"]
+trust_level = "trusted"
+
+[projects."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat-pulse-cue-queued-guard"]
+trust_level = "trusted"
+
+[projects."/Users/jasonkuhrt/.codex/worktrees/23e8"]
+trust_level = "trusted"
+
+[projects."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat.codex-monorepo-dependency-graph"]
+trust_level = "trusted"
+
 # [projects."/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles"]
 # trust_level = "trusted"
 
@@ -52,10 +64,32 @@ url = "https://mcp.figma.com/mcp"
 [mcp_servers.linear]
 url = "https://mcp.linear.app/mcp"
 
+[mcp_servers.node_repl]
+args = []
+command = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node_repl"
+startup_timeout_sec = 120
+
+[mcp_servers.node_repl.env]
+NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS = "1000"
+NODE_REPL_NODE_MODULE_DIRS = "/Applications/Codex.app/Contents/Resources/cua_node/lib/node_modules"
+NODE_REPL_NODE_PATH = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node"
+NODE_REPL_TRUSTED_CODE_PATHS = "/Users/jasonkuhrt/.codex"
+CODEX_HOME = "/Users/jasonkuhrt/.codex"
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "a3f3ca79fe2bff56076b895f1f13a8f673168160bd79d880cc34b4500e08a71c"
+BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
+NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
+NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
+BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
+BROWSER_USE_CODEX_APP_VERSION = "26.609.30741"
+CODEX_CLI_PATH = "/Applications/Codex.app/Contents/Resources/codex"
+
 [features]
 codex_hooks = true
+hooks = true
 multi_agent = true
 memories = true
+goals = true
+js_repl = false
 
 [plugins."linear@openai-curated"]
 enabled = true
@@ -64,9 +98,6 @@ enabled = true
 enabled = true
 
 [plugins."hookify@hookify-local"]
-enabled = true
-
-[plugins."computer-use@openai-bundled"]
 enabled = true
 
 [plugins."documents@openai-primary-runtime"]
@@ -87,19 +118,19 @@ enabled = true
 [plugins."google-calendar@openai-curated"]
 enabled = false
 
-[plugins."browser-use@openai-bundled"]
+[plugins."browser@openai-bundled"]
 enabled = true
 
 [plugins."chrome@openai-bundled"]
 enabled = true
 
 [marketplaces.openai-bundled]
-last_updated = "2026-05-10T15:28:05Z"
+last_updated = "2026-06-12T03:24:23Z"
 source_type = "local"
 source = "/Users/jasonkuhrt/.codex/.tmp/bundled-marketplaces/openai-bundled"
 
 [marketplaces.openai-primary-runtime]
-last_updated = "2026-05-07T21:03:22Z"
+last_updated = "2026-06-01T18:03:43Z"
 source_type = "local"
 source = "/Users/jasonkuhrt/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
 
@@ -110,6 +141,56 @@ trusted_hash = "sha256:e1c6eb46673007b3042531fb2660c9834e9dadafaf8eb4040fb846c67
 
 [hooks.state."/Users/jasonkuhrt/.codex/hooks.json:stop:0:0"]
 trusted_hash = "sha256:5210c633c3eb979002fc980cbf92a86327538a3e6ca2f6d142608701f587a530"
+
+[hooks.state."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat-hea-4430-react-compiler-webapp/.codex/hooks.json:pre_tool_use:0:0"]
+trusted_hash = "sha256:c1140d2e63557e9326770008ebb0f5dd60713f89cc4e6ab8d9eff281a622a63b"
+
+[hooks.state."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat-hea-4430-react-compiler-webapp/.codex/hooks.json:pre_tool_use:0:1"]
+trusted_hash = "sha256:0e216e96be9851d931cb59f2379a25ceb9565dbfe8c4bf4fef857824b4fa21fb"
+
+[hooks.state."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat-hea-4430-react-compiler-webapp/.codex/hooks.json:pre_tool_use:0:2"]
+trusted_hash = "sha256:4a8912a39e135cf6f6d737d4d549b005b95e36d86efe6a5bef360c30f0c286e6"
+
+[hooks.state."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat-hea-4430-react-compiler-webapp/.codex/hooks.json:pre_tool_use:1:0"]
+trusted_hash = "sha256:450be573d49f7fadca414a916cc453cfa0633dca67877ad7cea95e09f4be5543"
+
+[hooks.state."hookify@hookify-local:hooks.json:post_tool_use:0:0"]
+trusted_hash = "sha256:cf7711e65553d311a86d9459bcc0e0b8226e0ede1f223f05b6e5c2b4cb97e5b6"
+
+[hooks.state."hookify@hookify-local:hooks.json:pre_tool_use:0:0"]
+trusted_hash = "sha256:37c54fcb7ef9216f1dde6da6030556ae1f0fb3356afbaaecab8e2426f6e65364"
+
+[hooks.state."hookify@hookify-local:hooks.json:session_start:0:0"]
+trusted_hash = "sha256:afd84dbf91d8dfc0a1673849ab72f0f61e324b10d9d1092162469f20c9b40bab"
+
+[hooks.state."hookify@hookify-local:hooks.json:stop:0:0"]
+trusted_hash = "sha256:4a854d6fcee4614219ac055dd99dd634b7fe06dc9b414ee742ce15b1dd550160"
+
+[hooks.state."hookify@hookify-local:hooks.json:user_prompt_submit:0:0"]
+trusted_hash = "sha256:86bfe1b8c23f9cd89f2aca8e63c7e50be1ea656c972cb6ab5260e383b6b3e9d9"
+
+[desktop]
+usePointerCursors = false
+followUpQueueMode = "queue"
+preventSleepWhileRunning = false
+keepRemoteControlAwakeWhilePluggedIn = false
+git-create-pull-request-as-draft = false
+conversationDetailMode = "STEPS_EXECUTION"
+
+[desktop.open-in-target-preferences]
+global = "zed"
+
+[desktop.open-in-target-preferences.perPath]
+"/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat-cell-middleware" = "vscode"
+"/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat-hea-4346-html-template-to-page" = "vscode"
+"/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat-hea-4350-page-editor-live-slot-value-pointer-migration" = "vscode"
+"/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat-hea-4567-pageeditor-kind-refactor" = "vscode"
+"/Users/jasonkuhrt/projects/jasonkuhrt/kitz" = "zed"
+"/Users/jasonkuhrt/.codex/worktrees/885d/Heartbeat" = "vscode"
+"/Users/jasonkuhrt/.codex/worktrees/91a6/Heartbeat" = "zed"
+
+[tui.model_availability_nux]
+"gpt-5.5" = 1
 
 # Re-enable when LINEAR_API_TOKEN is available in Codex's environment.
 #

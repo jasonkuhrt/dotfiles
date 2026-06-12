@@ -46,7 +46,3 @@ __pycache__/
 
 # Manual config backups (e.g., user-saved snapshots before risky edits)
 *_backup.json
-
-# shan-managed (do not edit)
-.codex/skills
-# end shan-managed

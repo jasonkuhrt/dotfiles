@@ -155,5 +155,15 @@
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Duplicate lines in visual mode (Zed parity)
   { "key": "cmd+j", "command": "editor.action.copyLinesDownAction", "when": "editorTextFocus && neovim.mode == 'visual'" },
-  { "key": "cmd+k", "command": "editor.action.copyLinesUpAction",   "when": "editorTextFocus && neovim.mode == 'visual'" }
+  { "key": "cmd+k", "command": "editor.action.copyLinesUpAction",   "when": "editorTextFocus && neovim.mode == 'visual'" },
+
+  //
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Markdown: toggle source ⇄ preview
+  //   One key flips a .md between its source editor and the rendered preview.
+  //   `markdown.togglePreview` is editorAssociation-aware (reopens as source
+  //   or as the `vscode.markdown.preview.editor` custom editor — set in
+  //   settings.json — not a stray webview). VS Code also binds this to
+  //   shift+cmd+v by default; this puts the same toggle on cmd+k v.
+  //
+  { "key": "cmd+k v", "command": "markdown.togglePreview", "when": "resourceLangId == markdown && !notebookEditorFocused" }
 ]

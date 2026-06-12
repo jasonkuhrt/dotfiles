@@ -449,7 +449,7 @@
       "[": "pane::GoBack",
       "]": "pane::GoForward",
       // Buffer prev/next via vim-style bracket chord
-      "[ b": "pane::ActivatePrevItem",
+      "[ b": "pane::ActivatePreviousItem",
       "] b": "pane::ActivateNextItem"
       // "ctrl-k": "vim::PageUp",
       // "ctrl-j": "vim::PageDown"

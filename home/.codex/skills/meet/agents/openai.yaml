@@ -1,4 +1,0 @@
-interface:
-  display_name: "Meet"
-  short_description: "Open the dev app in Chrome at a target view"
-  default_prompt: "Use $meet to meet me in the Page Editor."

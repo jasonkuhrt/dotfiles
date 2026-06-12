@@ -1,17 +1,23 @@
 ---
 name: plannotator-review
-description: Open interactive code review for current changes with Plannotator. Use when the user explicitly asks to review current changes in Plannotator.
-allowed-tools:
-  - Bash(plannotator:*)
-disable-model-invocation: true
+description: Open Plannotator's browser-based code review UI for the current worktree or a pull request URL, then act on the feedback that comes back.
 ---
 
 # Plannotator Review
 
-## Code Review Feedback
+Use this skill when the user wants to review current code changes in Plannotator instead of reading a diff inline.
 
-!`plannotator review`
+Run:
 
-## Your task
+```bash
+plannotator review [optional-pr-url]
+```
 
-Address the concrete annotations and comments returned above before moving on.
+Behavior:
+
+1. Launch the command with Bash.
+2. Wait for it to finish.
+3. If it returns feedback or annotations, address them in the same conversation.
+4. If it returns an approval/LGTM-style message, acknowledge that review passed and continue.
+
+Do not ask the user to copy shell commands into chat. Run the command yourself.

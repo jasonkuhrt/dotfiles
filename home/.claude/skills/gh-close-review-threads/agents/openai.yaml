@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub Review Thread Closeout"
+  short_description: "Reply to and resolve addressed PR review threads"
+  default_prompt: "Address the actionable PR review comments. Treat written thread replies and resolving addressed threads as part of the work, not an optional follow-up. After any code fix or justification is complete, reply on each addressed review thread with the commit/change or reason, mark it resolved, verify the reply and resolved state, and keep PR checks green."

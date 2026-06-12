@@ -169,22 +169,22 @@
   },
   "enabledPlugins": {
     "Notion@claude-plugins-official": true,
-    "claude-code-setup@claude-plugins-official": true,
-    "claude-md-management@claude-plugins-official": true,
-    "code-review@claude-plugins-official": true,
-    "code-simplifier@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": false,
+    "claude-md-management@claude-plugins-official": false,
+    "code-review@claude-plugins-official": false,
+    "code-simplifier@claude-plugins-official": false,
     "explanatory-output-style@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true,
-    "hookify@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": false,
     "impeccable@impeccable": true,
     "plannotator@plannotator": true,
-    "playground@claude-plugins-official": true,
-    "plugin-dev@claude-plugins-official": true,
-    "ralph-loop@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true,
+    "playground@claude-plugins-official": false,
+    "plugin-dev@claude-plugins-official": false,
+    "ralph-loop@claude-plugins-official": false,
+    "skill-creator@claude-plugins-official": false,
     "superpowers-dev@superpowers-marketplace": true,
     "tsgo-lsp@jasonkuhrt": true,
-    "worktrunk@worktrunk": true
+    "worktrunk@worktrunk": true,
+    "hookify-claude@hookify": true
   },
   "extraKnownMarketplaces": {
     "impeccable": {
@@ -212,11 +212,17 @@
         "source": "github",
         "repo": "max-sixty/worktrunk"
       }
+    },
+    "hookify": {
+      "source": {
+        "source": "github",
+        "repo": "jasonkuhrt/hookify"
+      }
     }
   },
   "syntaxHighlightingDisabled": false,
   "alwaysThinkingEnabled": true,
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
   "autoUpdatesChannel": "latest",
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,

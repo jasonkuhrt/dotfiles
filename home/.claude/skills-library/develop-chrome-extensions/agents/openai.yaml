@@ -1,0 +1,3 @@
+display_name: Develop Chrome Extensions
+short_description: Source-first Chrome extension workflow.
+default_prompt: Use develop-chrome-extensions to investigate and implement Chrome extension changes from source-backed platform contracts before live probing.

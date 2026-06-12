@@ -1,0 +1,4 @@
+interface:
+  display_name: "Land Merged"
+  short_description: "Clean up after an already merged PR"
+  default_prompt: "Use $land-merged after a GitHub PR is already merged to refresh the base worktree, remove the PR worktree, and delete the local branch when safe."

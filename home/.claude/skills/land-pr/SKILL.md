@@ -1,6 +1,6 @@
 ---
 name: land-pr
-description: Prepare a branch or GitHub PR to an open, ready PR by composing land-worktree first, then creating a PR when missing, moving it out of draft, waiting for Greptile review comments, addressing actionable Greptile feedback, watching PR checks, and triggering E2E Local Sign Off after other checks are green when required. Use when the user says to land to PR, prepare a PR, create or ready the PR, undraft and handle Greptile, wait for Greptile, finish review-comment closeout, handle local sign off, or get the PR green without merging.
+description: Prepare a branch or GitHub PR to an open, ready PR by composing land-worktree first, then creating a PR when missing, moving it out of draft, scanning existing Greptile review feedback, addressing actionable Greptile feedback when present, watching PR checks, and triggering E2E Local Sign Off after other checks are green when required. Use when the user says to land to PR, prepare a PR, create or ready the PR, undraft and handle existing Greptile feedback, finish review-comment closeout, handle local sign off, or get the PR green without merging.
 ---
 
 # Land PR
@@ -18,8 +18,8 @@ Core flow:
 1. Run `land-worktree` to resolve task context, normalize the current worktree, create/attach a branch when needed, commit intended dirty work, and push the branch.
 2. Resolve or create the PR from the prepared branch unless the user gave a PR URL or number.
 3. Move the PR out of draft.
-4. Wait for Greptile review comments to appear.
-5. Use the PR-review-comments rule to address actionable Greptile feedback.
+4. Scan for existing Greptile review feedback. Do not wait for Greptile to appear or settle.
+5. Use the PR-review-comments rule to address actionable Greptile feedback only when it already exists.
 6. Push any fixes and watch the requested remote checks.
 7. If the PR requires E2E Local Sign Off, wait until all other checks are green, trigger the sign-off workflow for the current head SHA, then wait for that gate.
 8. Report the PR URL, branch, Greptile outcome, remote check state, and any intentionally open blockers.
@@ -28,9 +28,7 @@ Core flow:
 
 ### 1. Prepare Worktree
 
-Load and follow:
-
-`/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.claude/skills/land-worktree/SKILL.md`
+Load and follow the `land-worktree` skill from the current skills list.
 
 Run `land-worktree` exactly as written from the invocation context. Do not duplicate, partially reimplement, or reinterpret its task-context, detached-head, branch-creation, dirty-work commit, or push workflow here.
 
@@ -74,9 +72,11 @@ gh pr ready <number>
 
 If it is already ready, treat this step as complete and say so.
 
-### 4. Wait For Greptile
+### 4. Scan Greptile
 
-Poll the PR until Greptile has posted review material or until a clear timeout is reached. Default to 60 second polls for up to 30 minutes unless the user asks otherwise.
+Greptile is opportunistic in this workflow. It may be off, delayed, or broken. Never wait for Greptile to appear, never wait for a Greptile check/status to settle, and never treat Greptile silence as a blocker.
+
+Do one short scan for existing Greptile material and proceed. If the user explicitly asks for Greptile, trigger or inspect it as requested, but still do not add an automatic wait unless the user gives a wait policy in that same request.
 
 Look for Greptile in:
 
@@ -87,15 +87,15 @@ Look for Greptile in:
 
 Use GitHub GraphQL for thread-aware reads when checking review threads. A Greptile hit is any review, comment, review-thread comment, or completed Greptile check with text or author metadata matching `greptile` case-insensitively.
 
-If Greptile has already posted, continue immediately. If Greptile times out without posting, report that the PR was moved out of draft but no Greptile feedback arrived.
+If Greptile has already posted, continue to the feedback-handling step. If not, report "no Greptile material found" and continue to checks.
 
-### 5. Address Greptile Feedback
+### 5. Address Existing Greptile Feedback
 
-Follow the `pr-review-comments` rule at `~/.claude/rules/pr-review-comments.md`. Every addressed thread must close the loop with a reply + resolve, not just a code push.
+Use the current harness's PR review-comment workflow. Prefer a loaded `github:gh-address-comments` or equivalent PR-thread skill when available. In Claude Code, follow `~/.claude/rules/pr-review-comments.md` when that rule exists. Every addressed thread must close the loop with a reply + resolve, not just a code push.
 
 When working through threads:
 
-- Treat Greptile review threads as selected for this pass.
+- Treat existing Greptile review threads as selected for this pass.
 - Separate actionable change requests from informational comments.
 - Implement only actionable fixes.
 - Resolve addressed threads after fixes are pushed and the requested verification passes.
@@ -105,7 +105,7 @@ When working through threads:
 
 Use the user's requested verification policy. If no policy was given, prefer PR CI status checks over broad local checks.
 
-After pushing any review fixes, watch the remote PR checks via the `gh-ci` skill (`~/.claude/skills/gh-ci/`). Never spin up an ad-hoc `gh pr checks --watch` or count-based poll — `gh-ci` is the only authority for PR CI status.
+After pushing any review fixes, watch the remote PR checks via the `gh-ci` skill. Never spin up an ad-hoc `gh pr checks --watch` or count-based poll — `gh-ci` is the only authority for PR CI status.
 
 Do not report the land pass complete while selected Greptile threads are still unresolved or actionable CI checks are still red. If a required external gate cannot be satisfied from the agent environment, report it explicitly.
 

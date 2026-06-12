@@ -1,0 +1,4 @@
+interface:
+  display_name: "Return"
+  short_description: "Reset the thread to one clear current view."
+  default_prompt: "Use $return to reset this conversation to the current truth, what is done, what is not done, and the next move."

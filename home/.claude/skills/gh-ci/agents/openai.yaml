@@ -1,0 +1,4 @@
+interface:
+  display_name: "GH CI"
+  short_description: "Watch a PR's current-head CI correctly"
+  default_prompt: "Use $gh-ci to poll a GitHub PR's current-head checks to a terminal state using the harness-appropriate watch route."

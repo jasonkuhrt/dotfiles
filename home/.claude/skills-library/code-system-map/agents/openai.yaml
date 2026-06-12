@@ -1,0 +1,7 @@
+interface:
+  display_name: "Code System Map"
+  short_description: "Explain code through before/after reference sites"
+  default_prompt: "Use $code-system-map to explain this suspicious code with before and after reference sites."
+
+policy:
+  allow_implicit_invocation: true

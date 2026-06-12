@@ -1,0 +1,4 @@
+interface:
+  display_name: "Heartbeat Dep Gardener"
+  short_description: "Retire or update weak Heartbeat dependencies"
+  default_prompt: "Use $heartbeat-dep-gardener to find and land one dependency removal or update in Heartbeat."

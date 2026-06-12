@@ -1,0 +1,4 @@
+interface:
+  display_name: "Land PR"
+  short_description: "Prepare worktree, PR, review, and gates"
+  default_prompt: "Use $land-pr to run $land-worktree first, then create or ready the PR, wait for Greptile, address actionable feedback, and watch remote checks including E2E Local Sign Off when required."

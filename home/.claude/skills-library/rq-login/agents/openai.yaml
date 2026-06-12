@@ -1,0 +1,4 @@
+interface:
+  display_name: "RQ Login"
+  short_description: "Log into RQ with Gov Auth and safe cleanup"
+  default_prompt: "Use $rq-login to log into Revenu Quebec through Government Authentication Service, using $passwords for credentials and Mail cleanup after login."

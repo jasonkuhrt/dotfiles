@@ -1,0 +1,4 @@
+interface:
+  display_name: "CI E2E Off"
+  short_description: "Turn off PR E2E mode via the dashboard comment."
+  default_prompt: "Turn E2E mode off for this PR and verify the status is no longer blocking."

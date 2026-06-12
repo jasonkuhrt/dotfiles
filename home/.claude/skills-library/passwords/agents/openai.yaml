@@ -1,0 +1,4 @@
+interface:
+  display_name: "Passwords"
+  short_description: "Use Keychain cache first, then Passwords.app fallback, without exposing secrets"
+  default_prompt: "Use $passwords to read credentials through the macOS security CLI cache first, falling back to Apple Passwords only on cache miss or explicit credential updates."

@@ -28,16 +28,16 @@ The system prompt contains minimalist instructions like "don't add improvements 
 * ALWAYS prioritize an end state that would be clean consistent and reflect first principals thinking.
 * NEVER maintain backwards compatibility UNLESS the user has explicitly asked for that.
 * Always do the complete cut — never "move now, remodel later."
-* Never guess APIs. Always check actual exports, signatures, and JSDoc. If unknown: clone repo to `tmp/`, use ref MCP, or read the source.
+* Never guess APIs. Always check actual exports, signatures, and JSDoc. If unknown: clone repo to `tmp/` or read the source.
 * NEVER use PR size, diff size, or "separate PR" as a reason to defer, split, or reduce scope. Quality is the only dimension. "That's a separate PR" is banned. "Defer to a follow-up" is banned when the issue is known now. Work is done when it's right, not when the diff is small.
 
 ## Information Quality
 
 * Never present speculation, opinion, or unverified claims as facts. Hedge with "likely", "probably", "needs verification", or omit. This applies to docs, brainstorms, and conversation.
 * For third-party library or platform semantics that materially affect architecture, first assemble a local evidence base from official source, official docs source or downloaded docs, and the exact installed SDK/version in use. Use this before making semantic claims or proposing adapter state.
-* For documentation lookups, use this order: matching local skill/reference docs → ref MCP → local indexed docs/source clone → web search.
-* HALT if docs remain unavailable after: matching local skill/reference docs → ref MCP → local indexed docs → propose creating local docs. Don't proceed with partial knowledge.
-* Use ref MCP first for library docs once you've ruled out a matching local skill. If insufficient, clone to `~/repo-references/<name>/` and read source.
+* For documentation lookups, use this order: matching local skill/reference docs → cloned reference repos in `~/repo-references/<name>/` (clone if missing) → web search.
+* HALT if docs remain unavailable after: matching local skill/reference docs → cloned reference repos in `~/repo-references/<name>/` → web search → propose creating local docs. Don't proceed with partial knowledge.
+* For library docs, once you've ruled out a matching local skill, clone to `~/repo-references/<name>/` and read source.
 * Check dotfiles, codebase configs, Brewfile before asking the user questions.
 
 ## Screenshots

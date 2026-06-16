@@ -19,6 +19,7 @@
   //
   //
   //
+  "diff_view_style": "split",
   "cli_default_open_behavior": "existing_window",
   "minimap": {
     "max_width_columns": 101
@@ -274,6 +275,7 @@
     "button": false
   },
   "git_panel": {
+    "tree_view": true,
     "dock": "left",
     "button": false,
     "sort_by_path": true,
@@ -509,17 +511,17 @@
             //
             // "autoImportFileExcludePatterns": [],
             //
-            // @see https://github.com/microsoft/TypeScript/issues/56415
+            // @see https://github.com/microsoft/TypeScript/issues/56415 (closed 2024-01-19)
             // @see https://stackoverflow.com/questions/76788709/how-can-i-exclude-an-ambient-module-declaration-like-nodetest-from-vs-codes-au
             // "autoImportSpecifierExcludeRegexes": [],
             //
-            // Threads n' Stuff:
+            // Threads n' Stuff (issue status re-validated 2026-06-16):
             // - https://stackoverflow.com/questions/63251182/vs-code-typescript-auto-import-suggestion-priority
             // - https://stackoverflow.com/questions/68686383/typescript-react-props-priority-when-using-intellisense-in-vs-code/76938845#76938845
-            // - https://github.com/microsoft/TypeScript/issues/51418
-            // - https://github.com/microsoft/TypeScript/issues/55092
-            // - (open) https://github.com/microsoft/TypeScript/issues/51155
-            // - (open) https://github.com/microsoft/TypeScript/issues/52080
+            // - (open)   https://github.com/microsoft/TypeScript/issues/51418
+            // - (closed) https://github.com/microsoft/TypeScript/issues/55092
+            // - (open)   https://github.com/microsoft/TypeScript/issues/51155
+            // - (open)   https://github.com/microsoft/TypeScript/issues/52080
             //
             // Tools n' Stuff:
             // - https://github.com/tidalhq/ts-plugin-sort-import-suggestions
@@ -594,20 +596,19 @@
     "TypeScript": {
       // ━━━ tsgo: native Go-based TypeScript compiler (TS 7.0) ━━━
       // CLI: pnpm add -D @typescript/native-preview && npx tsgo
-      // NOTE: Type-heavy codebases (recursive conditional types) may OOM - see github.com/microsoft/typescript-go/issues/2125
       // NOTE: Zed extension downloads its own binary from npm, ignores global install
       //
-      // ━━━ tsgo rename issues (all open as of 2025-12-30) ━━━
-      // Rename refactor crashes tsgo ("server shut down"). Related issues:
-      // - https://github.com/microsoft/typescript-go/issues/2244 (rename LSP not implemented)
-      // - https://github.com/microsoft/typescript-go/issues/2387 (diagnostics don't refresh after rename)
-      // - https://github.com/microsoft/typescript-go/issues/2133 (rename breaks tsconfig detection)
-      // - https://github.com/microsoft/typescript-go/issues/1882 (rename/move breaks imports)
-      // - https://github.com/microsoft/typescript-go/issues/2230 (should block renaming stdlib)
+      // ━━━ tsgo status (re-validated 2026-06-16) ━━━
+      // Rename cluster RESOLVED — all closed Mar–Apr 2026:
+      //   #2244 update-imports-on-rename/move, #2387 diagnostics-refresh-after-rename,
+      //   #2133 rename-tsconfig-mis-detection, #1882 rename/move-breaks-imports,
+      //   #2230 block-renaming-stdlib.
+      // STILL OPEN — known WARNING, not a blocker (tsgo is enabled anyway):
+      //   #2125 OOM on recursive conditional types — github.com/microsoft/typescript-go/issues/2125
       //
       // Swap these lines to toggle:
-      "language_servers": ["vtsls", "!tsgo", "!eslint", "oxlint", "..."],
-      // "language_servers": ["tsgo", "!vtsls", "!eslint", "oxlint", "..."],
+      // "language_servers": ["vtsls", "!tsgo", "!eslint", "oxlint", "..."],
+      "language_servers": ["tsgo", "!vtsls", "!eslint", "oxlint", "..."],
       "prettier": { "allowed": false },
       // "completions": {
       //   "lsp_fetch_timeout_ms": 5000
@@ -633,13 +634,13 @@
     "TSX": {
       // ━━━ tsgo: native Go-based TypeScript compiler (TS 7.0) ━━━
       // CLI: pnpm add -D @typescript/native-preview && npx tsgo
-      // NOTE: Type-heavy codebases (recursive conditional types) may OOM - see github.com/microsoft/typescript-go/issues/2125
       // NOTE: Zed extension downloads its own binary from npm, ignores global install
-      // NOTE: Rename issues - see TypeScript section above for links
+      // NOTE: tsgo status re-validated 2026-06-16 — see TypeScript section above
+      //   (rename cluster resolved; #2125 OOM is a known warning, not a blocker).
       //
       // Swap these lines to toggle:
-      "language_servers": ["vtsls", "!tsgo", "!eslint", "oxlint", "..."],
-      // "language_servers": ["tsgo", "!vtsls", "!eslint", "oxlint", "..."],
+      // "language_servers": ["vtsls", "!tsgo", "!eslint", "oxlint", "..."],
+      "language_servers": ["tsgo", "!vtsls", "!eslint", "oxlint", "..."],
       "prettier": { "allowed": false },
       "formatter": [
         {

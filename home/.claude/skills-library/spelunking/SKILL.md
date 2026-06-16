@@ -21,7 +21,7 @@ Check in this order. Stop when you find a definitive answer.
 
 1. **Local source code** — `node_modules/`, installed binaries, `~/.local/`, brew cellar. The code is the truth.
 2. **GitHub issues/PRs/discussions** — search the tool's repo. Recent closed issues often document workarounds. Open issues confirm known limitations.
-3. **Ref MCP / official docs** — check for recently added features the docs mention but tutorials haven't caught up to.
+3. **Official docs** — check for recently added features the docs mention but tutorials haven't caught up to.
 4. **Changelog / release notes** — version-specific. A feature may have landed 2 releases ago with zero fanfare.
 5. **Web search** — community posts, Discord archives, blog posts. Filter by date — 2024 answers are often wrong for 2026 tools.
 6. **Empirical testing** — build a probe. The fastest way to answer "does X work?" is to try X.

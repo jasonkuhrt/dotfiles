@@ -38,6 +38,13 @@ git:
   pagers:
     - colorArg: always
       pager: delta --paging=never
+os:
+  # `o` (openFile) opens in Zed, not the macOS default app. Needed because
+  # extensionless files like `Dockerfile` can't be routed by duti.yml (which is
+  # extension-keyed): macOS sends `Dockerfile` to VS Code, whose Info.plist
+  # declares the `Dockerfile` filename, while Zed declares no Dockerfile type.
+  # This forces Zed for every `o` file-open (links still use os.openLink).
+  open: 'zed -- {{filename}}'
 keybinding:
   universal:
     scrollUpMain: K

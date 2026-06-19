@@ -1,5 +1,5 @@
 ---
-name: skills:doctor
+name: skills-doctor
 description: >-
   Run automated health checks on skill outfit. Use when user says "check skills",
   "diagnose skills", "skill problems", "doctor", "fix skills".

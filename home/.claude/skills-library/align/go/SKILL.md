@@ -1,5 +1,5 @@
 ---
-name: align:go
+name: align-go
 description: Exit alignment mode — resume normal editing. Use when user says /align:go after being in align mode.
 disable-model-invocation: true
 ---

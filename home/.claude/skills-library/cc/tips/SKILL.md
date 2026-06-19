@@ -1,5 +1,5 @@
 ---
-name: cc:tips
+name: cc-tips
 description: Use when starting a Claude Code session, feeling overwhelmed by context, or needing workflow tips. Triggers on "how do I manage sessions", "context getting long", "remind me".
 ---
 

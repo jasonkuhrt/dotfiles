@@ -1,5 +1,5 @@
 ---
-name: align:once
+name: align-once
 description: Single-shot alignment — confirm understanding and preview intent for one response, then resume normal editing. Use when user says /align:once.
 disable-model-invocation: true
 ---

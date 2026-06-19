@@ -1,5 +1,5 @@
 ---
-name: gh:pr
+name: gh-pr
 description: Use when working with GitHub PRs — resolving review comments, checking CI status, writing PR comments, triggering AI re-reviews, or running PR review integration tests.
 ---
 

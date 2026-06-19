@@ -1,9 +1,9 @@
 ---
-name: linear:managing-issues
-description: Compatibility alias for projects that still reference `linear_managing-issues`. Use when searching, creating, updating, or commenting on Linear issues.
+name: linear-managing-issues
+description: Compatibility alias for projects that still reference `linear-managing-issues`. Use when searching, creating, updating, or commenting on Linear issues.
 ---
 
-# linear_managing-issues
+# linear-managing-issues
 
 Compatibility alias for legacy project instructions.
 

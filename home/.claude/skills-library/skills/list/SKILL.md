@@ -1,5 +1,5 @@
 ---
-name: skills:list
+name: skills-list
 description: >-
   Show current skill outfit (core + pluggable status), token costs, and operation history.
   Use when user asks "what skills are on", "show my skills", "skill cost", "skill history".

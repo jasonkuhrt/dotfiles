@@ -1,9 +1,9 @@
 ---
-name: plan_exec
+name: plan-exec
 description: >
   Execute a technical plan document autonomously while the user is away.
   Use when given a design doc path and told to implement it without interruption.
-  Triggers on "execute the plan", "run this plan", "implement from this doc", or /plan_exec.
+  Triggers on "execute the plan", "run this plan", "implement from this doc", or /plan-exec.
 argument-hint: "[path/to/plan.md] [extra context]"
 ---
 

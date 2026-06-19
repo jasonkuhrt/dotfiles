@@ -1,5 +1,5 @@
 ---
-name: beads:teacher
+name: beads-teacher
 description: Use when onboarding beads for persistent agent memory, orchestrating parallel subagents for ready tasks, or verifying beads:teacher accuracy.
 ---
 

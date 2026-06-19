@@ -1,5 +1,5 @@
 ---
-name: cc:session:new
+name: cc-session-new
 description: Generate a carry-over prompt capturing current session context for a new Claude Code session. Use when the user wants to continue work in a fresh session, says "new session", "carry over", or /cc:session:new.
 ---
 

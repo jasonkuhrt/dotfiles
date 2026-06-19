@@ -1,5 +1,5 @@
 ---
-name: beads:offload
+name: beads-offload
 description: Use when the user or conversation veers into an adjacent idea worth tracking. Captures the idea as a bead without derailing the current task.
 ---
 

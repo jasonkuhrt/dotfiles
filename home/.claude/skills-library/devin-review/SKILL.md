@@ -1,5 +1,5 @@
 ---
-name: devin_review
+name: devin-review
 description: "Run Devin Review on a PR — smart diffs, bug catching, codebase-aware chat."
 argument-hint: "<pr-url or number>"
 ---

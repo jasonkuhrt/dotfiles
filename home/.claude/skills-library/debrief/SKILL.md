@@ -22,7 +22,7 @@ Determine what work is being debriefed.
 **If `$ARGUMENTS` contains a path**: Read that plan/design doc as the baseline for deviation analysis.
 
 **If no arguments**: Infer from conversation context:
-- Was a plan executed? (Look for `plan_exec` session summary, plan docs, `HALT.md`)
+- Was a plan executed? (Look for `plan-exec` session summary, plan docs, `HALT.md`)
 - Was an epic wave run? (Check `.flo/state.yml`, recent bead activity)
 - Was this a debugging/investigation session?
 - Was this a failed attempt at something?
@@ -121,7 +121,7 @@ Present all proposals together. Do not execute without user approval.
 
 ### Methodology Notes
 
-If plan methodology flaws were identified, propose a memory note under `plan-methodology-learnings` that future `plan_exec` sessions can reference. Format as actionable guidelines, not narrative.
+If plan methodology flaws were identified, propose a memory note under `plan-methodology-learnings` that future `plan-exec` sessions can reference. Format as actionable guidelines, not narrative.
 
 ## Output Format
 

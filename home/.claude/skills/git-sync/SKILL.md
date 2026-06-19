@@ -1,9 +1,9 @@
 ---
-name: git_sync
+name: git-sync
 description: >-
   Sync the current branch with the main development branch using merge commits.
   Use this skill whenever the user says "sync", "sync with develop", "update branch",
-  "merge develop", "resolve conflicts", "PR has conflicts", or /git:sync. Also trigger
+  "merge develop", "resolve conflicts", "PR has conflicts", or /git-sync. Also trigger
   when the user mentions a PR needing updates, a branch being behind, or merge conflicts
   on a pull request. This skill handles worktree detection, fetching, merging, checks,
   and pushing — the full PR sync workflow. Never rebase; always merge.

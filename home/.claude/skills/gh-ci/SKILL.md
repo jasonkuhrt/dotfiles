@@ -1,6 +1,6 @@
 ---
 name: gh-ci
-description: Poll, diagnose, and report on a GitHub PR's CI. Use this skill whenever you're about to watch a PR's CI to a terminal state — after pushing commits to a PR, after /git_sync, when the user says "is CI green", "wait for CI", "check the PR's checks", "monitor CI", "did CI pass", "watch the workflow", "fix CI failures", or any phrasing that asks whether a PR is ready to merge based on its checks. ALSO use proactively whenever you push a commit to a branch that has an open PR — never spin up an ad-hoc `gh pr checks --watch` or count-based poll. This skill is the only authority for PR CI status; ignore any older guidance suggesting otherwise.
+description: Poll, diagnose, and report on a GitHub PR's CI. Use this skill whenever you're about to watch a PR's CI to a terminal state — after pushing commits to a PR, after /git-sync, when the user says "is CI green", "wait for CI", "check the PR's checks", "monitor CI", "did CI pass", "watch the workflow", "fix CI failures", or any phrasing that asks whether a PR is ready to merge based on its checks. ALSO use proactively whenever you push a commit to a branch that has an open PR — never spin up an ad-hoc `gh pr checks --watch` or count-based poll. This skill is the only authority for PR CI status; ignore any older guidance suggesting otherwise.
 ---
 
 # gh-ci — The Only Way To Watch a GitHub PR's CI
@@ -100,7 +100,7 @@ Surface to the user:
 
 You are not done with CI — you have a different job:
 
-1. `cd` into the PR's worktree (per `git_sync`).
+1. `cd` into the PR's worktree (per `git-sync`).
 2. `git fetch origin <baseRefName>`.
 3. `git merge origin/<baseRefName>` and resolve conflicts.
 4. Commit, push.

@@ -1,5 +1,5 @@
 ---
-name: skills:change
+name: skills-change
 description: >-
   Turn skills on/off, move between scopes/commitments, undo/redo changes. Interprets user intent to determine
   the right shan CLI command. Use when user says "add", "equip", "enable", "remove", "disable",

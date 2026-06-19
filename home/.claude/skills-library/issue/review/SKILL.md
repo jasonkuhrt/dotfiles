@@ -1,5 +1,5 @@
 ---
-name: issue:review
+name: issue-review
 description: Run QA criteria against the current issue's codebase and produce structured findings. Use when asked to review, audit, or QA the current issue. Triggers on /issue:review.
 ---
 

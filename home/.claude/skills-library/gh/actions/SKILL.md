@@ -1,5 +1,5 @@
 ---
-name: gh:actions
+name: gh-actions
 description: Use when writing GitHub Actions workflows, TypeScript scripts for Actions, or reading GitHub issues/PRs via gh CLI.
 ---
 

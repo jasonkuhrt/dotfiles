@@ -1,5 +1,5 @@
 ---
-name: "test:review"
+name: test-review
 description: >-
   Review tests for oracle strength, missing scenarios, flaky behavior,
   counterexample handling, and cross-API inconsistencies that survive line

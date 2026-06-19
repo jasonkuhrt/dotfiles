@@ -1,5 +1,5 @@
 ---
-name: "test:write"
+name: test-write
 description: >-
   Write or update TypeScript tests, including regression, property, snapshot,
   type-level, and Effect-service tests. Use when the user asks to write, add,

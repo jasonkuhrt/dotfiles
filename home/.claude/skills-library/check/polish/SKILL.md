@@ -1,5 +1,5 @@
 ---
-name: check:polish
+name: check-polish
 description: Thorough checks — edge cases, security, completeness. Shortcut for /check polish.
 argument-hint: "[pr | dirty | here] [@<group>]"
 ---

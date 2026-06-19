@@ -1,5 +1,5 @@
 ---
-name: check:help
+name: check-help
 description: Show available checks, config, and how to add checks.
 ---
 

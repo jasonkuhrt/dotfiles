@@ -7,8 +7,8 @@
 # are even created.
 #
 # Exit codes:
-#   0 — all visible checks green and relevant current-head workflow runs completed green
-#   1 — at least one check failed/cancelled/timed out/action-required
+#   0 — all visible checks green, relevant current-head workflow runs completed green, and PR is merge-unblocked
+#   1 — at least one check failed/cancelled/timed out/action-required, or required review conversations remain unresolved
 #   2 — stale head or merge conflict; rerun/fix before polling further
 #   3 — usage error
 #
@@ -152,6 +152,51 @@ filter_ignorable_workflow_runs() {
   jq -c --argjson ignored "$ignored_json" '[.[] | select(.id as $id | ($ignored | index($id) | not))]' <<<"$runs"
 }
 
+unresolved_review_threads() {
+  gh api graphql \
+    -f owner="${repo%/*}" \
+    -f repo="${repo#*/}" \
+    -F number="$pr_number" \
+    -f query='
+      query($owner:String!, $repo:String!, $number:Int!) {
+        repository(owner:$owner, name:$repo) {
+          pullRequest(number:$number) {
+            reviewThreads(first:100) {
+              nodes {
+                id
+                isResolved
+                isOutdated
+                path
+                line
+                comments(first:1) {
+                  nodes {
+                    author { login }
+                    body
+                    url
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ' |
+    jq -r '
+      .data.repository.pullRequest.reviewThreads.nodes[]
+      | select(.isResolved == false)
+      | .comments.nodes[0] as $comment
+      | [
+          .id,
+          (.path // ""),
+          ((.line // "") | tostring),
+          ($comment.author.login // ""),
+          ($comment.url // ""),
+          (($comment.body // "") | split("\n")[0])
+        ]
+      | @tsv
+    '
+}
+
 summarize_checks() {
   jq -r '
     sort_by(.workflow, .name)
@@ -200,6 +245,22 @@ while true; do
   if [ "$mergeable" = "CONFLICTING" ]; then
     echo "CONFLICT: PR #$pr_number ($current_branch) has merge conflicts with its base. Resolve before polling CI."
     exit 2
+  fi
+
+  if [ "$merge_state" = "BLOCKED" ]; then
+    unresolved_threads=$(unresolved_review_threads)
+    if [ -n "$unresolved_threads" ]; then
+      echo "=== BLOCKED ==="
+      echo "PR #$pr_number is blocked by unresolved required review conversation(s). Treat these like failing checks:"
+      printf '%s\n' "$unresolved_threads" | while IFS=$'\t' read -r id path line author url summary; do
+        location="$path"
+        if [ -n "$line" ]; then
+          location="$location:$line"
+        fi
+        printf '  thread %s %s by %s: %s (%s)\n' "$id" "$location" "$author" "$summary" "$url"
+      done
+      exit 1
+    fi
   fi
 
   checks=$(normalize_checks <<<"$raw")
@@ -263,11 +324,21 @@ while true; do
   workflow_run_success_count=$(jq '[.[] | select(.success)] | length' <<<"$workflow_runs")
   if [ "$total" -gt 0 ] && [ "$success_count" -eq "$total" ]; then
     if [ "$workflow_run_total" -gt 0 ] && [ "$workflow_run_success_count" -eq "$workflow_run_total" ]; then
+      if [ "$merge_state" = "BLOCKED" ]; then
+        echo "=== BLOCKED ==="
+        echo "PR #$pr_number checks are green, but GitHub still reports mergeStateStatus=BLOCKED. Inspect merge conflicts and required review conversations before reporting ready."
+        exit 1
+      fi
       echo "=== ALL GREEN ==="
       echo "PR #$pr_number head ${head_sha:0:10}: $total checks successful; $workflow_run_total current-head workflow runs completed successfully."
       exit 0
     fi
     if [ "$workflow_run_total" -eq 0 ] && [ "$raw_workflow_run_total" -gt 0 ]; then
+      if [ "$merge_state" = "BLOCKED" ]; then
+        echo "=== BLOCKED ==="
+        echo "PR #$pr_number checks are green, but GitHub still reports mergeStateStatus=BLOCKED. Inspect merge conflicts and required review conversations before reporting ready."
+        exit 1
+      fi
       echo "=== ALL GREEN ==="
       echo "PR #$pr_number head ${head_sha:0:10}: $total checks successful; no relevant current-head workflow runs remain after ignoring $ignored_workflow_run_total no-job dashboard run(s)."
       exit 0

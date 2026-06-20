@@ -107,7 +107,7 @@ Use the user's requested verification policy. If no policy was given, prefer PR 
 
 After pushing any review fixes, watch the remote PR checks via the `gh-ci` skill. Never spin up an ad-hoc `gh pr checks --watch` or count-based poll — `gh-ci` is the only authority for PR CI status.
 
-Do not report the land pass complete while selected Greptile threads are still unresolved or actionable CI checks are still red. If a required external gate cannot be satisfied from the agent environment, report it explicitly.
+Do not report the land pass complete while selected Greptile threads are still unresolved, any required review conversation is unresolved, the PR has merge conflicts, or actionable CI checks are still red. Treat `mergeStateStatus: BLOCKED` as a TODO like a failing check: it usually means merge conflicts, unresolved required conversations, or both. If a required external gate cannot be satisfied from the agent environment, report it explicitly.
 
 ### 7. E2E Local Sign Off
 

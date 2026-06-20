@@ -13,7 +13,7 @@ A PR's "done?" question must be anchored to the current PR head SHA and answered
 
 | # | Layer | API | What it tells you |
 |---|---|---|---|
-| 1 | **PR identity and mergeability** | `gh pr view --json headRefOid,headRefName,mergeable,mergeStateStatus` | Which SHA you are waiting for, and whether conflicts make CI meaningless. |
+| 1 | **PR identity and mergeability** | `gh pr view --json headRefOid,headRefName,mergeable,mergeStateStatus` | Which SHA you are waiting for, and whether conflicts or unresolved required conversations make CI insufficient. |
 | 2 | **PR check rollup** | `gh pr view --json statusCheckRollup` | Every current check run/status context GitHub attaches to that PR head. |
 | 3 | **Current-head workflow runs** | `gh api repos/<repo>/actions/runs?head_sha=<sha>` | Whether Actions workflows spawned from the current commit are still creating/running jobs. This replaces fixed "green but wait N seconds" grace windows. |
 | 4 | **Failed job logs** | `gh run view <run-id> --log-failed --job <job-id>` | The exact failing step/log excerpt, read only after the rollup is red. |
@@ -58,12 +58,13 @@ The script:
 - Calls `gh pr view` first and anchors to the initial `headRefOid`.
 - Exits `2` if the PR head moves while polling; rerun for the new SHA.
 - Exits `2` if `mergeable == CONFLICTING`.
+- Exits `1` if `mergeStateStatus == BLOCKED` because unresolved required review conversations remain.
 - Polls `statusCheckRollup` directly, not workflow-run names.
 - Handles both `CheckRun` and legacy `StatusContext` field shapes.
 - Groups duplicate matrix checks in compact status lines.
 - Exits `1` immediately on terminal red conclusions.
 - Polls GitHub Actions workflow runs for the same head SHA.
-- Exits `0` only after all visible checks are green and every relevant current-head workflow run has completed successfully, catching delayed fanout without a fixed grace window.
+- Exits `0` only after all visible checks are green, every relevant current-head workflow run has completed successfully, and GitHub no longer reports the PR as merge-blocked.
 - Ignores cancelled `pull_request_target` workflow runs that created zero jobs; those dashboard/comment runs never became PR checks and are not evidence that the PR head is red.
 
 Tunables via env:
@@ -80,7 +81,7 @@ Tunables via env:
 | Treating cancelled no-job `pull_request_target` dashboard runs as red CI | They never created jobs or PR checks, so they are phantom workflow-run signals outside the PR check rollup. |
 | `while true; do ...; sleep 120; done` in plain Bash | Blocked by the `block-sleep-poll-loops` hook. Use this skill's harness-kind route instead. |
 | Treating dashboard/comment checks as authoritative | They are UX surfaces, not the current head's complete check state. |
-| Polling check-runs without first checking mergeable | A CONFLICTING PR will never run the heavy workflow, so the poll spins until timeout. |
+| Polling check-runs without first checking mergeability and merge state | A CONFLICTING PR or unresolved required conversation can leave checks green while GitHub still blocks merge. |
 
 ## When CI fails
 
@@ -106,9 +107,19 @@ You are not done with CI — you have a different job:
 4. Commit, push.
 5. Re-invoke this skill.
 
+## When the PR has unresolved required conversations (script exits 1)
+
+You are not done with CI. Treat unresolved required review conversations exactly like failing checks:
+
+1. Fetch thread-aware review data, not flat comments.
+2. Address each actionable thread with code or a clear explanation.
+3. Reply on the exact thread and resolve it.
+4. Re-fetch thread state and verify `isResolved: true`.
+5. Re-invoke this skill for the current head SHA.
+
 ## After this skill exits 0
 
-CI is green. Tell the user. Don't ask "want me to do X?" — pick the next obvious action (e.g. report status, address review comments).
+CI and merge blockers are green. Tell the user. Don't ask "want me to do X?" — pick the next obvious action.
 
 ## What this skill replaces
 

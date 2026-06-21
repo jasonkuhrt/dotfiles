@@ -29,6 +29,22 @@ dev-browser --connect --timeout 30 run script3.js
 - Never assume `--connect` requires re-authentication between scripts — the daemon caches it
 - Never use `--browser` mode when the site has bot detection (Cloudflare Turnstile, etc.) — use `--connect` to the user's real Chrome instead
 
+## `chrome-debug connect` fails: `usecomputer not found`
+
+`chrome-debug connect` clicks Chrome M144+'s "Allow remote debugging?" dialog with the `usecomputer` CLI (`$USECOMPUTER`, default `~/.npm-global/lib/node_modules/usecomputer/dist/darwin-arm64/usecomputer`). Two failure modes both surface as "usecomputer not found" and both block **all** `--connect` work, including `td`:
+
+1. **Lost execute bit.** npm only guarantees `+x` on declared `bin` entries, not on the platform binary nested under `dist/darwin-arm64/`. After an install/reinstall it can land non-executable (`-rw-r--r--`), so the path check reports it "not found" even though the file is present. Fix:
+
+   ```bash
+   chmod +x ~/.npm-global/lib/node_modules/usecomputer/dist/darwin-arm64/usecomputer
+   ```
+
+   **Verified 2026-06-21:** this exact missing `+x` (not a daemon wedge, not Chrome) was the real blocker for an alimony e-transfer via `td`. One `chmod` fixed it.
+
+2. **Chrome closed.** `chrome-debug connect` requires Chrome already running with ≥1 window. Launch it first (`open -a "Google Chrome"`); opening a *closed* Chrome is fine, but never *quit/restart* the user's Chrome without per-occurrence approval.
+
+A `chrome-debug connect` "✓ Connected to Chrome default profile" followed by `chrome-debug status` reporting "not listening on port 9222" is **not** a failure — M144+ permission debugging is WebSocket-only and `/json`/port-9222 404 by design (see daemon-wedge note below). The connect confirmation is authoritative; don't re-chase it.
+
 ## Named Pages
 
 - `browser.getPage("name")` creates/reuses a named page that persists between script runs within the same browser instance

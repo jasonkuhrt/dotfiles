@@ -1,6 +1,6 @@
 ---
 name: land-pr
-description: Prepare a branch or GitHub PR to an open, ready PR by composing land-worktree first, then creating a PR when missing, moving it out of draft, scanning existing Greptile review feedback, addressing actionable Greptile feedback when present, watching PR checks, and triggering E2E Local Sign Off after other checks are green when required. Use when the user says to land to PR, prepare a PR, create or ready the PR, undraft and handle existing Greptile feedback, finish review-comment closeout, handle local sign off, or get the PR green without merging.
+description: Prepare a branch or GitHub PR to an open, ready PR by composing land-worktree first, then creating a PR when missing, moving it out of draft, scanning existing Greptile review feedback, addressing actionable Greptile feedback when present, running an independent subagent review iteration, watching PR checks, and triggering E2E Local Sign Off after other checks are green when required. Use when the user says to land to PR, prepare a PR, create or ready the PR, undraft and handle existing Greptile feedback, finish review-comment closeout, run a subagent/code-review pass during PR landing, handle local sign off, or get the PR green without merging.
 ---
 
 # Land PR
@@ -20,9 +20,10 @@ Core flow:
 3. Move the PR out of draft.
 4. Scan for existing Greptile review feedback. Do not wait for Greptile to appear or settle.
 5. Use the PR-review-comments rule to address actionable Greptile feedback only when it already exists.
-6. Push any fixes and watch the requested remote checks.
-7. If the PR requires E2E Local Sign Off, wait until all other checks are green, trigger the sign-off workflow for the current head SHA, then wait for that gate.
-8. Report the PR URL, branch, Greptile outcome, remote check state, and any intentionally open blockers.
+6. Run one independent subagent review iteration against the current PR diff, then address actionable findings.
+7. Push any fixes and watch the requested remote checks.
+8. If the PR requires E2E Local Sign Off, wait until all other checks are green, trigger the sign-off workflow for the current head SHA, then wait for that gate.
+9. Report the PR URL, branch, review outcome, remote check state, and any intentionally open blockers.
 
 ## Workflow
 
@@ -87,7 +88,7 @@ Look for Greptile in:
 
 Use GitHub GraphQL for thread-aware reads when checking review threads. A Greptile hit is any review, comment, review-thread comment, or completed Greptile check with text or author metadata matching `greptile` case-insensitively.
 
-If Greptile has already posted, continue to the feedback-handling step. If not, report "no Greptile material found" and continue to checks.
+If Greptile has already posted, continue to the feedback-handling step. If not, report "no Greptile material found" and continue to the subagent review iteration.
 
 ### 5. Address Existing Greptile Feedback
 
@@ -101,7 +102,29 @@ When working through threads:
 - Resolve addressed threads after fixes are pushed and the requested verification passes.
 - Leave ambiguous, conflicting, informational, or still-failing threads open with a clear reason.
 
-### 6. Checks
+### 6. Subagent Review Iteration
+
+Load and follow the `dispatch-codex-sub` skill from the current skills list.
+
+After existing Greptile feedback has been handled, dispatch one in-thread Codex subagent for an independent code-review pass on the current PR diff. The subagent review is a required PR-landing gate, not a substitute for Greptile, CI, or the main agent's own review.
+
+Use this prompt shape:
+
+```text
+Review PR <number> on branch <branch> for correctness, regressions, missing verification, and repo-convention violations. Other agents may be editing the repo; do not revert unrelated changes. Do not edit files. Report only actionable findings with severity, file/line evidence, and the smallest fix that would satisfy the concern.
+```
+
+Handle the subagent result:
+
+- Implement actionable correctness, regression, verification, or repo-convention findings.
+- Leave opinion-only or ambiguous findings unimplemented unless local evidence confirms them.
+- Run the narrow verification that proves the applied fixes.
+- Commit or amend as appropriate for the current land-worktree state, then push.
+- If the subagent reports no actionable findings, record that outcome and continue.
+
+If fixes from the subagent review materially change the PR, re-check unresolved PR review threads before moving to CI watching.
+
+### 7. Checks
 
 Use the user's requested verification policy. If no policy was given, prefer PR CI status checks over broad local checks.
 
@@ -109,7 +132,7 @@ After pushing any review fixes, watch the remote PR checks via the `gh-ci` skill
 
 Do not report the land pass complete while selected Greptile threads are still unresolved, any required review conversation is unresolved, the PR has merge conflicts, or actionable CI checks are still red. Treat `mergeStateStatus: BLOCKED` as a TODO like a failing check: it usually means merge conflicts, unresolved required conversations, or both. If a required external gate cannot be satisfied from the agent environment, report it explicitly.
 
-### 7. E2E Local Sign Off
+### 8. E2E Local Sign Off
 
 Handle this section when either the user asks for local sign off or the PR has the `E2E Local Sign Off` status/check.
 
@@ -156,4 +179,5 @@ Keep the closeout short:
 - Whether the PR was moved out of draft or was already ready.
 - Whether Greptile feedback appeared.
 - Which Greptile threads were addressed/resolved, or that none were actionable.
+- Which subagent review findings were addressed, or that the subagent reported no actionable findings.
 - Remote check status and any remaining external blockers.

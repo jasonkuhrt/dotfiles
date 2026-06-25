@@ -33,18 +33,38 @@
   //
   "profiles": {
     "focus": {
-      "tab_bar": { "show": false, "show_nav_history_buttons": false },
-      "toolbar": { "breadcrumbs": false, "quick_actions": false },
-      "gutter": { "line_numbers": false, "folds": false },
-      "indent_guides": { "enabled": false },
-      "current_line_highlight": "none",
-      "scrollbar": { "show": "never" },
-      "centered_layout": { "left_padding": 0.3, "right_padding": 0.3 }
+      "settings": {
+        "tab_bar": {
+          "show": false,
+          "show_nav_history_buttons": false
+        },
+        "toolbar": {
+          "breadcrumbs": false,
+          "quick_actions": false
+        },
+        "gutter": {
+          "line_numbers": false,
+          "folds": false
+        },
+        "indent_guides": {
+          "enabled": false
+        },
+        "current_line_highlight": "none",
+        "scrollbar": {
+          "show": "never"
+        },
+        "centered_layout": {
+          "left_padding": 0.3,
+          "right_padding": 0.3
+        }
+      }
     },
     "presentation": {
-      "buffer_font_size": 20,
-      "ui_font_size": 18,
-      "theme": "One Light"
+      "settings": {
+        "buffer_font_size": 20,
+        "ui_font_size": 18,
+        "theme": "One Light"
+      }
     }
   },
   "auto_install_extensions": {
@@ -64,8 +84,7 @@
     "postgres-context-server": true,
     "prisma": true,
     "svelte": false,
-    "tokyo-night": true,
-    "tsgo": true
+    "tokyo-night": true
   },
   "disable_ai": false,
   "show_signature_help_after_edits": false,
@@ -88,13 +107,23 @@
     // "provider": "zed.dev",
     // "model": "zed-dev-2.0"
     // },
+    "favorite_models": [
+      {
+        "provider": "openai-subscribed",
+        "model": "gpt-5.5",
+        "enable_thinking": true,
+        "effort": "xhigh"
+      }
+    ],
     "dock": "right",
     "tool_permissions": {
       "default": "allow"
     },
     "default_model": {
-      "provider": "zed.dev",
-      "model": "claude-opus-4-thinking"
+      "effort": "xhigh",
+      "enable_thinking": true,
+      "provider": "openai-subscribed",
+      "model": "gpt-5.5"
     },
     "default_profile": "write",
     // "default_model": {
@@ -314,6 +343,66 @@
   //
 
   "file_scan_inclusions": [".env*", ".claude/**", ".tmp/**"],
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // WORKAROUND — added 2026-06-17.  WHY: Zed's project panel goes stale on large
+  // monorepos (new/changed/deleted files don't appear). Root cause: Zed watches
+  // the ENTIRE worktree (e.g. heartbeat-chat has 95 node_modules) and overruns
+  // macOS FSEvents → dropped events → stale tree. Zed has NO "refresh tree"
+  // command, so the only built-in fix is window-reload — which recreates the OS
+  // window, dropping it out of a Full Screen Split View tile and killing in-window
+  // terminals. Excluding the high-file-COUNT dirs below shrinks the watched set so
+  // the watcher stays reliable. (It is file COUNT, not size, that overruns the
+  // watcher — each file is O(1) to scan regardless of bytes. node_modules is the
+  // big win — community-confirmed.)
+  //
+  // WHAT EXCLUSION COSTS (verified against Zed source — only exclude what you
+  // don't need Zed to track):
+  //   • LSP / code intelligence — NOT affected. Language servers read the disk
+  //     themselves; go-to-definition still opens files in excluded dirs (e.g. into
+  //     node_modules) as standalone buffers.
+  //   • cmd-P file finder — excluded files won't appear (can't fuzzy-open them).
+  //   • Project search (find-in-files) — excluded files are NOT searched.
+  //   • Git panel / diff gutter — matters ONLY for git-TRACKED files. Everything
+  //     excluded here is git-IGNORED, so ZERO git cost (nothing to diff). ⚠️ NEVER
+  //     exclude a committed/tracked dir — that is why parts/prisma/src/client
+  //     (tracked) is deliberately NOT excluded: you would lose its diffs on regen.
+  //   • An open buffer of an excluded file won't auto-reload on external change —
+  //     use `editor: reload file` (in-place, no window reload).
+  //
+  // KNOWN OPEN upstream bug (verified 2026-06-17): zed-industries/zed
+  //   #53182 stale files · #30851 slow FS updates · #58389 stale after agent
+  //   writes · #29598 (feature request) no manual-refresh command.
+  // PR #57173 (merged 2026-05-19) added logging only — NOT a fix; a version bump
+  // does NOT resolve this (still broken in v1.7.1 preview).
+  //
+  // DROP THIS BLOCK WHEN Zed ships a reliable watcher or a manual "refresh project
+  // panel" command — watch #53182 / #29598. To test removal: delete the non-default
+  // entries, reload once, churn files (terminal + agent) ~20 min, confirm the tree
+  // stays in sync; re-add if it goes stale.
+  //
+  // NOTE: setting this key REPLACES Zed's default exclusions, so the defaults are
+  // re-listed first.
+  // ──────────────────────────────────────────────────────────────────────────
+  "file_scan_exclusions": [
+    // Zed defaults (re-listed — this key replaces, not merges):
+    "**/.git",
+    "**/.svn",
+    "**/.hg",
+    "**/.jj",
+    "**/.sl",
+    "**/.repo",
+    "**/CVS",
+    "**/.DS_Store",
+    "**/Thumbs.db",
+    "**/.classpath",
+    "**/.settings",
+    // Heavy git-IGNORED dirs (high file count / churn) — the workaround.
+    // (All git-ignored → zero git-diff cost. Do NOT add tracked dirs here.)
+    "**/node_modules",            // 95 dirs; dominant FSEvents load
+    "**/test-results",            // e2e artifacts (gitignored), churny
+    "**/playwright-report"        // e2e artifacts (gitignored)
+  ],
   "autosave": "on_focus_change",
   "format_on_save": "on",
   // "close_on_file_delete": true,
@@ -480,7 +569,13 @@
     "vtsls": {
       // @see https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json
       "settings": {
+        "javascript": {
+          "updateImportsOnFileMove": {
+            "enabled": "always"
+          }
+        },
         "typescript": {
+          "tsdk": "/Users/jasonkuhrt/Library/Application Support/Zed/languages/vtsls/node_modules/typescript/lib",
           "preferences": {
             //
             //
@@ -528,6 +623,7 @@
             // - https://github.com/zardoy/typescript-vscode-plugins
           },
           "tsserver": {
+            "maxTsServerMemory": 8192,
             "experimental": {
               "enableProjectDiagnostics": true,
               "completion": {
@@ -542,6 +638,12 @@
           },
           "updateImportsOnFileMove": {
             "enabled": "always"
+          }
+        },
+        "vtsls": {
+          "autoUseWorkspaceTsdk": false,
+          "typescript": {
+            "globalTsdk": "/Users/jasonkuhrt/Library/Application Support/Zed/languages/vtsls/node_modules/typescript/lib"
           }
         }
       }
@@ -592,23 +694,11 @@
         }
       }
     },
-    // @see https://zed.dev/docs/languages/typescript
+    // Keep TS/TSX server ownership explicit. `...` can re-expand default
+    // servers that conflict with project-local Oxc/Vite+ settings.
+    // Tracks: https://github.com/oxc-project/oxc-zed/issues/212
     "TypeScript": {
-      // ━━━ tsgo: native Go-based TypeScript compiler (TS 7.0) ━━━
-      // CLI: pnpm add -D @typescript/native-preview && npx tsgo
-      // NOTE: Zed extension downloads its own binary from npm, ignores global install
-      //
-      // ━━━ tsgo status (re-validated 2026-06-16) ━━━
-      // Rename cluster RESOLVED — all closed Mar–Apr 2026:
-      //   #2244 update-imports-on-rename/move, #2387 diagnostics-refresh-after-rename,
-      //   #2133 rename-tsconfig-mis-detection, #1882 rename/move-breaks-imports,
-      //   #2230 block-renaming-stdlib.
-      // STILL OPEN — known WARNING, not a blocker (tsgo is enabled anyway):
-      //   #2125 OOM on recursive conditional types — github.com/microsoft/typescript-go/issues/2125
-      //
-      // Swap these lines to toggle:
-      // "language_servers": ["vtsls", "!tsgo", "!eslint", "oxlint", "..."],
-      "language_servers": ["tsgo", "!vtsls", "!eslint", "oxlint", "..."],
+      "language_servers": ["vtsls", "!typescript-language-server", "!eslint", "oxlint"],
       "prettier": { "allowed": false },
       // "completions": {
       //   "lsp_fetch_timeout_ms": 5000
@@ -629,18 +719,8 @@
         }
       ]
     },
-    // Considered apart from TypeScript
-    // @see https://zed.dev/docs/languages/typescript?highlight=tsx#language-servers
     "TSX": {
-      // ━━━ tsgo: native Go-based TypeScript compiler (TS 7.0) ━━━
-      // CLI: pnpm add -D @typescript/native-preview && npx tsgo
-      // NOTE: Zed extension downloads its own binary from npm, ignores global install
-      // NOTE: tsgo status re-validated 2026-06-16 — see TypeScript section above
-      //   (rename cluster resolved; #2125 OOM is a known warning, not a blocker).
-      //
-      // Swap these lines to toggle:
-      // "language_servers": ["vtsls", "!tsgo", "!eslint", "oxlint", "..."],
-      "language_servers": ["tsgo", "!vtsls", "!eslint", "oxlint", "..."],
+      "language_servers": ["vtsls", "!typescript-language-server", "!eslint", "oxlint"],
       "prettier": { "allowed": false },
       "formatter": [
         {

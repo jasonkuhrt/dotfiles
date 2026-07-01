@@ -35,6 +35,14 @@ Use Ref first for Effect guides, concepts, and pattern docs. Fall back to `effec
 
 **Fallback:** Module-scope exports — use only when the class cannot be the top-level export (e.g., combinators or custom transforms wrap the base schema, making the consumer-facing schema a composed value rather than the class itself).
 
+## Generator Yield Discipline
+
+Do not say "`Effect.gen` can only yield Effects." The accurate model is: `yield*` works through the iterator/yieldable protocol, and Effect v4 implements that protocol across multiple data types.
+
+In `Effect.gen`, yielded values must be Effect-yieldable: `Effect` values, `Context` references/services, and `Cause.YieldableError` values all implement `[Symbol.iterator]()` so they yield an `Effect` into the generator. In `Result.gen`, `Result` values are Result-yieldable. In `Option.gen`, `Option` values are Option-yieldable.
+
+Crossing worlds is still explicit. A `Result<A, E>` is not automatically the failure channel of an `Effect.gen`; bridge it with `Effect.fromResult` or the local `E.fromResult` helper at the point where the code moves from Result composition into Effect composition. That bridge is about failure-channel semantics, not about JavaScript `yield*` being syntactically limited to Effects.
+
 ## File Organization
 
 Schemas can live one-per-file, grouped under a directory, or in a single file — whatever matches the domain's natural boundaries. Co-locate what's mutually defined, separate what's independent. `Schema.suspend()` handles circular references across files.

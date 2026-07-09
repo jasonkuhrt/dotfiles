@@ -369,17 +369,23 @@ This is the exception to the normal Do-NOT-commit default.
 If Codex fails with a model-not-available error, surface it to the user —
 do not silently fall back to a lesser model.
 
-## Known environment failure: missing `codex-code-mode-host`
+## Known environment failure: resuming pre-0.144 sessions
 
-Codex CLI ≥ 0.144 (Homebrew cask) enables a "code mode" feature by default
-but the cask ships ONLY the main binary — every tool call then dies with:
+Codex CLI 0.144 (Homebrew cask) cannot RESUME sessions recorded by older
+CLI versions — every tool call in the resumed run dies with:
 
 ```text
 failed to spawn code-mode host /opt/homebrew/bin/codex-code-mode-host: No such file or directory
 ```
 
-The run burns tokens reaching the model and then can do nothing. Fix:
-add `--disable code_mode` to the invocation (verified 2026-07-09 with a
-cheap `echo` probe). The session survives — resume it by ID with the flag
-added; do not ditch it. Re-check whether a later cask ships the host binary
-(`ls /opt/homebrew/Caskroom/codex/<version>/`) before dropping the flag.
+The run burns tokens reaching the model and then can do nothing. Verified
+2026-07-09 with controls: FRESH sessions on 0.144 work fine (with or
+without `--disable code_mode` — the flag is irrelevant; an earlier
+attribution to it was wrong); only resume-of-old-session fails.
+
+Consequence for the resume-by-default rule: after a Codex CLI upgrade,
+sessions recorded under the previous version may be version-trapped. When a
+resume fails this way, START FRESH (self-contained prompt; note in the
+session ledger that the old ID is trapped) — do not keep prodding the old
+session, and do not add flags hoping to revive it. Re-check resumability
+after future CLI upgrades before assuming the ledger's sessions are live.

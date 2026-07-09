@@ -369,23 +369,32 @@ This is the exception to the normal Do-NOT-commit default.
 If Codex fails with a model-not-available error, surface it to the user —
 do not silently fall back to a lesser model.
 
-## Known environment failure: resuming pre-0.144 sessions
+## Known environment failure: cask ships without `codex-code-mode-host`
 
-Codex CLI 0.144 (Homebrew cask) cannot RESUME sessions recorded by older
-CLI versions — every tool call in the resumed run dies with:
+Codex CLI 0.144's Homebrew cask installs ONLY the main binary, but real
+tasks (especially on gpt-5.6-sol, whose tooling is code-mode based) need a
+sibling host binary. Every tool call then dies with:
 
 ```text
 failed to spawn code-mode host /opt/homebrew/bin/codex-code-mode-host: No such file or directory
 ```
 
-The run burns tokens reaching the model and then can do nothing. Verified
-2026-07-09 with controls: FRESH sessions on 0.144 work fine (with or
-without `--disable code_mode` — the flag is irrelevant; an earlier
-attribution to it was wrong); only resume-of-old-session fails.
+Diagnosis traps (all hit on 2026-07-09 — don't repeat them): trivial echo
+probes SUCCEED (they never enter code mode), so a cheap probe proves
+nothing; `--disable code_mode` does NOT prevent it on real tasks; it is not
+resume-specific — fresh sessions fail identically once the task is real.
 
-Consequence for the resume-by-default rule: after a Codex CLI upgrade,
-sessions recorded under the previous version may be version-trapped. When a
-resume fails this way, START FRESH (self-contained prompt; note in the
-session ledger that the old ID is trapped) — do not keep prodding the old
-session, and do not add flags hoping to revive it. Re-check resumability
-after future CLI upgrades before assuming the ledger's sessions are live.
+THE FIX — install the official release asset next to the cask's binary:
+
+```bash
+gh release download rust-v<version> -R openai/codex \
+  -p 'codex-code-mode-host-aarch64-apple-darwin.tar.gz' && \
+tar xzf codex-code-mode-host-aarch64-apple-darwin.tar.gz && \
+cp codex-code-mode-host-aarch64-apple-darwin /opt/homebrew/bin/codex-code-mode-host && \
+chmod +x /opt/homebrew/bin/codex-code-mode-host
+```
+
+Verified: a blocked session resumes fine afterwards (sessions survive the
+outage; resume by ID with a short "environment fixed, proceed" message).
+After every cask upgrade, check the host binary version-matches
+(`ls /opt/homebrew/Caskroom/codex/`) — the cask may keep omitting it.

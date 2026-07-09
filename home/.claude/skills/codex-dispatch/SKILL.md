@@ -7,7 +7,7 @@ description: >
   when another skill (codex-review, codex-research) needs the invocation
   mechanics. Also trigger when the user says "run codex", "dispatch to codex",
   "use codex to implement/execute", or asks which model/flags to use with Codex.
-  Always gpt-5.5 at xhigh reasoning effort.
+  Always gpt-5.6-sol at xhigh reasoning effort, regular service tier.
 ---
 
 # Codex Dispatch
@@ -43,12 +43,31 @@ of `codex exec`.** Same flags as a fresh dispatch, `tee -a` onto the same log.
 ```bash
 codex exec resume "$SESSION_ID" \
   --dangerously-bypass-approvals-and-sandbox \
-  -m gpt-5.5 \
+  --disable code_mode_host \
+  -m gpt-5.6-sol \
   -c model_reasoning_effort="xhigh" \
-  -c service_tier="priority" \
   - < "$PROMPT_FILE" \
   2>&1 | tee -a "$RAW_LOG"
 ```
+
+`codex exec resume` REJECTS the root-level `-C <DIR>` flag ("unexpected
+argument"). Set the shell working directory to the workspace root before
+invoking instead (Claude Code's Bash cwd persists across calls — verify with
+`pwd` if earlier commands `cd`'d around).
+
+### The jobs-session pattern
+
+Resume chaining doubles as job streaming: designate one session per
+worktree/domain as the standing jobs session and stream each new job into it
+with `codex exec resume <ID>` as it arrives. Each job pays only its
+incremental prompt; the session retains the repo conventions, contracts, and
+prior findings. There is no hot daemon in `codex exec` (each job is still a
+process run-to-completion), but since jobs per worktree must serialize anyway
+(one writer rule), a queue of resumes is equivalent. Codex 0.144.0 also ships
+experimental long-lived surfaces — `app-server` (+ `remote-control` for its
+daemon), `exec-server`, and `mcp-server` (stdio MCP) — which are real hot
+processes but different integration surfaces (JSON-RPC/MCP, not the exec CLI);
+unevaluated here, so do not reach for them in normal dispatch.
 
 Mechanics that make this work:
 
@@ -102,24 +121,39 @@ bloat ordinary dispatch prompts with full transcript dumps.
 
 ## The canonical invocation
 
-**Always `gpt-5.5` at `xhigh` reasoning effort, on the `priority` service tier
-(fast mode).** No exceptions unless the user explicitly names a different
-model/effort for a specific run, or says to save tokens / "slow" — then drop
-the tier to `default` (keep model and effort unchanged).
+**Always `gpt-5.6-sol` at `xhigh` reasoning effort, on the regular service
+tier (NOT fast mode — omit `service_tier` / leave it `"default"`).** No
+exceptions unless the user explicitly names a different model/effort/tier for
+a specific run. Requires codex-cli newer than 0.139.0 — on an older CLI the
+API rejects the model with "requires a newer version of Codex"; surface that
+and stop.
 
 ```bash
 codex exec \
   --dangerously-bypass-approvals-and-sandbox \
-  -m gpt-5.5 \
+  --disable code_mode_host \
+  -m gpt-5.6-sol \
   -c model_reasoning_effort="xhigh" \
-  -c service_tier="priority" \
   - < "$PROMPT_FILE" \
   2>&1 | tee "$RAW_LOG"
 ```
 
-These three values are also the global defaults in `~/.codex/config.toml`
-(`model`, `model_reasoning_effort`, `service_tier`) — pass them explicitly
-anyway so invocations survive config drift.
+Pass model and effort explicitly even when `~/.codex/config.toml` agrees, so
+invocations survive config drift. Do not pass `service_tier` — regular speed
+is the default; `"priority"` (fast mode) only when the user asks for it.
+
+### Why `--disable code_mode_host`
+
+The Homebrew-cask install of codex-cli 0.144.0 ships only the main binary and
+NOT the `codex-code-mode-host` helper. The `code_mode_host` feature flag is
+stable + enabled by default, so at startup the tool router tries to spawn the
+missing host and wedges the whole run. `--disable code_mode_host` is therefore
+REQUIRED on every dispatch until the host binary is present on the machine.
+What it costs: nothing functional today — the parent `code_mode` feature
+(agent batches tool calls by writing code executed in the host) is itself
+"under development" and off. When the binary ships (npm distribution or a
+fixed cask), drop the flag and re-evaluate `code_mode`. Verify with:
+`which codex-code-mode-host` and `codex features list | grep code_mode`.
 
 - **Prompt via stdin from a file** (`- < file`) for anything longer than a
   sentence — avoids shell-quoting hell and keeps the prompt reviewable and
@@ -217,13 +251,14 @@ Result-handling contract:
 | Flag                                  | Purpose                                                          |
 | ------------------------------------- | ---------------------------------------------------------------- |
 | `--dangerously-bypass-approvals-and-sandbox` | No approvals, NO sandbox. The default for dispatch on this machine — see below. |
-| `-m gpt-5.5`                          | The model. Always this one.                                      |
+| `-m gpt-5.6-sol`                      | The model. Always this one.                                      |
 | `-c model_reasoning_effort="xhigh"`   | Reasoning effort. Always xhigh.                                  |
-| `-c service_tier="priority"`          | Fast mode (priority processing). Default; `"default"` only when the user asks to save tokens / go slow. |
+| `-c service_tier="priority"`          | Fast mode. NOT the default — only when the user explicitly asks for fast/priority. |
 | `- < prompt.md`                       | Prompt from stdin file.                                          |
 | `</dev/null`                          | Only for rare positional-prompt invocations in non-TTY contexts; closes inherited stdin. |
+| `--disable code_mode_host`            | REQUIRED on every dispatch while the cask lacks the `codex-code-mode-host` binary — see "Why --disable code_mode_host". |
 | `--skip-git-repo-check`               | Optional: allow non-git scratch or external directories when intentional. |
-| `-C <DIR>`                            | Optional: set the Codex working root explicitly. Prefer this over `cd` inside the prompt. |
+| `-C <DIR>`                            | Optional on `exec` only: set the Codex working root explicitly. `codex exec resume` REJECTS it — set the shell cwd instead. |
 | `--add-dir <DIR>`                     | Optional: add one scoped extra directory when a task genuinely spans roots. |
 | `--json`                              | Optional: JSONL event stream for wrappers/parsers, not normal human output. |
 | `--output-schema <FILE>`              | Optional: force final structured output for downstream automation. |
@@ -333,3 +368,18 @@ This is the exception to the normal Do-NOT-commit default.
 
 If Codex fails with a model-not-available error, surface it to the user —
 do not silently fall back to a lesser model.
+
+## Known environment failure: missing `codex-code-mode-host`
+
+Codex CLI ≥ 0.144 (Homebrew cask) enables a "code mode" feature by default
+but the cask ships ONLY the main binary — every tool call then dies with:
+
+```text
+failed to spawn code-mode host /opt/homebrew/bin/codex-code-mode-host: No such file or directory
+```
+
+The run burns tokens reaching the model and then can do nothing. Fix:
+add `--disable code_mode` to the invocation (verified 2026-07-09 with a
+cheap `echo` probe). The session survives — resume it by ID with the flag
+added; do not ditch it. Re-check whether a later cask ships the host binary
+(`ls /opt/homebrew/Caskroom/codex/<version>/`) before dropping the flag.

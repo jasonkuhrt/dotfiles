@@ -17,6 +17,20 @@ Canonical invocation mechanics for the Codex CLI. Purpose-specific skills
 to invoke it. When in doubt, this skill wins on flags, model, and process
 handling.
 
+## First dispatch readiness
+
+Before the first Codex dispatch in a Claude thread, make one cheap readiness
+check:
+
+```bash
+codex --version
+```
+
+If Codex is missing, not authenticated, or the requested runtime feature is not
+available, surface the exact failure and stop. Tell the user to install or run
+`codex login`; do not auto-install, downgrade, or improvise an alternate auth
+flow.
+
 ## Resume by default — fresh sessions are the exception
 
 Every fresh session pays for Codex to re-learn the repo/domain from zero:
@@ -40,10 +54,17 @@ Mechanics that make this work:
 
 - **Record every session at dispatch time.** The ID prints in the log header
   (`session id: <uuid>`, first ~15 lines). Immediately append a line to a
-  session ledger file in the working scratchpad (e.g.
-  `codex-sessions.md`: `<id> — <repo/domain> — <what it learned/did>`), so
-  later turns — and post-compaction turns — can pick the right session to
-  resume without re-reading logs.
+  session ledger file in the working scratchpad (usually `codex-sessions.md`),
+  so later turns — and post-compaction turns — can pick the right session to
+  resume without re-reading logs. Use a compact table or fenced record with:
+  `job_id`, `repo_root`, `claude_session_id` if known, `codex_session_id`,
+  `pid`, `prompt_file`, `raw_log`, `status`, `started_at`, `completed_at`, and
+  `summary`.
+- **Find resume candidates from the ledger, not `--last`.** Prefer an entry
+  with the same `repo_root`, same Claude session/thread if known, a non-running
+  status (`completed`, `failed`, `killed`, or `cancelled`), and an explicit
+  `codex_session_id`. If multiple rows match, choose deliberately by ID and
+  what it learned/did; do not guess.
 - **Chain naturally:** audit session → resume it for the fix batch; stress
   session → resume it for the follow-up probe; implementation session →
   resume it for the review-feedback pass. The follow-up prompt can then be
@@ -54,6 +75,30 @@ Mechanics that make this work:
   review — prior context would bias it); or the prior session's context is
   contaminated (wrong assumptions you'd have to argue it out of).
 - Resume is by EXPLICIT ID only — never `--last` (see Never below).
+
+### Ledger operations: status, result, cancel
+
+These are documented procedures over the ledger, `ps`, and logs — not plugin
+commands:
+
+- **Status:** locate the ledger row by `job_id` or `codex_session_id`; check
+  whether `pid` is alive with `ps`; inspect the log tail and look for the final
+  summary/tokens block. Update `status` to `running`, `completed`, `failed`,
+  `killed`, or `cancelled` based on evidence.
+- **Result:** read the final answer from `raw_log`; report `job_id`,
+  `codex_session_id`, `status`, `raw_log`, and touched files if Codex reported
+  them. Treat Codex's final message as a report, not evidence; verify claims
+  yourself.
+- **Cancel:** cancel only the selected ledger row. Kill the recorded `pid` or
+  process tree if still alive, append a cancellation note to the log, and mark
+  the row `cancelled`. Never kill by broad process-name matching.
+
+### Full-context transfer
+
+If a future workflow truly needs the whole Claude conversation inside Codex,
+prefer an intentional transfer/import handoff when the installed Codex runtime
+supports it, then record the imported `codex_session_id` in the ledger. Do not
+bloat ordinary dispatch prompts with full transcript dumps.
 
 ## The canonical invocation
 
@@ -80,11 +125,92 @@ anyway so invocations survive config drift.
   sentence — avoids shell-quoting hell and keeps the prompt reviewable and
   re-runnable. Write the prompt file to the session scratchpad (or `.tmp/`).
   Short one-liners may pass the prompt as a positional argument instead.
+  If you ever use a positional prompt in a non-TTY/background/hook context,
+  explicitly close stdin with `</dev/null`; otherwise `codex exec` can wait on
+  inherited stdin.
 - **Always capture all output**: `2>&1 | tee "$RAW_LOG"`. The final agent
   message appears at the end of stdout.
+- **Optional split capture:** only when a downstream parser needs clean stdout,
+  split stdout and stderr into separate logs while still preserving both. Never
+  use `2>/dev/null` as the default evidence policy.
 - **Always run in the background** (`run_in_background: true` from Claude
   Code) — xhigh runs take minutes to tens of minutes. Read the log file for
   interim progress; act on the completion notification.
+- **Only one write-capable Codex process per worktree.** Parallelize read-only
+  research freely, or use separate worktrees for write-capable parallelism.
+
+## Prompt contract
+
+Brief Codex as a capable engineer with no access to the current Claude
+conversation except what you provide. Keep one coherent deliverable per run,
+but do not micro-slice related work.
+
+For substantial runs, use a compact block contract:
+
+```xml
+<task>
+Do <specific goal>. Done means <observable end state>.
+</task>
+
+<scope>
+Workspace: <absolute repo/root path>
+Inspect: <paths, commands, docs>
+Do not touch: <explicit non-goals>
+</scope>
+
+<execution_policy>
+Edits: allowed|not allowed
+Network: none|web-search-only|shell-network-ok
+Destructive actions: stop and report before executing
+</execution_policy>
+
+<grounding_rules>
+Use current files, command output, tests, and official docs. Do not guess.
+Separate observed facts, evidence-based inferences, and unknowns.
+</grounding_rules>
+
+<verification_loop>
+Run the named gates below. If a gate fails, diagnose and make the smallest
+scoped fix unless blocked by credentials, external state, or a safety gate.
+</verification_loop>
+
+<output_contract>
+Report the exact facts requested: files changed, root cause confirmation,
+validation commands/results, remaining risks, and blockers.
+</output_contract>
+```
+
+Brief-hardening rules:
+
+- Name every quality gate verbatim and say it **MUST pass**. Codex runs the
+  checks you name, not the checks you merely imply.
+- If you already have a diagnosis, pin it with file/line evidence and say
+  "verify this root cause before changing code." Codex should catch stale or
+  wrong handoffs instead of building on them.
+- Encode risky scope with a stop condition: "Implement X only as Y; if broader
+  machinery is needed, stop on X, keep safe completed work, and report why."
+- End the prompt with the exact report shape needed. A good final message
+  should drop into a commit message, issue comment, or handoff without further
+  excavation.
+- For normal code tasks, include "Do NOT commit" unless this is an explicit
+  implementation burndown (see exception below).
+
+Research addendum:
+
+- For current facts, require primary sources first, absolute dates, and source
+  disagreement/caveats.
+- Ask Codex to quote only short load-bearing facts and provide the URL for each
+  claim.
+- Require a confidence line (`high`, `medium`, `low`) with the reason.
+
+Result-handling contract:
+
+- Preserve Codex's verdict, findings, severity order, file paths, line numbers,
+  uncertainty, and evidence boundaries.
+- If Codex returns malformed output or fails, report the actionable stderr/log
+  lines and stop. Do not invent a substitute answer.
+- Review output is review output. Do not auto-fix findings unless the user
+  explicitly asks for fixes after seeing them.
 
 ## Flags reference
 
@@ -95,7 +221,18 @@ anyway so invocations survive config drift.
 | `-c model_reasoning_effort="xhigh"`   | Reasoning effort. Always xhigh.                                  |
 | `-c service_tier="priority"`          | Fast mode (priority processing). Default; `"default"` only when the user asks to save tokens / go slow. |
 | `- < prompt.md`                       | Prompt from stdin file.                                          |
+| `</dev/null`                          | Only for rare positional-prompt invocations in non-TTY contexts; closes inherited stdin. |
+| `--skip-git-repo-check`               | Optional: allow non-git scratch or external directories when intentional. |
+| `-C <DIR>`                            | Optional: set the Codex working root explicitly. Prefer this over `cd` inside the prompt. |
+| `--add-dir <DIR>`                     | Optional: add one scoped extra directory when a task genuinely spans roots. |
+| `--json`                              | Optional: JSONL event stream for wrappers/parsers, not normal human output. |
+| `--output-schema <FILE>`              | Optional: force final structured output for downstream automation. |
 | `--ephemeral`                         | Optional: skip session persistence for throwaway runs.           |
+| `--ignore-user-config`                | Optional: reproducible automation only; skips user config.       |
+| `--ignore-rules`                      | Optional: controlled automation only; skips user/project execpolicy rules. |
+| `--strict-config`                     | Optional: fail on unknown config fields.                         |
+| `--enable <FEATURE>` / `--disable <FEATURE>` | Optional: feature flags for controlled experiments.         |
+| `-c web_search="live"`                | Optional: live web-search capability when shell network is not the point of the task. |
 | `codex exec resume <SESSION_ID>`      | Resume a session by explicit ID (continue interrupted work). Never `--last` — see below. |
 
 ## Why no sandbox
@@ -124,6 +261,9 @@ dispatch runs unsandboxed. Consequences:
   overwrites content the prompt told Codex to write. Capture stdout instead.
 - **Never run foreground** — xhigh runs block for minutes; dispatch in the
   background and monitor the log.
+- **Never run two write-capable Codex processes in the same worktree** —
+  formatters, tests, and file edits collide. Use one writer, or split work into
+  separate worktrees.
 - **Never downgrade the model or effort to "save time"** — if a smaller run is
   wanted, the user says so.
 - **Never re-send a huge prompt inline after a quoting failure** — write it to
@@ -134,6 +274,12 @@ dispatch runs unsandboxed. Consequences:
   `--last` resolves to whichever lane's session happened to start most
   recently, silently continuing the WRONG conversation in the wrong worktree.
   Always resume by explicit session ID.
+- **Never use multiselect / `AskUserQuestion` dispatch flows** on this machine.
+  If a dispatch truly needs clarification, ask a direct plain-text question.
+- **Never use `2>/dev/null` as the default** — happy-path cleanliness is not
+  worth losing failure evidence. Split logs only if both streams are preserved.
+- **Never auto-install Codex or mutate global tool state** from this skill.
+  Surface setup guidance and stop.
 
 ## Resuming a dead run
 
@@ -159,7 +305,18 @@ hung child). The session survives on disk and resumes with full context:
    DISK STATE (re-read its own changes) rather than from memory — then re-run
    any child command that may have died with it and finish the original gates.
 
+## Normal implementation runs
+
+- Default instruction for code tasks: **Do NOT commit.** Codex may edit files,
+  but you verify the diff, `git status`, and claims yourself before committing.
+- Do not stage from Codex's reported file list alone; reports can omit touched
+  files. Inspect the actual worktree state.
+- If Codex says it edited or generated files, spot-check the files and run the
+  named gates before relaying the result as fact.
+
 ## Long multi-item runs (implementation burndowns)
+
+This is the exception to the normal Do-NOT-commit default.
 
 - Instruct Codex to **commit per logical item** (conventional commits; include
   any required trailers such as `Session-Id`) so a killed/timed-out run loses

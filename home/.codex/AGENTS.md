@@ -18,11 +18,12 @@ For architecture and design brainstorming:
 - For calendar work, "my calendar", "calendar", and scheduling requests mean Apple Calendar/iCloud Calendar via `acal`. Do not use Google Calendar, Outlook, Fantastical, Calendar.app GUI automation, or cross-platform calendar connectors unless the user explicitly names that platform.
 - Codex-only skills must live under `~/.codex/skills`. Do not place Codex-only skills in `~/.claude/skills`, because that makes them visible to Claude Code too. Shared skills can be linked into `~/.codex/skills` intentionally.
 - For third-party library or platform semantics that materially affect architecture, build a stable local evidence base first: official source repos in `~/repo-references/`, official docs source or downloaded docs, and the exact installed SDK/version in use. Do this before making semantic claims or proposing adapter state.
+- For Effect research, respect the local v3/v4 reference split. For current Effect v4 work, use `~/repo-references/effect-v4-references/effect-smol` first and only use other `~/repo-references/effect-v4-references/*` repos when the task specifically needs them. Use `~/repo-references/effect-v3-references/*` only for explicit v3 work. Do not create or rely on an unsuffixed `~/repo-references/effect` checkout for current work.
 - Any repeatable repo workflow should be driven through the root `justfile`.
 - If a workflow matters and no `just` recipe exists yet, add one instead of leaving the procedure as raw shell commands in docs only.
 - Exception: do not add `justfile`s to JavaScript, TypeScript, Bun, Node.js, or general web projects. In those projects, use the existing package-manager/task-runner workflow instead of introducing `just`.
 - For Codex or Claude hook scripts, default to Bun rather than Python. Only use Python when Bun is unavailable or the hook truly depends on Python-specific libraries.
-- Never run `tsc`. Avoid direct `tsc` invocations and any workflow that shells out to `tsc`.
+- Never rename named imports with `import { X as Y }`. Prefer namespace imports or canonical named imports; put local context in the consuming expression rather than in an import alias.
 - Only mock through the Effect services pattern. Do not use module-level mocking frameworks or monkeypatching approaches.
 - Treat Effect service usage as binary: app code either uses Effect services correctly or it is wrong. Do not use direct globals or ad hoc substitutes for runtime dependencies such as time, randomness, process, filesystem, network, or environment access when an Effect service boundary should exist.
 - For Lua or Neovim Lua changes, run `just lua-check` before closing the task.

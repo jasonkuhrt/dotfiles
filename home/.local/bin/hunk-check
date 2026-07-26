@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+printf 'hunk path: %s\n' "$(command -v hunk)"
+printf 'hunk version: '
+hunk --version
+
+skill_path="$(hunk skill path)"
+test -f "$skill_path"
+printf 'hunk skill: %s\n' "$skill_path"
+
+hunk diff --help >/dev/null
+hunk show --help >/dev/null
+hunk session --help >/dev/null
+hunk pager --help >/dev/null
+
+printf 'hunk OK\n'

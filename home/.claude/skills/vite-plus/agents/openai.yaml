@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Vite+'
+  short_description: 'Choose safe Vite+ vp command surfaces'
+  default_prompt: 'Use $vite-plus to choose the right Vite+ vp command surface and avoid routing, caching, filtering, or scaffolding mistakes.'

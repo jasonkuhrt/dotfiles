@@ -1,0 +1,4 @@
+interface:
+  display_name: "Technical Document"
+  short_description: "Source-backed HTML technical documents"
+  default_prompt: "Use $technical-document to draft a source-backed HTML technical proposal."

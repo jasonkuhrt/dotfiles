@@ -84,7 +84,8 @@
     "postgres-context-server": true,
     "prisma": true,
     "svelte": false,
-    "tokyo-night": true
+    "tokyo-night": true,
+    "tsgo": true
   },
   "disable_ai": false,
   "show_signature_help_after_edits": false,
@@ -107,12 +108,20 @@
     // "provider": "zed.dev",
     // "model": "zed-dev-2.0"
     // },
+    "profiles": {
+      "max": {
+        "name": "Max",
+        "tools": {},
+        "enable_all_context_servers": false,
+        "context_servers": {}
+      }
+    },
     "favorite_models": [
       {
         "provider": "openai-subscribed",
-        "model": "gpt-5.5",
+        "model": "gpt-5.6-sol",
         "enable_thinking": true,
-        "effort": "xhigh"
+        "effort": "low"
       }
     ],
     "dock": "right",
@@ -120,10 +129,11 @@
       "default": "allow"
     },
     "default_model": {
-      "effort": "xhigh",
+      "speed": "fast",
+      "effort": "max",
       "enable_thinking": true,
       "provider": "openai-subscribed",
-      "model": "gpt-5.5"
+      "model": "gpt-5.6-terra"
     },
     "default_profile": "write",
     // "default_model": {
@@ -385,6 +395,7 @@
   // re-listed first.
   // ──────────────────────────────────────────────────────────────────────────
   "file_scan_exclusions": [
+    "**/__generated__",
     // Zed defaults (re-listed — this key replaces, not merges):
     "**/.git",
     "**/.svn",
@@ -401,7 +412,10 @@
     // (All git-ignored → zero git-diff cost. Do NOT add tracked dirs here.)
     "**/node_modules",            // 95 dirs; dominant FSEvents load
     "**/test-results",            // e2e artifacts (gitignored), churny
-    "**/playwright-report"        // e2e artifacts (gitignored)
+    "**/playwright-report",       // e2e artifacts (gitignored)
+    "**/___generated___"          // git-IGNORED tool output (triple-underscore convention). Its
+                                  // tracked twin `__generated__` is deliberately NOT here — excluding
+                                  // a tracked dir loses its regen diffs (see the ⚠️ rule above).
   ],
   "autosave": "on_focus_change",
   "format_on_save": "on",
@@ -421,12 +435,12 @@
   // "buffer_font_family": "Iosevka Aile",
 
   "ui_font_family": "Monaspace Neon",
-  "ui_font_size": 12,
+  "ui_font_size": 13.0,
   "ui_font_weight": 300,
   "ui_font_features": {},
 
   "buffer_font_family": "Monaspace Neon",
-  "buffer_font_size": 12.0,
+  "buffer_font_size": 11.0,
   "buffer_font_weight": 300,
 
   //
@@ -563,90 +577,6 @@
       "initialization_options": {
         "typescript": {}
       }
-    },
-    // Also possible to try: https://github.com/typescript-language-server/typescript-language-server
-    // @see https://github.com/yioneko/vtsls
-    "vtsls": {
-      // @see https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json
-      "settings": {
-        "javascript": {
-          "updateImportsOnFileMove": {
-            "enabled": "always"
-          }
-        },
-        "typescript": {
-          "tsdk": "/Users/jasonkuhrt/Library/Application Support/Zed/languages/vtsls/node_modules/typescript/lib",
-          "preferences": {
-            //
-            //
-            //
-            // ━━━━━━━━━━━━━━ • The Wacky Wild World Of TypeScript Auto Imports Tooling
-            //
-            //
-            "importModuleSpecifier": "non-relative", // Use non-relative imports
-            //
-            "importModuleSpecifierEnding": "minimal", // Use minimal import paths (without extensions)
-            //
-            "useAliasesForRenames": false,
-            //
-            // > Include the `type` keyword in auto-imports whenever possible. Requires using TypeScript 5.3+ in the workspace.
-            "preferTypeOnlyAutoImports": true,
-            //
-            "includePackageJsonAutoImports": "on" // Disable package.json auto-imports
-            //
-            // ━ Remove noise from auto-imports
-            //
-            // @see https://stackoverflow.com/questions/73505774/option-to-exclude-patterns-from-auto-import-not-working
-            // @see https://stackoverflow.com/questions/71491519/prevent-certain-files-from-being-imported-in-vs-code/74331320#74331320
-            // @see https://github.com/microsoft/TypeScript/pull/49578
-            // @see https://devblogs.microsoft.com/typescript/announcing-typescript-4-8-rc/#exclude-globs-auto-import
-            // > This can be useful in cases where you can’t avoid having certain modules or libraries in your compilation
-            //   but you rarely want to import from them. These modules might have lots of exports that can pollute
-            //   the auto-imports list and make it harder to navigate, and this option can help in those situations.
-            //
-            // "autoImportFileExcludePatterns": [],
-            //
-            // @see https://github.com/microsoft/TypeScript/issues/56415 (closed 2024-01-19)
-            // @see https://stackoverflow.com/questions/76788709/how-can-i-exclude-an-ambient-module-declaration-like-nodetest-from-vs-codes-au
-            // "autoImportSpecifierExcludeRegexes": [],
-            //
-            // Threads n' Stuff (issue status re-validated 2026-06-16):
-            // - https://stackoverflow.com/questions/63251182/vs-code-typescript-auto-import-suggestion-priority
-            // - https://stackoverflow.com/questions/68686383/typescript-react-props-priority-when-using-intellisense-in-vs-code/76938845#76938845
-            // - (open)   https://github.com/microsoft/TypeScript/issues/51418
-            // - (closed) https://github.com/microsoft/TypeScript/issues/55092
-            // - (open)   https://github.com/microsoft/TypeScript/issues/51155
-            // - (open)   https://github.com/microsoft/TypeScript/issues/52080
-            //
-            // Tools n' Stuff:
-            // - https://github.com/tidalhq/ts-plugin-sort-import-suggestions
-            // - https://github.com/zardoy/typescript-vscode-plugins
-          },
-          "tsserver": {
-            "maxTsServerMemory": 8192,
-            "experimental": {
-              "enableProjectDiagnostics": true,
-              "completion": {
-                // https://github.com/yioneko/vtsls?tab=readme-ov-file#bad-performance-of-completion
-                //
-                // > before returning all the completion candidates from tsserver, the server will do
-                //   fuzzy matching and filter out entries with no match. This can reduce the number of invalid entries in the response.
-                "enableServerSideFuzzyMatch": true,
-                "entriesLimit": 50
-              }
-            }
-          },
-          "updateImportsOnFileMove": {
-            "enabled": "always"
-          }
-        },
-        "vtsls": {
-          "autoUseWorkspaceTsdk": false,
-          "typescript": {
-            "globalTsdk": "/Users/jasonkuhrt/Library/Application Support/Zed/languages/vtsls/node_modules/typescript/lib"
-          }
-        }
-      }
     }
   },
   "file_types": {
@@ -694,11 +624,17 @@
         }
       }
     },
-    // Keep TS/TSX server ownership explicit. `...` can re-expand default
+    // Keep JS/TS server ownership explicit. `...` can re-expand default
     // servers that conflict with project-local Oxc/Vite+ settings.
     // Tracks: https://github.com/oxc-project/oxc-zed/issues/212
+    "JavaScript": {
+      "language_servers": ["typescript-ls", "!vtsls", "!typescript-language-server", "!eslint", "oxlint", "oxfmt"]
+    },
+    "JSX": {
+      "language_servers": ["typescript-ls", "!vtsls", "!typescript-language-server", "!eslint", "oxlint", "oxfmt"]
+    },
     "TypeScript": {
-      "language_servers": ["vtsls", "!typescript-language-server", "!eslint", "oxlint"],
+      "language_servers": ["typescript-ls", "!vtsls", "!typescript-language-server", "!eslint", "oxlint", "oxfmt"],
       "prettier": { "allowed": false },
       // "completions": {
       //   "lsp_fetch_timeout_ms": 5000
@@ -720,7 +656,7 @@
       ]
     },
     "TSX": {
-      "language_servers": ["vtsls", "!typescript-language-server", "!eslint", "oxlint"],
+      "language_servers": ["typescript-ls", "!vtsls", "!typescript-language-server", "!eslint", "oxlint", "oxfmt"],
       "prettier": { "allowed": false },
       "formatter": [
         {
@@ -737,7 +673,7 @@
   }
   // @see https://zed.dev/docs/languages/javascript
   // "JavaScript": {
-  //   "language_servers": ["vtsls", "!eslint", "oxlint"],
+  //   "language_servers": ["typescript-ls", "!vtsls", "!eslint", "oxlint", "oxfmt"],
   //   "prettier": { "allowed": false },
   //   "formatter": [
   //     {

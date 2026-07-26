@@ -14,6 +14,7 @@ ${env_var.ZMX_SESSION}\
 $directory\
 $git_branch\
 $git_status\
+$cmd_duration\
 $character"""
 
 # No blank line between prompts
@@ -55,6 +56,12 @@ behind = '[⇣${count}](#f7768e)'      # Tokyo Night red
 diverged = '[⇡${ahead_count}](#9ece6a)[⇣${behind_count}](#f7768e)'
 up_to_date = ''
 style = 'bold'
+
+[cmd_duration]
+format = '[$duration]($style) '
+min_time = 0
+show_milliseconds = true
+style = 'bold #e0af68'               # Tokyo Night yellow
 
 # Disable modules we don't need in prompt
 [package]

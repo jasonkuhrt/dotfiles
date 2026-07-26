@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{TITLE}}</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f7f8fb;
+        --fg: #141820;
+        --muted: #5e6878;
+        --panel: #ffffff;
+        --panel-2: #eef2f7;
+        --line: #d9e0ea;
+        --accent: #1d6fdc;
+        --ok: #18794e;
+        --bad: #bd271e;
+        --gate: #7a5b00;
+        --code-bg: #f1f4f8;
+        --shadow: 0 18px 50px rgb(20 24 32 / 10%);
+      }
+      [data-theme="dark"] {
+        --bg: #10141b;
+        --fg: #eef3fb;
+        --muted: #aab4c3;
+        --panel: #171d27;
+        --panel-2: #222a36;
+        --line: #313b4b;
+        --accent: #82b7ff;
+        --ok: #7ad9a3;
+        --bad: #ff8f87;
+        --gate: #e5c36c;
+        --code-bg: #0b0f15;
+        --shadow: none;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #10141b;
+          --fg: #eef3fb;
+          --muted: #aab4c3;
+          --panel: #171d27;
+          --panel-2: #222a36;
+          --line: #313b4b;
+          --accent: #82b7ff;
+          --ok: #7ad9a3;
+          --bad: #ff8f87;
+          --gate: #e5c36c;
+          --code-bg: #0b0f15;
+          --shadow: none;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        margin: 0;
+      }
+      a {
+        color: var(--accent);
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.92em;
+      }
+      .layout {
+        display: grid;
+        gap: 28px;
+        grid-template-columns: minmax(0, 1fr);
+        margin: 0 auto;
+        max-width: 1180px;
+        padding: 32px 22px 72px;
+      }
+      header,
+      main > section,
+      .colophon {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+        padding: 24px;
+      }
+      h1 {
+        font-size: clamp(1.75rem, 3vw, 2.25rem);
+        line-height: 1.15;
+        margin: 0 0 18px;
+      }
+      h2 {
+        border-top: 2px solid var(--line);
+        font-size: 1.3rem;
+        line-height: 1.2;
+        margin: 0 0 18px;
+        padding-top: 18px;
+        scroll-margin-top: 18px;
+      }
+      h2 .self-link {
+        opacity: 0;
+        text-decoration: none;
+      }
+      h2:hover .self-link {
+        opacity: 1;
+      }
+      p {
+        max-width: 72ch;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .pill {
+        align-items: center;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        display: inline-flex;
+        gap: 6px;
+        padding: 4px 9px;
+      }
+      .toc {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        padding: 16px;
+      }
+      .toc a {
+        display: block;
+        margin: 6px 0;
+        text-decoration: none;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        font-variant-numeric: tabular-nums;
+        margin: 12px 0 20px;
+        min-width: 760px;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: var(--panel-2);
+      }
+      tbody tr:nth-child(even) {
+        background: color-mix(in srgb, var(--panel-2) 55%, transparent);
+      }
+      pre {
+        background: var(--code-bg);
+        border: 1px solid var(--line);
+        overflow-x: auto;
+        padding: 14px 16px;
+      }
+      dl.card {
+        border: 1px solid var(--line);
+        display: grid;
+        grid-template-columns: minmax(140px, 0.28fr) minmax(0, 1fr);
+        margin: 14px 0;
+      }
+      dl.card dt,
+      dl.card dd {
+        border-bottom: 1px solid var(--line);
+        margin: 0;
+        padding: 10px 12px;
+      }
+      dl.card dt {
+        background: var(--panel-2);
+        font-weight: 700;
+      }
+      figure {
+        border: 1px solid var(--line);
+        margin: 16px 0;
+        padding: 14px;
+      }
+      figcaption {
+        color: var(--muted);
+        margin-top: 10px;
+      }
+      .status-pass {
+        color: var(--ok);
+        font-weight: 700;
+      }
+      .status-fail {
+        color: var(--bad);
+        font-weight: 700;
+      }
+      .status-gate {
+        color: var(--gate);
+        font-weight: 700;
+      }
+      .source {
+        white-space: nowrap;
+      }
+      .xref {
+        font-weight: 700;
+      }
+      .toolbar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 12px;
+      }
+      button {
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        color: var(--fg);
+        cursor: pointer;
+        padding: 6px 10px;
+      }
+      @media (min-width: 980px) {
+        .layout {
+          grid-template-columns: 230px minmax(0, 1fr);
+        }
+        .toc {
+          align-self: start;
+          position: sticky;
+          top: 18px;
+        }
+        main {
+          min-width: 0;
+        }
+      }
+      @media (max-width: 899px) {
+        .toc nav {
+          display: none;
+        }
+        .toc[open] nav {
+          display: block;
+        }
+      }
+      @media print {
+        body {
+          background: #fff;
+          color: #000;
+        }
+        .toc,
+        .toolbar {
+          display: none;
+        }
+        header,
+        main > section,
+        .colophon {
+          border: 1px solid #bbb;
+          box-shadow: none;
+          break-inside: avoid;
+        }
+        a {
+          color: #000;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside>
+        <details class="toc" open>
+          <summary>Contents</summary>
+          <nav id="toc"></nav>
+        </details>
+      </aside>
+      <main>
+        <div class="toolbar">
+          <button type="button" id="theme-toggle">Toggle theme</button>
+        </div>
+        <header>
+          <h1>{{TITLE}}</h1>
+          <div class="meta">
+            <span class="pill">Status: {{STATUS}}</span>
+            <span class="pill">Doc Type: {{DOC_TYPE}}</span>
+            <span class="pill">Authored: {{DATE}}</span>
+            <span class="pill">Commit: <a href="{{COMMIT_URL}}"><code>{{COMMIT_SHORT}}</code></a></span>
+          </div>
+        </header>
+        <section id="summary">
+          <h2>Summary <a class="self-link" href="#summary">#</a></h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Status</th><td>{{STATUS}}</td></tr>
+                <tr><th scope="row">Doc Type</th><td>{{DOC_TYPE}}</td></tr>
+                <tr><th scope="row">Authored</th><td>{{DATE}}</td></tr>
+                <tr><th scope="row">Commit</th><td><a href="{{COMMIT_URL}}"><code>{{COMMIT}}</code></a></td></tr>
+                <tr><th scope="row">Recommendation</th><td>{{RECOMMENDATION}}</td></tr>
+                <tr><th scope="row">Constraints</th><td>{{CONSTRAINTS}}</td></tr>
+                <tr><th scope="row">Proof</th><td>{{PROOF_SUMMARY}}</td></tr>
+                <tr><th scope="row">Proof Gates</th><td>{{GATE_SUMMARY}}</td></tr>
+                <tr><th scope="row">Verification</th><td>{{VERIFICATION_SUMMARY}}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <!-- Add profile sections here. -->
+        <section id="diagrams">
+          <h2>Diagrams <a class="self-link" href="#diagrams">#</a></h2>
+          <figure id="diag-example">
+            <svg role="img" aria-labelledby="diag-example-title" viewBox="0 0 640 180" width="100%">
+              <title id="diag-example-title">Example dependency graph</title>
+              <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="currentColor"/></marker></defs>
+              <rect x="40" y="60" width="150" height="56" rx="6" fill="none" stroke="currentColor"/>
+              <text x="115" y="94" text-anchor="middle" fill="currentColor">App Layer</text>
+              <rect x="440" y="60" width="150" height="56" rx="6" fill="none" stroke="currentColor"/>
+              <text x="515" y="94" text-anchor="middle" fill="currentColor">Library Layer</text>
+              <line x1="190" y1="88" x2="440" y2="88" stroke="currentColor" marker-end="url(#arrow)"/>
+            </svg>
+            <figcaption>Claim: dependencies point from application code toward library code.</figcaption>
+            <details>
+              <summary>Mermaid source</summary>
+              <pre><code>graph LR
+  App["App Layer"] --> Lib["Library Layer"]</code></pre>
+            </details>
+          </figure>
+        </section>
+        <section id="self-audit">
+          <h2>Self Audit <a class="self-link" href="#self-audit">#</a></h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Check</th><th scope="col">Result</th><th scope="col">Evidence</th></tr></thead>
+              <tbody>
+                <tr><td>{{CHECK}}</td><td><span class="status-pass">✓ Pass</span></td><td>{{EVIDENCE}}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <footer class="colophon" id="colophon">
+          <h2>Colophon <a class="self-link" href="#colophon">#</a></h2>
+          <p>Agent: {{AGENT}}. Session: {{SESSION_ID}}. Generated: {{DATE}}. Commit: <a href="{{COMMIT_URL}}"><code>{{COMMIT}}</code></a>.</p>
+        </footer>
+      </main>
+    </div>
+    <script>
+      (() => {
+        const root = document.documentElement;
+        document.getElementById("theme-toggle")?.addEventListener("click", () => {
+          root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+        });
+        const toc = document.getElementById("toc");
+        if (!toc) return;
+        document.querySelectorAll("main h2[id], main section[id] > h2").forEach((heading) => {
+          const section = heading.closest("section, footer");
+          const id = heading.id || section?.id;
+          if (!id) return;
+          const a = document.createElement("a");
+          a.href = `#${id}`;
+          a.textContent = heading.textContent?.replace("#", "").trim() || id;
+          toc.appendChild(a);
+        });
+      })();
+    </script>
+  </body>
+</html>

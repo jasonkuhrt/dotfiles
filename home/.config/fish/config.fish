@@ -165,6 +165,7 @@ alias cal='cal -3'  # show 3 months by default
 alias serena 'uv run --directory /Users/jasonkuhrt/projects/oraios/serena serena'
 alias ccusage 'npx ccusage@latest'
 alias ccmonitor 'claude-monitor --plan max20'
+alias h hunk
 
 # GitHub CLI
 function dr --description "Devin Review for current branch's PR"
@@ -357,3 +358,10 @@ nesia nag 2>/dev/null
 # Added by OrbStack: command-line tools and integration
 # This won't be added again if you remove it.
 source ~/.orbstack/shell/init2.fish 2>/dev/null || :
+
+# pnpm
+set -gx PNPM_HOME "/Users/jasonkuhrt/Library/pnpm"
+if not string match -q -- "$PNPM_HOME/bin" $PATH
+  set -gx PATH "$PNPM_HOME/bin" $PATH
+end
+# pnpm end

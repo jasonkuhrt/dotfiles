@@ -147,5 +147,12 @@ ZED_CUSTOM_RUST_PACKAGE: (Rust-specific) name of the parent package of $ZED_FILE
     "reveal": "no_focus",
     "show_command": false,
     "hide": "on_success"
+  },
+  {
+    "label": "toggle: generated",
+    "command": "node --no-warnings --experimental-strip-types ~/.config/zed/scripts/toggle-generated.mts",
+    "reveal": "no_focus",
+    "show_command": false,
+    "hide": "on_success"
   }
 ]

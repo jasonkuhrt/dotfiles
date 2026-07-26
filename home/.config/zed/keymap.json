@@ -277,6 +277,7 @@
       ", w": "diagnostics::ToggleWarnings", // "w" is close to "e" ...
       ", space": "editor::ToggleSoftWrap",
       ", g": ["task::Spawn", { "task_name": "toggle: chore files" }], // gitignore visibility
+      ", G": ["task::Spawn", { "task_name": "toggle: generated" }], // __generated__ in/out of tree+finder+search
       // ━ Reload
       ", R": "workspace::Reload",
       ", r": "editor::RestartLanguageServer"

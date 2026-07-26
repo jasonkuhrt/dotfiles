@@ -266,3 +266,7 @@ A Glossary entry that explains why a design decision was made, when to use the c
 ### Private Surface Leakage
 
 Cross-references to sibling repos via `[../sibling-name]` markdown links, "sibling project in `~/projects/<user>/`" framing, "in my dotfiles" / "in the user's config" phrasing, or naming author-private helpers (a personal `vsmap()` lua helper, etc.) as if they were canonical upstream APIs. The README is OSS-bound; consumers don't have the author's filesystem or private helpers. Use NPM package names for cross-references (`` `@scope/package` ``). Describe behavior generically rather than naming personal helpers. See Cardinal Rule at the top of this file — and run the mandatory grep before declaring done.
+
+## Exemplars
+
+For concrete READMEs to study — gold-standard examples annotated with their teaching techniques, plus real-world anti-pattern examples to avoid — read `~/.claude/skills/readme/exemplars.md`. Use them as models when writing the Solution and Concepts sections (where prose quality carries the most weight), and as cautions during review.

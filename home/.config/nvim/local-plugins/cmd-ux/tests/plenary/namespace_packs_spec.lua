@@ -48,7 +48,7 @@ describe("cmd_ux namespace packs", function()
   end)
 
   it("exposes semantic workspace roots", function()
-    eq({ "blame", "branches", "history", "hunk", "status" }, labels(core.resolve_line("Git").frontier))
+    eq({ "blame", "branches", "history", "hunk", "review", "status" }, labels(core.resolve_line("Git").frontier))
     eq({ "browse" }, labels(core.resolve_line("Marks").frontier))
     eq({ "files", "grep", "recent", "switch" }, labels(core.resolve_line("Project").frontier))
     eq({ "browse" }, labels(core.resolve_line("Registers").frontier))

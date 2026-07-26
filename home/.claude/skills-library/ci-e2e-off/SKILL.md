@@ -1,14 +1,20 @@
 ---
 name: ci-e2e-off
-description: Turn off Heartbeat PR E2E mode by editing the generated PR Dashboard comment checkbox and syncing the E2E Local Sign Off status. Use when a PR's broad E2E gate is unnecessary for the current change, when the user says to turn E2E off, disable E2E, remove E2E local signoff, or when the PR dashboard has Local or Local Sign Off checked but the targeted CI checks already cover the work.
+description: Turn off Heartbeat PR-control E2E modes by posting target-scoped PR E2E mode-off commands and verifying E2E mode labels/checks are no longer blocking. Use when a PR's broad E2E gate is unnecessary for the current change, when the user says to turn E2E off, disable E2E, remove E2E on-demand/CI mode, or when the PR dashboard has an E2E target enabled but targeted checks already cover the work.
 ---
 
 # CI E2E Off
 
 ## Workflow
 
-Use this skill for Heartbeat PRs with the generated `<!-- pr-dashboard -->` comment.
-The important bit is that the mode lives in a PR comment, not in a workflow file.
+Use this skill for Heartbeat PRs controlled by PR-control E2E labels. The important bit is that target mode lives in labels managed by PR comments, not in a workflow file or a sidecar commit status.
+
+Current target ids are:
+
+- `webapp`
+- `subscriptions-importer`
+
+There is no separate E2E workflow or commit status in the current repo.
 
 1. Resolve the PR and repository.
 
@@ -17,50 +23,31 @@ The important bit is that the mode lives in a PR comment, not in a workflow file
    REPO="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
    ```
 
-2. Inspect the dashboard comment and confirm the current E2E mode.
+2. Inspect current E2E labels and the dashboard projection.
 
    ```bash
+   gh pr view "$PR_NUMBER" --json labels,statusCheckRollup \
+     --jq '{labels: [.labels[].name], checks: [.statusCheckRollup[] | .name // .context // .workflowName]}'
+
    gh api "repos/$REPO/issues/$PR_NUMBER/comments?per_page=100" \
      --paginate \
      --jq '.[] | select(.body | contains("<!-- pr-dashboard -->")) | {id, body}'
    ```
 
-3. Patch the dashboard comment so `Off` is checked and the other E2E modes are unchecked. Preserve any other dashboard sections such as Docs UI.
+3. Post `off` commands for every enabled target. One comment can contain multiple commands on separate lines. If inspection is ambiguous, turning both known targets off is safe because `off` is the default no-label mode.
 
    ```bash
-   COMMENT_ID="$(
-     gh api "repos/$REPO/issues/$PR_NUMBER/comments?per_page=100" \
-       --paginate \
-       --jq '.[] | select(.body | contains("<!-- pr-dashboard -->")) | .id' \
-       | head -n 1
-   )"
-
-   BODY="$(
-     gh api "repos/$REPO/issues/comments/$COMMENT_ID" --jq .body \
-      | perl -0pe 's/- \\[[ xX]\\] Off/- [x] Off/g; s/- \\[[ xX]\\] Local$/- [ ] Local/mg; s/- \\[[ xX]\\] Local Sign Off/- [ ] Local Sign Off/g; s/(\\n\\s*)- \\[[ xX]\\] trigger/$1- [ ] trigger/g'
-   )"
-
-   gh api "repos/$REPO/issues/comments/$COMMENT_ID" \
-     --method PATCH \
-     -f body="$BODY"
+   gh pr comment "$PR_NUMBER" --body $'/pr e2e webapp mode off\n/pr e2e subscriptions-importer mode off'
    ```
 
-4. If the repo has the PR dashboard sync tool, run it from the repo root so the `E2E Local Sign Off` commit status is updated to success for the current head SHA.
+4. Verify active E2E mode labels are gone or converted to `off`. Because `off` is the default mode, there should be no `e2e:<target>:mode:ci` or `e2e:<target>:mode:on-demand` label left.
 
    ```bash
-   GITHUB_REPOSITORY="$REPO" npx tsx tools/pr-dashboard/cli.ts sync-e2e-mode --pr-number "$PR_NUMBER"
+   gh pr view "$PR_NUMBER" --json labels \
+     --jq '[.labels[].name | select(test("^e2e:[^:]+:mode:(ci|on-demand)$"))]'
    ```
 
-5. If an unnecessary `e2e-local.yml` run was already queued or running, cancel it.
-
-   ```bash
-   gh run list --workflow e2e-local.yml --limit 10 \
-     --json databaseId,status,headSha,url
-
-   gh run cancel <run-id>
-   ```
-
-6. Verify the PR no longer has an E2E Local Sign Off failure.
+5. Verify current checks are not blocked by PR-control E2E. Existing E2E jobs that already started may still finish or fail, but the PR should not require a new enabled E2E target after the mode labels are off.
 
    ```bash
    gh pr checks "$PR_NUMBER"
@@ -69,5 +56,6 @@ The important bit is that the mode lives in a PR comment, not in a workflow file
 ## Notes
 
 - Do not edit workflow YAML just to turn E2E off for one PR.
-- Do not assume clicking a checkbox in GitHub UI happened; verify via `gh api` or `gh pr checks`.
-- If the dashboard comment is missing, run the repo sync command first; it creates the dashboard comment with the default E2E mode.
+- Do not edit the generated dashboard comment with regexes. Post PR-control slash commands and verify labels/checks.
+- Do not dispatch or cancel separate E2E workflows; the current repo does not use one.
+- If the dashboard comment is missing, rely on labels and slash commands. The dashboard is a projection, not the source of truth.

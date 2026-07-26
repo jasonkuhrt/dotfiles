@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Database Stack Sweeper Proposal</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f7f8fb;
+        --fg: #141820;
+        --muted: #5e6878;
+        --panel: #ffffff;
+        --panel-2: #eef2f7;
+        --line: #d9e0ea;
+        --accent: #1d6fdc;
+        --ok: #18794e;
+        --bad: #bd271e;
+        --gate: #7a5b00;
+        --code-bg: #f1f4f8;
+        --shadow: 0 18px 50px rgb(20 24 32 / 10%);
+      }
+      [data-theme="dark"] {
+        --bg: #10141b;
+        --fg: #eef3fb;
+        --muted: #aab4c3;
+        --panel: #171d27;
+        --panel-2: #222a36;
+        --line: #313b4b;
+        --accent: #82b7ff;
+        --ok: #7ad9a3;
+        --bad: #ff8f87;
+        --gate: #e5c36c;
+        --code-bg: #0b0f15;
+        --shadow: none;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        margin: 0;
+      }
+      a {
+        color: var(--accent);
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.92em;
+      }
+      .layout {
+        display: grid;
+        gap: 28px;
+        grid-template-columns: minmax(0, 1fr);
+        margin: 0 auto;
+        max-width: 1180px;
+        padding: 32px 22px 72px;
+      }
+      header,
+      main > section,
+      .colophon {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+        padding: 24px;
+      }
+      h1 {
+        font-size: clamp(1.75rem, 3vw, 2.25rem);
+        line-height: 1.15;
+        margin: 0 0 18px;
+      }
+      h2 {
+        border-top: 2px solid var(--line);
+        font-size: 1.3rem;
+        line-height: 1.2;
+        margin: 0 0 18px;
+        padding-top: 18px;
+        scroll-margin-top: 18px;
+      }
+      h2 .self-link {
+        opacity: 0;
+        text-decoration: none;
+      }
+      h2:hover .self-link {
+        opacity: 1;
+      }
+      p {
+        max-width: 72ch;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .pill {
+        align-items: center;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        display: inline-flex;
+        gap: 6px;
+        padding: 4px 9px;
+      }
+      .toc {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        padding: 16px;
+      }
+      .toc a {
+        display: block;
+        margin: 6px 0;
+        text-decoration: none;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        font-variant-numeric: tabular-nums;
+        margin: 12px 0 20px;
+        min-width: 760px;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: var(--panel-2);
+      }
+      tbody tr:nth-child(even) {
+        background: color-mix(in srgb, var(--panel-2) 55%, transparent);
+      }
+      pre {
+        background: var(--code-bg);
+        border: 1px solid var(--line);
+        overflow-x: auto;
+        padding: 14px 16px;
+      }
+      dl.card {
+        border: 1px solid var(--line);
+        display: grid;
+        grid-template-columns: minmax(140px, 0.28fr) minmax(0, 1fr);
+        margin: 14px 0;
+      }
+      dl.card dt,
+      dl.card dd {
+        border-bottom: 1px solid var(--line);
+        margin: 0;
+        padding: 10px 12px;
+      }
+      dl.card dt {
+        background: var(--panel-2);
+        font-weight: 700;
+      }
+      figure {
+        border: 1px solid var(--line);
+        margin: 16px 0;
+        padding: 14px;
+      }
+      figcaption {
+        color: var(--muted);
+        margin-top: 10px;
+      }
+      .status-pass {
+        color: var(--ok);
+        font-weight: 700;
+      }
+      .source {
+        white-space: nowrap;
+      }
+      .xref {
+        font-weight: 700;
+      }
+      .toolbar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 12px;
+      }
+      button {
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        color: var(--fg);
+        cursor: pointer;
+        padding: 6px 10px;
+      }
+      @media (min-width: 980px) {
+        .layout {
+          grid-template-columns: 230px minmax(0, 1fr);
+        }
+        .toc {
+          align-self: start;
+          position: sticky;
+          top: 18px;
+        }
+      }
+      @media print {
+        body {
+          background: #fff;
+          color: #000;
+        }
+        .toc,
+        .toolbar {
+          display: none;
+        }
+        header,
+        main > section,
+        .colophon {
+          border: 1px solid #bbb;
+          box-shadow: none;
+          break-inside: avoid;
+        }
+        a {
+          color: #000;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside>
+        <details class="toc" open>
+          <summary>Contents</summary>
+          <nav id="toc"></nav>
+        </details>
+      </aside>
+      <main>
+        <div class="toolbar">
+          <button type="button" id="theme-toggle">Toggle theme</button>
+        </div>
+        <header>
+          <h1>Database Stack Sweeper Proposal</h1>
+          <div class="meta">
+            <span class="pill">Status: draft</span>
+            <span class="pill">Doc Type: proposal</span>
+            <span class="pill">Authored: 2026-07-09</span>
+            <span class="pill">Commit: <a href="https://github.com/heartbeat-chat/Heartbeat/commit/b34bdae7fc22263de08573ffe84ba847a4248eac"><code>b34bdae</code></a></span>
+          </div>
+        </header>
+
+        <section id="summary">
+          <h2>Summary <a class="self-link" href="#summary">#</a></h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Status</th><td>draft</td></tr>
+                <tr><th scope="row">Doc Type</th><td>proposal</td></tr>
+                <tr><th scope="row">Authored</th><td>2026-07-09</td></tr>
+                <tr><th scope="row">Commit</th><td><a href="https://github.com/heartbeat-chat/Heartbeat/commit/b34bdae7fc22263de08573ffe84ba847a4248eac"><code>b34bdae7fc22263de08573ffe84ba847a4248eac</code></a></td></tr>
+                <tr><th scope="row">Recommendation</th><td>Replace branch-oriented sweeping with Database Stack Stage sweeping through Alchemy destroy.</td></tr>
+                <tr><th scope="row">Constraints</th><td>None.</td></tr>
+                <tr><th scope="row">Proof</th><td>1: <a class="xref" href="#proof-alchemy-destroy">Alchemy destroy semantics source read</a>.</td></tr>
+                <tr><th scope="row">Proof Gates</th><td>None.</td></tr>
+                <tr><th scope="row">Verification</th><td>2 checks: action tests and workflow syntax.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>The current workflow already uses Alchemy destroy for the destructive path, but its vocabulary and scan output are PlanetScale Branch oriented. The target model makes the Alchemy stack stage the lifecycle unit.</p>
+        </section>
+
+        <section id="ubiquitous-language">
+          <h2>Ubiquitous Language <a class="self-link" href="#ubiquitous-language">#</a></h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Term</th><th scope="col">Description</th></tr></thead>
+              <tbody>
+                <tr><td>Database Stack Stage</td><td>An Alchemy stage for the Database stack.</td></tr>
+                <tr><td>PlanetScale Branch</td><td>The provider resource currently created by a Database Stack Stage.</td></tr>
+                <tr><td>Stage Scan</td><td>The read-only workflow step that finds stale Database Stack Stages.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="personas">
+          <h2>Personas <a class="self-link" href="#personas">#</a></h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Persona</th><th scope="col">Description</th></tr></thead>
+              <tbody>
+                <tr><td>Maintainer</td><td>Owns workflow behavior and repository architecture.</td></tr>
+                <tr><td>Reviewer</td><td>Reviews the proposal and implementation for correctness.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="current-state">
+          <h2>Current State <a class="self-link" href="#current-state">#</a></h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Fact</th><th scope="col">Source</th></tr></thead>
+              <tbody>
+                <tr id="cs-1">
+                  <td>The Database Stack Stage creates a PlanetScale Branch.</td>
+                  <td>Source: <a class="source" href="https://github.com/heartbeat-chat/Heartbeat/blob/b34bdae7fc22263de08573ffe84ba847a4248eac/infra/database/alchemy.run.ts#L47"><code>infra/database/alchemy.run.ts:47</code></a> (<code>Planetscale.MySQLBranch</code>) — The stack creates <code>Planetscale.MySQLBranch("Branch", ...)</code>.</td>
+                </tr>
+                <tr id="cs-2">
+                  <td>The workflow destroys stale matrix entries through Alchemy.</td>
+                  <td>Source: <a class="source" href="https://github.com/heartbeat-chat/Heartbeat/blob/b34bdae7fc22263de08573ffe84ba847a4248eac/.github/workflows/planetscale-branch-sweeper.yml#L326"><code>.github/workflows/planetscale-branch-sweeper.yml:326</code></a> (<code>Destroy Database stack</code>) — The destroy job calls <code>.github/actions/alchemy-stack</code>.</td>
+                </tr>
+                <tr id="cs-3">
+                  <td>The destroy action supports <code>operation: destroy</code>.</td>
+                  <td>Source: <a class="source" href="https://github.com/heartbeat-chat/Heartbeat/blob/b34bdae7fc22263de08573ffe84ba847a4248eac/.github/actions/alchemy-stack/action.yml#L14"><code>.github/actions/alchemy-stack/action.yml:14</code></a> (<code>operation</code>) — The action input accepts a stack operation.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="problem">
+          <h2>Problem <a class="self-link" href="#problem">#</a></h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Problem</th><th scope="col">Current State Link</th><th scope="col">Impact</th></tr></thead>
+              <tbody>
+                <tr id="p-1">
+                  <td>The workflow names the provider resource as the lifecycle unit.</td>
+                  <td><a class="xref" href="#cs-1">CS-1</a></td>
+                  <td>A future Database Stack Stage with more provider resources would still be swept as if the PlanetScale Branch were the whole lifecycle.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="target-model">
+          <h2>Target Model <a class="self-link" href="#target-model">#</a></h2>
+          <dl class="card">
+            <dt>Model</dt><dd>The Stage Scan emits Database Stack Stage names.</dd>
+            <dt>Lifecycle</dt><dd>Alchemy destroy tears down each stale Database Stack Stage.</dd>
+            <dt>Provider</dt><dd>PlanetScale Branch inventory is only an input to Stage Scan.</dd>
+          </dl>
+        </section>
+
+        <section id="separation-of-concerns">
+          <h2>Separation Of Concerns <a class="self-link" href="#separation-of-concerns">#</a></h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Unit</th><th scope="col">Owns</th><th scope="col">Must Not Know About</th><th scope="col">May Depend On</th></tr></thead>
+              <tbody>
+                <tr><td>Workflow</td><td>Stage Scan orchestration and Alchemy destroy matrix.</td><td>PlanetScale deletion mechanics.</td><td>Stage Scan action; Alchemy stack action.</td></tr>
+                <tr><td>Stage Scan SDK</td><td>Staleness policy and stage classification.</td><td>Alchemy destroy internals.</td><td>GitHub client; PlanetScale inventory client.</td></tr>
+                <tr><td>PlanetScale Inventory Client</td><td>PlanetScale Branch and password reads.</td><td>PR policy and Alchemy lifecycle decisions.</td><td>PlanetScale API credentials.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <dl class="card">
+            <dt>Layer</dt><dd>Workflow</dd>
+            <dt>Responsibility</dt><dd>Compose Stage Scan output into Alchemy destroy.</dd>
+            <dt>Peers</dt><dd><code>.github/workflows/alchemy-stack-sweeper.yml</code></dd>
+            <dt>Direction</dt><dd>Workflow depends on actions; actions do not depend on workflow files.</dd>
+            <dt>Contract</dt><dd><pre><code>interface StackSweeperOutputs {
+  readonly staleStages: readonly string[];
+}</code></pre></dd>
+          </dl>
+        </section>
+
+        <section id="typescript-model">
+          <h2>TypeScript Model <a class="self-link" href="#typescript-model">#</a></h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Surface</th><th scope="col">Inference Strategy</th><th scope="col">Runtime Source</th><th scope="col">Escape Hatches</th></tr></thead>
+              <tbody>
+                <tr><td>Stage Scan result</td><td>Infer from returned object literal using <code>satisfies</code>.</td><td>Stage Scan SDK result builder.</td><td>None.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <pre><code>const result = {
+  staleStages,
+  summary,
+} satisfies StageScanResult;</code></pre>
+        </section>
+
+        <section id="proposed-changes">
+          <h2>Proposed Changes <a class="self-link" href="#proposed-changes">#</a></h2>
+          <dl class="card" id="mech-stage-scan-action">
+            <dt>Mechanism</dt><dd>Stage Scan Action</dd>
+            <dt>Problem</dt><dd><a class="xref" href="#p-1">P-1</a></dd>
+            <dt>Evidence</dt><dd>Source: <a class="source" href="https://github.com/heartbeat-chat/Heartbeat/blob/b34bdae7fc22263de08573ffe84ba847a4248eac/.github/workflows/planetscale-branch-sweeper.yml#L21"><code>.github/workflows/planetscale-branch-sweeper.yml:21</code></a> (<code>stale-branches</code>) — The scan output is named <code>stale-branches</code>.</dd>
+            <dt>Change</dt><dd>Emit <code>stale-stages</code> and matrix over Database Stack Stage names.</dd>
+            <dt>Baseline</dt><dd>The current workflow destroys through Alchemy but exposes provider-resource terminology.</dd>
+            <dt>Omission</dt><dd>Provider-resource naming remains the orchestration model.</dd>
+          </dl>
+        </section>
+
+        <section id="options">
+          <h2>Options <a class="self-link" href="#options">#</a></h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Option</th><th scope="col">Description</th><th scope="col">Solves</th><th scope="col">Cost</th><th scope="col">Recommendation</th></tr></thead>
+              <tbody>
+                <tr id="opt-a"><td>A</td><td>Stage-oriented workflow and scan action.</td><td><a class="xref" href="#p-1">P-1</a></td><td>Renames one workflow output and updates downstream references to <code>stale-branches</code>.</td><td>Yes</td></tr>
+                <tr id="opt-b"><td>B</td><td>Keep branch-oriented workflow.</td><td>No hard distinguisher.</td><td>Preserves provider-resource lifecycle naming.</td><td>No</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="tradeoffs">
+          <h2>Tradeoffs <a class="self-link" href="#tradeoffs">#</a></h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Dimension</th><th scope="col">Current State</th><th scope="col">Proposed State</th><th scope="col">Tradeoff</th><th scope="col">Evidence</th></tr></thead>
+              <tbody>
+                <tr><td>Workflow vocabulary</td><td><code>stale-branches</code> output.</td><td><code>stale-stages</code> output.</td><td>Review must inspect renamed output and every downstream reference.</td><td>Source: <a class="source" href="https://github.com/heartbeat-chat/Heartbeat/blob/b34bdae7fc22263de08573ffe84ba847a4248eac/.github/workflows/planetscale-branch-sweeper.yml#L21"><code>.github/workflows/planetscale-branch-sweeper.yml:21</code></a> (<code>stale-branches</code>) — Current output name.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="verification">
+          <h2>Verification <a class="self-link" href="#verification">#</a></h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Check</th><th scope="col">Command Or CI Job</th><th scope="col">Pass Criteria</th></tr></thead>
+              <tbody>
+                <tr><td>Action SDK tests</td><td><code>node --test .github/actions/core-sdk/index.test.mts .github/actions/alchemy-sdk/index.test.mts</code></td><td>Existing GitHub action SDK tests pass.</td></tr>
+                <tr><td>Workflow syntax</td><td><code>actionlint .github/workflows/planetscale-branch-sweeper.yml</code></td><td>Workflow parser reports no errors.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="diagrams">
+          <h2>Diagrams <a class="self-link" href="#diagrams">#</a></h2>
+          <figure id="diag-stage-destroy-sequence">
+            <svg role="img" aria-labelledby="diag-stage-destroy-title" viewBox="0 0 760 280" width="100%">
+              <title id="diag-stage-destroy-title">Database Stack Stage destroy sequence</title>
+              <defs><marker id="arrow-a" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="currentColor"/></marker></defs>
+              <g fill="none" stroke="currentColor"><line x1="105" y1="62" x2="105" y2="250"/><line x1="330" y1="62" x2="330" y2="250"/><line x1="600" y1="62" x2="600" y2="250"/></g>
+              <g fill="currentColor" font-size="14" text-anchor="middle"><text x="105" y="38">Workflow</text><text x="330" y="38">Stage Scan Action</text><text x="600" y="38">Alchemy Stack Action</text></g>
+              <g stroke="currentColor" marker-end="url(#arrow-a)"><line x1="105" y1="92" x2="330" y2="92"/><line x1="330" y1="142" x2="105" y2="142"/><line x1="105" y1="192" x2="600" y2="192"/><line x1="600" y1="232" x2="105" y2="232"/></g>
+              <g fill="currentColor" font-size="13"><text x="155" y="84">request stale stages</text><text x="165" y="134">stale-stages JSON</text><text x="190" y="184">destroy Database Stack Stage</text><text x="220" y="224">destroy result</text></g>
+            </svg>
+            <figcaption>Claim: the workflow consumes Database Stack Stage names and delegates teardown to Alchemy destroy.</figcaption>
+            <details>
+              <summary>Mermaid source</summary>
+              <pre><code>sequenceDiagram
+  participant WF as Workflow
+  participant Scan as Stage Scan Action
+  participant Alchemy as Alchemy Stack Action
+  WF->>Scan: request stale stages
+  Scan-->>WF: stale-stages JSON
+  WF->>Alchemy: destroy Database Stack Stage
+  Alchemy-->>WF: destroy result</code></pre>
+            </details>
+          </figure>
+          <figure id="diag-dependency-graph">
+            <svg role="img" aria-labelledby="diag-dependency-title" viewBox="0 0 760 220" width="100%">
+              <title id="diag-dependency-title">Sweeper dependency direction</title>
+              <defs><marker id="arrow-b" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="currentColor"/></marker></defs>
+              <g fill="none" stroke="currentColor"><rect x="35" y="82" width="150" height="54" rx="6"/><rect x="300" y="42" width="170" height="54" rx="6"/><rect x="300" y="132" width="170" height="54" rx="6"/><rect x="575" y="42" width="150" height="54" rx="6"/><rect x="575" y="132" width="150" height="54" rx="6"/></g>
+              <g fill="currentColor" font-size="13" text-anchor="middle"><text x="110" y="114">Workflow</text><text x="385" y="74">Stage Scan SDK</text><text x="385" y="164">Alchemy Action</text><text x="650" y="74">GitHub Client</text><text x="650" y="164">PlanetScale Client</text></g>
+              <g stroke="currentColor" marker-end="url(#arrow-b)"><line x1="185" y1="105" x2="300" y2="70"/><line x1="185" y1="116" x2="300" y2="154"/><line x1="470" y1="69" x2="575" y2="69"/><line x1="470" y1="78" x2="575" y2="153"/></g>
+            </svg>
+            <figcaption>Claim: dependency direction flows from workflow orchestration to scan/action mechanics and from Stage Scan SDK to provider clients.</figcaption>
+            <details>
+              <summary>Mermaid source</summary>
+              <pre><code>graph LR
+  Workflow --> StageScanSDK
+  Workflow --> AlchemyAction
+  StageScanSDK --> GitHubClient
+  StageScanSDK --> PlanetScaleClient</code></pre>
+            </details>
+          </figure>
+        </section>
+
+        <section id="proof">
+          <h2>Proof <a class="self-link" href="#proof">#</a></h2>
+          <dl class="card" id="proof-alchemy-destroy">
+            <dt>Proof</dt><dd>Alchemy destroy semantics source read.</dd>
+            <dt>Purpose</dt><dd>Show that Alchemy destroy is the stack teardown path.</dd>
+            <dt>Script</dt><dd>Inline command</dd>
+            <dt>Command</dt><dd><pre><code>sed -n '11,35p' node_modules/alchemy/src/Destroy.ts</code></pre></dd>
+            <dt>Output</dt><dd><pre><code>export const destroy = ({
+  stack,
+  stage,
+  dev,
+  scope,
+}: {
+  stack: StackEffect&lt;CompiledStack, ConfigError, Stage | AlchemyContext&gt;;
+  stage: string;
+  dev?: boolean;
+  /** See {@link evalStack} — when set, scoped resources outlive `destroy`. */
+  scope?: Scope.Scope;
+}) =&gt;
+  evalStack(
+    stack,
+    (stack) =&gt;
+      Plan.make({
+        ...stack,
+        // zero these out (destroy will treat all as orphans)
+        // TODO(sam): probably better to have Plan.destroy and Plan.update
+        resources: {},
+        bindings: {},
+        actions: {},
+        output: {},
+      }).pipe(Effect.flatMap(Apply.apply)),
+    { stage, dev, scope },</code></pre></dd>
+            <dt>Interpretation</dt><dd>Alchemy destroy empties the desired stack resources so prior persisted resources are planned for deletion. This does not prove provider resources exist without state.</dd>
+            <dt>Reproduce</dt><dd>Run from repo root after dependencies are installed at pinned commit <code>b34bdae7fc22263de08573ffe84ba847a4248eac</code>.</dd>
+          </dl>
+        </section>
+
+        <section id="proof-gates">
+          <h2>Proof Gates <a class="self-link" href="#proof-gates">#</a></h2>
+          <p>None.</p>
+        </section>
+
+        <section id="self-audit">
+          <h2>Self Audit <a class="self-link" href="#self-audit">#</a></h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Check</th><th scope="col">Result</th><th scope="col">Evidence</th></tr></thead>
+              <tbody>
+                <tr><td>Standalone document, zero session context.</td><td><span class="status-pass">✓ Pass</span></td><td>Summary, Ubiquitous Language, and Current State define the needed context.</td></tr>
+                <tr><td>Selected profile sections present, ordered, and non-decorative.</td><td><span class="status-pass">✓ Pass</span></td><td>Proposal profile sections appear in order.</td></tr>
+                <tr><td>Ubiquitous Language and Personas either <code>None.</code> or at least two rows.</td><td><span class="status-pass">✓ Pass</span></td><td>Both tables have at least two rows.</td></tr>
+                <tr><td>Header includes status, doc type, date, and pinned commit.</td><td><span class="status-pass">✓ Pass</span></td><td>Header and Summary include all metadata.</td></tr>
+                <tr><td>Colophon includes agent, session id when available, date, and pinned commit.</td><td><span class="status-pass">✓ Pass</span></td><td>See Colophon.</td></tr>
+                <tr><td>Every codebase claim has a pinned source link.</td><td><span class="status-pass">✓ Pass</span></td><td>Current State and Proposed Changes use GitHub blob links.</td></tr>
+                <tr><td>Cross-references use real anchors.</td><td><span class="status-pass">✓ Pass</span></td><td>Problem and Proposed Changes link to <a class="xref" href="#cs-1">CS-1</a> and <a class="xref" href="#p-1">P-1</a>.</td></tr>
+                <tr><td>Current State contains facts only.</td><td><span class="status-pass">✓ Pass</span></td><td>Current State table has factual source rows only.</td></tr>
+                <tr><td>Problem rows tie to Current State rows.</td><td><span class="status-pass">✓ Pass</span></td><td><a class="xref" href="#p-1">P-1</a> links to <a class="xref" href="#cs-1">CS-1</a>.</td></tr>
+                <tr><td>Proposed Changes use the mechanism shape.</td><td><span class="status-pass">✓ Pass</span></td><td><a class="xref" href="#mech-stage-scan-action">Stage Scan Action</a> uses all required fields.</td></tr>
+                <tr><td>Separation Of Concerns includes ownership, dependency direction, contracts, and graph.</td><td><span class="status-pass">✓ Pass</span></td><td>Separation Of Concerns table, contract block, and dependency graph are present.</td></tr>
+                <tr><td>TypeScript Model includes inference strategy and justified escape hatches.</td><td><span class="status-pass">✓ Pass</span></td><td>Stage Scan result row uses <code>satisfies</code> and lists no escape hatch.</td></tr>
+                <tr><td>Options and Tradeoffs contain hard facts only.</td><td><span class="status-pass">✓ Pass</span></td><td>Rows use output rename and downstream-reference review cost, not qualitative claims.</td></tr>
+                <tr><td>Diagrams render as inline SVG and carry captions.</td><td><span class="status-pass">✓ Pass</span></td><td>Both diagrams are inline SVG figures with captions.</td></tr>
+                <tr><td>Proof items include command, output, interpretation, and reproduction details.</td><td><span class="status-pass">✓ Pass</span></td><td><a class="xref" href="#proof-alchemy-destroy">Alchemy destroy proof</a> includes all fields.</td></tr>
+                <tr><td>Proof Gates are not presented as proposed work.</td><td><span class="status-pass">✓ Pass</span></td><td>Proof Gates is <code>None.</code>.</td></tr>
+                <tr><td>No nested lists, repeated arguments, unauthorized constraints, duration estimates, or soft claims remain.</td><td><span class="status-pass">✓ Pass</span></td><td>Sections use tables, cards, and hard-fact cells.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <footer class="colophon" id="colophon">
+          <h2>Colophon <a class="self-link" href="#colophon">#</a></h2>
+          <p>Agent: Codex. Session: current Heartbeat Prisma upgrade thread. Generated: 2026-07-09. Commit: <a href="https://github.com/heartbeat-chat/Heartbeat/commit/b34bdae7fc22263de08573ffe84ba847a4248eac"><code>b34bdae7fc22263de08573ffe84ba847a4248eac</code></a>.</p>
+        </footer>
+      </main>
+    </div>
+    <script>
+      (() => {
+        const root = document.documentElement;
+        document.getElementById("theme-toggle")?.addEventListener("click", () => {
+          root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+        });
+        const toc = document.getElementById("toc");
+        if (!toc) return;
+        document.querySelectorAll("main h2").forEach((heading) => {
+          const section = heading.closest("section, footer");
+          const id = section?.id;
+          if (!id) return;
+          const a = document.createElement("a");
+          a.href = `#${id}`;
+          a.textContent = heading.textContent?.replace("#", "").trim() || id;
+          toc.appendChild(a);
+        });
+      })();
+    </script>
+  </body>
+</html>

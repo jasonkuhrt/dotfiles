@@ -1,6 +1,6 @@
 ---
 name: d2
-description: Use when creating diagrams with D2. Triggers on "d2", "diagram", "flowchart", "visualize", "ascii diagram". Preferred over Mermaid for new diagrams.
+description: Use when creating diagrams with D2. Triggers on "d2", "diagram", "flowchart", "visualize", "ascii diagram".
 ---
 
 # D2
@@ -45,11 +45,12 @@ Render output adjacent to the `.d2` source file unless told otherwise.
 
 ## When to Use D2
 
-| Use D2 When | Use Mermaid Instead When |
-|-------------|--------------------------|
-| ASCII output needed | GitHub README (native Mermaid) |
-| Starting new diagrams | Existing Mermaid codebase |
-| Complex layouts | — |
+| Use D2 When | Notes |
+|-------------|-------|
+| You need a source-controlled diagram | Keep `.d2` as the source of truth |
+| You need rendered docs output | Render SVG/PNG/PDF adjacent to the source |
+| You need inline terminal output | Render ASCII and check the result before using it |
+| The flow has architectural boundaries | Use containers and explicit edge labels |
 
 ## References
 

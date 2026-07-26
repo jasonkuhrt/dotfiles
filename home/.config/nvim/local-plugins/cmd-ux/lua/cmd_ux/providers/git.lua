@@ -3,13 +3,13 @@ local capability_provider = require("cmd_ux.lib.capability_provider")
 local M = capability_provider.make({
   id = "git",
   root = "Git",
-  desc = "Semantic git actions for status, history, hunks, and blame",
+  desc = "Semantic git actions for status, history, reviews, hunks, and blame",
   help = table.concat({
     "Git surfaces high-signal repository actions through typed capabilities.",
     "",
-    "Use it for status, branch/history browsing, hunk navigation, staging/resetting, and blame.",
+    "Use it for status, branch/history browsing, Hunk reviews, hunk navigation, staging/resetting, and blame.",
   }, "\n"),
-  examples = { "Git status", "Git hunk stage", "Git history file" },
+  examples = { "Git status", "Git review watch", "Git hunk stage", "Git history file" },
   children = {
     status = {
       token = "status",
@@ -94,6 +94,49 @@ local M = capability_provider.make({
           help = "Discard the current changed hunk.",
           examples = { "Git hunk reset" },
           capability = "git.hunk_reset",
+        },
+      },
+    },
+    review = {
+      token = "review",
+      desc = "Open Hunk review surfaces",
+      help = "Open Hunk for working tree, staged changes, the last commit, or live-session inspection.",
+      examples = { "Git review watch", "Git review staged" },
+      children = {
+        working = {
+          token = "working",
+          desc = "Review the working tree",
+          help = "Open Hunk for the current working tree.",
+          examples = { "Git review working" },
+          capability = "git.review_working",
+        },
+        watch = {
+          token = "watch",
+          desc = "Review the working tree with reloads",
+          help = "Open Hunk for the current working tree and reload on changes.",
+          examples = { "Git review watch" },
+          capability = "git.review_watch",
+        },
+        staged = {
+          token = "staged",
+          desc = "Review staged changes",
+          help = "Open Hunk for staged changes.",
+          examples = { "Git review staged" },
+          capability = "git.review_staged",
+        },
+        show = {
+          token = "show",
+          desc = "Review the last commit",
+          help = "Open Hunk for the last commit.",
+          examples = { "Git review show" },
+          capability = "git.review_show",
+        },
+        session = {
+          token = "session",
+          desc = "List live Hunk sessions",
+          help = "List live Hunk sessions for agent-assisted review.",
+          examples = { "Git review session" },
+          capability = "git.review_session",
         },
       },
     },

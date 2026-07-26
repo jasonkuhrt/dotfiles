@@ -13,9 +13,9 @@
 #                  (no .status, no .conclusion — those will be null/missing)
 #
 # Ad-hoc python/jq scripts that only key off `.status` silently treat every
-# StatusContext as "pending forever" — which is exactly how a green
-# `E2E Local Sign Off` StatusContext caused a CI watch loop to never
-# terminate. This script is the single source of truth for "what state is
+# StatusContext as "pending forever" — which is exactly how a green legacy
+# StatusContext caused a CI watch loop to never terminate. This script is the
+# single source of truth for "what state is
 # this check in" so callers can't get the field-name dispatch wrong.
 #
 # Usage:

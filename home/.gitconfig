@@ -12,11 +12,9 @@
 	templateDir = /Users/jasonkuhrt/.config/git-hooks/init-template
 
 [core]
-    # Use delta for all paged output (diff, log, show, blame).
-    # --side-by-side lives HERE, not in [delta], so the two-column view is
-    # a wide-terminal opt-in. lazygit invokes delta without it (see its
-    # config.yml) and so renders unified — side-by-side cramps TUI panes.
-    pager = delta --side-by-side
+    # Use Hunk for paged Git diff output. Hunk acts as a pager wrapper and
+    # detects diff-shaped output while preserving normal text pager behavior.
+    pager = hunk pager
     # Global gitignore location
     excludesfile = ~/.config/git/ignore
     # Cache untracked files - speeds up `git status` in large repos
@@ -100,10 +98,8 @@
     features = tokyonight
     # Use n/N to jump between diff sections
     navigate = true
-    # side-by-side is intentionally NOT set here: a value in the main
-    # [delta] section overrides features AND can't be turned off per-pager,
-    # so it would force two columns on lazygit too. It's opt-in via
-    # core.pager instead (terminal yes, lazygit no).
+    # side-by-side is intentionally NOT set here: lazygit runs delta inside
+    # narrow panes, while terminal Git diff output is handled by Hunk.
     # Show line numbers
     line-numbers = true
     # Make file paths clickable in supported terminals (e.g., iTerm2, Ghostty)

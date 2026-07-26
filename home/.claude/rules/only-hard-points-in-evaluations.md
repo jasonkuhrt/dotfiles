@@ -1,85 +1,38 @@
 # Only Hard Points in Evaluations
 
-When evaluating libraries, abstractions, frameworks, or design alternatives,
-cite ONLY hard, source-backed capability differences. Soft points are noise
-and are banned as decision input.
+Evaluating libraries, abstractions, frameworks, or design alternatives: cite **only** hard, source-backed capability differences. Soft points are banned as decision input.
 
-## Why this rule exists
+Jason, escalating after repeated corrections: *"i fucking said do not cite soft points"*.
 
-Jason has corrected this repeatedly in design conversations, escalating in
-frustration ("i fucking said do not cite soft points"). The pattern of
-leaning on "ecosystem maturity", "blast radius", "more control", "dependency
-footprint", "alignment with trajectory", "novel use case" as reasons-to-prefer-X
-is exactly the kind of low-signal evaluation reasoning that wastes his time.
-He wants decision input grounded in source code, version requirements,
-benchmarks, and architectural constraints — nothing else.
+## Hard — allowed
 
-## What counts as hard (always allowed)
-
-- Source code demonstrating a capability gap, with `file:line`
-- Version requirements that block use — BUT verify with the user before
-  treating as a blocker; some "version mismatches" are easy migrations
+- Source code showing a capability gap, with `file:line`
+- Version requirements that block use — but **verify with Jason before treating as a blocker**; some "version mismatches" are easy migrations
 - Benchmarks with specific numbers
 - Architectural constraints with concrete failure modes
-- API surfaces that can't express a required behavior, with the failing
-  example
+- An API that can't express a required behaviour, with the failing example
 - Concurrency / ordering / atomicity guarantees that conflict
 - Documented breaking changes between versions
-- Specific runtime / bundle constraints (e.g. "doesn't run in Bun",
-  "imports node:fs")
+- Specific runtime or bundle constraints ("doesn't run in Bun", "imports node:fs")
 
-## What counts as soft (banned as decision input)
+## Soft — banned
 
-- "Maturity" / "ecosystem maturity" / "battle-tested" / "young framework"
-- "Blast radius" / "smaller blast radius" / "more control"
-- "Dependency footprint" / "external dependency cost"
-- "Aligns with trajectory" / "future-proofing"
-- "Learning curve"
-- "First in the codebase" / "novel use case" / "no precedent"
-- "Smaller" / "simpler" / "cleaner" / "leaner" without LOC numbers
-- "Less coupling" without naming the specific coupling failure
-- "More idiomatic" without API examples
-- "Ecosystem support" / "community size"
-- Anything dismissable with "that's just preference"
+"maturity" · "battle-tested" · "young/novel" · "blast radius" · "more control" · "dependency footprint" · "aligns with trajectory" · "future-proofing" · "learning curve" · "first in the codebase" · "no precedent" · "ecosystem support" · "community size" · "smaller/simpler/cleaner/leaner" without LOC · "less coupling" without naming the failure · "more idiomatic" without an API example
 
-## Procedure when tempted to cite a soft point
+Anything dismissable with *"that's just preference"*.
 
-1. Stop. Find the hard underlying fact, or admit there is none.
-2. If there's a hard underlying fact, cite that instead.
-3. If there isn't, drop the point entirely. Do not include it.
-4. If a recommendation has no hard facts in its favor, do not make the
-   recommendation. State explicitly: "no hard evidence supports a
-   recommendation here; deferring."
+## Procedure
 
-## Procedure when evaluating multiple options
+1. Tempted to cite a soft point → find the hard fact underneath it, or admit there is none.
+2. No hard fact → **drop the point entirely.**
+3. No hard facts favour a recommendation → don't make it. Say: *"no hard evidence supports a recommendation here; deferring."*
+4. Comparison tables get **hard columns only**. Never "maturity"/"fit"/"alignment".
+5. Two options tie on hard points → say *"no hard distinguisher"*. Never invent a soft tiebreaker.
 
-- Build the comparison table with HARD columns only (source location,
-  version requirement, capability gap, benchmark number, etc.).
-- Never include columns like "maturity" / "community" / "control" /
-  "fit" / "alignment."
-- If two options tie on hard points, say "no hard distinguisher between
-  them" — do not invent soft tiebreakers.
+## Self-check triggers
 
-## Trigger phrases that should make me self-check immediately
+About to write: "smaller/cleaner/lighter" · "more/less" anything qualitative · "aligns with" · "blast radius" · "footprint" · "mature/novel/first" · "control/ownership" · "easier/harder to" — **stop.** Find the hard fact or delete the sentence.
 
-- "smaller / cleaner / lighter / leaner"
-- "more / less" anything qualitative
-- "aligns with" / "fits with"
-- "blast radius" / "footprint"
-- "mature" / "novel" / "first"
-- "control" / "ownership"
-- "easier to" / "harder to"
+## Version blockers dissolve under his knowledge
 
-When I catch myself writing any of those in an evaluation context, I'm
-about to drop a soft point. Stop and either find the hard fact or drop
-the sentence.
-
-## Verifying version-blocker claims with the user
-
-Even hard-looking facts can dissolve under user knowledge of their own
-codebase. Jason has explicitly said "Effect v4 migration is easy lift" —
-which dissolved my source-confirmed "Alchemy requires Effect v4" blocker.
-When a version requirement looks like a hard blocker, flag it as a question
-to the user ("X requires Y; is migration to Y feasible?") rather than
-asserting it as a decided blocker. The user knows their migration costs
-better than the source code does.
+Jason: *"Effect v4 migration is easy lift"* — which dissolved a source-confirmed "Alchemy requires Effect v4" blocker. Flag version requirements as a **question** ("X requires Y; is migrating feasible?"), never as a decided blocker. He knows his migration costs better than the source does.

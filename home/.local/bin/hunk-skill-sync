@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+skill_path="$(hunk skill path)"
+if [ ! -f "$skill_path" ]; then
+  printf 'hunk skill not found: %s\n' "$skill_path" >&2
+  exit 1
+fi
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
+
+codex_link="$HOME/.codex/skills/hunk-review"
+claude_library_dir="$repo_root/home/.claude/skills-library/hunk-review"
+claude_link="$repo_root/home/.claude/skills/hunk-review"
+
+mkdir -p "$HOME/.codex/skills" "$claude_library_dir"
+cp "$skill_path" "$claude_library_dir/SKILL.md"
+ln -sfn /Users/jasonkuhrt/.claude/skills-library/hunk-review "$claude_link"
+rm -rf "$codex_link"
+ln -s ../../.claude/skills/hunk-review "$codex_link"
+
+printf 'synced Codex runtime skill link: %s\n' "$codex_link"
+printf 'synced Claude skill: %s\n' "$claude_library_dir/SKILL.md"
+printf 'synced Claude skill link: %s\n' "$claude_link"

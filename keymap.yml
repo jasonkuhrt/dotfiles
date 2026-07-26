@@ -1,6 +1,6 @@
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║  Declarative Keymap - Single Source of Truth                               ║
-# ║  Tools: zed, nvim, vscode, cmux, fish, cc (claude code)                    ║
+# ║  Tools: zed, nvim, vscode, cmux, fish, hunk, cc (claude code)              ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 #
 # Post-vscode-neovim migration architecture:
@@ -504,15 +504,19 @@ search:
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 git:
+  # Hunk app review is exposed through cmd-ux as `Git review ...`; q-prefix
+  # hunk bindings stay editor-local gitsigns operations.
   hunk_next:
     desc: Go to next hunk
     zed: "q j"
     nvim: "qj"             # gitsigns next_hunk
+    hunk: "]"              # Hunk app keybindings are built in
 
   hunk_prev:
     desc: Go to previous hunk
     zed: "q k"
     nvim: "qk"             # gitsigns prev_hunk
+    hunk: "["              # Hunk app keybindings are built in
 
   branch:
     desc: Switch / pick branch
@@ -538,6 +542,31 @@ git:
     desc: Expand all inline hunks
     zed: "q O"
     nvim: "qO"
+    hunk: "-"
+
+  review_file_next:
+    desc: Hunk app next file
+    hunk: "."
+
+  review_file_prev:
+    desc: Hunk app previous file
+    hunk: ","
+
+  review_comment_next:
+    desc: Hunk app next comment
+    hunk: "}"
+
+  review_comment_prev:
+    desc: Hunk app previous comment
+    hunk: "{"
+
+  review_note_create:
+    desc: Hunk app create review note
+    hunk: "c"
+
+  review_context_toggle:
+    desc: Hunk app toggle unchanged context
+    hunk: "z"
 
   stage_toggle:
     desc: Toggle staged (range)

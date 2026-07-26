@@ -1,5 +1,6 @@
 gui:
   scrollHeight: 10
+  showRootItemInFileTree: false
   # Tokyo Night theme
   # Source: https://github.com/folke/tokyonight.nvim/blob/main/extras/lazygit/tokyonight_night.yml
   theme:
@@ -28,12 +29,13 @@ gui:
     defaultFgColor:
       - '#c0caf5' # fg
 git:
-  # `pagers` is a LIST (this fork's schema — see `lazygit --config`).
+  # Commit messages starting with this prefix are committed with --no-verify
+  # (skips pre-commit / commit-msg hooks). Only a single prefix is supported.
+  skipHookPrefix: 'rachet'
+  # `pagers` is a LIST (see `lazygit --config`).
   # delta reads its own behaviour (navigate, line-numbers, hyperlinks,
   # theme) from ~/.gitconfig's [delta] section; this only names the
-  # command. side-by-side is NOT inherited — it's set on core.pager in
-  # ~/.gitconfig, so the terminal gets two columns and lazygit stays
-  # unified. --paging=never stops delta spawning its own less, leaving
+  # command. --paging=never stops delta spawning its own less, leaving
   # lazygit in control of scrolling.
   pagers:
     - colorArg: always
@@ -50,101 +52,27 @@ keybinding:
     scrollUpMain: K
     scrollDownMain: J
 customCommands:
-  # UPSTREAM-FIXME: stash → commitFiles drill-in gives a wrong commit SHA.
-  #
-  # lazygit's session_state_loader resolves SelectedCommit via a 3-way
-  # switch on IsCurrentOrParent(LocalCommits|SubCommits|ReflogCommits). When
-  # commitFiles is drilled in from the Stash panel, none of those branches
-  # match, so the default falls through to LocalCommits.GetSelected() —
-  # i.e. whatever happens to be cursored in [5] Commits, unrelated to the
-  # stash you're viewing. SelectedCommit.Hash is silently a plausible but
-  # WRONG SHA in that one path.
-  #
-  # Code: pkg/gui/services/custom_commands/session_state_loader.go:271-279
-  # Fix would be ~15 lines: special-case commitFiles by reading its own
-  # GetRef() before falling back to the 3-way switch. Holding off until
-  # there's a real need — Jason doesn't use lazygit's stash flow.
-  #
-  # Practical guidance: do NOT press ';' inside a commitFiles view that
-  # was drilled in from the Stash panel — it would encode an unrelated
-  # SHA into .dunk/comments.json. Every other drill-in source (LocalCommits,
-  # SubCommits, ReflogCommits) works correctly.
-
-  # LINE mode, dirty: working-tree-vs-index (real anchor against working tree)
-  - key: ';'
+  - key: 'H'
     context: 'staging'
-    description: 'Add Dunk line comment (dirty)'
-    prompts:
-      - type: 'input'
-        title: 'Dunk line comment (dirty)'
-        key: 'Body'
-    command: >
-      dunk-lazygit --mode line --file {{.SelectedPatch.FileName | quote}} --line {{.SelectedPatch.CurrentLineNumber}} --range "{{.SelectedPatch.SelectedStartLineNumber}}:{{.SelectedPatch.SelectedEndLineNumber}}" --body {{.Form.Body | quote}}
-
-    loadingText: 'Adding Dunk line comment'
-    output: log
-  # LINE mode, staged: index-vs-HEAD (sentinel anchor — index content ≠ working tree)
-  - key: ';'
+    description: 'Open Hunk review (working tree)'
+    command: hunk-agent-watch --repo . --background && hunk diff --watch
+    loadingText: 'Opening Hunk working-tree review'
+    output: terminal
+  - key: 'H'
     context: 'stagingSecondary'
-    description: 'Add Dunk line comment (staged)'
-    prompts:
-      - type: 'input'
-        title: 'Dunk line comment (staged)'
-        key: 'Body'
-    command: >
-      dunk-lazygit --mode line --file {{.SelectedPatch.FileName | quote}} --line {{.SelectedPatch.CurrentLineNumber}} --range "{{.SelectedPatch.SelectedStartLineNumber}}:{{.SelectedPatch.SelectedEndLineNumber}}" --staged --body {{.Form.Body | quote}}
-
-    loadingText: 'Adding Dunk line comment (staged)'
-    output: log
-  # LINE mode, in commit: patch builder drilled in from a commit
-  - key: ';'
-    context: 'patchBuilding'
-    description: 'Add Dunk line comment (in commit)'
-    prompts:
-      - type: 'input'
-        title: 'Dunk line comment (in commit)'
-        key: 'Body'
-    command: >
-      dunk-lazygit --mode line --file {{.SelectedPatch.FileName | quote}} --line {{.SelectedPatch.CurrentLineNumber}} --range "{{.SelectedPatch.SelectedStartLineNumber}}:{{.SelectedPatch.SelectedEndLineNumber}}" --commit {{.SelectedCommit.Hash | quote}} --body {{.Form.Body | quote}}
-
-    loadingText: 'Adding Dunk line comment (in commit)'
-    output: log
-  # FILE/DIR mode, dirty: working tree
-  - key: ';'
+    description: 'Open Hunk review (staged)'
+    command: hunk-agent-watch --repo . --background && hunk diff --staged
+    loadingText: 'Opening Hunk staged review'
+    output: terminal
+  - key: 'H'
     context: 'files'
-    description: 'Add Dunk file/dir comment (dirty)'
-    prompts:
-      - type: 'input'
-        title: 'Dunk file/dir comment (dirty)'
-        key: 'Body'
-    command: >
-      dunk-lazygit --mode file --file {{.SelectedPath | quote}} --body {{.Form.Body | quote}}
-
-    loadingText: 'Adding Dunk file/dir comment'
-    output: log
-  # FILE/DIR mode, in commit: drilled into a commit's files
-  - key: ';'
-    context: 'commitFiles'
-    description: 'Add Dunk file/dir comment (in commit)'
-    prompts:
-      - type: 'input'
-        title: 'Dunk file/dir comment (in commit)'
-        key: 'Body'
-    command: >
-      dunk-lazygit --mode file --file {{.SelectedPath | quote}} --commit {{.SelectedCommit.Hash | quote}} --body {{.Form.Body | quote}}
-
-    loadingText: 'Adding Dunk file/dir comment (in commit)'
-    output: log
-  # COMMIT mode: whole commit annotation from any commits panel
-  - key: ';'
+    description: 'Open Hunk review (selected path)'
+    command: hunk-agent-watch --repo . --background && hunk diff --watch -- {{.SelectedPath | quote}}
+    loadingText: 'Opening Hunk path review'
+    output: terminal
+  - key: 'H'
     context: 'commits, subCommits, reflogCommits'
-    description: 'Add Dunk commit-level comment'
-    prompts:
-      - type: 'input'
-        title: 'Dunk commit-level comment'
-        key: 'Body'
-    command: >
-      dunk-lazygit --mode commit --commit {{.SelectedCommit.Hash | quote}} --body {{.Form.Body | quote}}
-
-    loadingText: 'Adding Dunk commit-level comment'
-    output: log
+    description: 'Open Hunk review (selected commit)'
+    command: hunk-agent-watch --repo . --background && hunk show {{.SelectedCommit.Hash | quote}}
+    loadingText: 'Opening Hunk commit review'
+    output: terminal

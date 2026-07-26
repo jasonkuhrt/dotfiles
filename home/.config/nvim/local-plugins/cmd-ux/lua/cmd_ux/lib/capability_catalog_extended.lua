@@ -28,6 +28,23 @@ local function current_buffer_label()
   return path and vim.fn.fnamemodify(path, ":~:.") or "[No Name]"
 end
 
+local function hunk_available()
+  if not git.in_repo() then
+    return false, "Current buffer is not in a git repo."
+  end
+  if vim.fn.executable("hunk") ~= 1 then
+    return false, "Hunk is not installed."
+  end
+  return true
+end
+
+local function hunk_preview(argv)
+  return {
+    "Repo: " .. vim.fn.fnamemodify(git.root() or "", ":t"),
+    "Command: " .. table.concat(argv, " "),
+  }
+end
+
 ---@param register fun(spec: CmdUxCapabilitySpec)
 function M.register_all(register)
   register({
@@ -485,6 +502,76 @@ function M.register_all(register)
     end,
     execute = function()
       git.run_picker("git_log_line")
+    end,
+  })
+
+  register({
+    id = "git.review_working",
+    label = "Review working tree",
+    desc = "Open Hunk for the working tree.",
+    safety = "safe",
+    available = hunk_available,
+    preview = function()
+      return hunk_preview({ "hunk", "diff" })
+    end,
+    execute = function()
+      git.run_terminal({ "hunk", "diff" })
+    end,
+  })
+
+  register({
+    id = "git.review_watch",
+    label = "Review working tree watch",
+    desc = "Open Hunk for the working tree and reload on changes.",
+    safety = "safe",
+    available = hunk_available,
+    preview = function()
+      return hunk_preview({ "hunk", "diff", "--watch" })
+    end,
+    execute = function()
+      git.run_terminal({ "hunk", "diff", "--watch" })
+    end,
+  })
+
+  register({
+    id = "git.review_staged",
+    label = "Review staged changes",
+    desc = "Open Hunk for staged changes.",
+    safety = "safe",
+    available = hunk_available,
+    preview = function()
+      return hunk_preview({ "hunk", "diff", "--staged" })
+    end,
+    execute = function()
+      git.run_terminal({ "hunk", "diff", "--staged" })
+    end,
+  })
+
+  register({
+    id = "git.review_show",
+    label = "Review last commit",
+    desc = "Open Hunk for the last commit.",
+    safety = "safe",
+    available = hunk_available,
+    preview = function()
+      return hunk_preview({ "hunk", "show" })
+    end,
+    execute = function()
+      git.run_terminal({ "hunk", "show" })
+    end,
+  })
+
+  register({
+    id = "git.review_session",
+    label = "Review live Hunk sessions",
+    desc = "List live Hunk sessions.",
+    safety = "safe",
+    available = hunk_available,
+    preview = function()
+      return hunk_preview({ "hunk", "session", "list" })
+    end,
+    execute = function()
+      git.run_terminal({ "hunk", "session", "list" })
     end,
   })
 

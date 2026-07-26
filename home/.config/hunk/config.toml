@@ -1,0 +1,21 @@
+# Hunk user config.
+#
+# Hunk 0.16.x does not expose configurable keybindings in config.toml. Key
+# alignment lives around the app:
+# - Fish: `h` aliases to `hunk`.
+# - Git: diff-shaped pager output routes through `hunk pager`.
+# - LazyGit: `H` opens Hunk review sessions from the relevant Git context.
+# - Inside Hunk: j/k, d/u, g/G, and c already match the local motion/review
+#   vocabulary; hunk/file/comment jumps remain Hunk's built-ins:
+#   [ ], , ., and { }.
+
+theme = "tokyo-night"
+mode = "auto"
+watch = false
+exclude_untracked = false
+line_numbers = true
+wrap_lines = false
+hunk_headers = true
+agent_notes = true
+copy_decorations = false
+color_moved = true

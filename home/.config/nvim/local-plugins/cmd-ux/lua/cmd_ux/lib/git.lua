@@ -75,4 +75,16 @@ function M.run_picker(method)
   picker.run(method, "Git")
 end
 
+---@param argv string[]
+function M.run_terminal(argv)
+  local cwd = M.root() or vim.fn.getcwd()
+  vim.cmd("tabnew")
+  local job_id = vim.fn.termopen(argv, { cwd = cwd })
+  if job_id <= 0 then
+    vim.notify(("Failed to start: %s"):format(table.concat(argv, " ")), vim.log.levels.ERROR, { title = "Git" })
+    return
+  end
+  vim.cmd("startinsert")
+end
+
 return M

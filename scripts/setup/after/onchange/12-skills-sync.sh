@@ -23,10 +23,12 @@ mkdir -p "$target_dir"
 
 shared_skills=(
     gh-ci
+    hunk-review
     land-complete
     land-merged
     land-pr
     land-worktree
+    session-refresh
 )
 
 codex_only_skills=(

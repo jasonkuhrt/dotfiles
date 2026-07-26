@@ -43,15 +43,13 @@ Tokyo Night lazygit UI.
   and no delta/gitconfig setting can stop it.
 - Net consequence: turning off side-by-side (to kill the two-column view)
   also turned off delta's own wrapping, which shifted the wrapping job to
-  lazygit's `Main` view. Living with that wrap for now. The only real fixes
-  are a fork patch (`Main.Wrap = false`) or swapping the lazygit pager to
-  `dunk pager --no-wrap` (dunk truncates long lines itself).
+  lazygit's `Main` view. Living with that wrap for now.
 - delta does not wrap when its output is piped (non-TTY) — it only wraps
   to a real terminal. Testing wrap behaviour requires a PTY.
-- `dunk` is `dunkdiff` (`github.com/amix/dunk`), a separate diff-review
-  TUI. It is installed but **not** wired into lazygit's diff rendering —
-  the `• N:` boxes and `Δ`/`N ⋮ N` chrome in lazygit are all **delta**
-  (its hunk-header and file-header styling), not dunk.
+- Historical note: `dunk` was `dunkdiff` (`github.com/amix/dunk`), a
+  separate diff-review TUI. It has been replaced here by Hunk; LazyGit still
+  renders its embedded diff panes through delta, while Hunk is opened as an
+  explicit review surface.
 
 ## Process note
 

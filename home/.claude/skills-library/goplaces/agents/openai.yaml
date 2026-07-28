@@ -1,0 +1,4 @@
+interface:
+  display_name: "Google Places and Routes"
+  short_description: "Route and place data through goplaces"
+  default_prompt: "Use $goplaces to calculate a traffic-aware route."

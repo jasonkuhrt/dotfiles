@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly goplaces_bin="/opt/homebrew/bin/goplaces"
+readonly keychain_service="goplaces-google-maps-api-key"
+readonly keychain_account="jasonkuhrt@me.com"
+
+if [[ ! -x "$goplaces_bin" ]]; then
+  echo "goplaces: install with 'brew install --cask openclaw/tap/goplaces'" >&2
+  exit 127
+fi
+
+if [[ -z "${GOOGLE_PLACES_API_KEY:-}" ]]; then
+  if ! GOOGLE_PLACES_API_KEY="$(
+    security find-generic-password \
+      -s "$keychain_service" \
+      -a "$keychain_account" \
+      -w 2>/dev/null
+  )"; then
+    echo "goplaces: API key missing from macOS Keychain" >&2
+    exit 78
+  fi
+  export GOOGLE_PLACES_API_KEY
+fi
+
+exec "$goplaces_bin" "$@"

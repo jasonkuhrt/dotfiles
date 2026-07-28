@@ -10,6 +10,7 @@ Use Peter Steinberger's `goplaces` CLI as the direct Google Places and Routes su
 ## Command contract
 
 - Call `~/.local/bin/goplaces`. This wrapper loads its API key from macOS Keychain and then runs the Homebrew binary.
+- Call `~/.local/bin/groute` when the result also needs a ready-to-open Google Maps directions URL or Markdown link.
 - Prefer `--json`; Peter documents it as the stable automation and agent contract.
 - Inspect `~/.local/bin/goplaces <command> --help` before forming an unfamiliar command.
 - Never read, print, pass on the command line, or persist the API key.
@@ -56,6 +57,34 @@ When reporting a route, retain:
 - requested departure time and timezone, if any;
 - distance and duration;
 - whether the result is traffic-aware.
+
+### Route facts plus Google Maps link
+
+`groute` is the agent-facing companion for durable itinerary links. It calls
+`goplaces` for route facts and deterministically creates a Google Maps URL from
+the same endpoints, Place IDs, and travel mode:
+
+```bash
+~/.local/bin/groute \
+  --from "<origin name or address>" \
+  --to "<destination name or address>" \
+  --from-place-id "<origin Google Place ID>" \
+  --to-place-id "<destination Google Place ID>" \
+  --mode drive \
+  --departure-time "2026-08-16T15:45:00-06:00" \
+  --format markdown \
+  --label "Chad's → Royal Tyrrell"
+```
+
+Formats:
+
+- `--format json`: route facts plus `google_maps_url`.
+- `--format markdown`: `[label](URL) · distance · duration`.
+- `--format url`: URL only; performs no API call.
+
+The planning result and link share Google endpoints and travel mode. The link
+does not freeze the API route or its future departure time: Google Maps
+recalculates the route and live conditions when opened.
 
 ## Places
 

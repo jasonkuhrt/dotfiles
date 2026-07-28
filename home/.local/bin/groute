@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# @describe Produce Google route facts and a matching ready-to-open Google Maps URL.
+# @option --from Origin name or address used in the Maps URL.
+# @option --to Destination name or address used in the Maps URL.
+# @option --from-place-id Exact Google Place ID for the origin.
+# @option --to-place-id Exact Google Place ID for the destination.
+# @option --mode=drive Travel mode: drive, walk, bicycle, or transit.
+# @option --departure-time Future departure as an RFC3339 timestamp.
+# @option --arrival-time Transit arrival as an RFC3339 timestamp.
+# @option --units=metric Units: metric or imperial.
+# @option --format=json Output format: json, markdown, or url.
+# @option --label Link label used by markdown output.
+# @flag --avoid-tolls Avoid toll roads when driving.
+# @flag --avoid-highways Avoid highways when driving.
+# @flag --avoid-ferries Avoid ferries when driving.
+
+die() {
+  printf 'groute: %s\n' "$1" >&2
+  exit 64
+}
+
+eval "$(argc --argc-eval "$0" "$@")"
+
+[[ -n "${argc_from:-}" ]] || die "--from is required"
+[[ -n "${argc_to:-}" ]] || die "--to is required"
+
+mode="${argc_mode:-drive}"
+format="${argc_format:-json}"
+
+case "$mode" in
+  drive) maps_mode="driving" ;;
+  walk) maps_mode="walking" ;;
+  bicycle) maps_mode="bicycling" ;;
+  transit) maps_mode="transit" ;;
+  *) die "--mode must be drive, walk, bicycle, or transit" ;;
+esac
+
+case "$format" in
+  json | markdown | url) ;;
+  *) die "--format must be json, markdown, or url" ;;
+esac
+
+google_maps_url="$(
+  jq -rn \
+    --arg origin "$argc_from" \
+    --arg destination "$argc_to" \
+    --arg origin_place_id "${argc_from_place_id:-}" \
+    --arg destination_place_id "${argc_to_place_id:-}" \
+    --arg travelmode "$maps_mode" '
+      "https://www.google.com/maps/dir/?api=1" +
+      "&origin=" + ($origin | @uri) +
+      (if $origin_place_id == "" then "" else "&origin_place_id=" + ($origin_place_id | @uri) end) +
+      "&destination=" + ($destination | @uri) +
+      (if $destination_place_id == "" then "" else "&destination_place_id=" + ($destination_place_id | @uri) end) +
+      "&travelmode=" + ($travelmode | @uri)
+    '
+)"
+
+if [[ "$format" == "url" ]]; then
+  printf '%s\n' "$google_maps_url"
+  exit 0
+fi
+
+directions_args=(directions --mode "$mode" --units "${argc_units:-metric}" --json)
+
+if [[ -n "${argc_from_place_id:-}" ]]; then
+  directions_args+=(--from-place-id "$argc_from_place_id")
+else
+  directions_args+=(--from "$argc_from")
+fi
+
+if [[ -n "${argc_to_place_id:-}" ]]; then
+  directions_args+=(--to-place-id "$argc_to_place_id")
+else
+  directions_args+=(--to "$argc_to")
+fi
+
+[[ -z "${argc_departure_time:-}" ]] || directions_args+=(--departure-time "$argc_departure_time")
+[[ -z "${argc_arrival_time:-}" ]] || directions_args+=(--arrival-time "$argc_arrival_time")
+[[ -z "${argc_avoid_tolls:-}" ]] || directions_args+=(--avoid-tolls)
+[[ -z "${argc_avoid_highways:-}" ]] || directions_args+=(--avoid-highways)
+[[ -z "${argc_avoid_ferries:-}" ]] || directions_args+=(--avoid-ferries)
+
+route_json="$(~/.local/bin/goplaces "${directions_args[@]}")"
+
+result="$(
+  jq -cn \
+    --arg from "$argc_from" \
+    --arg to "$argc_to" \
+    --arg from_place_id "${argc_from_place_id:-}" \
+    --arg to_place_id "${argc_to_place_id:-}" \
+    --arg google_maps_url "$google_maps_url" \
+    --argjson route "$route_json" '
+      {
+        provider: "Google Routes API",
+        from: $from,
+        to: $to,
+        from_place_id: (if $from_place_id == "" then null else $from_place_id end),
+        to_place_id: (if $to_place_id == "" then null else $to_place_id end),
+        mode: $route.mode,
+        summary: $route.summary,
+        distance_text: $route.distance_text,
+        distance_meters: $route.distance_meters,
+        duration_text: $route.duration_text,
+        duration_seconds: $route.duration_seconds,
+        departure_time: ($route.departure_time // null),
+        arrival_time: ($route.arrival_time // null),
+        traffic_aware: ($route.departure_time != null and $route.mode == "DRIVING"),
+        google_maps_url: $google_maps_url
+      }
+    '
+)"
+
+if [[ "$format" == "json" ]]; then
+  jq . <<<"$result"
+else
+  label="${argc_label:-$argc_from → $argc_to}"
+  jq -r \
+    --arg label "$label" '
+      "[" + $label + "](" + .google_maps_url + ") · " +
+      .distance_text + " · " + .duration_text
+    ' <<<"$result"
+fi

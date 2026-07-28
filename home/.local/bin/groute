@@ -7,6 +7,9 @@ set -euo pipefail
 # @option --to Destination name or address used in the Maps URL.
 # @option --from-place-id Exact Google Place ID for the origin.
 # @option --to-place-id Exact Google Place ID for the destination.
+# @option --via* Intermediate stop name or address, in visit order.
+# @option --via-place-id* Place ID matching each --via, in the same order.
+# @option --stop-minutes* Planned minutes at each --via, in the same order.
 # @option --mode=drive Travel mode: drive, walk, bicycle, or transit.
 # @option --departure-time Future departure as an RFC3339 timestamp.
 # @option --arrival-time Transit arrival as an RFC3339 timestamp.
@@ -27,6 +30,54 @@ eval "$(argc --argc-eval "$0" "$@")"
 [[ -n "${argc_from:-}" ]] || die "--from is required"
 [[ -n "${argc_to:-}" ]] || die "--to is required"
 
+vias=()
+via_place_ids=()
+stop_minutes=()
+
+if declare -p argc_via &>/dev/null; then
+  vias=("${argc_via[@]}")
+fi
+
+if declare -p argc_via_place_id &>/dev/null; then
+  via_place_ids=("${argc_via_place_id[@]}")
+fi
+
+if declare -p argc_stop_minutes &>/dev/null; then
+  stop_minutes=("${argc_stop_minutes[@]}")
+fi
+
+via_count="${#vias[@]}"
+via_place_id_count="${#via_place_ids[@]}"
+stop_minutes_count="${#stop_minutes[@]}"
+
+(( via_count <= 3 )) || die "Google Maps mobile links support at most 3 intermediate stops"
+
+if (( via_place_id_count > 0 && via_place_id_count != via_count )); then
+  die "--via-place-id must occur once for every --via"
+fi
+
+if (( stop_minutes_count > 0 && stop_minutes_count != via_count )); then
+  die "--stop-minutes must occur once for every --via"
+fi
+
+if (( via_place_id_count == 0 && via_count > 0 )); then
+  for _ in "${vias[@]}"; do
+    via_place_ids+=("")
+  done
+fi
+
+if (( stop_minutes_count == 0 && via_count > 0 )); then
+  for _ in "${vias[@]}"; do
+    stop_minutes+=(0)
+  done
+fi
+
+if (( via_count > 0 )); then
+  for minutes in "${stop_minutes[@]}"; do
+    [[ "$minutes" =~ ^[0-9]+$ ]] || die "--stop-minutes values must be non-negative integers"
+  done
+fi
+
 mode="${argc_mode:-drive}"
 format="${argc_format:-json}"
 
@@ -43,19 +94,53 @@ case "$format" in
   *) die "--format must be json, markdown, or url" ;;
 esac
 
+if (( via_count > 0 )) && [[ -n "${argc_arrival_time:-}" ]]; then
+  die "--arrival-time is only supported for point-to-point routes"
+fi
+
+strings_json() {
+  if (( $# == 0 )); then
+    printf '[]\n'
+  else
+    printf '%s\n' "$@" | jq -Rsc 'split("\n")[:-1]'
+  fi
+}
+
+numbers_json() {
+  if (( $# == 0 )); then
+    printf '[]\n'
+  else
+    printf '%s\n' "$@" | jq -Rsc 'split("\n")[:-1] | map(tonumber)'
+  fi
+}
+
+vias_json='[]'
+via_place_ids_json='[]'
+stop_minutes_json='[]'
+
+if (( via_count > 0 )); then
+  vias_json="$(strings_json "${vias[@]}")"
+  via_place_ids_json="$(strings_json "${via_place_ids[@]}")"
+  stop_minutes_json="$(numbers_json "${stop_minutes[@]}")"
+fi
+
 google_maps_url="$(
   jq -rn \
     --arg origin "$argc_from" \
     --arg destination "$argc_to" \
     --arg origin_place_id "${argc_from_place_id:-}" \
     --arg destination_place_id "${argc_to_place_id:-}" \
+    --argjson waypoints "$vias_json" \
+    --argjson waypoint_place_ids "$via_place_ids_json" \
     --arg travelmode "$maps_mode" '
       "https://www.google.com/maps/dir/?api=1" +
       "&origin=" + ($origin | @uri) +
       (if $origin_place_id == "" then "" else "&origin_place_id=" + ($origin_place_id | @uri) end) +
       "&destination=" + ($destination | @uri) +
       (if $destination_place_id == "" then "" else "&destination_place_id=" + ($destination_place_id | @uri) end) +
-      "&travelmode=" + ($travelmode | @uri)
+      "&travelmode=" + ($travelmode | @uri) +
+      (if ($waypoints | length) == 0 then "" else "&waypoints=" + ($waypoints | map(@uri) | join("%7C")) end) +
+      (if ($waypoint_place_ids | map(select(. != "")) | length) == 0 then "" else "&waypoint_place_ids=" + ($waypoint_place_ids | map(@uri) | join("%7C")) end)
     '
 )"
 
@@ -64,27 +149,160 @@ if [[ "$format" == "url" ]]; then
   exit 0
 fi
 
-directions_args=(directions --mode "$mode" --units "${argc_units:-metric}" --json)
+format_duration() {
+  jq -nr --argjson seconds "$1" '
+    if $seconds < 60 then
+      "\($seconds) sec"
+    elif $seconds < 3600 then
+      "\(($seconds / 60) | round) mins"
+    else
+      ($seconds / 3600 | floor) as $hours |
+      (($seconds % 3600) / 60 | round) as $minutes |
+      if $minutes == 0 then
+        "\($hours) " + (if $hours == 1 then "hour" else "hours" end)
+      else
+        "\($hours) " + (if $hours == 1 then "hour" else "hours" end) + " \($minutes) mins"
+      end
+    end
+  '
+}
 
-if [[ -n "${argc_from_place_id:-}" ]]; then
-  directions_args+=(--from-place-id "$argc_from_place_id")
-else
-  directions_args+=(--from "$argc_from")
+format_distance() {
+  jq -nr --argjson meters "$1" --arg units "$2" '
+    if $units == "imperial" then
+      ($meters / 1609.344) as $miles |
+      "\((($miles * 10) | round) / 10) mi"
+    else
+      ($meters / 1000) as $kilometers |
+      "\((($kilometers * 10) | round) / 10) km"
+    end
+  '
+}
+
+rfc3339_to_epoch() {
+  local value="$1"
+
+  if [[ "$value" == *Z ]]; then
+    date -j -u -f '%Y-%m-%dT%H:%M:%SZ' "$value" '+%s'
+  elif [[ "$value" =~ ^(.*[0-9])([+-][0-9]{2}):([0-9]{2})$ ]]; then
+    date -j -f '%Y-%m-%dT%H:%M:%S%z' \
+      "${BASH_REMATCH[1]}${BASH_REMATCH[2]}${BASH_REMATCH[3]}" '+%s'
+  else
+    die "--departure-time must be RFC3339 with Z or a numeric offset"
+  fi
+}
+
+points=("$argc_from")
+point_place_ids=("${argc_from_place_id:-}")
+
+if (( via_count > 0 )); then
+  points+=("${vias[@]}")
+  point_place_ids+=("${via_place_ids[@]}")
 fi
 
-if [[ -n "${argc_to_place_id:-}" ]]; then
-  directions_args+=(--to-place-id "$argc_to_place_id")
-else
-  directions_args+=(--to "$argc_to")
+points+=("$argc_to")
+point_place_ids+=("${argc_to_place_id:-}")
+legs_json='[]'
+total_distance_meters=0
+total_duration_seconds=0
+stop_duration_seconds=0
+current_departure_epoch=""
+
+if [[ -n "${argc_departure_time:-}" ]]; then
+  current_departure_epoch="$(rfc3339_to_epoch "$argc_departure_time")"
 fi
 
-[[ -z "${argc_departure_time:-}" ]] || directions_args+=(--departure-time "$argc_departure_time")
-[[ -z "${argc_arrival_time:-}" ]] || directions_args+=(--arrival-time "$argc_arrival_time")
-[[ -z "${argc_avoid_tolls:-}" ]] || directions_args+=(--avoid-tolls)
-[[ -z "${argc_avoid_highways:-}" ]] || directions_args+=(--avoid-highways)
-[[ -z "${argc_avoid_ferries:-}" ]] || directions_args+=(--avoid-ferries)
+for (( index = 0; index < ${#points[@]} - 1; index++ )); do
+  leg_from="${points[$index]}"
+  leg_to="${points[$(( index + 1 ))]}"
+  leg_from_place_id="${point_place_ids[$index]}"
+  leg_to_place_id="${point_place_ids[$(( index + 1 ))]}"
+  directions_args=(directions --mode "$mode" --units "${argc_units:-metric}" --json)
 
-route_json="$(~/.local/bin/goplaces "${directions_args[@]}")"
+  if [[ -n "$leg_from_place_id" ]]; then
+    directions_args+=(--from-place-id "$leg_from_place_id")
+  else
+    directions_args+=(--from "$leg_from")
+  fi
+
+  if [[ -n "$leg_to_place_id" ]]; then
+    directions_args+=(--to-place-id "$leg_to_place_id")
+  else
+    directions_args+=(--to "$leg_to")
+  fi
+
+  if [[ -n "$current_departure_epoch" ]]; then
+    if (( index == 0 )); then
+      leg_departure_time="$argc_departure_time"
+    else
+      leg_departure_time="$(date -u -r "$current_departure_epoch" '+%Y-%m-%dT%H:%M:%SZ')"
+    fi
+    directions_args+=(--departure-time "$leg_departure_time")
+  elif [[ -n "${argc_arrival_time:-}" ]]; then
+    directions_args+=(--arrival-time "$argc_arrival_time")
+  fi
+
+  [[ -z "${argc_avoid_tolls:-}" ]] || directions_args+=(--avoid-tolls)
+  [[ -z "${argc_avoid_highways:-}" ]] || directions_args+=(--avoid-highways)
+  [[ -z "${argc_avoid_ferries:-}" ]] || directions_args+=(--avoid-ferries)
+
+  route_json="$(~/.local/bin/goplaces "${directions_args[@]}")"
+  leg_json="$(
+    jq -cn \
+      --arg from "$leg_from" \
+      --arg to "$leg_to" \
+      --arg from_place_id "$leg_from_place_id" \
+      --arg to_place_id "$leg_to_place_id" \
+      --argjson route "$route_json" '
+        {
+          from: $from,
+          to: $to,
+          from_place_id: (if $from_place_id == "" then null else $from_place_id end),
+          to_place_id: (if $to_place_id == "" then null else $to_place_id end),
+          mode: $route.mode,
+          summary: $route.summary,
+          distance_text: $route.distance_text,
+          distance_meters: $route.distance_meters,
+          duration_text: $route.duration_text,
+          duration_seconds: $route.duration_seconds,
+          departure_time: ($route.departure_time // null),
+          arrival_time: ($route.arrival_time // null),
+          warnings: ($route.warnings // [])
+        }
+      '
+  )"
+  legs_json="$(jq -cn --argjson legs "$legs_json" --argjson leg "$leg_json" '$legs + [$leg]')"
+
+  leg_distance_meters="$(jq -r '.distance_meters' <<<"$route_json")"
+  leg_duration_seconds="$(jq -r '.duration_seconds' <<<"$route_json")"
+  total_distance_meters=$(( total_distance_meters + leg_distance_meters ))
+  total_duration_seconds=$(( total_duration_seconds + leg_duration_seconds ))
+
+  if [[ -n "$current_departure_epoch" ]]; then
+    current_departure_epoch=$(( current_departure_epoch + leg_duration_seconds ))
+  fi
+
+  if (( index < via_count )); then
+    dwell_seconds=$(( stop_minutes[$index] * 60 ))
+    stop_duration_seconds=$(( stop_duration_seconds + dwell_seconds ))
+    if [[ -n "$current_departure_epoch" ]]; then
+      current_departure_epoch=$(( current_departure_epoch + dwell_seconds ))
+    fi
+  fi
+done
+
+distance_text="$(format_distance "$total_distance_meters" "${argc_units:-metric}")"
+duration_text="$(format_duration "$total_duration_seconds")"
+stop_duration_text="$(format_duration "$stop_duration_seconds")"
+total_trip_seconds=$(( total_duration_seconds + stop_duration_seconds ))
+total_trip_text="$(format_duration "$total_trip_seconds")"
+computed_arrival_time=""
+
+if [[ -n "$current_departure_epoch" ]]; then
+  computed_arrival_time="$(date -u -r "$current_departure_epoch" '+%Y-%m-%dT%H:%M:%SZ')"
+elif (( via_count == 0 )); then
+  computed_arrival_time="$(jq -r '.[0].arrival_time // ""' <<<"$legs_json")"
+fi
 
 result="$(
   jq -cn \
@@ -92,23 +310,50 @@ result="$(
     --arg to "$argc_to" \
     --arg from_place_id "${argc_from_place_id:-}" \
     --arg to_place_id "${argc_to_place_id:-}" \
+    --argjson via_names "$vias_json" \
+    --argjson via_place_ids "$via_place_ids_json" \
+    --argjson stop_minutes "$stop_minutes_json" \
+    --argjson legs "$legs_json" \
+    --arg distance_text "$distance_text" \
+    --argjson distance_meters "$total_distance_meters" \
+    --arg duration_text "$duration_text" \
+    --argjson duration_seconds "$total_duration_seconds" \
+    --arg stop_duration_text "$stop_duration_text" \
+    --argjson stop_duration_seconds "$stop_duration_seconds" \
+    --arg total_duration_text "$total_trip_text" \
+    --argjson total_duration_seconds "$total_trip_seconds" \
+    --arg departure_time "${argc_departure_time:-}" \
+    --arg arrival_time "$computed_arrival_time" \
     --arg google_maps_url "$google_maps_url" \
-    --argjson route "$route_json" '
+    --arg mode "$mode" '
       {
         provider: "Google Routes API",
         from: $from,
         to: $to,
         from_place_id: (if $from_place_id == "" then null else $from_place_id end),
         to_place_id: (if $to_place_id == "" then null else $to_place_id end),
-        mode: $route.mode,
-        summary: $route.summary,
-        distance_text: $route.distance_text,
-        distance_meters: $route.distance_meters,
-        duration_text: $route.duration_text,
-        duration_seconds: $route.duration_seconds,
-        departure_time: ($route.departure_time // null),
-        arrival_time: ($route.arrival_time // null),
-        traffic_aware: ($route.departure_time != null and $route.mode == "DRIVING"),
+        via: [
+          range(0; $via_names | length) as $index |
+          {
+            name: $via_names[$index],
+            place_id: (if $via_place_ids[$index] == "" then null else $via_place_ids[$index] end),
+            stop_minutes: $stop_minutes[$index]
+          }
+        ],
+        mode: $legs[0].mode,
+        summary: ($legs | map(.summary) | unique | join(" → ")),
+        distance_text: $distance_text,
+        distance_meters: $distance_meters,
+        duration_text: $duration_text,
+        duration_seconds: $duration_seconds,
+        stop_duration_text: $stop_duration_text,
+        stop_duration_seconds: $stop_duration_seconds,
+        total_duration_text: $total_duration_text,
+        total_duration_seconds: $total_duration_seconds,
+        departure_time: (if $departure_time == "" then null else $departure_time end),
+        arrival_time: (if $arrival_time == "" then null else $arrival_time end),
+        traffic_aware: ($departure_time != "" and $mode == "drive"),
+        legs: $legs,
         google_maps_url: $google_maps_url
       }
     '
@@ -118,9 +363,18 @@ if [[ "$format" == "json" ]]; then
   jq . <<<"$result"
 else
   label="${argc_label:-$argc_from → $argc_to}"
-  jq -r \
-    --arg label "$label" '
-      "[" + $label + "](" + .google_maps_url + ") · " +
-      .distance_text + " · " + .duration_text
-    ' <<<"$result"
+  if (( stop_duration_seconds > 0 )); then
+    jq -r \
+      --arg label "$label" '
+        "[" + $label + "](" + .google_maps_url + ") · " +
+        .distance_text + " · " + .duration_text + " drive · " +
+        .total_duration_text + " incl stops"
+      ' <<<"$result"
+  else
+    jq -r \
+      --arg label "$label" '
+        "[" + $label + "](" + .google_maps_url + ") · " +
+        .distance_text + " · " + .duration_text
+      ' <<<"$result"
+  fi
 fi

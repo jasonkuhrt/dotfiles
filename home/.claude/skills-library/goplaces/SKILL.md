@@ -76,9 +76,33 @@ the same endpoints, Place IDs, and travel mode:
   --label "Chad's → Royal Tyrrell"
 ```
 
+For one link spanning multiple stops, repeat `--via`. Repeat
+`--via-place-id` and `--stop-minutes` in the same order:
+
+```bash
+~/.local/bin/groute \
+  --from "Calgary International Airport" \
+  --from-place-id "<YYC place ID>" \
+  --via "MEC Calgary" \
+  --via-place-id "<MEC place ID>" \
+  --stop-minutes 20 \
+  --via "London Drugs Brentwood" \
+  --via-place-id "<London Drugs place ID>" \
+  --stop-minutes 10 \
+  --to "Chad's" \
+  --to-place-id "<Chad's place ID>" \
+  --mode drive \
+  --departure-time "2026-07-31T19:15:00-06:00" \
+  --format markdown
+```
+
+`groute` supports up to three intermediate stops so its links work in mobile
+browsers. It sources each leg through Google Routes, advances later departure
+times by prior driving and planned stop time, and emits one ordered Maps URL.
+
 Formats:
 
-- `--format json`: route facts plus `google_maps_url`.
+- `--format json`: aggregate facts, per-leg facts, planned stop time, and `google_maps_url`.
 - `--format markdown`: `[label](URL) · distance · duration`.
 - `--format url`: URL only; performs no API call.
 

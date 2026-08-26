@@ -12,7 +12,7 @@ MCP is registered user-scope (`/Users/jasonkuhrt/.claude.json`). The editable wo
 - `origin` is Jason's owned fork: `git@github.com:jasonkuhrt/acal-apple-calendar-cli.git`
 - `upstream` is Helmi's project: `git@github.com:Helmi/acal-apple-calendar-cli.git`
 
-Treat `origin` as ours: this is normal source we can edit, test, commit, and install locally. Calendar permission must survive those rebuilds, so install only through the repository's root `justfile` with one persistent certificate-backed code-signing identity. For this local-only CLI, a Keychain Access **Self Signed Root / Code Signing** identity is sufficient and does not require an Apple Developer account; an Apple Development or Developer ID Application identity also works. The recipe fails before replacing the target when no stable identity is available:
+Treat `origin` as ours: this is normal source we can edit, test, commit, and install locally. Calendar permission must survive those rebuilds, so install only through the repository's root `justfile` with one persistent certificate-backed code-signing identity. Apple Development and Developer ID Application identities work; a Certificate Assistant self-signed **Code Signing** identity is supported through the guarded `local-untrusted` path without changing global Trust Settings. The recipe fails before replacing the target when no eligible stable identity is available:
 
 ```bash
 cd /Users/jasonkuhrt/projects/Helmi/acal-apple-calendar-cli
@@ -21,7 +21,7 @@ just install-local /opt/homebrew/bin/acal
 codesign --verify --verbose=2 /opt/homebrew/bin/acal
 ```
 
-With multiple identities, pass the intended 40-character hash from `signing-doctor` as the second `install-local` argument. The recipe signs offline with a fixed `com.jasonkuhrt.acal` identifier and a designated requirement pinned to that exact certificate. Keep its certificate and private key; recreating either changes the identity. Do not fall back to `codesign --sign -`: an ad-hoc signature has a cdhash-only designated requirement that changes on every build, so macOS cannot retain Calendar TCC authorization. The old brew installation is intentionally absent so it cannot overwrite the fork binary.
+With multiple identities, pass the intended 40-character hash from `signing-doctor` as the second `install-local` argument. A `local-untrusted` identity is eligible only when its status is exactly `CSSMERR_TP_NOT_TRUSTED`, the installer extracts the certificate matching that exact SHA, and an isolated native `codeSign` validity gate passes; every other invalid status is rejected. The recipe then signs offline as `com.jasonkuhrt.acal`, pins the designated requirement to that exact certificate, and runs strict `codesign` verification before replacement. Keep the certificate and private key; recreating either changes the identity. Never weaken global Trust Settings or fall back to `codesign --sign -`: an ad-hoc cdhash identity changes on every build, so macOS cannot retain Calendar TCC authorization. The old brew installation is intentionally absent so it cannot overwrite the fork binary.
 
 ## Canonical mapping — what "calendar" means
 

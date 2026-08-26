@@ -7,21 +7,21 @@ description: Apple Calendar via the acal CLI and mcp__acal__* tools — the cano
 
 `acal` is the canonical agent surface for Apple Calendar (read + write). Single signed binary, EventKit-native, JSON-first. Lives in tier-2 of `computer-use.md` (CLI-driveable APIs); also exposed as MCP server (`mcp__acal__*`).
 
-Source: https://github.com/Helmi/acal-apple-calendar-cli. MCP registered user-scope (`/Users/jasonkuhrt/.claude.json`).
+MCP is registered user-scope (`/Users/jasonkuhrt/.claude.json`). The editable working source is `/Users/jasonkuhrt/projects/Helmi/acal-apple-calendar-cli`:
 
-**Currently running a self-built fork** at `~/projects/Helmi/acal-apple-calendar-cli/` carrying a fix for `--scope this/future` silently no-op'ing on recurring events. Upstream PR: <https://github.com/Helmi/acal-apple-calendar-cli/pull/10>. Once merged + released to brew, revert to `brew install helmi/tap/acal`. Until then:
+- `origin` is Jason's owned fork: `git@github.com:jasonkuhrt/acal-apple-calendar-cli.git`
+- `upstream` is Helmi's project: `git@github.com:Helmi/acal-apple-calendar-cli.git`
+
+Treat `origin` as ours: this is normal source we can edit, test, commit, and install locally. Calendar permission must survive those rebuilds, so install only through the repository's root `justfile` with a persistent Apple Development or Developer ID Application signing identity. The recipe fails before replacing the target when no stable certificate-backed identity is available:
 
 ```bash
-cd ~/projects/Helmi/acal-apple-calendar-cli
-git pull
-swift build -c release
-cp .build/release/acal /opt/homebrew/bin/acal
-codesign --force --sign - /opt/homebrew/bin/acal   # re-sign adhoc after cp; otherwise macOS SIGKILLs on first run
+cd /Users/jasonkuhrt/projects/Helmi/acal-apple-calendar-cli
+just signing-doctor
+just install-local /opt/homebrew/bin/acal
+codesign --verify --verbose=2 /opt/homebrew/bin/acal
 ```
 
-**Why the `codesign` step matters.** `swift build` produces an adhoc-signed binary at `.build/release/acal`. `cp` does NOT preserve the embedded code signature in a form macOS continues to trust — on the next invocation from `/opt/homebrew/bin/acal`, AMFI/library-validation SIGKILLs the process (exit 137, no stderr, intermittent before the signature settles). `codesign --force --sign -` re-applies the adhoc signature at the new path and restores trust. Symptom if you forget: `acal <anything>` exits 137 silently; running `~/projects/Helmi/acal-apple-calendar-cli/.build/release/acal <same args>` works.
-
-Brew install was uninstalled (`brew uninstall helmi/tap/acal`) to avoid clobbering the fork binary on `brew bundle`. Not in Brewfile.
+With multiple identities, pass the intended 40-character hash from `signing-doctor` as the second `install-local` argument. Do not fall back to `codesign --sign -`: an ad-hoc signature has a cdhash-only designated requirement that changes on every build, so macOS cannot retain Calendar TCC authorization. The old brew installation is intentionally absent so it cannot overwrite the fork binary.
 
 ## Canonical mapping — what "calendar" means
 
@@ -47,10 +47,51 @@ Jason is all-in on Apple/iCloud (see memory `user_apple_ecosystem.md`). Never re
 Every command returns a stable JSON envelope:
 
 ```json
-{ "data": <payload>, "meta": { "command": "...", "schemaVersion": "1.0.0", "timestamp": "..." }, "ok": true }
+{ "data": <payload>, "meta": { "command": "...", "schemaVersion": "1.2.0", "timestamp": "..." }, "ok": true }
 ```
 
 `--format` defaults to `json` for non-TTY (agent), `table` for TTY (human). Don't pass `--format json` defensively from a script — it's already the default.
+
+## Reviewed conditional batches
+
+Treat the installed binary's schema as the runtime contract. Before producing or applying a proposal, require the exact schema and capability your decoder supports; a command name or version string alone is insufficient:
+
+```bash
+acal schema --pretty false | jq -e '
+  .ok == true and
+  .data.schemaVersion == "1.2.0" and
+  any(.data.capabilities[];
+    .id == "events.conditional-batch.v1" and
+    .snapshotVersion == "1.0.0" and
+    .digestCanonicalization == "sha256-json-v1-sorted-keys-unescaped-slashes-positive-zero" and
+    .grammar.semantics == "snapshot-preconditioned-single-commit-post-observed")
+'
+```
+
+Capture the bounded preflight state read-only, then persist only the envelope's `.data` payload. The snapshot digest and native fingerprints are acal-owned opaque values: do not recompute, normalize, or reconstruct them; embed the snapshot unchanged as `expectedSnapshot` in the reviewed request.
+
+```bash
+acal events snapshot \
+  --from 2026-08-01T00:00:00Z \
+  --to 2027-07-01T00:00:00Z \
+  --calendar "School" \
+  --pretty false \
+  | jq '.data' > snapshot.json
+```
+
+Freeze the proposal before approval. Version 1 allows only non-recurring create/update/delete operations with `scope: "all"`; update/delete must carry the exact snapshot record in `expected`. Run the frozen file only after Jason approves that exact proposal/ID:
+
+```bash
+acal events transact --input reviewed-transaction.json
+```
+
+Interpret the typed result precisely:
+
+- `rejected`: no EventKit commit was attempted.
+- `committed`: one deferred local EventKit commit returned successfully and a fresh local store observed the requested postconditions. It is **not** an iCloud sync receipt, CAS, external-writer lock, or filesystem durability guarantee.
+- `indeterminate`: a commit was attempted but post-observation did not prove the result; `tentativeOperations` is evidence, not verified output.
+
+`rejected` and `indeterminate` are valid `ok:true` protocol results. If the process exits without a result or returns `indeterminate`, capture a fresh snapshot, reconcile observed state, and construct a new attempt with a new transaction ID. Never blindly replay the old request.
 
 ## Three event identities — pick the right one
 
@@ -83,7 +124,7 @@ acal events create --calendar "Willem" --title "First day" \
   --all-day --timezone America/Toronto
 ```
 
-**The `T12:00:00-04:00` (noon-EDT) trick is DST-safe across the year.** Even when the date falls in EST (winter, UTC-05:00), passing `-04:00` lands at 11am local — still well within the day boundary. Hardcode `-04:00` for every Toronto event regardless of season; skip DST-aware date math.
+**Use noon with the Toronto offset in effect on that date.** Use `-04:00` during EDT and `-05:00` during EST. Noon keeps the instant safely inside the intended local day, while the date-specific offset keeps serialized evidence and review payloads exact.
 
 `--timezone America/Toronto` is still worth passing alongside — it sets the event's stored timezone field so iCloud sync renders it correctly across devices.
 
@@ -92,7 +133,7 @@ acal events create --calendar "Willem" --title "First day" \
 ```bash
 # Winter break Dec 21 through Jan 1, inclusive:
 acal events create --calendar "Willem" --title "Winter break" \
-  --start 2026-12-21T12:00:00-04:00 --end 2027-01-01T12:00:00-04:00 \
+  --start 2026-12-21T12:00:00-05:00 --end 2027-01-01T12:00:00-05:00 \
   --all-day --timezone America/Toronto
 ```
 
@@ -167,7 +208,7 @@ acal schema                # full CLI command contract (use to discover flags be
 - Never assume `acal auth grant` will upgrade an existing TCC tier on macOS 26 — it returns `granted: false` silently. Send the user to System Settings instead.
 - Never pass `--format table` from agent code — it's for human terminals; downstream JSON parsing will fail.
 - Never re-tap or reinstall acal to "reset" permissions — TCC state is independent of the binary; reinstalling does nothing.
-- Never pass bare `YYYY-MM-DD` to `--start`/`--end` for `events create` — silently shifts events 1 day earlier in any zone west of UTC. Always use `T12:00:00-04:00` ISO form (see "Date input gotchas").
+- Never pass bare `YYYY-MM-DD` to `--start`/`--end` for `events create` — silently shifts events 1 day earlier in any zone west of UTC. Always use noon with the date's actual Toronto offset (`-04:00` during EDT, `-05:00` during EST; see "Date input gotchas").
 - Never use positional event-ID syntax (`acal events get <id>`, `acal events delete <id>`) — silently rejected. Use `--id <id>`.
 - Never assume `--timezone` rescues bare-date parsing — it only sets the stored timezone field, not how `--start`/`--end` are interpreted.
 - Never try to auto-geocode an address inside acal (CLGeocoder, MapKit). Apple's geocoding APIs silently time out from a CLI invocation on macOS 26.2+ — they require an entitled host app with Location TCC, which a bare swift binary does not hold. Pass coords explicitly via `--location-lat=<deg> --location-lon=<deg>` (note `=` syntax — negative longitudes start with `-` and ArgumentParser otherwise consumes them as flags). Geocode externally (Nominatim, copy from Maps.app, etc.) and store the result alongside the address text.

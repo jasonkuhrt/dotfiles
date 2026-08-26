@@ -47,7 +47,7 @@ Jason is all-in on Apple/iCloud (see memory `user_apple_ecosystem.md`). Never re
 Every command returns a stable JSON envelope:
 
 ```json
-{ "data": <payload>, "meta": { "command": "...", "schemaVersion": "1.2.0", "timestamp": "..." }, "ok": true }
+{ "data": <payload>, "meta": { "command": "...", "schemaVersion": "1.3.0", "timestamp": "..." }, "ok": true }
 ```
 
 `--format` defaults to `json` for non-TTY (agent), `table` for TTY (human). Don't pass `--format json` defensively from a script — it's already the default.
@@ -59,12 +59,20 @@ Treat the installed binary's schema as the runtime contract. Before producing or
 ```bash
 acal schema --pretty false | jq -e '
   .ok == true and
-  .data.schemaVersion == "1.2.0" and
+  .data.schemaVersion == "1.3.0" and
   any(.data.capabilities[];
     .id == "events.conditional-batch.v1" and
+    .requires == [] and
     .snapshotVersion == "1.0.0" and
     .digestCanonicalization == "sha256-json-v1-sorted-keys-unescaped-slashes-positive-zero" and
-    .grammar.semantics == "snapshot-preconditioned-single-commit-post-observed")
+    .grammar.semantics == "snapshot-preconditioned-single-commit-post-observed" and
+    .grammar.recurringOperationKinds == []) and
+  any(.data.capabilities[];
+    .id == "events.conditional-batch.recurring-create.v1" and
+    .requires == ["events.conditional-batch.v1"] and
+    .grammar.recurringOperationKinds == ["create"] and
+    .grammar.recurrenceFields == ["frequency", "interval", "byDay", "byMonthDay", "setPositions"] and
+    .grammar.recurrenceOptionalFields == ["until", "count"])
 '
 ```
 
@@ -79,7 +87,13 @@ acal events snapshot \
   | jq '.data' > snapshot.json
 ```
 
-Freeze the proposal before approval. Version 1 allows only non-recurring create/update/delete operations with `scope: "all"`; update/delete must carry the exact snapshot record in `expected`. Run the frozen file only after Jason approves that exact proposal/ID:
+Freeze the proposal before approval. The base capability allows non-recurring
+create/update/delete operations with `scope: "all"`; update/delete must carry
+the exact snapshot record in `expected`. The recurring-create extension adds
+one operation-level structured `recurrence` object to `create` only. Raw
+`rrule`, recurring update/delete, and occurrence-scoped conditional mutations
+remain unsupported. Run the frozen file only after Jason approves that exact
+proposal/ID:
 
 ```bash
 acal events transact --input reviewed-transaction.json

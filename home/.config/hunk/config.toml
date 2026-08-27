@@ -1,7 +1,9 @@
 # Hunk user config.
 #
-# Hunk 0.16.x does not expose configurable keybindings in config.toml. Key
-# alignment lives around the app:
+# Hunk 0.18+ DOES expose configurable keybindings here via a [keybindings]
+# table (command ids like "hunk.review.nextHunk"). None are remapped yet --
+# defaults already match the local motion vocabulary. Key alignment around the
+# app:
 # - Fish: `h` aliases to `hunk`.
 # - Git: diff-shaped pager output routes through `hunk pager`.
 # - LazyGit: `H` opens Hunk review sessions from the relevant Git context.

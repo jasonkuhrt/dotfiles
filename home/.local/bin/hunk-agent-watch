@@ -23,6 +23,8 @@ Environment:
   HUNK_AGENT_TRANSPORT        auto, desktop, exec, or print
   HUNK_AGENT_WATCH_INTERVAL   poll interval in seconds
   HUNK_AGENT_STATE_DIR        state directory
+  HUNK_AGENT_STARTUP_GRACE    seconds to wait for a first session (default 120)
+  HUNK_AGENT_MISS_LIMIT       consecutive misses before exiting (default 5)
 USAGE
 }
 
@@ -323,8 +325,21 @@ send_to_codex() {
 
 log "watching repo=$repo_root transport=$transport interval=${interval}s"
 
+# The watcher's life is the Hunk session's life. LazyGit starts it just before
+# `hunk diff`, so allow a startup grace window; once a session has been bound,
+# losing it for miss_limit consecutive polls means the review is over.
+startup_grace="${HUNK_AGENT_STARTUP_GRACE:-120}"
+miss_limit="${HUNK_AGENT_MISS_LIMIT:-5}"
+start_epoch="$(date +%s)"
+bound_once=0
+idle_logged=0
+miss_count=0
+
 while true; do
     if notes_json="$(snapshot_notes)"; then
+        bound_once=1
+        idle_logged=0
+        miss_count=0
         hash="$(printf '%s' "$notes_json" | sha256)"
         previous_hash=""
         if [[ -f "$hash_file" ]]; then
@@ -360,7 +375,23 @@ while true; do
             fi
         fi
     else
-        log "waiting for an active Hunk session"
+        miss_count=$((miss_count + 1))
+
+        if ((bound_once)); then
+            if ((miss_count >= miss_limit)); then
+                log "Hunk session ended; exiting"
+                exit 0
+            fi
+        else
+            if ((idle_logged == 0)); then
+                log "waiting for an active Hunk session"
+                idle_logged=1
+            fi
+            if (($(date +%s) - start_epoch >= startup_grace)); then
+                log "no Hunk session appeared within ${startup_grace}s; exiting"
+                exit 0
+            fi
+        fi
     fi
 
     ((once)) && exit 0

@@ -7,7 +7,10 @@ if [ ! -f "$skill_path" ]; then
   exit 1
 fi
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+# Resolve through the ~/.local/bin symlink: that directory is real and is not
+# in the dotfiles repo, so dirname alone lands outside Git.
+script_path="$(readlink -f "${BASH_SOURCE[0]}")"
+script_dir="$(dirname "$script_path")"
 repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
 
 codex_link="$HOME/.codex/skills/hunk-review"
@@ -16,7 +19,7 @@ claude_link="$repo_root/home/.claude/skills/hunk-review"
 
 mkdir -p "$HOME/.codex/skills" "$claude_library_dir"
 cp "$skill_path" "$claude_library_dir/SKILL.md"
-ln -sfn /Users/jasonkuhrt/.claude/skills-library/hunk-review "$claude_link"
+ln -sfn "$HOME/.claude/skills-library/hunk-review" "$claude_link"
 rm -rf "$codex_link"
 ln -s ../../.claude/skills/hunk-review "$codex_link"
 

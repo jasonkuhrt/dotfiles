@@ -7,6 +7,11 @@ import type { HunkExtensionAPI } from "hunkdiff/extension"
  * Replaces the polling `hunk-agent-watch` script: `note_created` is the host's
  * own signal, so there is no timer, no snapshot hashing, and no process that
  * can outlive the session.
+ *
+ * `A` opens the guide, which doubles as the queue: it names the keys, the
+ * transport, and every note still waiting to leave. Nothing here imports
+ * `react` or `@opentui/*` — those do not resolve from an extension directory
+ * without its own node_modules, so a dialog carries the UI instead of a pane.
  */
 
 /** `hunk.config` merges the reviewed repo's table over the user's, so a repo under
@@ -21,19 +26,13 @@ const DEFAULT_DEBOUNCE_MS = 10_000
 
 interface SavedNote {
   id: string
+  fileId: string
   filePath: string
   hunkIndex: number
-  side: string
+  side: "old" | "new"
   line: number
   body: string
   draft: boolean
-}
-
-/** Shutdown gives handlers 250ms, far less than a Codex round trip, so the last
- *  batch leaves as a child that outlives Hunk rather than being dropped. */
-const runDetached = (command: string, args: string[], cwd: string): void => {
-  const child = spawn(command, args, { cwd, stdio: "ignore", detached: true })
-  child.unref()
 }
 
 const run = (command: string, args: string[], cwd: string): Promise<string> =>
@@ -49,7 +48,14 @@ const run = (command: string, args: string[], cwd: string): Promise<string> =>
     )
   })
 
-const buildPrompt = (repoRoot: string, notes: SavedNote[]): string => {
+/** Shutdown gives handlers 250ms, far less than a Codex round trip, so the last
+ *  batch leaves as a child that outlives Hunk rather than being dropped. */
+const runDetached = (command: string, args: string[], cwd: string): void => {
+  const child = spawn(command, args, { cwd, stdio: "ignore", detached: true })
+  child.unref()
+}
+
+const buildPrompt = (repoRoot: string, notes: readonly SavedNote[]): string => {
   const rendered = notes
     .map((note) => `- ${note.filePath}:${note.line} (${note.side} side, hunk ${note.hunkIndex + 1})\n  ${note.body}`)
     .join("\n")
@@ -85,15 +91,17 @@ export default function (hunk: HunkExtensionAPI) {
    *  is command-time only, so the payloads are the whole record we ever see. */
   const pending = new Map<string, SavedNote>()
   let timer: ReturnType<typeof setTimeout> | undefined
-  let repoRoot: string | undefined
+  let repoRoot = ""
+  let status = "nothing sent yet"
 
   hunk.on("startup", async (_event, ctx) => {
+    repoRoot = ctx.cwd
     try {
       repoRoot = await run("git", ["rev-parse", "--show-toplevel"], ctx.cwd)
     } catch {
-      repoRoot = ctx.cwd
+      // A non-Git review still dispatches; the cwd is the best root available.
     }
-    hunk.log(`agent dispatch armed: transport=${transport} root=${repoRoot} enabled=${enabled}`)
+    hunk.log(`armed: transport=${transport} root=${repoRoot} enabled=${enabled}`)
   })
 
   const flush = async (ctx: { cwd: string; notify: (message: string, type?: string) => void }) => {
@@ -109,12 +117,13 @@ export default function (hunk: HunkExtensionAPI) {
       return
     }
 
-    const root = repoRoot ?? ctx.cwd
+    const root = repoRoot || ctx.cwd
     const prompt = buildPrompt(root, batch)
     const label = batch.length === 1 ? "1 note" : `${batch.length} notes`
 
     if (transport === "print") {
       hunk.log(prompt)
+      status = `logged ${label}`
       ctx.notify(`Logged ${label} (transport=print)`)
       return
     }
@@ -126,15 +135,48 @@ export default function (hunk: HunkExtensionAPI) {
       } else {
         await run(CODEX_BIN, ["exec", "-C", root, "--dangerously-bypass-approvals-and-sandbox", prompt], root)
       }
+      status = `sent ${label}`
       ctx.notify(`Sent ${label} to Codex`)
     } catch (error) {
+      status = `FAILED: ${String(error)}`
       hunk.log(`dispatch failed: ${String(error)}`)
       ctx.notify(`Codex dispatch failed: ${String(error)}`, "error")
     }
   }
 
-  hunk.registerCommand({ id: "send", title: "Send review notes to Codex" }, async (ctx) => {
+  hunk.registerCommand({ id: "send", title: "Send review notes to Codex", key: "S" }, async (ctx) => {
     await flush(ctx)
+  })
+
+  hunk.registerCommand({ id: "guide", title: "Agent dispatch: guide and queue", key: "A" }, async (ctx) => {
+    const queued = [...pending.values()]
+    const idleSeconds = Math.round(debounceMs / 1000)
+
+    const SEND_NOW = "S — send the queue to Codex now"
+    const guide = [
+      SEND_NOW,
+      `c then Ctrl+S queues a note; the queue leaves after ${idleSeconds}s idle`,
+      `q before it leaves still sends — the queue flushes on shutdown`,
+      `transport ${transport}${enabled ? "" : " (disabled)"} · last: ${status}`,
+    ]
+
+    // Every queued note is also a jump target, so the guide doubles as a way
+    // back to whatever the reviewer wrote and wants to reread.
+    const noteOptions = queued.map((note) => `→ ${note.filePath}:${note.line}  ${note.body}`)
+
+    const picked = await ctx.dialogs.select({
+      title: `Agent dispatch · ${queued.length} queued`,
+      options: [...guide, ...noteOptions],
+    })
+    if (picked === null) return
+
+    if (picked === SEND_NOW) {
+      await flush(ctx)
+      return
+    }
+
+    const note = queued[noteOptions.indexOf(picked)]
+    if (note) ctx.navigation.revealLine(note.fileId, note.side, note.line)
   })
 
   hunk.on("note_created", (event, ctx) => {
@@ -144,6 +186,7 @@ export default function (hunk: HunkExtensionAPI) {
     if (!note || note.draft) return
 
     pending.set(note.id, note)
+    status = `${pending.size} queued`
 
     // Restarted on every save, so a burst of notes leaves as one message.
     if (timer) clearTimeout(timer)
@@ -157,14 +200,13 @@ export default function (hunk: HunkExtensionAPI) {
     pending.clear()
     if (batch.length === 0 || transport === "print") return
 
-    const root = repoRoot ?? process.cwd()
-    const prompt = buildPrompt(root, batch)
+    const prompt = buildPrompt(repoRoot, batch)
 
     // `remote-control start` is warm-up only; the send alone carries the batch.
     if (transport === "desktop") {
-      runDetached(CODEX_BIN, ["debug", "app-server", "send-message-v2", prompt], root)
+      runDetached(CODEX_BIN, ["debug", "app-server", "send-message-v2", prompt], repoRoot)
     } else {
-      runDetached(CODEX_BIN, ["exec", "-C", root, "--dangerously-bypass-approvals-and-sandbox", prompt], root)
+      runDetached(CODEX_BIN, ["exec", "-C", repoRoot, "--dangerously-bypass-approvals-and-sandbox", prompt], repoRoot)
     }
   })
 }

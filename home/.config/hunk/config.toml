@@ -29,6 +29,3 @@ color_moved = true
 transport = "desktop"  # desktop | exec | print
 debounceMs = 10000     # idle gap after the last Ctrl+S before the batch leaves
 enabled = true
-
-[keybindings]
-"hunk-agent-dispatch.send" = "S"  # flush notes to Codex now, without waiting

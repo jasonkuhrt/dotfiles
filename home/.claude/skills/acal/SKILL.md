@@ -72,7 +72,13 @@ acal schema --pretty false | jq -e '
     .requires == ["events.conditional-batch.v1"] and
     .grammar.recurringOperationKinds == ["create"] and
     .grammar.recurrenceFields == ["frequency", "interval", "byDay", "byMonthDay", "setPositions"] and
-    .grammar.recurrenceOptionalFields == ["until", "count"])
+    .grammar.recurrenceOptionalFields == ["until", "count"]) and
+  any(.data.capabilities[];
+    .id == "events.conditional-batch.recurring-create-exclusions.v1" and
+    .requires == ["events.conditional-batch.recurring-create.v1"] and
+    .grammar.recurringOperationKinds == ["create"] and
+    .grammar.recurrenceFields == ["frequency", "interval", "byDay", "byMonthDay", "setPositions"] and
+    .grammar.recurrenceOptionalFields == ["until", "count", "excludedOccurrenceStarts"])
 '
 ```
 
@@ -92,8 +98,18 @@ create/update/delete operations with `scope: "all"`; update/delete must carry
 the exact snapshot record in `expected`. The recurring-create extension adds
 one operation-level structured `recurrence` object to `create` only. Raw
 `rrule`, recurring update/delete, and occurrence-scoped conditional mutations
-remain unsupported. Run the frozen file only after Jason approves that exact
-proposal/ID:
+remain unsupported.
+
+The recurring-create-exclusions extension creates one recurring EventKit
+series with exceptions, not separate events. Add one non-empty
+`excludedOccurrenceStarts` array to that same `recurrence` object. Its values
+are unique, chronologically sorted, canonical whole-second UTC occurrence
+anchors inside the approved snapshot; omit the field when there are no
+exclusions. `count` is the number of base-rule occurrences before exclusions,
+and the seed occurrence cannot be excluded. Exact exclusions support daily or
+single-weekday weekly cadence and fail closed beyond 10,000 base occurrences.
+
+Run the frozen file only after Jason approves that exact proposal/ID:
 
 ```bash
 acal events transact --input reviewed-transaction.json

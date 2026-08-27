@@ -158,6 +158,9 @@ export default function (hunk: HunkExtensionAPI) {
       `c then Ctrl+S queues a note; the queue leaves after ${idleSeconds}s idle`,
       `q before it leaves still sends — the queue flushes on shutdown`,
       `transport ${transport}${enabled ? "" : " (disabled)"} · last: ${status}`,
+      // The two surfaces this guide does not own, named so it is still the one
+      // place to start from when the whole setup has gone cold.
+      `H in LazyGit opens a review · ? lists every Hunk key`,
     ]
 
     // Every queued note is also a jump target, so the guide doubles as a way

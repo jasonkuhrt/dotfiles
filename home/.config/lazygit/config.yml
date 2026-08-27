@@ -55,24 +55,24 @@ customCommands:
   - key: 'H'
     context: 'staging'
     description: 'Open Hunk review (working tree)'
-    command: hunk-agent-watch --repo . --background && hunk diff --watch
+    command: hunk diff --watch
     loadingText: 'Opening Hunk working-tree review'
     output: terminal
   - key: 'H'
     context: 'stagingSecondary'
     description: 'Open Hunk review (staged)'
-    command: hunk-agent-watch --repo . --background && hunk diff --staged
+    command: hunk diff --staged
     loadingText: 'Opening Hunk staged review'
     output: terminal
   - key: 'H'
     context: 'files'
     description: 'Open Hunk review (selected path)'
-    command: hunk-agent-watch --repo . --background && hunk diff --watch -- {{.SelectedPath | quote}}
+    command: hunk diff --watch -- {{.SelectedPath | quote}}
     loadingText: 'Opening Hunk path review'
     output: terminal
   - key: 'H'
     context: 'commits, subCommits, reflogCommits'
     description: 'Open Hunk review (selected commit)'
-    command: hunk-agent-watch --repo . --background && hunk show {{.SelectedCommit.Hash | quote}}
+    command: hunk show {{.SelectedCommit.Hash | quote}}
     loadingText: 'Opening Hunk commit review'
     output: terminal

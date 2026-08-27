@@ -1,0 +1,13 @@
+{
+  "name": "hunk-agent-dispatch",
+  "version": "1.0.0",
+  "description": "Send saved Hunk review notes to Codex as they are written.",
+  "hunk": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "devDependencies": {
+    "hunkdiff": "0.20.0"
+  }
+}

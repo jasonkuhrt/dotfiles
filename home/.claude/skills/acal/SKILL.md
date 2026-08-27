@@ -47,7 +47,7 @@ Jason is all-in on Apple/iCloud (see memory `user_apple_ecosystem.md`). Never re
 Every command returns a stable JSON envelope:
 
 ```json
-{ "data": <payload>, "meta": { "command": "...", "schemaVersion": "1.3.0", "timestamp": "..." }, "ok": true }
+{ "data": <payload>, "meta": { "command": "...", "schemaVersion": "1.4.0", "timestamp": "..." }, "ok": true }
 ```
 
 `--format` defaults to `json` for non-TTY (agent), `table` for TTY (human). Don't pass `--format json` defensively from a script — it's already the default.
@@ -59,7 +59,7 @@ Treat the installed binary's schema as the runtime contract. Before producing or
 ```bash
 acal schema --pretty false | jq -e '
   .ok == true and
-  .data.schemaVersion == "1.3.0" and
+  .data.schemaVersion == "1.4.0" and
   any(.data.capabilities[];
     .id == "events.conditional-batch.v1" and
     .requires == [] and
@@ -78,7 +78,14 @@ acal schema --pretty false | jq -e '
     .requires == ["events.conditional-batch.recurring-create.v1"] and
     .grammar.recurringOperationKinds == ["create"] and
     .grammar.recurrenceFields == ["frequency", "interval", "byDay", "byMonthDay", "setPositions"] and
-    .grammar.recurrenceOptionalFields == ["until", "count", "excludedOccurrenceStarts"])
+    .grammar.recurrenceOptionalFields == ["until", "count", "excludedOccurrenceStarts"]) and
+  any(.data.capabilities[];
+    .id == "events.conditional-batch.recurring-update-all.v1" and
+    .requires == ["events.conditional-batch.v1"] and
+    .grammar.recurringOperationKinds == ["update"] and
+    .grammar.recurrenceFields == [] and
+    .grammar.recurrenceOptionalFields == [] and
+    .grammar.recurrenceSemantics == "scope=all targets one exact recurring master whose finite exactly expandable daily or single-weekday weekly series is fully contained by the snapshot; desired timing must semantically equal expected timing; the existing structured recurrence rule and complete occurrence anchor set, including exclusions, are preserved; detached or overridden occurrences are rejected")
 '
 ```
 
@@ -97,8 +104,8 @@ Freeze the proposal before approval. The base capability allows non-recurring
 create/update/delete operations with `scope: "all"`; update/delete must carry
 the exact snapshot record in `expected`. The recurring-create extension adds
 one operation-level structured `recurrence` object to `create` only. Raw
-`rrule`, recurring update/delete, and occurrence-scoped conditional mutations
-remain unsupported.
+`rrule`, recurring delete, and occurrence-scoped conditional mutations remain
+unsupported.
 
 The recurring-create-exclusions extension creates one recurring EventKit
 series with exceptions, not separate events. Add one non-empty
@@ -108,6 +115,14 @@ anchors inside the approved snapshot; omit the field when there are no
 exclusions. `count` is the number of base-rule occurrences before exclusions,
 and the seed occurrence cannot be excluded. Exact exclusions support daily or
 single-weekday weekly cadence and fail closed beyond 10,000 base occurrences.
+
+The recurring-update-all extension allows only `scope: "all"` updates against
+one exact recurring master. The finite daily or single-weekday weekly series
+must be completely contained by the approved snapshot. Timing, recurrence,
+occurrence anchors, exclusions, and occurrence-native state are preserved;
+only the desired mutable non-timing fields may change. Unbounded or truncated
+series, unsupported cadence, timing changes, detached occurrences, and
+overridden occurrences fail closed.
 
 Run the frozen file only after Jason approves that exact proposal/ID:
 
@@ -203,7 +218,7 @@ acal exposes recurrence as a structured object (`frequency`, `interval`, `byDay`
 "recurrence": { "frequency": "weekly", "interval": 1, "byDay": ["mon","wed","fri"] }
 ```
 
-When creating/updating a recurring event, pass the same structured shape. Don't synthesize RRULE strings.
+When creating a recurring event, pass the same structured shape. Don't synthesize RRULE strings. A reviewed whole-series conditional update carries the exact existing recurrence in `expected`; `desired` does not restate or replace it.
 
 ## Common operations
 
@@ -234,7 +249,7 @@ acal schema                # full CLI command contract (use to discover flags be
 
 - Never call AppleScript (`osascript`) or `macos-automator` for Calendar work when acal can do it — acal is faster, returns structured data, and survives Calendar.app being closed.
 - Never use bundled `computer-use` to drive Calendar.app — pixel automation for a surface with a real CLI is wasteful and fragile.
-- Never mutate a recurring event by `id` when the user means the series — confirm scope first ("this occurrence only" vs "all future occurrences").
+- Never mutate a recurring event by `id` when the user means the series — confirm scope first ("this occurrence only" vs "all future occurrences"). For a reviewed whole-series transaction, use the exact master with `scope: "all"` and require the recurring-update-all capability.
 - Never assume `acal auth grant` will upgrade an existing TCC tier on macOS 26 — it returns `granted: false` silently. Send the user to System Settings instead.
 - Never pass `--format table` from agent code — it's for human terminals; downstream JSON parsing will fail.
 - Never re-tap or reinstall acal to "reset" permissions — TCC state is independent of the binary; reinstalling does nothing.

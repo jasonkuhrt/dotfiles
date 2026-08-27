@@ -7,6 +7,7 @@
 # - Fish: `h` aliases to `hunk`.
 # - Git: diff-shaped pager output routes through `hunk pager`.
 # - LazyGit: `H` opens Hunk review sessions from the relevant Git context.
+# - Codex: the hunk-agent-dispatch extension sends saved notes on Ctrl+S.
 # - Inside Hunk: j/k, d/u, g/G, and c already match the local motion/review
 #   vocabulary; hunk/file/comment jumps remain Hunk's built-ins:
 #   [ ], , ., and { }.
@@ -21,3 +22,13 @@ hunk_headers = true
 agent_notes = true
 copy_decorations = false
 color_moved = true
+
+# Saved review notes go to Codex. The extension validates `transport` against
+# its own literal set, because a reviewed repo can override this table.
+[extension.hunk-agent-dispatch]
+transport = "desktop"  # desktop | exec | print
+debounceMs = 10000     # idle gap after the last Ctrl+S before the batch leaves
+enabled = true
+
+[keybindings]
+"hunk-agent-dispatch.send" = "S"  # flush notes to Codex now, without waiting

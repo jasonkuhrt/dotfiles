@@ -57,7 +57,6 @@ Full list in `home/dot_config/fish/config.fish`.
 | Git         | `git-crypt`  | Encrypt files in git transparently    | `git-crypt init`                                |
 | Git         | `git-delta`  | Better git diffs inside LazyGit/add-p | (auto via lazygit/gitconfig)                    |
 | Git         | `hunk`       | Review-first terminal diff viewer     | `hunk diff --watch`, `hunk session list`        |
-| Git         | `hunk-agent-watch` | Trigger Codex from saved Hunk notes | `hunk-agent-watch --repo . --background`        |
 | Git         | `lazygit`    | Terminal UI for git                   | `lazygit`                                       |
 | Git         | `wt`         | Git worktree manager ([docs](worktrunk.md)) | `wt switch -c feat`, `wt list`, `wt merge` |
 | Git         | `onefetch`   | Git repo stats (neofetch for repos)   | `onefetch` (run in any repo)                    |

@@ -64,7 +64,6 @@ brew "up"            # interactive piping (Ultimate Plumber)
 
 # Apple ecosystem CLIs (EventKit/Shortcuts/iCloud-native tools — preferred over AppleScript for speed)
 brew "electrikmilk/cherri/cherri"  # compile .cherri to .shortcut files
-brew "bro3886/tap/ical"  # macOS Calendar.app CLI (EventKit-native, like rem for Reminders)
 
 # Git & GitHub
 brew "git"

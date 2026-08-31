@@ -110,6 +110,31 @@ args = ["mcp"]
 cwd = "."
 enabled = false
 
+[mcp_servers.che-ical]
+command = "/Users/jasonkuhrt/.local/bin/CheICalMCP"
+default_tools_approval_mode = "auto"
+enabled_tools = [
+    "list_calendars",
+    "create_calendar",
+    "delete_calendar",
+    "update_calendar",
+    "list_events",
+    "create_event",
+    "update_event",
+    "delete_event",
+    "undo",
+    "redo",
+    "undo_history",
+    "search_events",
+    "list_events_quick",
+    "create_events_batch",
+    "check_conflicts",
+    "copy_event",
+    "move_events_batch",
+    "delete_events_batch",
+    "find_duplicate_events",
+]
+
 [features]
 codex_hooks = true
 hooks = true

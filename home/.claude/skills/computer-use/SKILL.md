@@ -9,8 +9,8 @@ Multiple tools can drive macOS GUIs from a Claude Code session. They are NOT int
 
 ## Tool tier order — most precise first
 
-1. **Dedicated MCP for the app** (Linear, Gmail, Splitwise, msgvault, etc.) — API-backed, structured, fast.
-2. **Bash + scriptable APIs** — `security`, `osascript`, `gh`, `td`, `rem`, `acal` (Apple Calendar — see `acal.md`), `oathtool`, etc. Anything CLI-driveable beats anything GUI-driveable.
+1. **Dedicated MCP for the concern** (Linear, Gmail, Splitwise, msgvault archive search, etc.) — API-backed, structured, fast.
+2. **Bash + scriptable APIs** — `security`, `osascript`, `gh`, `td`, `remindctl`, `CheICalMCP` (Apple Calendar), `oathtool`, etc. Anything CLI-driveable beats anything GUI-driveable.
 3. **claude-in-chrome MCP** — for web pages. DOM-aware, ~100× cheaper than pixel clicks.
 4. **AX-first native MCPs** — `peekaboo` for AppKit apps with rich AX trees; `macos-automator-mcp` for AppleScript-dictionary apps (Mail, Calendar, Finder, Music, Reminders).
 5. **Bundled `computer-use` MCP** — pixel + CGEvent, last resort. Every action burns a screenshot (~3-5k tokens).
@@ -33,7 +33,7 @@ If `mcp__computer-use__left_click` or `type` errors with a tier message, re-rout
 For Passwords.app and other AppKit apps:
 
 - **`peekaboo` first** — AX-first means named-action invocation (`AXPress "Reveal Password"`), no coordinate guessing, no per-step screenshot cost.
-- **`macos-automator-mcp`** for apps with rich AppleScript dictionaries (Finder, Music, Photos, plus Mail/Calendar/Reminders only as fallback when the dedicated CLI can't do the thing — `msgvault` for mail, `acal` for calendar, `rem` for reminders). 200+ pre-built recipes via `get_scripting_tips`.
+- **`macos-automator-mcp`** for apps with rich AppleScript dictionaries (Finder, Music, Photos, and current Apple Mail state/actions). Use `msgvault` for the durable mail archive and search, `CheICalMCP` for calendar, and `remindctl` for reminders. 200+ pre-built recipes via `get_scripting_tips`.
 - **Bundled `computer-use`** only when AX is degraded (Electron/WebGL/custom Skia surfaces) or for visual validation that needs a screenshot anyway (build-launch-click loops, layout-bug repros, simulator flows).
 
 For Passwords.app specifically: no scripting dictionary, but its AX tree exposes a `Reveal Password` AXAction. `peekaboo perform-action` is the cleanest path; `osascript` via System Events also works as a shell-fallback. The lock screen (LocalAuthentication / TouchID) is drawn outside any app's AX tree and cannot be automated by design — clear it once per session interactively.
@@ -59,7 +59,7 @@ For Passwords.app specifically: no scripting dictionary, but its AX tree exposes
 
 - `peekaboo` — `peekaboo-mcp` (AX-first AppKit driver, 25+ tools). Install: `npm install -g @steipete/peekaboo`.
 - `macos-automator` — `npx -y @steipete/macos-automator-mcp@latest` (AppleScript/JXA wrapper + recipe KB)
-- `acal` — `/opt/homebrew/bin/acal mcp` (Apple Calendar EventKit, JSON-first; see `acal.md`). Install: self-built fork at `~/projects/Helmi/acal-apple-calendar-cli/` carrying the `--scope this/future` recurrence fix (PR #10 pending upstream). When that merges + releases, revert to `brew install helmi/tap/acal`.
+- `che-ical` — `/Users/jasonkuhrt/.local/bin/CheICalMCP` (signed and notarized Apple Calendar EventKit MCP; Calendar tools only in Codex).
 - `computer-use` — built-in, enable via `/mcp` per-project (Pro/Max, v2.1.85+, macOS)
 - `claude-in-chrome` — built-in, enable via `/mcp` per-project (browser DOM)
 
@@ -69,10 +69,8 @@ To re-bootstrap on a new machine:
 npm install -g @steipete/peekaboo
 claude mcp add peekaboo -s user -- peekaboo-mcp
 claude mcp add macos-automator -s user -- npx -y @steipete/macos-automator-mcp@latest
-# acal: build from fork until upstream PR #10 merges
-git clone https://github.com/jasonkuhrt/acal-apple-calendar-cli.git ~/projects/Helmi/acal-apple-calendar-cli
-cd ~/projects/Helmi/acal-apple-calendar-cli && swift build -c release && cp .build/release/acal /opt/homebrew/bin/acal
-claude mcp add --scope user --transport stdio acal -- /opt/homebrew/bin/acal mcp
+# Install PsychQuant's signed, notarized CheICalMCP release at
+# ~/.local/bin/CheICalMCP after verifying its published SHA-256 and code signature.
 ```
 
 **Why global install for peekaboo:** the package ships two binaries (`peekaboo` and `peekaboo-mcp`). `npx -y @steipete/peekaboo` defaults to the wrong one (the CLI tool, not the MCP server). `npx -y -p @steipete/peekaboo peekaboo-mcp` is the correct npx form but Claude Code's `mcp add` parser mis-handles the embedded `-p` flag after `--`. Globally installing keeps the MCP `command` field a single token (`peekaboo-mcp`) and sidesteps the parser quirk.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Apple Calendar"
+  short_description: "Read and update Apple Calendar through CheICalMCP"
+  default_prompt: "Use $che-ical to inspect or update my Apple Calendar."

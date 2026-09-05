@@ -14,12 +14,12 @@ Manage which skills are active in the outfit.
 
 ## Commands
 
-All commands use `bun` to run the shan CLI:
+All commands use the globally linked `shan` CLI:
 
 ### Turn on skills
 
 ```bash
-bun x @jasonkuhrt/shan skills on <targets> [--scope user] [--fail-on-missing-dependencies]
+shan skills on <targets> [--scope user] [--fail-on-missing-dependencies]
 ```
 
 - `<targets>`: comma-separated skill/group names using colon syntax
@@ -31,7 +31,7 @@ bun x @jasonkuhrt/shan skills on <targets> [--scope user] [--fail-on-missing-dep
 ### Turn off skills
 
 ```bash
-bun x @jasonkuhrt/shan skills off <targets> [--scope user] [--cascade-dependencies] [--fail-on-dependents]
+shan skills off <targets> [--scope user] [--cascade-dependencies] [--fail-on-dependents]
 ```
 
 - Same target syntax as `on`
@@ -43,7 +43,7 @@ bun x @jasonkuhrt/shan skills off <targets> [--scope user] [--cascade-dependenci
 ### Move skills
 
 ```bash
-bun x @jasonkuhrt/shan skills move <axis> <direction> <targets> [--scope user] [--cascade-dependencies]
+shan skills move <axis> <direction> <targets> [--scope user] [--cascade-dependencies]
 ```
 
 - `axis`: `scope` (user↔project library) or `commitment` (pluggable↔core)
@@ -55,8 +55,8 @@ bun x @jasonkuhrt/shan skills move <axis> <direction> <targets> [--scope user] [
 ### Undo/Redo
 
 ```bash
-bun x @jasonkuhrt/shan skills undo [N] [--scope user]
-bun x @jasonkuhrt/shan skills redo [N] [--scope user]
+shan skills undo [N] [--scope user]
+shan skills redo [N] [--scope user]
 ```
 
 - N = number of operations to undo/redo (default: 1)
@@ -83,5 +83,5 @@ When a target names a group (directory with children in the library), ALL descen
 
 ## Important Notes
 
-- `bun x @jasonkuhrt/shan` expects the package to be globally linked or otherwise resolvable
+- `shan` is globally linked from `~/projects/jasonkuhrt/shan`
 - Use `--scope user` when managing user-level skills, omit for project-level

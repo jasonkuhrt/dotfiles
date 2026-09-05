@@ -1,0 +1,11 @@
+interface:
+  display_name: "Mail Writer"
+  short_description: "Draft and safely send through Apple Mail"
+  default_prompt: "Use $mail-writer to draft a reply from the complete live Mail thread."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "macos-automator"
+      description: "Native Apple Mail state and actions"
+policy:
+  allow_implicit_invocation: true

@@ -83,6 +83,50 @@ cmux send --workspace "$WS_ID" "cd /target/dir"
 cmux send-key --workspace "$WS_ID" Enter
 ```
 
+## Peer Tabs and Spawning Agents (verified 2026-08-27)
+
+"Peer tab" = a SURFACE in the caller's current workspace (`cmux new-surface`),
+NOT a new workspace. `new-surface --type agent-session --provider claude` exists
+but exposes no model/effort/prompt flags — for parameterized agent spawns use a
+terminal surface with the recipe below.
+
+### Typed-input hazards (all verified failures)
+
+- `new-workspace --command` and `cmux send` TYPE text into the shell. The first
+  1-2 characters can be EATEN even when the prompt looks ready (`claude ...`
+  arrived as `aude ...`).
+- Fish ABBREVIATIONS rewrite typed tokens (`cat` → `bat`). Never type a command
+  line whose tokens might be abbreviated — put the real command in a `sh` script
+  and type only the script invocation.
+- A surface created without `--focus true` may never spawn its terminal
+  (`surface-health` shows `in_window=false`; `read-screen` fails with
+  internal_error). Create with `--focus true`.
+- `send-key` key names: `enter`, `ctrl+c` (plus form, lowercase).
+
+### Reliable agent-spawn recipe
+
+```bash
+# 1. Prompt in a file; command in a sh script (immune to fish abbreviations)
+printf '%s\n' '#!/bin/sh' \
+  'exec claude --model claude-opus-5 --effort max "$(cat .tmp/agent.prompt.md)"' \
+  > .tmp/agent.launch.sh
+
+# 2. Focused terminal surface in the caller's workspace/pane (cmux identify first)
+cmux new-surface --type terminal --working-directory <dir> \
+  --workspace <ws> --pane <pane> --focus true            # → OK surface:N
+
+# 3. VERIFY shell prompt, then send with leading-space padding (absorbs eaten chars)
+cmux read-screen --surface surface:N --lines 3
+cmux send --surface surface:N --workspace <ws> "     sh .tmp/agent.launch.sh"
+
+# 4. VERIFY the typed line via read-screen BEFORE executing, then:
+cmux send-key --surface surface:N --workspace <ws> enter
+cmux read-screen --surface surface:N --lines 12          # confirm the agent booted
+```
+
+Never chain send + enter blind: read-screen between every step is what catches
+eaten characters and abbreviation rewrites before they execute.
+
 ## Tab (Surface) Switching
 
 **There is no `next-tab` or `focus-surface` CLI command.** The `surface.focus` API method exists in capabilities but is not exposed as a CLI command.

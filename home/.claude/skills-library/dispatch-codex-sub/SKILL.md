@@ -20,7 +20,7 @@ Do **not** use this for:
 - "separate Codex agent"
 - "new Codex thread"
 
-Those mean `dispatch-codex`.
+Those mean `dispatch-codex-peer`.
 
 ## Procedure
 

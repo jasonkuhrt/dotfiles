@@ -187,6 +187,11 @@
   },
   // TODO: change fish prompt to not duplicate breadcrumbs (when in zed context)
   "terminal": {
+    // Pin fish explicitly: Zed's default is the LAUNCHING process's $SHELL, so
+    // a Zed cold-started by an agent/CLI whose env carries SHELL=/bin/zsh
+    // silently opens zsh terminals. Pinning removes the launch-context
+    // sensitivity.
+    "shell": { "program": "/opt/homebrew/bin/fish" },
     // Default 45 uses APCA to boost dark colors for readability, which clamps
     // subtle nvim highlight differences (e.g. dim Whitespace vs fg_gutter).
     // 0 = exact colors. See https://github.com/zed-industries/zed/issues/21330

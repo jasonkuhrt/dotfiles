@@ -296,7 +296,7 @@
   "extensions.ignoreRecommendations": true,
   "update.mode": "start",
   "extensions.autoCheckUpdates": true,
-  "extensions.autoUpdate": true,
+  "extensions.autoUpdate": "on",
   // Already default; explicit for documentation purposes
   "github.copilot.nextEditSuggestions.enabled": true,
   "github.copilot.nextEditSuggestions.extendedRange": true,

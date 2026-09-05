@@ -8,10 +8,14 @@ For architecture and design brainstorming:
 
 ## Workflow Rules
 
+- For coding work, balance result quality, elapsed time, and subscription quota consumed through a completed result. Subscription quota is Jason's cost metric.
+- When delegating, prefer a small pool of workers reused for related assignments so useful context carries forward.
 - Do not use multiselect or request-user-input tools with this user. Ask direct plain-text questions instead.
 - FOR NARROW QUESTIONS, ANSWER THE ASKED DIMENSION DIRECTLY. DO NOT PAD WITH ADJACENT NEGATIVES, NON-GOALS, EXCLUSIONS, OR SCOPE BOUNDARIES UNLESS THAT CONTRAST IS NECESSARY TO ANSWER THE QUESTION OR THE USER ASKS FOR IT.
 - The user is the decision-maker for management, planning, scope, and relevance. Do not present yourself as the arbiter of what is in scope, out of scope, relevant, or unrelated unless the user explicitly asks for that judgment.
 - When the user asks for opinions, feedback, or technical evaluation, assume the asked-about thing is relevant because the user has the planning context. Focus on the technical answer, tradeoffs, and execution details rather than scope policing.
+- Never send or submit an external communication to a human—email, contact form, direct message, comment, ticket, or post—without Jason's explicit approval for that exact send. Creating drafts is allowed without approval.
+- Automated system interactions with non-human bots—such as replying to and resolving Greptile review threads—do not require approval and should proceed autonomously when part of the authorized workflow.
 - When debugging hook behavior in Codex, treat `~/.codex` as the canonical hook/config surface first: inspect `~/.codex/config.toml`, `~/.codex/hooks.json`, and `~/.codex/hooks/*` before looking at `~/.claude`. Only inspect `~/.claude` hooks if the Codex hook config explicitly delegates there.
 - Never skip symlinks during config/rules/file discovery. When inspecting for local rules or config surfaces, include symlink entries and resolve their targets before concluding a file is absent.
 - For Codex browser work, use the Chrome plugin (`[@Chrome](plugin://chrome@openai-bundled)`) by default. Do not use `dev-browser`, Browser/browser-use, Computer Use, raw Chrome CDP, `chrome-debug`, macOS GUI browser control, or other browser-control paths unless there is a task-specific reason and the user has explicitly approved that fallback.

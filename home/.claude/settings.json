@@ -39,6 +39,7 @@
       "/Users/jasonkuhrt"
     ]
   },
+  "model": "claude-fable-5-1[1m]",
   "enableAllProjectMcpServers": true,
   "hooks": {
     "PreToolUse": [
@@ -138,6 +139,11 @@
             "type": "command",
             "command": "~/.claude/hooks/scripts/rename-terminal-tab.sh",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/scripts/response-format-reminder.sh",
+            "timeout": 5
           }
         ]
       }
@@ -201,16 +207,99 @@
   "syntaxHighlightingDisabled": false,
   "alwaysThinkingEnabled": true,
   "effortLevel": "xhigh",
+  "modelSettings": {
+    "claude-fable-5": {
+      "effortLevel": "xhigh"
+    },
+    "claude-fable-5-1": {
+      "effortLevel": "xhigh"
+    }
+  },
   "autoUpdatesChannel": "latest",
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
   "preferredNotifChannel": "ghostty",
   "switchModelsOnFlag": false,
+  "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "autoMode": {
     "allow": [
       "$defaults",
       "Dispatching Codex CLI workers via `codex exec --dangerously-bypass-approvals-and-sandbox` (any flags, any prompt) is the user's standing, explicitly sanctioned dispatch workflow (codex-dispatch skill mandates this exact invocation; sandboxed modes are broken for it). Allow it without requiring the user to re-name the flag."
+    ],
+    "soft_deny": [
+      "$defaults",
+      "Bash(vp exec -w alchemy login:*) \u2014 Cloudflare/PlanetScale platform credential login, treat as sensitive credential action requiring confirmation",
+      "Writes to terraform/ (IaC apply/destroy) in this repo \u2014 protected IaC scope per Trust config above"
+    ],
+    "environment": [
+      "### Org-wide",
+      "**Organization**: heartbeat-chat (GitHub org; repo github.com:heartbeat-chat/Heartbeat.git)",
+      "**Cloud provider(s)**: AWS (Secrets Manager, S3 \u2014 per README/terraform), Cloudflare (per README `vp exec -w alchemy login`), PlanetScale (per README + .env.example)",
+      "**Repository visibility**: private (heartbeat-chat/Heartbeat, confirmed via gh)",
+      "**Internal sharing / snippet hosting**: None configured \u2014 treat public paste/gist services as outside the trust boundary",
+      "**Secrets management**: AWS Secrets Manager (per README `aws configure # Secrets Manager access`); CI secrets referenced include CENTRAL_LICENSE_KEY, CLOUDFLARE_API_TOKEN, EXPO_TOKEN, GITHUB_TOKEN, GOOGLE_PLAY_SERVICE_KEY_0-5, GT_API_KEY, GT_PROJECT_ID, HB_ADMIN_TOKEN, LINEAR_ACCESS_KEY, MUX_EVENT_HANDLER_WEBHOOK_SECRET, PLANETSCALE_API_TOKEN, PLANETSCALE_API_TOKEN_ID, PULSE_CONTENT_DATABASE_URL, README_API_DEFINITION_ID, README_API_KEY",
+      "**Default / protected branches**: `develop` (default), `master` \u2014 both protected; ruleset `Primary` active (plus at least one additional ruleset outside the display charset)",
+      "**CI/CD deploy targets**: GitHub Actions (.github/workflows); Platform stack managed via Alchemy (Cloudflare + PlanetScale); Render (per interval listener host onrender.com); pr-owned PlanetScale stage `pr-<number>` per e2e-run skill",
+      "**Network posture**: None configured",
+      "**Source control**: GitHub \u2014 heartbeat-chat/Heartbeat (this repo) and its remote only",
+      "**Trusted internal domains**: None configured",
+      "**Trusted cloud buckets**: None configured",
+      "**Key internal services**: PlanetScale (dev database branching), Mux (voice/video events), Split.io (feature flags, admin API), Linear (issue tracking, linear.app/heartbeat-chat), Interval admin tooling (wss://interval-g00r.onrender.com)",
+      "**Internal package registry**: None configured",
+      "**Sensitive data locations & audiences**: `.env`, `.local.env`, `**/cypress.env.json`, `*.key` files, `apps/heartbeat-expo/google-services-prod.json`, `apps/heartbeat-expo/src/app/environments/local.env.ts` (gitignored secrets/credentials); terraform/ directory (IaC state and cloud resource definitions) \u2014 share only with audiences cleared at the [named+specifics] bar",
+      "**Data retention / declassification**: None configured",
+      "**Sensitive remote targets**: any namespace, host, or container whose name carries `prod` or `production` as a whole word or name segment (e.g. `google-services-prod.json`, prod PlanetScale/Cloudflare stages)",
+      "**Protected deployment namespaces / environments**: production stage(s) reachable via Alchemy/Platform stack; PR-owned ephemeral stages (`pr-<number>`) are not production but should not be casually destroyed",
+      "**Protected IaC scopes**: terraform/ (iamRole, s3Bucket, s3policy, cicd, db, lambda, main, render, flightcontrol_vpc_endpoints, google_tag_gateway, domain, assets, buckets, dev, terraform_admin, variables, versions) \u2014 IAM, RBAC, networking, quota, and node-pool resources; anything whose name or tag carries `prod` or `production` as a whole word or name segment",
+      "### User-specific",
+      "**Primary use of Claude Code**: software development (Heartbeat web/backend monorepo \u2014 Effect/TypeScript, E2E via Playwright/Persona, lint-rule ratchets, Pulse content)",
+      "**Trusted repo**: heartbeat-chat/Heartbeat (this checkout, working directory /Users/jasonkuhrt/.codex/worktrees/hea-5029-tiptap-rich-document-cutover/Heartbeat) and its origin remote (github.com:heartbeat-chat/Heartbeat.git) \u2014 private repo, so confidential material is fine to commit here but secrets/credentials are never cleared by visibility",
+      "**Org-specific CLIs**: vp / vpr / vpx (Vite+ toolchain \u2014 sole build/test/lint entrypoint per README and skills), gh, sb (testing/auth CLI referenced in .env.example)",
+      "**Routine under this repo's prefix**: routine vp/vpr/vpx toolchain invocations, git operations, and E2E runs scoped to this checkout are expected day-to-day activity"
     ]
+  },
+  "skillOverrides": {
+    "agents-sdk": "off",
+    "brief": "off",
+    "caveman": "off",
+    "cli": "off",
+    "cloudflare-email-service": "off",
+    "debugging-hooks": "off",
+    "defog": "off",
+    "dev-browser": "off",
+    "durable-objects": "off",
+    "goplaces": "off",
+    "hunk-review": "off",
+    "keychain-totp": "off",
+    "linear-managing-issues": "off",
+    "monkey-patch-discipline": "off",
+    "nvim-workflows": "off",
+    "own-it": "off",
+    "planetscale": "off",
+    "plannotator": "off",
+    "plannotator-annotate": "off",
+    "plannotator-last": "off",
+    "plannotator-review": "off",
+    "plugin-management": "off",
+    "qaloop": "off",
+    "react-19-and-compiler": "off",
+    "refactor-review-loop": "off",
+    "role-pm-architect": "off",
+    "role-tech-lead": "off",
+    "sandbox-sdk": "off",
+    "skills": "off",
+    "skills-change": "off",
+    "skills-doctor": "off",
+    "start": "off",
+    "tech-ops-investigation": "off",
+    "turnstile-spin": "off",
+    "visual-oracle-ratchet": "off",
+    "vitest-browser-visual-oracle-ratchet": "off",
+    "web-perf": "off",
+    "workbench": "off",
+    "workers-best-practices": "off",
+    "wrangler": "off",
+    "writing-vite-plugins": "off"
   }
 }

@@ -147,26 +147,3 @@ end
 
 Source: `config.fish:38-47`
 
----
-
-## Decision 10: Claude Code Hooks for Rule Enforcement
-
-**Context:**
-Rules in `CLAUDE.md` and `claude/rules/` are advisory. Critical constraints need enforcement that doesn't depend on context window content.
-
-**Decision:**
-Use PreToolUse hooks (shell scripts) to enforce critical rules at runtime, blocking tool calls that violate them.
-
-**Implementation:**
-- `git-worktree-guard.sh` — blocks `git checkout/switch/stash` in shared worktrees
-- Skill script interpreter enforcement — blocks `tsx`/`node` on `.ts` files, blocks `bun` on `.sh` files
-
-**Properties:**
-- Hooks run before the tool executes — violations are prevented, not just detected
-- Exit code 2 blocks the action with a message; the agent can adjust
-- Hooks are loaded from filesystem, not context
-- Debugging pattern: external counter files verify hook execution (see `claude/rules/debugging-hooks.md`)
-
-Source: `claude/rules/no-branch-switching-in-shared-worktrees.md`, `claude/rules/skill-scripts-bun-only.md`, `claude/rules/debugging-hooks.md`
-
----

@@ -12,7 +12,6 @@ Quick reference for all Claude Code plugins, MCP servers, and hooks in this setu
 | Code Quality      | `typescript-lsp`            | TypeScript language server integration                 | Type checking, go-to-definition                        |
 | **Memory**        | `claude-supermemory`        | Persistent memory across sessions                      | `/super-search`, index, recall                         |
 | **Authoring**     | `plugin-dev`                | Plugin scaffolding and development                     | create-plugin, skill/hook/command-development           |
-| Authoring         | `hookify`                   | Create hooks from conversation analysis                | `/hookify`, configure, list                            |
 | Authoring         | `claude-md-management`      | CLAUDE.md maintenance and improvement                  | revise-claude-md, claude-md-improver                   |
 | Authoring         | `superpowers-dev-for-cc`    | CC plugin development docs and patterns                | developing-claude-code-plugins, working-with-claude-code |
 | **Creative**      | `playground`                | Interactive single-file HTML playground builder         | `/playground`                                          |
@@ -21,7 +20,7 @@ Quick reference for all Claude Code plugins, MCP servers, and hooks in this setu
 
 | Marketplace                | Plugins                                                       |
 | -------------------------- | ------------------------------------------------------------- |
-| `claude-plugins-official`  | code-review, hookify, plugin-dev, typescript-lsp, playground, claude-md-management |
+| `claude-plugins-official`  | code-review, plugin-dev, typescript-lsp, playground, claude-md-management |
 | `superpowers-marketplace`  | superpowers, superpowers-dev-for-cc                           |
 | `supermemory-plugins`      | claude-supermemory                                            |
 | `plannotator`              | plannotator                                                   |

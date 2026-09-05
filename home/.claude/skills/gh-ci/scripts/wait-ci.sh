@@ -13,7 +13,10 @@
 #   3 — usage error
 #
 # Env tunables:
-#   GH_CI_POLL  — poll interval seconds (default 120)
+#   GH_CI_POLL     — poll interval seconds (default 120)
+#   GH_CI_VERBOSE  — 1 prints the check rollup on every change; default prints
+#                    only terminal states, because each line costs the waiting
+#                    agent a turn
 #
 # allow-sleep-poll: this script is the canonical CI poll.
 
@@ -283,7 +286,11 @@ while true; do
       }'
   )
 
-  if [ "$signature" != "$prev_signature" ]; then
+  # Quiet by default: every progress line is a turn for the agent that is
+  # waiting, and a 25-minute run produced a dozen of them. Only terminal states
+  # (FAILED / ALL GREEN / BLOCKED / STALE HEAD / CONFLICT) print unless
+  # GH_CI_VERBOSE=1 asks for the rollup on every change.
+  if [ "${GH_CI_VERBOSE:-0}" = "1" ] && [ "$signature" != "$prev_signature" ]; then
     printed_waiting_green=0
     printf '%s\n' "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
     printf 'PR #%s head=%s branch=%s merge=%s\n' "$pr_number" "${head_sha:0:10}" "$current_branch" "$merge_state"
@@ -343,7 +350,7 @@ while true; do
       echo "PR #$pr_number head ${head_sha:0:10}: $total checks successful; no relevant current-head workflow runs remain after ignoring $ignored_workflow_run_total no-job dashboard run(s)."
       exit 0
     fi
-    if [ "$printed_waiting_green" -eq 0 ]; then
+    if [ "${GH_CI_VERBOSE:-0}" = "1" ] && [ "$printed_waiting_green" -eq 0 ]; then
       if [ "$workflow_run_total" -eq 0 ]; then
         echo "VISIBLE GREEN: $total checks successful; waiting for current-head workflow runs to appear."
       else

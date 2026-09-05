@@ -11,12 +11,12 @@ Every prior attempt to "just check CI" has failed for the same reason: each laye
 
 A PR's "done?" question must be anchored to the current PR head SHA and answered from the PR's own check rollup. Skipping either piece is where everything has gone wrong before.
 
-| # | Layer | API | What it tells you |
-|---|---|---|---|
-| 1 | **PR identity and mergeability** | `gh pr view --json headRefOid,headRefName,mergeable,mergeStateStatus` | Which SHA you are waiting for, and whether conflicts or unresolved required conversations make CI insufficient. |
-| 2 | **PR check rollup** | `gh pr view --json statusCheckRollup` | Every current check run/status context GitHub attaches to that PR head. |
-| 3 | **Current-head workflow runs** | `gh api repos/<repo>/actions/runs?head_sha=<sha>` | Whether Actions workflows spawned from the current commit are still creating/running jobs. This replaces fixed "green but wait N seconds" grace windows. |
-| 4 | **Failed job logs** | `gh run view <run-id> --log-failed --job <job-id>` | The exact failing step/log excerpt, read only after the rollup is red. |
+| #   | Layer                            | API                                                                   | What it tells you                                                                                                                                        |
+| --- | -------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **PR identity and mergeability** | `gh pr view --json headRefOid,headRefName,mergeable,mergeStateStatus` | Which SHA you are waiting for, and whether conflicts or unresolved required conversations make CI insufficient.                                          |
+| 2   | **PR check rollup**              | `gh pr view --json statusCheckRollup`                                 | Every current check run/status context GitHub attaches to that PR head.                                                                                  |
+| 3   | **Current-head workflow runs**   | `gh api repos/<repo>/actions/runs?head_sha=<sha>`                     | Whether Actions workflows spawned from the current commit are still creating/running jobs. This replaces fixed "green but wait N seconds" grace windows. |
+| 4   | **Failed job logs**              | `gh run view <run-id> --log-failed --job <job-id>`                    | The exact failing step/log excerpt, read only after the rollup is red.                                                                                   |
 
 ## The canonical poll
 
@@ -26,24 +26,40 @@ First identify the harness kind, then use that harness's long-running-work primi
 
 ### Claude Code
 
-Use `Monitor` when available for a foreground watch that streams progress outside the conversation cadence:
+Use `Monitor` when available. The script is quiet by default: it prints nothing until a terminal state (ALL GREEN / FAILED / BLOCKED / STALE HEAD / CONFLICT), so the waiting agent spends one turn per verdict, not one per poll. A 25-minute run once cost a dozen progress turns; that is tokens taken from other agents.
 
 ```bash
 Monitor:
   bash ~/.claude/skills/gh-ci/scripts/wait-ci.sh <PR_NUMBER>
 ```
 
+Set `GH_CI_VERBOSE=1` only when a human is watching the stream live and wants the rollup on every change.
+
 If the user explicitly asks for unattended re-invocation rather than a foreground watch, use the installed Claude Code loop command/plugin with the same script as the task body.
 
 ### Codex
 
-For a foreground watch in the current Codex turn, run the shared script directly:
+A one-shot status read does not need a worker. Read the authoritative layers above
+once and report the current head and rollup.
+
+An ongoing watch in the current turn is worker-owned, even without crew mode or a
+separate subagent request. Delegate it through
+[dispatch-codex-sub](../../../.codex/skills/dispatch-codex-sub/SKILL.md), reusing a
+suitable worker when available. Have the worker keep one quiet script process
+attached rather than spend a model turn on each poll:
 
 ```bash
-bash ~/.codex/skills/gh-ci/scripts/wait-ci.sh <PR_NUMBER>
+bash ~/.claude/skills/gh-ci/scripts/wait-ci.sh <PR_NUMBER>
 ```
 
-If the user asks to keep checking across turns, use Codex's session loop or heartbeat automation with the same script as the per-iteration check.
+The worker reports a terminal result, head change, failure or blockage, or abnormal
+delay, with sparse liveness during unusually long silence. The lead owns consequential
+decisions and remediation; check on an overdue worker at a coarser, project-informed
+cadence instead of polling GitHub in parallel.
+
+If no worker capability is available, run the script directly and keep it attached.
+Do not claim background persistence the harness does not provide. Do not create a
+scheduler or automation unless the user independently requests one.
 
 ### Generic Shell
 
@@ -73,15 +89,15 @@ Tunables via env:
 
 ## Banned patterns
 
-| Pattern | Failure mode |
-|---|---|
-| `gh pr checks <N> --watch --fail-fast` | Exits as soon as the *visible* checks settle. Heavy workflows that queue 30–90s after push are missed entirely. **Blocked by the `block-gh-pr-checks-watch` hook.** |
-| Counting check-runs (`if count >= N`, `gh pr checks <N> \| wc -l`, etc.) | Different PRs have different workflow shapes. There's no robust threshold. **Blocked by the `block-gh-pr-checks-watch` hook.** |
-| Treating workflow names (`PR`, `PR Dashboard`, etc.) as authoritative | Plan/dashboard jobs can complete or cancel while later matrix jobs are still queued or not yet created. |
-| Treating cancelled no-job `pull_request_target` dashboard runs as red CI | They never created jobs or PR checks, so they are phantom workflow-run signals outside the PR check rollup. |
-| `while true; do ...; sleep 120; done` in plain Bash | Blocked by the `block-sleep-poll-loops` hook. Use this skill's harness-kind route instead. |
-| Treating dashboard/comment checks as authoritative | They are UX surfaces, not the current head's complete check state. |
-| Polling check-runs without first checking mergeability and merge state | A CONFLICTING PR or unresolved required conversation can leave checks green while GitHub still blocks merge. |
+| Pattern                                                                  | Failure mode                                                                                                                                                        |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gh pr checks <N> --watch --fail-fast`                                   | Exits as soon as the _visible_ checks settle. Heavy workflows that queue 30–90s after push are missed entirely. **Blocked by the `block-gh-pr-checks-watch` hook.** |
+| Counting check-runs (`if count >= N`, `gh pr checks <N> \| wc -l`, etc.) | Different PRs have different workflow shapes. There's no robust threshold. **Blocked by the `block-gh-pr-checks-watch` hook.**                                      |
+| Treating workflow names (`PR`, `PR Dashboard`, etc.) as authoritative    | Plan/dashboard jobs can complete or cancel while later matrix jobs are still queued or not yet created.                                                             |
+| Treating cancelled no-job `pull_request_target` dashboard runs as red CI | They never created jobs or PR checks, so they are phantom workflow-run signals outside the PR check rollup.                                                         |
+| `while true; do ...; sleep 120; done` in plain Bash                      | Blocked by the `block-sleep-poll-loops` hook. Use this skill's harness-kind route instead.                                                                          |
+| Treating dashboard/comment checks as authoritative                       | They are UX surfaces, not the current head's complete check state.                                                                                                  |
+| Polling check-runs without first checking mergeability and merge state   | A CONFLICTING PR or unresolved required conversation can leave checks green while GitHub still blocks merge.                                                        |
 
 ## When CI fails
 
@@ -92,6 +108,7 @@ gh run view <run-id> --log-failed --job <job-id>
 ```
 
 Surface to the user:
+
 - The exact error line (TS error / test failure / build error)
 - File + line if available
 - One-sentence root cause

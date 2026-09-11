@@ -103,7 +103,7 @@ If Greptile has already posted, continue to the feedback-handling step. If not, 
 
 ### 5. Address Existing Greptile Feedback
 
-Use the current harness's PR review-comment workflow. Prefer a loaded `github:gh-address-comments` or equivalent PR-thread skill when available. In Claude Code, follow `~/.claude/rules/pr-review-comments.md` when that rule exists. Every addressed thread must close the loop with a reply + resolve, not just a code push.
+Use the current harness's PR review-comment workflow: in Claude Code the `gh-close-review-threads` skill, in Codex `github:gh-address-comments`. Every addressed thread must close the loop with a reply + resolve, not just a code push.
 
 When working through threads:
 
@@ -160,7 +160,7 @@ Do not report the land pass complete while selected Greptile threads are still u
 
 Handle this section only for Heartbeat PRs when the user asks for PR E2E, when the PR has E2E mode labels, or when the PR dashboard/comment indicates an enabled E2E target.
 
-Current Heartbeat E2E is PR-control label driven. There is no separate E2E workflow or commit status to trigger. Use the repo-local `.claude/rules/e2e-testing.md` rule or `e2e` skill as the source of truth when present — the repo owns this command surface and it changes; on any `Unknown subcommand` reply from PR CLI, re-read the repo-local `e2e` skill instead of retrying variants.
+Current Heartbeat E2E is PR-control label driven. There is no separate E2E workflow or commit status to trigger. Use the repo-local `e2e-run` skill as the source of truth — the repo owns this command surface and it changes; on any `Unknown subcommand` reply from PR CLI, re-read the repo-local `e2e` skill instead of retrying variants.
 
 Current commands (no per-target subcommands — the old `/pr e2e <target> mode ...` form is gone):
 

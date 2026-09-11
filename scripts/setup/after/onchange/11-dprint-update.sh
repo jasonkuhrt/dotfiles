@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# dotctl:watch symlink-roots/config/dprint/dprint.json
+# dotctl:watch home/.config/dprint/dprint.json
 
 source "$DOTFILES_ROOT/scripts/lib/helpers.sh"
 

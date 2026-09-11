@@ -155,7 +155,7 @@ cask "loom"           # screen recording
 cask "1password"      # password manager
 cask "notion"
 cask "obsidian"       # local-first markdown notes / knowledge vault
-cask "linear-linear"
+cask "linear"
 cask "figma"
 
 # Development

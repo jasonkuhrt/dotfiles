@@ -34,6 +34,9 @@
     default = current
     # Push annotated tags along with commits that reference them
     followTags = true
+    # Reject --force-with-lease when a background fetch moved the remote-tracking ref
+    # you never integrated: the fish prompt hook and lazygit both autofetch
+    useForceIfIncludes = true
 
 [fetch]
     # Delete local refs to branches that were deleted on remote
@@ -96,8 +99,6 @@
     # Tokyo Night theme — diff colors + syntax-theme, defined as the
     # named feature below so it can be swapped (storm/moon/day variants).
     features = tokyonight
-    # Use n/N to jump between diff sections
-    navigate = true
     # side-by-side is intentionally NOT set here: lazygit runs delta inside
     # narrow panes, while terminal Git diff output is handled by Hunk.
     # Show line numbers
@@ -109,8 +110,8 @@
 # folke/tokyonight.nvim → extras/delta/tokyonight_night.gitconfig — the
 # same source as the lazygit theme. syntax-theme = tokyonight_night needs
 # the matching tmTheme installed in bat: it lives at
-# ~/.config/bat/themes/tokyonight_night.tmTheme and is registered via
-# `bat cache --build`. delta shares bat's theme cache.
+# ~/.config/bat/themes/tokyonight_night.tmTheme, and
+# scripts/setup/after/onchange/10-bat-cache.sh builds the cache delta shares with bat.
 [delta "tokyonight"]
     syntax-theme                  = tokyonight_night
     minus-style                   = syntax "#4a272f"
@@ -142,7 +143,7 @@
     aa = add --all
     ap = add --patch
     # Unstage files (opposite of git add)
-    unstage = reset HEAD --
+    unstage = restore --staged --
 
     # ── Commits ──
     c = commit
@@ -153,7 +154,7 @@
     reword = commit --amend
     # Quick work-in-progress commit (stage all + commit)
     wip = !git add -A && git commit -m 'wip'
-    # Undo wip commit (keeps changes staged)
+    # Undo wip commit (changes stay in the working tree, unstaged)
     unwip = reset HEAD~1
 
     # ── Viewing ──
@@ -176,7 +177,7 @@
     # Just branch names, most recent first (for scripting/fzf)
     recent = branch --sort=-committerdate --format='%(refname:short)' -n 10
     # Delete branches already merged into current branch (except main/master)
-    dm = !git branch --merged | grep -v '\\*\\|main\\|master' | xargs -n 1 git branch -d
+    dm = "!git for-each-ref --merged=HEAD --format='%(if)%(worktreepath)%(then)%(else)%(refname:short)%(end)' refs/heads | grep -vxE 'main|master|develop' | xargs -n 1 git branch -d"
 
     # ── Remote ──
     p = push

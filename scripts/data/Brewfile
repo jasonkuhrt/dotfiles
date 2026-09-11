@@ -6,12 +6,10 @@
 tap "electrikmilk/cherri"
 tap "planetscale/tap"
 tap "polidog/kilar"
-tap "assimelha/tap"
 tap "manaflow-ai/cmux"
 tap "bendews/tap"
 tap "neurosnap/tap"
 tap "mdsakalu/tap"
-tap "bro3886/tap"
 
 # ═══════════════════════════════════════════════════════════
 # CLI Tools

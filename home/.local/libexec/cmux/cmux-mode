@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Launchd spawns cmux.app and Karabiner's shell_command with only /usr/bin:/bin:
+# /usr/sbin:/sbin, where cmux, zmx and jq are missing and this script would fall back
+# or abort silently.
+PATH="/opt/homebrew/bin:/usr/local/bin:${PATH}"
+
 cmux_bin="${CMUX_MODE_CMUX_BIN:-cmux}"
 osascript_bin="${CMUX_MODE_OSASCRIPT_BIN:-osascript}"
 status_key="keyboard"

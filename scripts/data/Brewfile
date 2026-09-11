@@ -1,6 +1,8 @@
 # ═══════════════════════════════════════════════════════════
 # Taps
 # ═══════════════════════════════════════════════════════════
+# Homebrew refuses to load formulae and casks from untrusted taps. Name tap
+# packages in full with `trusted: true`; brew bundle records the grant.
 tap "electrikmilk/cherri"
 tap "planetscale/tap"
 tap "polidog/kilar"
@@ -63,7 +65,7 @@ brew "just"          # command runner (modern make alternative)
 brew "up"            # interactive piping (Ultimate Plumber)
 
 # Apple ecosystem CLIs (EventKit/Shortcuts/iCloud-native tools — preferred over AppleScript for speed)
-brew "electrikmilk/cherri/cherri"  # compile .cherri to .shortcut files
+brew "electrikmilk/cherri/cherri", trusted: true  # compile .cherri to .shortcut files
 
 # Git & GitHub
 brew "git"
@@ -72,8 +74,8 @@ brew "git-delta"     # better diffs (also in gitconfig)
 brew "git-crypt"     # transparent file encryption
 brew "lazygit"       # terminal UI for git
 brew "worktrunk"     # git worktree manager (parallel AI agents)
-brew "zmx"           # terminal session persistence
-brew "zsm"           # TUI session manager for zmx
+brew "neurosnap/tap/zmx", trusted: true  # terminal session persistence
+cask "mdsakalu/tap/zsm", trusted: true   # TUI session manager for zmx
 brew "pre-commit"    # git hooks framework
 brew "flock"         # file-lock CLI; serializes concurrent git hooks (not shipped on macOS)
 
@@ -103,7 +105,7 @@ brew "pandoc"        # document converter
 
 # Encryption & passwords
 brew "age"           # file encryption and key management
-brew "bendews/tap/apw"  # Apple Passwords CLI (iCloud Keychain access)
+brew "bendews/tap/apw", trusted: true  # Apple Passwords CLI (iCloud Keychain access)
 brew "oath-toolkit"  # TOTP code generation from keychain-stored secrets (oathtool)
 
 # System utilities
@@ -118,7 +120,7 @@ brew "duti"          # default document and URL handlers
 # brew "polidog/kilar/kilar"  # interactive port/process manager
 
 # Database
-brew "planetscale/tap/pscale"
+brew "planetscale/tap/pscale", trusted: true
 
 # Cloud
 brew "awscli"        # AWS command line interface

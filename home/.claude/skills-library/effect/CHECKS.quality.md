@@ -1,64 +1,5 @@
 # Effect Review Quality Checks
 
-## effect-data-types
-
-Use Effect data types instead of native equivalents. Native types only at serialization boundaries (`Schema.Array`, `Schema.Record`, `Schema.optional`), function parameters accepting plain arrays for ergonomics, or static const lookups with fixed keys.
-
-| Native | Effect |
-|--------|--------|
-| `Map`, `ReadonlyMap` | `HashMap` |
-| `Record<K,V>` as data map | `HashMap` |
-| `Set`, `ReadonlySet` | `HashSet` |
-| `Date`, `string` (dates) | `DateTime.Utc` or `DateTime.Zoned` |
-| `T \| null`, `T \| undefined` | `Option` |
-| Raw discriminated unions | `Data.TaggedEnum` |
-
-### Correct
-
-```typescript
-const index: HashMap.HashMap<string, Entry> = HashMap.empty()
-const created: DateTime.Utc = DateTime.unsafeNow()
-const result: Option.Option<User> = HashMap.get(users, id)
-```
-
-### Incorrect
-
-```typescript
-const index: Map<string, Entry> = new Map()
-const created: Date = new Date()
-const result: User | undefined = users.get(id)
-```
-
-## tagged-enum-over-raw-unions
-
-Discriminated unions MUST use `Data.TaggedEnum` — never raw TS unions with manual discriminants. Use `$match` instead of `switch` for compiler-enforced exhaustiveness.
-
-### Correct
-
-```typescript
-type Patch = Data.TaggedEnum<{
-  Add: { readonly url: string; readonly name: string }
-  Remove: { readonly url: string }
-}>
-const { Add, Remove, $is, $match } = Data.taggedEnum<Patch>()
-const patch = Add({ url: 'https://x.com', name: 'X' })
-$match(patch, {
-  Add: (p) => console.log(p.name),
-  Remove: (p) => console.log(p.url),
-})
-```
-
-### Incorrect
-
-```typescript
-type Patch = { op: "add"; url: string; name: string } | { op: "remove"; url: string }
-const patch: Patch = { op: "add", url: "https://x.com", name: "X" }
-switch (patch.op) {
-  case "add": ...
-  case "remove": ...
-}
-```
-
 ## grouping-directory-named-imports
 
 Grouping directories (organizing by tool/layer/convention, not domain concepts) use named imports. The directory name is housekeeping, not a domain namespace.
@@ -246,24 +187,6 @@ pipe(
 )
 ```
 
-## schema-always-taggedclass
-
-Always use `TaggedClass`, never `Class`. The `_tag` field provides runtime identity for `Schema.Union` dispatch and meaningful `.is()` predicates.
-
-### Correct
-
-```typescript
-export class Order extends Schema.TaggedClass<Order>('Order')('Order', { ... }) {}
-Order.is(value)
-```
-
-### Incorrect
-
-```typescript
-value._tag === 'Order' // use Order.is(value)
-value instanceof Order // breaks across serialization boundaries
-```
-
 ## schema-make-not-new
 
 Use `.make()` for construction — stable API across class statics and module-scope exports. `new` only works with class statics and breaks if refactored.
@@ -278,23 +201,6 @@ Order.make({ amount: 100 })
 
 ```typescript
 new Order({ amount: 100 })
-```
-
-## schema-enums-as-const
-
-`Schema.Enums` requires `as const` — without it, literal types widen to `string`.
-
-### Correct
-
-```typescript
-Schema.Enums({ active: 'active', inactive: 'inactive' } as const)
-MyEnum.enums.active
-```
-
-### Incorrect
-
-```typescript
-Schema.Enums({ active: 'active', inactive: 'inactive' })
 ```
 
 ## schema-suspend-typed

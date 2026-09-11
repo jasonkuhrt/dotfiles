@@ -89,7 +89,7 @@ Before scripts install foundational dependencies:
 After scripts configure the system:
 
 - `04-node-toolchain.sh` — Node.js via fnm
-- `05-npm-globals.sh` — global npm packages from `home/npm/global-packages.txt`
+- `05-npm-globals.sh` — global npm packages from `scripts/data/npm/global-packages.txt`
 - `06-fisher.sh` — Fisher plugin manager for fish
 - `07-fisher-plugins.sh` — fish plugins from `home/.config/fish/fish_plugins`
 - `08-macos-defaults.sh` — keyboard repeat, trackpad speed, Finder preferences

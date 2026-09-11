@@ -1190,13 +1190,10 @@ cmd-ux-proof-wq-regression:
     run_probe "$baseline_dir" "$baseline_cache" "head:"
 
 hooks-install:
-    bash scripts/git-hooks/install-pre-commit.sh
-
-hooks-uninstall:
-    bash scripts/git-hooks/uninstall-pre-commit.sh
+    git-hooks install
 
 hooks-status:
-    bash scripts/git-hooks/pre-commit-status.sh
+    git-hooks status
 
 nix-darwin-sandbox-readme:
     cat sandbox/nix-darwin-macos/README.md

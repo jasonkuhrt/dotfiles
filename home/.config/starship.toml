@@ -40,6 +40,9 @@ format = '[$branch]($style) '
 style = 'bold #bb9af7'               # Tokyo Night magenta
 
 [git_status]
+# gitoxide ignores core.untrackedCache, so the git executable is ~20ms faster in large
+# repos (Heartbeat: 48ms -> 28ms) with identical output.
+use_git_executable = true
 # Hide file status indicators - use `git` dashboard for details
 stashed = ''
 modified = ''

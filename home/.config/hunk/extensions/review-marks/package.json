@@ -1,0 +1,14 @@
+{
+  "name": "review-marks",
+  "version": "1.0.0",
+  "description": "Mark hunks and files reviewed, dim what is done, and jump to what is left.",
+  "hunk": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "apiVersion": 11
+  },
+  "devDependencies": {
+    "hunkdiff": "0.22.0"
+  }
+}

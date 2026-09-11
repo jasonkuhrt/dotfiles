@@ -1,0 +1,14 @@
+{
+  "name": "files-pane",
+  "version": "1.0.0",
+  "description": "Hunk's stock files pane, sized to show every name uncropped, without line-count badges.",
+  "hunk": {
+    "extensions": [
+      "./index.tsx"
+    ],
+    "apiVersion": 22
+  },
+  "devDependencies": {
+    "hunkdiff": "0.22.0"
+  }
+}

@@ -722,18 +722,43 @@ git-maintenance-check:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    repo_root="$PWD"
+    # The script resolves the repo through git, which canonicalizes symlinks. Do the same,
+    # or the comparison below fails whenever just runs through the ~/dotfiles symlink.
+    repo_root="$(git rev-parse --show-toplevel)"
     script="$repo_root/scripts/setup/after/onchange/15-git-maintenance.sh"
+    fake_launchctl="$repo_root/scripts/tests/fake-launchctl.sh"
 
     bash -n "$script"
+    bash -n "$fake_launchctl"
 
     tmp_home="$(mktemp -d)"
     trap 'rm -rf "$tmp_home"' EXIT
 
-    HOME="$tmp_home" DOTFILES_ROOT="$repo_root" bash "$script" >/dev/null
+    # `git maintenance start` bootstraps launchd jobs in the real user domain. Give it a
+    # stub: otherwise this check re-registers org.git-scm.git.* against this temp HOME and
+    # leaves the user's jobs pointing at plists that vanish with it.
+    mkdir -p "$tmp_home/bin"
+    cp "$fake_launchctl" "$tmp_home/bin/launchctl"
+    chmod +x "$tmp_home/bin/launchctl"
+    launchctl_log="$tmp_home/launchctl.log"
+
+    HOME="$tmp_home" DOTFILES_ROOT="$repo_root" PATH="$tmp_home/bin:$PATH" \
+        LAUNCHCTL_TEST_LOG="$launchctl_log" bash "$script" >/dev/null
 
     registered_repo="$(git config --file "$tmp_home/.config/git/local.gitconfig" --get-all maintenance.repo)"
     [ "$registered_repo" = "$repo_root" ]
+
+    # The stub handled the scheduling, not the real launchctl.
+    [ -s "$launchctl_log" ]
+
+    # The user's own jobs still point at their own plists.
+    for label in hourly daily weekly; do
+        loaded="$(launchctl print "gui/$(id -u)/org.git-scm.git.$label" 2>/dev/null | awk '/^[[:space:]]*path = /{print $3; exit}')"
+        case "$loaded" in
+            ""|"$HOME/Library/LaunchAgents/org.git-scm.git.$label.plist") ;;
+            *) printf 'FAIL: org.git-scm.git.%s points at %s\n' "$label" "$loaded" >&2; exit 1 ;;
+        esac
+    done
 
     printf 'PASS: git-maintenance-check\n'
 

@@ -39,7 +39,7 @@ confirm-close-surface      = true
 #
 # Notifications & Bell
 #
-# OSC 777 notifications → macOS Notification Center (used by Claude Code hooks)
+# OSC 777 notifications → macOS Notification Center
 # Bell features: dock bounce + badge for attention when unfocused
 #
 
@@ -53,6 +53,16 @@ bell-features = attention
 #
 
 command = direct:/Users/jasonkuhrt/.local/libexec/cmux/cmux-zmx-enter
+
+#
+# Keyboard
+#
+# Ghostty turns Option into Alt by default only on U.S. layouts. This machine is on
+# Canadian, where Option+hjkl types ˙∆˚¬ and Neovim never sees <A-hjkl>. Left Option
+# becomes Alt; right Option keeps macOS character input.
+#
+
+macos-option-as-alt = left
 
 #
 # Keybindings

@@ -3,13 +3,13 @@ set -e
 
 # ─────────────────────────────────────────────────────────────
 # Dotfiles sudo operations
-# Run after ./sync completes: sudo ./scripts/sync-sudo.sh
+# Run after `just up`: just sudo-setup
 # ─────────────────────────────────────────────────────────────
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 
 # Load shared utilities
-source "$HERE/sync-lib.sh"
+source "$HERE/lib/helpers.sh"
 
 # ─────────────────────────────────────────────────────────────
 # Check if running as root
@@ -22,7 +22,7 @@ if [ "$(id -u)" -ne 0 ]; then
     printf "\n"
     printf "Run with sudo to apply these settings:\n"
     printf "\n"
-    printf "  ${CYAN}sudo ./scripts/sync-sudo.sh${RESET}\n"
+    printf "  ${CYAN}just sudo-setup${RESET}\n"
     printf "\n"
     printf "Or run these commands manually:\n"
     printf "\n"
@@ -52,7 +52,7 @@ if [ "$(id -u)" -ne 0 ]; then
             printf "  ${CYAN}echo '$FISH_PATH' | sudo tee -a /etc/shells${RESET}\n"
         fi
 
-        if [ "$SHELL" = "$FISH_PATH" ]; then
+        if [ "$(dscl . -read "/Users/$USER" UserShell 2>/dev/null | awk '{print $2}')" = "$FISH_PATH" ]; then
             printf "  ${SKIP} ${DIM}Fish already default shell${RESET}\n"
         else
             printf "  ${CYAN}chsh -s $FISH_PATH${RESET}\n"

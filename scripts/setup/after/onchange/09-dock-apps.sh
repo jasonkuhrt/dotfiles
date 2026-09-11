@@ -24,7 +24,9 @@ if [ ! -f "$DOCK_CONFIG" ]; then
 fi
 
 # Get current dock apps
-current_dock=$(dockutil --list 2>/dev/null | awk -F$'\t' '{print $1}' | tr '\n' '|' | sed 's/|$//')
+# Only persistentApps: dockutil also lists folders (Downloads), which never match
+# apps.txt, so the comparison always failed and every run rebuilt the Dock.
+current_dock=$(dockutil --list 2>/dev/null | awk -F$'\t' '$3=="persistentApps"{print $1}' | tr '\n' '|' | sed 's/|$//')
 
 # Build expected dock apps list
 expected_dock=""

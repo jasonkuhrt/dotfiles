@@ -15,7 +15,7 @@ DUTI_SYNC="$DOTFILES_ROOT/home/.local/bin/duti-sync"
 header "macOS Defaults"
 
 info "Configuring keyboard..."
-set_default "com.apple.HIToolbox" "AppleFnUsageType" "-int" "3" "Fn/Globe key press does nothing (disable Emoji picker)"
+set_default "com.apple.HIToolbox" "AppleFnUsageType" "-int" "0" "Fn/Globe key press does nothing (0=Do Nothing; 3 was Start Dictation)"
 set_default "NSGlobalDomain" "com.apple.keyboard.fnState" "-bool" "true" "Use F1, F2, etc. as standard function keys"
 set_default "NSGlobalDomain" "ApplePressAndHoldEnabled" "-bool" "false" "Key repeat enabled"
 set_default "NSGlobalDomain" "KeyRepeat" "-int" "2" "Fast key repeat rate"
@@ -40,7 +40,6 @@ set_default "com.apple.desktopservices" "DSDontWriteNetworkStores" "-bool" "true
 set_default "com.apple.desktopservices" "DSDontWriteUSBStores" "-bool" "true" "No .DS_Store on USB volumes"
 
 info "Configuring system..."
-set_default "com.apple.LaunchServices" "LSQuarantine" "-bool" "false" "Disabled app quarantine dialog"
 set_default "com.apple.dock" "minimize-to-application" "-bool" "true" "Minimize to app icon"
 set_default "com.apple.dock" "show-recents" "-bool" "false" "No recent apps in Dock"
 set_default "com.apple.dock" "autohide" "-bool" "true" "Dock autohide"

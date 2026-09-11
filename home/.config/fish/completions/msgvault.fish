@@ -233,4 +233,3 @@ complete -c msgvault -n '__msgvault_clear_perform_completion_once_result'
 complete -c msgvault -n 'not __msgvault_requires_order_preservation && __msgvault_prepare_completions' -f -a '$__msgvault_comp_results'
 # otherwise we use the -k flag
 complete -k -c msgvault -n '__msgvault_requires_order_preservation && __msgvault_prepare_completions' -f -a '$__msgvault_comp_results'
-time=2026-04-27T23:51:27.506-04:00 level=INFO msg="msgvault exit" outcome=ok

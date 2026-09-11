@@ -46,3 +46,6 @@ __pycache__/
 
 # Manual config backups (e.g., user-saved snapshots before risky edits)
 *_backup.json
+
+# Karabiner writes a dated backup into its config dir on every GUI edit
+home/.config/karabiner/automatic_backups/

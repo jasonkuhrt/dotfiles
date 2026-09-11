@@ -19,37 +19,17 @@ fi
 
 BREWFILE="$DOTFILES_ROOT/scripts/data/Brewfile"
 
-if brew bundle check --file="$BREWFILE" &>/dev/null; then
+# --no-upgrade: without it, self-updating casks (loom, 1password, notion) always read as
+# outdated, so the check can never pass. HOMEBREW_BUNDLE_*_SKIP take space-separated entry
+# names rather than booleans, so the old staged install ran the whole bundle anyway, and the
+# cask loop that followed dropped entry options such as `trusted:`.
+if brew bundle check --no-upgrade --file="$BREWFILE" &>/dev/null; then
     skip "Homebrew packages (all installed)"
 else
-    # Install formulae first (no sudo needed)
-    info "Installing formulae..."
-    if HOMEBREW_BUNDLE_CASK_SKIP=1 HOMEBREW_BUNDLE_MAS_SKIP=1 brew bundle --file="$BREWFILE"; then
-        task "Formulae installed"
+    info "Converging Homebrew packages (casks may prompt for a password)..."
+    if brew bundle --file="$BREWFILE"; then
+        task "Homebrew packages converged"
     else
-        warn "Some formulae may have failed"
-    fi
-
-    # Install casks (may need sudo for system locations)
-    info "Installing casks (may prompt for password)..."
-    grep -E "^cask " "$BREWFILE" | sed 's/cask "//;s/".*//' | while read -r cask; do
-        if ! brew list --cask "$cask" &>/dev/null; then
-            printf "    ${DIM}Installing %s...${RESET}\n" "$cask"
-            if brew install --cask "$cask" 2>&1; then
-                task "$cask"
-            else
-                warn "Failed to install $cask"
-            fi
-        fi
-    done
-
-    # Install Mac App Store apps
-    if grep -qE "^mas " "$BREWFILE"; then
-        info "Installing Mac App Store apps..."
-        if HOMEBREW_BUNDLE_BREW_SKIP=1 HOMEBREW_BUNDLE_CASK_SKIP=1 brew bundle --file="$BREWFILE"; then
-            task "Mac App Store apps installed"
-        else
-            warn "Some MAS apps may have failed"
-        fi
+        warn "Some Homebrew entries failed"
     fi
 fi

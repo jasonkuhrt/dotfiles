@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# dotctl:watch home/dot_config/fish/fish_plugins
+# dotctl:watch home/.config/fish/fish_plugins
 
 source "$DOTFILES_ROOT/scripts/lib/helpers.sh"
 

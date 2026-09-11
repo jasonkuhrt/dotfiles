@@ -46,6 +46,3 @@ __pycache__/
 
 # Manual config backups (e.g., user-saved snapshots before risky edits)
 *_backup.json
-
-# Machine-local state written through deployed symlinks (dotctl walks the filesystem, so the links survive)
-home/.config/fish/fish_variables

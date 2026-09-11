@@ -1,50 +1,62 @@
-# Vite+ Staged Checks And Config
+# Hooks, Staged Checks And Agent Files
 
-## Contents
+Installed docs: `node_modules/vite-plus/docs/guide/commit-hooks.md`,
+`config/staged.md`, and the staged section of `guide/troubleshooting.md`.
 
-- `vp config`
-- `vp staged`
-- Hook flags
-- Agent integration caveats
+## Git Hook Dispatcher
+
+```bash
+vp hooks status                      # preference, core.hooksPath, dispatcher
+vp hooks enable [--hooks-dir <dir>]  # install or refresh <dir>/_ and set core.hooksPath
+vp hooks disable                     # remove it and remember the choice in local git config
+```
+
+- Project hook scripts such as `.vite-hooks/pre-commit` are committed. The
+  generated `<hooks-dir>/_` directory is not.
+- `enable` and `disable` never touch project hook scripts or the `staged`
+  block.
+- `VP_GIT_HOOKS=0` makes installed hooks exit immediately and stops lifecycle
+  scripts (`prepare`, `postinstall`) from reinstalling the dispatcher.
+  `HUSKY=0` works the same. `VITE_GIT_HOOKS` is the old name, still honored
+  for backwards compatibility.
+- Every hook first sources `~/.config/vite-plus/hooks-init.sh` when it exists;
+  export `VP_GIT_HOOKS=0` there to disable hooks for a whole machine.
 
 ## `vp config`
 
-`vp config` configures hooks and agent integration for the current project:
+`vp config` installs the dispatcher (unless `vp hooks disable` ran in this
+clone) and updates coding-agent instruction files.
 
 ```bash
-vp config
-vp config --hooks-dir .vite-hooks
-VITE_GIT_HOOKS=0 vp config
+vp config --no-hooks --no-agent      # skip both steps
+vp config --hooks-dir .vite-hooks    # default: .vite-hooks, or the last dir used in this clone
 ```
 
-It reads staged-file rules from `vite.config.ts#staged`. `VITE_GIT_HOOKS=0`
-skips hook installation.
+## Agent Instruction Files
 
-Because `vp config` can edit agent, hook, and editor files, inspect installed
-help and existing repo rules before running it in a mature repository.
+`vp config --agent`, `vp create --agent <name>` and `vp migrate --agent <name>`
+write the official Vite+ block (between `<!--VITE PLUS START-->` and
+`<!--VITE PLUS END-->`, sourced from `node_modules/vite-plus/AGENTS.md`) into
+`AGENTS.md`, `CLAUDE.md` and similar files. It is a short generic template. In
+a repository with its own agent rules, pass `--no-agent` or review the diff.
 
 ## `vp staged`
 
-`vp staged` runs staged-file tasks from the same `staged` config:
+`vp staged` runs the `staged` block of `vite.config.ts`, which maps globs to
+commands, for example `'*.{js,ts,tsx}': 'vp check --fix'`. The project-owned
+pre-commit hook calls it.
 
 ```bash
-vp staged --help
-vp staged --fail-on-changes
+vp staged --fail-on-changes            # exit 1 when tasks modify tracked files
 vp staged --diff HEAD~1 --diff-filter ACMR
-vp staged --hide-unstaged
-vp staged --hide-partially-staged
-vp staged --no-stash
-vp staged --revert
-vp staged --relative
-vp staged --concurrent false
+vp staged --hide-unstaged              # or --hide-partially-staged
+vp staged --revert                     # restore the original state on errors
+vp staged --continue-on-error --verbose
 ```
 
-Use `--fail-on-changes` when hooks or CI should fail if staged tasks modify
-tracked files. Use `--hide-unstaged` or `--hide-partially-staged` when the
-check must operate only on the selected diff.
+Other flags: `--no-stash`, `--relative`, `--cwd <path>`, `-p/--concurrent`,
+`--no-concurrent`, `--allow-empty`, `-q/--quiet`, `-d/--debug`.
 
-## Agent Integration Caveats
-
-Installed Vite+ may ship an upstream `AGENTS.md` template. Treat it as template
-text. Verify commands against installed help before copying them. The workspace
-JS CLI still lacks the `env` family; use the global binary for `vp env` probes.
+When a hook does not run: `vp hooks status`, then confirm the `staged` block
+exists, the pre-commit script calls `vp staged`, and `VP_GIT_HOOKS=0` is not
+set.

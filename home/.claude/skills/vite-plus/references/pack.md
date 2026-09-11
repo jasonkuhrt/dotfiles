@@ -1,75 +1,43 @@
-# Vite+ Pack
+# `vp pack`
 
-## Contents
+Installed docs: `node_modules/vite-plus/docs/guide/pack.md`, `config/pack.md`,
+and the tsdown docs they link.
 
-- App build vs package build
-- Package-quality flags
-- Workspace filtering
-- Declaration output caveats
-- `--no-write` caveat
+## Build Or Pack
 
-## App Build Vs Package Build
+- `vp build` builds Vite applications.
+- `vp pack` builds libraries and standalone executables with tsdown.
+- Configure it in the `pack` block of `vite.config.ts`; the docs advise
+  against `tsdown.config.ts`.
 
-Use `vp build` for Vite application builds:
-
-```bash
-vp build <root>
-vp build <root> --mode production
-```
-
-Use `vp pack` for library/standalone package bundling and package-quality
-checks:
+## Targeting
 
 ```bash
-vp pack
-vp pack --root <dir> --dts
-vp pack --root <dir> --dts --publint --attw --unused --exports
-vp pack --workspace --filter <config-name-or-regex>
-vp pack --fail-on-warn
+vp -C packages/ui pack               # as if run from the package directory
+vp pack src/index.ts --dts           # explicit entry
+vp pack --workspace --filter /ui$/   # workspace mode, filtered by config cwd or name
 ```
 
-For libraries, reach for `vp pack` before `vp build`.
+- `--root <dir>` sets the root directory of the input files. It does not
+  select a package; use `-C`.
+- At the workspace root with no target, `vp pack` runs the single packable
+  package, opens a picker, or exits 1 in a non-interactive shell.
 
-## Package-Quality Flags
-
-Installed `vp pack --help` exposes these material package-quality flags:
-
-- `--dts`
-- `--publint`
-- `--attw`
-- `--unused`
-- `--exports`
-- `--fail-on-warn`
-- `--no-write`
-
-Use `--publint`, `--attw`, `--unused`, and `--exports` when the goal is package
-contract quality rather than just bundling.
-
-## Workspace Filtering
-
-`vp pack --filter` filters pack configs in workspace mode:
+## Package Quality
 
 ```bash
-vp pack --workspace --filter <config-name-or-regex>
+vp -C packages/ui pack --dts --publint --attw --unused --exports
 ```
 
-This is not the same selection surface as `vpr <package>#<task>`, which targets
-workspace package scripts/tasks.
+- `--publint`, `--attw` and `--unused` are off by default. `--exports`
+  (experimental) generates export metadata for `package.json`.
+- `--fail-on-warn` is on by default.
+- `--no-write` disables writing files; do not pair it with checks that must
+  validate emitted files.
+- For TypeScript project-reference packages, check tsdown's `dts` options
+  before assuming plain `--dts` works, and record what works as a project rule.
 
-## Declaration Output Caveats
+## Executables
 
-The generic Vite+ docs show plain `--dts`, but real monorepos may need more
-specific tsdown declaration options. Check local package shape and prior repo
-rules before using package-quality flags.
-
-For TypeScript project-reference packages, `--dts.build true` may be required
-where plain `--dts` fails. Confirm per project and keep it as a project rule, not
-a universal Vite+ claim.
-
-## `--no-write` Caveat
-
-`--no-write` disables writing files. Do not combine it with `--publint`,
-`--attw`, or `--exports` when those checks need real emitted package files
-unless intentionally testing parser-only behavior. Package-quality validation
-usually needs real output so exports and declaration paths point at files that
-exist.
+`exe: true` in the `pack` block (or `--exe`) builds a Node.js single executable
+application. It needs Node.js 25.7.0 or later (`vp env use 26`).

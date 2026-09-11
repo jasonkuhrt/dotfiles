@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Vendored third-party skill reference docs: their examples use placeholder credentials"
+paths = [
+  '''^home/\.claude/skills/(cloudflare|workers-best-practices)/references/''',
+]

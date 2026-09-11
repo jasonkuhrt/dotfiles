@@ -7,8 +7,8 @@ if status is-interactive
     # Commands to run in interactive sessions can go here
 end
 
-# Prompt (Starship)
-starship init fish | source
+# Prompt (Starship). --print-full-init avoids the extra process the default init spawns.
+status is-interactive; and starship init fish --print-full-init | source
 
 # Secrets
 # =======
@@ -84,6 +84,10 @@ set --universal fish_greeting ""
 # https://supermemory.ai/docs/integrations/claude-code#environment-variables
 # SUPERMEMORY_SKIP_TOOLS=Read,Glob,Grep # Tools to not capture (optional)
 # SUPERMEMORY_DEBUG=true                # Enable debug logging (optional)
+
+# Interactive-only block: abbreviations, helper functions, shell modules and prompt
+# integrations do nothing in a script, but every `fish -c` paid for them.
+if status is-interactive
 
 # Abbreviations & Aliases
 # =======================
@@ -244,6 +248,8 @@ for f in ~/.config/fish/modules/*.fish
     source $f
 end
 
+end # interactive-only block
+
 set --export GITHUB_HANDLE jasonkuhrt
 
 # Node package managers
@@ -284,6 +290,8 @@ fish_add_path /Users/jasonkuhrt/.codeium/windsurf/bin
 # ––––––––––––––––––––––––––– Vim Mode
 #
 #
+
+if status is-interactive
 
 # Vi mode with hybrid insert (Ctrl+A/E still work in insert mode)
 fish_vi_key_bindings default
@@ -339,6 +347,8 @@ function fish_mode_prompt --description "Display vi mode as a single Tokyo Night
     set_color normal
 end
 
+end # interactive-only block
+
 # bun
 set --export BUN_INSTALL "$HOME/.bun"
 set --export PATH $BUN_INSTALL/bin $PATH
@@ -354,7 +364,7 @@ fish_add_path "$HOME/go/bin"
 
 # Gentle nudge if nesia changelog hasn't been checked in 7+ days
 # Must be after PATH setup since nesia lives in ~/.local/bin
-nesia nag 2>/dev/null
+status is-interactive; and nesia nag 2>/dev/null
 
 # Added by OrbStack: command-line tools and integration
 # This won't be added again if you remove it.

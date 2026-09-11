@@ -17,7 +17,7 @@ Interactive Fish abbreviations expand classic commands to modern replacements. S
 | `diff` | `difft` | Structural diff (understands syntax) |
 | `vim` | `nvim` | Neovim |
 
-Full list in `home/dot_config/fish/config.fish`.
+Full list in `home/.config/fish/config.fish`.
 
 ## Tools Reference
 

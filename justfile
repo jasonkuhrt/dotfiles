@@ -14,6 +14,14 @@ default:
 up:
     {{ dotctl }} up
 
+# Remove symlinks into the repo that the deployment plan no longer contains
+prune *args:
+    {{ dotctl }} prune {{ args }}
+
+# Regenerate the cached symlink manifest that explain/status read
+manifest:
+    {{ dotctl }} manifest --write
+
 edit target:
     {{ dotctl }} edit {{ target }}
 
@@ -298,10 +306,12 @@ karabiner-check:
     fi
 
     if [ -f "$live_cfg" ]; then
-        if cmp -s "$repo_cfg" "$live_cfg"; then
-            pass "Live Karabiner config matches repo config"
+        # ~/.config/karabiner is a whole-dir symlink into the repo, so comparing contents
+        # compares a file with itself; -ef asks whether they really are the same file.
+        if [ "$repo_cfg" -ef "$live_cfg" ]; then
+            pass "Live Karabiner config is the repo file"
         else
-            bad "Live Karabiner config differs from repo config"
+            bad "Live Karabiner config is not the repo file: $live_cfg"
         fi
     else
         bad "Live Karabiner config not found at $live_cfg"
@@ -313,7 +323,7 @@ karabiner-check:
         bad "Karabiner core service is not running"
     fi
 
-    if pgrep -f 'karabiner_console_user_server' >/dev/null; then
+    if pgrep -f 'Karabiner-Console-User-Server' >/dev/null; then
         pass "Karabiner console user server is running"
     else
         bad "Karabiner console user server is not running"
@@ -482,7 +492,7 @@ claude-dispatch-check:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    script="$PWD/home/.claude/skills/dispatch/dispatch.sh"
+    script="$PWD/home/.claude/skills-library/dispatch-claude/dispatch.sh"
 
     bash -n "$script"
 
@@ -1382,23 +1392,23 @@ brew-cleanup:
 
 [private]
 shan *args:
-    bun x @jasonkuhrt/shan {{ args }}
+    shan {{ args }}
 
 [private]
 transcript-dump *args:
-    bun x @jasonkuhrt/shan transcript dump {{ args }}
+    shan transcript dump {{ args }}
 
 [private]
 transcript-analyze *args:
-    bun x @jasonkuhrt/shan transcript analyze {{ args }}
+    shan transcript analyze {{ args }}
 
 [private]
 task-dump *args:
-    bun x @jasonkuhrt/shan task dump {{ args }}
+    shan task dump {{ args }}
 
 [private]
 task-open *args:
-    bun x @jasonkuhrt/shan task open {{ args }}
+    shan task open {{ args }}
 
 browser-probe := "research/browser-native-host-prototype/host/agent-browser-host.ts"
 

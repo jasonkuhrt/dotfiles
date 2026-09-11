@@ -146,7 +146,7 @@ abbr -a du dust
 abbr -a df duf
 abbr -a ps procs
 abbr -a sed sd
-abbr -a dig dog
+abbr -a dig doggo
 abbr -a ping gping
 abbr -a diff difft
 abbr -a n nvim

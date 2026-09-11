@@ -1,27 +1,30 @@
 # hb-logs: Open the latest Claude Code background task output in lnav
 #
 # CC writes background task output to:
-#   /private/tmp/claude-<uid>/-<mangled-project-path>/tasks/<hash>.output
+#   /private/tmp/claude-<uid>/<mangled-project-path>/<session-uuid>/tasks/<hash>.output
 #
-# This function finds the latest .output file for the current project
-# and opens it in lnav for live tailing with search/filter/SQL.
+# The mangling replaces every non-alphanumeric character, '.' included, so
+# ~/.codex/worktrees/x/Heartbeat becomes -Users-jasonkuhrt--codex-worktrees-x-Heartbeat.
+
+function __hb_logs_outputs --description "List CC task output files for the current project, newest first"
+    set -l uid (id -u)
+    set -l project_dir (string replace -ra '[^A-Za-z0-9]' '-' -- $PWD)
+    set -l base /private/tmp/claude-$uid/$project_dir
+
+    test -d $base; or return 1
+
+    set -l found (find $base -mindepth 3 -maxdepth 3 -path '*/tasks/*.output' -type f 2>/dev/null)
+    test (count $found) -gt 0; or return 1
+
+    ls -t $found
+end
 
 function hb-logs --description "Open latest CC task output in lnav"
-    set -l uid (id -u)
-    set -l project_dir (pwd | string replace -a '/' '-')
-    set -l tasks_dir "/private/tmp/claude-$uid/$project_dir/tasks"
-
-    if not test -d "$tasks_dir"
-        echo "No CC task directory found for this project"
-        echo "  Expected: $tasks_dir"
-        echo "  (Run a background task in CC first)"
-        return 1
-    end
-
-    set -l outputs (ls -t "$tasks_dir"/*.output 2>/dev/null)
+    set -l outputs (__hb_logs_outputs)
 
     if test (count $outputs) -eq 0
-        echo "No task output files found in $tasks_dir"
+        echo "No CC task output found for this project"
+        echo "  (Run a background task in CC first)"
         return 1
     end
 
@@ -52,21 +55,12 @@ function hb-logs --description "Open latest CC task output in lnav"
 end
 
 function hb-logs-path --description "Print CC task output path (for pasting into other tools)"
-    set -l uid (id -u)
-    set -l project_dir (pwd | string replace -a '/' '-')
-    set -l tasks_dir "/private/tmp/claude-$uid/$project_dir/tasks"
+    set -l outputs (__hb_logs_outputs)
 
-    if not test -d "$tasks_dir"
-        echo "No CC task directory found" >&2
-        return 1
-    end
-
-    set -l outputs (ls -t "$tasks_dir"/*.output 2>/dev/null)
     if test (count $outputs) -eq 0
-        echo "No output files found" >&2
+        echo "No CC task output found for this project" >&2
         return 1
     end
 
-    # Print the path (no lnav, just the path for piping/copying)
     echo $outputs[1]
 end

@@ -1,3 +1,8 @@
+# Interactive git safety guardrails.
+# git.fish runs every interactive invocation through __dotfiles_git_guardrail.
+# Blocked commands print a modern alternative and return 2; `command git ...` is
+# the escape hatch.
+
 function __dotfiles_git_checkout_guidance --description "Reject interactive git checkout usage with modern replacements"
     set -l args $argv
 
@@ -39,6 +44,15 @@ function __dotfiles_git_push_force_guidance --description "Reject interactive gi
     for arg in $argv
         switch "$arg"
             case -f --force
+            case '--*'
+                set -a filtered_args "$arg"
+            case '-*f*'
+                # A short-option cluster such as -fu keeps its other flags.
+                set -l other_flags (string replace -a f '' -- "$arg")
+                test "$other_flags" != -; and set -a filtered_args "$other_flags"
+            case '+*'
+                # The lease protects the ref without the forcing plus.
+                set -a filtered_args (string sub --start 2 -- "$arg")
             case '*'
                 set -a filtered_args "$arg"
         end
@@ -85,10 +99,14 @@ function __dotfiles_git_reset_hard_guidance --description "Reject interactive gi
     return 2
 end
 
-function __dotfiles_git_has_force_push_arg --description "Return true when push args include unsafe force"
+function __dotfiles_git_has_force_push_arg --description "Return true when push args force-update a ref"
     for arg in $argv
         switch "$arg"
-            case -f --force
+            case --force '+*'
+                return 0
+            case '--*'
+                # Long options, including the safe --force-with-lease and --force-if-includes.
+            case '-*f*'
                 return 0
         end
     end
@@ -100,26 +118,40 @@ function __dotfiles_git_has_hard_reset_arg --description "Return true when reset
     contains -- --hard $argv
 end
 
-function git --wraps git --description "Git wrapper with interactive safety guardrails"
-    if test (count $argv) -ge 1
-        if status is-interactive; or set -q DOTFILES_GIT_GUARDRAILS_FORCE
-            switch "$argv[1]"
-                case checkout
-                    __dotfiles_git_checkout_guidance $argv[2..-1]
-                    return $status
-                case push
-                    if __dotfiles_git_has_force_push_arg $argv[2..-1]
-                        __dotfiles_git_push_force_guidance $argv[2..-1]
-                        return $status
-                    end
-                case reset
-                    if __dotfiles_git_has_hard_reset_arg $argv[2..-1]
-                        __dotfiles_git_reset_hard_guidance $argv[2..-1]
-                        return $status
-                    end
-            end
+function __dotfiles_git_guardrail --description "Print guidance and return 2 for a blocked git invocation; return 0 to allow it"
+    # Skip global options so `git -C <dir> push --force` still resolves to `push`.
+    set -l idx 1
+    while test $idx -le (count $argv)
+        switch "$argv[$idx]"
+            case -C -c --git-dir --work-tree --namespace --config-env --super-prefix
+                set idx (math $idx + 2)
+            case '-*'
+                set idx (math $idx + 1)
+            case '*'
+                break
         end
     end
+    test $idx -le (count $argv); or return 0
 
-    command git $argv
+    set -l subcommand $argv[$idx]
+    set -l rest $argv
+    set -e rest[1..$idx]
+
+    switch "$subcommand"
+        case checkout
+            __dotfiles_git_checkout_guidance $rest
+            return $status
+        case push
+            if __dotfiles_git_has_force_push_arg $rest
+                __dotfiles_git_push_force_guidance $rest
+                return $status
+            end
+        case reset
+            if __dotfiles_git_has_hard_reset_arg $rest
+                __dotfiles_git_reset_hard_guidance $rest
+                return $status
+            end
+    end
+
+    return 0
 end

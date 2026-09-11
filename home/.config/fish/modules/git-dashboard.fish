@@ -1,15 +1,7 @@
 # Git Dashboard
 # =============
-# Context-aware git status with railway graph visualization
-# See GIT_DASHBOARD_DESIGN.md for design documentation
-
-function git --wraps git --description "git with no args shows dashboard"
-    if test (count $argv) -eq 0
-        _git_dashboard
-    else
-        command git $argv
-    end
-end
+# Context-aware git status with railway graph visualization, shown by bare `git` (git.fish)
+# See git-dashboard.md for design documentation
 
 function _git_is_repo
     command git rev-parse --git-dir >/dev/null 2>&1

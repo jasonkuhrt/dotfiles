@@ -628,18 +628,20 @@ fish-check:
     set -euo pipefail
 
     fish_cfg="$PWD/home/.config/fish/config.fish"
-    git_checkout_guardrail="$PWD/home/.config/fish/modules/git-checkout-guardrail.fish"
-    git_shortcuts="$PWD/home/.config/fish/modules/git-shortcuts.fish"
-    git_learn_completions="$PWD/home/.config/fish/modules/git-learn-completions.fish"
+    modules_dir="$PWD/home/.config/fish/modules"
     gco_completion="$PWD/home/.config/fish/completions/gco.fish"
 
     fish -n "$fish_cfg"
-    fish -n "$git_checkout_guardrail"
-    fish -n "$git_shortcuts"
-    fish -n "$git_learn_completions"
+    for module in "$modules_dir"/*.fish; do fish -n "$module"; done
     fish -n "$gco_completion"
 
-    fish -c "source \"$git_checkout_guardrail\"; source \"$git_shortcuts\"; source \"$git_learn_completions\"; source \"$gco_completion\"; functions -q gco; functions -q git; test -n \"(__dotfiles_git_default_branch)\"; complete -C 'gco ' >/dev/null; complete -C 'git learn ' >/dev/null"
+    # Load the modules the way config.fish does, without the live config, so one module
+    # redefining another's function fails here instead of silently in a shell.
+    fish --no-config -c "for f in \"$modules_dir\"/*.fish; source \$f; end; source \"$gco_completion\"
+        for fn in gco __dotfiles_git_default_branch __dotfiles_git_guardrail _git_dashboard; functions -q \$fn; or exit 1; end
+        test (functions --details git) = \"$modules_dir/git.fish\"; or exit 1
+        complete -C 'gco ' >/dev/null; or exit 1
+        complete -C 'git learn ' >/dev/null; or exit 1"
 
     printf 'PASS: fish-check\n'
 
@@ -664,10 +666,8 @@ git-guardrail-check:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    repo_root="$PWD"
-    guardrail="$repo_root/home/.config/fish/modules/git-checkout-guardrail.fish"
-
-    fish -n "$guardrail"
+    modules_dir="$PWD/home/.config/fish/modules"
+    for module in "$modules_dir"/*.fish; do fish -n "$module"; done
 
     tmpdir="$(mktemp -d)"
     trap 'rm -rf "$tmpdir"' EXIT
@@ -679,29 +679,42 @@ git-guardrail-check:
     git commit --allow-empty -m init >/dev/null 2>&1
     git switch -c feature/test >/dev/null 2>&1
 
-    blocked_output="$(DOTFILES_GIT_GUARDRAILS_FORCE=1 fish -c "source \"$guardrail\"; git checkout main" 2>&1 || true)"
-    printf '%s\n' "$blocked_output" | grep -q 'Blocked: `git checkout` is disabled'
-    printf '%s\n' "$blocked_output" | grep -q 'git switch main'
-    printf '%s\n' "$blocked_output" | grep -q 'Escape hatch: command git checkout'
+    # Load every module the way config.fish does, without the live config, so a module
+    # shadowing the wrapper fails here. The dashboard is stubbed: this checks dispatch.
+    load="for f in \"$modules_dir\"/*.fish; source \$f; end; function _git_dashboard; echo DASHBOARD; end"
+    guarded() { DOTFILES_GIT_GUARDRAILS_FORCE=1 fish --no-config -c "$load; $1" 2>&1 || true; }
+    expect_blocked() {
+        local out; out="$(guarded "$1")"
+        printf '%s\n' "$out" | grep -qF "Blocked: \`git $2\` is disabled" || { printf 'FAIL: not blocked: %s\n%s\n' "$1" "$out" >&2; exit 1; }
+        printf '%s\n' "$out"
+    }
+    expect_allowed() {
+        local out; out="$(guarded "$1")"
+        if printf '%s\n' "$out" | grep -qF 'Blocked:'; then printf 'FAIL: blocked: %s\n%s\n' "$1" "$out" >&2; exit 1; fi
+    }
 
-    current_branch="$(DOTFILES_GIT_GUARDRAILS_FORCE=1 fish -c "source \"$guardrail\"; command git checkout main >/dev/null; command git branch --show-current")"
-    [ "$current_branch" = "main" ]
+    [ "$(fish --no-config -c "$load; functions --details git")" = "$modules_dir/git.fish" ]
+    [ "$(guarded 'git')" = "DASHBOARD" ]
 
-    blocked_output="$(DOTFILES_GIT_GUARDRAILS_FORCE=1 fish -c "source \"$guardrail\"; git push --force origin feature/test" 2>&1 || true)"
-    printf '%s\n' "$blocked_output" | grep -q 'Blocked: `git push --force` is disabled'
-    printf '%s\n' "$blocked_output" | grep -q 'git push --force-with-lease origin feature/test'
-    printf '%s\n' "$blocked_output" | grep -q 'git pf origin feature/test'
+    expect_blocked 'git checkout main' checkout | grep -qF 'git switch main'
+    expect_blocked 'git -C . checkout main' checkout >/dev/null
+    expect_blocked 'git -c core.pager=cat --no-pager checkout main' checkout >/dev/null
+    expect_blocked 'git push --force origin feature/test' 'push --force' | grep -qF 'git pf origin feature/test'
+    expect_blocked 'git push -f origin feature/test' 'push --force' >/dev/null
+    expect_blocked 'git push -fu origin feature/test' 'push --force' | grep -qF 'git push --force-with-lease -u origin feature/test'
+    expect_blocked 'git push origin +feature/test' 'push --force' | grep -qF 'git push --force-with-lease origin feature/test'
+    expect_blocked 'git -C . push --force origin feature/test' 'push --force' >/dev/null
+    expect_blocked 'git reset --hard HEAD~1' 'reset --hard' | grep -qF 'git reset --soft HEAD~1'
+    expect_blocked 'git -C . reset --hard HEAD' 'reset --hard' >/dev/null
 
-    escape_output="$(DOTFILES_GIT_GUARDRAILS_FORCE=1 fish -c "source \"$guardrail\"; command git push --force origin feature/test" 2>&1 || true)"
-    printf '%s\n' "$escape_output" | grep -qv 'Blocked: `git push --force` is disabled'
+    expect_allowed 'git push --force-with-lease origin feature/test'
+    expect_allowed 'git -c color.ui=never --no-pager log --oneline -1'
+    expect_allowed 'git reset --soft HEAD'
+    expect_allowed 'git switch -q main'
 
-    blocked_output="$(DOTFILES_GIT_GUARDRAILS_FORCE=1 fish -c "source \"$guardrail\"; git reset --hard HEAD~1" 2>&1 || true)"
-    printf '%s\n' "$blocked_output" | grep -q 'Blocked: `git reset --hard` is disabled'
-    printf '%s\n' "$blocked_output" | grep -q 'git reset --soft HEAD~1'
-    printf '%s\n' "$blocked_output" | grep -q 'git reflog'
-
-    escape_output="$(DOTFILES_GIT_GUARDRAILS_FORCE=1 fish -c "source \"$guardrail\"; command git reset --hard HEAD >/dev/null; command git rev-parse --verify HEAD" 2>&1 || true)"
-    printf '%s\n' "$escape_output" | grep -qv 'Blocked: `git reset --hard` is disabled'
+    # The escape hatch and non-interactive shells run git unguarded.
+    [ "$(guarded 'command git checkout -q feature/test; command git branch --show-current')" = "feature/test" ]
+    [ "$(fish --no-config -c "$load; git checkout -q main; command git branch --show-current")" = "main" ]
 
     printf 'PASS: git-guardrail-check\n'
 

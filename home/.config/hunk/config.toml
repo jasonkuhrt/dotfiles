@@ -1,31 +1,108 @@
 # Hunk user config.
 #
 # Hunk 0.18+ DOES expose configurable keybindings here via a [keybindings]
-# table (command ids like "hunk.review.nextHunk"). None are remapped yet --
-# defaults already match the local motion vocabulary. Key alignment around the
-# app:
+# table (command ids like "hunk.review.nextHunk"). Space, `J`, and `K` are
+# remapped (see [keybindings] below); the other defaults already match the
+# local motion vocabulary. Key alignment around the app:
 # - Fish: `h` aliases to `hunk`.
 # - Git: diff-shaped pager output routes through `hunk pager`.
-# - LazyGit: `H` opens Hunk review sessions from the relevant Git context.
+# - LazyGit: `H` opens Hunk review sessions from the relevant Git context, its
+#   screen-mode keys `+` / `_` cycle Hunk's pane layouts (pane-cycle), and
+#   `J` / `K` page the review the way they scroll LazyGit's main view, from the
+#   file tree too.
 # - Codex: the hunk-agent-dispatch extension sends saved notes on Ctrl+S.
+# - Review progress (review-marks; files-pane shows `✓` / `◐` per file): Space
+#   marks reviewed the way LazyGit stages, the whole file while the file tree
+#   has focus (`h` focuses it; `l`, Enter, or Escape leaves) and the current hunk
+#   otherwise. `x` / `X` mark hunk / file directly, `>` / `<` jump to the next /
+#   previous unreviewed hunk, and `H` hides fully reviewed files.
 # - Inside Hunk: j/k, d/u, g/G, and c already match the local motion/review
 #   vocabulary; hunk/file/comment jumps remain Hunk's built-ins:
 #   [ ], , ., and { }.
 
-theme = "tokyo-night"
+theme = "tokyonight"
 mode = "auto"
 watch = false
 exclude_untracked = false
 line_numbers = true
+# The cursor paints a fixed 20% text blend (#373949 here) that no theme key
+# controls, so the whole row is the strongest marker Hunk has; `number` lifts
+# only the line-number cell, which is easy to lose.
+cursor_line = "row"
 wrap_lines = false
 hunk_headers = true
 agent_notes = true
 copy_decorations = false
+menu_bar = false
 color_moved = true
+# Panes open and close in one frame. The slide animation redraws the review for
+# ~200 ms on every pane toggle (`s`, `+`).
+animations = false
+
+# Space marks reviewed (review-marks' toggle) instead of paging down, and `J` /
+# `K` page down / up, as they scroll LazyGit's main view. A binding replaces the
+# command's default keys, so the page commands restate the defaults they keep.
+[keybindings]
+"review-marks.toggle" = "space"
+"hunk.review.pageDown" = ["pagedown", "f", "J"]
+"hunk.review.pageUp" = ["pageup", "b", "shift+space", "K"]
+
+# Bundled tokyo-night derives its UI from the VS Code theme: grey chrome
+# blends, muted text and line numbers that fail a contrast floor and fall back
+# to neutral #aeafb5 / #a8a8ad, and teal/red diff and file-status colors.
+# Every UI value below is the Tokyo Night palette instead, read from the Zed
+# tokyo-night extension theme (key names in the comments); syntax colors stay
+# with the bundled theme. The row tints are Hunk's own derivation
+# (ui/themes.ts buildShikiTheme) applied to the palette's added, deleted, and
+# accent colors, so they keep its readability guarantees. The id matches
+# Ghostty's `theme = tokyonight`; Hunk reserves the bundled `tokyo-night`.
+[themes.tokyonight]
+base = "tokyo-night"
+label = "Tokyo Night"
+# Surfaces
+panel = "#16161e"            # panel.background: files pane, dividers, dialogs
+panelAlt = "#1e202e"         # editor.highlighted_line: @@ and collapsed rows, split fillers
+border = "#363b54"           # indent_guide: file separator rules, divider lines
+noteBackground = "#16161e"
+noteTitleBackground = "#16161e"
+# Text
+muted = "#787c99"            # text.muted: directories, collapsed rows, hints
+badgeNeutral = "#787c99"     # text.muted: @@ hunk headers, dialog section titles
+lineNumberFg = "#787c99"     # text.muted: editor.line_number #363b54 is 1.04:1 on the cursor
+# Accent and selection
+accent = "#7dcfff"           # text.accent
+noteBorder = "#7dcfff"
+accentMuted = "#414868"      # tab.active_background: menu/dialog selection, scrollbar thumb
+selectedHunk = "#1e3b51"     # players selection #267ead3d, pre-scaled for Hunk's 75% blend
+# Diff
+addedSignColor = "#9ece6a"   # version_control.added
+removedSignColor = "#f7768e" # version_control.deleted
+addedBg = "#2f3831"
+addedContentBg = "#3b4837"
+removedBg = "#462d3b"
+removedContentBg = "#583443"
+movedAddedBg = "#2e3f51"
+movedRemovedBg = "#2e3f51"
+# Files pane status
+badgeAdded = "#9ece6a"
+badgeRemoved = "#f7768e"
+fileNew = "#9ece6a"          # created
+fileUntracked = "#9ece6a"
+fileDeleted = "#f7768e"      # deleted
+fileModified = "#e0af68"     # modified
+fileRenamed = "#7dcfff"      # renamed
+
+# `+` / `_` step through pane layouts like LazyGit's screen modes: split (files
+# pane beside the review), tree (files over all but 5 review rows), review
+# (review alone). The cycler knows panes only by these keys; files-pane
+# registers both.
+[extension.pane-cycle]
+files = "files-pane:files" # split: the left files pane
+tree = "files-pane:tree"   # tree: the top pane that fills the body
 
 # Saved review notes go to Codex. The extension validates `transport` against
 # its own literal set, because a reviewed repo can override this table.
 [extension.hunk-agent-dispatch]
-transport = "desktop"  # desktop | exec | print
-debounceMs = 10000     # idle gap after the last Ctrl+S before the batch leaves
-enabled = true
+transport = "desktop" # desktop | exec | print
+debounceMs = 10000    # idle gap after the last Ctrl+S before the batch leaves
+enabled = false       # opt-in; the desktop transport is failing, see below

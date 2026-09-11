@@ -1,68 +1,70 @@
-# `vp env` — Node runtime management
+# `vp env`: Node.js And Package-Manager Versions
 
-Full installed guide: `node_modules/vite-plus/docs/guide/env.md`. Read it
-before making semantic claims; this file is the operational digest.
+Installed docs: `node_modules/vite-plus/docs/guide/env.md`, `guide/upgrade.md`,
+`guide/installer-env-vars.md`.
 
-## The `env` family lives in the GLOBAL binary
+## Global Binary Only
 
-`vp` has two CLI surfaces, and only one of them has `env`:
+`vp env`, `vp node`, `vp upgrade` and `vp implode` appear only in the global
+`vp`. The workspace-local CLI answers `vp env` with "The `env` command is only
+available in the global `vp` CLI"; that is PATH evidence, not a missing
+feature.
 
-| Surface                | Path                                               | Has `env` family?                               |
-| ---------------------- | -------------------------------------------------- | ----------------------------------------------- |
-| Global native binary   | `~/.vite-plus/bin/vp` (`VP_HOME/bin`)              | Yes — owns runtime management                   |
-| Workspace-local JS CLI | `node_modules/.bin/vp` (vite-plus npm package bin) | No — `vp env` reports `Command 'env' not found` |
+- Fresh installs keep executables in `~/.local/share/vite-plus/bin` (Windows:
+  `%LOCALAPPDATA%\vite-plus\bin`). Existing `~/.vite-plus` installs are not
+  moved. `VP_HOME` puts everything under one root.
+- `type -a vp` shows which `vp` answers. Shell setup wraps `vp` in a function
+  so `vp env use` can change the current shell.
 
-In a workspace shell, bare `vp` often resolves to `node_modules/.bin/vp`
-(workspace bins get PATH-prepended by direnv setups, manifest scripts, and
-CI's expose-workspace-binaries step). A `Command 'env' not found` from that
-surface is **PATH evidence, not version evidence** — never conclude the
-installed vite-plus version lacks `vp env` from a workspace-shell probe.
+## Resolution
 
-Probe the global binary explicitly:
+Node.js: the nearest directory, walking up, that declares a version wins.
+Within one directory the order is `.node-version`, `devEngines.runtime`,
+`engines.node`, `.nvmrc`. With no declaration, Vite+ uses `vp env default`,
+then the latest LTS. `vp env doctor` warns when declared sources conflict;
+keep one canonical pin.
 
-```bash
-~/.vite-plus/bin/vp env current
-~/.vite-plus/bin/vp env --help
-```
+Package manager: an explicit override, then `VP_PACKAGE_MANAGER` or a session
+override, `packageManager`, `devEngines.packageManager`, the lockfile or
+manager config, the manager's global default, and finally its latest release.
 
-Shell integration note: `vp` may also be a shell function (from
-`~/.vite-plus/env`) that special-cases `vp env use` to eval its output into
-the current session. `type -a vp` shows the full resolution chain.
+`vp env on` makes shims always use managed Node.js. `vp env off` prefers the
+system Node.js and falls back to managed.
 
-## Resolution Model
-
-- **Managed mode (default):** `node`, `npm`, `npx` shims in `VP_HOME/bin`
-  resolve through Vite+ to the right Node version for the current project.
-  When `package.json#packageManager` is set, matching package-manager shims
-  use that exact version. `vp env off` switches to system-first mode.
-- **Project runtime source:** Vite+ 0.2 resolves `.node-version`, then
-  `package.json#devEngines.runtime`, then `package.json#engines.node`, then the
-  global default/latest LTS. Pick ONE of these as the project's canonical pin and
-  don't mix them — e.g. if the project pins via `devEngines.runtime`, don't also
-  add `.node-version`.
-- **Session override:** `vp env use <version>` for the current shell
-  session. **CI path is first-class:** without shell init, `vp env use`
-  writes a session file under `VP_HOME` so later shim calls in the same job
-  resolve the selected version.
-- **Storage:** runtimes live under `~/.vite-plus/js_runtime/node/<version>/`;
-  override the root with `VP_HOME`; mirror with `VP_NODE_DIST_MIRROR`.
-
-## Inspect before claiming
+## Inspect
 
 ```bash
-~/.vite-plus/bin/vp env current        # resolved version + source + tool paths
-~/.vite-plus/bin/vp env doctor         # environment diagnostics
-~/.vite-plus/bin/vp env which node     # which binary a shim will use
+vp env current --json     # node and package_manager, each with its source
+vp env which node
+vp env list
+vp env list-remote --lts
+vp env doctor
+vp toolchain --global     # tool versions of the global release
 ```
 
-`vp env current` names the source and exact tool paths. `vp env current --json`
-reports the resolved `"source"` — confirm it matches the project's intended pin
-(`.node-version` / `devEngines.runtime` / `engines.node`).
+## Change
 
-## CI wiring
+```bash
+vp env pin 22 --target node-version   # or dev-engines, package-manager
+vp env unpin
+vp env use 22 pnpm@10                 # this shell session; --unset clears it
+vp env exec --node lts --package-manager pnpm@10 pnpm install
+vp node script.js
+```
 
-Use `voidzero-dev/setup-vp` with `node-version-file: package.json` (or the
-project's chosen pin source). setup-vp resolves the runtime, installs the global
-binary, PATH-prepends `VP_HOME/bin`, then runs `vp env use <resolved version>` —
-so the job's `node`/`npm`/`npx` resolve to the project pin end to end. Do not add
-bespoke Node provisioning (`setup-node`, manual downloads) next to it.
+`VP_NODE_DIST_MIRROR` points Node.js downloads at a mirror.
+
+## CI
+
+The `voidzero-dev/setup-vp` GitHub Action installs Vite+, Node.js and the
+package manager, so jobs need no separate `setup-node` or package-manager
+setup (its GitLab template expects Node.js from the job image). Without shell
+initialization, `vp env use` writes a session file that later shim calls in
+the same job read.
+
+## pnpm Also Managing Node.js
+
+pnpm can manage `devEngines.runtime` too, so pnpm and Vite+ can download or
+select different versions. To let Vite+ own Node.js on pnpm 11+, run
+`pnpm config set --global runtimeOnFail ignore`; this also stops pnpm managing
+Bun and Deno runtimes.

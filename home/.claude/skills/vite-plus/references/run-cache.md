@@ -1,308 +1,194 @@
-# Vite Task, `vp run`, Filters, And Cache
+# `vp run` And Vite Task Caching
 
-## Contents
+Installed docs: `node_modules/vite-plus/docs/guide/run.md`, `config/run.md`,
+`guide/cache.md`, `guide/automatic-data-tracking.md`,
+`guide/github-actions-cache.md`. Checked on Vite+ 0.3.1, which pins vite-task
+`d05b1dc`.
 
-- `vp run` planning model
-- Argument forwarding
-- Workspace filters
-- Task definitions
-- Cache enablement
-- Cache key and replay
-- Automatic file tracking
-- Environment model
-- CI design
-
-## `vp run` Planning Model
-
-`vp run` has three stages:
-
-1. Package selection.
-2. Task/script selection inside selected packages.
-3. Execution graph planning, including package dependency order and explicit
-   `dependsOn` edges.
-
-Package selection examples:
+## Selecting Packages
 
 ```bash
-vp run build                                      # package containing cwd
-vp run -w build                                   # workspace root package
-vp run -r build                                   # every workspace package with build
-vp run -t build                                   # current package plus dependencies
-vpr @scope/app#build                              # selected package script/task
+vp run build                    # the package containing the current directory
+vp run -r build                 # every package that defines it, in dependency order
+vp run -t @my/app#build         # the package and its transitive dependencies
+vp run -w build                 # the workspace root package
+vp run --filter "@my/*" build   # pnpm filter syntax
+vpr @my/app#build               # one package; vpr is vp run
 ```
 
-Running `vp run` without a task name opens an interactive task selector.
-Agents should avoid that in unattended workflows; choose an explicit task.
+- Filters: name or glob, `./dir`, `{dir}`, `pkg...` (with dependencies),
+  `...pkg` (with dependents), `pkg^...` (dependencies only), `!pkg`. Several
+  `--filter` flags form a union; exclusions apply last.
+- `-t` cannot be combined with `-r` or `--filter`
+  (`crates/vt_workspace/src/package_filter.rs:218-222`).
+- Without a task name, `vp run` opens an interactive selector.
 
-A `<pkg>#<task>` specifier or `--filter <pattern>` that matches no package exits
-0 by default; add `--fail-if-no-match` to exit non-zero instead. In 0.2.x this
-works on both `vp run` and `vp exec` (verified: exit 1 on no match). An unknown
-task inside an existing package fails loudly. Confirm a filtered run actually
-executed before trusting the exit code.
+A selection that matches nothing:
 
-Useful control/debug flags:
+| Selection                               | Default           | With `--fail-if-no-match` |
+| --------------------------------------- | ----------------- | ------------------------- |
+| `--filter` matching no package          | message, exit 0   | error, exit 1             |
+| `<pkg>#<task>` with an unknown package  | no output, exit 0 | no output, exit 0         |
+| `<pkg>#<task>` with an unknown task     | error, exit 1     | error, exit 1             |
 
-```bash
-vp run --last-details
-vpr --log grouped @scope/app#test
-vp run --concurrency-limit 2 -r build
-vpr --ignore-depends-on @scope/app#build
-vp run --parallel -r build
-```
+Run control: `-v` (execution summary), `--last-details` (the previous run's
+summary), `--log interleaved|labeled|grouped`, `--concurrency-limit <n>`
+(default 4, or `VP_RUN_CONCURRENCY_LIMIT`; the flag wins), `--parallel`
+(ignores ordering, unlimited unless limited), `--ignore-depends-on`, `--cache`,
+`--no-cache`.
 
-`--parallel` disables dependency ordering and makes concurrency unlimited unless
-`--concurrency-limit` is also set. Use it only when order is irrelevant.
-
-## Argument Forwarding
-
-For `vp run`, flags before the task name belong to `vp run`; tokens after the
-task name are forwarded to the task process.
-
-```bash
-vpr @scope/app#test
-vpr @scope/app#test --reporter verbose
-```
-
-Do not put debug/control flags after the task name unless the underlying task
-should receive them:
-
-```bash
-vpr -v @scope/app#test
-vpr @scope/app#test -v
-```
-
-Bare `--` is not a universal safety marker. In Vitest file targeting, it can
-become part of the underlying command and stop the file filter from filtering.
-
-## Workspace Filters
-
-Package filtering is for `vp run`, not for domain commands. Domain commands use
-their own target model:
-
-```bash
-vp test run --root packages/app src/foo.test.ts
-vp lint packages/app/src
-vp fmt --check packages/app/src
-vp build apps/web
-```
-
-Task-runner package targeting:
-
-```bash
-vpr @scope/foo#build
-vpr ./packages/foo#docs
-```
-
-Use `-r` for all packages, `-t` for current package plus transitive
-dependencies, and `-w` for the workspace root.
-
-Multiple `--filter` flags are unioned, and exclusion filters apply after
-inclusions. `{dir}` has traversal suffix support. `<pattern>...` selects a
-package and its dependencies; `...<pattern>` selects a package and its
-dependents; `<pattern>^...` selects dependencies only.
+Flags before the task specifier belong to `vp run`; everything after it is
+passed to the task command.
 
 ## Task Definitions
 
-Configured tasks live under `run.tasks` in `vite.config.ts`.
-
-Use a task when you need:
-
-- Stable CI entrypoint.
-- Dependency ordering through `dependsOn`.
-- Cross-package task dependencies with `package#task`.
-- Cache controls.
-- Fingerprinted env controls.
-- Explicit input/output controls.
-- Package-root-relative `cwd`.
-
-Task definition forms:
+Tasks live under `run.tasks` in a package's `vite.config.ts`. A name cannot be
+both a task and a `package.json` script.
 
 ```ts
 tasks: {
-  build: 'vp build',
-  check: ['vp lint', 'vp build'],
+  build: 'vp build',                // shorthand
+  check: ['vp lint', 'vp build'],   // two commands, in order
   deploy: {
     command: 'deploy-script --prod',
-    dependsOn: ['build', 'test'],
-    env: ['NODE_ENV'],
-    output: ['dist/**'],
+    dependsOn: ['build', '@my/core#build', { task: 'build', from: 'dependencies' }],
+    cache: false,
   },
 }
 ```
 
-Command arrays are sequential commands, not argv tokens:
+- An array runs its commands in order, like `&&`. It is not an argv list:
+  `['vp', 'build']` runs `vp`, then `build`.
+- Object fields: `command`, `dependsOn`, `cache`, `env`, `untrackedEnv`,
+  `input`, `output`, `cwd` (relative to the package root).
+- `{ task, from }` runs `task` in each direct dependency that defines it;
+  `from` takes `dependencies`, `devDependencies`, `peerDependencies`, or an
+  array of them.
+- `&&` chains and arrays split into independently cached sub-tasks.
+- `run.enablePrePostScripts` (root config only, default `true`) runs
+  `preX`/`postX` scripts around script `X`.
+
+### `dependsOn` Or Nested `vp run`
+
+`dependsOn` builds one flat graph, so a task shared by several dependents runs
+once. A `vp run` inside a command is expanded into tasks (flat output,
+per-sub-task caching), but each nested invocation is isolated from its
+siblings, like nested `pnpm run`: two nested runs that both need a prerequisite
+both execute it, possibly at the same time
+([vite-task#323](https://github.com/voidzero-dev/vite-task/issues/323#issuecomment-4242689629)).
+Put shared prerequisites in `dependsOn`. A root `vp run -r <task>` that would
+include itself is pruned.
+
+## Cache Enablement And Keys
+
+- Tasks are cached by default; scripts are not. Precedence: a task's
+  `cache: false`, then `--cache` or `--no-cache`, then the root `run.cache`
+  (`boolean` or `{ tasks, scripts }`, default `{ tasks: true, scripts: false }`).
+- A task hits when its command and arguments, fingerprinted env and inputs are
+  unchanged. A hit replays the terminal output, restores output files and skips
+  the command. Only exit code 0 saves an entry.
+- A miss prints its reason: `'src/x.ts' modified`, `env 'NODE_ENV' changed`,
+  `args changed`.
+- Entries are content-based: the same command over the same inputs shares one
+  entry across tasks and scripts.
+- The store is `node_modules/.vite/task-cache` at the workspace root.
+  `vp cache clean` deletes it. Entries are never evicted by age or size.
+
+Built-in commands inside a task are rewritten to direct tool calls
+(`packages/cli/binding/src/cli/resolver.rs` in v0.3.1):
+
+- `vp lint` becomes `node <lint JS entry> …`, with `-c <vite config>` added
+  when the config has a `lint` block, and fingerprints `OXLINT_TSGOLINT_PATH`.
+- `vp fmt` becomes `node <fmt JS entry> …`, with `-c <vite config>` added when
+  the config has a `fmt` block.
+- `vp test` becomes `node <test JS entry> run …`. `run` is added unless a
+  subcommand, help, watch flag or `--run` is present.
+- `vp build` becomes `node <vite JS entry> build …` and reports its own
+  tracking.
+
+## Input And Output Tracking
+
+- `input` defaults to `[{ auto: true }]`: files the command reads, missing
+  files it probes, and directories it lists. `output` defaults to the files the
+  command writes.
+- Entries: package-relative globs, `!` exclusions, `{ auto: true }`, and
+  `{ pattern, base: 'package' | 'workspace' }` (`base` is required).
+- A list without `{ auto: true }` replaces tracking, so it must name the full
+  set. `input: []` keys only on command and env. `output: []` restores nothing
+  but still replays the log.
+- `vp build` reports `VITE_*`, `NODE_ENV`, its outputs and temp-path
+  exclusions; do not repeat them. Other tools can report through
+  `@voidzero-dev/vite-task-client`.
+- Exclude files the task itself rewrites (build info, tool caches, generated
+  output) from `input`, or the next run misses. Adding or removing a file in a
+  listed directory invalidates too, so broad scans make broad keys.
 
 ```ts
-tasks: {
-  check: ['vp lint', 'vp build'];
-} // correct
-tasks: {
-  check: ['vp', 'build'];
-} // wrong
+input: [{ auto: true }, '!**/*.tsbuildinfo', '!dist/**'],
+output: [{ auto: true }, '!*.tsbuildinfo'],
 ```
 
-Task names cannot overlap between `vite.config.ts` and `package.json`. Inspect
-both `package.json#scripts` and `vite.config.ts#run.tasks` before proposing a
-task name.
+## Environment
 
-Commands joined with `&&`, and command arrays, are split into independently
-cached sub-tasks. Nested `vp run` calls are inlined into the task graph. A root
-recursive task that would call itself is pruned rather than executed forever.
+Tasks run in a cleaned environment. Vite Task passes these without
+fingerprinting them (`crates/vt_graph/src/config/mod.rs:398-481`); the docs
+list only some:
 
-Pre/post scripts are enabled by default for package scripts unless
-`run.enablePrePostScripts` is disabled in the workspace root config.
+- system: `HOME`, `USER`, `TZ`, `LANG`, `SHELL`, `PWD`, `PATH`, `TMP`, `TEMP`,
+  `DISPLAY`, and XDG, library-path and Windows system variables;
+- Node.js: `NODE_OPTIONS`, `COREPACK_*`, `NPM_CONFIG_STORE_DIR`, `PNPM_HOME`;
+- CI and platforms: `CI`, `GITHUB_*`, `RUNNER_*`, `VERCEL`, `VERCEL_*`,
+  `NEXT_*`, `DOCKER_*`, `BUILDKIT_*`, `COMPOSE_*`, `PLAYWRIGHT_*`;
+- editors: `VSCODE_*`, `JB_IDE_*`, `ELECTRON_RUN_AS_NODE`;
+- `VP_*` and every `*_TOKEN`.
 
-## Cache Enablement
+Color variables (`FORCE_COLOR`, `NO_COLOR`, `COLORTERM`, `TERM`,
+`TERM_PROGRAM`) are withheld unless listed; `FORCE_COLOR=1` is set when nothing
+provides it.
 
-Caching only applies to `vp run` execution.
-
-Defaults:
-
-- Configured Vite Tasks: cached by default.
-- Package scripts: not cached by default.
-- `run.cache.tasks`: default `true`.
-- `run.cache.scripts`: default `false`.
-
-Override order:
-
-1. Per-task `cache: false` is final.
-2. CLI flags `--cache` / `--no-cache`.
-3. Workspace `run.cache`.
-
-Use `--cache` carefully on package scripts. It can be correct for pure scripts,
-but unsafe for scripts whose inputs/env/outputs are not modeled.
-
-## Cache Key And Replay
-
-When a cached task succeeds, Vite Task stores stdout/stderr and cache metadata.
-On the next run it checks:
-
-- Additional args passed to the task.
-- Fingerprinted env vars.
-- Input files.
-
-On a hit, Vite Task replays terminal output and does not run the process.
-
-Cache entries are content-keyed, so identical command strings share hits across
-tasks, scripts, and compound-command sub-tasks. Cache misses print the reason
-(`'src/x.ts' modified`, `env changed`, `args changed`) — read it before
-assuming the cache is broken. `vp cache clean` clears the store at
-`node_modules/.vite/task-cache`.
-
-By default, produced files are not restored. Configure `output` globs for file
-archiving:
+- `env` passes a variable and fingerprints it; `untrackedEnv` only passes it.
+  Both accept `PREFIX_*` and `!NAME`.
+- Execution knobs that do not change the result (worker counts, concurrency,
+  reporter or log modes) belong in `untrackedEnv`:
 
 ```ts
 tasks: {
-  build: {
-    command: 'vp build',
-    output: ['dist/**'],
+  test: {
+    command: 'vp test run --maxWorkers "${TEST_WORKERS:-4}"',
+    untrackedEnv: ['TEST_WORKERS'],
   },
 }
 ```
 
-Use workspace-based output patterns for artifacts outside the package:
+## Tasks That Compute A Diff
 
-```ts
-output: [{ pattern: 'shared-artifacts/**', base: 'workspace' }];
-```
+A task that resolves a diff must fingerprint its base, head, dirty and index
+state and relevant environment, or stay uncached. Alternatively, resolve the
+scope outside the cached task and hand execution a canonical selection that
+contains every behavior-relevant input. Fingerprint that selection and the
+sources it consumes; discovery commit IDs stop mattering once they no longer
+affect execution. For large selections, write a stable workspace-relative file
+that the cached process reads, so file tracking fingerprints its bytes without
+argv limits, and do not exclude that file from inputs.
 
-## Automatic File Tracking
+## CI
 
-Default `input` is automatic. Vite Task observes what the process reads.
-
-It tracks:
-
-- files opened by the process
-- missing-file probes
-- directory listings
-
-Treat this as observed process-input tracking. Files written by the command are
-not automatically restored from cache; produced files require `output` globs.
-
-Implications:
-
-- If a missing imported file appears later, the cache invalidates.
-- If a directory was listed by test discovery or globbing, adding/removing files
-  in that directory can invalidate the cache.
-- Broad scans make broad cache keys.
-- Tool caches and generated outputs can create noisy invalidation.
-
-Shape cache inputs deliberately:
-
-```ts
-input: [{ auto: true }, '!**/*.tsbuildinfo', '!dist/**'];
-input: ['src/**/*.ts', 'vite.config.ts'];
-input: [{ pattern: 'shared-config/**', base: 'workspace' }];
-input: []; // no file tracking; cache only by command/env
-```
-
-Do not cache tasks that read/write their own inputs or whose correctness
-depends on hidden process state Vite Task cannot observe.
-
-## Environment Model
-
-Tasks run in a clean environment. Only common variables are passed through by
-default. Other variables are neither visible to the task nor fingerprinted.
-
-Use `env` when the variable affects output/correctness:
-
-```ts
-env: ['NODE_ENV', 'VITE_*', 'GITHUB_SHA'];
-```
-
-Use `untrackedEnv` when the variable must be visible but should not invalidate
-the cache:
-
-```ts
-untrackedEnv: ['CI', 'GITHUB_ACTIONS'];
-```
-
-Use `untrackedEnv` for execution tuning knobs that do not affect correctness or
-output content. Examples include TypeScript checker/builder counts, worker
-counts, concurrency limits, log modes, reporter modes, and CI-only display
-controls. Do not put these in `env` merely because the command reads them:
-
-```ts
-tasks: {
-  'check:types': {
-    command:
-      'tsc --build ./tsconfig.json --pretty false --checkers "${HB_TSC_CHECKERS:-2}" --builders "${HB_TSC_BUILDERS:-1}"',
-    untrackedEnv: ['HB_TSC_CHECKERS', 'HB_TSC_BUILDERS'],
-  },
-}
-```
-
-Affected/diff tasks must fingerprint their base selection state or be uncached:
-
-```ts
-env: ['AFFECTED_SINCE', 'GITHUB_BASE_REF', 'GITHUB_SHA'];
-```
-
-## CI Design
-
-Prefer domain commands directly for direct domain work:
+- Use `voidzero-dev/setup-vp` pinned to an exact release or commit SHA; the
+  `v1` tag no longer receives updates. On GitHub Actions it sets up Node.js and
+  the package manager, and `cache: true` caches package-manager data.
+- Reusing task results across CI runs is experimental and needs its own cache
+  step. First prove an immediate local second run hits. Restore
+  `node_modules/.vite/task-cache` after `vp install`, with a per-run key and an
+  OS and architecture restore prefix:
 
 ```yaml
-run: vp lint packages/foo/src
-run: vp test run --root packages/foo src/foo.test.ts
-run: vp fmt --check packages/foo/src
+key: vite-task-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+restore-keys: |
+  vite-task-${{ runner.os }}-${{ runner.arch }}-
 ```
 
-Prefer configured Vite Tasks for repeatable lanes:
-
-```yaml
-run: vp run -w affected:test
-run: vp run -w check:package-quality
-run: vp run -r build
-```
-
-Persist `node_modules/.vite/task-cache` as Vite Task's task-result cache. Do
-not confuse it with artifact caches. If a `vp run` task needs generated files,
-declarations, screenshots, or build outputs restored, configure task `output`
-for those files.
-
-Official Vite+ CI setup uses `voidzero-dev/setup-vp`, then `vp install`, then
-domain commands or `vp run` tasks. A setup action typically exposes the
-workspace binary on PATH so CI runs bare `vp ...`; verify the project's adopted
-surface before changing CI.
+- Keep task inputs, lockfiles included, out of that key; Vite Task fingerprints
+  them. Weigh restore and save time against the time saved, and manage size at
+  the Actions cache layer.
+- In CI, run the same `vp run` commands developers use, such as
+  `vp run -t @my/app#build`; call domain commands directly for direct tool work.

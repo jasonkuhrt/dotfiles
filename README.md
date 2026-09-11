@@ -100,27 +100,14 @@ After scripts configure the system:
 - `14-neovim-plugins.sh` — Neovim plugin install via lazy.nvim
 - `19-agentsview.sh` — pinned `agentsview` CLI install into `~/.local/share/agentsview`
 
-## Heal Agent
-
-A macOS launchd agent runs `dotctl heal` every 5 minutes. Some applications replace symlinks with regular files during atomic saves — the healer detects this drift and restores the symlinks. `just up` installs and loads the agent automatically.
-
 ## Configuration
 
 `dotctl.config.json` in the repo root:
 
 ```json
 {
-  "sourceDir": "home",
-  "scriptsDir": "scripts/setup",
-  "stateDir": "~/.local/state/dotfiles-symlink",
-  "homeRootSkip": ["Brewfile", "dock", "npm"],
   "age": {
-    "identity": "~/.config/dotctl/age-key.txt",
     "recipient": "age1..."
-  },
-  "heal": {
-    "label": "com.jasonkuhrt.dotfiles-symlink-heal",
-    "intervalSeconds": 300
   }
 }
 ```

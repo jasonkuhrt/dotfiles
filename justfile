@@ -14,6 +14,10 @@ default:
 up:
     {{ dotctl }} up
 
+# Privileged setup: Touch ID for sudo, display sleep, fish as the login shell
+sudo-setup:
+    sudo bash scripts/sync-sudo.sh
+
 # Remove symlinks into the repo that the deployment plan no longer contains
 prune *args:
     {{ dotctl }} prune {{ args }}

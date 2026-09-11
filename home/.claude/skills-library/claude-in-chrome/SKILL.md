@@ -5,13 +5,8 @@ description: The authoritative playbook for driving a browser with the Claude in
 
 # Claude in Chrome
 
-The rich playbook for the Claude in Chrome browser integration. Three layers
-work together — never drive a browser on a guessed model of the tooling:
-
-- **Rule** `~/.claude/rules/claude-in-chrome.md` — 10 terse facts, always loaded.
-- **This skill** — the full how-to, loaded on demand when browser work starts.
-- **Hook** — a `PreToolUse` guard (`claude-in-chrome-guard.sh`) hard-stops the
-  first `mcp__claude-in-chrome__*` call each session until you have verified.
+The playbook for the Claude in Chrome browser integration, loaded on demand when
+browser work starts. Never drive a browser on a guessed model of the tooling.
 
 ## The one distinction that matters
 
@@ -62,9 +57,8 @@ The extension gates browser work — not Claude Code:
   sites".
 - **`claude-chrome-allow`** is a legitimate companion CLI that pre-writes URL
   approvals into the extension's allowlist so a new URL does not block on a
-  manual click. It is expected, not a workaround — see
-  `~/.claude/rules/claude-in-chrome.md`. Pre-approve a task's domains with it
-  before browser work.
+  manual click. It is expected, not a workaround. Pre-approve a task's domains
+  with it before browser work.
 - **Protected actions always require explicit user approval** regardless of
   mode: purchases, permanent deletes, modifying permissions, creating accounts,
   granting authorizations, entering sensitive information.

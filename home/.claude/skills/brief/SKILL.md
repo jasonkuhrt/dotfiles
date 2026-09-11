@@ -175,5 +175,3 @@ active if unsure. Off only when Jason says so.
 - Any claim whose status (now / proposed / done / broken) isn't obvious? Mark it.
 - Count the lines. More than ~10 without him asking for depth? Cut it.
   Wrote a paragraph? Convert to nested lines.
-
-Full rule: `~/.claude/rules/response-length.md`

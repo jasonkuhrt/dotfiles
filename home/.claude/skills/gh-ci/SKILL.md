@@ -91,11 +91,11 @@ Tunables via env:
 
 | Pattern                                                                  | Failure mode                                                                                                                                                        |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `gh pr checks <N> --watch --fail-fast`                                   | Exits as soon as the _visible_ checks settle. Heavy workflows that queue 30–90s after push are missed entirely. **Blocked by the `block-gh-pr-checks-watch` hook.** |
-| Counting check-runs (`if count >= N`, `gh pr checks <N> \| wc -l`, etc.) | Different PRs have different workflow shapes. There's no robust threshold. **Blocked by the `block-gh-pr-checks-watch` hook.**                                      |
+| `gh pr checks <N> --watch --fail-fast`                                   | Exits as soon as the _visible_ checks settle. Heavy workflows that queue 30–90s after push are missed entirely. **Never use.** |
+| Counting check-runs (`if count >= N`, `gh pr checks <N> \| wc -l`, etc.) | Different PRs have different workflow shapes. There's no robust threshold. **Never use.**                                      |
 | Treating workflow names (`PR`, `PR Dashboard`, etc.) as authoritative    | Plan/dashboard jobs can complete or cancel while later matrix jobs are still queued or not yet created.                                                             |
 | Treating cancelled no-job `pull_request_target` dashboard runs as red CI | They never created jobs or PR checks, so they are phantom workflow-run signals outside the PR check rollup.                                                         |
-| `while true; do ...; sleep 120; done` in plain Bash                      | Blocked by the `block-sleep-poll-loops` hook. Use this skill's harness-kind route instead.                                                                          |
+| `while true; do ...; sleep 120; done` in plain Bash                      | Use this skill's harness-kind route instead.                                                                          |
 | Treating dashboard/comment checks as authoritative                       | They are UX surfaces, not the current head's complete check state.                                                                                                  |
 | Polling check-runs without first checking mergeability and merge state   | A CONFLICTING PR or unresolved required conversation can leave checks green while GitHub still blocks merge.                                                        |
 

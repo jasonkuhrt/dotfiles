@@ -78,7 +78,9 @@ Then address each note. If a note asks for a code change, implement it in the re
 export default function (hunk: HunkExtensionAPI) {
   const config = hunk.config as Record<string, unknown>
 
-  const enabled = config.enabled !== false
+  // Opt-in: an absent or non-true value means off, so a repo that ships no
+  // table cannot dispatch, and a broken transport cannot fire by default.
+  const enabled = config.enabled === true
   const requested = String(config.transport ?? "desktop")
   const transport: Transport = (TRANSPORTS as readonly string[]).includes(requested)
     ? (requested as Transport)
@@ -145,6 +147,12 @@ export default function (hunk: HunkExtensionAPI) {
   }
 
   hunk.registerCommand({ id: "send", title: "Send review notes to Codex", key: "S" }, async (ctx) => {
+    if (!enabled) {
+      ctx.notify(
+        'Agent dispatch is off. Set enabled = true under [extension.hunk-agent-dispatch] to turn it on.',
+      )
+      return
+    }
     await flush(ctx)
   })
 

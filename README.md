@@ -95,7 +95,6 @@ After scripts configure the system:
 - `08-macos-defaults.sh` — keyboard repeat, trackpad speed, Finder preferences
 - `09-dock-apps.sh` — Dock layout from `home/dock/apps.txt`
 - `11-dprint-update.sh` — dprint formatter plugins
-- `12-skills-sync.sh` — Claude Code skill installation
 - `13-git-ssh.sh` — SSH key for GitHub
 - `14-neovim-plugins.sh` — Neovim plugin install via lazy.nvim
 - `19-agentsview.sh` — pinned `agentsview` CLI install into `~/.local/share/agentsview`

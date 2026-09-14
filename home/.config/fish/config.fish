@@ -228,18 +228,11 @@ set -gx PNPM_HOME "$HOME/Library/pnpm"
 
 set -gx PATH "$HOME/.local/bin" "$NPM_GLOBAL/bin" "$PNPM_HOME" $PATH
 
-# Mirror cmux's bash/zsh shell integration for fish: wrap `claude` with the
-# bundled cmux wrapper so it can inject --session-id/--settings (hooks +
-# auto-resume). Native fish integration tracked upstream at
-# https://github.com/manaflow-ai/cmux/pull/1528.
-if set -q CMUX_SURFACE_ID; and test -x /Applications/cmux.app/Contents/Resources/bin/claude
-    function claude --description "cmux-bundled claude wrapper"
-        /Applications/cmux.app/Contents/Resources/bin/claude $argv
-    end
-    # cmux's tmux shim — Claude Code spawns subagents via the tmux protocol.
-    if test -d "$HOME/.cmuxterm/claude-teams-bin"; and not contains "$HOME/.cmuxterm/claude-teams-bin" $PATH
-        set -gx PATH "$HOME/.cmuxterm/claude-teams-bin" $PATH
-    end
+# cmux ships a `tmux` shim that proxies to `cmux __tmux-compat`, so tools that
+# drive tmux (Claude Code teams) drive cmux panes instead. Real tmux is not
+# installed, so without this those tools have no tmux at all.
+if set -q CMUX_SURFACE_ID; and test -x "$HOME/.cmuxterm/claude-teams-bin/tmux"
+    set -gx PATH "$HOME/.cmuxterm/claude-teams-bin" $PATH
 end
 
 

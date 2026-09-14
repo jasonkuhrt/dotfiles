@@ -111,6 +111,15 @@ abbr -a clpml 'claude plugin marketplace list'
 abbr -a clpmu 'claude plugin marketplace update'
 abbr -a clpmr 'claude plugin marketplace remove'
 abbr -a l yazi
+abbr -a h hunk
+abbr -a ghil 'gh issue list'
+abbr -a gi 'gh issue'
+abbr -a gic 'gh issue create'
+abbr -a gpr 'gh pr'
+abbr -a gprc 'gh pr create'
+abbr -a gr 'gh repo'
+abbr -a pnx 'pnpm nx'
+abbr -a grepp pcre2grep
 
 # Modern Unix replacements (only expand in interactive mode, not scripts)
 abbr -a ls lsd
@@ -141,7 +150,6 @@ alias cal='cal -3'  # show 3 months by default
 ## ----------------------------------
 
 alias ccusage 'npx ccusage@latest'
-alias h hunk
 
 # GitHub CLI
 function dr --description "Devin Review for current branch's PR"
@@ -149,9 +157,6 @@ function dr --description "Devin Review for current branch's PR"
     or begin; echo "No PR found for current branch"; return 1; end
     npx devin-review $pr_url
 end
-alias ghil="gh issue list"
-alias gpr="gh pr"
-alias gprc="gh pr create"
 function gprv --description "Open current branch's PR in browser"
     set -l pr_url (gh pr view --json url -q .url 2>/dev/null)
     or begin; echo "No PR found for current branch" >&2; return 1; end
@@ -168,18 +173,12 @@ function gprv --description "Open current branch's PR in browser"
 
     gh pr view --web
 end
-alias gr="gh repo"
 alias grv="gh repo view --web"
-alias gi="gh issue"
-alias gic="gh issue create"
 
 # Other
 # OSC 8 hyperlinks (tree has no config file; no auto mode, just on/off)
 alias tree='tree --hyperlink'
 
-alias ..="cd .."
-alias grepp="pcregrep"
-alias pnx="pnpm nx"
 alias px="pnpm --silent"
 alias pt="pnpm --silent turbo"
 

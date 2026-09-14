@@ -2,8 +2,10 @@
 # Merge managed keys into settings.json, preserving CC runtime state.
 #
 # Managed keys (from settings.json): overwritten on deploy.
-# Runtime-accumulated keys (e.g. permissions.allow, enabledPlugins): preserved
-# via recursive merge — dotfiles values win for shared keys, runtime-only keys kept.
+# Runtime-only OBJECT keys (enabledPlugins entries, skillOverrides, ...) survive the
+# recursive merge. ARRAYS do not: jq's `*` replaces an array wholesale, so
+# permissions.allow is exactly what the managed file says and runtime additions to it
+# are dropped on the next deploy.
 #
 # Convention: DOTCTL_SOURCE points to the managed data file.
 # Stdin contains current target content.

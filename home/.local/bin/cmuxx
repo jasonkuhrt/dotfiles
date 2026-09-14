@@ -84,10 +84,6 @@ _open_worktree() {
         cmux rename-workspace --workspace "$uuid" "$name"
     fi
 
-    # TODO: Set workspace color — not exposed in cmux socket API (v0.61).
-    # Tracked: https://github.com/manaflow-ai/cmux/issues/539 (--color on new-workspace)
-    #          https://github.com/manaflow-ai/cmux/issues/1041 (expose tab color via CLI)
-
     sleep 0.5
     local escaped_path
     escaped_path=$(printf '%q' "$wt_path")

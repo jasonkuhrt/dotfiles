@@ -13,7 +13,7 @@ The matrix is complex and getting it wrong causes subtle failures.
 
 ### npm globals must be decoupled from pnpm node versions
 
-pnpm manages node versions via `pnpm env use`. If npm globals are installed to pnpm's node directory, switching node versions breaks your global tools (claude-code, dprint, etc. vanish).
+pnpm manages node versions via `pnpm runtime set node <version> -g`. If npm globals are installed to pnpm's node directory, switching node versions breaks your global tools (claude-code, dprint, etc. vanish).
 
 __Solution__: Set npm prefix to a fixed location:
 

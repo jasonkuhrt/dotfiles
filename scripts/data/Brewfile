@@ -78,8 +78,7 @@ brew "pre-commit"    # git hooks framework
 brew "flock"         # file-lock CLI; serializes concurrent git hooks (not shipped on macOS)
 
 # Development
-brew "node"          # bootstrap only (pnpm manages LTS)
-brew "pnpm"          # fast package manager + node version manager
+brew "node"          # first npm on a fresh machine (pnpm runtimes ship without npm); pnpm's LTS shadows it
 brew "deno"          # Deno runtime
 brew "go"
 brew "lua"           # Lua runtime

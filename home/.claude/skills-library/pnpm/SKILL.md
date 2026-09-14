@@ -7,7 +7,8 @@ description: Use when running pnpm commands, configuring workspaces, or executin
 
 ## Environment
 
-Use `pnpm env` for Node version management (not nvm).
+Use `pnpm runtime` for Node version management (not nvm): `pnpm runtime set node lts -g` sets the
+global node. `pnpm env` is deprecated in pnpm 12.
 
 ## Parallel Scripts
 

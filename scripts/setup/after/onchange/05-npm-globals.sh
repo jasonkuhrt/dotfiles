@@ -7,12 +7,13 @@ source "$DOTFILES_ROOT/scripts/lib/helpers.sh"
 
 header "npm Global Packages"
 
-# Ensure Homebrew and pnpm node are in PATH
+# Same precedence as a login shell: the npm in ~/.npm-global, then pnpm's node, then Homebrew.
+# On a fresh machine ~/.npm-global is empty, so the first npm is Homebrew node's bundled one.
 if [ -f "/opt/homebrew/bin/brew" ]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 PNPM_HOME="$HOME/Library/pnpm"
-export PATH="$PNPM_HOME:$PATH"
+export PATH="$HOME/.npm-global/bin:$PNPM_HOME/bin:$PATH"
 
 if ! has_cmd npm; then
     warn "npm not installed, skipping global packages"

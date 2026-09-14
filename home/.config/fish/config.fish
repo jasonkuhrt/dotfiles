@@ -45,17 +45,6 @@ set --export CLAUDE_CODE_NO_FLICKER 1
 # Plannotator: open in cmux browser instead of OS default
 set --export PLANNOTATOR_BROWSER "$HOME/.local/bin/plannotator-browser"
 
-# The official suggestion doesn't work in Fish for some reason
-# More info here about the problem and workaround: https://github.com/Schniz/fnm/issues/356#issuecomment-1010816655
-# fnm env --use-on-cd | source
-# fnm env | source
-# if type fnm -q
-#  fnm env --shell fish --use-on-cd | source
-#  fnm completions --shell fish | source
-# end
-
-
-
 # fzf: use fd for file listing (respects .gitignore, purpose-built for file enumeration)
 set --export FZF_DEFAULT_COMMAND 'fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
 
@@ -69,10 +58,6 @@ set --export FZF_DEFAULT_OPTS "\
 
 # https://fishshell.com/docs/current/faq.html#how-do-i-change-the-greeting-message
 set --universal fish_greeting ""
-
-# https://supermemory.ai/docs/integrations/claude-code#environment-variables
-# SUPERMEMORY_SKIP_TOOLS=Read,Glob,Grep # Tools to not capture (optional)
-# SUPERMEMORY_DEBUG=true                # Enable debug logging (optional)
 
 # Interactive-only block: abbreviations, helper functions, shell modules and prompt
 # integrations do nothing in a script, but every `fish -c` paid for them.
@@ -109,7 +94,6 @@ abbr -a wts 'wt switch'
 abbr -a d docker
 abbr -a dc docker-compose
 abbr -a k kubectl
-abbr -a tf terraform
 abbr -a p pnpm
 abbr -a c claude
 abbr -a cx 'claude --print'
@@ -156,9 +140,7 @@ alias cal='cal -3'  # show 3 months by default
 ## Aliases (commands with flags/args)
 ## ----------------------------------
 
-alias serena 'uv run --directory /Users/jasonkuhrt/projects/oraios/serena serena'
 alias ccusage 'npx ccusage@latest'
-alias ccmonitor 'claude-monitor --plan max20'
 alias h hunk
 
 # GitHub CLI
@@ -239,8 +221,6 @@ end
 
 end # interactive-only block
 
-set --export GITHUB_HANDLE jasonkuhrt
-
 # Node package managers
 # pnpm manages node versions; npm globals go to fixed location
 # See README "Node Package Management" for details
@@ -263,14 +243,6 @@ if set -q CMUX_SURFACE_ID; and test -x /Applications/cmux.app/Contents/Resources
     end
 end
 
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/jasonkuhrt/google-cloud-sdk/path.fish.inc' ]; . '/Users/jasonkuhrt/google-cloud-sdk/path.fish.inc'; end
-
-test -e {$HOME}/.iterm2_shell_integration.fish ; and source {$HOME}/.iterm2_shell_integration.fish
-
-
-# Added by Windsurf
-fish_add_path /Users/jasonkuhrt/.codeium/windsurf/bin
 
 #
 #

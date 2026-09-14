@@ -17,7 +17,7 @@ description: >-
 cmux is a terminal application built on **libghostty** (not a Ghostty wrapper — it's its own app).
 
 - Bundle ID: `com.cmuxterm.app`
-- CLI: `cmux` (Homebrew links it from the app bundle's `Contents/Resources/bin/cmux`); socket at `$CMUX_SOCKET_PATH`, e.g. `~/.local/state/cmux/cmux-<uid>.sock`
+- CLI: `cmux`, the app bundle's `Contents/Resources/bin/cmux`, symlinked both from `/usr/local/bin/cmux` (cmux's own CLI install) and `/opt/homebrew/bin/cmux` (the cask); socket at `$CMUX_SOCKET_PATH`, e.g. `~/.local/state/cmux/cmux-<uid>.sock`
 - Version: check with `cmux version`
 
 ## Object Model

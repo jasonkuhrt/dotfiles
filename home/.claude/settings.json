@@ -1,11 +1,8 @@
 {
   "cleanupPeriodDays": 999999,
-  "includeCoAuthoredBy": false,
   "permissions": {
     "allow": [
       "Bash",
-      "Bash(*)",
-      "Bash(codex exec --dangerously-bypass-approvals-and-sandbox*)",
       "Edit",
       "MultiEdit",
       "Write",
@@ -15,19 +12,9 @@
       "WebSearch",
       "mcp__claude-in-chrome",
       "mcp__effect-docs",
-      "mcp__ref",
-      "mcp__Ref",
-      "Skill(cc-writing-skills)",
-      "Skill(flowlist)",
-      "Skill(tmux)",
-      "Skill(tips)",
       "Skill(dotfiles-doctor)",
       "Skill(shan)",
-      "mcp__linear",
-      "Skill(draft)",
-      "mcp__figma",
       "mcp__Claude_Preview",
-      "mcp__plugin_Notion_notion",
       "mcp__mcp-registry",
       "mcp__Claude_in_Chrome"
     ],
@@ -50,7 +37,6 @@
     "dev-browser": "off",
     "durable-objects": "off",
     "goplaces": "off",
-    "hunk-review": "on",
     "keychain-totp": "off",
     "monkey-patch-discipline": "off",
     "nvim-workflows": "off",
@@ -81,7 +67,6 @@
     "command": "~/.claude/statusline.sh"
   },
   "enabledPlugins": {
-    "Notion@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": false,
     "claude-md-management@claude-plugins-official": false,
     "code-review@claude-plugins-official": true,
@@ -108,6 +93,12 @@
       "source": {
         "source": "github",
         "repo": "humanlayer/skills"
+      }
+    },
+    "superpowers-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
       }
     }
   },
@@ -166,5 +157,9 @@
       "**Org-specific CLIs**: vp / vpr / vpx (Vite+ toolchain — sole build/test/lint entrypoint per README and skills), gh, sb (testing/auth CLI referenced in .env.example)",
       "**Routine under this repo's prefix**: routine vp/vpr/vpx toolchain invocations, git operations, and E2E runs scoped to this checkout are expected day-to-day activity"
     ]
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
   }
 }

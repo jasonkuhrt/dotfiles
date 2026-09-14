@@ -8,7 +8,7 @@ function __clef_sb_bin_find_dir
       return 0
     end
 
-    set -l parent (dirname "$dir")
+    set -l parent (path dirname -- "$dir")
     if test "$parent" = "$dir"
       return 1
     end
@@ -16,6 +16,9 @@ function __clef_sb_bin_find_dir
     set dir $parent
   end
 end
+
+# Interactive only: the PWD handler and its initial run walk to / on every cd.
+status is-interactive; or exit 0
 
 function __clef_sb_bin_refresh_path --on-variable PWD
   if set -q CLEF_SB_BIN_PATH

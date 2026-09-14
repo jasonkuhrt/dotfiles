@@ -45,17 +45,6 @@ set --export CLAUDE_CODE_NO_FLICKER 1
 # Plannotator: open in cmux browser instead of OS default
 set --export PLANNOTATOR_BROWSER "$HOME/.local/bin/plannotator-browser"
 
-# Direnv: lazy-load only when needed (saves ~130ms startup)
-# Auto-activates if .envrc exists in current dir, otherwise run `direnv-init`
-set -gx DIRENV_LOG_FORMAT ""  # Silence "loading" messages
-function direnv-init --description "Enable direnv for this shell session"
-    direnv hook fish | source
-    direnv reload 2>/dev/null
-end
-if test -f .envrc
-    direnv-init
-end
-
 # The official suggestion doesn't work in Fish for some reason
 # More info here about the problem and workaround: https://github.com/Schniz/fnm/issues/356#issuecomment-1010816655
 # fnm env --use-on-cd | source

@@ -70,7 +70,6 @@ Full list in `home/.config/fish/config.fish`.
 | Dev         | `node`       | Node.js runtime                       | `node script.js`                                |
 | Dev         | `pnpm`       | Fast Node package manager             | `pnpm install`, `pnpm add -D pkg`              |
 | Dev         | `uv`         | Fast Python package manager           | `uv pip install pkg`, `uvx ruff`                |
-| **Shell**   | `direnv`     | Auto-load .envrc per directory        | `echo 'export API_KEY=xxx' > .envrc`            |
 | Shell       | `fish`       | Modern shell with autosuggestions     | (default shell)                                 |
 | Shell       | `gum`        | Pretty shell script UI components     | `gum choose "opt1" "opt2"`                      |
 | Shell       | `shellcheck` | Lint shell scripts                    | `shellcheck script.sh`                          |

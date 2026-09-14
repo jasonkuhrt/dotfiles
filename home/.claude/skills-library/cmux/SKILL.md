@@ -17,7 +17,7 @@ description: >-
 cmux is a terminal application built on **libghostty** (not a Ghostty wrapper — it's its own app).
 
 - Bundle ID: `com.cmuxterm.app`
-- CLI: `/usr/local/bin/cmux` (Unix socket at `~/Library/Application Support/cmux/cmux.sock`)
+- CLI: `cmux` (Homebrew links it from the app bundle's `Contents/Resources/bin/cmux`); socket at `$CMUX_SOCKET_PATH`, e.g. `~/.local/state/cmux/cmux-<uid>.sock`
 - Version: check with `cmux version`
 
 ## Object Model
@@ -55,7 +55,7 @@ cmux --json identify       # structured output with caller + focused surface inf
 | `CMUX_WORKSPACE_ID` | Default for `--workspace` in all commands        |
 | `CMUX_SURFACE_ID`   | Default for `--surface`                          |
 | `CMUX_TAB_ID`       | Default for `--tab` in `tab-action`/`rename-tab` |
-| `CMUX_SOCKET_PATH`  | Override socket path (default `/tmp/cmux.sock`)  |
+| `CMUX_SOCKET_PATH`  | Socket path; set in every cmux surface           |
 
 ## Creating Windows vs Workspaces
 
@@ -129,7 +129,7 @@ eaten characters and abbreviation rewrites before they execute.
 
 ## Tab (Surface) Switching
 
-**There is no `next-tab` or `focus-surface` CLI command.** The `surface.focus` API method exists in capabilities but is not exposed as a CLI command.
+**There is no `next-tab` or `focus-surface` CLI command.** The `surface.focus` API method has no dedicated verb either, but `cmux rpc <method> [json-params]` calls any v2 method directly.
 
 ### Approach 1: cmux CLI (native, no osascript)
 

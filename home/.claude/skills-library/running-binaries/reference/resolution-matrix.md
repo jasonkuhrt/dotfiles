@@ -68,10 +68,10 @@ Works if package is in PATH.
 
 ```bash
 # Without fixed prefix, npm installs to pnpm's node directory:
-npm install -g dprint  # -> ~/Library/pnpm/nodejs/24.12.0/lib/...
+npm install -g dprint  # -> inside pnpm's node runtime directory
 
-pnpm env use 22        # switch node version
-dprint --version       # ERROR: not found (it's in 24.12.0 dir)
+pnpm runtime set node 22 -g  # switch node version
+dprint --version       # ERROR: not found (it was in the previous runtime's dir)
 ```
 
 __Fix__: Set `prefix=~/.npm-global` in .npmrc

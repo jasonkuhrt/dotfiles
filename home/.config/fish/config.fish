@@ -21,7 +21,7 @@ set -gx BUN_INSTALL "$HOME/.bun"
 fish_add_path -gP \
     "$HOME/.local/bin" \
     "$NPM_GLOBAL/bin" \
-    "$PNPM_HOME" "$PNPM_HOME/bin" \
+    "$PNPM_HOME/bin" \
     "$BUN_INSTALL/bin" \
     "$HOME/.cargo/bin" \
     "$HOME/go/bin" \

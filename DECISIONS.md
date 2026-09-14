@@ -71,33 +71,36 @@ Source: `config.fish`, "Modern Unix replacements"
 ## Decision 6: pnpm for Node Version Management
 
 **Decision:**
-Use pnpm as both package manager and Node version manager. npm for global CLI tools.
+Use pnpm as both package manager and Node version manager, installed the way pnpm documents. npm for
+global CLI tools.
 
 **Implementation:**
 ```
-Bootstrap: Homebrew -> pnpm -> node LTS -> npm globals
-Runtime:   ~/.local/bin -> npm globals -> pnpm node -> Homebrew
+Bootstrap: pnpm standalone installer -> pnpm runtime set node lts -g -> npm globals
+Runtime:   ~/.local/bin -> npm globals -> ~/Library/pnpm/bin (pnpm, node) -> Homebrew
 ```
 
 **Rationale (documented in [docs/node-setup.md](docs/node-setup.md)):**
-- pnpm already manages packages; `pnpm env use --global lts` replaces a dedicated version manager
-- npm globals install to `~/.npm-global` independent of node version — upgrading node doesn't break global tools
+- pnpm already manages packages; `pnpm runtime set node lts -g` replaces a dedicated version manager
+- pnpm 12 is a native executable that needs no Node.js, so installing it has no bootstrap dependency
+- npm globals install to `~/.npm-global` independent of node version — changing node doesn't break global tools
 - npx checks npm's global dir, so using npm (not pnpm) for globals preserves npx fallback
 
 **Trade-offs:**
-- No `pnpm self-update`: pnpm comes from Homebrew, so `brew upgrade pnpm` is the update path
+- pnpm's node runtimes ship without npm (since pnpm 11), so a fresh machine takes its first npm from
+  Homebrew's node, which is why `brew "node"` stays
 
-**Corepack removed (2026-09-13):**
-Corepack was installed as an npm global to resolve per-project `packageManager` pins. It also owned
-the `pnpm`, `pnpx`, `yarn` and `yarnpkg` shims in `~/.npm-global/bin`, which sits ahead of Homebrew
-on PATH — so the pnpm actually in use (12.4.1) came from corepack, while the Homebrew formula this
-repo declares sat at 11.8.0, unused and invisible. Two owners, and the wrong one was winning.
-Uninstalling corepack removed the shims and exposed the gap; `brew upgrade pnpm` closed it.
-Homebrew is now the only source of pnpm.
-
-**Prior art:** fnm was tried but abandoned — "the official suggestion doesn't work in Fish for some
-reason" ([fnm#356](https://github.com/Schniz/fnm/issues/356#issuecomment-1010816655)). The
-commented-out fish block it refers to was deleted in the 2026-09-13 cleanup.
+**History:**
+- 2026-09-13 — corepack removed. It owned the `pnpm`, `pnpx`, `yarn` and `yarnpkg` shims in
+  `~/.npm-global/bin`, ahead of Homebrew on PATH, so the pnpm in use (12.4.1) came from corepack while
+  the Homebrew formula this repo declared sat unused at 11.8.0.
+- 2026-09-14 — pnpm moved off Homebrew to its standalone installer; pnpm's installation docs do not
+  describe Homebrew at all. `pnpm env use`, deprecated in pnpm 12, became `pnpm runtime set`. The old
+  layout had left a `node` symlink at the top of `~/Library/pnpm`, and with that directory on PATH it
+  shadowed the runtime shim in `~/Library/pnpm/bin` — invoked through it, `node --version` printed
+  pnpm's version. Only `~/Library/pnpm/bin` is on PATH now.
+- Earlier, fnm was tried and abandoned — "the official suggestion doesn't work in Fish for some reason"
+  ([fnm#356](https://github.com/Schniz/fnm/issues/356#issuecomment-1010816655)).
 
 ---
 

@@ -54,8 +54,10 @@ set --export CLAUDE_CODE_MAX_OUTPUT_TOKENS 50000
 # Docs: https://code.claude.com/docs/en/skills#claude-doesnt-see-all-my-skills
 set --export SLASH_COMMAND_TOOL_CHAR_BUDGET 30000
 
-# Claude Code: enable agent teams (experimental)
-# Unlocks TeamCreate, TaskCreate, TaskUpdate, TaskList, SendMessage tools
+# Claude Code: agent teams (experimental; `claude --agent-teams` enables them for one run).
+# Every session gets one implicit team: spawn teammates with the Agent tool's `name` and
+# message them with SendMessage. With `teammateMode` auto they fall back to running
+# in-process when no tmux or iTerm2 pane backend is available, which is the case in cmux.
 # Docs: https://code.claude.com/docs/en/agent-teams
 set --export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS 1
 

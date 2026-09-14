@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# @describe cmuxx — semantic veneer over cmux for missing surface/tab commands.
-# @describe Powered by osascript keystroke simulation (cmd+shift+bracket).
-# @describe cmux exposes surface.focus in its API but not yet as a CLI command,
-# @describe so this fills the gap with a self-documenting interface.
+# @describe cmuxx — next/previous surface (tab) in the current pane.
+# @describe cmux has no CLI verb for relative surface focus, so this sends cmux's own
+# @describe nextSurface/prevSurface shortcuts (cmd+shift+] and cmd+shift+[) via osascript.
 
 _keystroke() {
     osascript -e "tell application \"System Events\" to keystroke \"$1\" using {command down, shift down}" &
@@ -20,101 +19,6 @@ next_surface() {
 # @alias ps
 prev_surface() {
     _keystroke "["
-}
-
-# @cmd Workspace commands
-# @alias ws
-workspace() { :; }
-
-# Shorten a hyphen-separated slug to fit the sidebar title width
-_shorten_slug() {
-    local slug="$1" max="${2:-14}"
-    if (( ${#slug} <= max )); then
-        printf '%s' "$slug"
-        return
-    fi
-    # Take hyphen-separated segments that fit within max length
-    local result=""
-    local IFS='-'
-    local parts
-    read -ra parts <<< "$slug"
-    local part
-    for part in "${parts[@]}"; do
-        if [[ -z "$result" ]]; then
-            result="$part"
-        elif (( ${#result} + 1 + ${#part} <= max )); then
-            result="$result-$part"
-        else
-            break
-        fi
-    done
-    printf '%s' "$result"
-}
-
-# Derive workspace name from a git branch: linear ID > shortened slug > empty
-_name_from_branch() {
-    local branch="$1"
-    if [[ -z "$branch" || "$branch" == "HEAD" ]]; then
-        return
-    fi
-    local linear_id
-    linear_id=$(echo "$branch" | grep -oE '[A-Z]+-[0-9]+' | head -1) || true
-    if [[ -n "$linear_id" ]]; then
-        echo "$linear_id"
-    else
-        _shorten_slug "${branch##*/}"
-    fi
-}
-
-# Create a cmux workspace for a worktree path + branch, launch Claude Code, and switch to it.
-_open_worktree() {
-    local wt_path="$1" wt_branch="$2" label="${3:-}"
-
-    local name
-    if [[ -n "$label" ]]; then
-        name="$label"
-    else
-        name=$(_name_from_branch "$wt_branch")
-    fi
-
-    local uuid
-    uuid=$(cmux new-workspace | awk '{print $2}')
-
-    if [[ -n "$name" ]]; then
-        cmux rename-workspace --workspace "$uuid" "$name"
-    fi
-
-    sleep 0.5
-    local escaped_path
-    escaped_path=$(printf '%q' "$wt_path")
-    cmux send --workspace "$uuid" "cd ${escaped_path} && claude '/rename main'\n"
-
-    cmux select-workspace --workspace "$uuid"
-    cmux close-surface --surface "$CMUX_SURFACE_ID"
-}
-
-# @cmd Create a workspace from a worktree — pick via fzf, or create a new one with a branch name
-# @alias n
-# @option --label Short label for the workspace sidebar (overrides branch-derived name)
-# @arg name  Branch name for a new worktree (omit to pick existing via fzf)
-workspace::new() {
-    if [[ -z "${argc_name:-}" ]]; then
-        # fzf picker for existing worktrees
-        local selection
-        selection=$(git worktree list | fzf --prompt="worktree> " --height=~50%) || exit 0
-        local wt_path wt_branch
-        wt_path=$(echo "$selection" | awk '{print $1}')
-        wt_branch=$(echo "$selection" | sed -n 's/.*\[\(.*\)\]/\1/p')
-        _open_worktree "$wt_path" "$wt_branch" "${argc_label:-}"
-    else
-        # Create a new worktree branched from HEAD
-        local repo_root
-        repo_root=$(git worktree list | awk 'NR==1{print $1}')
-        local wt_path="${repo_root}-${argc_name}"
-
-        git worktree add -b "$argc_name" "$wt_path" HEAD
-        _open_worktree "$wt_path" "$argc_name" "${argc_label:-}"
-    fi
 }
 
 eval "$(argc --argc-eval "$0" "$@")"

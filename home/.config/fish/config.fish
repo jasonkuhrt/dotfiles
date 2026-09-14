@@ -1,11 +1,33 @@
-# Homebrew - must be early for tools used during config (e.g. gh for GITHUB_TOKEN)
-fish_add_path /opt/homebrew/bin
-fish_add_path /opt/homebrew/sbin
-fish_add_path ~/.local/bin
+# PATH
+# ====
+#
+# One block, one mechanism, first in the file: later config (starship, secrets
+# via gh) needs the tools already resolvable.
+#
+# `fish_add_path -gP` prepends to the global $PATH. It is idempotent, so nested
+# shells no longer grow PATH by five entries per level, and it skips directories
+# that do not exist, so a missing toolchain leaves no dead entry behind. It
+# deliberately does not touch the universal `fish_user_paths`: universal PATH
+# entries are machine state that outlives this file and cannot be reviewed here.
+#
+# First argument wins. ~/.local/bin leads so its wrappers shadow Homebrew casks
+# (see home/.local/bin/codex). Installer-appended blocks for pnpm, bun, cargo,
+# go and grok are folded in here; if one re-appends its own block, delete it.
 
-if status is-interactive
-    # Commands to run in interactive sessions can go here
-end
+set -gx NPM_GLOBAL "$HOME/.npm-global"
+set -gx PNPM_HOME "$HOME/Library/pnpm"
+set -gx BUN_INSTALL "$HOME/.bun"
+
+fish_add_path -gP \
+    "$HOME/.local/bin" \
+    "$NPM_GLOBAL/bin" \
+    "$PNPM_HOME" "$PNPM_HOME/bin" \
+    "$BUN_INSTALL/bin" \
+    "$HOME/.cargo/bin" \
+    "$HOME/go/bin" \
+    "$HOME/.grok/bin" \
+    /opt/homebrew/bin \
+    /opt/homebrew/sbin
 
 # Prompt (Starship). --print-full-init avoids the extra process the default init spawns.
 status is-interactive; and starship init fish --print-full-init | source
@@ -56,7 +78,7 @@ set --export FZF_DEFAULT_OPTS "\
 --color=border:#565f89"
 
 # https://fishshell.com/docs/current/faq.html#how-do-i-change-the-greeting-message
-set --universal fish_greeting ""
+set -g fish_greeting ""
 
 # Interactive-only block: abbreviations, helper functions, shell modules and prompt
 # integrations do nothing in a script, but every `fish -c` paid for them.
@@ -180,6 +202,7 @@ alias tree='tree --hyperlink'
 
 alias px="pnpm --silent"
 alias pt="pnpm --silent turbo"
+alias octorus="command or" # octorus' binary is `or`, which collides with the fish builtin
 
 # npm script runner with silent mode and automatic -- for args
 function npmx --description "Run npm scripts silently with args"
@@ -219,19 +242,11 @@ end
 
 end # interactive-only block
 
-# Node package managers
-# pnpm manages node versions; npm globals go to fixed location
-# See README "Node Package Management" for details
-set -gx NPM_GLOBAL "$HOME/.npm-global"
-set -gx PNPM_HOME "$HOME/Library/pnpm"
-
-set -gx PATH "$HOME/.local/bin" "$NPM_GLOBAL/bin" "$PNPM_HOME" $PATH
-
 # cmux ships a `tmux` shim that proxies to `cmux __tmux-compat`, so tools that
 # drive tmux (Claude Code teams) drive cmux panes instead. Real tmux is not
 # installed, so without this those tools have no tmux at all.
 if set -q CMUX_SURFACE_ID; and test -x "$HOME/.cmuxterm/claude-teams-bin/tmux"
-    set -gx PATH "$HOME/.cmuxterm/claude-teams-bin" $PATH
+    fish_add_path -gP "$HOME/.cmuxterm/claude-teams-bin"
 end
 
 
@@ -301,19 +316,6 @@ end
 
 end # interactive-only block
 
-# bun
-set --export BUN_INSTALL "$HOME/.bun"
-set --export PATH $BUN_INSTALL/bin $PATH
-
-# cargo (rust)
-fish_add_path "$HOME/.cargo/bin"
-alias octorus="command or" # octorus CLI binary is "or", which collides with fish builtin
-
-# go
-fish_add_path "$HOME/go/bin"
-
-# uv (uses ~/.local/bin, already in PATH from node package managers section)
-
 # Gentle nudge if nesia changelog hasn't been checked in 7+ days
 # Must be after PATH setup since nesia lives in ~/.local/bin
 status is-interactive; and nesia nag 2>/dev/null
@@ -321,14 +323,3 @@ status is-interactive; and nesia nag 2>/dev/null
 # Added by OrbStack: command-line tools and integration
 # This won't be added again if you remove it.
 source ~/.orbstack/shell/init2.fish 2>/dev/null || :
-
-# pnpm
-set -gx PNPM_HOME "/Users/jasonkuhrt/Library/pnpm"
-if not string match -q -- "$PNPM_HOME/bin" $PATH
-  set -gx PATH "$PNPM_HOME/bin" $PATH
-end
-# pnpm end
-
-# >>> grok installer >>>
-fish_add_path $HOME/.grok/bin
-# <<< grok installer <<<

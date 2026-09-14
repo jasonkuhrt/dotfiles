@@ -5,7 +5,6 @@
 
 @antfu/ni
 ajv-cli
-corepack
 @mermaid-js/mermaid-cli
 @typescript/native-preview
 dprint

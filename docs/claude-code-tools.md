@@ -36,10 +36,11 @@ Quick reference for all Claude Code plugins, MCP servers, and hooks in this setu
 
 ## Hooks
 
-cmux Claude integration (status, notifications, Feed approvals, session restore) is handled natively by the cmux-bundled `claude` wrapper at `/Applications/cmux.app/Contents/Resources/bin/claude`, which injects `--session-id` and `--settings` to install its own hooks. Fish wires the wrapper via a `function claude` in `home/.config/fish/config.fish`. See [cmux agent-hooks docs](https://raw.githubusercontent.com/manaflow-ai/cmux/main/docs/agent-hooks.md).
+No Claude Code hooks are configured here; the hook scripts were removed in `05bc64c6`.
 
-| Event             | Matcher          | Script                              | What it does                                       |
-| ----------------- | ---------------- | ----------------------------------- | -------------------------------------------------- |
-| PermissionRequest | `Skill\|mcp__.*` | `approve-and-persist-permissions.sh` | Auto-approves and persists plugin/MCP permissions   |
-| UserPromptSubmit  | —                | `rename-terminal-tab.sh`            | Renames the terminal tab to the latest prompt summary |
-| SessionStart      | —                | `compact-name-restore.sh`           | Restores workspace name after compaction            |
+cmux's Claude integration (sidebar status, notifications, Feed approvals, session restore) comes from cmux
+itself. `/Applications/cmux.app/Contents/Resources/bin/cmux-claude-wrapper` injects `--session-id` and
+`--settings`, and cmux's fish integration puts a per-surface `claude` shim ahead of the real binary on PATH.
+That integration loads only when cmux starts the shell itself (`fish -il --init-command …`); surfaces started
+through `cmux-zmx-enter` run plain `fish -l`, so it does not load there. See the
+[cmux agent-hooks docs](https://raw.githubusercontent.com/manaflow-ai/cmux/main/docs/agent-hooks.md).

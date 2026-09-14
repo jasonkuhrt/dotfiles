@@ -115,7 +115,6 @@ home/
   .config/               # spread
     .spread
     bat/                 # dir-symlink
-    direnv/              # dir-symlink
     dprint/              # dir-symlink
     fish/                # spread (config.fish, fish_plugins, fish_variables, modules)
       .spread

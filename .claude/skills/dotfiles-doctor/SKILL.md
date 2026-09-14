@@ -39,7 +39,6 @@ of starting them.
 | `aws` | `home/.aws/` | AWS CLI config (`credentials.age` is encrypted) |
 | `bat` | `home/.config/bat/` | Pager theme and syntax cache (delta shares it) |
 | `brew` | `scripts/data/Brewfile` | Formulae, casks, taps, and tap trust |
-| `direnv` | `home/.config/direnv/` | Per-directory environments |
 | `dock` | `scripts/setup/after/onchange/09-dock-apps.sh` | macOS Dock contents |
 | `dprint` | `home/.config/dprint/` | Formatter config |
 | `fish` | `home/.config/fish/` | Shell: config.fish, conf.d, functions, modules, completions |

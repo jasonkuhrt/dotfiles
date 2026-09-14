@@ -118,32 +118,3 @@ style = "bold #7dcfff"
 ```
 
 Source: `starship.toml`
-
----
-
-## Decision 9: Direnv Lazy-Loading
-
-**Context:**
-Direnv's Fish hook (`direnv hook fish | source`) adds ~130ms to shell startup even when no `.envrc` exists.
-
-**Decision:**
-Lazy-load direnv: only activate if `.envrc` exists in the starting directory. Provide `direnv-init` function for manual activation.
-
-**Implementation:**
-```fish
-# Direnv: lazy-load only when needed (saves ~130ms startup)
-set -gx DIRENV_LOG_FORMAT ""  # Silence "loading" messages
-function direnv-init --description "Enable direnv for this shell session"
-    direnv hook fish | source
-    direnv reload 2>/dev/null
-end
-if test -f .envrc
-    direnv-init
-end
-```
-
-**Trade-off:**
-- If you `cd` into a direnv project after shell startup, you must run `direnv-init` manually
-
-Source: `config.fish:38-47`
-

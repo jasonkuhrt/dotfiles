@@ -11,7 +11,6 @@
 Current active `trueDir` roots:
 
 - `~/.config/bat`
-- `~/.config/direnv`
 - `~/.config/dprint`
 - `~/.config/ghostty`
 - `~/.config/git`

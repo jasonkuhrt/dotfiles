@@ -54,7 +54,6 @@ brew "yq"            # YAML processor (jq for YAML)
 brew "fish"          # modern shell
 brew "bash"          # modern bash (macOS ships old version)
 brew "starship"      # cross-shell prompt
-brew "direnv"        # per-directory env vars
 brew "shellcheck"    # shell script linter
 brew "shfmt"         # shell formatter
 brew "argc"          # bash CLI framework (comment-based arg parsing)

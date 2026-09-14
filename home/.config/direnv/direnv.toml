@@ -1,7 +1,0 @@
-[global]
-hide_env_diff = true
-
-[whitelist]
-prefix = [
-  "/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat"
-]

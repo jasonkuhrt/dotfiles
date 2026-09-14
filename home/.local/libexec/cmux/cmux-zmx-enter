@@ -117,7 +117,8 @@ if [[ -z "$surface_id" || -z "$pane_id" ]]; then
 fi
 
 surface_id_lower="$(printf '%s' "$surface_id" | tr '[:upper:]' '[:lower:]')"
-session_name="cmux-surface-${surface_id_lower}"
+# Keep the full UUID within the 46-byte budget under macOS's default TMPDIR.
+session_name="cmux-${surface_id_lower}"
 state_file="$state_dir/surfaces/$surface_id.json"
 
 mkdir -p "$(dirname "$state_file")"

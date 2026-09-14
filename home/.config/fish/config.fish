@@ -244,13 +244,6 @@ end
 
 end # interactive-only block
 
-# cmux ships a `tmux` shim that proxies to `cmux __tmux-compat`, so tools that
-# drive tmux (Claude Code teams) drive cmux panes instead. Real tmux is not
-# installed, so without this those tools have no tmux at all.
-if set -q CMUX_SURFACE_ID; and test -x "$HOME/.cmuxterm/claude-teams-bin/tmux"
-    fish_add_path -gP "$HOME/.cmuxterm/claude-teams-bin"
-end
-
 
 #
 #

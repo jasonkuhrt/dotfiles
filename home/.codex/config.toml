@@ -1,81 +1,9 @@
-model = "gpt-5.6-sol"
-model_reasoning_effort = "ultra"
+model = "gpt-6-astra"
+model_reasoning_effort = "max"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
 
-
-
 notify = ["/Users/jasonkuhrt/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
-service_tier = "priority"
-
-[projects."/Users/jasonkuhrt/projects"]
-trust_level = "trusted"
-
-# [projects."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat"]
-# trust_level = "trusted"
-
-# [projects."/Users/jasonkuhrt/projects/ushironoko/octorus"]
-# trust_level = "trusted"
-
-# [projects."/Users/jasonkuhrt/projects/jasonkuhrt/gh-pr-viewed-glob-safari"]
-# trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/willems-game"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/projects/jasonkuhrt/meos"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/projects/jasonkuhrt/flo"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/me"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/projects/jasonkuhrt/kitz"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/projects/jasonkuhrt/key-binder"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat-pulse-cue-queued-guard"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/.codex/worktrees/23e8"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat.codex-monorepo-dependency-graph"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles"]
-trust_level = "trusted"
-
-[projects."/private/tmp/claude-501/-Users-jasonkuhrt-projects-jasonkuhrt-kitz-path-operations/ba42d2c4-c03e-4890-9c2f-b385df9ca188/scratchpad"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/Documents/Codex/2026-07-24/realtime-voice-chat"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/Documents/Codex/2026-07-25/realtime-voice-chat"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/Documents/Codex/2026-08-26/realtime-voice-chat"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/Documents/Codex/2026-08-26/at-each-scheduled-run-execute-the"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/Documents/Codex/2026-08-26/at-each-scheduled-run-execute-the-2"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/Documents/Codex/2026-08-27/at-each-scheduled-run-execute-the"]
-trust_level = "trusted"
-
-[projects."/Users/jasonkuhrt/Documents/Codex/2026-08-27/realtime-voice-chat"]
-trust_level = "trusted"
 
 [mcp_servers.figma]
 url = "https://mcp.figma.com/mcp"
@@ -102,10 +30,6 @@ url = "https://observability.mcp.cloudflare.com/mcp"
 command = "npx"
 args = ["-y", "--package", "@steipete/macos-automator-mcp", "macos-automator-mcp"]
 
-[mcp_servers.msgvault]
-command = "/Users/jasonkuhrt/.local/bin/msgvault"
-args = ["--no-log-file", "mcp"]
-
 [mcp_servers.node_repl]
 args = []
 command = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node_repl"
@@ -118,21 +42,26 @@ NODE_REPL_NODE_PATH = "/Applications/Codex.app/Contents/Resources/cua_node/bin/n
 NODE_REPL_TRUSTED_CODE_PATHS = "/Users/jasonkuhrt/.codex:/Applications/Codex.app/Contents/Resources/cua_node/lib/node_modules"
 CODEX_HOME = "/Users/jasonkuhrt/.codex"
 BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
-BROWSER_USE_TINYSKY_ENABLED = "0"
-NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
-NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
-NODE_REPL_INSTRUCTIONS_USE_CASE_COMPUTER_USE = "Control desktop apps on macOS through Computer Use."
+BROWSER_USE_TINYSKY_ENABLED = "1"
+NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = ""
+NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = ""
+NODE_REPL_INSTRUCTIONS_USE_CASE_COMPUTER_USE = ""
 BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-BROWSER_USE_CODEX_APP_VERSION = "26.820.60940"
-NODE_REPL_TRUSTED_SERVICES = '{"browser":"/Users/jasonkuhrt/.codex/plugins/cache/openai-bundled/browser/26.820.60940/scripts/browser-service.mjs","sky":"@oai/sky/service"}'
+BROWSER_USE_CODEX_APP_VERSION = "26.908.40834"
+NODE_REPL_TRUSTED_SERVICES = '{"browser":"/Users/jasonkuhrt/.codex/plugins/cache/openai-bundled/browser/26.908.40834/scripts/browser-service.mjs","sky":"@oai/sky/service"}'
 SKY_CUA_SERVICE_PATH = "/Users/jasonkuhrt/.codex/computer-use/Codex Computer Use.app"
 CODEX_CLI_PATH = "/Applications/Codex.app/Contents/Resources/codex"
 
-[mcp_servers.computer-use]
-command = "./Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient"
-args = ["mcp"]
-cwd = "."
-enabled = false
+[mcp_servers.msgvault]
+command = "/Users/jasonkuhrt/.local/bin/msgvault"
+args = ["--no-log-file", "mcp"]
+
+[mcp_servers.apple-contacts]
+command = "npx"
+args = ["-y", "@mgcrea/mcp-apple-contacts@1.4.0"]
+
+[mcp_servers.apple-contacts.env]
+APPLE_CONTACTS_ALLOW_WRITES = "1"
 
 [mcp_servers.che-ical]
 command = "/Users/jasonkuhrt/.local/bin/CheICalMCP"
@@ -160,20 +89,16 @@ enabled_tools = [
 ]
 
 [features]
-codex_hooks = true
 hooks = true
 multi_agent = true
 memories = true
 goals = true
-js_repl = false
+chronicle = true
 
 [plugins."linear@openai-curated"]
 enabled = true
 
 [plugins."github@openai-curated"]
-enabled = true
-
-[plugins."hookify@hookify-local"]
 enabled = true
 
 [plugins."documents@openai-primary-runtime"]
@@ -200,9 +125,6 @@ enabled = true
 [plugins."template-creator@openai-primary-runtime"]
 enabled = true
 
-[plugins."sites@openai-bundled"]
-enabled = true
-
 [plugins."browser@openai-bundled"]
 enabled = true
 
@@ -218,6 +140,12 @@ enabled = true
 [plugins."codex-app-tools@openai-bundled"]
 enabled = true
 
+[plugins."unified-computer-use@openai-bundled"]
+enabled = true
+
+[plugins."computer-history@openai-bundled"]
+enabled = true
+
 [marketplaces.openai-bundled]
 source_type = "local"
 source = "/Users/jasonkuhrt/.codex/.tmp/bundled-marketplaces/openai-bundled"
@@ -225,6 +153,12 @@ source = "/Users/jasonkuhrt/.codex/.tmp/bundled-marketplaces/openai-bundled"
 [marketplaces.openai-primary-runtime]
 source_type = "local"
 source = "/Users/jasonkuhrt/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+
+[marketplaces.apple-mail-mcp]
+last_updated = "2026-08-30T20:35:43Z"
+source_type = "git"
+source = "https://github.com/sweetrb/apple-mail-mcp.git"
+ref = "v2.17.3"
 
 [hooks.state]
 
@@ -246,21 +180,6 @@ trusted_hash = "sha256:4a8912a39e135cf6f6d737d4d549b005b95e36d86efe6a5bef360c30f
 [hooks.state."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat-hea-4430-react-compiler-webapp/.codex/hooks.json:pre_tool_use:1:0"]
 trusted_hash = "sha256:450be573d49f7fadca414a916cc453cfa0633dca67877ad7cea95e09f4be5543"
 
-[hooks.state."hookify@hookify-local:hooks.json:post_tool_use:0:0"]
-trusted_hash = "sha256:cf7711e65553d311a86d9459bcc0e0b8226e0ede1f223f05b6e5c2b4cb97e5b6"
-
-[hooks.state."hookify@hookify-local:hooks.json:pre_tool_use:0:0"]
-trusted_hash = "sha256:37c54fcb7ef9216f1dde6da6030556ae1f0fb3356afbaaecab8e2426f6e65364"
-
-[hooks.state."hookify@hookify-local:hooks.json:session_start:0:0"]
-trusted_hash = "sha256:afd84dbf91d8dfc0a1673849ab72f0f61e324b10d9d1092162469f20c9b40bab"
-
-[hooks.state."hookify@hookify-local:hooks.json:stop:0:0"]
-trusted_hash = "sha256:4a854d6fcee4614219ac055dd99dd634b7fe06dc9b414ee742ce15b1dd550160"
-
-[hooks.state."hookify@hookify-local:hooks.json:user_prompt_submit:0:0"]
-trusted_hash = "sha256:86bfe1b8c23f9cd89f2aca8e63c7e50be1ea656c972cb6ab5260e383b6b3e9d9"
-
 [hooks.state."/Users/jasonkuhrt/projects/heartbeat-chat/Heartbeat/.codex/config.toml:session_start:0:0"]
 trusted_hash = "sha256:f414b0c9a23b05cad965680e64ec7e49827a111f9f715cc4a9483d573a3141c1"
 
@@ -272,8 +191,13 @@ keepRemoteControlAwakeWhilePluggedIn = true
 git-create-pull-request-as-draft = false
 conversationDetailMode = "STEPS_EXECUTION"
 dock-icon-preference = "app-default"
-appearanceTheme = "dark"
+appearanceTheme = "system"
 realtimeVoiceScreenContextEnabled = true
+appshotDestination = "automatic"
+open-link-in-target-preference = "in-app-browser"
+git-pull-request-merge-method = "squash"
+git-pr-watch-auto-merge = false
+worktree-upstream-refresh-mode = "best-effort"
 
 [desktop.open-in-target-preferences]
 global = "zed"
@@ -308,12 +232,22 @@ skill = "#ad7bf9"
 [shell_environment_policy.set]
 NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "9230e2bd8b24b7ac7a0ba6774c64bf0d78ecdabbdd91d0ed627b02a587bae2df"
 
+[agents]
+default_subagent_model = "gpt-5.6-sol"
+default_subagent_reasoning_effort = "high"
+
 [[skills.config]]
 name = "dispatch-claude"
 enabled = false
 
+# Claude Code manuals conflict with Codex's bundled browser instructions.
+[[skills.config]]
+name = "claude-in-chrome"
+enabled = false
+
+[[skills.config]]
+name = "computer-use"
+enabled = false
+
 # Re-enable when LINEAR_API_TOKEN is available in Codex's environment.
 #
-# [mcp_servers.linear]
-# url = "https://mcp.linear.app/mcp"
-# bearer_token_env_var = "LINEAR_API_TOKEN"

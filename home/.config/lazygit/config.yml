@@ -47,10 +47,6 @@ os:
   # declares the `Dockerfile` filename, while Zed declares no Dockerfile type.
   # This forces Zed for every `o` file-open (links still use os.openLink).
   open: 'zed -- {{filename}}'
-keybinding:
-  universal:
-    scrollUpMain: K
-    scrollDownMain: J
 customCommands:
   - key: 'H'
     context: 'staging'

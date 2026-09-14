@@ -30,7 +30,7 @@ alias cal='cal -3'
 - Visible expansion teaches the full command
 - Aliases reserved for cases where abbreviation expansion would be wrong (`px test` should NOT expand to `pnpm --silent test` visually — the `--silent` is implementation detail)
 
-Source: `config.fish:82-90`
+Source: `config.fish`, "Abbreviations & Aliases"
 
 ---
 
@@ -50,7 +50,7 @@ abbr -a du dust      # disk usage with visual bars
 abbr -a df duf       # disk free with color
 abbr -a ps procs     # process viewer with tree
 abbr -a sed sd       # simpler regex syntax
-abbr -a dig dog      # DNS with color
+abbr -a dig doggo    # DNS with color
 abbr -a ping gping   # graphical ping
 abbr -a diff difft   # structural diff (understands syntax)
 abbr -a vim nvim
@@ -64,33 +64,40 @@ abbr -a vim nvim
 - Must install all replacement tools (handled by Brewfile)
 - Occasional behavior differences from classic tools (e.g., `fd` excludes gitignored files by default)
 
-Source: `config.fish:127-141`
+Source: `config.fish`, "Modern Unix replacements"
 
 ---
 
 ## Decision 6: pnpm for Node Version Management
 
 **Decision:**
-Use pnpm as both package manager and Node version manager. npm for global CLI tools. Corepack for per-project pnpm/yarn versions.
+Use pnpm as both package manager and Node version manager. npm for global CLI tools.
 
 **Implementation:**
 ```
-Bootstrap: Homebrew → pnpm → node LTS → npm globals → corepack
-Runtime:   npm globals (1st) → pnpm node (2nd) → Homebrew (3rd, unused)
+Bootstrap: Homebrew -> pnpm -> node LTS -> npm globals
+Runtime:   ~/.local/bin -> npm globals -> pnpm node -> Homebrew
 ```
 
 **Rationale (documented in [docs/node-setup.md](docs/node-setup.md)):**
 - pnpm already manages packages; `pnpm env use --global lts` replaces a dedicated version manager
 - npm globals install to `~/.npm-global` independent of node version — upgrading node doesn't break global tools
 - npx checks npm's global dir, so using npm (not pnpm) for globals preserves npx fallback
-- Corepack handles per-project pnpm/yarn versions automatically
 
 **Trade-offs:**
-- Three-tool dance (pnpm + npm + corepack) is more complex than a single tool
-- Can't use `pnpm self-update` (conflicts with Homebrew's version tracking)
-- `brew install corepack` conflicts with `brew install pnpm` — must use npm global instead
+- No `pnpm self-update`: pnpm comes from Homebrew, so `brew upgrade pnpm` is the update path
 
-**Prior art:** fnm was tried but abandoned — "the official suggestion doesn't work in Fish for some reason" (commented-out code in `config.fish:49-56`, links to [fnm#356](https://github.com/Schniz/fnm/issues/356#issuecomment-1010816655)).
+**Corepack removed (2026-09-13):**
+Corepack was installed as an npm global to resolve per-project `packageManager` pins. It also owned
+the `pnpm`, `pnpx`, `yarn` and `yarnpkg` shims in `~/.npm-global/bin`, which sits ahead of Homebrew
+on PATH — so the pnpm actually in use (12.4.1) came from corepack, while the Homebrew formula this
+repo declares sat at 11.8.0, unused and invisible. Two owners, and the wrong one was winning.
+Uninstalling corepack removed the shims and exposed the gap; `brew upgrade pnpm` closed it.
+Homebrew is now the only source of pnpm.
+
+**Prior art:** fnm was tried but abandoned — "the official suggestion doesn't work in Fish for some
+reason" ([fnm#356](https://github.com/Schniz/fnm/issues/356#issuecomment-1010816655)). The
+commented-out fish block it refers to was deleted in the 2026-09-13 cleanup.
 
 ---
 

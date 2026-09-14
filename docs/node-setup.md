@@ -2,47 +2,32 @@
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
-│  BOOTSTRAP (first just up)                                     │
+│  BOOTSTRAP (first just up)                                    │
 ├───────────────────────────────────────────────────────────────┤
 │                                                               │
-│  Homebrew ───▶ pnpm ───▶ npm ───▶ corepack                    │
-│     │           │         │          │                        │
-│     ▼           ▼         ▼          ▼                        │
-│  pnpm +      LTS node   global    per-project                 │
-│  bootstrap   (runtime)  CLI tools pnpm/yarn                   │
-│  node                                                         │
-│                                                               │
-├───────────────────────────────────────────────────────────────┤
-│  RUNTIME PATH                                                 │
-├───────────────────────────────────────────────────────────────┤
-│                                                               │
-│  1st  npm globals ────▶ CLI tools (including corepack)        │
-│            │                                                  │
-│            ▼                                                  │
-│  2nd  pnpm ───────────▶ node + npm (shadows brew)             │
-│            │                                                  │
-│            ▼                                                  │
-│  3rd  Homebrew ───────▶ pnpm (bootstrap only)                 │
-│                                                               │
-├───────────────────────────────────────────────────────────────┤
-│  PROJECT-LEVEL                                                │
-├───────────────────────────────────────────────────────────────┤
-│                                                               │
-│  pnpm/yarn ───▶ corepack ───▶ uses version from               │
-│                               packageManager field            │
+│  Homebrew ───▶ pnpm ───▶ node LTS ───▶ npm globals            │
+│     │            │          │               │                 │
+│     ▼            ▼          ▼               ▼                 │
+│  node + pnpm   version    runtime       CLI tools             │
+│  (bootstrap)   manager                                        │
 │                                                               │
 └───────────────────────────────────────────────────────────────┘
 ```
 
 ## PATH & Tool Layout
 
-```
-Priority   Tool       Manages               Location
-────────────────────────────────────────────────────────────────────
-1st        npm        global CLI tools      ~/.npm-global/bin
-2nd        pnpm       node versions         ~/Library/pnpm
-3rd        Homebrew   initial bootstrap     /opt/homebrew/bin
-```
+The order `config.fish` establishes in a login shell (its PATH block is a single
+`fish_add_path -gP`, first argument first):
+
+| Priority | Location           | Holds                                       |
+| -------- | ------------------ | ------------------------------------------- |
+| 1st      | `~/.local/bin`     | own wrappers, which must win (e.g. `codex`) |
+| 2nd      | `~/.npm-global/bin`| global CLI tools                            |
+| 3rd      | `~/Library/pnpm`   | the node pnpm manages                       |
+| 4th      | `/opt/homebrew/bin`| pnpm itself, and brew's bootstrap node       |
+
+A nested shell inherits its parent's order: `fish_add_path` guarantees an entry is
+present, not that it is repositioned, so it never reshuffles what the parent set.
 
 ## Bootstrap Flow
 
@@ -68,7 +53,8 @@ This is why we use npm (not pnpm) for globals — npx checks npm's global dir.
 
 ## Key Insight
 
-npm globals install to `~/.npm-global` independent of node version. `pnpm env use 22` won't break your global tools.
+npm globals install to `~/.npm-global` independent of node version. `pnpm env use 22` won't break
+your global tools.
 
 ## Updating Tools
 
@@ -81,10 +67,12 @@ Don't use `pnpm self-update` — it conflicts with Homebrew's version tracking.
 
 ## Project-Specific Versions
 
-* Projects may specify `"packageManager": "pnpm@9.x.x"` in package.json
-* Corepack handles this automatically (installed and enabled by dotfiles via `just up`)
-* Corepack manages pnpm and yarn; npm is bundled with node separately
+Corepack is no longer installed — see DECISION 6 for why. pnpm comes from Homebrew and is the only
+package manager on PATH.
 
-## Pitfall: Don't `brew install corepack`
+When a project needs a pnpm other than the installed one, `pnpm with` runs a single invocation at a
+given version without changing anything globally; see `pnpm help with`.
 
-Brew's corepack conflicts with brew's pnpm (both install `pnpm` and `pnpx` binaries). Use npm global install instead (handled by dotfiles via `just up`).
+Whether pnpm honours a project's `"packageManager"` field on its own is unverified here:
+`manage-package-manager-versions` is unset on this machine and `pnpm config get` reports
+`undefined`.

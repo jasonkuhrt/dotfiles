@@ -29,16 +29,3 @@ else
     warn "pnpm not installed, skipping Node.js setup"
     exit 0
 fi
-
-# Enable corepack for per-project pnpm/yarn version management
-if has_cmd corepack; then
-    if [ -L "$PNPM_HOME/pnpm" ] || [ -L "$(dirname "$(which node 2>/dev/null)")/pnpm" ] 2>/dev/null; then
-        skip "Corepack"
-    else
-        if corepack enable; then
-            task "Corepack enabled"
-        else
-            warn "corepack enable failed"
-        fi
-    fi
-fi

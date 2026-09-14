@@ -54,7 +54,7 @@ Claude Code has multiple bugs that prevent symlinked `settings.json` from workin
 
 These items require manual action and can't be fully automated:
 
-- **`sync-sudo`** — sudo operations (power management, Touch ID, Fish as default shell). Run `sudo ./scripts/sync-sudo.sh` when prompted after `just up`.
+- **`sync-sudo`** — sudo operations (power management, Touch ID, Fish as default shell). Run `just sudo-setup` when prompted after `just up`.
 - **Fisher plugin removals** — `fisher update` handles removals, but some plugins leave behind universal variables in `~/.config/fish/fish_variables` that need manual cleanup.
 - **Keyboard repeat rate** — set by the macOS defaults script, but requires logout/login to take effect.
 

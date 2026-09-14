@@ -266,7 +266,7 @@ cmux-upstream-audit:
             -f query='query($owner:String!,$name:String!,$number:Int!){ repository(owner:$owner,name:$name){ issue(number:$number){ number title state url timelineItems(first:100,itemTypes:[CROSS_REFERENCED_EVENT]){ nodes{ ... on CrossReferencedEvent { source { __typename ... on PullRequest { number title state isDraft url repository { nameWithOwner } } } } } } } } }'
     }
 
-    for issue in 1900 1418 1884 1200 1472 2319; do
+    for issue in 1900 1418 1884 1472 2319; do
         payload="$(query_issue "$issue")"
         title="$(printf '%s' "$payload" | jq -r '.data.repository.issue.title')"
         state="$(printf '%s' "$payload" | jq -r '.data.repository.issue.state')"

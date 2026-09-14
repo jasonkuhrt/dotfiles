@@ -1,0 +1,10 @@
+{
+  "name": "key-binder-config",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@jasonkuhrt/key-binder": "file:/Users/jasonkuhrt/projects/jasonkuhrt/key-binder",
+    "@jasonkuhrt/vsv": "file:/Users/jasonkuhrt/projects/jasonkuhrt/vsv",
+    "effect": "^3.21.2"
+  }
+}

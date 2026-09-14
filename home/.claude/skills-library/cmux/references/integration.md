@@ -22,11 +22,11 @@ While active, bare keys are intercepted by Karabiner before reaching the termina
 
 | Key | Action | Mechanism |
 |-----|--------|-----------|
-| h/j/k/l | Focus split left/down/up/right | osascript → Hyper+key → Ghostty keybind |
-| u/i/o/p (via prefix) | Resize split | osascript → Hyper+key → Ghostty keybind |
-| n/m/,/. (via prefix) | New split | osascript → Hyper+key → Ghostty keybind |
-| z | Toggle zoom | osascript → Hyper+z → Ghostty keybind |
-| x | Close surface | osascript → Hyper+x → Ghostty keybind |
+| h/j/k/l | Focus split left/down/up/right | Karabiner → Hyper+key → Ghostty keybind |
+| u/i/o/p (via prefix) | Resize split | Karabiner → Hyper+key → Ghostty keybind |
+| n/m/,/. (via prefix) | New split | Karabiner → Hyper+key → Ghostty keybind |
+| z | Toggle zoom | Karabiner → Hyper+z → Ghostty keybind |
+| x | Close surface | Karabiner → Hyper+x → Ghostty keybind |
 | j/k (workspace prefix) | Workspace next/prev | cmux-mode → cmux CLI |
 | Escape / Ctrl+0 | Exit drive mode | Clears `cmux_mode` variable |
 
@@ -86,8 +86,8 @@ Example: binding `[`/`]` in vi normal mode for tab cycling:
 ```fish
 # These override the default history-token-search-backward/forward bindings.
 # Alternatives for history search: alt-up/down, ctrl+r (fzf).
-bind -M default \[ 'cmux-tab-cycle prev'
-bind -M default \] 'cmux-tab-cycle next'
+bind -M default \[ 'cmuxx prev-surface'
+bind -M default \] 'cmuxx next-surface'
 ```
 
 Key placement rule: custom bindings must go AFTER `fish_vi_key_bindings` and `fzf_configure_bindings` calls, which replace all bindings.

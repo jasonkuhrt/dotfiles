@@ -30,7 +30,7 @@ The human:
 
 An agent runs inside **one surface** (terminal). It has `CMUX_WORKSPACE_ID` and `CMUX_SURFACE_ID` set by the environment. It calls `cmux` CLI commands to interact with the multiplexer — the CLI is the agent's UI to cmux, the way the sidebar/tabs are the human's UI.
 
-The tmux shim exists because Claude Code speaks tmux protocol internally. The shim translates tmux calls to cmux API calls.
+Claude Code drives split-pane teammates through tmux, and only when `TMUX` is set. `cmux claude-teams` sets `TMUX`/`TMUX_PANE` and puts a `tmux` shim beside the per-surface `claude` shim; the shim translates tmux calls into cmux API calls.
 
 ## What the human sees when things spawn
 

@@ -22,9 +22,8 @@ set --export EDITOR nvim
 set --export XDG_CONFIG_HOME ~/.config
 set --export RIPGREP_CONFIG_PATH ~/.config/ripgrep/config
 
-# Claude Code: reduce buffer from 45k→35k for ~10k more effective context
-# Trade-off: max response length 22k (vs 32k default)
-# Formula: buffer = 13k + maxOutputTokens
+# Claude Code: max response length. The harness reserves 13k + this value as the
+# output buffer, so raising it trades context window for longer single responses.
 # Source: https://x.com/bcherny/status/2012670336362492296
 set --export CLAUDE_CODE_MAX_OUTPUT_TOKENS 50000
 

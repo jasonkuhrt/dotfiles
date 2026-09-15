@@ -38,19 +38,19 @@ These tasks can be completed independently of the terminal cutover. Commit each 
 
 ### Delete the unused Neovim plugin copy
 
-- [ ] Confirm `home/.config/nvim/lua/plugins/cmdux.lua` still loads `~/projects/jasonkuhrt/cmdux`.
-- [ ] Delete `home/.config/nvim/local-plugins/cmd-ux/` and `cmd-ux-command-blocklist.txt`. Keep `cmdux-command-blocklist.txt`.
-- [ ] Remove its wiring from:
+- [x] Confirm `home/.config/nvim/lua/plugins/cmdux.lua` still loads `~/projects/jasonkuhrt/cmdux`.
+- [x] Delete `home/.config/nvim/local-plugins/cmd-ux/` and `cmd-ux-command-blocklist.txt`. Keep `cmdux-command-blocklist.txt`.
+- [x] Remove its wiring from:
   - `justfile`: `cmd_ux_*` variables and eight `cmd-ux-*` recipes.
   - `.luarc.json`, `scripts/git-hooks/check-staged-lua.sh`, `scripts/ci/lua-ci.sh`, and `.github/workflows/lua.yml`: its paths, test bookkeeping and test block. Keep other plugins' checks.
   - `.claude/CLAUDE.md` and `docs/lua-tooling.md`: instructions about the deleted copy.
   - `keymap.yml` and `home/.config/nvim/local-plugins/file-ops/README.md`: references should say `cmdux`.
-- [ ] Check: `just lua-check`, recipe parsing, and a bounded Neovim startup that loads `cmdux`.
+- [x] Check: `just lua-check`, recipe parsing, and a bounded Neovim startup that loads `cmdux`.
 
 ### Bring the CLI tools into their intended installation state
 
-- [ ] **Neovim:** replace the HEAD build with the stable Homebrew package declared in `scripts/data/Brewfile`. Confirm the version and that the normal configuration starts. Run the Lua check after this change.
-- [ ] **Codex:** download and read the official installer, then run it:
+- [x] **Neovim:** replace the HEAD build with the stable Homebrew package declared in `scripts/data/Brewfile`. Confirm the version and that the normal configuration starts. Run the Lua check after this change.
+- [x] **Codex:** download and read the official installer, then run it:
 
   ```bash
   curl -fsSL https://chatgpt.com/codex/install.sh -o /tmp/codex-install.sh
@@ -58,7 +58,7 @@ These tasks can be completed independently of the terminal cutover. Commit each 
   ```
 
   The inspected installer replaces `~/.local/bin/codex` with a symlink; it does not write through the old link into the repo. Check the downloaded script still does this, and inspect any shell-config changes it makes.
-- [ ] Verify the newly installed CLI with `codex --version` and a bounded `codex doctor` from a fresh shell.
+- [x] Verify the newly installed CLI with `codex --version` and a bounded `codex doctor` from a fresh shell.
   - Success: delete and commit the repository wrapper `home/.local/bin/codex`.
   - Installation or verification failure: restore the existing wrapper link, verify it works again, and record the actual reason it stays:
 

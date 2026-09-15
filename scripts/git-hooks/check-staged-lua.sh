@@ -8,7 +8,6 @@ files=()
 while IFS= read -r -d '' file; do
   case "$file" in
     home/.config/nvim/lua/*.lua | \
-    home/.config/nvim/local-plugins/cmd-ux/lua/*.lua | \
     home/.config/nvim/local-plugins/file-ops/lua/*.lua | \
     home/.config/nvim/local-plugins/file-ops/tests/*.lua | \
     home/.config/nvim/local-plugins/file-ops/tests/plenary/*.lua)

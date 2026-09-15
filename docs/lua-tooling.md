@@ -14,18 +14,18 @@ Personal reference for the Lua toolchain in this repo: what is installed, how Ne
 | `selene` | Linter | Repo-owned static analysis for Lua |
 | `stylua` | Formatter | Canonical formatting for Lua |
 
-Machine-managed installs live in [home/Brewfile](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/Brewfile). Neovim-managed installs are ensured through [lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/symlink-roots/config/nvim/lua/plugins/lua.lua).
+Machine-managed installs live in [scripts/data/Brewfile](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/scripts/data/Brewfile). Neovim-managed installs are ensured through [lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/lua/plugins/lua.lua).
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| [lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/symlink-roots/config/nvim/lua/plugins/lua.lua) | Lua-specific Neovim tooling glue |
+| [lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/lua/plugins/lua.lua) | Lua-specific Neovim tooling glue |
 | [.luarc.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.luarc.json) | Repo-owned LuaLS policy for Neovim, Claude/Serena, and shell checks |
 | [selene.toml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/selene.toml) | Selene lint policy |
 | [selene.nvim.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/selene.nvim.yml) | Selene stdlib/global definitions for Neovim-style Lua |
-| [stylua.toml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/symlink-roots/config/nvim/stylua.toml) | StyLua formatting rules |
-| [.neoconf.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/symlink-roots/config/nvim/.neoconf.json) | Enables Lua library support for Neovim config work |
+| [stylua.toml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/stylua.toml) | StyLua formatting rules |
+| [.neoconf.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/.neoconf.json) | Enables Lua library support for Neovim config work |
 | [.mcp.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.mcp.json) | Project-local Serena MCP entry for Claude Code |
 | [.serena/project.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.serena/project.yml) | Serena language-server configuration, now including Lua via LSP backend |
 
@@ -41,13 +41,13 @@ The old `vim.yml` and `nvim.yml` names were technically valid but still too ambi
 
 ## What `lua/plugins/lua.lua` Does
 
-[lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/symlink-roots/config/nvim/lua/plugins/lua.lua) is a small Lua-tooling overlay on top of LazyVim defaults.
+[lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/lua/plugins/lua.lua) is a small Lua-tooling overlay on top of LazyVim defaults.
 
 This is the idiomatic extension point here. The installed LazyVim tree already ships core `lazydev.nvim` and `lua_ls` defaults, but it does not ship an `extras/lang/lua.lua` extra. So the repo-level `plugins/lua.lua` file is extending the existing Lua stack, not replacing some missing standard plugin.
 
 It does three things:
 
-1. Extends `lazydev.nvim` so local plugin code under `local-plugins/cmd-ux` is part of Lua editor intelligence.
+1. Extends `lazydev.nvim` so the local `cmux-nav` plugin and the `cmdux` checkout are part of Lua editor intelligence.
 2. Wires `selene` into `nvim-lint` for `lua` buffers when a `selene.toml` exists in the project.
 3. Ensures `lua-language-server`, `selene`, and `stylua` are installed through Mason for Neovim use.
 
@@ -85,7 +85,7 @@ Important distinction: Lua does not become truly type-safe here. The closest equ
 Those relaxations were re-tested again on March 6, 2026 after the Lua QA/typing pass:
 
 - Re-enabling `multiple_statements` produced 0 Selene findings, so that relaxation was removed.
-- Re-enabling `mixed_table` still produced 34 warnings across normal Lazy.nvim plugin specs and keymap-style tables, including files like `plugins/editor.lua`, `plugins/lang.lua`, `plugins/cmux-nav.lua`, and `cmd_ux/adapters/snacks.lua`.
+- Re-enabling `mixed_table` still produced 34 warnings across normal Lazy.nvim plugin specs and keymap-style tables, including files like `plugins/editor.lua`, `plugins/lang.lua`, and `plugins/cmux-nav.lua`.
 
 So the current posture is intentional, not stale:
 
@@ -98,8 +98,8 @@ The stricter move that did land is not "more Selene noise". It is a repo-owned L
 
 Use LuaLS annotations to make real shapes explicit, not to wallpaper over unclear code.
 
-- Reuse shared contracts when they already exist. In `cmd-ux`, prefer the domain types in [types.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/local-plugins/cmd-ux/lua/cmd_ux/types.lua) over inventing duplicate local schemas.
-- Add local `---@class` and `---@alias` blocks for file-local boundary shapes and string unions. Good examples already exist in [config.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/local-plugins/cmd-ux/lua/cmd_ux/providers/config.lua) and other `cmd-ux` modules.
+- Reuse shared contracts when they already exist instead of inventing duplicate local schemas.
+- Add local `---@class` and `---@alias` blocks for file-local boundary shapes and string unions.
 - Add `---@param` and `---@return` on helpers when LuaLS inference is weak or the function boundary is non-obvious.
 - Prefer narrow concrete shapes over `table` and avoid `any` unless the boundary is truly dynamic and cannot be modeled cleanly.
 - In plugin-spec files, keep annotations lightweight and local. Annotate the returned table or callback shape; do not invent a fake repo-local schema for all of Lazy.nvim just to satisfy one file.
@@ -115,7 +115,7 @@ just lua-ci
 just lua-check
 just lua-check-staged
 just lua-fmt
-just cmd-ux-test
+just file-ops-test
 just hooks-install
 ```
 
@@ -137,12 +137,12 @@ Expected workflow:
 
 - It exits cleanly when the current change set has no Lua or Lua-tooling changes.
 - It runs `just lua-check` for Lua-relevant changes.
-- It only runs `just cmd-ux-test` when the change set touches `cmd-ux` paths.
+- It runs a local plugin's tests (`just cmux-nav-test`, `just file-ops-test`) only when the change set touches that plugin.
 
 For local commits, `just hooks-install` installs a staged-only pre-commit hook. That hook checks only staged Lua blobs from:
 
-- `symlink-roots/config/nvim/lua`
-- `symlink-roots/config/nvim/local-plugins/cmd-ux/lua`
+- `home/.config/nvim/lua`
+- `home/.config/nvim/local-plugins/file-ops`
 
 This keeps existing unrelated repo issues from blocking a commit.
 
@@ -158,9 +158,9 @@ nvim --headless '+lua local lint=require("lint"); print(vim.inspect(lint.linters
 
 Yes. Neovim has Lua LSP support on.
 
-- [.neoconf.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/symlink-roots/config/nvim/.neoconf.json) enables LuaLS-related Neovim config support.
+- [.neoconf.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/.neoconf.json) enables LuaLS-related Neovim config support.
 - LazyVim already provides good `lua_ls` defaults.
-- [lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/symlink-roots/config/nvim/lua/plugins/lua.lua) adds the missing Lua-specific glue.
+- [lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/lua/plugins/lua.lua) adds the missing Lua-specific glue.
 
 ### Codex
 

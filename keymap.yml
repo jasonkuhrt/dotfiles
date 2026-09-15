@@ -504,7 +504,7 @@ search:
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 git:
-  # Hunk app review is exposed through cmd-ux as `Git review ...`; q-prefix
+  # Hunk app review is exposed through cmdux as `Git review ...`; q-prefix
   # hunk bindings stay editor-local gitsigns operations.
   hunk_next:
     desc: Go to next hunk

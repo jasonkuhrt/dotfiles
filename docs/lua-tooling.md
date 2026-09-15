@@ -21,13 +21,10 @@ Machine-managed installs live in [scripts/data/Brewfile](/Users/jasonkuhrt/proje
 | File | Purpose |
 |------|---------|
 | [lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/lua/plugins/lua.lua) | Lua-specific Neovim tooling glue |
-| [.luarc.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.luarc.json) | Repo-owned LuaLS policy for Neovim, Claude/Serena, and shell checks |
+| [.luarc.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.luarc.json) | Repo-owned LuaLS policy for Neovim and shell checks |
 | [selene.toml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/selene.toml) | Selene lint policy |
 | [selene.nvim.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/selene.nvim.yml) | Selene stdlib/global definitions for Neovim-style Lua |
 | [stylua.toml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/stylua.toml) | StyLua formatting rules |
-| [.neoconf.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/.neoconf.json) | Enables Lua library support for Neovim config work |
-| [.mcp.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.mcp.json) | Project-local Serena MCP entry for Claude Code |
-| [.serena/project.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.serena/project.yml) | Serena language-server configuration, now including Lua via LSP backend |
 
 ## What `selene.nvim.yml` Is
 
@@ -63,7 +60,6 @@ What is strict now:
 - Lua files have a real linter.
 - Lua files have a repo-owned LuaLS policy in [.luarc.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.luarc.json).
 - LuaLS is active in Neovim.
-- Claude Code can start a project-local Serena server for this repo, and Serena is configured to start Lua via the LSP backend.
 - `lazydev.nvim` improves library/type resolution for Neovim plugin code.
 - Agents can run the exact same formatter and linter in the shell.
 
@@ -158,34 +154,16 @@ nvim --headless '+lua local lint=require("lint"); print(vim.inspect(lint.linters
 
 Yes. Neovim has Lua LSP support on.
 
-- [.neoconf.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/.neoconf.json) enables LuaLS-related Neovim config support.
 - LazyVim already provides good `lua_ls` defaults.
 - [lua.lua](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/lua/plugins/lua.lua) adds the missing Lua-specific glue.
 
-### Codex
+### Codex and Claude Code
 
-Codex still does not have a repo-local, first-class LuaLS toggle surfaced in this project the way Claude Code does. What it does have is:
+Neither agent has a Lua language server configured for this repo. Both rely on:
 
-- repo instructions in [AGENTS.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/AGENTS.md) and [codex/AGENTS.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/codex/AGENTS.md)
-- a repo-owned LuaLS config in [.luarc.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.luarc.json)
-- global Serena MCP configured in [~/.codex/config.toml](/Users/jasonkuhrt/.codex/config.toml)
-
-For Lua quality, Codex should assume:
-
-- `just lua-check` is the canonical Lua gate
-- `just lua-fmt` is the canonical Lua formatter
-- MCP/Serena plus direct CLI checks are the practical agent path unless Codex exposes a stronger project-local LSP hook in a future release
-
-### Claude Code
-
-Claude Code is now configured for this repo to use a project-local Serena server:
-
-- [.mcp.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.mcp.json) defines the `serena` MCP server
-- [.claude/settings.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.claude/settings.json) enables project MCP servers
-- [.serena/project.yml](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.serena/project.yml) now includes `lua` and pins the backend to `LSP`
-- [.luarc.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.luarc.json) gives LuaLS a repo-owned policy to read
-
-So for Claude Code in this repo, Lua is no longer just "Neovim has LuaLS". There is now a project-local Serena + LuaLS path plus the shell-based `just lua-check` fallback.
+- repo instructions in [AGENTS.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/AGENTS.md), [codex/AGENTS.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/codex/AGENTS.md) and [.claude/CLAUDE.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.claude/CLAUDE.md)
+- the repo-owned LuaLS policy in [.luarc.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.luarc.json)
+- `just lua-check` as the canonical Lua gate and `just lua-fmt` as the canonical formatter
 
 ## Rules of Thumb
 

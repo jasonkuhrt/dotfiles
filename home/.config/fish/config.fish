@@ -10,9 +10,10 @@
 # deliberately does not touch the universal `fish_user_paths`: universal PATH
 # entries are machine state that outlives this file and cannot be reviewed here.
 #
-# First argument wins. ~/.local/bin leads so its wrappers shadow Homebrew casks
-# (see home/.local/bin/codex). Installer-appended blocks for pnpm, bun, cargo,
-# go and grok are folded in here; if one re-appends its own block, delete it.
+# First argument wins. ~/.local/bin leads so standalone installs there, such as
+# Codex's official installer, shadow Homebrew. Installer-appended blocks for
+# pnpm, bun, cargo, go and grok are folded in here; if one re-appends its own
+# block, delete it.
 
 set -gx NPM_GLOBAL "$HOME/.npm-global"
 set -gx PNPM_HOME "$HOME/Library/pnpm"

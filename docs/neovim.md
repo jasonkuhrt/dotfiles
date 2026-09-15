@@ -119,18 +119,7 @@ Extras explicitly evaluated and rejected. Don't re-evaluate unless the landscape
 
 ## Neovim Version
 
-Running **nvim 0.12 nightly** (HEAD) via `brew install --HEAD neovim`.
-
-When 0.12 stable releases (~March 14, 2026):
-```sh
-brew uninstall neovim && brew install neovim
-```
-
-The stable 0.11.6 is still installed but unlinked. To revert:
-```sh
-brew unlink neovim  # unlink HEAD
-brew link neovim    # re-link 0.11.6
-```
+Stable Neovim from Homebrew (`brew "neovim"` in `scripts/data/Brewfile`). Upgrade with `brew upgrade neovim`.
 
 ## Plugin Config Files
 

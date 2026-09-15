@@ -3,9 +3,6 @@
   "runtime.version": "LuaJIT",
   "workspace.checkThirdParty": false,
   "workspace.useGitIgnore": true,
-  "workspace.ignoreDir": [
-    "home/.config/nvim/local-plugins/cmd-ux"
-  ],
   "workspace.library": [
     "${3rd}/luv/library",
     "${workspaceFolder}/../cmdux/lua"

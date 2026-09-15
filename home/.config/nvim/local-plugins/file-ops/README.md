@@ -12,7 +12,7 @@ Universal file operations that resolve their target based on context:
 | Normal buffer with a file | `vim.api.nvim_buf_get_name(0)` — current file |
 | No file context | Prompt for path, use cwd, or refuse (per command) |
 
-Registers a standard Neovim user command `:File` with tab completion. No external dependencies beyond `kit` (shared local utilities). cmd-ux discovers it automatically via Neovim's command registry.
+Registers a standard Neovim user command `:File` with tab completion. No external dependencies beyond `kit` (shared local utilities). cmdux discovers it automatically via Neovim's command registry.
 
 ## Commands
 
@@ -96,7 +96,7 @@ Shared `resolve_target()` function in `target.lua` that all commands call before
 -- context: "minifiles" | "buffer" | "none"
 ```
 
-Target is resolved at command execution time. When invoked from a picker (e.g. cmd-ux), the picker closes and focus returns to the previous window (mini.files or buffer) before the command fires via `vim.schedule`. This means `vim.bo.filetype` and `vim.api.nvim_buf_get_name(0)` reflect the original context correctly.
+Target is resolved at command execution time. When invoked from a picker (e.g. cmdux), the picker closes and focus returns to the previous window (mini.files or buffer) before the command fires via `vim.schedule`. This means `vim.bo.filetype` and `vim.api.nvim_buf_get_name(0)` reflect the original context correctly.
 
 ### Post-mutation hook
 

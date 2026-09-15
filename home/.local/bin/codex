@@ -1,4 +1,0 @@
-#!/bin/sh
-# The Homebrew cask lags the app, and Codex.app writes config keys older CLIs cannot
-# parse, so terminal `codex` must be the binary that ships inside the app.
-exec /Applications/Codex.app/Contents/Resources/codex "$@"

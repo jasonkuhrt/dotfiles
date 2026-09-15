@@ -21,7 +21,7 @@ The order `config.fish` establishes in a login shell (its PATH block is a single
 
 | Priority | Location             | Holds                                               |
 | -------- | -------------------- | --------------------------------------------------- |
-| 1st      | `~/.local/bin`       | own wrappers, which must win (e.g. `codex`)         |
+| 1st      | `~/.local/bin`       | standalone installs, which must win (e.g. `codex`)         |
 | 2nd      | `~/.npm-global/bin`  | global CLI tools, and npm itself                    |
 | 3rd      | `~/Library/pnpm/bin` | pnpm, and the `node` shim for pnpm's global runtime |
 | 4th      | `/opt/homebrew/bin`  | Homebrew's node: fallback, and a fresh machine's first npm |

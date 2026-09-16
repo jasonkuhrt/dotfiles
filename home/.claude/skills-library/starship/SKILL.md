@@ -19,13 +19,7 @@ Cross-shell prompt with modules for git, languages, cloud, and more.
 
 ## Context-Specific Configs
 
-**Current setup:** Single config with optional zmx session segment:
-
-```toml
-[env_var.ZMX_SESSION]
-symbol = " "
-format = "[$symbol$env_value]($style) "
-```
+**Current setup:** A single config for every shell.
 
 **When to use multiple configs:**
 - SSH sessions -> show hostname

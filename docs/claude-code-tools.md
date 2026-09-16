@@ -41,6 +41,5 @@ No Claude Code hooks are configured here; the hook scripts were removed in `05bc
 cmux's Claude integration (sidebar status, notifications, Feed approvals, session restore) comes from cmux
 itself. `/Applications/cmux.app/Contents/Resources/bin/cmux-claude-wrapper` injects `--session-id` and
 `--settings`, and cmux's fish integration puts a per-surface `claude` shim ahead of the real binary on PATH.
-That integration loads only when cmux starts the shell itself (`fish -il --init-command …`); surfaces started
-through `cmux-zmx-enter` run plain `fish -l`, so it does not load there. See the
+That integration loads because cmux starts the shell itself (`fish -il --init-command …`). See the
 [cmux agent-hooks docs](https://raw.githubusercontent.com/manaflow-ai/cmux/main/docs/agent-hooks.md).

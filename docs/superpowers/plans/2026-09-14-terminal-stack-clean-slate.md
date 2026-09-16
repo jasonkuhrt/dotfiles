@@ -95,7 +95,10 @@ If the cutover is interrupted, leave zmx and its launcher available. Resume from
 were migrated to native tabs by session id. cmux auto-resume initially restored nothing because cmux types
 `cmux restore <agent> <id>` into the new shell and fish started prompts in vi normal mode, which ate the
 leading characters; fixed by starting prompts in insert mode (b1f4af72) and reported upstream as
-manaflow-ai/cmux#12772. After the fix a quit/relaunch restored every session unattended. The 10 idle zmx
+manaflow-ai/cmux#12772. After the fix a quit/relaunch restored every session unattended. A second restart exposed a
+different defect: cmux refuses to restore a session whose recorded pid is stale, printing "already running
+in process N" for a dead process, so three grok sessions needed a manual `cmux restore`. Filed as
+manaflow-ai/cmux#12775. The 10 idle zmx
 sessions were left running; the binary is uninstalled, so they end at reboot.
 ## 3. Remove the retired zmx glue — agent
 

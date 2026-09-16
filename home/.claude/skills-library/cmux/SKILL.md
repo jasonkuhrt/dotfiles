@@ -1,313 +1,74 @@
 ---
 name: cmux
-description: >-
-  Reference for cmux, the terminal app built on libghostty. Use whenever the user
-  mentions cmux, terminal tabs, surfaces, workspaces, splits, pane navigation, the
-  cmux CLI, cmux-mode, or terminal multiplexer operations. Critical: always consult
-  this skill before running any cmux command that creates windows or workspaces —
-  `new-window` (OS window) and `new-workspace` (sidebar tab) are different commands
-  and confusing them is the most common mistake. Also use when working with Ghostty
-  config (cmux reads it), Karabiner cmux drive mode, or Fish/Neovim keybindings for
-  terminal navigation. Even if the user just says "open a window", "new tab", or
-  "switch tabs" in a terminal context, this skill applies.
+description: End-user control of cmux topology and routing (windows, workspaces, panes/surfaces, focus, moves, reorder, identify, trigger flash). Use when automation needs deterministic placement and navigation in a multi-pane cmux layout.
 ---
 
-# cmux Reference
+# cmux Core Control
 
-cmux is a terminal application built on **libghostty** (not a Ghostty wrapper — it's its own app).
+Non-browser cmux topology and routing.
 
-- Bundle ID: `com.cmuxterm.app`
-- CLI: `cmux`, the app bundle's `Contents/Resources/bin/cmux`, symlinked both from `/usr/local/bin/cmux` (cmux's own CLI install) and `/opt/homebrew/bin/cmux` (the cask); socket at `$CMUX_SOCKET_PATH`, e.g. `~/.local/state/cmux/cmux-<uid>.sock`
-- Version: check with `cmux version`
+- **Window**: top-level macOS cmux window.
+- **Workspace**: tab-like group within a window.
+- **Pane**: split container in a workspace.
+- **Surface**: a tab within a pane (terminal or browser panel).
 
-## Object Model
-
-```
-Window          macOS window
-└── Workspace   sidebar entry (like a tmux session)
-    └── Pane    split region within a workspace
-        └── Surface   individual terminal or browser instance
-                       ↑ THIS is what users call a "tab"
-```
-
-- **Window**: top-level macOS window, contains workspaces.
-- **Workspace**: shown in the sidebar. Has its own pane layout. Closest tmux analogy: session.
-- **Pane**: a split region. Contains surfaces displayed as a tab bar.
-- **Surface**: a single terminal (or browser). **Surfaces = tabs.** The tab bar at the top of a pane shows these.
-- **Tab**: an alias for surface in some commands. `tab:<n>` refs work interchangeably with `surface:<n>`.
-
-### Referencing Objects
-
-Commands accept short refs (`surface:14`) and UUIDs. Indexes are also technically
-accepted but **never use them** — indexes are positional and change when workspaces are
-reordered, created, or closed. Always use refs (`workspace:13`, `surface:4`) or UUIDs.
-For targeting by name, use `find-window` to resolve to a ref first.
+## Fast start
 
 ```bash
-cmux identify              # caller's full context (window, workspace, pane, surface, tab)
-cmux --json identify       # structured output with caller + focused surface info
+cmux identify --json                              # current caller context
+cmux list-windows / list-workspaces / list-panes
+cmux list-pane-surfaces --pane pane:1
+cmux new-workspace
+cmux new-split right --panel pane:1
+cmux new-split down --command "npm run dev"       # new terminal runs the command in a live shell
+cmux move-surface --surface surface:7 --pane pane:2 --focus true
+cmux split-off --surface surface:7 right
+cmux reorder-surface --surface surface:7 --before surface:3
+
+# workspace context-menu actions (color, description, rename, pin, ...)
+cmux workspace-action --action set-color --color Blue
+cmux workspace-action --action set-description --description "Ship checklist"
+
+# attention cue
+cmux trigger-flash --surface surface:7
 ```
 
-### Environment Variables (auto-set in cmux terminals)
+## Handle model
 
-| Variable            | Purpose                                          |
-| ------------------- | ------------------------------------------------ |
-| `CMUX_WORKSPACE_ID` | Default for `--workspace` in all commands        |
-| `CMUX_SURFACE_ID`   | Default for `--surface`                          |
-| `CMUX_TAB_ID`       | Default for `--tab` in `tab-action`/`rename-tab` |
-| `CMUX_SOCKET_PATH`  | Socket path; set in every cmux surface           |
+Output defaults to short refs (`window:N`, `workspace:N`, `pane:N`, `surface:N`). UUIDs are accepted as input; request UUID output only when needed with `--id-format uuids|both`.
 
-## Creating Windows vs Workspaces
+## Initial command on new terminals
 
-These are **different commands** — confusing them is the most common mistake.
+`new-workspace`, `new-split`, `new-pane`, and `new-surface` accept `--command <text>`. cmux starts the terminal's normal interactive shell and delivers the text plus one Enter at spawn time, so the command runs immediately and the shell stays alive after it exits. No follow-up `send` or `send-key enter` is needed, and the text is passed literally (quoting, `&&`, pipes, and `$VARS` are interpreted by the new shell). The flag is terminal-only: it is rejected with `--type browser|simulator|agent-session`, blank text is ignored, and `new-workspace --layout` ignores it because layout surfaces define their own commands. Details: [references/panes-surfaces.md](references/panes-surfaces.md).
 
-| User says                              | Command                           | What it does                                        |
-| -------------------------------------- | --------------------------------- | --------------------------------------------------- |
-| "open a new window", "new cmux window" | `cmux new-window`                 | Opens a new **OS-level window**                     |
-| "new workspace", "new tab" (sidebar)   | `cmux new-workspace --cwd <path>` | Opens a new **workspace tab** in the current window |
+## Settings
+
+cmux-owned settings live in `~/.config/cmux/cmux.json`. `cmux docs settings` prints the docs URL, schema URL, raw GitHub resources, cmux.json paths, and reload command. `cmux settings`, `cmux settings cmux-json`, and `cmux settings shortcuts` open the UI.
+
+`cmux reload-config` reloads both `cmux.json` and `~/.config/ghostty/config`, refreshing terminals in place with no app restart.
+
+Terminal rendering (font, cursor style, theme, scrollback, `background-opacity`, `background-blur`) belongs in Ghostty config, not cmux settings. Everything else (app behavior, sidebar, notifications, browser behavior, automation, workspace colors, cmux-owned shortcuts) is cmux settings. Before editing, copy any existing `cmux.json` to a timestamped `.bak` next to it. Legacy `~/.config/cmux/settings.json` and `~/Library/Application Support/com.cmuxterm.app/settings.json` are read only as fallback for missing keys.
+
+For a completed download, the CLI can inspect the bounded history owned by the
+target browser surface without consuming a waiter:
 
 ```bash
-cmux new-window                        # new OS window
-cmux new-workspace --cwd /some/path    # new sidebar workspace in current window
+cmux browser --surface <surface> download list
+cmux browser --surface <surface> download list --limit 5 --json
 ```
 
-`--cwd` sets the starting directory for `new-workspace`. `new-window` does NOT accept `--cwd`.
-
-To open a new window at a specific directory, create the window then cd in its terminal:
-
-```bash
-WIN_ID=$(cmux new-window | awk '{print $2}')
-sleep 0.3
-WS_ID=$(cmux --json list-windows | python3 -c "import json,sys; ws=[w for w in json.load(sys.stdin) if w['id']=='$WIN_ID']; print(ws[0]['selected_workspace_id'] if ws else '')")
-cmux send --workspace "$WS_ID" "cd /target/dir"
-cmux send-key --workspace "$WS_ID" Enter
-```
-
-## Peer Tabs and Spawning Agents (verified 2026-08-27)
-
-"Peer tab" = a SURFACE in the caller's current workspace (`cmux new-surface`),
-NOT a new workspace. `new-surface --type agent-session --provider claude` exists
-but exposes no model/effort/prompt flags — for parameterized agent spawns use a
-terminal surface with the recipe below.
-
-### Typed-input hazards (all verified failures)
-
-- `new-workspace --command` and `cmux send` TYPE text into the shell. The first
-  1-2 characters can be EATEN even when the prompt looks ready (`claude ...`
-  arrived as `aude ...`).
-- Fish ABBREVIATIONS rewrite typed tokens (`cat` → `bat`). Never type a command
-  line whose tokens might be abbreviated — put the real command in a `sh` script
-  and type only the script invocation.
-- A surface created without `--focus true` may never spawn its terminal
-  (`surface-health` shows `in_window=false`; `read-screen` fails with
-  internal_error). Create with `--focus true`.
-- `send-key` key names: `enter`, `ctrl+c` (plus form, lowercase).
-
-### Reliable agent-spawn recipe
-
-```bash
-# 1. Prompt in a file; command in a sh script (immune to fish abbreviations)
-printf '%s\n' '#!/bin/sh' \
-  'exec claude --model claude-opus-5 --effort max "$(cat .tmp/agent.prompt.md)"' \
-  > .tmp/agent.launch.sh
-
-# 2. Focused terminal surface in the caller's workspace/pane (cmux identify first)
-cmux new-surface --type terminal --working-directory <dir> \
-  --workspace <ws> --pane <pane> --focus true            # → OK surface:N
-
-# 3. VERIFY shell prompt, then send with leading-space padding (absorbs eaten chars)
-cmux read-screen --surface surface:N --lines 3
-cmux send --surface surface:N --workspace <ws> "     sh .tmp/agent.launch.sh"
-
-# 4. VERIFY the typed line via read-screen BEFORE executing, then:
-cmux send-key --surface surface:N --workspace <ws> enter
-cmux read-screen --surface surface:N --lines 12          # confirm the agent booted
-```
-
-Never chain send + enter blind: read-screen between every step is what catches
-eaten characters and abbreviation rewrites before they execute.
-
-## Tab (Surface) Switching
-
-**There is no `next-tab` or `focus-surface` CLI command.** The `surface.focus` API method has no dedicated verb either, but `cmux rpc <method> [json-params]` calls any v2 method directly.
-
-### Approach 1: cmux CLI (native, no osascript)
-
-Focus a surface at its current index to avoid reordering:
-
-```bash
-cmux move-surface --surface surface:13 --index 2 --focus true
-```
-
-To cycle tabs programmatically: list surfaces, find selected, compute next/prev, then move-surface at same index with `--focus true`.
-
-Use `list-pane-surfaces` or `list-panels` (richer, includes `focused` and `selected_in_pane` fields) to get the surface list:
-
-```bash
-cmux --json list-pane-surfaces    # surfaces in current pane
-cmux --json list-panels           # all surfaces with focused/selected_in_pane/index_in_pane
-```
-
-### Approach 2: Simulate keypress
-
-cmux inherits Ghostty's default `cmd+shift+[`/`]` for tab cycling:
-
-```bash
-osascript -e 'tell application "System Events" to keystroke "[" using {command down, shift down}'
-```
-
-### Gotcha: next-window/previous-window cycle WORKSPACES, not tabs
-
-The tmux-compat commands `next-window` and `previous-window` switch **workspaces** (sidebar entries), not surfaces (tabs within a pane). This is a naming trap from tmux compatibility.
-
-## Essential Commands
-
-Full CLI help: `cmux --help`. Add `--json` to most commands for structured output.
-
-### Window Management
-
-```bash
-cmux new-window                       # new OS-level window
-cmux list-windows
-cmux focus-window --window <ref>
-cmux close-window --window <ref>
-```
-
-### Workspace Navigation
-
-```bash
-cmux new-workspace --cwd <path>       # new workspace in current window
-cmux list-workspaces
-cmux select-workspace --workspace <ref>
-cmux rename-workspace <title>
-cmux close-workspace --workspace <ref>
-cmux next-window              # next workspace (tmux compat name)
-cmux previous-window          # prev workspace (tmux compat name)
-```
-
-### Pane (Split) Navigation
-
-```bash
-cmux list-panes
-cmux focus-pane --pane <ref>
-cmux last-pane
-cmux new-split <left|right|up|down>
-```
-
-### Surface (Tab) Management
-
-```bash
-cmux new-surface                                    # new terminal tab
-cmux new-surface --type browser --url <url>         # new browser tab
-cmux close-surface --surface <ref>
-cmux move-surface --surface <ref> --workspace <ref> # move tab to workspace
-cmux reorder-surface --surface <ref> --index <n>
-cmux tab-action --action <rename|pin|close-left|close-right|close-others|...>
-cmux rename-tab <title>
-```
-
-### Terminal I/O
-
-```bash
-cmux read-screen                           # visible terminal text
-cmux read-screen --scrollback --lines 100  # include scrollback
-cmux send "text"                           # type text into surface
-cmux send-key <key>                        # send keypress
-```
-
-**`cmux send` targets the caller's workspace by default.** The `--workspace` flag accepts
-refs (`workspace:13`) or UUIDs — **not names**. Passing a workspace name as a positional
-arg silently sends it as text to the caller's own terminal. Always use
-`--workspace <ref>` for cross-workspace sends.
-
-### Workspace Name Resolution
-
-`--workspace` does not resolve workspace names. Use `find-window` to look up a ref by title:
-
-```bash
-cmux find-window "Importer Fixes"              # human-readable: workspace:13  "Importer Fixes"
-cmux --json find-window "Importer Fixes"       # structured: .matches[].ref
-```
-
-`find-window` does substring matching against workspace titles. Add `--content` to also
-search terminal content. Add `--select` to focus the first match.
-
-#### Cross-workspace send pattern
-
-Always resolve by name before sending. Never cache refs across turns — workspaces can be
-deleted and recreated at any time.
-
-```bash
-# Resolve name → ref, then send
-ws_ref=$(cmux --json find-window "Remaining Fixes" | jq -r '.matches[0].ref')
-cmux send --workspace "$ws_ref" "message text"
-```
-
-If a send fails because the workspace no longer exists, re-resolve by name:
-
-```bash
-# Send attempt fails → workspace was deleted/recreated
-cmux send --workspace "$ws_ref" "message"  # → error
-
-# Re-resolve: find-window picks up the new workspace with the same semantic name
-ws_ref=$(cmux --json find-window "Remaining Fixes" | jq -r '.matches[0].ref')
-```
-
-**If `find-window` returns no matches or multiple ambiguous matches, STOP.** Never send
-to a workspace you're not confident is the intended target. Instead, tell the user:
-
-- What name you searched for
-- What `find-window` returned (all matches with their names and refs, or empty)
-- That you cannot reliably identify the target workspace
-
-Let the user resolve the ambiguity. Blindly sending to the wrong workspace is worse than
-not sending at all.
-
-Never use `cmux send "workspace-name" "message"` — this sends both strings as text to the
-caller's own workspace.
-
-### Metadata & Status
-
-```bash
-cmux set-status <key> <value> --icon <name> --color <#hex>
-cmux clear-status <key>
-cmux set-progress 0.5 --label "Building..."
-cmux notify --title "Done" --body "Build complete"
-cmux log "message" --level info --source my-tool
-```
-
-## Integration Architecture
-
-See `references/integration.md` for detailed architecture of how Karabiner, Ghostty config, cmux-mode, and Fish/Neovim keybindings connect.
-
-**Quick summary:**
-
-- **Ghostty config** (`~/.config/ghostty/config`): read by cmux. Hyper-key bindings route to split actions.
-- **Karabiner cmux drive mode**: sticky Ctrl+0 sets `cmux_mode=1`. Bare keys dispatch via `~/.local/libexec/cmux/cmux-mode`.
-- **cmux-mode script**: bridges Karabiner actions to cmux by sending Hyper-key combos via osascript or calling cmux CLI directly.
-- **Fish vi mode**: can bind keys in normal mode (`bind -M default`) to call cmux CLI.
-
-## Opening Files
-
-```bash
-# Open a markdown file in the formatted viewer (split panel, live reload)
-cmux markdown open path/to/file.md
-
-# Open a directory as a new workspace
-cmux path/to/dir
-```
-
-**Important**: `cmux open` is NOT a command. For `.md` files use `cmux markdown open <path>`. For directories just pass the path directly as the first argument.
-
-## Common Patterns
-
-```bash
-# Who am I? Full context.
-cmux --json identify
-
-# All tabs with their focused/selected state
-cmux --json list-panels
-
-# Scripting: always use --json for parseable output
-cmux --json list-pane-surfaces | python3 -c "..."
-```
+Use the browser skill for the full response fields and wait/path compatibility
+details.
+
+## Deep-dive references
+
+| Reference | When to Use |
+|-----------|-------------|
+| [references/handles-and-identify.md](references/handles-and-identify.md) | Handle syntax, self-identify, caller targeting |
+| [references/windows-workspaces.md](references/windows-workspaces.md) | Window/workspace lifecycle, reorder/move, and context-menu actions (color, description, rename) |
+| [references/panes-surfaces.md](references/panes-surfaces.md) | Splits, surfaces, move/reorder, focus routing |
+| [references/trigger-flash-and-health.md](references/trigger-flash-and-health.md) | Flash cue and surface health checks |
+| [../cmux-workspace/SKILL.md](../cmux-workspace/SKILL.md) | Current caller workspace rules and non-disruptive automation |
+| [../cmux-settings/SKILL.md](../cmux-settings/SKILL.md) | Safe cmux.json settings edits and validation |
+| [../cmux-browser/SKILL.md](../cmux-browser/SKILL.md) | Browser automation on surface-backed webviews |
+| [../cmux-markdown/SKILL.md](../cmux-markdown/SKILL.md) | Markdown viewer panel with live file watching |

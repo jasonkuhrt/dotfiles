@@ -60,7 +60,7 @@ if [ "$current_version" = "$version" ]; then
 fi
 
 filename="agentsview_${version#v}_${os}_${arch}.tar.gz"
-base_url="https://github.com/wesm/agentsview/releases/download/$version"
+base_url="https://github.com/kenn-io/agentsview/releases/download/$version"
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 

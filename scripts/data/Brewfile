@@ -8,8 +8,6 @@ tap "planetscale/tap"
 tap "polidog/kilar"
 tap "manaflow-ai/cmux"
 tap "bendews/tap"
-tap "neurosnap/tap"
-tap "mdsakalu/tap"
 
 # ═══════════════════════════════════════════════════════════
 # CLI Tools

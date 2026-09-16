@@ -237,27 +237,33 @@ if status is-interactive
 # Prompts start in insert mode: cmux's agent auto-resume restores a session by
 # typing `cmux restore <agent> <id>` into the new shell, and a normal-mode prompt
 # eats the leading characters. Escape still reaches normal mode.
-fish_vi_key_bindings insert
-bind -M insert -m default k,j cancel repaint-mode
+#
+# All binds live in fish_user_key_bindings: fish calls it once, after installing
+# the key bindings. Calling fish_vi_key_bindings at config scope sets
+# fish_key_bindings, which triggers a second full rebuild of every binding.
 set -g fish_sequence_key_delay_ms 200
 
-# Ctrl+J/K navigate the tab-completion pager like arrow keys
-bind -M pager \ck up-or-search
-bind -M pager \cj down-or-search
+function fish_user_key_bindings
+    fish_vi_key_bindings insert
+    bind -M insert -m default k,j cancel repaint-mode
+
+    # Ctrl+J/K navigate the tab-completion pager like arrow keys
+    bind -M pager \ck up-or-search
+    bind -M pager \cj down-or-search
+
+    # fzf.fish: Ctrl+R (history), Ctrl+Alt+F (files), Ctrl+Alt+L (git log),
+    #           Ctrl+Alt+S (git status), Ctrl+Alt+P (processes), Ctrl+V (variables)
+    fzf_configure_bindings
+
+    # Disable replace mode (unused)
+    bind -M default r ''
+    bind -M default R ''
+end
 
 # Cursor shapes per mode (visual feedback)
 set -g fish_cursor_default block
 set -g fish_cursor_insert line
 set -g fish_cursor_visual block
-
-# fzf.fish: must be called AFTER fish_vi_key_bindings, which replaces all bindings
-# Provides: Ctrl+R (history), Ctrl+Alt+F (files), Ctrl+Alt+L (git log),
-#           Ctrl+Alt+S (git status), Ctrl+Alt+P (processes), Ctrl+V (variables)
-fzf_configure_bindings
-
-# Disable replace mode (unused)
-bind -M default r ''
-bind -M default R ''
 
 function fish_mode_prompt --description "Display vi mode as a single Tokyo Night colored letter"
     switch $fish_bind_mode

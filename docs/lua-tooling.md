@@ -44,7 +44,7 @@ This is the idiomatic extension point here. The installed LazyVim tree already s
 
 It does three things:
 
-1. Extends `lazydev.nvim` so the local `cmux-nav` plugin and the `cmdux` checkout are part of Lua editor intelligence.
+1. Extends `lazydev.nvim` so the `cmdux` checkout is part of Lua editor intelligence.
 2. Wires `selene` into `nvim-lint` for `lua` buffers when a `selene.toml` exists in the project.
 3. Ensures `lua-language-server`, `selene`, and `stylua` are installed through Mason for Neovim use.
 
@@ -81,7 +81,7 @@ Important distinction: Lua does not become truly type-safe here. The closest equ
 Those relaxations were re-tested again on March 6, 2026 after the Lua QA/typing pass:
 
 - Re-enabling `multiple_statements` produced 0 Selene findings, so that relaxation was removed.
-- Re-enabling `mixed_table` still produced 34 warnings across normal Lazy.nvim plugin specs and keymap-style tables, including files like `plugins/editor.lua`, `plugins/lang.lua`, and `plugins/cmux-nav.lua`.
+- Re-enabling `mixed_table` still produced 34 warnings across normal Lazy.nvim plugin specs and keymap-style tables, including files like `plugins/editor.lua` and `plugins/lang.lua`.
 
 So the current posture is intentional, not stale:
 
@@ -133,7 +133,7 @@ Expected workflow:
 
 - It exits cleanly when the current change set has no Lua or Lua-tooling changes.
 - It runs `just lua-check` for Lua-relevant changes.
-- It runs a local plugin's tests (`just cmux-nav-test`, `just file-ops-test`) only when the change set touches that plugin.
+- It runs `just file-ops-test` only when the change set touches that plugin.
 
 For local commits, `just hooks-install` installs a staged-only pre-commit hook. That hook checks only staged Lua blobs from:
 

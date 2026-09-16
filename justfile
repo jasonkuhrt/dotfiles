@@ -1,8 +1,7 @@
 set quiet
 
 dotctl := "DOTFILES_REPO_ROOT=" + justfile_directory() + " dotctl"
-lua_paths := "home/.config/nvim/lua home/.config/nvim/local-plugins/cmux-nav/lua home/.config/nvim/local-plugins/cmux-nav/tests home/.config/nvim/local-plugins/file-ops/lua home/.config/nvim/local-plugins/file-ops/tests home/.config/nvim/local-plugins/kit/lua"
-cmux_nav_plugin_path := "home/.config/nvim/local-plugins/cmux-nav"
+lua_paths := "home/.config/nvim/lua home/.config/nvim/local-plugins/file-ops/lua home/.config/nvim/local-plugins/file-ops/tests home/.config/nvim/local-plugins/kit/lua"
 file_ops_plugin_path := "home/.config/nvim/local-plugins/file-ops"
 
 [private]
@@ -153,84 +152,6 @@ nvim-smoke:
     fi
 
     printf 'PASS: nvim config loads cleanly (terminal mode)\n'
-
-cmux-mode-check:
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    helper="$PWD/home/.local/libexec/cmux/cmux-mode"
-    ghostty_cfg="$PWD/home/.config/ghostty/config"
-    karabiner_cfg="$PWD/home/.config/karabiner/karabiner.json"
-
-    bash -n "$helper"
-    python3 -m json.tool "$karabiner_cfg" >/dev/null
-    grep -q '^confirm-close-surface      = true$' "$ghostty_cfg"
-    grep -q 'shift+ctrl+alt+cmd+h=goto_split:left' "$ghostty_cfg"
-    grep -q 'shift+ctrl+alt+cmd+z=toggle_split_zoom' "$ghostty_cfg"
-    grep -q 'shift+ctrl+alt+cmd+x=close_surface' "$ghostty_cfg"
-
-    tmpdir="$(mktemp -d)"
-    trap 'rm -rf "$tmpdir"' EXIT
-    log="$tmpdir/cmux.log"
-    state="$tmpdir/state.json"
-    workspace_state="$tmpdir/workspace.txt"
-    osalog="$tmpdir/osascript.log"
-    fake_cmux="$tmpdir/cmux"
-    fake_osascript="$tmpdir/osascript"
-
-    cp "$PWD/scripts/tests/fake-cmux.sh" "$fake_cmux"
-    chmod +x "$fake_cmux"
-
-    printf '%s\n' \
-      '#!/usr/bin/env bash' \
-      'set -euo pipefail' \
-      'cat > "${CMUX_MODE_TEST_OSASCRIPT_LOG:?}"' > "$fake_osascript"
-    chmod +x "$fake_osascript"
-
-    printf 'workspace:1\n' > "$workspace_state"
-
-    CMUX_MODE_CMUX_BIN="$fake_cmux" \
-    CMUX_MODE_OSASCRIPT_BIN="$fake_osascript" \
-    CMUX_MODE_TEST_OSASCRIPT_LOG="$osalog" \
-    CC_CMUX_TEST_LOG="$log" \
-    CC_CMUX_TEST_STATE="$state" \
-    CC_CMUX_TEST_WORKSPACES_STATE="$workspace_state" \
-    "$helper" enter
-
-    CMUX_MODE_CMUX_BIN="$fake_cmux" \
-    CMUX_MODE_OSASCRIPT_BIN="$fake_osascript" \
-    CMUX_MODE_TEST_OSASCRIPT_LOG="$osalog" \
-    CC_CMUX_TEST_LOG="$log" \
-    CC_CMUX_TEST_STATE="$state" \
-    CC_CMUX_TEST_WORKSPACES_STATE="$workspace_state" \
-    "$helper" action focus-left
-
-    CMUX_MODE_CMUX_BIN="$fake_cmux" \
-    CMUX_MODE_OSASCRIPT_BIN="$fake_osascript" \
-    CMUX_MODE_TEST_OSASCRIPT_LOG="$osalog" \
-    CC_CMUX_TEST_LOG="$log" \
-    CC_CMUX_TEST_STATE="$state" \
-    CC_CMUX_TEST_WORKSPACES_STATE="$workspace_state" \
-    "$helper" workspace-next
-
-    CMUX_MODE_CMUX_BIN="$fake_cmux" \
-    CMUX_MODE_OSASCRIPT_BIN="$fake_osascript" \
-    CMUX_MODE_TEST_OSASCRIPT_LOG="$osalog" \
-    CC_CMUX_TEST_LOG="$log" \
-    CC_CMUX_TEST_STATE="$state" \
-    CC_CMUX_TEST_WORKSPACES_STATE="$workspace_state" \
-    "$helper" exit
-
-    grep -q '^set-status keyboard cmux --icon keyboard --color #0A84FF$' "$log"
-    grep -q '^--json current-workspace$' "$log"
-    grep -q '^--json list-workspaces$' "$log"
-    grep -q '^select-workspace --workspace workspace:2$' "$log"
-    grep -q '^clear-status keyboard --workspace workspace:1$' "$log"
-    grep -q '^set-status keyboard cmux --icon keyboard --color #0A84FF --workspace workspace:2$' "$log"
-    grep -q '^clear-status keyboard$' "$log"
-    grep -q 'keystroke "h" using {command down, control down, option down, shift down}' "$osalog"
-
-    printf 'PASS: cmux-mode-check\n'
 
 karabiner-check:
     #!/usr/bin/env bash
@@ -709,24 +630,6 @@ claude-settings-apply:
     jq empty "$tmpfile" >/dev/null
     mv "$tmpfile" "$target"
     printf 'Updated %s\n' "$target"
-
-cmux-nav-test:
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    plugin_root="$PWD/{{ cmux_nav_plugin_path }}"
-    plenary="${PLENARY_PATH:-$HOME/.local/share/nvim/lazy/plenary.nvim}"
-    cache_dir="$(mktemp -d)"
-    trap 'rm -rf "$cache_dir"' EXIT
-
-    if [ ! -d "$plenary" ]; then
-        printf 'FAIL: plenary.nvim not found at %s\n' "$plenary" >&2
-        exit 1
-    fi
-
-    XDG_CONFIG_HOME="$PWD/home/.config" XDG_CACHE_HOME="$cache_dir" nvim --headless -u NONE \
-        --cmd "set runtimepath^=$plenary" \
-        -c "lua require('plenary.test_harness').test_directory('$plugin_root/tests/plenary', { minimal_init = '$plugin_root/tests/minimal_init.lua', sequential = true })"
 
 file-ops-test:
     #!/usr/bin/env bash

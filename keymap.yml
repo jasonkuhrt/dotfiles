@@ -59,92 +59,83 @@ pane:
   focus_up:
     desc: Focus pane above
     zed: "C-k"
-    nvim: "C-k"           # cmux-nav (crosses nvim↔cmux)
-    cmux: "C-0 k"
+    nvim: "C-k"
+    cmux: "D-M-<up>"
 
   focus_down:
     desc: Focus pane below
     zed: "C-j"
     nvim: "C-j"
-    cmux: "C-0 j"
+    cmux: "D-M-<down>"
 
   focus_left:
     desc: Focus pane left
     zed: "C-h"
     nvim: "C-h"
-    cmux: "C-0 h"
+    cmux: "D-M-<left>"
 
   focus_right:
     desc: Focus pane right
     zed: "C-l"
     nvim: "C-l"
-    cmux: "C-0 l"
-
-  resize_up:
-    desc: Resize pane up
-    nvim: "M-k"           # cmux-nav
-    cmux: "C-0 r k"
-
-  resize_down:
-    desc: Resize pane down
-    nvim: "M-j"
-    cmux: "C-0 r j"
-
-  resize_left:
-    desc: Resize pane left
-    nvim: "M-h"
-    cmux: "C-0 r h"
-
-  resize_right:
-    desc: Resize pane right
-    nvim: "M-l"
-    cmux: "C-0 r l"
+    cmux: "D-M-<right>"
 
   create_up:
     desc: Create split above
     zed: "C-D-k"          # pane::SplitUp
-    cmux: "C-0 s k"
 
   create_down:
     desc: Create split below
     zed: "C-D-j"
-    cmux: "C-0 s j"
+    cmux: "D-S-d"
 
   create_left:
     desc: Create split left
     zed: "C-D-h"
-    cmux: "C-0 s h"
 
   create_right:
     desc: Create split right
     zed: "C-D-l"
-    cmux: "C-0 s l"
+    cmux: "D-d"
 
   zoom:
     desc: Zoom current pane
     zed: "<spc> z"
-    cmux: "C-0 z"
+    cmux: "D-S-<cr>"
 
   close:
-    desc: Close pane (host confirmation required)
-    cmux: "C-0 x"
+    desc: Close tab
+    cmux: "D-w"
 
-cmux_mode:
-  toggle:
-    desc: Enter or exit sticky cmux drive mode
-    cmux: "C-0"
+cmux_host:
+  # cmux's own defaults; override under shortcuts.bindings in cmux.json.
+  tab_next:
+    desc: Next tab (surface) in the pane
+    cmux: "D-S-]"
 
-  exit:
-    desc: Exit sticky cmux drive mode
-    cmux: "<esc> / <cr> / C-0"
+  tab_prev:
+    desc: Previous tab (surface) in the pane
+    cmux: "D-S-["
 
-  workspace_prev:
-    desc: Select previous workspace in sidebar order
-    cmux: "C-0 w k"
+  tab_new:
+    desc: New tab in the current pane
+    cmux: "D-t"
 
   workspace_next:
     desc: Select next workspace in sidebar order
-    cmux: "C-0 w j"
+    cmux: "D-C-]"
+
+  workspace_prev:
+    desc: Select previous workspace in sidebar order
+    cmux: "D-C-["
+
+  workspace_by_number:
+    desc: Select workspace by position
+    cmux: "D-1"
+
+  sidebar_toggle:
+    desc: Show or hide the sidebar
+    cmux: "D-b"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # DOCKS (CHROME — Zed-only)

@@ -134,22 +134,6 @@ Install [television](https://github.com/alexpasmantier/television), then:
 }
 ```
 
-## Auto-Attach to Project zmx Session
-
-`settings.json`:
-```json
-"terminal": {
-  "shell": {
-    "with_arguments": {
-      "program": "/bin/zsh",
-      "args": ["-c", "zmx attach \"$(basename \"$PWD\")\""]
-    }
-  }
-}
-```
-
-Terminal auto-attaches to a zmx session named after the project directory, creating it when missing.
-
 ## Map Unknown File Extensions to Languages
 
 Temporary: `language selector: toggle` in command palette, pick language (resets on close).

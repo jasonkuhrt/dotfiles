@@ -76,8 +76,6 @@ Full list in `home/.config/fish/config.fish`.
 | Shell       | `shfmt`      | Format shell scripts                  | `shfmt -w script.sh`                            |
 | Shell       | `starship`   | Cross-shell prompt                    | config: `~/.config/starship.toml`               |
 | Shell       | `up`         | Interactive piping (Ultimate Plumber) | `cat file \| up`                                |
-| Shell       | `zmx`        | Persistent terminal sessions          | `zmx attach dotfiles`                           |
-| Shell       | `zsm`        | TUI manager for zmx sessions          | `zsm`                                           |
 | **Media**   | `ffmpeg`     | Audio/video processing Swiss Army knife | `ffmpeg -i in.mp4 out.gif`                    |
 | **Docs**    | `glow`       | Render markdown in terminal           | `glow README.md`                                |
 | Docs        | `pandoc`     | Convert between doc formats           | `pandoc doc.md -o doc.pdf`                      |

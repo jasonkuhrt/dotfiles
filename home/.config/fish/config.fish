@@ -228,13 +228,6 @@ function mcd --description "Create a directory and set CWD"
     end
 end
 
-abbr -a zx zmx
-abbr -a zs zsm
-
-function zz --description "zmx: attach/create session named after current directory"
-    zmx attach (basename $PWD)
-end
-
 # zoxide: smart cd with frecency ranking (replaces jethrokuan/z)
 zoxide init fish | source
 

@@ -72,8 +72,6 @@ brew "git-crypt"     # transparent file encryption
 brew "gitleaks"      # secret scanner (pre-push hook; this repo is public)
 brew "lazygit"       # terminal UI for git
 brew "worktrunk"     # git worktree manager (parallel AI agents)
-brew "neurosnap/tap/zmx", trusted: true  # terminal session persistence
-cask "mdsakalu/tap/zsm", trusted: true   # TUI session manager for zmx
 brew "pre-commit"    # git hooks framework
 brew "flock"         # file-lock CLI; serializes concurrent git hooks (not shipped on macOS)
 

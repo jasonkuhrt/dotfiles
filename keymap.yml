@@ -1,7 +1,13 @@
 # ╔════════════════════════════════════════════════════════════════════════════╗
-# ║  Declarative Keymap - Single Source of Truth                               ║
+# ║  Cross-tool keymap reference — hand-maintained, not compiled                ║
 # ║  Tools: zed, nvim, vscode, cmux, fish, hunk, cc (claude code)              ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
+#
+# Nothing reads this file. The tools' own configs are authoritative; this is the
+# one place the whole keymap can be read across them, so it has to be updated by
+# hand when a binding changes, and it drifts whenever that is skipped. Making it
+# a compiler target was proposed in docs/plans/2026-03-07-tooling-stack-
+# consolidation.md and never built.
 #
 # Post-vscode-neovim migration architecture:
 # VS Code's vim layer is provided by vscode-neovim, which executes the nvim

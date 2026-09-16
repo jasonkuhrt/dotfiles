@@ -275,11 +275,6 @@ fzf_configure_bindings
 bind -M default r ''
 bind -M default R ''
 
-# Vi normal mode: [ and ] cycle cmux tabs (surfaces) via cmuxx
-# Overrides history-token-search (alt-up/down and ctrl+r remain)
-bind -M default \[ 'cmuxx prev-surface'
-bind -M default \] 'cmuxx next-surface'
-
 function fish_mode_prompt --description "Display vi mode as a single Tokyo Night colored letter"
     switch $fish_bind_mode
         case default

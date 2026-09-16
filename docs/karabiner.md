@@ -219,7 +219,7 @@ Focused shape check for the Raycast `control-j` / `control-k` rule in the repo c
 
 Karabiner is doing two kinds of work here:
 
-- low-level keyboard behavior like fn handling and cmux mode
+- low-level keyboard behavior like fn handling
 - app-scoped niceties like Raycast vim-style list navigation
 
 That split matters. Global mode systems tend to use variables and more complex rules. App niceties are usually simple `frontmost_application_if` remaps.

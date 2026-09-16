@@ -77,14 +77,7 @@ is_lua_relevant_path() {
   local file=$1
 
   matches_regex "$file" \
-    '^(\.github/workflows/lua\.yml|home/\.config/nvim/(lua|local-plugins/(cmux-nav|file-ops))/.*\.lua|\.luarc\.json|selene\.toml|selene\.nvim\.yml|home/\.config/nvim/stylua\.toml|justfile|scripts/ci/lua-ci\.sh|scripts/git-hooks/check-staged-lua\.sh)$'
-}
-
-is_cmux_nav_test_path() {
-  local file=$1
-
-  matches_regex "$file" \
-    '^(home/\.config/nvim/local-plugins/cmux-nav/.*|home/\.config/nvim/lua/plugins/cmux-nav\.lua)$'
+    '^(\.github/workflows/lua\.yml|home/\.config/nvim/(lua|local-plugins/file-ops)/.*\.lua|\.luarc\.json|selene\.toml|selene\.nvim\.yml|home/\.config/nvim/stylua\.toml|justfile|scripts/ci/lua-ci\.sh|scripts/git-hooks/check-staged-lua\.sh)$'
 }
 
 is_file_ops_test_path() {
@@ -122,16 +115,11 @@ for file in "${changed_files[@]}"; do
 done
 
 declare -a lua_relevant_files=()
-declare -a cmux_nav_test_files=()
 declare -a file_ops_test_files=()
 
 for file in "${unique_files[@]}"; do
   if is_lua_relevant_path "$file"; then
     lua_relevant_files+=("$file")
-  fi
-
-  if is_cmux_nav_test_path "$file"; then
-    cmux_nav_test_files+=("$file")
   fi
 
   if is_file_ops_test_path "$file"; then
@@ -152,16 +140,9 @@ done
 printf '\n[just lua-check]\n'
 just lua-check
 
-if [ ${#cmux_nav_test_files[@]} -eq 0 ] && [ ${#file_ops_test_files[@]} -eq 0 ]; then
+if [ ${#file_ops_test_files[@]} -eq 0 ]; then
   printf '\nSKIP: plugin tests not needed for this change set\n'
   exit 0
-fi
-
-if [ ${#cmux_nav_test_files[@]} -gt 0 ]; then
-  printf '\n[just cmux-nav-test]\n'
-  just cmux-nav-test
-else
-  printf '\nSKIP: cmux-nav tests not needed for this change set\n'
 fi
 
 if [ ${#file_ops_test_files[@]} -gt 0 ]; then

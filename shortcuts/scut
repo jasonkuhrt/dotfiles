@@ -13,7 +13,19 @@
 # @describe Code: github.com/electrikmilk/cherri, sebj/iOS-Shortcuts-Reference
 
 set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Resolve through symlinks: scut is deployed onto PATH as ~/.local/bin/scut, so
+# dirname "$0" is the bin dir, not the source dir that holds knowledge/ and
+# glyphs.json. macOS ships bash 3.2 and BSD readlink (no `readlink -f`), so walk
+# the link chain by hand.
+_scut_self="${BASH_SOURCE[0]}"
+while [[ -L "$_scut_self" ]]; do
+    _scut_dir="$(cd -P "$(dirname "$_scut_self")" && pwd)"
+    _scut_self="$(readlink "$_scut_self")"
+    [[ "$_scut_self" != /* ]] && _scut_self="$_scut_dir/$_scut_self"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$_scut_self")" && pwd)"
+unset _scut_self _scut_dir
 
 # ─── Config ──────────────────────────────────────────────────────────
 CHERRI="${SCUT_CHERRI:-cherri}"

@@ -2,13 +2,12 @@
 // Vim-mode bindings live in nvim's init.lua, loaded into VS Code via the
 // vscode-neovim extension. settings.json no longer contains vim.* keys.
 // This file holds chrome operations: dock toggles, pane navigation, list/menu
-// nav, terminal exit, welcome-screen leader chords (when no editor is open).
+// nav, terminal exit, welcome-screen leader chords (Welcome page / empty workbench).
 [
   //
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Docks & Panels (match Zed cmd-h/j/l)
   //
   { "key": "cmd+h", "command": "workbench.action.toggleSidebarVisibility" },
-  { "key": "cmd+h", "command": "-workbench.action.hideEditor" },
   // cmd+l cycles layout presets forward: all → explorer → full-terminal → all.
   // cmd+shift+l cycles the same sequence in reverse.
   // Handled by workbench-cycler extension; see /Users/jasonkuhrt/projects/jasonkuhrt/workbench-cycler.
@@ -88,35 +87,46 @@
 
   //
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Never close the last editor (keep workbench non-empty)
-  //   Default cmd-w is unbound only when this would be the last editor anywhere. In any
-  //   other state, default closeActiveEditor still applies.
-  { "key": "cmd+w", "command": "-workbench.action.closeActiveEditor", "when": "groupActiveEditorCount == 1 && !multipleEditorGroups" },
+  //   A `-command` removal only applies when the DEFAULT rule's `when` implies the
+  //   removal's `when`, and VS Code's default cmd-w rule has no `when` at all — so a
+  //   conditional removal removes nothing. Unbind the default outright, then re-add it
+  //   guarded: cmd-w closes unless this is the last editor in the only group.
+  //   (`groupEditorsCount` is the real context key; `groupActiveEditorCount` does not exist.)
+  { "key": "cmd+w", "command": "-workbench.action.closeActiveEditor" },
+  { "key": "cmd+w", "command": "workbench.action.closeActiveEditor", "when": "groupEditorsCount != 1 || multipleEditorGroups" },
 
   //
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Empty / Welcome leader chords (mirror vim leader)
-  //   Scoped to !editorIsOpen so they only fire when no editor is focused —
-  //   vscode-neovim attaches to text editors; without one, no vim mode and
-  //   no leader. These chrome bindings give a working "leader" experience
-  //   on the welcome screen using the same chords as the in-editor scheme.
+  //   vscode-neovim attaches to text editors; without one there is no vim mode
+  //   and no leader. These chrome bindings give a working "leader" experience
+  //   using the same chords as the in-editor scheme.
+  //
+  //   Gate: `inWelcome || !editorIsOpen`. The Welcome page IS an editor pane, so
+  //   `editorIsOpen` (bound to editorsVisibleContext = visibleEditorPanes.length > 0)
+  //   is TRUE there and `!editorIsOpen` alone never fired. `inWelcome` is the
+  //   Welcome-scoped key; `!editorIsOpen` still covers the fully empty workbench.
   //
   //   Updated for the new 5-prefix architecture (g LSP, q git, m match,
   //   t toggle/panel, , config). Panels now use t-prefix instead of space-p.
   //
-  { "key": "space k", "command": "workbench.action.quickOpen", "when": "!editorIsOpen && !inputFocus" },
-  { "key": "space o", "command": "workbench.action.openRecent", "when": "!editorIsOpen && !inputFocus" },
-  { "key": "space shift+o", "command": "projectManager.listProjects", "when": "!editorIsOpen && !inputFocus" },
-  { "key": "space j", "command": "workbench.action.tasks.runTask", "when": "!editorIsOpen && !inputFocus" },
-  { "key": "t e", "command": "workbench.files.action.focusFilesExplorer", "when": "!editorIsOpen && !inputFocus" },
-  { "key": "t g", "command": "workbench.view.scm", "when": "!editorIsOpen && !inputFocus" },
-  { "key": "t t", "command": "workbench.action.terminal.focus", "when": "!editorIsOpen && !inputFocus" },
-  { "key": "t d", "command": "workbench.panel.markers.view.focus", "when": "!editorIsOpen && !inputFocus" },
-  { "key": ";", "command": "workbench.action.showCommands", "when": "!editorIsOpen && !inputFocus" },
+  { "key": "space k", "command": "workbench.action.quickOpen", "when": "(inWelcome || !editorIsOpen) && !inputFocus" },
+  { "key": "space o", "command": "workbench.action.openRecent", "when": "(inWelcome || !editorIsOpen) && !inputFocus" },
+  { "key": "space shift+o", "command": "projectManager.listProjects", "when": "(inWelcome || !editorIsOpen) && !inputFocus" },
+  { "key": "space j", "command": "workbench.action.tasks.runTask", "when": "(inWelcome || !editorIsOpen) && !inputFocus" },
+  { "key": "t e", "command": "workbench.files.action.focusFilesExplorer", "when": "(inWelcome || !editorIsOpen) && !inputFocus" },
+  { "key": "t g", "command": "workbench.view.scm", "when": "(inWelcome || !editorIsOpen) && !inputFocus" },
+  { "key": "t t", "command": "workbench.action.terminal.focus", "when": "(inWelcome || !editorIsOpen) && !inputFocus" },
+  { "key": "t d", "command": "workbench.panel.markers.view.focus", "when": "(inWelcome || !editorIsOpen) && !inputFocus" },
+  { "key": ";", "command": "workbench.action.showCommands", "when": "(inWelcome || !editorIsOpen) && !inputFocus" },
 
   //
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Misc Zed parity
   //
-  { "key": "cmd+j", "command": "-editor.action.joinLines" },
-  { "key": "shift+cmd+j", "command": "-workbench.action.search.toggleQueryDetails", "when": "searchViewletVisible" },
+  // joinLines' mac default is ctrl-j (not cmd-j), so the removal has to target ctrl-j.
+  { "key": "ctrl+j", "command": "-editor.action.joinLines" },
+  // No `when` here: the default rule is gated on `searchViewletFocus || inSearchEditor`,
+  // which does not imply `searchViewletVisible`, so a narrowed removal never matched.
+  { "key": "shift+cmd+j", "command": "-workbench.action.search.toggleQueryDetails" },
   { "key": "cmd+alt+shift+m", "command": "jason.toggleProblemsVisibility", "when": "editorTextFocus" },
 
   //

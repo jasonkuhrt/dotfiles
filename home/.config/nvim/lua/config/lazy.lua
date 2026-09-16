@@ -22,22 +22,9 @@ lazy.setup({
   spec = {
     { "LazyVim/LazyVim", import = "lazyvim.plugins" },
 
-    -- Language extras
-    { import = "lazyvim.plugins.extras.lang.typescript" },
-    { import = "lazyvim.plugins.extras.lang.go" },
-    { import = "lazyvim.plugins.extras.lang.rust" },
-    { import = "lazyvim.plugins.extras.lang.json" },
-    { import = "lazyvim.plugins.extras.lang.yaml" },
-    { import = "lazyvim.plugins.extras.lang.toml" },
-    { import = "lazyvim.plugins.extras.lang.markdown" },
-
-    -- Tooling extras
-    { import = "lazyvim.plugins.extras.dap.core" },
-    { import = "lazyvim.plugins.extras.formatting.prettier" },
-    { import = "lazyvim.plugins.extras.linting.eslint" },
-
-    -- VS Code mode (whitelist plugins safe to run under vscode-neovim)
-    { import = "lazyvim.plugins.extras.vscode" },
+    -- LazyVim extras are declared in `lazyvim.json` only — that is the file
+    -- `:LazyExtras` reads and writes. Importing any of them here as well makes
+    -- them "Not managed by LazyExtras" and un-togglable from that UI.
 
     -- Custom plugins
     { import = "plugins" },

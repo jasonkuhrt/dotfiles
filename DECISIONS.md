@@ -101,3 +101,39 @@ Runtime:   ~/.local/bin -> npm globals -> ~/Library/pnpm/bin (pnpm, node) -> Hom
   pnpm's version. Only `~/Library/pnpm/bin` is on PATH now.
 - Earlier, fnm was tried and abandoned — "the official suggestion doesn't work in Fish for some reason"
   ([fnm#356](https://github.com/Schniz/fnm/issues/356#issuecomment-1010816655)).
+
+---
+
+## Decision 9: Native Terminal and Agent Features Over Repo-Owned Glue
+
+**Context:**
+A year of accreted helpers duplicated features cmux, Claude Code and Codex now ship themselves. The
+glue cost more than it bought: it had to be maintained, it hid upstream behavior, and one piece of it
+(the cmux/zmx bridge) actively disabled cmux's own shell integration.
+
+**Decision:**
+Use what the tools ship. Write glue only for a capability they genuinely lack, and record the gap here
+so it can be dropped when upstream fills it.
+
+**Implementation:**
+- Terminal persistence: cmux restores workspaces and resumes agent sessions. The `cmux-zmx-enter`
+  bridge, zmx and zsm are gone.
+- Navigation: cmux's own shortcuts. The sticky Ctrl+0 Karabiner drive mode, `cmux-mode`, the `cmux-nav`
+  Neovim plugin and `cmuxx` are gone.
+- Agent fan-out: Claude Code agent teams, enabled with `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`. The
+  `dispatch-claude` skill is gone.
+- Browser: cmux intercepts a terminal's `open`. The `plannotator-browser` wrapper and Neovim's
+  cmux-specific branch are gone.
+- Documentation: the official `cmux*` skills, pinned at the installed version, plus a short `cmux-local`
+  note for machine specifics.
+
+**Trade-offs (the gaps that remain):**
+- cmux has no pane-resize shortcut, and splits open right or down only.
+- Teammates no longer each get a cmux sidebar workspace.
+- cmux resumes an agent by typing into the new shell, so prompts must start in insert mode
+  ([cmux#12772](https://github.com/manaflow-ai/cmux/issues/12772)).
+
+**History:**
+- 2026-09-16 — cutover executed. Ten agent sessions were migrated into native tabs, then a cmux restart
+  restored them unattended.
+

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fast Feedback Development"
+  short_description: "Build features through a hot, minimal feedback loop"
+  default_prompt: "Use $fast-feedback-development to implement this feature with the fastest sound feedback loop."

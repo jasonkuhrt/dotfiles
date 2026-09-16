@@ -118,11 +118,11 @@ Collect the visual checks for Jason into a short list. While waiting for his obs
 
 **If using native navigation:**
 
-- [ ] Remove the Karabiner rules whose descriptions contain `cmux`. Keep Raycast Ctrl+J/K and sticky fn. Validate the JSON, run `just karabiner-check`, and reload Karabiner.
-- [ ] Delete `cmux-mode`, its `cmux-mode-check` recipe, and the Ghostty `shift+ctrl+alt+cmd+…` bindings.
-- [ ] Delete `home/.config/nvim/local-plugins/cmux-nav/` and `lua/plugins/cmux-nav.lua`. Remove its lazydev entry, `justfile` variable/paths/recipe, CI bookkeeping, and entry in `docs/neovim.md`.
-- [ ] Delete `cmuxx` and fish's `[`/`]` bindings.
-- [ ] Update `hjkl-navigation.md`, `keymap.yml`, `docs/karabiner.md`, and the current cmux skill to describe the chosen navigation. Keep instructions for retained features.
+- [x] Remove the Karabiner rules whose descriptions contain `cmux`. Keep Raycast Ctrl+J/K and sticky fn. Validate the JSON, run `just karabiner-check`, and reload Karabiner.
+- [x] Delete `cmux-mode`, its `cmux-mode-check` recipe, and the Ghostty `shift+ctrl+alt+cmd+…` bindings.
+- [x] Delete `home/.config/nvim/local-plugins/cmux-nav/` and `lua/plugins/cmux-nav.lua`. Remove its lazydev entry, `justfile` variable/paths/recipe, CI bookkeeping, and entry in `docs/neovim.md`.
+- [x] Delete `cmuxx` and fish's `[`/`]` bindings.
+- [x] Update `hjkl-navigation.md`, `keymap.yml`, `docs/karabiner.md`, and the current cmux skill to describe the chosen navigation. Keep instructions for retained features.
 - [ ] Check Lua and fish. **Jason confirms:** Neovim window movement and native cmux navigation work.
 
 Native keys: tabs `cmd+shift+]/[`; workspaces `cmd+ctrl+]/[`; focus `cmd+opt+arrows`; split right/down `cmd+d` / `cmd+shift+d`; zoom `cmd+shift+enter`; resize `ctrl+shift+h/j/k/l`.
@@ -140,17 +140,17 @@ Native keys: tabs `cmd+shift+]/[`; workspaces `cmd+ctrl+]/[`; focus `cmd+opt+arr
 
 ### Claude fan-out
 
-- [ ] If selected, confirm Claude Code agent teams support the independent-worker/report-back workflow in their current documentation.
-- [ ] Remove `home/.claude/skills-library/dispatch-claude` **and its tracked activation link** `home/.claude/skills/dispatch-claude` with `git rm`.
-- [ ] Remove recipes `claude-dispatch-check` and `cmux-upstream-audit`, and the disabled `dispatch-claude` block in the tracked Codex config. If that block is also in the separate live `~/.codex/config.toml`, remove only that block; preserve all other contents.
-- [ ] Check recipe parsing and that the skill link is gone. Check Codex config loading if its config changed.
+- [x] If selected, confirm Claude Code agent teams support the independent-worker/report-back workflow in their current documentation.
+- [x] Remove `home/.claude/skills-library/dispatch-claude` **and its tracked activation link** `home/.claude/skills/dispatch-claude` with `git rm`.
+- [x] Remove recipes `claude-dispatch-check` and `cmux-upstream-audit`, and the disabled `dispatch-claude` block in the tracked Codex config. If that block is also in the separate live `~/.codex/config.toml`, remove only that block; preserve all other contents.
+- [x] Check recipe parsing and that the skill link is gone. Check Codex config loading if its config changed.
 
 ### cmux skills — after navigation is settled
 
-- [ ] If selected, disable the old `cmux` skill with shan, rename its library folder to `cmux-local`, and update its frontmatter to `name: cmux-local` **before enabling it**.
-- [ ] Reduce the local note to: windows vs workspaces, the cmux config directory symlink, the native-launch requirement, and Jason's chosen navigation. Delete its obsolete reference pages.
-- [ ] Read and use the official [skills.sh](https://raw.githubusercontent.com/manaflow-ai/cmux/v0.64.23/skills.sh) with **`--ref v0.64.23`** and `--dest "$PWD/home/.claude/skills-library"`. The explicit ref pins the skills it downloads, not just the installer. Install `cmux`, `cmux-browser`, `cmux-workspace`, `cmux-keyboard-shortcuts`, `cmux-settings`, `cmux-customization`, and `cmux-markdown`.
-- [ ] Enable those skills and `cmux-local` through shan. Verify each activation link resolves to its `SKILL.md`, then commit the exact library folders **and** links under `home/.claude/skills/`.
+- [x] If selected, disable the old `cmux` skill with shan, rename its library folder to `cmux-local`, and update its frontmatter to `name: cmux-local` **before enabling it**.
+- [x] Reduce the local note to: windows vs workspaces, the cmux config directory symlink, the native-launch requirement, and Jason's chosen navigation. Delete its obsolete reference pages.
+- [x] Read and use the official [skills.sh](https://raw.githubusercontent.com/manaflow-ai/cmux/v0.64.23/skills.sh) with **`--ref v0.64.23`** and `--dest "$PWD/home/.claude/skills-library"`. The explicit ref pins the skills it downloads, not just the installer. Install `cmux`, `cmux-browser`, `cmux-workspace`, `cmux-keyboard-shortcuts`, `cmux-settings`, `cmux-customization`, and `cmux-markdown`.
+- [x] Enable those skills and `cmux-local` through shan. Verify each activation link resolves to its `SKILL.md`, then commit the exact library folders **and** links under `home/.claude/skills/`.
 
 Use the library destination above: `~/.claude/skills` itself is a symlink into this repo, so a global installer would bypass this library/activation layout.
 
@@ -160,6 +160,20 @@ Use the library destination above: `~/.claude/skills` itself is a symlink into t
 - [ ] Once that works, delete `plannotator-browser`, `PLANNOTATOR_BROWSER`, and Neovim `link_open.lua`'s cmux-specific branch. Check fish and Lua. **Jason confirms:** a Plannotator page and a Neovim link open in cmux.
 - [ ] Replace `gprv` with `abbr -a gprv 'gh pr view --web'` only if **Jason confirms** `gh pr view --web` also opens in cmux. Otherwise keep the existing function.
 
+
+**Step 4 record (2026-09-16):** navigation, Claude fan-out, cmux skills and browser links are done and
+machine-checked: `just lua-check`, `just karabiner-check`, `fish -n`, recipe parsing and a bounded Neovim
+startup all pass, and `open https://example.com` from a `/bin/sh` script in a native tab created a cmux
+browser surface rather than an external window. Items marked "Jason confirms" await his eyes, not more work.
+The drive-mode alternative does not apply: native navigation was chosen.
+
+**Codex tab names: not done, and codex2 stays.** `cmux hooks setup --agent codex` is installed and the
+hooks do fire (a `codex exec` turn logged `hook: Stop`), but the workspace title never became a topic
+name, and cmux 0.64.23 exposes no `automation.workspaceAutoNaming` setting — neither `cmux docs settings`
+nor the commented defaults in `cmux.json` contain any naming key, so the plan's premise for this item was
+wrong. An interactive attempt was inconclusive: the Codex TUI stopped on a confirmation dialog. Until a
+Codex session is seen producing a topic name, `codex2`, `codex-tab-sync`, the `codex2-check` recipe, its
+docs row and `scripts/tests/fake-cmux.sh` all stay.
 ## 5. Finish — agent
 
 - [ ] Delete `scripts/tests/fake-cmux.sh` only when no remaining recipe uses it.

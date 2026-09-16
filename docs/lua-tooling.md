@@ -161,7 +161,7 @@ Yes. Neovim has Lua LSP support on.
 
 Neither agent has a Lua language server configured for this repo. Both rely on:
 
-- repo instructions in [AGENTS.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/AGENTS.md), [codex/AGENTS.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/codex/AGENTS.md) and [.claude/CLAUDE.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.claude/CLAUDE.md)
+- repo instructions in [.claude/CLAUDE.md](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.claude/CLAUDE.md)
 - the repo-owned LuaLS policy in [.luarc.json](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/.luarc.json)
 - `just lua-check` as the canonical Lua gate and `just lua-fmt` as the canonical formatter
 

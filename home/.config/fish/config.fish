@@ -67,7 +67,6 @@ set --export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS 1
 set --export CLAUDE_CODE_NO_FLICKER 1
 
 # Plannotator: open in cmux browser instead of OS default
-set --export PLANNOTATOR_BROWSER "$HOME/.local/bin/plannotator-browser"
 
 # fzf: use fd for file listing (respects .gitignore, purpose-built for file enumeration)
 set --export FZF_DEFAULT_COMMAND 'fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
@@ -181,22 +180,7 @@ function dr --description "Devin Review for current branch's PR"
     or begin; echo "No PR found for current branch"; return 1; end
     npx devin-review $pr_url
 end
-function gprv --description "Open current branch's PR in browser"
-    set -l pr_url (gh pr view --json url -q .url 2>/dev/null)
-    or begin; echo "No PR found for current branch" >&2; return 1; end
-
-    if test -n "$CMUX_WORKSPACE_ID"; and command -q cmux
-        set -l workspace_ref (cmux current-workspace 2>/dev/null | string trim)
-        if test -n "$workspace_ref"
-            echo "Opening $pr_url in cmux browser."
-            cmux browser open --workspace "$workspace_ref" "$pr_url"
-            and return 0
-            echo "cmux browser open failed; falling back to system browser." >&2
-        end
-    end
-
-    gh pr view --web
-end
+abbr -a gprv 'gh pr view --web'
 alias grv="gh repo view --web"
 
 # Other

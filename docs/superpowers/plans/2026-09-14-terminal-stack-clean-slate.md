@@ -177,17 +177,23 @@ docs row and `scripts/tests/fake-cmux.sh` all stay.
 ## 5. Finish — agent
 
 - [ ] Delete `scripts/tests/fake-cmux.sh` only when no remaining recipe uses it.
-- [ ] Scan for retired names, excluding historical docs:
+- [x] Scan for retired names, excluding historical docs:
 
   ```bash
   git grep -n -w -e zmx -e zsm -e ZMX_SESSION -e cmd-ux -e cmd_ux -e codex2 -e codex-tab-sync -e dispatch-claude -e cmux-mode -e cmux-nav -e cmuxx -e plannotator-browser -- . ':!docs/plans' ':!docs/superpowers' ':!research' ':!archive'
   ```
 
   Fix active references to removed features. Matches for deliberately retained features are expected.
-- [ ] Check recipe parsing after the final recipe deletion. Complete any component check still outstanding; don't rerun successful checks on unchanged components.
-- [ ] Add a short decision in `DECISIONS.md`: prefer native features; keep glue for a specific missing capability. Log the actual user-visible changes with `nesia add`.
-- [ ] Commit the remaining owned changes, review outgoing commits, and push. If the shared branch contains another session's unpublished work, coordinate before pushing their commits.
-- [ ] Report what was removed, what stayed, and any item still blocked. An unchecked or failed item remains visible until resolved.
+- [x] Check recipe parsing after the final recipe deletion. Complete any component check still outstanding; don't rerun successful checks on unchanged components.
+- [x] Add a short decision in `DECISIONS.md`: prefer native features; keep glue for a specific missing capability. Log the actual user-visible changes with `nesia add`.
+- [x] Commit the remaining owned changes, review outgoing commits, and push. If the shared branch contains another session's unpublished work, coordinate before pushing their commits.
+- [x] Report what was removed, what stayed, and any item still blocked. An unchecked or failed item remains visible until resolved.
+
+**Step 5 record (2026-09-16):** 19 commits pushed, `main` at `4f175a3b`. `scripts/tests/fake-cmux.sh`
+stays because `codex2-check` still uses it. The retired-name scan is clean except for `codex2` and
+`codex-tab-sync`, which are deliberately retained (see the Codex note in Step 4). Other sessions' work in
+`justfile`, `scripts/data/Brewfile`, `README.md`, `tasks.md` and the Zed, grok and land-pr files was left
+untouched: every commit here staged only its own hunks.
 
 **Done means:** new terminals work, retained Claude conversations are recovered, native auto-resume works after relaunch, chosen replacements pass their command and visual checks, and no active configuration or recipe points at deleted files.
 

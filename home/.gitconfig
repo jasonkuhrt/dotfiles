@@ -9,7 +9,7 @@
 [init]
     # Default branch name for new repos
     defaultBranch = main
-	templateDir = /Users/jasonkuhrt/.config/git-hooks/init-template
+	templateDir = ~/.config/git-hooks/init-template
 
 [core]
     # Use Hunk for paged Git diff output. Hunk acts as a pager wrapper and
@@ -233,7 +233,7 @@
     insteadOf = me:
 [credential "https://github.com"]
 	helper = 
-	helper = !/opt/homebrew/bin/gh auth git-credential
+	helper = !gh auth git-credential
 [credential "https://gist.github.com"]
 	helper = 
-	helper = !/opt/homebrew/bin/gh auth git-credential
+	helper = !gh auth git-credential

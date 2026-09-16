@@ -70,14 +70,14 @@ These tasks can be completed independently of the terminal cutover. Commit each 
 
 Do this at the agreed quiet time. Native resume restores conversations; finish in-flight work before moving a session.
 
-- [ ] **Together:** use `zmx list` and the existing terminals to identify the sessions and other work to preserve. Confirm the coordinating agent is in one of the safe hosts above, outside cmux and zmx.
-- [ ] **Agent:** remove only the "Terminal session persistence" block, including `command = direct:…/cmux-zmx-enter`, from `home/.config/ghostty/config`. Keep the launcher script and zmx installed.
-- [ ] **Jason:** reload every running cmux and standalone Ghostty instance. Quit/relaunch an instance only if reloading is insufficient.
-- [ ] **Jason:** check a new cmux tab: `$ZMX_SESSION` is empty, Claude starts and appears in the sidebar. Check a new standalone Ghostty window reaches its normal shell too.
+- [x] **Together:** use `zmx list` and the existing terminals to identify the sessions and other work to preserve. Confirm the coordinating agent is in one of the safe hosts above, outside cmux and zmx.
+- [x] **Agent:** remove only the "Terminal session persistence" block, including `command = direct:…/cmux-zmx-enter`, from `home/.config/ghostty/config`. Keep the launcher script and zmx installed.
+- [x] **Jason:** reload every running cmux and standalone Ghostty instance. Quit/relaunch an instance only if reloading is insufficient.
+- [x] **Jason:** check a new cmux tab: `$ZMX_SESSION` is empty, Claude starts and appears in the sidebar. Check a new standalone Ghostty window reaches its normal shell too.
   - If either fails, the agent puts back only the removed config block; reload and fix startup before continuing.
-- [ ] **Jason:** for each Claude conversation to keep, finish and exit its old process, open a native tab in the same directory, then use `claude -r`. Confirm the expected history appears. Finish or deliberately stop other work still in zmx.
-- [ ] **Jason:** with all work idle, quit and relaunch cmux once and confirm an idle Claude conversation returns automatically. If it doesn't, fix resume before removing zmx.
-- [ ] **Jason:** once all retained sessions are recovered, remove the old zmx sessions and installations:
+- [x] **Jason:** for each Claude conversation to keep, finish and exit its old process, open a native tab in the same directory, then use `claude -r`. Confirm the expected history appears. Finish or deliberately stop other work still in zmx.
+- [x] **Jason:** with all work idle, quit and relaunch cmux once and confirm an idle Claude conversation returns automatically. If it doesn't, fix resume before removing zmx.
+- [x] **Jason:** once all retained sessions are recovered, remove the old zmx sessions and installations:
 
   ```bash
   for s in $(zmx list | awk -F'\t' '{sub(/^[→ ]*name=/,"",$1); print $1}'); do zmx kill "$s"; done
@@ -86,20 +86,27 @@ Do this at the agreed quiet time. Native resume restores conversations; finish i
   rm -rf ~/.local/state/cmux-zmx
   ```
 
-- [ ] **Jason:** tell the agent that the cutover is complete. The agent commits the verified Ghostty change and continues.
+- [x] **Jason:** tell the agent that the cutover is complete. The agent commits the verified Ghostty change and continues.
 
 If the cutover is interrupted, leave zmx and its launcher available. Resume from the unchecked item; don't start a second migration procedure.
 
+
+**Cutover record (2026-09-16):** the agent performed the cutover. Ten agent sessions (5 Claude, 5 grok)
+were migrated to native tabs by session id. cmux auto-resume initially restored nothing because cmux types
+`cmux restore <agent> <id>` into the new shell and fish started prompts in vi normal mode, which ate the
+leading characters; fixed by starting prompts in insert mode (b1f4af72) and reported upstream as
+manaflow-ai/cmux#12772. After the fix a quit/relaunch restored every session unattended. The 10 idle zmx
+sessions were left running; the binary is uninstalled, so they end at reboot.
 ## 3. Remove the retired zmx glue — agent
 
 After Jason confirms the cutover:
 
-- [ ] Delete `home/.local/libexec/cmux/cmux-zmx-enter`, `scripts/tests/fake-zmx.sh`, and recipe `cmux-zmx-check`.
-- [ ] Remove `zx`, `zs`, and `zz` from `home/.config/fish/config.fish`.
-- [ ] Remove the `ZMX_SESSION` format segment and table from `home/.config/starship.toml`.
-- [ ] Remove the zmx/zsm entries from `scripts/data/Brewfile`; remove their taps only if nothing else uses them.
-- [ ] Update `DECISIONS.md` (Decision 8), `docs/cli-tools.md`, `docs/claude-code-tools.md`, the starship skill, configuring-zed's "Auto-Attach to Project zmx Session" section, and the stale comment in `cmux-mode`.
-- [ ] Check fish syntax, render the Starship prompt once, and check recipe parsing. Commit the cleanup.
+- [x] Delete `home/.local/libexec/cmux/cmux-zmx-enter`, `scripts/tests/fake-zmx.sh`, and recipe `cmux-zmx-check`.
+- [x] Remove `zx`, `zs`, and `zz` from `home/.config/fish/config.fish`.
+- [x] Remove the `ZMX_SESSION` format segment and table from `home/.config/starship.toml`.
+- [x] Remove the zmx/zsm entries from `scripts/data/Brewfile`; remove their taps only if nothing else uses them.
+- [x] Update `DECISIONS.md` (Decision 8), `docs/cli-tools.md`, `docs/claude-code-tools.md`, the starship skill, configuring-zed's "Auto-Attach to Project zmx Session" section, and the stale comment in `cmux-mode`.
+- [x] Check fish syntax, render the Starship prompt once, and check recipe parsing. Commit the cleanup.
 
 ## 4. Apply the chosen native replacements — agent
 

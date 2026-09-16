@@ -256,8 +256,11 @@ end # interactive-only block
 
 if status is-interactive
 
-# Vi mode with hybrid insert (Ctrl+A/E still work in insert mode)
-fish_vi_key_bindings default
+# Vi mode with hybrid insert (Ctrl+A/E still work in insert mode).
+# Prompts start in insert mode: cmux's agent auto-resume restores a session by
+# typing `cmux restore <agent> <id>` into the new shell, and a normal-mode prompt
+# eats the leading characters. Escape still reaches normal mode.
+fish_vi_key_bindings insert
 bind -M insert -m default k,j cancel repaint-mode
 set -g fish_sequence_key_delay_ms 200
 
@@ -285,14 +288,6 @@ bind -M default \[ 'cmuxx prev-surface'
 bind -M default \] 'cmuxx next-surface'
 
 function fish_mode_prompt --description "Display vi mode as a single Tokyo Night colored letter"
-    if not set -q __dotfiles_fish_vi_mode_bootstrapped
-        set -g __dotfiles_fish_vi_mode_bootstrapped 1
-        if test "$fish_key_bindings" = fish_vi_key_bindings
-            or test "$fish_key_bindings" = fish_hybrid_key_bindings
-            set fish_bind_mode default
-        end
-    end
-
     switch $fish_bind_mode
         case default
             set_color --bold 7aa2f7

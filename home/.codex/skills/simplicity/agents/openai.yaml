@@ -1,0 +1,4 @@
+interface:
+  display_name: "Simplicity"
+  short_description: "Clear responsibilities, strong contracts, less complexity"
+  default_prompt: "Use $simplicity to assess this design and propose concrete improvements to its responsibilities, interfaces, and conceptual complexity."

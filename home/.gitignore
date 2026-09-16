@@ -1,3 +1,12 @@
-# shan-managed (do not edit)
-.codex/skills
-# end shan-managed
+# Deployed into $HOME. Ignore what Codex and Claude regenerate or what points
+# outside this repo, so `home/` only ever tracks real, portable config.
+
+# Vendored system skills: reinstalled by the agent, not ours to version.
+.codex/skills/.system/
+
+# Absolute symlinks into private or sibling checkouts; broken on any other machine.
+.codex/skills/session
+.codex/skills/meos-kids-school-sync
+
+# Personal-life skills: this repo is public.
+.codex/skills/meos-*

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Pair Edit"
+  short_description: "Fast user-directed editing in tight loops"
+  default_prompt: "Use $pair-edit to make one fast, tightly scoped edit and return control immediately."
+policy:
+  allow_implicit_invocation: false

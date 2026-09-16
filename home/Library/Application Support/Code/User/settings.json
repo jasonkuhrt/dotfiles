@@ -10,34 +10,12 @@
   "workbench.tree.renderIndentGuides": "none",
   "workbench.editor.enablePreview": false,
   "workbench.editor.enablePreviewFromQuickOpen": false,
-  "workbench.editor.untitled.hint": "hidden",
   // Native replacement for old `customizeUI.stylesheet` monkey-patch
   "workbench.editor.editorActionsLocation": "hidden",
   // ── UI chrome minimization (keyboard-driven, reclaim screen real estate)
   "workbench.activityBar.location": "hidden",
   "workbench.layoutControl.enabled": false,
   "window.commandCenter": false,
-
-  // ── View layout: containers pinned to the Auxiliary Bar (right); search to a custom sidebar.
-  //    Mirrors `views.customizations` in state.vscdb so the layout follows dotfiles to any
-  //    machine and survives a state-DB reset. `terminal` stays as its own container here so
-  //    the terminal view never re-nests inside the chat container.
-  "workbench.views.customizations": {
-    "viewContainerLocations": {
-      "workbench.views.service.sidebar.c28e3b73-2832-41b7-b340-efefea9f6b6f": 0,
-      "refactorPreview": 2,
-      "workbench.panel.repl": 2,
-      "workbench.panel.markers": 2,
-      "workbench.panel.output": 2,
-      "terminal": 2,
-      "~remote.forwardedPortsContainer": 2,
-      "workbench.panel.comments": 2
-    },
-    "viewLocations": {
-      "workbench.view.search": "workbench.views.service.sidebar.c28e3b73-2832-41b7-b340-efefea9f6b6f"
-    },
-    "viewContainerBadgeEnablementStates": {}
-  },
 
   // ──────────────────────────────────────────── Editor
   "editor.fontFamily": "Fira Code",
@@ -126,9 +104,7 @@
 
   // ──────────────────────────────────────────── Project Manager
   //   sortList "Tags" groups projects by their first tag (alphabetical: fav, personal, ref, work).
-  //   Sidebar tree view: adds a PROJECTS panel in the activity bar for one-click switching.
   "projectManager.sortList": "Tags",
-  "projectManager.treeview.visibility": true,
 
   // ──────────────────────────────────────────── Terminal
   "terminal.integrated.fontSize": 14,
@@ -149,13 +125,14 @@
     "workbench.action.navigateUp",
     "workbench.action.navigateDown",
   ],
-  "terminal.external.osxExec": "iTerm.app",
+  // Ghostty is the only installed app VS Code supports here: its mac external-terminal
+  // service only implements runInTerminal for Terminal.app, iTerm.app and Ghostty.app.
+  "terminal.external.osxExec": "Ghostty.app",
 
   // ──────────────────────────────────────────── Git / GitHub
   "git.confirmSync": false,
   "git.autofetch": true,
   "git.enableSmartCommit": true,
-  "github.autoPublish": true,
 
   // GitHub PR extension: keep API usage predictable. The extension spends the
   // account-wide GitHub GraphQL quota; huge PRs can fan out through file,
@@ -189,51 +166,43 @@
   "githubPullRequests.hideViewedFiles": false,
   "githubPullRequests.fileAutoReveal": false,
   "githubPullRequests.commentExpandState": "collapseAll",
-  "github-actions.org-features": true,
 
   // ──────────────────────────────────────────── Languages
-  "typescript.format.enable": false,
-  "typescript.suggestionActions.enabled": false,
-  "typescript.suggest.completeFunctionCalls": false,
-  // Disable `import { foo as bar }` aliasing during F2 rename. These entries
-  // are a *partial* mitigation, not a complete fix. Stock tsserver is known
+  // TS/JS settings live under the unified `js/ts.*` namespace. Every
+  // `typescript.*` / `javascript.*` twin of these keys carries a
+  // deprecationMessage in typescript-language-features and is superseded
+  // by the entry below; one key now covers both languages.
+  "js/ts.experimental.useTsgo": true,
+  "js/ts.format.enabled": false,
+  "js/ts.suggestionActions.enabled": false,
+  "js/ts.suggest.completeFunctionCalls": false,
+  // Disable `import { foo as bar }` aliasing during F2 rename. This entry
+  // is a *partial* mitigation, not a complete fix. Stock tsserver is known
   // to still insert aliases in multiple scenarios despite the preference:
   // https://github.com/microsoft/TypeScript/issues/29026 (open since 2018).
   // When rename still aliases, fix the binding by hand — the preference
   // cannot currently enforce zero-alias rename everywhere.
-  "typescript.preferences.useAliasesForRenames": false,
-  "javascript.preferences.useAliasesForRenames": false,
-  "typescript.preferGoToSourceDefinition": true,
-  "js/ts.experimental.useTsgo": true,
-  "typescript.referencesCodeLens.enabled": true,
-  "typescript.referencesCodeLens.showOnAllFunctions": true,
-  "typescript.implementationsCodeLens.enabled": true,
-  "typescript.updateImportsOnFileMove.enabled": "always",
-  "typescript.tsc.autoDetect": "off",
-  "typescript.tsserver.maxTsServerMemory": 8192,
+  "js/ts.preferences.useAliasesForRenames": false,
+  "js/ts.preferGoToSourceDefinition": true,
+  "js/ts.referencesCodeLens.enabled": true,
+  "js/ts.referencesCodeLens.showOnAllFunctions": true,
+  "js/ts.implementationsCodeLens.enabled": true,
+  "js/ts.updateImportsOnFileMove.enabled": "always",
+  "js/ts.tsc.autoDetect": "off",
+  "js/ts.tsserver.maxMemory": 8192,
   // Inlay hints — volume up. Globally suppressed via editor.inlayHints.enabled,
   // toggled on with `space t h` (or ", e" for diagnostics). When on, show all of these.
-  "typescript.inlayHints.parameterNames.enabled": "all",
-  "typescript.inlayHints.parameterNames.suppressWhenArgumentMatchesName": true,
-  "typescript.inlayHints.parameterTypes.enabled": true,
-  "typescript.inlayHints.propertyDeclarationTypes.enabled": true,
-  "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
-  "typescript.inlayHints.enumMemberValues.enabled": true,
-  "typescript.inlayHints.variableTypes.enabled": true,
-  "typescript.inlayHints.variableTypes.suppressWhenTypeMatchesName": true,
-  "javascript.format.enable": false,
-  "javascript.updateImportsOnFileMove.enabled": "always",
-  "javascript.inlayHints.parameterNames.enabled": "all",
-  "javascript.inlayHints.parameterNames.suppressWhenArgumentMatchesName": true,
-  "javascript.inlayHints.parameterTypes.enabled": true,
-  "javascript.inlayHints.propertyDeclarationTypes.enabled": true,
-  "javascript.inlayHints.functionLikeReturnTypes.enabled": true,
-  "javascript.inlayHints.enumMemberValues.enabled": true,
-  "javascript.inlayHints.variableTypes.enabled": true,
+  "js/ts.inlayHints.parameterNames.enabled": "all",
+  "js/ts.inlayHints.parameterNames.suppressWhenArgumentMatchesName": true,
+  "js/ts.inlayHints.parameterTypes.enabled": true,
+  "js/ts.inlayHints.propertyDeclarationTypes.enabled": true,
+  "js/ts.inlayHints.functionLikeReturnTypes.enabled": true,
+  "js/ts.inlayHints.enumMemberValues.enabled": true,
+  "js/ts.inlayHints.variableTypes.enabled": true,
+  "js/ts.inlayHints.variableTypes.suppressWhenTypeMatchesName": true,
   "yaml.schemas": {
     "http://json.schemastore.org/circleciconfig": "/*/**/.circleci/*",
   },
-  "vscode-graphql.showExecCodelens": false,
   "emmet.showAbbreviationSuggestions": false,
   "emmet.showExpandedAbbreviation": "never",
 
@@ -300,13 +269,6 @@
   // Already default; explicit for documentation purposes
   "github.copilot.nextEditSuggestions.enabled": true,
   "github.copilot.nextEditSuggestions.extendedRange": true,
-  "github.copilot.enable": {
-    "*": true,
-    "plaintext": true,
-    "markdown": true,
-    "scminput": true,
-  },
-
   // ──────────────────────────────────────────── GitHub Copilot (experimental tab-complete)
   "github.copilot.editor.enableAutoCompletions": true,
   "github.copilot.nextEditSuggestions.fixes": true,
@@ -325,8 +287,6 @@
   "github.copilot.chat.notebook.enhancedNextEditSuggestions.enabled": true,
   "errorLens.enabled": false,
   "editor.codeLens": false,
-  "gitlens.ai.model": "vscode",
-  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
   "problems.visibility": true,
   "security.promptForLocalFileProtocolHandling": false,
 

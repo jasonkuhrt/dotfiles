@@ -49,3 +49,6 @@ __pycache__/
 
 # Karabiner writes a dated backup into its config dir on every GUI edit
 home/.config/karabiner/automatic_backups/
+
+# Zed writes its prompt library as an LMDB store; binary runtime state, not config
+home/.config/zed/prompts/

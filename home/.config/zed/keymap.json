@@ -276,7 +276,7 @@
       ", v": "editor::ToggleInlineValues",
       ", w": "diagnostics::ToggleWarnings", // "w" is close to "e" ...
       ", space": "editor::ToggleSoftWrap",
-      ", g": ["task::Spawn", { "task_name": "toggle: chore files" }], // gitignore visibility
+      ", g": "project_panel::ToggleHideGitIgnore", // gitignore visibility (built-in; writes project_panel.hide_gitignore)
       ", G": ["task::Spawn", { "task_name": "toggle: generated" }], // __generated__ in/out of tree+finder+search
       // ━ Reload
       ", R": "workspace::Reload",

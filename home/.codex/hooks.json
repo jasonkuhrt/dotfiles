@@ -1,20 +1,128 @@
 {
-  "hooks": {
-    "Stop": [
+  "hooks" : {
+    "PermissionRequest" : [
       {
-        "hooks": [
+        "hooks" : [
           {
-            "type": "command",
-            "command": "bun ~/.codex/hooks/loop_stop_continue.ts"
+            "command" : "\/Users\/jasonkuhrt\/.cmux\/hooks\/cmux-codex-hook-93a95cbd1c49741c-persistent-feed-PermissionRequest.sh",
+            "timeout" : 120,
+            "type" : "command"
+          }
+        ]
+      }
+    ],
+    "PostCompact" : [
+      {
+        "hooks" : [
+          {
+            "command" : "\/Users\/jasonkuhrt\/.cmux\/hooks\/cmux-codex-hook-1c62c346075c9690-persistent-feed-PostCompact.sh",
+            "timeout" : 5,
+            "type" : "command"
+          }
+        ]
+      }
+    ],
+    "PostToolUse" : [
+      {
+        "hooks" : [
+          {
+            "command" : "\/Users\/jasonkuhrt\/.cmux\/hooks\/cmux-codex-hook-87c24e1dfe09b3c8-persistent-feed-PostToolUse.sh",
+            "timeout" : 5,
+            "type" : "command"
+          }
+        ]
+      }
+    ],
+    "PreCompact" : [
+      {
+        "hooks" : [
+          {
+            "command" : "\/Users\/jasonkuhrt\/.cmux\/hooks\/cmux-codex-hook-01e605591b723b7d-persistent-feed-PreCompact.sh",
+            "timeout" : 5,
+            "type" : "command"
+          }
+        ]
+      }
+    ],
+    "PreToolUse" : [
+      {
+        "hooks" : [
+          {
+            "command" : "\/Users\/jasonkuhrt\/.cmux\/hooks\/cmux-codex-hook-ee71de233f3dccca-persistent-feed-PreToolUse.sh",
+            "timeout" : 5,
+            "type" : "command"
+          }
+        ]
+      }
+    ],
+    "SessionStart" : [
+      {
+        "hooks" : [
+          {
+            "command" : "\/Users\/jasonkuhrt\/.cmux\/hooks\/cmux-codex-hook-6f86d345090541b9-persistent-session-start.sh",
+            "timeout" : 5,
+            "type" : "command"
+          }
+        ]
+      }
+    ],
+    "Stop" : [
+      {
+        "hooks" : [
+          {
+            "command" : "bun ~\/.codex\/hooks\/loop_stop_continue.ts",
+            "type" : "command"
           }
         ]
       },
       {
-        "hooks": [
+        "hooks" : [
           {
-            "type": "command",
-            "command": "/Users/jasonkuhrt/.local/bin/plannotator",
-            "timeout": 345600
+            "command" : "\/Users\/jasonkuhrt\/.local\/bin\/plannotator",
+            "timeout" : 345600,
+            "type" : "command"
+          }
+        ]
+      },
+      {
+        "hooks" : [
+          {
+            "command" : "\/Users\/jasonkuhrt\/.cmux\/hooks\/cmux-codex-hook-a96f030eb871aa5f-persistent-stop.sh",
+            "timeout" : 5,
+            "type" : "command"
+          }
+        ]
+      }
+    ],
+    "SubagentStart" : [
+      {
+        "hooks" : [
+          {
+            "command" : "\/Users\/jasonkuhrt\/.cmux\/hooks\/cmux-codex-hook-139fbcdf8267d51e-persistent-feed-SubagentStart.sh",
+            "timeout" : 5,
+            "type" : "command"
+          }
+        ]
+      }
+    ],
+    "SubagentStop" : [
+      {
+        "hooks" : [
+          {
+            "command" : "\/Users\/jasonkuhrt\/.cmux\/hooks\/cmux-codex-hook-bb7a7f544a947ea1-persistent-feed-SubagentStop.sh",
+            "timeout" : 5,
+            "type" : "command"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit" : [
+      {
+        "hooks" : [
+          {
+            "command" : "\/Users\/jasonkuhrt\/.cmux\/hooks\/cmux-codex-hook-829ec5ef4bd8c36d-persistent-prompt-submit.sh",
+            "timeout" : 5,
+            "type" : "command"
           }
         ]
       }

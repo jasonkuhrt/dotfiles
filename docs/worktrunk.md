@@ -103,15 +103,15 @@ Key variables: `branch`, `worktree_path`, `repo`, `repo_path`, `base`, `target`,
 
 ## Session Integration
 
-The session system delegates worktree creation to worktrunk:
+Worktrees are created and removed with `wt` directly:
 
 ```bash
-session thread create my-feature --worktree              # calls wt switch --create
-session thread create my-feature --worktree --base develop
-session thread done my-feature --rm-worktree             # calls wt remove
+wt switch --create my-feature
+wt switch --create my-feature --base develop
+wt remove
 ```
 
-Session keeps ownership of base branch resolution (from `.sessions/.config.yml`) and session wiring (`session sync`). Worktrunk owns everything else: path naming, dependency installation, build cache copying, cleanup safety checks.
+The `session` CLI has no worktree subcommands — it manages the `.session` stage records (`init`, `add`, `mv`, `batch`, `start`, `done`, `open`). Worktrunk owns the worktree lifecycle outright: path naming, dependency installation, build cache copying, cleanup safety checks.
 
 ## Parallel Agents
 

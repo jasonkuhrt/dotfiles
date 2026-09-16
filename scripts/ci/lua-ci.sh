@@ -94,25 +94,16 @@ if [ ${#changed_files[@]} -eq 0 ]; then
   exit 0
 fi
 
+# macOS ships bash 3.2, which errors under `set -u` when an empty array is
+# expanded ("unbound variable"). Dedupe through a stream so no accumulator is
+# ever expanded while empty.
 declare -a unique_files=()
 
-contains_file() {
-  local needle=$1
-  local item
-  for item in "${unique_files[@]}"; do
-    if [ "$item" = "$needle" ]; then
-      return 0
-    fi
-  done
-
-  return 1
-}
-
-for file in "${changed_files[@]}"; do
-  if ! contains_file "$file"; then
+while IFS= read -r file; do
+  if [ -n "$file" ]; then
     unique_files+=("$file")
   fi
-done
+done < <(printf '%s\n' "${changed_files[@]}" | awk '!seen[$0]++')
 
 declare -a lua_relevant_files=()
 declare -a file_ops_test_files=()
@@ -141,13 +132,9 @@ printf '\n[just lua-check]\n'
 just lua-check
 
 if [ ${#file_ops_test_files[@]} -eq 0 ]; then
-  printf '\nSKIP: plugin tests not needed for this change set\n'
+  printf '\nSKIP: file-ops tests not needed for this change set\n'
   exit 0
 fi
 
-if [ ${#file_ops_test_files[@]} -gt 0 ]; then
-  printf '\n[just file-ops-test]\n'
-  just file-ops-test
-else
-  printf '\nSKIP: file-ops tests not needed for this change set\n'
-fi
+printf '\n[just file-ops-test]\n'
+just file-ops-test

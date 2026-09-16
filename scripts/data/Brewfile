@@ -8,6 +8,10 @@ tap "planetscale/tap"
 tap "polidog/kilar"
 tap "manaflow-ai/cmux"
 tap "bendews/tap"
+tap "mobile-dev-inc/tap"
+tap "steipete/tap"
+tap "terrastruct/tap"
+tap "withgraphite/tap"
 
 # ═══════════════════════════════════════════════════════════
 # CLI Tools
@@ -61,6 +65,7 @@ brew "up"            # interactive piping (Ultimate Plumber)
 
 # Apple ecosystem CLIs (EventKit/Shortcuts/iCloud-native tools — preferred over AppleScript for speed)
 brew "electrikmilk/cherri/cherri", trusted: true  # compile .cherri to .shortcut files
+brew "steipete/tap/remindctl", trusted: true  # Reminders CLI (EventKit)
 
 # Git & GitHub
 brew "git"
@@ -72,6 +77,7 @@ brew "lazygit"       # terminal UI for git
 brew "worktrunk"     # git worktree manager (parallel AI agents)
 brew "pre-commit"    # git hooks framework
 brew "flock"         # file-lock CLI; serializes concurrent git hooks (not shipped on macOS)
+brew "withgraphite/tap/graphite", trusted: true  # gt — stacked pull requests
 
 # Development
 brew "node"          # first npm on a fresh machine (pnpm runtimes ship without npm); pnpm's LTS shadows it
@@ -90,11 +96,13 @@ brew "neovim"        # editor
 brew "cmake"
 brew "gnu-getopt"
 brew "hyperfine"     # CLI benchmarking
+brew "mobile-dev-inc/tap/maestro", trusted: true  # mobile end-to-end test runner
 
 # Documents & text
 brew "glow"          # render markdown in terminal
 # `glow` covers terminal markdown; removed disabled `mdcat`
 brew "pandoc"        # document converter
+brew "terrastruct/tap/tala", trusted: true  # D2 layout engine (used by the d2 skill)
 
 # Encryption & passwords
 brew "age"           # file encryption and key management

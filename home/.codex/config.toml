@@ -236,10 +236,6 @@ NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "9230e2bd8b24b7ac7a0ba6774c64bf0d78ec
 default_subagent_model = "gpt-5.6-sol"
 default_subagent_reasoning_effort = "high"
 
-[[skills.config]]
-name = "dispatch-claude"
-enabled = false
-
 # Claude Code manuals conflict with Codex's bundled browser instructions.
 [[skills.config]]
 name = "claude-in-chrome"

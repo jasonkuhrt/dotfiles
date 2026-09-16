@@ -77,11 +77,11 @@
     "graphql": true,
     "html": true,
     "make": true,
-    "mcp-server-github": true,
+    "mcp-server-github": false,
     "mermaid": true,
     "nuisance": true,
     "oxc": true,
-    "postgres-context-server": true,
+    "postgres-context-server": false,
     "prisma": true,
     "svelte": false,
     "tokyo-night": true,
@@ -211,9 +211,6 @@
   "search": {
     "button": false
   },
-  "notification_panel": {
-    "button": false
-  },
   "diagnostics": {
     "button": false,
     "include_warnings": true
@@ -322,7 +319,7 @@
     "tree_view": true,
     "dock": "left",
     "button": false,
-    "sort_by_path": true,
+    "sort_by": "path",
     "status_style": "label_color" // What does this do?
   },
   "project_panel": {

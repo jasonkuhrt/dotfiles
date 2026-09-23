@@ -103,7 +103,7 @@ If Greptile has already posted, continue to the feedback-handling step. If not, 
 
 ### 5. Address Existing Greptile Feedback
 
-Use the current harness's PR review-comment workflow: in Claude Code the `gh-close-review-threads` skill, in Codex `github:gh-address-comments`. Every addressed thread must close the loop with a reply + resolve, not just a code push.
+Close each addressed thread directly with GitHub GraphQL once the fix is pushed: `addPullRequestReviewThreadReply` with a body naming the commit and the concrete change (or why no code change was needed), then `resolveReviewThread`, then re-fetch `reviewThreads` and confirm `isResolved: true` with the reply present. Every addressed thread must close the loop with a reply + resolve, not just a code push. In Codex, `github:gh-address-comments` covers the same steps.
 
 When working through threads:
 

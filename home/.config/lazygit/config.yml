@@ -1,6 +1,9 @@
 gui:
   scrollHeight: 10
   showRootItemInFileTree: false
+  # Open in the layout one `+` press used to reach: the focused panel beside
+  # the main view. `+` / `_` still cycle normal → half → full per session.
+  screenMode: half
   # Tokyo Night theme
   # Source: https://github.com/folke/tokyonight.nvim/blob/main/extras/lazygit/tokyonight_night.yml
   theme:

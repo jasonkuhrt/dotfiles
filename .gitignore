@@ -52,3 +52,7 @@ home/.config/karabiner/automatic_backups/
 
 # Zed writes its prompt library as an LMDB store; binary runtime state, not config
 home/.config/zed/prompts/
+
+# Claude Code writes its synced skills and trash into ~/.claude/skills, which is this directory
+home/.claude/skills/synced/
+home/.claude/skills/.trash/

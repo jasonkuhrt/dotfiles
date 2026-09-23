@@ -19,7 +19,7 @@
   //
   //
   //
-  "diff_view_style": "split",
+  "diff_view_style": "unified",
   "cli_default_open_behavior": "existing_window",
   "minimap": {
     "max_width_columns": 101
@@ -323,8 +323,8 @@
     "status_style": "label_color" // What does this do?
   },
   "project_panel": {
+    "folder_indicator": "chevron",
     "dock": "left",
-    "folder_icons": false,
     "auto_fold_dirs": false,
     "hide_gitignore": false,
     "entry_spacing": "standard",
@@ -354,7 +354,9 @@
   //
   //
 
-  "file_scan_inclusions": [".env*", ".claude/**", ".tmp/**"],
+  // .session/** is root-relative on purpose: a `**/` prefix would put `**` in
+  // Zed's parent-directory matcher and make every ignored directory scannable.
+  "file_scan_inclusions": [".env*", ".claude/**", ".tmp/**", ".session/**"],
 
   // ──────────────────────────────────────────────────────────────────────────
   // WORKAROUND — added 2026-06-17.  WHY: Zed's project panel goes stale on large

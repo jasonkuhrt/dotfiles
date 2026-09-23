@@ -96,6 +96,7 @@ brew "neovim"        # editor
 brew "cmake"
 brew "gnu-getopt"
 brew "hyperfine"     # CLI benchmarking
+brew "portless"      # local dev servers by name (https://<name>.localhost)
 brew "mobile-dev-inc/tap/maestro", trusted: true  # mobile end-to-end test runner
 
 # Documents & text
@@ -169,6 +170,7 @@ cask "ngrok"
 # AI
 cask "claude"
 cask "chatgpt"
+cask "codexbar"       # subscription quota menu bar; local setup in 22-codexbar.sh
 cask "cmux"           # Claude session multiplexer
 
 # Communication

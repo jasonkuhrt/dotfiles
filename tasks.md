@@ -1,5 +1,7 @@
 # Personal Tasks
 
+- [ ] Try [AeroSpace](https://github.com/nikitabobko/AeroSpace) for macOS window management with cmux and Zed.
+
 ## /readme skill: eval-driven generalization
 
 The /readme skill's G5 (conditional sections) enumerates specific section types (Architecture, Observability, Error Reference) with hardcoded triggers. This is whack-a-mole — it can't predict what sections a zig audio lib or a Rust crypto lib needs.

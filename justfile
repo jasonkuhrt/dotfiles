@@ -25,6 +25,10 @@ macos-default-apps:
 macos-default-apps-check:
     home/.local/bin/duti-sync --check home/.config/duti.yml
 
+# Install claude-swap if missing and apply only CodexBar's machine-local settings.
+codexbar-setup:
+    DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/22-codexbar.sh
+
 lua-check: lua-lint lua-lsp-check lua-fmt-check
 
 lua-lint:

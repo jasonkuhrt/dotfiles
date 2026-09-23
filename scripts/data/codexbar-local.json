@@ -1,0 +1,21 @@
+{
+  "providers": [
+    {
+      "id": "codex",
+      "codexProfileHomePaths": ["~/.config/codexbar/accounts/codex-2"]
+    },
+    {
+      "id": "claude",
+      "source": "auto",
+      "cookieSource": "auto",
+      "claudeSwapExecutablePath": "~/.local/bin/cswap"
+    }
+  ],
+  "preferences": {
+    "mergeIcons": true,
+    "multiAccountMenuLayout": "stacked",
+    "codexSparkUsageVisible": false,
+    "claudeOAuthDirectKeychainReadAllowed": false,
+    "claudeOAuthKeychainPromptMode": "onlyOnUserAction"
+  }
+}

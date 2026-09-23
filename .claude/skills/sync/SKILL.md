@@ -40,13 +40,15 @@ Full dotfiles sync: commit, rebase, converge with `just up`, then push.
 5. **Converge the machine**
    ```bash
    just up
-   just prune   # drop symlinks the deployment plan no longer contains
+   just prune           # lists symlinks the deployment plan no longer contains
+   just prune --force   # removes them, after reading the list
    ```
 
 6. **Inspect post-converge drift**
    - `just up` never copies live edits back into the repo; deploy only writes targets
-   - If an app replaced a managed symlink with a real file (`test -L <target>` fails),
-     copy that file into `home/` before converging, or `just up` reverts it
+   - If an app replaced a managed symlink with a real file whose bytes differ, `just up`
+     refuses that entry, exits 1, and prints the `mv` that clears it. Copy the file into
+     `home/` first if its content should be kept
    - Run `git status` again and commit anything intended
 
 7. **Push**
@@ -62,12 +64,13 @@ Full dotfiles sync: commit, rebase, converge with `just up`, then push.
 
 **`just up`** runs, in order:
 - `scripts/setup/before/*` (brew bundle, node toolchain, …)
-- deploy: symlink, modify and encrypted entries; a conflicting real file is moved to
-  `.dotctl-backup-*`
-- regenerates the cached manifest that `just explain` and `just status` read
+- deploy: symlinks, plus `F.merge` patches merged into JSON targets; a conflicting real
+  file or directory is refused with a `mv` remedy, never displaced
+- records the deployed targets, and reports any that have left the plan
 - `scripts/setup/after/*` (macOS defaults, dock, gh extensions, bat cache, …)
 
-It prunes nothing: `just prune` removes symlinks into the repo that the plan dropped.
+It prunes nothing: `just prune` lists symlinks into the repo that the plan dropped, and
+`just prune --force` removes them.
 The launchd healer is gone — dotctl removed that daemon upstream.
 
 **`just sudo-setup`** (user runs manually, only if needed):
@@ -77,8 +80,6 @@ The launchd healer is gone — dotctl removed that daemon upstream.
 
 ## Troubleshooting
 
-- **Machine health:** `just status`
-- **Deep drift check:** `just doctor`
-- **Explain one target:** `just explain <target>`
-- **Low-level diff:** `dotctl status` / `just status`
-- **Encrypted files:** `just edit <target>`
+- **What would change:** `just up --dry-run` prints every entry a real run would change and
+  the scripts it would run, writes nothing, and exits 1 when the real run would fail
+- **Leftover symlinks:** `just prune`

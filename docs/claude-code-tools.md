@@ -26,8 +26,8 @@ scope against a Heartbeat worktree rather than this setup.
 | `skills` (humanlayer/skills)   | show-me                                                       |
 | `jasonkuhrt` (local directory) | tsgo-lsp                                                      |
 
-`claude plugin list` is the live truth; which ones are on lives in `home/.claude/settings.json` under
-`enabledPlugins`.
+`claude plugin list` is the live truth; the managed set lives in `home/.claude/settings.json.merge`
+under `enabledPlugins`.
 
 ## MCP Servers
 
@@ -48,7 +48,7 @@ Google Drive, Gmail, and Calendar connectors are present but disabled per projec
 
 ## Hooks
 
-`home/.claude/settings.json` configures no hooks of its own; the repo's hook scripts were removed in
+`home/.claude/settings.json.merge` configures no hooks of its own; the repo's hook scripts were removed in
 `05bc64c6`.
 
 Every hook that actually fires comes from cmux, injected at launch rather than written to disk.

@@ -111,7 +111,7 @@
 # same source as the lazygit theme. syntax-theme = tokyonight_night needs
 # the matching tmTheme installed in bat: it lives at
 # ~/.config/bat/themes/tokyonight_night.tmTheme, and
-# scripts/setup/after/onchange/10-bat-cache.sh builds the cache delta shares with bat.
+# scripts/setup/after/10-bat-cache.sh builds the cache delta shares with bat.
 [delta "tokyonight"]
     syntax-theme                  = tokyonight_night
     minus-style                   = syntax "#4a272f"

@@ -8,32 +8,16 @@ file_ops_plugin_path := "home/.config/nvim/local-plugins/file-ops"
 default:
     just --list
 
-up:
-    {{ dotctl }} up
+up *args:
+    {{ dotctl }} up {{ args }}
 
 # Privileged setup: Touch ID for sudo, display sleep, fish as the login shell
 sudo-setup:
     sudo bash scripts/sync-sudo.sh
 
-# Remove symlinks into the repo that the deployment plan no longer contains
+# List symlinks into the repo that the deployment plan no longer contains; --force removes them
 prune *args:
     {{ dotctl }} prune {{ args }}
-
-# Regenerate the cached symlink manifest that explain/status read
-manifest:
-    {{ dotctl }} manifest --write
-
-edit target:
-    {{ dotctl }} edit {{ target }}
-
-status:
-    {{ dotctl }} status
-
-doctor:
-    {{ dotctl }} doctor
-
-explain target:
-    {{ dotctl }} explain {{ target }}
 
 macos-default-apps:
     home/.local/bin/duti-sync home/.config/duti.yml
@@ -65,7 +49,7 @@ lua-fmt:
 # Installs anything missing; skips already-installed; loudly warns on local
 # (jasonkuhrt.*) extensions which need manual builds.
 vscode-extensions-sync:
-    DOTFILES_ROOT="$PWD" bash scripts/setup/after/once/15-vscode-extensions.sh
+    DOTFILES_ROOT="$PWD" bash scripts/setup/after/15-vscode-extensions.sh
 
 # Export current VS Code extensions to the manifest. Run after installing
 # new extensions to keep the dotfiles canonical list in sync.
@@ -467,7 +451,7 @@ git-maintenance-check:
     # The script resolves the repo through git, which canonicalizes symlinks. Do the same,
     # or the comparison below fails whenever just runs through the ~/dotfiles symlink.
     repo_root="$(git rev-parse --show-toplevel)"
-    script="$repo_root/scripts/setup/after/onchange/15-git-maintenance.sh"
+    script="$repo_root/scripts/setup/after/12-git-maintenance.sh"
     fake_launchctl="$repo_root/scripts/tests/fake-launchctl.sh"
 
     bash -n "$script"
@@ -600,31 +584,6 @@ codex2-check:
 
     printf 'PASS: codex2-check\n'
 
-claude-settings-apply:
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    source="$PWD/home/.claude/settings.json"
-    modifier="$PWD/home/.claude/settings.json.modify"
-    target="$HOME/.claude/settings.json"
-    tmpfile="$(mktemp)"
-    trap 'rm -f "$tmpfile"' EXIT
-
-    mkdir -p "$HOME/.claude"
-
-    if [ -f "$target" ]; then
-        current="$(cat "$target")"
-    else
-        current='{}'
-    fi
-
-    printf '%s' "$current" \
-        | DOTCTL_SOURCE="$source" bash "$modifier" > "$tmpfile"
-
-    jq empty "$tmpfile" >/dev/null
-    mv "$tmpfile" "$target"
-    printf 'Updated %s\n' "$target"
-
 file-ops-test:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -709,10 +668,10 @@ fn-wispr-qa:
     fi
 
     fn_usage=$(defaults read com.apple.HIToolbox AppleFnUsageType 2>/dev/null || true)
-    if [ "$fn_usage" = "3" ]; then
-        pass "Fn/Globe key press behavior is disabled (AppleFnUsageType=3)"
+    if [ "$fn_usage" = "0" ]; then
+        pass "Fn/Globe key press does nothing; Fn is a pure modifier (AppleFnUsageType=0)"
     else
-        bad "AppleFnUsageType expected 3, got '${fn_usage:-unset}'"
+        bad "AppleFnUsageType expected 0, got '${fn_usage:-unset}'"
     fi
 
     if ! command -v karabiner_cli >/dev/null 2>&1; then
@@ -806,10 +765,10 @@ fn-wispr-qa:
     printf "\nResult: PASS\n"
 
 agentsview-install:
-    DOTFILES_ROOT={{ justfile_directory() }} bash scripts/setup/after/onchange/19-agentsview.sh
+    DOTFILES_ROOT={{ justfile_directory() }} bash scripts/setup/after/19-agentsview.sh
 
 gh-extensions-sync:
-    DOTFILES_ROOT={{ justfile_directory() }} bash scripts/setup/after/onchange/21-gh-extensions.sh
+    DOTFILES_ROOT={{ justfile_directory() }} bash scripts/setup/after/21-gh-extensions.sh
 
 agentsview-version:
     #!/usr/bin/env bash

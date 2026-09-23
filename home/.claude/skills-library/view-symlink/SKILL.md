@@ -13,7 +13,7 @@ The dotfiles repo uses two distinct symlink patterns:
 
 | Pattern | Direction | Owner | Example |
 |---------|-----------|-------|---------|
-| **Source of truth** | `~/.claude/rules` **→** `dotfiles/symlink-roots/claude/rules` | Dotfiles repo | `symlink_*.tmpl` + dotctl lane config |
+| **Source of truth** | `~/.config/starship.toml` **→** `dotfiles/home/.config/starship.toml` | Dotfiles repo | A path under `home/`, deployed by `just up` |
 | **Convenience view** | `dotfiles/claude/tasks` **→** `~/.claude/tasks` | Runtime | Manual repo-side symlink + `.gitignore` |
 
 This skill handles the **convenience view** pattern.
@@ -32,9 +32,8 @@ When adding a new convenience view symlink:
    ```
    <view-path>
    ```
-5. **Verify it stays out of dotctl lanes**
-   - Do not put convenience views under managed source directories
-   - Do not add them to `dotctl.config.json` trueDirs
+5. **Verify dotctl never deploys it**
+   - Do not put convenience views under `home/`: dotctl deploys everything there
    - They are repo-local browsing aids, not managed source-of-truth paths
 
 ## Key Principles
@@ -42,4 +41,4 @@ When adding a new convenience view symlink:
 - The symlink target (runtime path) is the **source of truth** — dotfiles repo just provides a window
 - Always `.gitignore` the view path — it's runtime data, not config
 - Convenience views are manual repo artifacts, not part of `just up`
-- Keep them obviously separate from real source-of-truth trees like `home/` and `symlink-roots/`
+- Keep them obviously separate from the real source-of-truth tree, `home/`

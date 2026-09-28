@@ -15,7 +15,9 @@ vim.opt.numberwidth = 8
 vim.opt.gdefault = true
 
 -- Files
-vim.opt.autowriteall = true
+-- Overrides LazyVim: shell commands and buffer switches must never write special plugin buffers
+-- (acwrite: a write accepts a proposed diff); the focus-loss autosave still saves ordinary files
+vim.opt.autowrite = false
 vim.opt.swapfile = false
 
 -- Whitespace indicators

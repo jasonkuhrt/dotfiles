@@ -33,6 +33,19 @@ function M.resolve()
   return { context = "none" }
 end
 
+---The directory a command works in: `path` itself when it is a directory, the
+---directory that holds it otherwise, and the current working directory without one.
+---@param path? string
+---@return string
+function M.working_dir(path)
+  if not path then
+    return vim.fn.getcwd()
+  end
+
+  local stat = vim.uv.fs_stat(path)
+  return stat and stat.type == "directory" and path or vim.fs.dirname(path)
+end
+
 ---@param target FileOpsTarget
 function M.after_mutation(target)
   if target.context == "minifiles" then

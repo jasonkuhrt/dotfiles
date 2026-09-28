@@ -10,18 +10,7 @@ end
 
 function M.run()
   local t = target.resolve()
-
-  local base_dir
-  if t.context == "minifiles" then
-    local stat = vim.uv.fs_stat(t.path)
-    base_dir = stat and stat.type == "directory" and t.path or t.dir
-  elseif t.context == "buffer" then
-    base_dir = t.dir
-  else
-    base_dir = vim.fn.getcwd()
-  end
-
-  local default = base_dir .. "/"
+  local default = target.working_dir(t.path) .. "/"
 
   vim.ui.input({ prompt = "New: ", default = default, completion = "file" }, function(input)
     if not input or input == "" then

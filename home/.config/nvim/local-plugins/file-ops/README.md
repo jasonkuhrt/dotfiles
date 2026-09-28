@@ -38,14 +38,14 @@ Each operation resolves its target from where it runs:
 | `File copy github link-line` | Copy a GitHub blob URL on a branch, anchored to the cursor line |
 | `File copy github permalink` | Copy a GitHub blob URL pinned to the `HEAD` commit |
 | `File copy github permalink-line` | Copy a GitHub blob URL pinned to `HEAD`, anchored to the cursor line |
-| `File copy to` | Copy to a new path, or into an existing directory |
+| `File copy to` | Copy to a new path, or into a directory |
 | `File delete` | Move to the trash, after confirmation |
-| `File rename` | Rename in place (the prompt holds the name without its extension) |
-| `File move` | Move to a new path (the prompt holds the current path) |
+| `File rename` | Rename in place (the prompt holds the whole name, extension included) |
+| `File move` | Move to a new path, or into a directory (the prompt holds the current path) |
 | `File duplicate` | Copy beside the original with a `_copy` suffix |
 | `File new` | Create a file, or a directory when the path ends in `/` |
-| `File reveal` | Open the containing directory with the system handler (Finder on macOS) |
-| `File terminal` | Open a terminal in the containing directory |
+| `File reveal` | Open a directory, or a file's containing directory, with the system handler (Finder on macOS) |
+| `File terminal` | Open a terminal in a directory, or in a file's containing directory |
 
 `:File` without arguments opens a `vim.ui.select` picker of the top-level commands; picking a group such as `copy` opens a picker of its members.
 
@@ -89,14 +89,14 @@ What each command acts on, and what follows it, per context:
 | `copy github permalink-line` | `git rev-parse HEAD` + `vim.fn.setreg` | refuse | file | refuse |
 | `copy to` | `Snacks.picker.util.copy_path()` | entry, then synchronize | file | refuse |
 | `delete` | `trash(path)` | entry, then synchronize | file, then `Snacks.bufdelete()` | refuse |
-| `rename` | `Snacks.rename.rename_file()` | entry, then synchronize | file; Snacks swaps the buffer | refuse |
-| `move` | `Snacks.rename.rename_file()` | entry, then synchronize | file; Snacks swaps the buffer | refuse |
+| `rename` | `:update` + `Snacks.rename.rename_file()` | entry, then synchronize | file; Snacks swaps the buffer | refuse |
+| `move` | `:update` + `Snacks.rename.rename_file()` | entry, then synchronize | file; Snacks swaps the buffer | refuse |
 | `duplicate` | `Snacks.picker.util.copy_path()` | entry, then synchronize | file, then open the copy | refuse |
 | `new` | `vim.fn.mkdir` + `io.open():close()` | synchronize | open the file | open the file |
-| `reveal` | `vim.ui.open(dir)` | containing directory | containing directory | cwd |
-| `terminal` | `Snacks.terminal(nil, { cwd = dir })` | containing directory | containing directory | cwd |
+| `reveal` | `vim.ui.open(dir)` | working directory | working directory | cwd |
+| `terminal` | `Snacks.terminal(nil, { cwd = dir })` | working directory | working directory | cwd |
 
-"synchronize" is `target.after_mutation()`, which runs only once the mutation has happened.
+"synchronize" is `target.after_mutation()`, which runs only once the mutation has happened. "working directory" is `target.working_dir()`: a directory itself, or the directory that holds a file.
 
 ## Architecture
 
@@ -110,6 +110,8 @@ What each command acts on, and what follows it, per context:
 ```
 
 Because resolution happens at execution time, a picker that runs `:File` must return focus to the original window first. cmdux closes its picker and runs the command in `vim.schedule`, so `vim.bo.filetype` and the buffer name reflect the window the user started from.
+
+`target.working_dir(path)` is the directory a command works in: `path` itself when it is a directory, the directory that holds it otherwise, and the current working directory without a target. `new` starts its prompt there, `reveal` opens it, `terminal` starts in it and `git.lua` runs git in it. `dir` stays the containing directory in every case, which is what `copy dir` copies.
 
 ### After a mutation
 
@@ -129,10 +131,16 @@ mini.files does not watch the file system, and file-ops mutates through Snacks a
 
 `destination.lua` holds the rules for where a command may write:
 
-- `is_taken(from, to)`: something already exists at `to` other than `from` itself, so a rename that only changes letter case works on a case-insensitive file system. Rename and move refuse a taken destination.
-- `is_inside(path, directory)`: `path` lies below `directory`, compared by inode. Copy refuses to copy a directory into itself.
+- `resolve(from, to)`: where copying or moving `from` to `to` puts it, as with `cp` and `mv`. When `to` is an existing directory other than `from` itself, or does not exist and ends in `/`, that is inside `to` under `from`'s name; otherwise it is `to`. Copy and move share this rule.
+- `is_same(a, b)`: `a` and `b` name the same existing file, compared by inode, so a symlinked or letter-case spelling counts.
+- `is_taken(from, to)`: something already exists at `to` other than `from` itself, so a rename or move that only changes letter case works on a case-insensitive file system. Rename and move refuse a taken destination.
+- `is_inside(path, directory)`: `path` lies below `directory`, compared by inode. Copy and move refuse to put a directory inside itself.
 
 Copy and duplicate refuse any destination that exists, including the source itself.
+
+### Relocation
+
+Rename and move both end in `relocate.run(t, to)`. `Snacks.rename.rename_file()` replaces the file's buffer with one read from the new path, which drops unsaved changes, so `relocate` first writes, with `:update`, every ordinary file buffer that has unsaved changes to the file under any spelling of its path. Special buffers are never written, since for an `acwrite` buffer a write can accept a proposed diff or publish a review. When a write fails, or ends with the changes still unsaved, nothing moves and the error is reported. Then it calls Snacks and synchronizes mini.files.
 
 ### Git
 
@@ -161,10 +169,12 @@ end, {
 
 ### Rename and move
 
-Both use `Snacks.rename.rename_file()`, and both refuse, with an error, a destination that is taken.
+Both use `Snacks.rename.rename_file()`, and both refuse, with an error, a destination that is taken. A destination that is the source itself, such as the prompt confirmed unchanged, does nothing: `rename_file()` closes the buffer of a file renamed onto itself.
 
-- **Rename**: the prompt holds the name. For a name with an extension, the prompt leaves the extension out and appends it to what you enter.
-- **Move**: the prompt holds the path, relative to the current working directory when it lies inside it, with file completion. The input is the new path itself; an existing directory counts as taken rather than as a place to move into.
+Unsaved changes to the file are saved first, so they travel with it, including from mini.files when the file is open in another buffer. When they cannot be saved, the file stays where it is and its buffer keeps the changes.
+
+- **Rename**: the prompt holds the whole name, extension included. The input is the new name exactly as typed, so `foo.test.ts` stays `foo.test.ts` when you press Enter, and an extension can change or go.
+- **Move**: the prompt holds the path, relative to the current working directory when it lies inside it, with file completion. A destination that is an existing directory, or a path ending in `/` that does not exist yet, means "into that directory under the same name", as with `mv`; Snacks creates the new directory. It refuses when the resulting path is taken or lies inside the directory being moved.
 
 ### Delete
 
@@ -178,13 +188,17 @@ One command. Input ending in `/` creates a directory; any other input creates an
 - **File buffer**: the prompt starts at the file's directory, and the new file opens.
 - **No target**: the prompt starts at the current working directory.
 
+### Reveal and terminal
+
+Both use the directory `File new` starts in. With the cursor on a directory in mini.files, reveal opens that directory and terminal starts in it; on a file, both use the directory that holds it. Without a target, both use the current working directory.
+
 ### Duplicate
 
 Copies to the same directory with `_copy` before the extension (`foo.lua` becomes `foo_copy.lua`, the directory `bar` becomes `bar_copy`). It refuses when that name is taken, and it opens the copy only when the copy was made.
 
 ### Copy to
 
-Prompts for a destination. A destination that is an existing directory means "into that directory under the same name", as with `cp`. It refuses when the resulting path is taken or lies inside the directory being copied.
+Prompts for a destination and places the copy by the same rule as move: a destination that is an existing directory, or a path ending in `/` that does not exist yet, means "into that directory under the same name", as with `cp`; Snacks creates the new directory. It refuses when the resulting path is taken, including a directory copied onto itself, or lies inside the directory being copied.
 
 ### Copy path variants
 
@@ -204,7 +218,8 @@ file-ops reports through `vim.notify`:
 | Line-aware copy outside a file buffer | WARN | `Current buffer line copy requires a file buffer` |
 | Copy path or link cannot be built | WARN | the reason, such as `Origin remote is not a GitHub URL` |
 | Destination taken (rename, move, copy, duplicate) | ERROR | `<path> already exists` |
-| Copy of a directory into itself | ERROR | `Cannot copy <path> into itself` |
+| Copy or move of a directory into itself | ERROR | `Cannot copy <path> into itself`, `Cannot move <path> into itself` |
+| Unsaved changes cannot be saved before a rename or move | ERROR | `Could not save <path>` and the reason |
 | Trash failed | ERROR | `Could not delete <name>` and the reason |
 | New path cannot be created | ERROR | `Could not create <path>` and the reason |
 | No system handler for reveal | ERROR | the message from `vim.ui.open` |
@@ -218,8 +233,9 @@ local-plugins/file-ops/
   lua/
     file_ops/
       init.lua              -- setup: create the :File user command
-      target.lua            -- target.resolve() and target.after_mutation()
-      destination.lua       -- rules for taken and self-nested destinations
+      target.lua            -- target.resolve(), target.working_dir() and target.after_mutation()
+      destination.lua       -- where a copy or move lands, and taken and self-nested destinations
+      relocate.lua          -- save unsaved changes, then rename through Snacks, for rename and move
       git.lua               -- repository, origin and ref lookups for project paths and GitHub links
       commands/
         init.lua            -- command tree, dispatch and completion
@@ -236,11 +252,11 @@ local-plugins/file-ops/
     minimal_init.lua        -- test runtime; git reads no user config and reaches only local repositories
     fixtures.lua            -- temp directories and buffer, mini.files and empty contexts
     plenary/
-      containing_dir_spec.lua  -- reveal and terminal
       copy_path_spec.lua       -- copy path and link variants in every context, command tree
       git_spec.lua             -- URL parsing, lookups against real temp repositories, timeouts
       mutations_spec.lua       -- new, rename, move, delete, duplicate and copy
       target_spec.lua          -- target resolution and synchronization
+      working_dir_spec.lua     -- the directory new, reveal and terminal work in, per context
   README.md
 ```
 

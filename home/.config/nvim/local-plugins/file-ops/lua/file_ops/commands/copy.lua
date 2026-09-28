@@ -14,10 +14,7 @@ function M.run()
     if not input or input == "" then
       return
     end
-    local to = vim.fn.fnamemodify(input, ":p")
-    if vim.fn.isdirectory(to) == 1 then
-      to = vim.fs.joinpath(to, t.name)
-    end
+    local to = destination.resolve(t.path, input)
     if vim.uv.fs_stat(to) then
       vim.notify(to .. " already exists", vim.log.levels.ERROR)
       return

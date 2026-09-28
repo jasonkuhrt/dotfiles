@@ -1,3 +1,5 @@
+local target = require("file_ops.target")
+
 local M = {}
 
 ---@class FileOpsGitCommandResult
@@ -17,14 +19,6 @@ local TIMED_OUT = 124
 local repo_root_cache = {}
 ---@type table<string, string>
 local origin_url_cache = {}
-
----@param path string
----@return string
-local function working_directory(path)
-  local stat = vim.uv.fs_stat(path)
-  local directory = stat and stat.type == "directory" and path or vim.fs.dirname(path)
-  return vim.fs.normalize(directory)
-end
 
 ---Detached, git runs in its own process group without a terminal, so ssh cannot
 ---prompt, and a timeout kills the transport helpers git spawns along with git.
@@ -51,7 +45,7 @@ end
 ---@param path string
 ---@return string?
 function M.repo_root(path)
-  local cwd = working_directory(path)
+  local cwd = target.working_dir(path)
   if repo_root_cache[cwd] then
     return repo_root_cache[cwd]
   end

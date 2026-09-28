@@ -1,4 +1,5 @@
 local destination = require("file_ops.destination")
+local relocate = require("file_ops.relocate")
 local target = require("file_ops.target")
 
 local M = {}
@@ -15,13 +16,19 @@ function M.run()
     if not input or input == "" then
       return
     end
-    local new_path = vim.fn.fnamemodify(input, ":p")
-    if destination.is_taken(t.path, new_path) then
-      vim.notify(new_path .. " already exists", vim.log.levels.ERROR)
+    local to = destination.resolve(t.path, input)
+    if to == t.path then
       return
     end
-    Snacks.rename.rename_file({ from = t.path, to = new_path })
-    target.after_mutation(t)
+    if destination.is_taken(t.path, to) then
+      vim.notify(to .. " already exists", vim.log.levels.ERROR)
+      return
+    end
+    if destination.is_inside(to, t.path) then
+      vim.notify(("Cannot move %s into itself"):format(t.path), vim.log.levels.ERROR)
+      return
+    end
+    relocate.run(t, to)
   end)
 end
 

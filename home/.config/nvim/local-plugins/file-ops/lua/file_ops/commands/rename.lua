@@ -1,4 +1,5 @@
 local destination = require("file_ops.destination")
+local relocate = require("file_ops.relocate")
 local target = require("file_ops.target")
 
 local M = {}
@@ -10,22 +11,16 @@ function M.run()
     return
   end
 
-  local stem = vim.fn.fnamemodify(t.name, ":r")
-  local ext = vim.fn.fnamemodify(t.name, ":e")
-  local prompt_default = ext ~= "" and stem or t.name
-
-  vim.ui.input({ prompt = "Rename: ", default = prompt_default }, function(input)
-    if not input or input == "" then
+  vim.ui.input({ prompt = "Rename: ", default = t.name }, function(input)
+    if not input or input == "" or input == t.name then
       return
     end
-    local new_name = ext ~= "" and input .. "." .. ext or input
-    local new_path = t.dir .. "/" .. new_name
+    local new_path = vim.fs.joinpath(t.dir, input)
     if destination.is_taken(t.path, new_path) then
       vim.notify(new_path .. " already exists", vim.log.levels.ERROR)
       return
     end
-    Snacks.rename.rename_file({ from = t.path, to = new_path })
-    target.after_mutation(t)
+    relocate.run(t, new_path)
   end)
 end
 

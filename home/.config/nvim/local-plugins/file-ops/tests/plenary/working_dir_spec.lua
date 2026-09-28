@@ -1,13 +1,15 @@
 ---@diagnostic disable: undefined-field
 
+local match = require("luassert.match")
 local spy = require("luassert.spy")
 local stub = require("luassert.stub")
 
 local fixtures = require("fixtures")
+local new = require("file_ops.commands.new")
 local reveal = require("file_ops.commands.reveal")
 local terminal = require("file_ops.commands.terminal")
 
-describe("file_ops commands that open the containing directory", function()
+describe("file_ops commands that work in a directory", function()
   local dir
   local open_result
 
@@ -17,6 +19,7 @@ describe("file_ops commands that open the containing directory", function()
     open_result = { {}, nil }
 
     stub(vim, "notify")
+    stub(vim.ui, "input")
     stub(vim.ui, "open", function()
       return unpack(open_result, 1, 2)
     end)
@@ -25,12 +28,14 @@ describe("file_ops commands that open the containing directory", function()
 
   after_each(function()
     vim.notify:revert()
+    vim.ui.input:revert()
     vim.ui.open:revert()
     Snacks = nil
     fixtures.reset()
     vim.fn.delete(dir, "rf")
   end)
 
+  -- A directory is its own working directory, a file's is the one that holds it.
   ---@type { name: string, enter: fun(), dir: fun(): string }[]
   local contexts = {
     {
@@ -43,9 +48,27 @@ describe("file_ops commands that open the containing directory", function()
       end,
     },
     {
-      name = "mini.files",
+      name = "a directory buffer",
+      enter = function()
+        fixtures.open(dir .. "/sub")
+      end,
+      dir = function()
+        return dir .. "/sub"
+      end,
+    },
+    {
+      name = "a file in mini.files",
       enter = function()
         fixtures.enter_minifiles(dir .. "/sub/a.txt")
+      end,
+      dir = function()
+        return dir .. "/sub"
+      end,
+    },
+    {
+      name = "a directory in mini.files",
+      enter = function()
+        fixtures.enter_minifiles(dir .. "/sub")
       end,
       dir = function()
         return dir .. "/sub"
@@ -64,14 +87,22 @@ describe("file_ops commands that open the containing directory", function()
         context.enter()
       end)
 
-      it("reveals the containing directory", function()
+      it("starts a new path in the working directory", function()
+        new.run()
+
+        assert
+          .stub(vim.ui.input)
+          .was_called_with({ prompt = "New: ", default = context.dir() .. "/", completion = "file" }, match.is_function())
+      end)
+
+      it("reveals the working directory", function()
         reveal.run()
 
         assert.stub(vim.ui.open).was_called_with(context.dir())
         assert.stub(vim.notify).was_not_called()
       end)
 
-      it("opens a terminal in the containing directory", function()
+      it("opens a terminal in the working directory", function()
         terminal.run()
 
         assert.spy(Snacks.terminal).was_called_with(nil, { cwd = context.dir() })

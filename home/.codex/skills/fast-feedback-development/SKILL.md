@@ -93,7 +93,7 @@ Use one bounded review at a meaningful implementation gate. Address concrete fin
 
 ## Vite+ and Vitest repositories
 
-When the repository uses Vite+, load `$vite-plus` and use the workspace runner directly. Do not wrap it in another package manager.
+When the repository uses Vite+, read the docs its installed package ships at `node_modules/vite-plus/docs`, which match the pinned version, and use the workspace runner directly. Do not wrap it in another package manager.
 
 Prefer the repository's named feedback task when present:
 

@@ -518,7 +518,8 @@ git:
   branch:
     desc: Switch / pick branch
     zed: "q b"
-    nvim: "qb"             # via lazygit (snacks)
+    nvim: "qb"             # opens lazygit
+    vscode: "q b"          # git.checkout
 
   panel:
     desc: Toggle git panel / lazygit float
@@ -573,7 +574,8 @@ git:
   stage_all:
     desc: Stage all
     zed: "q A"
-    nvim: "qA"             # via lazygit
+    nvim: "qA"             # opens lazygit
+    vscode: "q A"          # git.stage
 
   restore:
     desc: Restore range (revert hunk)
@@ -583,22 +585,26 @@ git:
   restore_file:
     desc: Restore file
     zed: "q U"
-    nvim: "qU"             # via lazygit
+    nvim: "qU"             # opens lazygit
+    vscode: "q U"          # git.clean
 
   commit:
     desc: Commit
     zed: "q c"
-    nvim: "qc"             # via lazygit
+    nvim: "qc"             # opens lazygit
+    vscode: "q c"          # git.commit
 
   push:
     desc: Push
     zed: "q p"
-    nvim: "qp"             # via lazygit
+    nvim: "qp"             # opens lazygit
+    vscode: "q p"          # git.push
 
   push_force:
     desc: Force push
     zed: "q P"
-    nvim: "qP"             # via lazygit
+    nvim: "qP"             # opens lazygit
+    vscode: "q P"          # git.pushForce
 
   blame:
     desc: Toggle blame for current line
@@ -619,28 +625,28 @@ git:
   pr_diff_next:
     desc: Next PR diff
     zed: "-"
-    nvim: "qn"             # octo.nvim
+    nvim: "qn"             # octo: the PR's changed files; no next/prev
     vscode: "q n"          # pr.goToNextDiffInPr
 
   pr_diff_prev:
     desc: Prev PR diff
     zed: "-"
-    nvim: "qN"             # octo.nvim
+    nvim: "qN"             # octo: the PR's changed files; no next/prev
     vscode: "q N"          # pr.goToPreviousDiffInPr
 
   copy_github_link:
     desc: Copy GitHub link for current line/selection
     zed: "-"
-    nvim: "qy"             # gitlinker.nvim
+    nvim: "qy"             # Snacks.gitbrowse, URL to the + register
     vscode: "q y"          # extension.copyGitHubLinkToClipboard
 
   open_in_github:
     desc: Open current line/selection in GitHub web
     zed: "-"
-    nvim: "qY"             # gitlinker.nvim browse
+    nvim: "qY"             # Snacks.gitbrowse
     vscode: "q Y"          # extension.openInGitHub
 
-  # qf fetch, qs/qS stash/pop reachable via lazygit TUI keys (no dedicated chord)
+  # nvim: fetch and stash, like branch/commit/push above, are lazygit's own keys inside qw
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # TOGGLE / PANELS (t-prefix — unified, replaces <leader>p* and <leader>t*)

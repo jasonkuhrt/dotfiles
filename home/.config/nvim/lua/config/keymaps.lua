@@ -92,7 +92,7 @@ map({ "n", "x" }, "mm", "%", { desc = "Match bracket" })
 
 -- ──────────────────────────────────────────────────────────────────────────
 -- GIT (q-prefix) — replaces vim's macro recording on q (user does not record).
--- Backed by gitsigns + snacks.lazygit + diffview/octo/gitlinker.
+-- Backed by gitsigns + snacks (lazygit, gitbrowse) + diffview/octo.
 -- ──────────────────────────────────────────────────────────────────────────
 local function gitsigns_action(action, arg)
   return function()
@@ -116,7 +116,9 @@ end
 map("n", "qj", gitsigns_action("nav_hunk", "next"), { desc = "Next git hunk" })
 map("n", "qk", gitsigns_action("nav_hunk", "prev"), { desc = "Prev git hunk" })
 
--- Lazygit float (handles branch/commit/push/stash/fetch interactively)
+-- Lazygit float. The q prefix is shared with Zed and VS Code, where these keys act
+-- directly; here they open lazygit, where the action is one key away. They stay
+-- mapped because an unmapped q<char> starts recording a macro.
 map("n", "qw", snacks_lazygit(), { desc = "Git panel (lazygit)" })
 map("n", "qb", snacks_lazygit(), { desc = "Branch picker (via lazygit)" })
 map("n", "qc", snacks_lazygit(), { desc = "Commit (via lazygit)" })
@@ -142,14 +144,26 @@ map("x", "qu", gitsigns_selection_action("reset_hunk"), { desc = "Restore select
 -- Blame
 map("n", "qB", gitsigns_action("toggle_current_line_blame"), { desc = "Toggle line blame" })
 
--- PR review (octo)
+-- PR review (octo). Octo has no next/previous diff command, so both keys open the
+-- PR's changed files.
 map("n", "qr", "<cmd>Octo pr list<cr>", { desc = "Open PR list" })
-map("n", "qn", "<cmd>Octo pr changes next<cr>", { desc = "Next PR diff" })
-map("n", "qN", "<cmd>Octo pr changes prev<cr>", { desc = "Prev PR diff" })
+map("n", "qn", "<cmd>Octo pr changes<cr>", { desc = "PR changed files" })
+map("n", "qN", "<cmd>Octo pr changes<cr>", { desc = "PR changed files" })
 
--- GitHub links (gitlinker)
-map({ "n", "x" }, "qy", "<cmd>GitLink<cr>", { desc = "Copy GitHub link" })
-map({ "n", "x" }, "qY", "<cmd>GitLink!<cr>", { desc = "Open in GitHub web" })
+-- GitHub links (Snacks.gitbrowse): the current line or selected line range, on the
+-- current branch by name, so an unpushed branch 404s. A commit hash under the cursor
+-- links that commit instead.
+map({ "n", "x" }, "qy", function()
+  Snacks.gitbrowse({
+    open = function(url)
+      vim.fn.setreg("+", url)
+    end,
+    notify = false,
+  })
+end, { desc = "Copy GitHub link" })
+map({ "n", "x" }, "qY", function()
+  Snacks.gitbrowse()
+end, { desc = "Open in GitHub web" })
 
 -- ──────────────────────────────────────────────────────────────────────────
 -- TOGGLE / PANELS (t-prefix) — replaces <leader>p* and <leader>t*.

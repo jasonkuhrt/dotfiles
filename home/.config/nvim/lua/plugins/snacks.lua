@@ -131,5 +131,18 @@ return {
       project.merge_snacks_picker_opts(opts)
       return opts
     end,
+    keys = function(_, keys)
+      if vim.g.vscode then
+        return keys
+      end
+      table.insert(keys, {
+        "<leader>z",
+        function()
+          Snacks.zen()
+        end,
+        desc = "Zen Mode",
+      })
+      return keys
+    end,
   },
 }

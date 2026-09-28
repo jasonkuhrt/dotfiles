@@ -1,6 +1,6 @@
 # Local Lua Plugin Development Guide
 
-This guide defines the development policy for local Lua plugins under [`home/.config/nvim/local-plugins`](/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.config/nvim/local-plugins).
+This guide defines the development policy for local Lua plugins under `home/.config/nvim/local-plugins`.
 
 It exists to keep plugin architecture consistent across:
 
@@ -147,11 +147,14 @@ Preferred shape:
 - `kit.strings`
 - `kit.fs`
 - `kit.cache`
+- `kit.modules`
 - `kit.validate`
 - `kit.test`
 - `kit.nvim.commands`
 - `kit.nvim.async`
 - `kit.nvim.ui`
+
+`kit.validate`, `kit.test`, `kit.nvim.async` and `kit.nvim.ui` do not exist yet.
 
 Rule:
 
@@ -164,6 +167,7 @@ Current shared modules:
 - `kit.collections`
 - `kit.fs`
 - `kit.cache`
+- `kit.modules`
 - `kit.nvim.commands`
 
 ## Promotion rule

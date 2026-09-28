@@ -1,11 +1,24 @@
 -- Autocmds are automatically loaded on the VeryLazy event
 -- Default autocmds: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
 
--- Auto-save on focus lost
+-- Auto-save on focus lost.
+-- Ordinary file buffers only: claudecode.nvim and octo.nvim use acwrite buffers,
+-- where a write accepts the proposed diff or publishes to GitHub.
 vim.api.nvim_create_autocmd("FocusLost", {
   group = vim.api.nvim_create_augroup("autosave_focus", { clear = true }),
   callback = function()
-    vim.cmd("silent! wall")
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      local bo = vim.bo[buf]
+      local name = vim.api.nvim_buf_get_name(buf)
+      if vim.api.nvim_buf_is_loaded(buf) and bo.buftype == "" and bo.modified and not bo.readonly and name ~= "" then
+        local ok, err = pcall(vim.api.nvim_buf_call, buf, function()
+          vim.cmd("silent update")
+        end)
+        if not ok then
+          vim.notify(("Autosave failed for %s\n%s"):format(name, err), vim.log.levels.ERROR)
+        end
+      end
+    end
   end,
 })
 

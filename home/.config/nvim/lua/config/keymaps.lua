@@ -11,8 +11,9 @@ local function cmdline_backspace_or_noop()
 end
 
 -- Escape
+-- Cmdline uses <C-c>: a mapped <Esc> there executes the line instead of cancelling it.
 map("i", "kj", "<Esc>", { desc = "Escape" })
-map("c", "kj", "<Esc>", { desc = "Escape" })
+map("c", "kj", "<C-c>", { desc = "Escape" })
 
 -- Redo
 map("n", "U", "<C-r>", { desc = "Redo" })

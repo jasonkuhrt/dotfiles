@@ -63,8 +63,8 @@ local function open_in_cmux(abs_path)
       "right",
       "--command",
       viewer.shell,
-    }, { text = true })
-    :wait()
+    }, { stdout = false, stderr = false })
+    :wait(2000)
 
   return create.code == 0
 end
@@ -80,7 +80,8 @@ local function open_in_nvim_terminal(abs_path)
   vim.cmd("botright vsplit")
   vim.cmd("enew")
 
-  local job_id = vim.fn.termopen(viewer.argv, {
+  local job_id = vim.fn.jobstart(viewer.argv, {
+    term = true,
     cwd = vim.fn.fnamemodify(abs_path, ":h"),
   })
 
@@ -136,9 +137,7 @@ function M.setup()
       end
 
       vim.schedule(function()
-        if vim.api.nvim_buf_is_valid(args.buf) then
-          vim.api.nvim_buf_delete(args.buf, { force = true })
-        end
+        Snacks.bufdelete({ buf = args.buf, force = true, wipe = true })
       end)
     end,
   })

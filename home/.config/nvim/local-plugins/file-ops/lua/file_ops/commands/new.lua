@@ -27,10 +27,13 @@ function M.run()
     if vim.endswith(path, "/") then
       vim.fn.mkdir(path, "p")
     else
-      local parent = vim.fs.dirname(path)
-      vim.fn.mkdir(parent, "p")
-      local f = io.open(path, "w")
-      if f then
+      if not vim.uv.fs_stat(path) then
+        vim.fn.mkdir(vim.fs.dirname(path), "p")
+        local f, err = io.open(path, "w")
+        if not f then
+          vim.notify(("Could not create %s\n%s"):format(path, err), vim.log.levels.ERROR)
+          return
+        end
         f:close()
       end
       if t.context ~= "minifiles" then

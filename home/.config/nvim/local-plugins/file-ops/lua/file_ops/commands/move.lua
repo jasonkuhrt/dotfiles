@@ -1,3 +1,4 @@
+local destination = require("file_ops.destination")
 local target = require("file_ops.target")
 
 local M = {}
@@ -15,6 +16,10 @@ function M.run()
       return
     end
     local new_path = vim.fn.fnamemodify(input, ":p")
+    if destination.is_taken(t.path, new_path) then
+      vim.notify(new_path .. " already exists", vim.log.levels.ERROR)
+      return
+    end
     Snacks.rename.rename_file({ from = t.path, to = new_path })
     target.after_mutation(t)
   end)

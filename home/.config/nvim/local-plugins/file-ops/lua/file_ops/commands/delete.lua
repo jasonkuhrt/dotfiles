@@ -13,7 +13,11 @@ function M.run()
     if choice ~= "Yes" then
       return
     end
-    require("snacks.explorer.actions").trash(t.path)
+    local ok, err = require("snacks.explorer.actions").trash(t.path)
+    if not ok then
+      vim.notify(("Could not delete %s\n%s"):format(t.name, err), vim.log.levels.ERROR)
+      return
+    end
     if t.context == "buffer" then
       Snacks.bufdelete({ file = t.path, force = true })
     end

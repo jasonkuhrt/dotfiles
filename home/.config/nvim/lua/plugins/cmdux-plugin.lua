@@ -7,8 +7,7 @@
 ---@class CmduxLazyPluginSpec
 ---@field name string
 ---@field dir string
----@field lazy boolean
----@field priority integer
+---@field event string
 ---@field config fun()
 
 ---@type CmduxLazyPluginSpec[]
@@ -16,8 +15,7 @@ return {
   {
     name = "cmdux",
     dir = vim.fn.expand("~/projects/jasonkuhrt/cmdux"),
-    lazy = false,
-    priority = 1000,
+    event = "VeryLazy",
     config = function()
       require("cmdux").setup()
     end,

@@ -4,8 +4,10 @@ local M = {}
 
 function M.run()
   local t = target.resolve()
-  local dir = t.dir or vim.fn.getcwd()
-  vim.ui.open(dir)
+  local _, err = vim.ui.open(t.dir or vim.fn.getcwd())
+  if err then
+    vim.notify(err, vim.log.levels.ERROR)
+  end
 end
 
 return M

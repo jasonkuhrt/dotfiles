@@ -45,7 +45,8 @@ end
 ---@param resolver fun(target: FileOpsTarget): string?, string?
 ---@param opts? { buffer_only?: boolean }
 local function copy_resolved(label, resolver, opts)
-  local t = opts and opts.buffer_only and resolve_buffer_target() or resolve_target()
+  local resolve = opts and opts.buffer_only and resolve_buffer_target or resolve_target
+  local t = resolve()
   if not t then
     return
   end

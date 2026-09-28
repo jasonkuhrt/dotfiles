@@ -1,3 +1,4 @@
+local destination = require("file_ops.destination")
 local target = require("file_ops.target")
 
 local M = {}
@@ -14,8 +15,22 @@ function M.run()
       return
     end
     local to = vim.fn.fnamemodify(input, ":p")
+    if vim.fn.isdirectory(to) == 1 then
+      to = vim.fs.joinpath(to, t.name)
+    end
+    if vim.uv.fs_stat(to) then
+      vim.notify(to .. " already exists", vim.log.levels.ERROR)
+      return
+    end
+    if destination.is_inside(to, t.path) then
+      vim.notify(("Cannot copy %s into itself"):format(t.path), vim.log.levels.ERROR)
+      return
+    end
     Snacks.picker.util.copy_path(t.path, to)
-    target.after_mutation(t)
+    -- Snacks reports a refused copy itself and returns nothing either way.
+    if vim.uv.fs_stat(to) then
+      target.after_mutation(t)
+    end
   end)
 end
 

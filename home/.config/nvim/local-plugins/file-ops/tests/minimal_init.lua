@@ -10,6 +10,7 @@ vim.opt.runtimepath:prepend(penlight_root)
 vim.opt.runtimepath:prepend(kit_root)
 vim.opt.runtimepath:prepend(plugin_root)
 package.path = table.concat({
+  tests_dir .. "/?.lua",
   penlight_root .. "/lua/?.lua",
   penlight_root .. "/lua/?/init.lua",
   package.path,
@@ -18,3 +19,8 @@ package.cpath = table.concat({
   penlight_rocks_root .. "/lib/lua/5.1/?.so",
   package.cpath,
 }, ";")
+
+-- Git run by the specs reads no user or system config and can reach only local repositories.
+vim.env.GIT_CONFIG_GLOBAL = "/dev/null"
+vim.env.GIT_CONFIG_NOSYSTEM = "1"
+vim.env.GIT_ALLOW_PROTOCOL = "file:ext"

@@ -3,26 +3,20 @@ local M = {}
 ---@class FileOpsGitCommandResult
 ---@field code integer
 ---@field stdout string
----@field stderr string
 
 ---@class FileOpsGitHubUrlOptions
 ---@field line? integer
 ---@field permalink? boolean
 
----@type table<string, string|false>
+local TIMEOUT_MS = 3000
+local TIMED_OUT = 124
+
+-- A repository's root and origin do not change during a session, so they are
+-- cached once found. HEAD, branches and remote refs do, so they are read each time.
+---@type table<string, string>
 local repo_root_cache = {}
----@type table<string, string|false>
+---@type table<string, string>
 local origin_url_cache = {}
----@type table<string, string|false>
-local github_base_url_cache = {}
----@type table<string, string|false>
-local branch_cache = {}
----@type table<string, string|false>
-local head_commit_cache = {}
----@type table<string, string|false>
-local default_branch_cache = {}
----@type table<string, boolean>
-local branch_exists_cache = {}
 
 ---@param path string
 ---@return string
@@ -32,31 +26,38 @@ local function working_directory(path)
   return vim.fs.normalize(directory)
 end
 
+---Detached, git runs in its own process group without a terminal, so ssh cannot
+---prompt, and a timeout kills the transport helpers git spawns along with git.
+---Those helpers inherit stderr, so it is not piped: an open pipe would keep the
+---wait from returning at the time limit.
 ---@param args string[]
 ---@param cwd string
 ---@return FileOpsGitCommandResult
 local function run_git(args, cwd)
-  local command = vim.list_extend({ "git", "-C", cwd }, args)
-  local result = vim.system(command, { text = true }):wait()
-  return {
-    code = result.code,
-    stdout = vim.trim(result.stdout or ""),
-    stderr = vim.trim(result.stderr or ""),
-  }
+  local process = vim.system(vim.list_extend({ "git", "-C", cwd }, args), {
+    detach = true,
+    env = { GIT_TERMINAL_PROMPT = "0" },
+    stderr = false,
+    text = true,
+  })
+  local result = process:wait(TIMEOUT_MS)
+  if not result or result.code == TIMED_OUT then
+    vim.uv.kill(-process.pid, "sigkill")
+    return { code = TIMED_OUT, stdout = "" }
+  end
+  return { code = result.code, stdout = vim.trim(result.stdout or "") }
 end
 
 ---@param path string
 ---@return string?
 function M.repo_root(path)
   local cwd = working_directory(path)
-  local cached = repo_root_cache[cwd]
-  if cached ~= nil then
-    return cached ~= false and cached or nil
+  if repo_root_cache[cwd] then
+    return repo_root_cache[cwd]
   end
 
   local result = run_git({ "rev-parse", "--show-toplevel" }, cwd)
   if result.code ~= 0 or result.stdout == "" then
-    repo_root_cache[cwd] = false
     return nil
   end
 
@@ -81,18 +82,21 @@ function M.relative_to_repo_root(path)
   return rel, root
 end
 
+---Maps a remote URL on a GitHub host to the repository's https URL, without
+---credentials or an ssh port.
 ---@param remote string
 ---@return string?
-local function parse_github_base_url(remote)
+function M.parse_github_base_url(remote)
   local cleaned = remote:gsub("/+$", ""):gsub("%.git$", "")
   local host, repo = cleaned:match("^git@([^:]+):(.+)$")
 
   if not host then
-    host, repo = cleaned:match("^ssh://git@([^/]+)/(.+)$")
+    host, repo = cleaned:match("^ssh://git@([^/:]+):?%d*/(.+)$")
   end
 
   if not host then
     host, repo = cleaned:match("^https?://([^/]+)/(.+)$")
+    host = host and host:gsub("^[^@]*@", "")
   end
 
   if not host or not repo then
@@ -114,14 +118,12 @@ function M.origin_url(path)
     return nil
   end
 
-  local cached = origin_url_cache[root]
-  if cached ~= nil then
-    return cached ~= false and cached or nil
+  if origin_url_cache[root] then
+    return origin_url_cache[root]
   end
 
   local result = run_git({ "remote", "get-url", "origin" }, root)
   if result.code ~= 0 or result.stdout == "" then
-    origin_url_cache[root] = false
     return nil
   end
 
@@ -132,20 +134,8 @@ end
 ---@param path string
 ---@return string?
 function M.github_base_url(path)
-  local root = M.repo_root(path)
-  if not root then
-    return nil
-  end
-
-  local cached = github_base_url_cache[root]
-  if cached ~= nil then
-    return cached ~= false and cached or nil
-  end
-
   local remote = M.origin_url(path)
-  local base_url = remote and parse_github_base_url(remote) or nil
-  github_base_url_cache[root] = base_url or false
-  return base_url
+  return remote and M.parse_github_base_url(remote) or nil
 end
 
 ---@param path string
@@ -156,18 +146,11 @@ function M.current_branch(path)
     return nil
   end
 
-  local cached = branch_cache[root]
-  if cached ~= nil then
-    return cached ~= false and cached or nil
-  end
-
   local result = run_git({ "symbolic-ref", "--quiet", "--short", "HEAD" }, root)
   if result.code ~= 0 or result.stdout == "" or result.stdout == "HEAD" then
-    branch_cache[root] = false
     return nil
   end
 
-  branch_cache[root] = result.stdout
   return result.stdout
 end
 
@@ -179,18 +162,11 @@ function M.head_commit(path)
     return nil
   end
 
-  local cached = head_commit_cache[root]
-  if cached ~= nil then
-    return cached ~= false and cached or nil
-  end
-
   local result = run_git({ "rev-parse", "HEAD" }, root)
   if result.code ~= 0 or result.stdout == "" then
-    head_commit_cache[root] = false
     return nil
   end
 
-  head_commit_cache[root] = result.stdout
   return result.stdout
 end
 
@@ -202,23 +178,15 @@ function M.default_branch(path)
     return nil
   end
 
-  local cached = default_branch_cache[root]
-  if cached ~= nil then
-    return cached ~= false and cached or nil
-  end
-
   local local_head = run_git({ "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD" }, root)
   if local_head.code == 0 and local_head.stdout ~= "" then
-    local branch = local_head.stdout:gsub("^origin/", "")
-    default_branch_cache[root] = branch
-    return branch
+    return (local_head.stdout:gsub("^origin/", ""))
   end
 
   local remote_head = run_git({ "ls-remote", "--symref", "origin", "HEAD" }, root)
   if remote_head.code == 0 and remote_head.stdout ~= "" then
     local branch = remote_head.stdout:match("ref:%s+refs/heads/([^\t\n]+)")
     if branch and branch ~= "" then
-      default_branch_cache[root] = branch
       return branch
     end
   end
@@ -226,12 +194,10 @@ function M.default_branch(path)
   for _, candidate in ipairs({ "main", "master" }) do
     local exists = run_git({ "show-ref", "--verify", "--quiet", "refs/remotes/origin/" .. candidate }, root)
     if exists.code == 0 then
-      default_branch_cache[root] = candidate
       return candidate
     end
   end
 
-  default_branch_cache[root] = false
   return nil
 end
 
@@ -244,27 +210,17 @@ function M.branch_exists_on_origin(path, branch)
     return false
   end
 
-  local cache_key = ("%s::%s"):format(root, branch)
-  local cached = branch_exists_cache[cache_key]
-  if cached ~= nil then
-    return cached
-  end
-
   local remote_result = run_git({ "ls-remote", "--exit-code", "--heads", "origin", branch }, root)
   if remote_result.code == 0 then
-    branch_exists_cache[cache_key] = true
     return true
   end
 
   if remote_result.code == 2 then
-    branch_exists_cache[cache_key] = false
     return false
   end
 
   local local_result = run_git({ "show-ref", "--verify", "--quiet", "refs/remotes/origin/" .. branch }, root)
-  local exists = local_result.code == 0
-  branch_exists_cache[cache_key] = exists
-  return exists
+  return local_result.code == 0
 end
 
 ---@param path string

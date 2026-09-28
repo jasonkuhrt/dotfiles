@@ -2,6 +2,12 @@ local target = require("file_ops.target")
 
 local M = {}
 
+---@param path string
+---@param err string?
+local function could_not_create(path, err)
+  vim.notify(("Could not create %s\n%s"):format(path, err), vim.log.levels.ERROR)
+end
+
 function M.run()
   local t = target.resolve()
 
@@ -23,15 +29,19 @@ function M.run()
     end
 
     local path = vim.fn.fnamemodify(input, ":p")
+    local is_directory = vim.endswith(path, "/")
 
-    if vim.endswith(path, "/") then
-      vim.fn.mkdir(path, "p")
-    else
+    local made, mkdir_err = pcall(vim.fn.mkdir, is_directory and path or vim.fs.dirname(path), "p")
+    if not made then
+      could_not_create(path, mkdir_err)
+      return
+    end
+
+    if not is_directory then
       if not vim.uv.fs_stat(path) then
-        vim.fn.mkdir(vim.fs.dirname(path), "p")
-        local f, err = io.open(path, "w")
+        local f, open_err = io.open(path, "w")
         if not f then
-          vim.notify(("Could not create %s\n%s"):format(path, err), vim.log.levels.ERROR)
+          could_not_create(path, open_err)
           return
         end
         f:close()

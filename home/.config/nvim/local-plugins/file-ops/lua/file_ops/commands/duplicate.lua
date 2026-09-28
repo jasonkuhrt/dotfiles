@@ -13,8 +13,16 @@ function M.run()
   local ext = vim.fn.fnamemodify(t.name, ":e")
   local copy_name = ext ~= "" and (stem .. "_copy." .. ext) or (t.name .. "_copy")
   local copy_path = t.dir .. "/" .. copy_name
+  if vim.uv.fs_stat(copy_path) then
+    vim.notify(copy_path .. " already exists", vim.log.levels.ERROR)
+    return
+  end
 
   Snacks.picker.util.copy_path(t.path, copy_path)
+  -- Snacks reports a refused copy itself and returns nothing either way.
+  if not vim.uv.fs_stat(copy_path) then
+    return
+  end
 
   if t.context == "buffer" then
     vim.cmd({ cmd = "edit", args = { copy_path } })

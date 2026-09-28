@@ -1,87 +1,74 @@
 ---@diagnostic disable: undefined-field
 
+local fixtures = require("fixtures")
 local target = require("file_ops.target")
 
-describe("resolve_target", function()
-  it("returns minifiles context when filetype is minifiles", function()
-    -- Mock minifiles environment
-    local original_ft = vim.bo.filetype
-    vim.bo.filetype = "minifiles"
+describe("target.resolve", function()
+  local dir
 
-    MiniFiles = {
-      get_fs_entry = function()
-        return { path = "/tmp/test.lua", name = "test.lua" }
-      end,
-      synchronize = function() end,
-    }
-
-    local t = target.resolve()
-    assert.are.equal("minifiles", t.context)
-    assert.are.equal("/tmp/test.lua", t.path)
-    assert.are.equal("test.lua", t.name)
-    assert.are.equal("/tmp", t.dir)
-
-    vim.bo.filetype = original_ft
-    MiniFiles = nil
+  before_each(function()
+    dir = fixtures.temp_dir()
   end)
 
-  it("returns buffer context when buffer has a real file", function()
-    local tmpfile = vim.fn.tempname()
-    local f = io.open(tmpfile, "w")
-    if f then
-      f:write("test")
-      f:close()
-    end
+  after_each(function()
+    fixtures.reset()
+    vim.fn.delete(dir, "rf")
+  end)
 
-    local buf = vim.api.nvim_create_buf(false, false)
-    vim.api.nvim_buf_set_name(buf, tmpfile)
-    vim.api.nvim_set_current_buf(buf)
+  it("returns the entry under the cursor in mini.files", function()
+    fixtures.enter_minifiles(dir .. "/test.lua")
+
+    assert.are.same({
+      path = dir .. "/test.lua",
+      dir = dir,
+      name = "test.lua",
+      context = "minifiles",
+    }, target.resolve())
+  end)
+
+  it("returns the file of a buffer that has one", function()
+    fixtures.write(dir .. "/test.lua", "test")
+    fixtures.open(dir .. "/test.lua")
 
     local t = target.resolve()
+
     assert.are.equal("buffer", t.context)
-    assert.are.equal(vim.uv.fs_realpath(tmpfile), vim.uv.fs_realpath(t.path))
-
-    vim.api.nvim_buf_delete(buf, { force = true })
-    os.remove(tmpfile)
+    assert.are.equal(dir .. "/test.lua", vim.uv.fs_realpath(t.path))
+    assert.are.equal(dir, vim.uv.fs_realpath(t.dir))
+    assert.are.equal("test.lua", t.name)
   end)
 
-  it("returns none context when no file", function()
-    local buf = vim.api.nvim_create_buf(false, false)
-    vim.api.nvim_set_current_buf(buf)
+  it("returns no target for a buffer whose file does not exist", function()
+    fixtures.open(dir .. "/unsaved.lua")
 
-    local t = target.resolve()
-    assert.are.equal("none", t.context)
+    assert.are.same({ context = "none" }, target.resolve())
+  end)
 
-    vim.api.nvim_buf_delete(buf, { force = true })
+  it("returns no target for a buffer without a file", function()
+    fixtures.enter_scratch()
+
+    assert.are.same({ context = "none" }, target.resolve())
   end)
 end)
 
-describe("after_mutation", function()
-  it("calls synchronize for minifiles context", function()
-    local synced = false
-    MiniFiles = {
-      synchronize = function()
-        synced = true
-      end,
-    }
-
-    target.after_mutation({ context = "minifiles" })
-    assert.is_true(synced)
-
-    MiniFiles = nil
+describe("target.after_mutation", function()
+  after_each(function()
+    fixtures.reset()
   end)
 
-  it("does not call synchronize for buffer context", function()
-    local synced = false
-    MiniFiles = {
-      synchronize = function()
-        synced = true
-      end,
-    }
+  it("synchronizes mini.files after a mutation made from it", function()
+    fixtures.enter_minifiles("/tmp/test.lua")
+
+    target.after_mutation({ context = "minifiles" })
+
+    assert.spy(MiniFiles.synchronize).was_called(1)
+  end)
+
+  it("leaves mini.files alone after a mutation made from a buffer", function()
+    fixtures.enter_minifiles("/tmp/test.lua")
 
     target.after_mutation({ context = "buffer" })
-    assert.is_false(synced)
 
-    MiniFiles = nil
+    assert.spy(MiniFiles.synchronize).was_not_called()
   end)
 end)

@@ -45,10 +45,6 @@ local function in_cmux()
   return vim.env.CMUX_WORKSPACE_ID ~= nil and vim.env.CMUX_WORKSPACE_ID ~= "" and vim.fn.executable("cmux") == 1
 end
 
----@class CmuxCreatePanePayload
----@field surface_ref? string|integer
----@field surface_id? string|integer
-
 ---@param abs_path string
 ---@return boolean
 local function open_in_cmux(abs_path)
@@ -60,41 +56,17 @@ local function open_in_cmux(abs_path)
   local create = vim
     .system({
       "cmux",
-      "--json",
       "new-pane",
       "--type",
       "terminal",
       "--direction",
       "right",
+      "--command",
+      viewer.shell,
     }, { text = true })
     :wait()
 
-  if create.code ~= 0 then
-    return false
-  end
-
-  local ok, payload = pcall(vim.json.decode, create.stdout or "")
-  if not ok or type(payload) ~= "table" then
-    return false
-  end
-
-  ---@cast payload CmuxCreatePanePayload
-  local surface = payload.surface_ref or payload.surface_id
-  if surface == nil or surface == vim.NIL or surface == "" then
-    return false
-  end
-
-  local send = vim
-    .system({
-      "cmux",
-      "send",
-      "--surface",
-      surface,
-      viewer.shell .. "\n",
-    }, { text = true })
-    :wait()
-
-  return send.code == 0
+  return create.code == 0
 end
 
 ---@param abs_path string

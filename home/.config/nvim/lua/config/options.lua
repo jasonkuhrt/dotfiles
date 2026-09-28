@@ -4,8 +4,14 @@
 -- Local leader (must be set before lazy.nvim)
 vim.g.maplocalleader = ","
 
--- Clipboard: use system clipboard
-vim.opt.clipboard = "unnamedplus"
+-- Deprecation warnings: LazyVim hides them; show them so API breakage surfaces before a Neovim upgrade
+vim.g.deprecation_warnings = true
+
+-- Providers: disable the unused remote-plugin hosts (their packages are not installed)
+vim.g.loaded_python3_provider = 0
+vim.g.loaded_node_provider = 0
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_ruby_provider = 0
 
 -- UI
 vim.opt.scrolloff = 3

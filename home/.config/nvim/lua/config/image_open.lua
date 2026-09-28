@@ -17,7 +17,6 @@ local image_patterns = {
   "*.webp",
   "*.avif",
   "*.bmp",
-  "*.svg",
 }
 
 ---@param abs_path string

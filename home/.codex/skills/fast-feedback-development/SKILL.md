@@ -56,14 +56,7 @@ Treat runtime and type behavior as separate channels unless the repository has p
 - A selected test containing no type assertions can still pay full package-program compilation if the typecheck pool is enabled.
 - Re-enable or run the repository's authoritative static gate after a type-affecting batch and in terminal assurance. Never substitute a narrowed test-runner typecheck for that gate unless repository policy explicitly defines it as authoritative.
 
-For a repository where the slow defaults repeatedly cause misuse, prefer a named `feedback:*` task surface over teaching every agent a collection of disabling flags:
-
-- `feedback:test`: runtime tests only; require an explicit project and exact file, optionally narrowed further by case or group, and fail closed when either required selector is omitted;
-- `feedback:test:watch`: the same runtime-only selection in a persistent process;
-- `feedback:lint`: non-type-aware rules over explicit file paths and fail closed when omitted;
-- `feedback:check`: formatting plus non-type-aware lint over explicit file paths.
-
-The `feedback:` prefix means “inner-loop signal, not an assurance gate.” Keep these tasks out of CI and terminal verification. Standard test, type, lint, check, build, and E2E tasks retain their full semantics.
+The inner loop is the runner's own command over explicit selectors, never a task of its own: an exact project and file for tests, optionally narrowed by case or group, and explicit file paths for non-type-aware lint and formatting. It is a signal, not an assurance gate. Standard test, type, lint, check, build, and E2E tasks retain their full semantics.
 
 ## Track invalidation
 
@@ -95,19 +88,13 @@ Use one bounded review at a meaningful implementation gate. Address concrete fin
 
 When the repository uses Vite+, read the docs its installed package ships at `node_modules/vite-plus/docs`, which match the pinned version, and use the workspace runner directly. Do not wrap it in another package manager.
 
-Prefer the repository's named feedback task when present:
+Target one file and case with the runner directly:
 
 ```sh
-vpr feedback:test --project '<project>' '<package-relative-test-file>' -t '<anchored case or suite regexp>'
+vp test watch --project '<project>' '<package-relative-test-file>' -t '<anchored case or suite regexp>'
 ```
 
-Otherwise use the equivalent runner command directly:
-
-```sh
-vp test watch --project '<project>' '<package-relative-test-file>' -t '<anchored case or suite regexp>' --typecheck.enabled=false
-```
-
-Use `vp test run` with the same selectors for a one-shot checkpoint. Omit `--typecheck.enabled=false` only when the typecheck pool is the active oracle or repository policy requires the combined run.
+Use `vp test run` with the same selectors for a one-shot checkpoint. Where the repository enables the test runner's typecheck pool, add `--typecheck.enabled=false`, unless that pool is the active oracle or repository policy requires the combined run.
 
 Before accepting a performance configuration or dependency upgrade:
 

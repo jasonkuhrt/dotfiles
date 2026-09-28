@@ -45,11 +45,6 @@ set --export EDITOR nvim
 set --export XDG_CONFIG_HOME ~/.config
 set --export RIPGREP_CONFIG_PATH ~/.config/ripgrep/config
 
-# Claude Code: double skill description budget from 15k→30k chars
-# Prevents skills silently disappearing when you have many installed
-# Docs: https://code.claude.com/docs/en/skills#claude-doesnt-see-all-my-skills
-set --export SLASH_COMMAND_TOOL_CHAR_BUDGET 30000
-
 # fzf: use fd for file listing (respects .gitignore, purpose-built for file enumeration)
 set --export FZF_DEFAULT_COMMAND 'fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
 

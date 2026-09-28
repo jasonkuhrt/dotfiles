@@ -35,9 +35,12 @@ cmux's fish integration loads only when cmux starts the shell itself. The Ghostt
 this machine sets no `command` in `ghostty/config`. Agent session restore depends
 on that integration.
 
-Prompts start in insert mode (`fish_vi_key_bindings insert`). cmux restores an
-agent session by typing `cmux restore <agent> <id>` into the new shell, and a
-normal-mode prompt eats the leading characters — see manaflow-ai/cmux#12772.
+Prompts start in insert mode (`fish_vi_key_bindings insert`). cmux types into the
+new shell in two cases, and a normal-mode prompt eats the leading characters of
+both: restoring an agent session with `cmux restore <agent> <id>`
+(manaflow-ai/cmux#12772), and running a `--command` on `new-workspace`,
+`new-pane`, `new-split` or `new-surface` (manaflow-ai/cmux#1900, reproduced on
+0.64.25). Insert mode stays until both are fixed upstream.
 
 ## Navigation
 

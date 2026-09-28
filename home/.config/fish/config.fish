@@ -234,9 +234,9 @@ end # interactive-only block
 if status is-interactive
 
 # Vi mode with hybrid insert (Ctrl+A/E still work in insert mode).
-# Prompts start in insert mode: cmux's agent auto-resume restores a session by
-# typing `cmux restore <agent> <id>` into the new shell, and a normal-mode prompt
-# eats the leading characters. Escape still reaches normal mode.
+# Prompts start in insert mode: cmux types into the new shell, both to resume an
+# agent session (`cmux restore <agent> <id>`) and to run a `--command`, and a
+# normal-mode prompt eats the leading characters. Escape still reaches normal mode.
 #
 # All binds live in fish_user_key_bindings: fish calls it once, after installing
 # the key bindings. Calling fish_vi_key_bindings at config scope sets

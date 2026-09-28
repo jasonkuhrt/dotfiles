@@ -130,8 +130,9 @@ so it can be dropped when upstream fills it.
 **Trade-offs (the gaps that remain):**
 - cmux has no pane-resize shortcut, and splits open right or down only.
 - Teammates no longer each get a cmux sidebar workspace.
-- cmux resumes an agent by typing into the new shell, so prompts must start in insert mode
-  ([cmux#12772](https://github.com/manaflow-ai/cmux/issues/12772)).
+- cmux resumes an agent, and runs a `--command`, by typing into the new shell, so prompts must start
+  in insert mode ([cmux#12772](https://github.com/manaflow-ai/cmux/issues/12772),
+  [cmux#1900](https://github.com/manaflow-ai/cmux/issues/1900)).
 
 **History:**
 - 2026-09-16 — cutover executed. Ten agent sessions were migrated into native tabs, then a cmux restart

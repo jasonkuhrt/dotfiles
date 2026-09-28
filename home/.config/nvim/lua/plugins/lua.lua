@@ -45,14 +45,6 @@ return {
 
   {
     "mason-org/mason.nvim",
-    opts = function(_, opts)
-      opts.ensure_installed = opts.ensure_installed or {}
-
-      for _, tool in ipairs({ "lua-language-server", "selene", "stylua" }) do
-        if not vim.tbl_contains(opts.ensure_installed, tool) then
-          table.insert(opts.ensure_installed, tool)
-        end
-      end
-    end,
+    opts = { ensure_installed = { "selene" } },
   },
 }

@@ -86,7 +86,6 @@ local snacks_opts = {
         hidden = true,
         exclude = picker_exclude,
         layout = {
-          preset = "sidebar",
           preview = "main",
         },
         matcher = {

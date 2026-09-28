@@ -8,19 +8,10 @@ return {
   -- Additional treesitter parsers
   {
     "nvim-treesitter/nvim-treesitter",
-    opts = function(_, opts)
-      vim.list_extend(opts.ensure_installed, {
-        "fish",
-        "dockerfile",
-        "graphql",
-        "css",
-        "html",
-      })
-    end,
+    opts = { ensure_installed = { "graphql", "css" } },
   },
 
   -- Disable markdownlint globally (too noisy for casual markdown / Claude Code prompts).
-  -- Re-enable per-project via .nvim/config.json if needed.
   {
     "mfussenegger/nvim-lint",
     opts = {
@@ -47,18 +38,5 @@ return {
         url = vim.uri_from_fname(vim.fn.expand("~/.config/nvim/schemas/project-config.schema.json")),
       })
     end,
-  },
-
-  -- Mason: ensure useful tools are installed
-  {
-    "mason-org/mason.nvim",
-    opts = {
-      ensure_installed = {
-        "stylua",
-        "shellcheck",
-        "shfmt",
-        "deno",
-      },
-    },
   },
 }

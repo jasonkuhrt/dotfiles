@@ -1,5 +1,5 @@
 -- Helix-style m-prefix for surround operations (Decision #2.c).
--- Replaces vim's mark-set defaults on letters s/d/f/F/h/r/n.
+-- Replaces vim's mark-set defaults on letters s/d/f/F/h/r.
 -- mini.surround is whitelisted in LazyVim's vscode extras, so these chords
 -- work in both terminal nvim AND VS Code (operate on text via nvim's mechanism).
 
@@ -13,7 +13,9 @@ return {
       find_left = "mF",
       highlight = "mh",
       replace = "mr",
-      update_n_lines = "mn",
+      -- mini.surround no longer maps this, but LazyVim's extra still turns it
+      -- into a lazy-load key (default `gsn`); "" suppresses that dead key.
+      update_n_lines = "",
     },
   },
 }

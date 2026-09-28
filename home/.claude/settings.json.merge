@@ -1,8 +1,6 @@
 {
   "cleanupPeriodDays": 999999,
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  },
+  "tui": "fullscreen",
   "permissions": {
     "allow": [
       "Bash",
@@ -29,40 +27,8 @@
   "model": "claude-fable-5-1[1m]",
   "enableAllProjectMcpServers": true,
   "skillOverrides": {
-    "agents-sdk": "off",
-    "brief": "off",
-    "caveman": "off",
-    "cli": "off",
-    "cloudflare-email-service": "off",
-    "debugging-hooks": "off",
-    "defog": "off",
-    "dev-browser": "off",
-    "durable-objects": "off",
-    "goplaces": "off",
-    "keychain-totp": "off",
-    "monkey-patch-discipline": "off",
-    "nvim-workflows": "off",
-    "own-it": "off",
-    "planetscale": "off",
-    "plannotator": "off",
-    "plannotator-annotate": "off",
-    "plannotator-last": "off",
-    "plannotator-review": "off",
-    "plugin-management": "off",
-    "react-19-and-compiler": "off",
-    "refactor-review-loop": "off",
-    "sandbox-sdk": "off",
-    "skills": "off",
-    "skills-change": "off",
-    "skills-doctor": "off",
-    "tech-ops-investigation": "off",
-    "turnstile-spin": "off",
-    "visual-oracle-ratchet": "off",
-    "vitest-browser-visual-oracle-ratchet": "off",
-    "web-perf": "off",
-    "workers-best-practices": "off",
-    "wrangler": "off",
-    "writing-vite-plugins": "off"
+    "code-review": "off",
+    "simplify": "off"
   },
   "statusLine": {
     "type": "command",
@@ -105,8 +71,6 @@
     }
   },
   "feedbackDrafts": "off",
-  "syntaxHighlightingDisabled": false,
-  "alwaysThinkingEnabled": true,
   "effortLevel": "xhigh",
   "modelSettings": {
     "claude-fable-5": {
@@ -116,10 +80,8 @@
       "effortLevel": "xhigh"
     }
   },
-  "autoUpdatesChannel": "latest",
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
-  "preferredNotifChannel": "ghostty",
   "switchModelsOnFlag": false,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,

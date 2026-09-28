@@ -45,28 +45,10 @@ set --export EDITOR nvim
 set --export XDG_CONFIG_HOME ~/.config
 set --export RIPGREP_CONFIG_PATH ~/.config/ripgrep/config
 
-# Claude Code: max response length. The harness reserves 13k + this value as the
-# output buffer, so raising it trades context window for longer single responses.
-# Source: https://x.com/bcherny/status/2012670336362492296
-set --export CLAUDE_CODE_MAX_OUTPUT_TOKENS 50000
-
 # Claude Code: double skill description budget from 15k→30k chars
 # Prevents skills silently disappearing when you have many installed
 # Docs: https://code.claude.com/docs/en/skills#claude-doesnt-see-all-my-skills
 set --export SLASH_COMMAND_TOOL_CHAR_BUDGET 30000
-
-# Claude Code: agent teams (experimental; `claude --agent-teams` enables them for one run).
-# Every session gets one implicit team: spawn teammates with the Agent tool's `name` and
-# message them with SendMessage. With `teammateMode` auto they fall back to running
-# in-process when no tmux or iTerm2 pane backend is available, which is the case in cmux.
-# Docs: https://code.claude.com/docs/en/agent-teams
-set --export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS 1
-
-# Claude Code: flicker-free alt-screen rendering with virtualized scrollback
-# Added in v2.1.89
-set --export CLAUDE_CODE_NO_FLICKER 1
-
-# Plannotator: open in cmux browser instead of OS default
 
 # fzf: use fd for file listing (respects .gitignore, purpose-built for file enumeration)
 set --export FZF_DEFAULT_COMMAND 'fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'

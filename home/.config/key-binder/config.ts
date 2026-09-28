@@ -436,10 +436,13 @@ $.neovim.bind({ mode: 'normal', key: NeovimKeyExpression(',<space>'), command: V
 $.neovim.bind({ mode: 'normal', key: NeovimKeyExpression(',R'), command: VsCodeCommandId('workbench.action.reloadWindow'), description: Description('Reload window') })
 $.neovim.bind({ mode: 'normal', key: NeovimKeyExpression(',r'), command: VsCodeCommandId('typescript.restartTsServer'), description: Description('Restart TS server') })
 
-// ── Bimodal branches from keymaps.lua (vim.g.vscode = true side only) ───
+// ── VS Code side of keys whose terminal side lives in keymaps.lua ───────
 $.neovim.bind({ mode: 'normal', key: NeovimKeyExpression('gh'), command: VsCodeCommandId('editor.action.showHover'), description: Description('Hover docs') })
 $.neovim.bind({ mode: 'normal', key: NeovimKeyExpression('<leader>k'), command: VsCodeCommandId('workbench.action.quickOpen'), description: Description('Find files') })
 $.neovim.bind({ mode: 'normal', key: NeovimKeyExpression(';'), command: VsCodeCommandId('workbench.action.showCommands'), description: Description('Command palette') })
+// jason.renameTight strips the `import { foo as bar }` aliases that tsserver
+// inserts despite typescript.preferences.useAliasesForRenames=false, which only
+// partly mitigates it. See TypeScript issue #29026.
 $.neovim.bind({ mode: 'normal', key: NeovimKeyExpression('r'), command: VsCodeCommandId('jason.renameTight'), description: Description('Rename symbol (alias-stripping)') })
 
 // ════════════════════════════════════════════════════════════════════════

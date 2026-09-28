@@ -10,6 +10,11 @@ local function cmdline_backspace_or_noop()
   return "<BS>"
 end
 
+-- Pristine: nothing typed yet, i.e. empty or only the range Visual-mode `:` prefills.
+local function ex_cmdline_pristine()
+  return vim.fn.getcmdtype() == ":" and vim.tbl_contains({ "", "'<,'>" }, vim.fn.getcmdline())
+end
+
 -- Escape
 -- Cmdline uses <C-c>: a mapped <Esc> there executes the line instead of cancelling it.
 map("i", "kj", "<Esc>", { desc = "Escape" })
@@ -19,49 +24,38 @@ map("c", "kj", "<C-c>", { desc = "Escape" })
 map("n", "U", "<C-r>", { desc = "Redo" })
 
 -- Scrolling (half-page, centered)
-map({ "n", "v" }, "J", "<C-d>zz", { desc = "Half-page down" })
-map({ "n", "v" }, "K", "<C-u>zz", { desc = "Half-page up" })
+map({ "n", "x" }, "J", "<C-d>zz", { desc = "Half-page down" })
+map({ "n", "x" }, "K", "<C-u>zz", { desc = "Half-page up" })
 
 -- Displaced defaults for J/K
 map("n", "gJ", "J", { desc = "Join lines" })
 map("n", "gh", function()
-  if vim.g.vscode then
-    require("vscode").action("editor.action.showHover")
-  else
-    vim.lsp.buf.hover()
-  end
+  vim.lsp.buf.hover()
 end, { desc = "Hover docs" })
 
--- Search centering
-map("n", "n", "nzz", { desc = "Next match (centered)" })
-map("n", "N", "Nzz", { desc = "Prev match (centered)" })
+-- Search centering (keeps LazyVim's fold opening and direction-stable n/N)
+map("n", "n", "'Nn'[v:searchforward].'zvzz'", { expr = true, desc = "Next match (centered)" })
+map("n", "N", "'nN'[v:searchforward].'zvzz'", { expr = true, desc = "Prev match (centered)" })
 map("n", "G", "Gzz", { desc = "Go to bottom (centered)" })
 
 -- Find files
 map("n", "<leader>k", function()
-  if vim.g.vscode then
-    require("vscode").action("workbench.action.quickOpen")
-  else
-    LazyVim.pick("files")()
-  end
+  LazyVim.pick("files")()
 end, { desc = "Find Files (Root Dir)" })
 
 -- Start/end of line
-map({ "n", "v" }, "H", "^", { desc = "Start of line" })
-map({ "n", "v" }, "L", "$", { desc = "End of line" })
+map({ "n", "x" }, "H", "^", { desc = "Start of line" })
+map({ "n", "x" }, "L", "$", { desc = "End of line" })
 
 -- Command palette / command line
 -- Aligned with Zed convention: ; opens command palette, : opens vim ex cmdline.
 -- Terminal nvim: ; → cmdux picker, : → vim ex cmdline (default). Cycle preserved
---   via cmdline-mode mappings below: from cmdline `;` escalates to palette, `:` exits.
--- VS Code: ; → VS Code's command palette. : is disabled (ex cmdline unreachable
---   by design — anything ex would do should be a VS Code extension instead).
+--   via cmdline-mode mappings below: while a `:` cmdline is pristine, `;` escalates
+--   to palette and `:` exits. Otherwise both keys type themselves.
+-- VS Code: ; → VS Code's command palette (key-binder). : is disabled (ex cmdline
+--   unreachable by design — anything ex would do should be a VS Code extension instead).
 map("n", ";", function()
-  if vim.g.vscode then
-    require("vscode").action("workbench.action.showCommands")
-  else
-    require("cmdux").open_picker()
-  end
+  require("cmdux").open_picker()
 end, { desc = "Command palette" })
 
 if vim.g.vscode then
@@ -69,9 +63,11 @@ if vim.g.vscode then
 else
   -- Cmdline-mode mappings only meaningful in terminal nvim
   map("c", ";", function()
-    require("cmdux").handoff_from_cmdline()
-  end, { desc = "Escalate to command palette" })
-  map("c", ":", "<C-c>", { desc = "Back to normal" })
+    return ex_cmdline_pristine() and [[<Cmd>lua require("cmdux").handoff_from_cmdline()<CR>]] or ";"
+  end, { expr = true, desc = "Escalate to command palette" })
+  map("c", ":", function()
+    return ex_cmdline_pristine() and "<C-c>" or ":"
+  end, { expr = true, desc = "Back to normal" })
   map("c", "<BS>", cmdline_backspace_or_noop, { expr = true, desc = "Keep empty cmdline open" })
   map("c", "<C-h>", cmdline_backspace_or_noop, { expr = true, desc = "Keep empty cmdline open" })
 end
@@ -84,15 +80,7 @@ map("n", "!", ":!", { desc = "External command" })
 -- Replace-char still reachable as cl<char>.
 -- ──────────────────────────────────────────────────────────────────────────
 map("n", "r", function()
-  if vim.g.vscode then
-    -- jason.renameTight strips import { foo as bar } aliases that tsserver
-    -- inserts despite typescript.preferences.useAliasesForRenames=false.
-    -- See TS issue #29026; setting is a partial mitigation. Provided by
-    -- the local jasonkuhrt.utils VS Code extension.
-    require("vscode").action("jason.renameTight")
-  else
-    vim.lsp.buf.rename()
-  end
+  vim.lsp.buf.rename()
 end, { desc = "Rename symbol" })
 
 -- ──────────────────────────────────────────────────────────────────────────
@@ -100,15 +88,21 @@ end, { desc = "Rename symbol" })
 -- mi<obj>/ma<obj> chord menus rely on vim's built-in i/a text objects;
 -- mini.surround handles ms/md/mr/mf/mF/mh/mn (configured separately).
 -- ──────────────────────────────────────────────────────────────────────────
-map({ "n", "v" }, "mm", "%", { desc = "Match bracket" })
+map({ "n", "x" }, "mm", "%", { desc = "Match bracket" })
 
 -- ──────────────────────────────────────────────────────────────────────────
 -- GIT (q-prefix) — replaces vim's macro recording on q (user does not record).
 -- Backed by gitsigns + snacks.lazygit + diffview/octo/gitlinker.
 -- ──────────────────────────────────────────────────────────────────────────
-local function gitsigns_action(action)
+local function gitsigns_action(action, arg)
   return function()
-    require("gitsigns")[action]()
+    require("gitsigns")[action](arg)
+  end
+end
+
+local function gitsigns_selection_action(action)
+  return function()
+    require("gitsigns")[action]({ vim.fn.line("."), vim.fn.line("v") })
   end
 end
 
@@ -119,8 +113,8 @@ local function snacks_lazygit()
 end
 
 -- Hunk navigation
-map("n", "qj", gitsigns_action("next_hunk"), { desc = "Next git hunk" })
-map("n", "qk", gitsigns_action("prev_hunk"), { desc = "Prev git hunk" })
+map("n", "qj", gitsigns_action("nav_hunk", "next"), { desc = "Next git hunk" })
+map("n", "qk", gitsigns_action("nav_hunk", "prev"), { desc = "Prev git hunk" })
 
 -- Lazygit float (handles branch/commit/push/stash/fetch interactively)
 map("n", "qw", snacks_lazygit(), { desc = "Git panel (lazygit)" })
@@ -140,8 +134,10 @@ map("n", "qo", gitsigns_action("preview_hunk_inline"), { desc = "Inline hunk pre
 map("n", "qO", gitsigns_action("toggle_signs"), { desc = "Toggle git signs" })
 
 -- Stage / restore (range)
-map({ "n", "v" }, "qa", gitsigns_action("stage_hunk"), { desc = "Stage hunk" })
-map({ "n", "v" }, "qu", gitsigns_action("reset_hunk"), { desc = "Restore hunk" })
+map("n", "qa", gitsigns_action("stage_hunk"), { desc = "Stage hunk" })
+map("n", "qu", gitsigns_action("reset_hunk"), { desc = "Restore hunk" })
+map("x", "qa", gitsigns_selection_action("stage_hunk"), { desc = "Stage selected lines" })
+map("x", "qu", gitsigns_selection_action("reset_hunk"), { desc = "Restore selected lines" })
 
 -- Blame
 map("n", "qB", gitsigns_action("toggle_current_line_blame"), { desc = "Toggle line blame" })
@@ -152,12 +148,13 @@ map("n", "qn", "<cmd>Octo pr changes next<cr>", { desc = "Next PR diff" })
 map("n", "qN", "<cmd>Octo pr changes prev<cr>", { desc = "Prev PR diff" })
 
 -- GitHub links (gitlinker)
-map({ "n", "v" }, "qy", "<cmd>GitLink<cr>", { desc = "Copy GitHub link" })
-map({ "n", "v" }, "qY", "<cmd>GitLink!<cr>", { desc = "Open in GitHub web" })
+map({ "n", "x" }, "qy", "<cmd>GitLink<cr>", { desc = "Copy GitHub link" })
+map({ "n", "x" }, "qY", "<cmd>GitLink!<cr>", { desc = "Open in GitHub web" })
 
 -- ──────────────────────────────────────────────────────────────────────────
 -- TOGGLE / PANELS (t-prefix) — replaces <leader>p* and <leader>t*.
--- Cost: lose t<char> find-till motion (user uses flash.nvim instead).
+-- Cost: normal-mode t<char> (flash) is shadowed for the chars bound below;
+-- dt<char>, ct<char> and visual t<char> are unaffected.
 -- ──────────────────────────────────────────────────────────────────────────
 map("n", "te", function()
   Snacks.explorer()
@@ -173,12 +170,12 @@ map("n", "to", "<cmd>AerialToggle<cr>", { desc = "Toggle outline" })
 map("n", "td", "<cmd>Trouble diagnostics toggle<cr>", { desc = "Toggle diagnostics" })
 
 map("n", "th", function()
-  vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+  vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = 0 }), { bufnr = 0 })
 end, { desc = "Toggle inlay hints" })
 
 map("n", "tc", function()
-  vim.lsp.codelens.refresh()
-end, { desc = "Refresh code lens" })
+  vim.lsp.codelens.enable(not vim.lsp.codelens.is_enabled({ bufnr = 0 }), { bufnr = 0 })
+end, { desc = "Toggle code lens" })
 
 map("n", "tw", function()
   vim.o.wrap = not vim.o.wrap
@@ -186,21 +183,20 @@ end, { desc = "Toggle word wrap" })
 
 map("n", "tb", gitsigns_action("toggle_current_line_blame"), { desc = "Toggle line blame" })
 
-map("n", "tP", "<cmd>TroubleClose<cr><cmd>AerialClose<cr>", { desc = "Close panels" })
+map("n", "tP", "<cmd>Trouble close<cr><cmd>AerialClose<cr>", { desc = "Close panels" })
 
 -- Terminal mode: escape and navigation
 map("t", "kj", [[<C-\><C-n>]], { desc = "Exit terminal mode" })
-map("t", "<C-h>", [[<C-\><C-n><C-h>]], { desc = "Move to left split/pane" })
-map("t", "<C-j>", [[<C-\><C-n><C-j>]], { desc = "Move to below split/pane" })
-map("t", "<C-k>", [[<C-\><C-n><C-k>]], { desc = "Move to above split/pane" })
-map("t", "<C-l>", [[<C-\><C-n><C-l>]], { desc = "Move to right split/pane" })
+map("t", "<C-h>", "<Cmd>wincmd h<CR>", { desc = "Move to left split/pane" })
+map("t", "<C-j>", "<Cmd>wincmd j<CR>", { desc = "Move to below split/pane" })
+map("t", "<C-k>", "<Cmd>wincmd k<CR>", { desc = "Move to above split/pane" })
+map("t", "<C-l>", "<Cmd>wincmd l<CR>", { desc = "Move to right split/pane" })
 
 -- ──────────────────────────────────────────────────────────────────────────
 -- VS Code-mode chord overrides
 -- ──────────────────────────────────────────────────────────────────────────
 -- KeyBinder-emitted (generated from ~/.config/key-binder/config.ts via
--- `key-binder sync`). Replaces the previous hand-authored
--- ~/.config/nvim/lua/config/vscode_keymaps.lua, which is now obsolete.
+-- `key-binder sync`). Loaded last, so it overrides any same-mode map above.
 -- See https://github.com/jasonkuhrt/key-binder
 if vim.g.vscode then
   require("key-binder.keymaps")

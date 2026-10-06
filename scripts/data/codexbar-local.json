@@ -8,7 +8,7 @@
       "id": "claude",
       "source": "auto",
       "cookieSource": "auto",
-      "claudeSwapExecutablePath": "~/.local/bin/cswap"
+      "claudeSwapExecutablePath": "~/.local/bin/cswap-meter"
     }
   ],
   "preferences": {

@@ -1,8 +1,14 @@
 function claude-account --description 'Claude Code as account N: own login in ~/.claude-N, setup and history shared with ~/.claude'
     set -l n $argv[1]
-    if not string match -qr '^[2-9]$' -- $n
-        echo 'usage: claude-account <2-9> [claude args...]' >&2
+    if not string match -qr '^[1-9]$' -- $n
+        echo 'usage: claude-account <1-9> [claude args...]' >&2
         return 2
+    end
+
+    # Account 2 is the default login, the one plain `claude` uses in ~/.claude.
+    if test $n = 2
+        env -u CLAUDE_CONFIG_DIR claude $argv[2..]
+        return
     end
 
     set -l base $HOME/.claude

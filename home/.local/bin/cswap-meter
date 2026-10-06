@@ -1,0 +1,17 @@
+#!/bin/sh
+# CodexBar's claude-swap source, read-only.
+#
+# Claude Code accounts each have their own login directory (see the
+# claude-account fish function), so nothing may swap the default login any
+# more. CodexBar still needs claude-swap to list every account's usage, and its
+# account cards offer a switch. This passes the two read commands through and
+# refuses the rest in claude-swap's own error format.
+
+case "$*" in
+  '--list --json' | '--version')
+    exec "$HOME/.local/bin/cswap" "$@"
+    ;;
+esac
+
+printf '%s\n' '{"schemaVersion": 1, "error": {"type": "SwitchError", "message": "Account switching is turned off. Start the account you want with claude1, claude2 or claude3."}}'
+exit 1

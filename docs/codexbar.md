@@ -8,7 +8,9 @@ Setup merges only those fields into the app's private `~/.config/codexbar/config
 
 The live config, account directories, Claude swap backups, and app preferences plist stay outside Git. CodexBar may write secrets into its config, including secrets received through optional encrypted iCloud sync. The local settings file in this repo contains no credentials and is not symlinked over the live config.
 
-On another Mac, sign into the same Apple ID and enable CodexBar's iCloud sync. Authenticate Codex, both Claude subscriptions through claude-swap, and Grok locally. iCloud does not copy the external CLI credential stores or install those CLIs. Launch at Login is configured in CodexBar on each Mac. This setup leaves the current iCloud sync and secret-sync choices unchanged.
+Claude Code accounts each sign in to their own directory through `claude1`, `claude2` and `claude3` (the `claude-account` fish function), so claude-swap no longer switches the login. CodexBar can list several Claude accounts only through claude-swap, so it stays as the usage source behind `~/.local/bin/cswap-meter`, which passes the list and version commands through and refuses a switch. The claude-swap aliases carry the launcher names so the cards read `claude1` to `claude3`. claude-swap keeps its own saved login per account for this; when one expires, that card shows "Re-login required" while the launchers keep working.
+
+On another Mac, sign into the same Apple ID and enable CodexBar's iCloud sync. Authenticate Codex, each Claude account with `claudeN auth login`, and Grok locally. iCloud does not copy the external CLI credential stores or install those CLIs. Launch at Login is configured in CodexBar on each Mac. This setup leaves the current iCloud sync and secret-sync choices unchanged.
 
 The tokenless AI Quota Resets calendar helper is a separate local installation; this setup manages CodexBar itself.
 

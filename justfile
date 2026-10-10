@@ -29,6 +29,54 @@ macos-default-apps-check:
 codexbar-setup:
     DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/22-codexbar.sh
 
+# Link HomeClaw's bundled HomeKit CLI into ~/.local/bin.
+homeclaw-setup:
+    DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/23-homeclaw.sh
+
+# Recover HomeKit access after macOS recorded a refusal: clear the decision and
+# relaunch in the foreground, the only place the permission prompt is shown.
+homeclaw-permission-reset:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    osascript -e 'tell application "HomeClaw" to quit' >/dev/null 2>&1 || true
+    for _ in $(seq 1 50); do
+        pgrep -x HomeClaw >/dev/null || break
+        sleep 0.2
+    done
+    if pgrep -x HomeClaw >/dev/null; then
+        printf 'HomeClaw is still running; quit it and run this again.\n' >&2
+        exit 1
+    fi
+    tccutil reset Willow com.shahine.homeclaw
+    open -a HomeClaw
+    printf 'Allow HomeKit access in the prompt, then check: homeclaw-cli status\n'
+
+# Install the pinned Matter controller from scripts/data/matter-server-version.txt.
+matter-server-setup:
+    DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/24-matter-server.sh
+
+# Build the bookmarks Chrome extension and install its native messaging host.
+# Chrome loads the printed extension directory once through chrome://extensions.
+bookmarks-chrome-setup:
+    bookmarks chrome install
+
+# Prepare the buildless Tab Presets extension at a stable path for Load unpacked.
+tab-presets-setup:
+    cd tools/tab-presets && bun run setup
+
+# Prepare a changed version; the installed extension refreshes when next opened.
+tab-presets-update:
+    cd tools/tab-presets && bun run update
+
+tab-presets-deps:
+    cd tools/tab-presets && bun install --ignore-scripts
+
+tab-presets-check:
+    cd tools/tab-presets && bun run check
+
+tab-presets-icons:
+    cd tools/tab-presets && bun run icons
+
 lua-check: lua-lint lua-lsp-check lua-fmt-check
 
 lua-lint:
@@ -1007,3 +1055,26 @@ browser-probe-native-click selector:
 
 browser-probe-native-type text:
     bun {{ browser-probe }} native-type "{{ text }}"
+
+# Install the user-level TypeSafe command and restore its maintained skill sections.
+typesafe-install:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{ justfile_directory() }}/tools/typesafe"
+    vp install --frozen-lockfile --ignore-scripts
+    typesafe_source="{{ justfile_directory() }}/home/.local/bin/typesafe"
+    typesafe_target="$HOME/.local/bin/typesafe"
+    mkdir -p "$HOME/.local/bin"
+    if [ ! -e "$typesafe_target" ] && [ ! -L "$typesafe_target" ]; then
+        ln -s "$typesafe_source" "$typesafe_target"
+    elif [ ! "$typesafe_target" -ef "$typesafe_source" ]; then
+        printf 'Existing typesafe command is not this installation: %s\n' "$typesafe_target" >&2
+        exit 1
+    fi
+    "$typesafe_target" install-skills
+
+typesafe-types:
+    cd tools/typesafe && vpr check:types
+
+typesafe-test:
+    cd tools/typesafe && vpr test

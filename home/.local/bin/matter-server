@@ -1,0 +1,13 @@
+#!/bin/bash
+set -euo pipefail
+
+# matter-server publishes no bin entry; this is the command it lacks.
+# scripts/setup/after/24-matter-server.sh installs the pinned package.
+entry="$HOME/.local/share/matter-server/node_modules/matter-server/dist/esm/MatterServer.js"
+
+if [ ! -f "$entry" ]; then
+    printf 'matter-server is not installed. Run: just matter-server-setup\n' >&2
+    exit 1
+fi
+
+exec node "$entry" "$@"

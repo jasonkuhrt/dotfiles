@@ -190,6 +190,8 @@ Scripts in `scripts/setup/` run during `just up` in two phases: `before/` (prere
 | `20-1password-cli.sh` | 1Password CLI |
 | `21-gh-extensions.sh` | `gh` extensions from `scripts/data/gh-extensions.txt` |
 | `22-codexbar.sh` | CodexBar machine-local settings |
+| `23-homeclaw.sh` | HomeClaw's bundled `homeclaw-cli` linked into `~/.local/bin` |
+| `24-matter-server.sh` | pinned `matter-server` Matter controller into `~/.local/share/matter-server` |
 | `99-sudo-hint.sh` | prints the `just sudo-setup` reminder when anything privileged is unapplied |
 
 ## Configuration

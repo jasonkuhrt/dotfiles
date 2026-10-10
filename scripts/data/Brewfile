@@ -212,6 +212,9 @@ mas "Unsplash Wallpapers", id: 1284863847
 # Shortcuts Extensions (for Cherri/automation workflows)
 mas "Actions", id: 1586435171          # 180+ utility actions (Sindre Sorhus)
 
+# Smart home
+mas "HomeClaw", id: 6759682551         # HomeKit CLI and MCP server; PATH link in 23-homeclaw.sh
+
 # Manual App Store installs:
 # - Toolbox Pro: https://apps.apple.com/app/id1476029992 (wrapped iOS)
 # - Logger: https://apps.apple.com/app/id1611554653 ($9.99 - paid)

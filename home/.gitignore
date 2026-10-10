@@ -10,6 +10,7 @@
 
 # Personal-life skills: this repo is public.
 .codex/skills/meos-*
+.claude/skills/meos-*
 
 # Machine state: absolute repo paths written by git maintenance.
 .config/git/local.gitconfig

@@ -81,6 +81,14 @@ tab-presets-icons:
 git-cleanup-check:
     cd "{{justfile_directory()}}/home/.codex/skills/git-cleanup" && vp exec node scripts/verify.mjs
 
+# Validate one skill's frontmatter and unfinished scaffold markers.
+skill-check skill:
+    python3 "{{justfile_directory()}}/home/.codex/skills/.system/skill-creator/scripts/quick_validate.py" "{{skill}}"
+
+# Restore a sealed skills backup; refuses to overwrite subsequent edits.
+skills-restore backup_dir:
+    python3 "{{backup_dir}}/restore.py" --apply
+
 lua-check: lua-lint lua-lsp-check lua-fmt-check
 
 lua-lint:

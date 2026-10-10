@@ -39,6 +39,7 @@ under `enabledPlugins`.
 | `peekaboo`          | stdio      | macOS screenshots and native UI automation                 | `peekaboo-mcp`                                |
 | `planetscale`       | HTTP       | PlanetScale branches, queries, insights                    | `mcp.pscale.dev`                              |
 | `linear`            | HTTP       | Linear issues and projects, supplied by the plugin         | `mcp.linear.app`                              |
+| `granola`           | HTTP       | Granola meeting notes — list, read, query, transcripts     | `mcp.granola.ai`                              |
 
 These are declared in `~/.claude.json`, which mixes config with session state and so is not
 dotfiles-managed — this table is the durable record.

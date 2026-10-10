@@ -1,6 +1,6 @@
 ---
 name: design-together
-description: Collaborate closely with Jason on consequential design and test decisions while continuing settled work. Use when he asks to design together, stay in the loop, or approve decisions as work evolves; works with or without a crew.
+description: Collaborate closely with Jason on consequential design and test decisions while continuing settled work. Use when he asks to design together, stay in the loop, or approve decisions as work evolves.
 ---
 
 # Design together
@@ -18,7 +18,7 @@ Handle incidental details yourself using established intent and conventions.
 Stay with an active design discussion until the next piece is settled enough to
 implement. Useful investigation and already-agreed work can continue quietly.
 Batch related questions when that helps; do not alternate every conversational
-turn with speculative crew dispatch. You coordinate workers; Jason does not relay
+turn with speculative worker dispatch. You coordinate workers; Jason does not relay
 their messages.
 
 Use the smallest representation that clarifies the point: a signature, short
@@ -31,6 +31,7 @@ design, return to collaboration. Preserve settled decisions and update existing
 task documents when they carry the ongoing work.
 
 When `session` manages the task, it owns the records and their transitions. Keep
-open decisions in `DESIGN.md`; move finished designs to `BATCH.md` with their
-outcome and acceptance criteria. Do not maintain a parallel design task list or
-append newly settled work to a running `EXECUTE.md` batch.
+open decisions in the item's Design stage; move finished designs to Batch through
+the session CLI with their outcome and acceptance criteria. Do not maintain a
+parallel design task list or add newly settled items to a running Execute batch
+without the user's explicit change of scope.

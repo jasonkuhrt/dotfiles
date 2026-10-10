@@ -1,6 +1,6 @@
 ---
 name: dispatch-codex-sub
-description: Dispatch an in-thread Codex subagent. Use only for "$dispatch-codex-sub", "subagent", "sub-agent", "in-thread helper", or "multi-agent subtask". Do not use for "peer agent".
+description: Dispatch an in-thread Codex subagent when explicitly requested or delegation is authorized by the active workflow. Use for "$dispatch-codex-sub", "subagent", "sub-agent", "in-thread helper", or "multi-agent subtask". Do not use for "peer agent".
 ---
 
 # Dispatch Codex Subagent
@@ -10,8 +10,8 @@ helper path, not a peer Codex thread.
 
 ## Hard Distinction
 
-Use this only when the user explicitly asks for a subagent, sub-agent, or
-`$dispatch-codex-sub`.
+Use this when the user explicitly asks for a subagent, sub-agent, or
+`$dispatch-codex-sub`, or when the active workflow authorizes delegation.
 
 Do **not** use this for:
 

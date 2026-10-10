@@ -46,6 +46,6 @@ Keep edited files syntactically parseable. Prefer inspection; use only a targete
 
 Do not delegate work.
 
-Do not commit or push unless explicitly requested. For an explicitly requested pair-edit commit, use `--no-verify`. Never push unless separately requested.
+Do not commit or push unless explicitly requested. Normal staged hooks are allowed for a requested commit; do not bypass them. If a hook requires work beyond the current edit, report the blocker. Never push unless separately requested.
 
 If progress would require leaving this mode, stop and name the deferred concern in one sentence. Do not investigate it.

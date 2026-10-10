@@ -1,0 +1,19 @@
+{
+  "name": "@jasonkuhrt/typesafe-workflows",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typesafe": "bun src/cli.ts",
+    "check:types": "tsc --noEmit",
+    "test": "vp test run"
+  },
+  "dependencies": {
+    "@effect/platform-bun": "4.0.0-rc.117",
+    "effect": "4.0.0-rc.117"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.2",
+    "typescript": "7.1.0-dev.20260909.1",
+    "vite-plus": "1.0.0-rc.0"
+  }
+}

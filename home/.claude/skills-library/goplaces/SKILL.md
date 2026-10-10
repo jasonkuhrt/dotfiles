@@ -115,9 +115,16 @@ recalculates the route and live conditions when opened.
 - Use `~/.local/bin/goplaces resolve "<location>" --json` before routing when an endpoint is ambiguous.
 - Use `search`, `nearby`, or `details` for current place research.
 - Keep result limits small and request only the operation needed.
-
 ## Failure handling
 
 - Missing Keychain credential: report that Google Maps setup is incomplete; never fall back to scraping Google Maps.
 - API or quota error: report the provider error without exposing credentials.
 - Browser maps remain the final-day surface for interactive navigation and live incident inspection.
+
+## TypeSafe judgments
+
+After `goplaces` resolves a small candidate set, use `typesafe rank` for
+qualitative relevance. Supply stable candidate and dimension IDs, complete
+candidate evidence in `text`, and ordered levels for every dimension. Consume
+the returned per-dimension scores; exact identity, routes, distance, duration,
+traffic, hours, and final ordering remain on `goplaces`.

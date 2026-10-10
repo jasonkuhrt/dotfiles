@@ -133,3 +133,11 @@ These are mistakes that had to be corrected during real investigation sessions:
 8. **"Open Questions" sections for resolved questions.** If you answered it during the investigation, it's not open — fold it into the narrative.
 9. **Recommending monitoring/post-deploy steps as their own items.** These are noise unless there's a specific metric to watch. If rollback is trivial, say so once and move on.
 10. **Using "probably" or "seems" for things you actually verified.** If you read the source code and confirmed the behavior, state it as fact.
+
+## TypeSafe judgments
+
+Before finalizing, use `typesafe verify` for bounded claims whose support
+depends on relating evidence. Supply stable sources and claims with `sourceId`
+and an exact quote that occurs in the source. Treat the returned relation as a
+support judgment, not provenance; versions, dates, URLs, logs, and citations
+still require direct verification.

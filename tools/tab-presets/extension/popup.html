@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tab Presets</title>
+    <link rel="stylesheet" href="popup.css">
+    <script type="module" src="popup.js"></script>
+  </head>
+  <body>
+    <header>
+      <img src="icons/icon-48.png" width="36" height="36" alt="">
+      <div><h1>Tab Presets</h1><p>Your tabs and pins, ready to reopen.</p></div>
+    </header>
+    <main>
+      <form id="save-form">
+        <label for="preset-name">Save this window</label>
+        <div class="save-row">
+          <input id="preset-name" name="name" maxlength="80" placeholder="e.g. Daily" required autocomplete="off">
+          <button class="primary" type="submit">Save</button>
+        </div>
+      </form>
+      <p id="status" role="status" aria-live="polite"></p>
+      <section aria-label="Saved presets">
+        <p id="empty" hidden>Set up your tabs and pins, then save your first preset.</p>
+        <ul id="presets"></ul>
+      </section>
+    </main>
+    <footer>Opens in a new window · Saved on this Mac</footer>
+
+    <dialog id="edit-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+      <form id="edit-form">
+        <h2 id="dialog-title"></h2>
+        <p id="dialog-description"></p>
+        <label id="rename-label" for="new-name">Preset name</label>
+        <input id="new-name" name="name" maxlength="80" autocomplete="off">
+        <p id="dialog-error" role="alert"></p>
+        <div class="dialog-actions">
+          <button type="button" commandfor="edit-dialog" command="close">Cancel</button>
+          <button id="confirm" type="submit" class="primary">Save</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>

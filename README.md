@@ -81,6 +81,16 @@ just prune                          # list symlinks the plan no longer contains
 just prune --force                  # remove them
 ```
 
+Chrome bookmark sync uses an unpacked extension backed by a native messaging host. Install or refresh both from the canonical dotfiles entrypoint:
+
+```sh
+just bookmarks-chrome-setup
+```
+
+The command prints the stable extension directory to load once from `chrome://extensions`. Re-running it rebuilds that same extension and refreshes the native-host manifest without changing its Chrome extension ID; click the extension's Reload button to activate a rebuilt worker.
+
+For reusable windows with pinned tabs, [Tab Presets](tools/tab-presets/README.md) is a separate, small Chrome extension. Run `just tab-presets-setup`, then load the printed folder once with Chrome's **Load unpacked** button. Save, open, rename, update and delete presets from its toolbar popup.
+
 `just up` is convergent and idempotent. Run it whenever you pull, edit config, or feel uncertain. It never displaces a file: a target in the way is refused, and the output names the `mv -n` (or, for a symlink at a spread directory, the `rm`) that clears it.
 
 dotctl has exactly these two commands; the recipes wrap them:

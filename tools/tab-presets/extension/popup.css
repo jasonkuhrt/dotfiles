@@ -1,0 +1,53 @@
+:root {
+  color-scheme: light dark;
+  font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --bg: light-dark(#faf9fc, #19181e);
+  --surface: light-dark(#fff, #24222b);
+  --text: light-dark(#24212e, #f2effa);
+  --muted: light-dark(#746e82, #ada6bb);
+  --line: light-dark(#e7e3ee, #3a3545);
+  --accent: light-dark(#6948c6, #b59aff);
+  --error: light-dark(#a43827, #ffab98);
+}
+* { box-sizing: border-box; }
+body { width: 364px; margin: 0; background: var(--bg); color: var(--text); }
+header { display: flex; align-items: center; gap: 11px; padding: 20px 20px 16px; }
+h1, h2, p { margin: 0; }
+h1 { font-size: 17px; letter-spacing: -.3px; font-weight: 650; }
+header p { color: var(--muted); font-size: 12px; margin-top: 2px; }
+main { padding: 0 20px; }
+label { display: block; font-weight: 600; font-size: 12px; margin-bottom: 7px; }
+.save-row { display: flex; gap: 8px; }
+input, button { font: inherit; }
+input { min-width: 0; width: 100%; padding: 9px 10px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+input::placeholder { color: var(--muted); }
+button { cursor: pointer; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); padding: 8px 12px; font-weight: 550; white-space: nowrap; }
+button:hover { background: light-dark(#f1edf9, #393144); }
+button.primary { background: var(--accent); border-color: transparent; color: light-dark(#fff, #211333); }
+button.primary:hover { filter: brightness(1.08); }
+button:disabled { opacity: .5; cursor: wait; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+#status { margin-top: 12px; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+#status:empty { display: none; }
+#status[data-error="true"], #dialog-error { color: var(--error); }
+#presets { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 10px; max-height: 330px; overflow-y: auto; }
+.preset { padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 11px; }
+.preset-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.preset-info { min-width: 0; }
+.preset h2 { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.preset p { color: var(--muted); font-size: 12px; margin-top: 3px; }
+.actions { display: flex; gap: 14px; margin-top: 11px; }
+.actions button { padding: 0; font-size: 11px; border: 0; border-radius: 2px; background: none; color: var(--muted); }
+.actions button:hover { color: var(--accent); }
+.actions button:last-child:hover { color: var(--error); }
+#empty { color: var(--muted); text-align: center; padding: 27px 20px 10px; }
+footer { color: var(--muted); font-size: 11px; text-align: center; padding: 17px 20px; }
+dialog { width: 320px; padding: 20px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface); color: var(--text); box-shadow: 0 12px 40px #0003; }
+dialog::backdrop { background: #12102070; }
+dialog h2 { font-size: 16px; margin-bottom: 9px; }
+dialog p { color: var(--muted); margin-bottom: 14px; overflow-wrap: anywhere; }
+#dialog-error:empty { display: none; }
+#dialog-error { margin-top: 10px; font-size: 12px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+button.danger { background: var(--error); color: light-dark(#fff, #2b1611); }
+[hidden] { display: none !important; }

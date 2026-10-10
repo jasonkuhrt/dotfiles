@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Tab Presets",
+  "version": "1.0.1",
+  "description": "Save a window's tabs and pins. Open it again whenever you like.",
+  "minimum_chrome_version": "135",
+  "incognito": "not_allowed",
+  "permissions": [
+    "tabs",
+    "storage"
+  ],
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAozXxEYlLUbknsb/ibnPeC9+ULNEkdUAY9w+M4l4NJIVnhoFi2Ylli+s72IqzeixoRt4Ag1uSeQLJhgAKRA307e+HC3hq52Lcz5SLtNmYX5JjW10OZQaLM0poZKw/SnHWdVzKPbVOarZSy0MhTr/UlFF5FEGlfT2FTjBD++lhnc2yIy/+KvcP7oR+kPm6WzvbjjGMwOm6qq0CdLaPNEzxHijhyu3zHUQl03IQlE3FaCVCFd9KG3WLL6ELQNrRRNYsXJD2ImRnyEkiD7YJG1ft32yW9YB43x8PDRs1emKPdvqQm2fOdSpvLIdfa6LgIUK1jobe03UriFdn8vJWDWJdawIDAQAB",
+  "background": {
+    "service_worker": "worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Tab Presets",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}

@@ -77,6 +77,24 @@ tab-presets-check:
 tab-presets-icons:
     cd tools/tab-presets && bun run icons
 
+# Link only the editable Raycast workbench; imports/registration happen in Raycast.
+raycast-setup:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    raycast_source="{{justfile_directory()}}/home/.config/raycast/workbench"
+    raycast_target="$HOME/.config/raycast/workbench"
+    mkdir -p "$(dirname "$raycast_target")"
+    if [[ -L "$raycast_target" && "$(readlink "$raycast_target")" == "$raycast_source" ]]; then
+        printf 'Raycast workbench is already linked.\n'
+    elif [[ -e "$raycast_target" || -L "$raycast_target" ]]; then
+        printf 'Refusing to replace existing path: %s\n' "$raycast_target" >&2
+        exit 1
+    else
+        ln -s "$raycast_source" "$raycast_target"
+        printf 'Linked %s\n' "$raycast_target"
+    fi
+    printf 'Activation steps: %s/README.md\n' "$raycast_target"
+
 # Verify Git Cleanup in isolated temporary Git repositories.
 git-cleanup-check:
     cd "{{justfile_directory()}}/home/.codex/skills/git-cleanup" && vp exec node scripts/verify.mjs

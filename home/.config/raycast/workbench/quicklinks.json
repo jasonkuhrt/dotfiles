@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Heartbeat PR",
+    "link": "https://github.com/heartbeat-chat/Heartbeat/pull/{argument name=\"Number\"}"
+  },
+  {
+    "name": "Sessions",
+    "link": "https://session.localhost/"
+  },
+  {
+    "name": "Email Sequences",
+    "link": "https://session.localhost/e/Email%20Sequences/"
+  },
+  {
+    "name": "Heartbeat Open Pull Requests",
+    "link": "https://github.com/heartbeat-chat/Heartbeat/pulls"
+  }
+]

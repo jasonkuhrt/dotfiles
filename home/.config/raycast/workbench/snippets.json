@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Brief answer",
+    "keyword": ";brief",
+    "text": "Answer the asked dimension directly. Lead with the result. Use plain language and a few short bullets where helpful. Include only the evidence needed to assess the answer."
+  },
+  {
+    "name": "Review request",
+    "keyword": ";review",
+    "text": "Review this for consequential correctness issues. Ground findings in the actual code and explain a concrete failure scenario. Prioritize by impact and give the smallest sound fix. If there are no actionable findings, say so."
+  },
+  {
+    "name": "Architecture options",
+    "keyword": ";design",
+    "text": "Show ideal, first-principles options optimized for type safety and developer experience. Explain the consumer-facing API with small examples. Compare meaningful tradeoffs and recommend one option."
+  }
+]

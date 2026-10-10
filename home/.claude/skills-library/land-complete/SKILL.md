@@ -112,7 +112,10 @@ branch is stale, and do not guess that it is conflicting:
 
 3. If unresolved actionable review feedback exists, return to the `land-pr`
    feedback-handling step: implement the fix or document why it is not
-   actionable, reply, and resolve the thread. Then push and re-run `gh-ci`.
+   actionable. Reply to and resolve bot threads within the authorized workflow.
+   Draft replies to human reviewers and obtain Jason's approval for the exact send
+   before posting. Resolve addressed threads after verification, then push and
+   re-run `gh-ci`.
 4. If `mergeable` is `CONFLICTING`, switch to conflict resolution for the PR
    branch. If branch protection requires the branch to be up to date, sync the
    PR branch with the base only after unresolved conversations and required

@@ -1,6 +1,6 @@
 ---
 name: land-pr
-description: Prepare a branch or GitHub PR to an open, ready PR by verifying locally before pushes, composing land-worktree, creating a PR when missing, moving it out of draft, handling existing Greptile feedback, running an independent subagent review iteration, and waiting efficiently for current-head PR checks and Heartbeat PR-control E2E when required. Use when the user says to land to PR, prepare a PR, create or ready the PR, undraft and handle existing Greptile feedback, finish review-comment closeout, run a subagent/code-review pass during PR landing, handle PR E2E mode, or get the PR green without merging.
+description: Prepare a branch or GitHub PR to an open, ready PR through authorized verification, land-worktree, PR creation and readiness, existing Greptile feedback, an independent subagent review, and current-head PR checks including required E2E. Use when the user says to land to PR, prepare a PR, create or ready the PR, undraft and handle existing Greptile feedback, finish review-comment closeout, run a subagent/code-review pass during PR landing, handle PR E2E mode, or get the PR green without merging.
 ---
 
 # Land PR
@@ -15,21 +15,21 @@ Type role: PR-ready segment. A human can merge after this and then run `land-mer
 
 Core flow:
 
-1. Run the relevant local verification, then run `land-worktree` to resolve task context, normalize the current worktree, create/attach a branch when needed, commit intended dirty work, and push the locally proven branch.
+1. Run relevant verification permitted by the user's policy and repository gates, then run `land-worktree` to resolve task context, normalize the current worktree, create/attach a branch when needed, commit intended dirty work, and push the branch.
 2. Resolve or create the PR from the prepared branch unless the user gave a PR URL or number.
 3. Move the PR out of draft.
 4. Scan for existing Greptile review feedback. Do not wait for Greptile to appear or settle.
 5. Use the PR-review-comments rule to address actionable Greptile feedback only when it already exists.
 6. Run one independent subagent review iteration against the current PR diff, then address actionable findings.
-7. Verify and batch any fixes locally, push once, handle requested Heartbeat PR-control E2E mode changes, and watch the requested remote checks at a quiet cadence.
-8. If the PR requires E2E through PR-control, ensure the target mode is set before relying on CI, then wait for the normal PR CI E2E checks.
+7. Verify fixes under the active check policy, batch them, push once, and watch the requested remote checks at a quiet cadence.
+8. If the PR requires E2E, follow the repository's E2E submission and continuation contract, then wait for its current-head checks.
 9. Report the PR URL, branch, review outcome, remote check state, and any intentionally open blockers.
 
 ## Workflow
 
-### 1. Verify Locally, Then Prepare Worktree
+### 1. Verify, Then Prepare Worktree
 
-Run local verification before invoking `land-worktree`, because its push step can start CI. A `land-pr` invocation authorizes safe, repo-native local checks unless the user explicitly gives a narrower verification policy.
+Run permitted local verification before invoking `land-worktree`, because its push step can start CI. Follow the user's active check policy and repository agent gates; this skill does not override them. Use CI for required checks that are gated or only available remotely.
 
 Prefer the smallest local gate that completely covers the current delta:
 
@@ -38,7 +38,7 @@ Prefer the smallest local gate that completely covers the current delta:
 - Expand to broad local checks only when the change breadth or repository landing policy warrants them.
 - Keep E2E under the explicit policy in section 8; do not add local E2E by default.
 
-Do not push a known local failure or use CI as the first debugging loop. Fix local failures and rerun the proving check before continuing.
+Fix known failures before continuing, using permitted local feedback or CI when the proving check is gated or only available remotely.
 
 Load and follow the `land-worktree` skill from the current skills list.
 
@@ -115,9 +115,10 @@ When working through threads:
 
 ### 6. Subagent Review Iteration
 
-Load and follow the `dispatch-codex-sub` skill from the current skills list.
+Use the active harness's native in-thread subagent tools. In Codex, load and
+follow the `dispatch-codex-sub` skill from the current skills list.
 
-After existing Greptile feedback has been handled, dispatch one in-thread Codex subagent for an independent code-review pass on the current PR diff. The subagent review is a required PR-landing gate, not a substitute for Greptile, CI, or the main agent's own review.
+After existing Greptile feedback has been handled, dispatch one in-thread subagent for an independent code-review pass on the current PR diff. The subagent review is a required PR-landing gate, not a substitute for Greptile, CI, or the main agent's own review.
 
 Use this prompt shape:
 
@@ -129,23 +130,23 @@ Handle the subagent result:
 
 - Implement actionable correctness, regression, verification, or repo-convention findings.
 - Leave opinion-only or ambiguous findings unimplemented unless local evidence confirms them.
-- Run the narrow verification that proves the applied fixes.
-- Commit or amend as appropriate for the current land-worktree state, then push.
+- Verify the applied fixes under the active check policy and repository gates.
+- Commit the intended fixes under the active history policy, then push.
 - If the subagent reports no actionable findings, record that outcome and continue.
 
 If fixes from the subagent review materially change the PR, re-check unresolved PR review threads before moving to CI watching.
 
 ### 7. Local-First Checks, Then Remote Gates
 
-Use the user's requested verification policy. If no policy was given, prefer local verification over repeated CI feedback.
+Use the user's active verification policy and repository gates. Where local checks are permitted, prefer them over repeated CI feedback.
 
 Before every push after review or CI fixes:
 
 1. Consolidate all currently known actionable fixes instead of pushing them one at a time.
-2. Run the narrowest repo-native local gate that proves the changed surface; do not duplicate checks whose coverage is already subsumed by a stronger local gate.
-3. Diagnose and fix local failures before pushing. Push only after the relevant local evidence is green or a genuinely remote-only limitation is explicitly understood.
+2. Run the narrowest permitted repo-native local gate that proves the changed surface; do not duplicate checks whose coverage is already subsumed by a stronger gate.
+3. Diagnose and fix known failures. Push after permitted local verification, using CI for required gated or remote-only checks and reporting that evidence accurately.
 
-CI remains the authority for remote-only gates and final current-head merge readiness. Once the local gate is green, push the consolidated batch and watch the PR through the `gh-ci` skill. Never spin up an ad-hoc `gh pr checks --watch` or count-based poll.
+CI remains the authority for gated or remote-only checks and final current-head merge readiness. Push the consolidated batch after permitted verification and watch the PR through the `gh-ci` skill. Never spin up an ad-hoc `gh pr checks --watch` or count-based poll.
 
 Keep CI observation token-efficient:
 
@@ -156,46 +157,12 @@ Keep CI observation token-efficient:
 
 Do not report the land pass complete while selected Greptile threads are still unresolved, any required review conversation is unresolved, the PR has merge conflicts, or actionable CI checks are still red. Treat `mergeStateStatus: BLOCKED` as a TODO like a failing check: it usually means merge conflicts, unresolved required conversations, or both. If a required external gate cannot be satisfied from the agent environment, report it explicitly.
 
-### 8. Heartbeat PR-Control E2E
+### 8. Heartbeat E2E
 
-Handle this section only for Heartbeat PRs when the user asks for PR E2E, when the PR has E2E mode labels, or when the PR dashboard/comment indicates an enabled E2E target.
-
-Current Heartbeat E2E is PR-control label driven. There is no separate E2E workflow or commit status to trigger. Use the repo-local `e2e-run` skill as the source of truth — the repo owns this command surface and it changes; on any `Unknown subcommand` reply from PR CLI, re-read the repo-local `e2e` skill instead of retrying variants.
-
-Current commands (no per-target subcommands — the old `/pr e2e <target> mode ...` form is gone):
-
-- `/pr e2e mode off` — keep E2E out of regular PR CI.
-- `/pr e2e mode on` — request E2E in regular PR CI.
-- `/pr e2e run` — one-shot: run E2E on the next commit, independent of mode.
-- `/pr e2e ratchet mode off` / `/pr e2e ratchet mode on` — persistent failure-ratchet control.
-- `/pr e2e ratchet reset` — one-shot: next run executes the complete suite and replaces the cached failure set. Never schedules E2E by itself.
-
-Semantics that matter for landing:
-
-- `mode` and `ratchet mode` are independent persistent controls; `run` and `ratchet reset` are independent one-shot signals recorded against the current PR head.
-- A completed ratchet satisfies an E2E request without launching the jobs (plan reports `ratchet-complete`). To force a fresh full-suite execution, post both `/pr e2e ratchet reset` and `/pr e2e run` in one comment.
-- If a prior E2E run failed at suite load time (zero tests executed), the saved ratchet state can make the next `--last-failed` restore run nothing and phantom-green — always `ratchet reset` after such a run.
-- The PR plan snapshots command state once per workflow run. Post commands BEFORE pushing, and wait for the acknowledgment labels (`pr:e2e:...`) to appear on the PR before the push that should consume them.
-
-When PR-control E2E is required:
-
-1. Resolve the current head and labels immediately before acting:
-
-   ```bash
-   gh pr view <number> --json number,url,headRefName,headRefOid,labels,statusCheckRollup
-   ```
-
-2. If the requested state is not already reflected by labels or the PR dashboard, post the slash command as a PR comment. One comment may contain multiple commands on separate lines:
-
-   ```bash
-   gh pr comment <number> --body $'/pr e2e mode on\n/pr e2e ratchet reset\n/pr e2e run'
-   ```
-
-   Then poll the PR labels until the corresponding `pr:e2e:...` labels appear before relying on them.
-
-3. Wait for normal PR CI via `gh-ci`. Do not dispatch separate E2E workflows and do not look for a separate E2E status. If CI already ran before the mode was enabled, report that the PR needs a new normal PR CI run for the current head SHA.
-
-4. If a new commit lands while waiting, restart this section with the new `headRefOid`. If any E2E check fails, debug it like any other required PR gate using CI artifacts (`gh run download <run-id> --name pw-report`).
+For Heartbeat PRs with requested or required E2E, follow the repository's `e2e-running`
+skill and its command reference for selectors, submission, continuation, and
+refresh. Preserve valid saved passes and refresh only exact cases whose proof is
+invalidated. Wait for the required current-head checks through `gh-ci`.
 
 ## Output
 
@@ -208,3 +175,12 @@ Keep the closeout short:
 - Which Greptile threads were addressed/resolved, or that none were actionable.
 - Which subagent review findings were addressed, or that the subagent reported no actionable findings.
 - Remote check status and any remaining external blockers.
+
+## TypeSafe judgments
+
+Classify one review comment or thread per `typesafe feedback` invocation. Put
+the feedback text in `feedback`; put its stable thread ID and all applicable
+diff, discussion, and verification evidence in `context`, retaining that mapping
+in the caller. Consume the actionable, informational, ambiguous, or unresolved
+choice inside the existing feedback workflow; fixes, replies, resolution, and
+pushes remain owned here.

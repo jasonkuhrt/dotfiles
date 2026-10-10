@@ -24,6 +24,9 @@ The script bakes in every lesson learned the hard way. Never inline this logic a
 
 First identify the harness kind, then use that harness's long-running-work primitive.
 
+Status and watch requests authorize observation. Fixes and other follow-up actions
+must stay within the task's existing authorization.
+
 ### Claude Code
 
 Use `Monitor` when available. The script is quiet by default: it prints nothing until a terminal state (ALL GREEN / FAILED / BLOCKED / STALE HEAD / CONFLICT), so the waiting agent spends one turn per verdict, not one per poll. A 25-minute run once cost a dozen progress turns; that is tokens taken from other agents.
@@ -42,7 +45,7 @@ If the user explicitly asks for unattended re-invocation rather than a foregroun
 A one-shot status read does not need a worker. Read the authoritative layers above
 once and report the current head and rollup.
 
-An ongoing watch in the current turn is worker-owned, even without crew mode or a
+An ongoing watch in the current turn is worker-owned, even without a
 separate subagent request. Delegate it through
 [dispatch-codex-sub](../../../.codex/skills/dispatch-codex-sub/SKILL.md), reusing a
 suitable worker when available. Have the worker keep one quiet script process
@@ -130,14 +133,13 @@ You are not done with CI. Treat unresolved required review conversations exactly
 
 1. Fetch thread-aware review data, not flat comments.
 2. Address each actionable thread with code or a clear explanation.
-3. Reply on the exact thread and resolve it.
+3. Reply to and resolve bot threads within the authorized workflow. Draft replies
+   to human reviewers and obtain Jason's approval for the exact send before posting;
+   resolve addressed threads after verification.
 4. Re-fetch thread state and verify `isResolved: true`.
 5. Re-invoke this skill for the current head SHA.
 
 ## After this skill exits 0
 
-CI and merge blockers are green. Tell the user. Don't ask "want me to do X?" — pick the next obvious action.
-
-## What this skill replaces
-
-Delete on sight: any rule file, memory entry, or ad-hoc `gh pr checks --watch` invocation that competes with this skill. The single-source rule was the whole point.
+CI and merge blockers are green. Tell the user and continue the next authorized
+task step.

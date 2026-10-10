@@ -1,0 +1,4 @@
+interface:
+  display_name: "Opus Review"
+  short_description: "Independent Opus review in cmux, relayed to Codex"
+  default_prompt: "Use $opus-review to have Opus 5.5 at max effort independently review this plan or change, verify its findings, and return the assessment and remaining decisions."

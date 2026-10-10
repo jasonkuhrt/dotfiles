@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fable Review"
+  short_description: "Independent Fable review in cmux, relayed to Codex"
+  default_prompt: "Use $fable-review to have Fable 5.1 at xhigh effort independently review this plan or change, verify its findings, and return the assessment and remaining decisions."

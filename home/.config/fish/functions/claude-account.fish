@@ -56,11 +56,13 @@ function __claude_account_sync_mcp --argument-names dir
     test -e $synced; or __claude_account_jq_into $synced '.mcpServers // {}' $config; or return
 
     # `objects` yields nothing for a file that is empty or not a config, which skips the sync
-    # instead of reading it as "every server was removed".
+    # instead of reading it as "every server was removed". A config with no mcpServers key at
+    # all was reset: Claude Code leaves an empty object behind the last removal. That side
+    # counts as unchanged, so it gets the list back and its loss is not replayed.
     set -l merged (jq -cnS --slurpfile hub $hub --slurpfile account $config --slurpfile synced $synced '
-        ($hub[0] | objects | .mcpServers // {}) as $h
-        | ($account[0] | objects | .mcpServers // {}) as $a
-        | ($synced[0] | objects) as $s
+        ($synced[0] | objects) as $s
+        | ($hub[0] | objects | .mcpServers // $s) as $h
+        | ($account[0] | objects | .mcpServers // $s) as $a
         | $h + ($a | with_entries(select(.value != $s[.key])))
         | del(.[($s | keys) - ($a | keys) | .[]])' | string collect)
     test -n "$merged"; or return

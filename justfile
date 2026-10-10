@@ -678,10 +678,30 @@ claude-account-check:
     [ "$(fish_run 'claude where')" = "$home" ] || fail 'plain claude did not default to account 2'
     [ "$(fish_run 'claude-default 3; claude where')" = "$home/.claude-3" ] || fail 'plain claude ignored claude-default'
 
+    # A config that lost its server list was reset, not emptied on purpose: it gets the list
+    # back, and the loss is not replayed onto the other side.
+    forget() {
+        jq 'del(.mcpServers)' "$1" > "$1.new" && mv "$1.new" "$1"
+    }
+    forget "$one"
+    account 1
+    expect 'account reset' "$one" '["added","hubside","left","right","unsynced"]'
+    expect 'account reset' "$hub" '["added","hubside","left","right","unsynced"]'
+    forget "$hub"
+    account 1
+    expect 'hub reset' "$hub" '["added","hubside","left","right","unsynced"]'
+
+    # Removing every server on purpose leaves an empty list behind, and that does travel.
+    for name in added hubside left right unsynced; do
+        account 1 mcp remove "$name"
+    done
+    expect 'remove all' "$hub" '[]'
+    account 1 mcp add last g
+
     # An unreadable hub skips the sync; it does not read as every server having been removed.
     : > "$hub"
     account 1
-    expect 'empty hub' "$one" '["added","hubside","left","right","unsynced"]'
+    expect 'empty hub' "$one" '["last"]'
     [ ! -s "$hub" ] || fail 'an empty hub was written to'
 
     printf 'PASS: claude-account-check\n'

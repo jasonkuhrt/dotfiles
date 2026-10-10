@@ -20,7 +20,7 @@
   //
   //
   "diff_view_style": "unified",
-  "cli_default_open_behavior": "existing_window",
+  "cli_default_open_behavior": "new_window",
   "minimap": {
     "max_width_columns": 101
   },
@@ -76,6 +76,7 @@
     "git-firefly": true,
     "graphql": true,
     "html": true,
+    "iwe": true, // Markdown LSP — the only source of heading folds (see languages.Markdown)
     "make": true,
     "mcp-server-github": false,
     "mermaid": true,
@@ -130,7 +131,7 @@
     },
     "default_model": {
       "speed": "fast",
-      "effort": "max",
+      "effort": "xhigh",
       "enable_thinking": true,
       "provider": "openai-subscribed",
       "model": "gpt-5.6-terra"
@@ -609,7 +610,13 @@
     },
     // https://zed.dev/docs/languages/markdown
     "Markdown": {
-      "soft_wrap": "editor_width",
+      // Wrap prose at preferred_line_length (100) instead of the window edge.
+      // Soft wrap is whole-buffer (no table exemption): toggle with `t w`.
+      "soft_wrap": "bounded",
+      "show_wrap_guides": false,
+      // Zed folds only by indentation or LSP ranges; headings aren't indented,
+      // so heading/list/table/code folds come from the IWE language server.
+      "document_folding_ranges": "on",
       "formatter": {
         "external": {
           "command": "npx",

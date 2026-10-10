@@ -1,3 +1,5 @@
+# Why this exists beside claude-swap, and the criteria for deleting it: docs/claude-account.md
+# in the dotfiles repo.
 function claude-account --description 'Claude Code as account N: own login in ~/.claude-N, setup and history shared with ~/.claude'
     set -l n $argv[1]
     if not string match -qr '^[1-9]$' -- $n

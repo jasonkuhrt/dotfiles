@@ -4,14 +4,14 @@
 # One block, one mechanism, first in the file: later config (starship, secrets
 # via gh) needs the tools already resolvable.
 #
-# `fish_add_path -gP` prepends to the global $PATH. It is idempotent, so nested
+# `fish_add_path -gPm` reorders the global $PATH. It is idempotent, so nested
 # shells no longer grow PATH by five entries per level, and it skips directories
 # that do not exist, so a missing toolchain leaves no dead entry behind. It
 # deliberately does not touch the universal `fish_user_paths`: universal PATH
 # entries are machine state that outlives this file and cannot be reviewed here.
 #
-# First argument wins. ~/.local/bin leads so standalone installs there, such as
-# Codex's official installer, shadow Homebrew. Installer-appended blocks for
+# First argument wins. Vite+ owns Node; ~/.local/bin keeps standalone installs
+# such as Codex's official installer ahead of Homebrew. Installer-appended blocks for
 # pnpm, bun, cargo, go and grok are folded in here; if one re-appends its own
 # block, delete it.
 
@@ -19,7 +19,8 @@ set -gx NPM_GLOBAL "$HOME/.npm-global"
 set -gx PNPM_HOME "$HOME/Library/pnpm"
 set -gx BUN_INSTALL "$HOME/.bun"
 
-fish_add_path -gP \
+fish_add_path -gPm \
+    "$HOME/.vite-plus/bin" \
     "$HOME/.local/bin" \
     "$NPM_GLOBAL/bin" \
     "$PNPM_HOME/bin" \

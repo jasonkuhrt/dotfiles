@@ -56,7 +56,5 @@ The system prompt contains minimalist instructions like "don't add improvements 
 
 * For any task sourced from `.session/`, treat `.session/` in the current checkout as the only authoritative session entrypoint.
 * The current checkout/worktree is the execution target by default for `.session/`-sourced work.
-* Do not use `.sessions/` location, symlink targets, backing-store paths, or shared-session storage topology to decide which repo/worktree to edit.
 * Do not switch repos because a session file contains absolute paths, source-context notes, or references to another checkout. Those are reference material unless the user explicitly says they are the target.
-* Inspect `.sessions/` only when the task is explicitly about session plumbing itself: sync, doctor, repair, migration, or debugging the session system.
 * If a session handoff appears to point at another repo, keep the current checkout as the target unless the user explicitly instructs a repo switch.

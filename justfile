@@ -588,6 +588,104 @@ codex2-check:
 
     printf 'PASS: codex2-check\n'
 
+# Verify the Claude account launchers against a fake claude in a temporary HOME.
+claude-account-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    functions="$PWD/home/.config/fish/functions"
+    fake_claude="$PWD/scripts/tests/fake-claude.sh"
+
+    fish -n "$functions/claude.fish"
+    fish -n "$functions/claude-account.fish"
+    fish -n "$functions/claude-default.fish"
+    bash -n "$fake_claude"
+
+    tmpdir="$(mktemp -d)"
+    trap 'rm -rf "$tmpdir"' EXIT
+
+    home="$tmpdir/home"
+    hub="$home/.claude.json"
+    one="$home/.claude-1/.claude.json"
+    three="$home/.claude-3/.claude.json"
+    mkdir -p "$tmpdir/bin" "$home/.claude"
+    cp "$fake_claude" "$tmpdir/bin/claude"
+    printf '%s\n' '{"userID":"hub","mcpServers":{"shared":{"type":"stdio","command":"a"}}}' > "$hub"
+
+    fail() {
+        printf 'FAIL: claude-account-check: %s\n' "$1" >&2
+        exit 1
+    }
+    fish_run() {
+        HOME="$home" XDG_CONFIG_HOME="$home/.config" PATH="$tmpdir/bin:$PATH" \
+            fish --no-config -c 'for file in $argv[1]/claude{,-account,-default}.fish; source $file; end; eval $argv[2]' "$functions" "$1"
+    }
+    account() {
+        fish_run "claude-account $*"
+    }
+    direct() {
+        CLAUDE_CONFIG_DIR="$home/.claude-$1" "$tmpdir/bin/claude" "${@:2}"
+    }
+    expect() {
+        local got
+        got="$(jq -c '.mcpServers | keys' "$2")"
+        [ "$got" = "$3" ] || fail "$1: ${2#"$home/"} has $got, want $3"
+    }
+
+    # A new account starts with the hub's servers and none of its identity.
+    account 1
+    account 3
+    expect 'seed' "$one" '["shared"]'
+    [ "$(jq -r .userID "$one")" = null ] || fail 'seed copied the hub identity'
+    direct 1 identify one
+
+    # An add under one account reaches the hub at exit and the next account at launch.
+    account 1 mcp add added b
+    expect 'add' "$one" '["added","shared"]'
+    expect 'add' "$hub" '["added","shared"]'
+    account 3
+    expect 'add' "$three" '["added","shared"]'
+
+    # A change no launcher saw exit, such as an agent calling the binary mid-session,
+    # survives the next launch of that account.
+    direct 1 mcp add unsynced c
+    account 1
+    expect 'unsynced add' "$one" '["added","shared","unsynced"]'
+    expect 'unsynced add' "$hub" '["added","shared","unsynced"]'
+
+    # A removal travels the same way, and so does a change made on the hub.
+    account 3 mcp remove shared
+    account 2 mcp add hubside d
+    account 1
+    expect 'remove and hub add' "$one" '["added","hubside","unsynced"]'
+
+    # Changes on both sides at once are both kept.
+    direct 1 mcp add left e
+    account 2 mcp add right f
+    account 1
+    expect 'both sides' "$one" '["added","hubside","left","right","unsynced"]'
+    expect 'both sides' "$hub" '["added","hubside","left","right","unsynced"]'
+
+    # Identity stays put, the agreed list is private, and claude's exit status comes back.
+    [ "$(jq -r .userID "$hub")" = hub ] || fail 'the hub lost its identity'
+    [ "$(jq -r .userID "$one")" = one ] || fail 'account 1 lost its identity'
+    [ "$(stat -f %Lp "$home/.claude-1/mcp-synced.json")" = 600 ] || fail 'mcp-synced.json is readable by others'
+    status=0
+    account 1 exit 7 || status=$?
+    [ "$status" = 7 ] || fail "exit status was $status, want 7"
+
+    # Plain claude follows claude-default, and lands on account 2 until one is set.
+    [ "$(fish_run 'claude where')" = "$home" ] || fail 'plain claude did not default to account 2'
+    [ "$(fish_run 'claude-default 3; claude where')" = "$home/.claude-3" ] || fail 'plain claude ignored claude-default'
+
+    # An unreadable hub skips the sync; it does not read as every server having been removed.
+    : > "$hub"
+    account 1
+    expect 'empty hub' "$one" '["added","hubside","left","right","unsynced"]'
+    [ ! -s "$hub" ] || fail 'an empty hub was written to'
+
+    printf 'PASS: claude-account-check\n'
+
 file-ops-test:
     #!/usr/bin/env bash
     set -euo pipefail

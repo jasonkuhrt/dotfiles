@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Cleanup"
+  short_description: "Preserve work remotely and clean stale local worktrees"
+  default_prompt: "Use $git-cleanup to preserve and clean stale local worktrees in this repository."

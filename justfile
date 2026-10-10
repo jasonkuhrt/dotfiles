@@ -77,6 +77,10 @@ tab-presets-check:
 tab-presets-icons:
     cd tools/tab-presets && bun run icons
 
+# Verify Git Cleanup in isolated temporary Git repositories.
+git-cleanup-check:
+    cd "{{justfile_directory()}}/home/.codex/skills/git-cleanup" && vp exec node scripts/verify.mjs
+
 lua-check: lua-lint lua-lsp-check lua-fmt-check
 
 lua-lint:

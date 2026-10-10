@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Cleanup Dry Run"
+  short_description: "Preview cleanup actions while preserving local state"
+  default_prompt: "Use $git-cleanup-dry-run to show what cleanup would do in this repository."

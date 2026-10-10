@@ -3,12 +3,25 @@
 #
 # Claude Code accounts each have their own login directory (see the
 # claude-account fish function), so nothing may swap the default login any
-# more. CodexBar still needs claude-swap to list every account's usage, and its
-# account cards offer a switch. This passes the two read commands through and
-# refuses the rest in claude-swap's own error format.
+# more. CodexBar still needs claude-swap to list every account's usage. The
+# list goes through with supportsAccountSwitching set to false, which CodexBar
+# 0.65 and later reads as "show the cards, offer no switch". Everything but the
+# list and the version is still refused in claude-swap's own error format, for
+# a CodexBar that does not read the flag.
 
 case "$*" in
-  '--list --json' | '--version')
+  '--list --json')
+    list=$("$HOME/.local/bin/cswap" "$@") || {
+      status=$?
+      printf '%s\n' "$list"
+      exit "$status"
+    }
+    # /usr/bin/jq ships with macOS, and CodexBar launches this with a bare PATH.
+    # A list jq cannot read goes through untouched.
+    printf '%s\n' "$list" | /usr/bin/jq '.supportsAccountSwitching = false' || printf '%s\n' "$list"
+    exit
+    ;;
+  '--version')
     exec "$HOME/.local/bin/cswap" "$@"
     ;;
 esac

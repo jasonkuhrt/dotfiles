@@ -40,9 +40,9 @@ git:
   # theme) from ~/.gitconfig's [delta] section; this only names the
   # command. --paging=never stops delta spawning its own less, leaving
   # lazygit in control of scrolling.
-  pagers:
+  diffRenderers:
     - colorArg: always
-      pager: delta --paging=never
+      command: delta --paging=never
 os:
   # `o` (openFile) opens in Zed, not the macOS default app. Needed because
   # extensionless files like `Dockerfile` can't be routed by duti.yml (which is
@@ -52,13 +52,13 @@ os:
   open: 'zed -- {{filename}}'
 customCommands:
   - key: 'H'
-    context: 'staging'
+    context: 'normal'
     description: 'Open Hunk review (working tree)'
     command: hunk diff --watch
     loadingText: 'Opening Hunk working-tree review'
     output: terminal
   - key: 'H'
-    context: 'stagingSecondary'
+    context: 'normalSecondary'
     description: 'Open Hunk review (staged)'
     command: hunk diff --staged
     loadingText: 'Opening Hunk staged review'

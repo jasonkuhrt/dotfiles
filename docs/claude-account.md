@@ -1,6 +1,6 @@
 # claude-account
 
-Runs Claude Code as one of several accounts. `claude1`, `claude2` and `claude3` pin an account, and plain `claude` runs whichever one `claude-default` names. Each account signs in once to its own directory (`~/.claude-1`, `~/.claude`, `~/.claude-3`); the setup, plugins and conversation history are symlinked to `~/.claude`, and user-scope MCP servers are merged through `~/.claude.json`.
+Runs Claude Code as one of several accounts. `claude1`, `claude2` and `claude3` pin an account. Plain `claude` runs the one `claude-default` names, or with `claude-default auto` the account to finish next: of those with quota left, the one whose week resets soonest. Each account signs in once to its own directory (`~/.claude-1`, `~/.claude`, `~/.claude-3`); the setup, plugins and conversation history are symlinked to `~/.claude`, and user-scope MCP servers are merged through `~/.claude.json`.
 
 The tool is `claude-account.fish`, `claude.fish`, `claude-default.fish` and `claude1.fish` to `claude3.fish` in `home/.config/fish/functions/`. `just claude-account-check` verifies it against `scripts/tests/fake-claude.sh`.
 
@@ -26,7 +26,17 @@ What this tool does that `cswap run` does not, as of claude-swap 0.26.0:
 - A user-scope MCP server added or removed under any account reaches the others.
 - Changing the default account touches no login.
 
-What claude-swap does that this tool does not: move a running session to another account without a restart, rotate automatically near a limit, and show every account's usage. Here a session that hits its limit is quit and resumed with another launcher.
+What claude-swap does that this tool does not: move a running session to another account without a restart, and show every account's usage. Here a session that hits its limit is quit and resumed with `claude --resume`, which on auto lands on the next account with quota left.
+
+## Automatic account choice
+
+The rule is use it or lose it. On `claude-default auto`, each launch of plain `claude` asks `cswap-meter` for every account's usage and takes, of the accounts with quota left, the one whose week resets soonest, so quota about to expire is spent first. An account at its five-hour or weekly limit is passed over until that window resets, and one whose week has not started goes last. The launch prints the account and why, for example `claude: account 1, week 4% used, resets in 3d 10h`.
+
+`claude-default N` pins an account and turns the choice off; `claude1` to `claude3` force one for a single launch.
+
+claude-swap's aliases carry the launcher names, so the row aliased `claudeN` is account N. The choice adds about 0.13 seconds to a launch.
+
+The figures come from the logins claude-swap keeps for the meter, which are separate from the launchers' own. An account whose meter login has expired (its CodexBar card reads "Re-login required") has no figures and is passed over until that login is renewed. With no figures at all, the launch goes to account 2.
 
 ## Delete when
 
@@ -43,11 +53,8 @@ The criteria follow from the goal above. Delete this tool and launch through `cs
 
 The last criterion is the one that decides it. Those bugs are instances of how claude-swap is built, a stored login with live copies, so closing them one at a time does not show the class is gone. Three quiet months is this repo's own bar, not upstream's.
 
-Reasons to want the move, which are not conditions for it:
+A reason to want the move, which is not a condition for it: folder trust. PR [#430](https://github.com/realiti4/claude-swap/pull/430) carries "trust this folder" answers into session profiles. This tool copies them once, when an account is created, so each account asks again about folders trusted later. Open since 2026-10-04.
 
-- **Automatic account choice.** PR [#386](https://github.com/realiti4/claude-swap/pull/386) (`cswap run --auto`, for [#382](https://github.com/realiti4/claude-swap/issues/382)) starts each session on an account that has quota left. Here the flip is manual, with `claude-default N`. Open since 2026-09-22 with merge conflicts, and it competes with PR #338 for the same flag.
-- **Folder trust.** PR [#430](https://github.com/realiti4/claude-swap/pull/430) carries "trust this folder" answers into session profiles. This tool copies them once, when an account is created, so each account asks again about folders trusted later. Open since 2026-10-04.
-
-Not a blocker: there is no default-account flip upstream, but `cswap map N ~` with a bare `cswap run` picks the account by directory, which is close enough.
+Not blockers, because a few lines of launcher over `cswap run` would cover both: upstream has no automatic choice per launch yet (PR [#386](https://github.com/realiti4/claude-swap/pull/386), `cswap run --auto`, open since 2026-09-22 with merge conflicts), and no default-account flip (`cswap map N ~` with a bare `cswap run` comes close).
 
 Moving over means signing in to each account again: Claude Code keys a saved login to the literal `CLAUDE_CONFIG_DIR` path, and claude-swap keeps its profiles under `~/.claude-swap-backup/sessions/`.

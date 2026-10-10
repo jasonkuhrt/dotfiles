@@ -678,6 +678,50 @@ claude-account-check:
     [ "$(fish_run 'claude where')" = "$home" ] || fail 'plain claude did not default to account 2'
     [ "$(fish_run 'claude-default 3; claude where')" = "$home/.claude-3" ] || fail 'plain claude ignored claude-default'
 
+    # On auto, plain claude takes the account to finish next: of those with quota left, the one
+    # whose week resets soonest. A row with no usage or no launcher alias is skipped.
+    meter="$tmpdir/meter.json"
+    printf '#!/bin/sh\ncat "%s"\n' "$meter" > "$tmpdir/bin/cswap-meter"
+    chmod +x "$tmpdir/bin/cswap-meter"
+    row() {
+        jq -cn --arg alias "$1" --argjson five "$2" --argjson week "$3" --arg reset "${4:-}" \
+            '{alias: $alias, usage: {fiveHour: {pct: $five}, sevenDay: ({pct: $week} + if $reset == "" then {} else {resetsAt: $reset} end) } }'
+    }
+    meter() {
+        jq -cs '{schemaVersion: 1, accounts: .}' > "$meter"
+    }
+    auto() {
+        fish_run 'claude-default auto; claude where' 2>/dev/null
+    }
+    expect_auto() {
+        [ "$(auto)" = "$2" ] || fail "auto, $1: took $(auto), want $2"
+    }
+    {
+        row claude1 14 4 2026-10-14T07:00:00+00:00
+        row claude2 0 100 2026-10-11T09:59:59+00:00
+        row claude3 8 50 2026-10-12T07:00:00+00:00
+        row elsewhere 0 0 2026-10-10T00:00:00+00:00
+        row claude4 0 0 2026-10-10T00:00:00+00:00 | jq -c '.usage = null'
+    } | meter
+    expect_auto 'soonest reset with quota left' "$home/.claude-3"
+    {
+        row claude1 14 4 2026-10-14T07:00:00+00:00
+        row claude3 100 50 2026-10-12T07:00:00+00:00
+    } | meter
+    expect_auto 'five-hour limit reached on the soonest' "$home/.claude-1"
+    {
+        row claude1 0 0
+        row claude3 8 50 2026-10-12T07:00:00+00:00
+    } | meter
+    expect_auto 'a week that has not started goes last' "$home/.claude-3"
+    {
+        row claude1 0 100 2026-10-14T07:00:00+00:00
+        row claude3 0 100 2026-10-12T07:00:00+00:00
+    } | meter
+    expect_auto 'every account at its limit' "$home/.claude-3"
+    rm "$meter"
+    expect_auto 'no usage figures' "$home"
+
     # A config that lost its server list was reset, not emptied on purpose: it gets the list
     # back, and the loss is not replayed onto the other side.
     forget() {

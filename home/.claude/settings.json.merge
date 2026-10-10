@@ -19,7 +19,7 @@
       "mcp__Claude_in_Chrome"
     ],
     "deny": [],
-    "defaultMode": "auto",
+    "defaultMode": "bypassPermissions",
     "additionalDirectories": [
       "/Users/jasonkuhrt"
     ]

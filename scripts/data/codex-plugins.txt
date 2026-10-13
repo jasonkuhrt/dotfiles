@@ -1,0 +1,2 @@
+# Codex plugins managed by dotfiles: <plugin>@<marketplace> <marketplace source>
+diagram-design@diagram-design cathrynlavery/diagram-design

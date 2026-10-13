@@ -55,6 +55,10 @@ homeclaw-permission-reset:
 matter-server-setup:
     DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/24-matter-server.sh
 
+# Install the Codex plugins listed in scripts/data/codex-plugins.txt.
+codex-plugins-setup:
+    DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/25-codex-plugins.sh
+
 # Build the bookmarks Chrome extension and install its native messaging host.
 # Chrome loads the printed extension directory once through chrome://extensions.
 bookmarks-chrome-setup:

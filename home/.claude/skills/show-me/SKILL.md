@@ -69,6 +69,8 @@ When discussing an abstraction, make its value visible in the code that uses it.
 
 ## Pick the view by the material's shape
 
+A diagram has to beat a table: when three columns say the same thing, send the table.
+
 | The material | The view |
 | --- | --- |
 | Logic or an algorithm | pseudocode |
@@ -106,7 +108,7 @@ src/
 ## Choose the delivery format
 
 - **Inline** when a static view answers the question in about 40 lines: fenced text, `diff`, `mermaid`, or a table.
-- **A page** when interaction helps the user vary assumptions, compare outcomes, or follow a mechanism; also use it for color, many items, or views side by side. Create one focused HTML file. Publish it with the Artifact tool when the session has one, following its quickstart; otherwise write `show-me-<topic>.html` beside the work's notes (`.session/context/` in a session) and `open` it. Use the product's own colors, type and components when it has them, and make it work at phone width and in dark mode.
+- **A page** when interaction helps the user vary assumptions, compare outcomes, or follow a mechanism; also use it for color, many items, or views side by side. Create one focused HTML file. Publish it with the Artifact tool when the session has one, following its quickstart; otherwise write `show-me-<topic>.html` beside the work's notes (`.session/context/` in a session) and `open` it. Use the product's own colors, type and components when it has them, and make it work at phone width and in dark mode. On a page, draw a diagram with the `diagram-design` skill and a chart with `dataviz`, not freehand; where a session lacks one, use the nearest it has (`artifact-diagramming` for a diagram, `diagram-design` for a chart). Hand the drawing skill the diagram's type, size and content, so it draws without asking again.
 - **A timed explanation** when seeing motion or changing quantities clarifies the mechanism: use a stepped HTML animation, or a short explainer video when the available tools support it and motion or narration improves understanding. Give each scene one relationship to explain, with visible labels. Provide pause, replay, and step controls for animations; respect reduced motion.
 
 Whatever the format, the layers keep their order. Inline, send `R0` and stop at the layer the question needs; put the layers below it in the page or file the reply links. On a page, show the map and `R0` first, and keep each layer below one step away (a section, a tab, a disclosure), reachable from its end point.
@@ -121,9 +123,14 @@ This format guidance adapts [Karpathy's post on understanding model outputs](htt
 
 - For an existing system, labels use its real names, counts, paths and `file:line`. Keep a standalone library example internally consistent and identify it as illustrative. Count what you show.
 - A state never lives in color alone: pair the color with a second cue (strikethrough, ✓ or ✗, an arrow), and give every colored view a legend.
+- A diagram holds at most 9 nodes and 12 arrows. Past that it is two views at two resolutions: the whole in one layer, the crowded part a layer below.
+- One accent, on the one or two things the answer turns on. State colors are a separate encoding and keep their legend.
+- An arrow says what moves along it (`writes`, `polls every 30s`). An arrow the layout already implies is removed.
 - Aim for labels of six words or fewer. Keep exact technical names and necessary qualifiers; split the view when a label becomes hard to read.
 - When the picture stands in for a longer written report, link the report, and both say the same thing.
 - In a session, a view explains one item and is linked from it; the `session` board stays the one work queue.
+
+The table test, the diagram budget, the single accent and the delete pass adapt [diagram-design](https://github.com/cathrynlavery/diagram-design/blob/7a2e22170ee838e859d8142ba825d83f8b6375e6/skills/diagram-design/SKILL.md).
 
 ## Make the words unambiguous
 
@@ -145,5 +152,7 @@ Compare the view with its source. Check facts, conditions, exceptions, claim str
 For an abstraction comparison, check that the first code view is caller code, the before and after solve the same task, and each additional layer is needed for the current decision. For standalone library design, check that both versions use a neutral domain throughout, including imports and names.
 
 Check the layers. The map comes first. Read `R0` alone: the subject is whole and true; then read each layer below the same way. No view mixes resolutions. For every view below `R0`, find its end point in the layer above, under the same name. From any view, say which layer and which part of the subject it is, using only what that view shows; if you cannot, the reader is lost.
+
+Then delete: every node, arrow and label the reader would not miss goes, and two nodes that always travel together become one.
 
 Then read the initial view. The user should see the answer or the model's key relationship within ten seconds. When the question needs it, keep deeper detail available through interaction or a timed walkthrough. Check that controls and scenes reveal the relationships they claim to explain. Simplify the layout or split the view while keeping the words needed for precision.

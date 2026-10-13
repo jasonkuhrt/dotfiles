@@ -40,6 +40,11 @@ The system prompt contains minimalist instructions like "don't add improvements 
 * For library docs, once you've ruled out a matching local skill, clone to `~/repo-references/<name>/` and read source.
 * Check dotfiles, codebase configs, Brewfile before asking the user questions.
 
+## Memory
+
+* A feedback memory's name, description and `MEMORY.md` line are the rule: sessions act on them without opening the file. They keep the scope of my own words ("asked to show code: …"). A wider scope is your reading: it stays in the body, labelled.
+* Write a rule as a test on the result ("a fence of only comments is prose"), with one bad and one good example from the incident. Never as a conversion ("prose becomes comments"): shortened, it loses its condition.
+
 ## Screenshots
 
 * All screenshots at `~/Pictures/Screenshots/`. "My latest screenshot" → check dir sorted by mtime.

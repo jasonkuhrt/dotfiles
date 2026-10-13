@@ -46,7 +46,6 @@
     "skill-creator@claude-plugins-official": false,
     "superpowers-dev@superpowers-marketplace": true,
     "tsgo-lsp@jasonkuhrt": false,
-    "show-me@skills": true,
     "linear@claude-plugins-official": true,
     "diagram-design@diagram-design": true
   },
@@ -63,12 +62,6 @@
         "path": "/Users/jasonkuhrt/projects/jasonkuhrt/claude-marketplace"
       },
       "autoUpdate": true
-    },
-    "skills": {
-      "source": {
-        "source": "github",
-        "repo": "humanlayer/skills"
-      }
     },
     "superpowers-marketplace": {
       "source": {

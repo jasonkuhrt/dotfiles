@@ -12,7 +12,7 @@ GitHub recognizes CONTRIBUTING.md at repo root, `.github/`, or `docs/` and surfa
 | 2 | __Codebase Map__ | Physical layout. Directory/package structure. Where to find things. |
 | 3 | __Boundaries__ | Logical architecture. What knows about what. Separation of concerns. Dependency direction. |
 | 4 | __Extension Points__ | Where the codebase is designed for horizontal growth. How to add a new module, package, adapter, provider. What patterns to follow when extending. |
-| 5 | __Key Decisions__ | Why things are built the way they are. Compact table: decision, why, alternative rejected. |
+| 5 | __Key Decisions__ | Why things are built the way they are. Compact table: decision, why, alternative rejected. Fill "alternative rejected" only from a record (a commit, a comment, a research record); never invent one. When the reason already lives in a doc comment (`@privateRemarks`), give it one line and point there. |
 | 6 | __Common Tasks__ | How to: add a feature, fix a bug, add a test, release. Recipe-style. |
 
 __Monorepo exception:__ Codebase Map should include a __Package Map__ table — every package with a one-liner of what it does.

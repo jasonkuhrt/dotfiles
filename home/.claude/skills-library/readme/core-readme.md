@@ -125,7 +125,7 @@ Introduction order: capability, slot, command, module, scope node, resolution.
 
 ## G4: Term Linking
 
-Domain terms in prose use backtick links to the glossary: `` [`term`](#term) ``.
+Domain terms in prose use backtick links to the glossary: `` [`term`](#term) ``. When a UL file is the vocabulary's home (`docset.md` rule 7), link only the README Glossary's own terms; the UL's rows have no anchors.
 
 Visually distinct from external links and plain code references. Use liberally after a term's first introduction. Glossary entries use `####` headings for anchor targets.
 
@@ -178,7 +178,7 @@ Some projects maintain a separate `UBIQUITOUS_LANGUAGE.md` at the repository or 
 
 The README Glossary uses headings because the README's body links into it via anchors; the project-wide UL file uses a flat table because nothing links into it. The textual discipline (G7.1-G7.7) is the same for both.
 
-When a project-wide UL file exists, the README Glossary's names and meanings must match it for every term that appears in both. The README Glossary may add package-local terms not in the project-wide UL — these are the package's internal vocabulary. The reverse (terms in the project-wide UL that don't appear in this package's README) is normal and not a violation.
+When a project-wide UL file exists, it is the vocabulary's home (`docset.md` placement rule 7): the README Glossary links to it, or is generated from it, instead of restating it. When it is a package-local file with entries that break G7.2, report them as defects, and check what tooling reads it before editing. Otherwise, the README Glossary's names and meanings must match it for every term that appears in both. The README Glossary may add package-local terms not in the project-wide UL — these are the package's internal vocabulary. The reverse (terms in the project-wide UL that don't appear in this package's README) is normal and not a violation.
 
 ## Section Guidance
 

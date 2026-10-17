@@ -4,9 +4,36 @@ Rules that apply to ALL files this skill produces (README.md, CONTRIBUTING.md). 
 
 ## G3: Heading Density
 
-If prose under a heading (excluding code blocks) is under 100 words, that concept does not deserve its own heading. Instead: weave into parent narrative, merge with siblings, or use bold-lead inline definition.
+If prose under a heading (excluding code blocks) is under 100 words, that concept does not deserve its own heading. Instead: weave into parent narrative, merge with siblings, or use bold-lead inline definition. G3 governs narrative sections (a README's Solution, Concepts, Usage; a concept file's body). It does not apply to the fixed sections of the doc-set templates in `docset.md` (Types, Rules, Questions, Known gaps, Long form) or to a section that is annotated code.
 
 A cascade of `### Concept` / 3 sentences / code block / `### Next` / 3 sentences / code block is heading slop.
+
+## Readability
+
+These rules hold for every file. A failure is a blocker in review, never polish.
+
+- **An opening is at most three sentences.** It says what the thing is and the one thing that matters most. Everything else goes to its own section. In a README, the opening is the one-liner plus Grounding, at most three sentences in all.
+- **One idea per paragraph.** A paragraph holds one idea, in at most six sentences. Split a paragraph that holds two ideas, even when it is short.
+- **Define before use.** A term is defined, or linked to its definition, before its first use (G2 in `core-readme.md`).
+- **Code before prose.** When code and prose say the same thing, show the code first. The prose adds only what the code cannot show.
+- **A mechanical list is annotated code.** A list of refusals, arguments, outputs or cases is one code block, annotated inline. It is never a run of prose sentences beside a code block.
+- **Nothing twice.** A fact has one home. Every other mention links to it (`docset.md`).
+- **Tables hold short cells.** A cell that needs a sentence belongs in a rule or a paragraph.
+- **Code blocks are whole, valid code.** A formatter rewrites fenced code, and a fragment can turn into different code (`yield* x` becomes `yield * x`). Write whole statements that parse in the block's language. Every identifier a block uses is declared or imported in it, named in the file's opening, or declared in the README Quickstart. Run the formatter, then re-read every block. Mark a block that cannot be whole with a comment that says so. A generated region is exempt: it is never edited by hand. When its fence names the wrong language, report that to the generator's owner.
+
+## Sentences
+
+These rules come from ASD-STE100 Simplified Technical English. They apply its writing rules, not its controlled dictionary. Technical names and code identifiers are exempt.
+
+- A sentence that describes is at most 25 words. A sentence that instructs is at most 20 words and gives one instruction.
+- Use the active voice. Use the passive only to describe, and only when the actor does not matter.
+- Use the imperative for an instruction: "Run the generator."
+- One word has one meaning. One thing has one word. Do not cycle synonyms. Quoted output (an error message, a log line) keeps its own words; only the prose uses the one word. The inverse of a relation ("the node above it" for "stands under") is the same word seen from the other end, and is allowed.
+- Use articles ("a", "an", "the") where they fit.
+- Stack at most three nouns together.
+- Use simple tenses: present, past and future.
+- No em dashes. No slash between words, except "and/or".
+- Never change technical content to obey a sentence rule. If a rule and accuracy conflict, keep accuracy and keep the sentence plain.
 
 ## Knowledge Delta Rule
 

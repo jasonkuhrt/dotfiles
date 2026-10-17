@@ -22,3 +22,9 @@ Sources that informed this skill's design. Credit where it's due.
 - **[Lucid research corpus](~/projects/jasonkuhrt/lucid/)** — Full documentation-as-product research including Diataxis deep-dive, portfolio archetype matrix, anti-slop rules, doc testing/verification, agent quality techniques.
 - **[Lucid portfolio archetype matrix](~/projects/jasonkuhrt/lucid/research/2026-03-15-portfolio-archetype-matrix.md)** — Maps project archetypes (A1-A7) to minimum documentation packages. Informed README scaling by project size/type.
 - **[Lucid skill](~/projects/jasonkuhrt/lucid/skills/lucid/SKILL.md)** — Full docs generation pipeline with anti-slop rules, archetype classification, mechanical verification, and cross-context review. The README skill is a focused extraction of the README-relevant parts.
+
+## Controlled language
+
+- **ASD-STE100 Simplified Technical English** ([asd-ste100.org](https://asd-ste100.org)): the aerospace controlled-language standard. Its writing rules (sentence length, active voice, one word for one meaning) are the basis of `core.md` § Sentences. This skill does not use its controlled dictionary.
+- **[blagoySimandov/asd-ste100-writer-skill](https://github.com/blagoySimandov/asd-ste100-writer-skill)**: a skill that states STE's writing rules in short form, with a checklist. The rule list in § Sentences follows it.
+- **[mikkovihonen/stelint](https://github.com/mikkovihonen/stelint)**: an STE linter built on spaCy, with Vale-compatible output. It is alpha; use it as an optional mechanical check, never as a gate.

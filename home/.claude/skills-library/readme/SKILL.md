@@ -5,7 +5,9 @@ description: >-
   "update the readme", "readme for this project", "contributing guide",
   "write contributing", or when a new package needs its README. Also triggered
   by natural language like "document the new feature in the readme", "refresh
-  the readme", or "update the contributing guide".
+  the readme", "update the contributing guide", "rewrite the docs", "restructure
+  the docs", "the docs are scattered", "review the docs", or when a package's
+  docs span more than one file (references, concepts, a docs/ directory).
 argument-hint: "[instruction]"
 ---
 
@@ -19,6 +21,8 @@ This skill manages two companion files:
 
 * __README.md__ — onboards users (default, always included)
 * __CONTRIBUTING.md__ — onboards contributors (included when relevant)
+
+When a package's docs outgrow one README, they become a **doc set**: the README as orientation and index, `docs/references/` (one construct each), `docs/concepts/` (one cross-cutting idea each), and `contrib/` for maintainers. Read `~/.claude/skills/readme/docset.md` for when a package needs one and how its facts are placed.
 
 When the instruction mentions contributing, development setup, or contributor onboarding, include CONTRIBUTING.md. When creating a README from scratch, also create CONTRIBUTING.md if the project has more than one potential contributor. When reviewing, check both files for drift.
 
@@ -41,6 +45,10 @@ Modify an existing README. Use when a README exists and needs changes — new fe
 ### review
 
 Assess README quality without modifying it. Use when the user wants to know what's wrong, what's missing, or whether recent work is documented. Reports findings. Does not write unless the user asks.
+
+### restructure
+
+Move an existing set of docs into the doc set layout and rewrite every line, with a fact ledger so that no user-facing fact is lost. Use it when the user says the docs are scattered, too long, or need restructuring, or asks to rewrite all of a package's docs.
 
 ## Target
 
@@ -92,13 +100,15 @@ If you cannot confidently determine any dimension, ask. Do not guess.
 When the user's instruction doesn't name an operation explicitly, infer from context:
 
 * User asks about the skill itself ("help", "how does this work", "what can you do") → __help__ (takes precedence)
+* A trigger in `docset.md` § "When a package needs a doc set" holds, and the docs are not yet a doc set → __restructure__ (read that section to decide; it comes before the rules below)
 * No README exists → __create__
 * README exists + conversation has recent implementation work → __update__
-* README exists + git working tree is dirty → __update__
+* README exists + the target package's files are dirty → __update__
 * README exists + no recent context + clean git → __review__
 * User says "rewrite", "from scratch", "start over" → __create__
 * User says "refresh", "add", "fix", "change" → __update__
 * User says "review", "check", "audit", "how does it look" → __review__
+* User says "restructure", "the docs are scattered", "rewrite all the docs", or the README passes ~600 lines → __restructure__
 
 ## File Sequencing
 
@@ -113,5 +123,8 @@ After confirmation, read the operation's file from `~/.claude/skills/readme/`:
 | create | `create.md` + `core.md` + `core-readme.md` | `create.md` + `core.md` + `core-contributing.md` |
 | update | `update.md` + `core.md` + `core-readme.md` | `update.md` + `core.md` + `core-contributing.md` |
 | review | `review-readme.md` + `core.md` + `core-readme.md` | `review-contributing.md` + `core.md` + `core-contributing.md` |
+| restructure | `restructure.md` + `docset.md` + `review-docset.md` + `core.md` + `core-readme.md` + `core-contributing.md` | (included) |
+
+A review of a doc set reads `review-docset.md` + `docset.md` + `core.md`.
 
 Only the files needed for the determined operation + file combination are loaded.

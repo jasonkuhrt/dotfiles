@@ -9,6 +9,12 @@ otherwise derive the label from the selected model. The wrapper's default
 label applies only to its default model. For example, `claude-opus-5-5` is
 `Opus 5.5` and `claude-fable-5-1[1m]` is `Fable 5.1`.
 
+The public skill also defines the coordinating Codex agent's receipt policy.
+When it supplies none, a request for review alone means assess and report;
+already authorized follow-up work still continues. A skill may explicitly
+include repairing confirmed findings. Preserve Jason's task and action limits
+under either policy.
+
 ## Establish the review
 
 - Infer the target plan or change and repository from the conversation. For a
@@ -22,11 +28,11 @@ label applies only to its default model. For example, `claude-opus-5-5` is
   establish Claude CLI availability. Never silently lower the effort, switch
   models, or add a fallback. If the requested setting is unavailable, report
   that fact instead of substituting another setting.
-- Review is read-only except for its output artifacts. Do not authorize
-  implementation or local checks merely by asking for review. Pass through any
-  explicitly granted check permissions; otherwise prohibit tests, typechecks,
-  lint, builds, generators, installs, servers, database operations, commits,
-  pushes, and external communications.
+- The independent reviewer is read-only except for its output artifacts. Its
+  permissions are separate from the coordinator's receipt policy. Pass through
+  any explicitly granted reviewer check permissions; otherwise prohibit tests,
+  typechecks, lint, builds, generators, installs, servers, database operations,
+  commits, pushes, and external communications in the reviewer brief.
 
 Use a fresh artifact directory belonging to this Codex chat and review run.
 Keep it outside the reviewed source tree when practical. Create:
@@ -76,7 +82,8 @@ flag.
 
 Capture the created window, workspace, and surface refs and UUIDs; Claude
 session UUID; requested model and effort; source baseline; brief, input, and
-report paths; originating Codex thread ID when available; and eventual relay
+report paths; originating public skill and coordinator receipt policy; task
+and check limits; originating Codex thread ID when available; and eventual relay
 automation ID in `review-session.json`. Inspect only that new surface to verify
 Claude is working and actually displays the requested model and effort. Record
 requested and verified settings separately. An unavailable or unverifiable
@@ -98,14 +105,21 @@ prompt must:
 
 - Name the exact session metadata, report, and input paths and the completion
   marker.
+- Name the originating public skill and carry its concrete coordinator receipt
+  policy and the task's existing authorization and check limits. Do not copy
+  the reviewer's read-only restriction onto the coordinator's follow-up work.
 - Stay quiet while work progresses and notify only on completion, failure, or
   required user input. Inspect the review surface only to diagnose a stall or
   input request.
-- On completion, read the report, verify consequential findings against source,
-  reconcile within existing authorization, and report findings and decisions.
-- Preserve the selected model, effort, and read-only review scope. Delete the
-  follow-up when delivering the result or after terminal failure or
-  cancellation.
+- On completion, read the report, verify consequential findings against source
+  and current state, then apply the recorded receipt policy. When it includes
+  repairs, continue confirmed fixes and authorized validation and delivery in
+  the current chat; report only genuine blockers or unresolved decisions that
+  require Jason. Under that policy, a completed report triggers continuation
+  without waiting for another request to fix it.
+- Preserve the selected model, effort, and the independent reviewer's read-only
+  scope. Delete the follow-up once the completed report is received and the
+  coordinator resumes work, or after terminal failure or cancellation.
 
 Without a follow-up tool, use bounded checks in the active turn. Do not promise
 an automatic later notification that has not been arranged. Never launch
@@ -129,17 +143,23 @@ drift since the recorded baseline before adopting line-specific findings.
 
 Distinguish accepted findings, corrected or rejected findings, and user
 decisions. For an authorized planning task, revise the working plan while
-keeping its review snapshot. A request to review code alone does not authorize
-implementing fixes. Do not widen an agreed rewrite boundary or weaken a project
-rule merely to adopt the review. Settle routine details and surface
-consequential product or scope choices.
+keeping its review snapshot. Apply the originating public skill's receipt
+policy to code findings: when repairs are included or already authorized,
+continue through confirmed fixes, necessary validation within standing
+permissions, and the authorized commit/push workflow. Do not halt at the report
+because the independent reviewer was read-only. Assessment-only requests stay
+assessment-only. Do not widen an agreed rewrite boundary or weaken a project
+rule merely to adopt the review. Settle routine details and surface genuine
+blockers, consequential unresolved choices, or required authorization while
+continuing independent approved work.
 
 Use the existing Claude session for a focused follow-up only when its answer
 would resolve a material uncertainty. Do not repeat a whole review by default.
 Keep the cmux workspace and session available; do not close them as cleanup.
 
 Deliver a concise verdict, important corrections, remaining decisions, and
-links to the original report and revised artifact. State material verification
-limits. Record delivery in `review-session.json` and delete the run's follow-up.
+links to the original report and revised artifact. State the repairs completed
+and material verification limits. Record delivery in `review-session.json` and
+ensure the run's follow-up is deleted.
 Claim reviewer approval only for the exact baseline it reviewed, not a later
 revision.

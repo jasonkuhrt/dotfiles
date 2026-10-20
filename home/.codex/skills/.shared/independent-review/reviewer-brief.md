@@ -53,6 +53,10 @@ installations, servers, database operations, commits, pushes, or external
 communications. <Replace only the relevant prohibition if Jason explicitly
 authorized a check.>
 
+These restrictions apply to you as the independent reviewer. The coordinating
+Codex chat follows the originating task and skill's separate receipt policy
+after verifying your report; do not impose a new approval stop on that work.
+
 ## Relay
 
 Write the finished review to <absolute report path>. The coordinating Codex

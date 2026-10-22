@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { git, run, writeJson } from './util.mjs';
 import { inventory, reconcilePlan } from './inventory.mjs';
 import { meaningfulLocalActivity } from './activity.mjs';
-import { createPreservation, pushPreservation, snapshotWorktree, verifyPreservation } from './preserve.mjs';
+import { createPreservation, pushPreservation, refreshLargeSessionCheckpoint, resolveRemovalRoots, snapshotWorktree, verifyPreservation } from './preserve.mjs';
 import { prepareMain } from './main-checkout.mjs';
 import { dryRun } from './dry-run.mjs';
 
@@ -149,6 +149,124 @@ async function retrySnapshot(repo, worktreePath) {
   };
 }
 
+async function verifyRemoteMerge(repo, entry) {
+  const repair = entry.remoteMerge;
+  if (!repair) return;
+  if (repair.status !== 'merged') throw new Error('Remote merge repair is unfinished; finish the recorded merge before resuming cleanup.');
+  if (repair.selectedHead !== entry.selectedHead || repair.before?.head !== entry.selectedHead
+    || repair.after?.head !== repair.mergedHead
+    || repair.before.sessionDigest !== repair.after.sessionDigest
+    || repair.before.ignoredDigest !== repair.after.ignoredDigest) throw new Error('Remote merge record does not preserve the authorized source and snapshots.');
+  const parents = (await git(repo, ['show', '-s', '--format=%P', repair.mergedHead])).trim().split(' ');
+  const tree = (await git(repo, ['rev-parse', `${repair.mergedHead}^{tree}`])).trim();
+  if (JSON.stringify(parents) !== JSON.stringify([entry.selectedHead, repair.remoteHead])
+    || tree !== repair.mergedTree || (repair.expectedTree && tree !== repair.expectedTree)) throw new Error('Remote merge commit does not match the recorded parents and tree.');
+}
+
+async function verifyCodePreservation(repo, entry, runId) {
+  const code = entry.codePreservation;
+  if (!code) return;
+  const [parents, tree, message] = await Promise.all([
+    git(repo, ['show', '-s', '--format=%P', code.sourceHead]),
+    git(repo, ['rev-parse', `${code.sourceHead}^{tree}`]),
+    git(repo, ['show', '-s', '--format=%B', code.sourceHead]),
+  ]);
+  if (entry.remoteMerge || parents.trim() !== entry.selectedHead || tree.trim() !== code.sourceTree
+    || message.trimEnd() !== `chore: preserve worktree before cleanup\n\nCodex-Worktree-Cleanup: ${runId}`) {
+    throw new Error('Changed source HEAD is not the exact code preservation commit from this cleanup run.');
+  }
+}
+
+/** Merge one failed target with its own remote, keeping the original cleanup selection. */
+export async function repairRemoteDivergence(journalFile, branch, options = {}) {
+  const journal = JSON.parse(await fs.readFile(journalFile, 'utf8'));
+  if (!journal.repo || !Array.isArray(journal.records) || !Array.isArray(journal.targets)
+    || !journal.runId || !journal.finishedAt) throw new Error('Repair requires a finished cleanup journal with its original targets.');
+  const target = journal.targets.find(item => item.branch === branch);
+  const entry = journal.records.find(item => item.branch === branch);
+  if (!target || !entry || entry.path !== target.path || entry.rule !== target.rule
+    || entry.selectedHead !== target.head || entry.phase !== 'repair_required' || entry.preservation
+    || !target.path) throw new Error('Remote merge repair requires an unchanged, unpreserved failed worktree target.');
+  const fresh = await inventory(journal.repo, {
+    remote: journal.remote, ageDays: journal.ageDays,
+    readOnly: true, persistActivity: false,
+    ...(options.activityStateRoot ? { activityStateRoot: options.activityStateRoot } : {}),
+    ...(options.prEvidence !== undefined ? { prEvidence: options.prEvidence } : {}),
+  });
+  if (fresh.remoteUrl !== journal.remoteUrl) throw new Error('Remote repository identity changed since the authorized selection.');
+  const current = fresh.branches.find(item => item.branch === branch);
+  if (!current || (target.activity?.incarnation && current.activity?.incarnation !== target.activity.incarnation)
+    || JSON.stringify(await checkoutPathsForBranch(fresh.mainPath, branch)) !== JSON.stringify([target.path])) throw new Error('Remote merge repair source identity or checkout ownership changed.');
+  if (entry.remoteMerge?.status === 'merged') {
+    await verifyRemoteMerge(fresh.mainPath, entry);
+    if (JSON.stringify(await retrySnapshot(fresh.mainPath, target.path)) !== JSON.stringify(entry.remoteMerge.after)) throw new Error('Source contents changed after the recorded remote merge.');
+    return { journalFile, branch, remoteMerge: entry.remoteMerge };
+  }
+  if (entry.remoteMerge && (entry.remoteMerge.selectedHead !== entry.selectedHead
+    || entry.remoteMerge.before?.head !== entry.selectedHead)) throw new Error('Prepared remote merge does not match the original authorized source.');
+
+  if (!entry.remoteMerge) {
+    if (current.head !== entry.selectedHead) throw new Error('Branch head changed outside the recorded preservation.');
+    const before = await retrySnapshot(fresh.mainPath, target.path);
+    if (!entry.retrySnapshot || JSON.stringify(before) !== JSON.stringify(entry.retrySnapshot)) throw new Error('Source contents changed after the recorded failure.');
+    if (await git(target.path, ['status', '--porcelain=v1', '-z', '--untracked-files=all', '--', '.', ':(exclude).session'], { env: { GIT_OPTIONAL_LOCKS: '0' } })) throw new Error('Remote merge repair requires clean ordinary code.');
+    const ref = `refs/heads/${branch}`;
+    const remoteRows = (await git(fresh.mainPath, ['ls-remote', '--heads', fresh.remote, ref])).trim().split('\n').filter(Boolean);
+    if (remoteRows.length !== 1) throw new Error('Remote feature branch is missing or ambiguous.');
+    const remoteHead = remoteRows[0].split(/\s/u)[0];
+    const fetchRef = `refs/codex/wt-cleanup-merge/${randomUUID()}`;
+    await git(fresh.mainPath, ['fetch', '--no-tags', fresh.remote, `+${ref}:${fetchRef}`]);
+    if ((await git(fresh.mainPath, ['rev-parse', fetchRef])).trim() !== remoteHead) throw new Error('Remote feature changed while preparing the merge.');
+    for (const [ancestor, descendant] of [[entry.selectedHead, remoteHead], [remoteHead, entry.selectedHead]]) {
+      const relation = await run('git', ['-C', fresh.mainPath, 'merge-base', '--is-ancestor', ancestor, descendant], { allowFailure: true });
+      if (relation.code !== 1) throw new Error('Remote merge repair requires true divergent history.');
+    }
+    if (await git(fresh.mainPath, ['diff', '--name-only', entry.selectedHead, remoteHead, '--', '.session'])) throw new Error('Remote merge would change tracked session contents; preserve or resolve those bytes before repair.');
+    const projection = await run('git', ['-C', fresh.mainPath, 'merge-tree', '--write-tree', entry.selectedHead, remoteHead], { allowFailure: true });
+    if (projection.code !== 0 && projection.code !== 1) throw new Error('Could not project the remote merge.');
+    // Journal the parents before Git changes HEAD, including the recovery window after a successful merge.
+    entry.remoteMerge = {
+      status: 'prepared', selectedHead: entry.selectedHead, remoteHead, fetchRef, before,
+      // A conflict's tree comes from the explicit worktree resolution; its parents stay fixed.
+      expectedTree: projection.code === 0 ? projection.stdout.split('\n')[0] : null,
+    };
+    await writeJson(journalFile, journal);
+  }
+
+  const repair = entry.remoteMerge;
+  try {
+    if ((await git(target.path, ['symbolic-ref', '--quiet', '--short', 'HEAD'])).trim() !== branch
+      || JSON.stringify(await checkoutPathsForBranch(fresh.mainPath, branch)) !== JSON.stringify([target.path])) throw new Error('Remote merge checkout ownership changed.');
+    const head = (await git(target.path, ['rev-parse', 'HEAD'])).trim();
+    if (head === entry.selectedHead) {
+      if (JSON.stringify(await retrySnapshot(fresh.mainPath, target.path)) !== JSON.stringify(repair.before)) throw new Error('Source contents changed before the recorded remote merge.');
+      const remoteRows = (await git(fresh.mainPath, ['ls-remote', '--heads', fresh.remote, `refs/heads/${branch}`])).trim().split('\n').filter(Boolean);
+      if (remoteRows.length !== 1 || remoteRows[0].split(/\s/u)[0] !== repair.remoteHead) throw new Error('Remote feature changed before the recorded merge.');
+      if ((await git(fresh.mainPath, ['rev-parse', repair.fetchRef])).trim() !== repair.remoteHead) throw new Error('Prepared remote merge ref changed.');
+      const merged = await run('git', ['-C', target.path, 'merge', '--no-edit', '--no-overwrite-ignore', repair.fetchRef], { allowFailure: true });
+      if (merged.code !== 0) throw new Error(`Remote merge requires resolution; keep the worktree and finish its recorded merge: ${merged.stderr.trim() || merged.stdout.trim()}`);
+    }
+    const mergedHead = (await git(target.path, ['rev-parse', 'HEAD'])).trim();
+    const mergedTree = (await git(target.path, ['rev-parse', 'HEAD^{tree}'])).trim();
+    const parents = (await git(target.path, ['show', '-s', '--format=%P', 'HEAD'])).trim().split(' ');
+    if (JSON.stringify(parents) !== JSON.stringify([entry.selectedHead, repair.remoteHead])
+      || (repair.expectedTree && mergedTree !== repair.expectedTree)) throw new Error('Resolved merge does not match the recorded parents and projected tree.');
+    if (await git(target.path, ['status', '--porcelain=v1', '-z', '--untracked-files=all', '--', '.', ':(exclude).session'], { env: { GIT_OPTIONAL_LOCKS: '0' } })) throw new Error('Resolved remote merge has uncommitted ordinary code.');
+    const after = await retrySnapshot(fresh.mainPath, target.path);
+    if (after.sessionDigest !== repair.before.sessionDigest || after.ignoredDigest !== repair.before.ignoredDigest) throw new Error('Remote merge changed session or useful ignored bytes.');
+    Object.assign(repair, { status: 'merged', mergedHead, mergedTree, after });
+    entry.retrySnapshot = after;
+    delete entry.error;
+    await verifyRemoteMerge(fresh.mainPath, entry);
+    await writeJson(journalFile, journal);
+    return { journalFile, branch, remoteMerge: repair };
+  } catch (error) {
+    entry.error = error.message;
+    await writeJson(journalFile, journal);
+    throw error;
+  }
+}
+
 export async function applyPlan(plan, options = {}) {
   if (!plan?.repo || !Array.isArray(plan.branches)) throw new Error('Invalid cleanup plan.');
   if (plan.ageClock !== 'meaningful-local-activity-v1') throw new Error('Regenerate the plan with the meaningful local activity clock before applying cleanup.');
@@ -162,7 +280,9 @@ export async function applyPlan(plan, options = {}) {
     ...(options.prEvidence !== undefined ? { prEvidence: options.prEvidence } : {}),
   });
   const { targets, retained } = reconcilePlan(plan, fresh);
+  const removalRoots = await resolveRemovalRoots(targets.map(target => target.path));
   journal.targets = targets;
+  journal.removalRoots = removalRoots;
   journal.remote = fresh.remote;
   journal.remoteUrl = fresh.remoteUrl;
   journal.ageDays = fresh.ageDays;
@@ -213,6 +333,7 @@ export async function applyPlan(plan, options = {}) {
       const record = await createPreservation(fresh.mainPath, {
         branch: target.branch, path: target.path, head: target.head,
         remote: fresh.remote, remoteUrl: fresh.remoteUrl, runId,
+        removalRoots,
       });
       entry.preservation = record;
       entry.phase = 'checkpoint_created';
@@ -249,6 +370,8 @@ export async function resumeJournal(journalFile, options = {}) {
   const sourcePlan = options.plan;
   const originalTargets = journal.targets ?? sourcePlan?.branches?.filter(item => item.decision === 'remove_after_preservation');
   if (!originalTargets) throw new Error('Legacy journal requires its original --plan for guarded repair.');
+  const removalRoots = await resolveRemovalRoots([...(journal.removalRoots ?? []), ...originalTargets.map(target => target.path)]);
+  journal.removalRoots = removalRoots;
   if (sourcePlan && (sourcePlan.repo !== journal.repo || sourcePlan.capturedAt !== journal.sourceCapturedAt || sourcePlan.ageClock !== 'meaningful-local-activity-v1')) throw new Error('The supplied plan is not the journal original source plan.');
   const byBranch = new Map(originalTargets.map(item => [item.branch, item]));
   const fresh = await inventory(journal.repo, {
@@ -270,10 +393,24 @@ export async function resumeJournal(journalFile, options = {}) {
   for (const entry of retryEntries) {
     const target = byBranch.get(entry.branch);
     if (!target || entry.path !== target.path || entry.rule !== target.rule || entry.selectedHead !== target.head) throw new Error('Retry record does not match the original authorized target.');
+    await verifyRemoteMerge(fresh.mainPath, entry);
+    const current = liveByBranch.get(entry.branch);
+    if (!entry.preservation && !entry.remoteMerge && !entry.codePreservation
+      && current && current.head !== entry.selectedHead) {
+      const live = await retrySnapshot(fresh.mainPath, target.path);
+      if (!entry.retrySnapshot || JSON.stringify(live) !== JSON.stringify(entry.retrySnapshot)) {
+        throw new Error('Source contents changed after the pre-checkpoint preservation failure.');
+      }
+      const recovered = { ...entry, codePreservation: { sourceHead: live.head, sourceTree: live.codeTree } };
+      await verifyCodePreservation(fresh.mainPath, recovered, journal.runId);
+      entry.codePreservation = recovered.codePreservation;
+    }
+    await verifyCodePreservation(fresh.mainPath, entry, journal.runId);
     const record = entry.preservation;
     if (record && (record.branch !== entry.branch || record.path !== target.path
       || record.remote !== fresh.remote || record.remoteUrl !== recordedRemoteUrl
-      || record.runId !== journal.runId || (record.requestedHead ?? record.originalHead) !== entry.selectedHead)) throw new Error('Preservation record does not match the authorized target and repository.');
+      || record.runId !== journal.runId || (record.requestedHead ?? record.originalHead) !== (entry.codePreservation?.sourceHead ?? entry.remoteMerge?.mergedHead ?? entry.selectedHead))) throw new Error('Preservation record does not match the authorized target and repository.');
+    if (record) record.removalRoots = await resolveRemovalRoots([...removalRoots, ...(record.removalRoots ?? [])]);
   }
   if (retryEntries.length === 0) return { journalFile, ...journal };
   const preparation = await prepareMain(fresh.repo, {
@@ -305,11 +442,13 @@ export async function resumeJournal(journalFile, options = {}) {
       }
       if (!current) throw new Error('Retry branch disappeared before preservation could be verified.');
       if (target.activity?.incarnation && current.activity?.incarnation !== target.activity.incarnation) throw new Error('Branch incarnation changed after selection.');
-      const expectedHead = entry.preservation?.sourceHead ?? entry.selectedHead;
+      const expectedHead = entry.preservation?.sourceHead ?? entry.codePreservation?.sourceHead ?? entry.remoteMerge?.mergedHead ?? entry.selectedHead;
       if (current.head !== expectedHead) throw new Error('Branch head changed outside the recorded preservation.');
       const expected = target.path ? [target.path] : [];
       if (JSON.stringify(await checkoutPathsForBranch(fresh.mainPath, entry.branch)) !== JSON.stringify(expected)) throw new Error('Retry checkout ownership changed.');
-      if (!entry.preservation && entry.retrySnapshot) {
+      if (!entry.preservation && entry.remoteMerge
+        && JSON.stringify(await retrySnapshot(fresh.mainPath, target.path)) !== JSON.stringify(entry.remoteMerge.after)) throw new Error('Source contents changed after the recorded remote merge.');
+      if (!entry.preservation && entry.retrySnapshot && !entry.remoteMerge) {
         const live = await retrySnapshot(fresh.mainPath, target.path);
         if (target.rule === 'closed_or_merged_pr') entry.retrySnapshot = live;
         else if (JSON.stringify(live) !== JSON.stringify(entry.retrySnapshot)) {
@@ -336,7 +475,17 @@ export async function resumeJournal(journalFile, options = {}) {
         entry.preservation = await createPreservation(fresh.mainPath, {
           branch: entry.branch, path: target.path, head: current.head,
           remote: fresh.remote, remoteUrl: fresh.remoteUrl, runId: journal.runId,
+          removalRoots,
+          ...(options.chunkBytes ? { chunkBytes: options.chunkBytes } : {}),
         });
+        entry.phase = 'checkpoint_created';
+        await writeJson(journalFile, journal);
+      }
+      const refreshed = await refreshLargeSessionCheckpoint(fresh.mainPath, entry.preservation, {
+        ...(options.chunkBytes ? { chunkBytes: options.chunkBytes } : {}),
+      });
+      if (refreshed !== entry.preservation) {
+        entry.preservation = refreshed;
         entry.phase = 'checkpoint_created';
         await writeJson(journalFile, journal);
       }
@@ -350,7 +499,7 @@ export async function resumeJournal(journalFile, options = {}) {
       entry.phase = 'repair_required';
       entry.error = error.message;
       if (error.preservationRecord) entry.preservation = error.preservationRecord;
-      entry.retrySnapshot = await retrySnapshot(fresh.mainPath, target?.path).catch(() => entry.retrySnapshot);
+      if (!entry.remoteMerge || entry.preservation) entry.retrySnapshot = await retrySnapshot(fresh.mainPath, target?.path).catch(() => entry.retrySnapshot);
     }
     await writeJson(journalFile, journal);
   }

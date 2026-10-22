@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { inventory, reconcilePlan } from './inventory.mjs';
-import { cacheLike, inspectIgnoredMaterial, inspectSession } from './preserve.mjs';
+import { externalTargetRetained, inspectIgnoredMaterial, inspectOmittedSessionTarget, inspectSession, resolveRemovalRoots } from './preserve.mjs';
 import { git, run } from './util.mjs';
 
 const readEnv = { GIT_OPTIONAL_LOCKS: '0' };
@@ -271,10 +271,16 @@ async function trackedSession(repo, head) {
   return { entries, rootType };
 }
 
-async function externalSessionPreservation(repo, worktree, head, session, ordinaryPaths, ignoredSnapshot, remoteConditional) {
+async function externalSessionPreservation(repo, worktree, head, session, ordinaryPaths, ignoredSnapshot, remoteConditional, removalRoots) {
   const blockers = [];
   const annotations = [];
+  const otherRemovalRoots = await resolveRemovalRoots(removalRoots, { exclude: worktree });
   for (const link of session.externalSymlinks ?? []) {
+    const lexicalTargetRemovedElsewhere = otherRemovalRoots.some(root => link.lexicalLocations.some(location => {
+      const relative = path.relative(root, location);
+      return relative === '' || (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
+    }));
+    if (!link.outsideSession && !lexicalTargetRemovedElsewhere) continue;
     const relative = path.relative(worktree, link.resolved).split(path.sep).join('/');
     const detail = {
       path: link.path,
@@ -282,9 +288,24 @@ async function externalSessionPreservation(repo, worktree, head, session, ordina
       targetPath: relative,
       targetExists: link.targetExists,
       outsideWorktree: link.outsideWorktree,
+      lexicalResolved: link.lexicalResolved,
+      resolved: link.resolved,
     };
-    if (cacheLike(relative)) {
-      annotations.push({ ...detail, preservation: 'regenerable_cache_target_not_copied' });
+    if (externalTargetRetained(link, removalRoots)) {
+      annotations.push({ ...detail, preservation: 'external_target_retained_in_place' });
+      continue;
+    }
+    if (link.outsideWorktree || lexicalTargetRemovedElsewhere) {
+      blockers.push(blocker(
+        'session_symlink_target_unpreserved',
+        'A .session symlink target is missing or lies inside a removal root.',
+        detail,
+      ));
+      continue;
+    }
+    const omitted = await inspectOmittedSessionTarget(worktree, link);
+    if (omitted) {
+      annotations.push(omitted);
       continue;
     }
     if (!link.outsideWorktree && ignoredSnapshot.entries.some(entry => entry.path === relative)) {
@@ -319,7 +340,7 @@ async function externalSessionPreservation(repo, worktree, head, session, ordina
   return { blockers, annotations };
 }
 
-async function targetReport(fresh, target, worktrees, runId) {
+async function targetReport(fresh, target, worktrees, runId, removalRoots) {
   const actions = [];
   const blockers = [];
   const pathValue = target.path;
@@ -460,6 +481,7 @@ async function targetReport(fresh, target, worktrees, runId) {
       ordinaryPaths,
       ignored,
       remoteConditional,
+      removalRoots,
     );
     blockers.push(...external.blockers);
     externalLinkPreservation = external.annotations;
@@ -599,7 +621,8 @@ export async function dryRun(plan, options = {}) {
   const worktrees = parseWorktrees(await git(fresh.repo, ['worktree', 'list', '--porcelain', '-z'], { env: readEnv }));
   const reconciliation = reconcilePlan(plan, fresh);
   const main = await mainReport(fresh, runId, worktrees);
-  const targets = await Promise.all(reconciliation.targets.map(target => targetReport(fresh, target, worktrees, runId)));
+  const removalRoots = await resolveRemovalRoots(reconciliation.targets.map(target => target.path));
+  const targets = await Promise.all(reconciliation.targets.map(target => targetReport(fresh, target, worktrees, runId, removalRoots)));
   if (main.status === 'blocked') {
     for (const target of targets) {
       target.status = 'blocked_by_main';

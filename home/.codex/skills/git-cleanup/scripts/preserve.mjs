@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { constants as fsConstants } from 'node:fs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -8,12 +8,32 @@ import { git, run, shellQuote, writeJson } from './util.mjs';
 
 const sessionRoot = '.session';
 const preservationMarker = 'Codex-Worktree-Preservation: v1';
+const defaultChunkBytes = 64 * 1024 * 1024;
+// `.alchemy` is Alchemy's local runtime: bundles, logs and dev-service data
+// that the next `vpr dev` rewrites. Every Heartbeat stack keeps its state
+// elsewhere (`Cloudflare.state()`, or the test runtime under `node_modules`),
+// so the directory regenerates. One that holds a `state` child does not; see
+// `alchemyStateRoot`.
 const cacheRoots = new Set([
-  '.cache', '.coverage', '.dist', '.next', '.ocb-build', '.pnpm-store',
-  '.sass-cache', '.tsbuild', '.turbo', '.vite', '.vitest', '.webpack-cache',
-  'build', 'coverage', 'dist', 'node_modules', 'out-tsc', 'playwright-report',
+  '.alchemy', '.cache', '.coverage', '.dist', '.next', '.ocb-build', '.pnpm-store',
+  '.sass-cache', '.tanstack', '.tsbuild', '.turbo', '.vite', '.vitest', '.webpack-cache',
+  '.wrangler', 'build', 'coverage', 'dist', 'node_modules', 'out-tsc', 'playwright-report',
   'storybook-static', 'test-results', 'web-build',
 ]);
+// Heartbeat paths a task or the dev stack writes again on demand.
+const regenerablePaths = new Set([
+  // The Git hook dispatcher `vp hooks enable` (or `vp config`) installs.
+  '.vite-hooks/_',
+  // Next.js rewrites it on every `next dev` and `next build`.
+  'apps/public-pages/next-env.d.ts',
+  // The development stack writes the stage's addresses here on every run
+  // (Heartbeat `.gitignore`, `infra/platform/src/Development/App.ts`).
+  'apps/heartbeat/public/.well-known',
+  // Declared outputs of the `@libs/maple#install` task (`libs/maple/vite.config.ts`).
+  'libs/maple/.tmp/libchdb.so',
+  'libs/maple/.tmp/maple',
+]);
+const regenerableNames = new Set(['.DS_Store']);
 
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const sortText = values => values.sort((left, right) => Buffer.compare(Buffer.from(left), Buffer.from(right)));
@@ -40,6 +60,25 @@ async function hashFile(file) {
     await handle.close().catch(() => {});
   }
   return hash.digest('hex');
+}
+
+async function inspectSessionTarget(lexicalResolved) {
+  let targetExists = true;
+  let resolved = lexicalResolved;
+  const lexicalLocations = [lexicalResolved];
+  try {
+    await fs.lstat(lexicalResolved);
+    resolved = await fs.realpath(lexicalResolved);
+    let prefix = path.parse(lexicalResolved).root;
+    for (const part of lexicalResolved.slice(prefix.length).split(path.sep)) {
+      lexicalLocations.push(path.join(await fs.realpath(prefix), part));
+      prefix = path.join(prefix, part);
+    }
+  } catch (error) {
+    if (error.code === 'ENOENT') targetExists = false;
+    else throw error;
+  }
+  return { targetExists, resolved, lexicalResolved, lexicalLocations };
 }
 
 export async function inspectSession(worktreePath) {
@@ -86,24 +125,19 @@ export async function inspectSession(worktreePath) {
       } else if (stat.isSymbolicLink()) {
         const target = await fs.readlink(absolute);
         const lexicalResolved = path.resolve(path.dirname(absolute), target);
-        let targetExists = true;
-        let resolved = lexicalResolved;
-        try {
-          await fs.lstat(lexicalResolved);
-          resolved = await fs.realpath(lexicalResolved);
-        } catch (error) {
-          if (error.code === 'ENOENT') targetExists = false;
-          else throw error;
-        }
+        const { targetExists, resolved, lexicalLocations } = await inspectSessionTarget(lexicalResolved);
         const outsideSession = !isInside(resolved, absoluteRoot);
         const outsideWorktree = !isInside(resolved, worktreePath);
         const entry = { path: relative, type: 'symlink', target };
         entries.push(entry);
-        if (outsideSession) {
+        if (outsideSession || !isInside(lexicalResolved, absoluteRoot)) {
           externalSymlinks.push({
             path: relative,
             target,
+            lexicalResolved,
+            lexicalLocations,
             resolved,
+            outsideSession,
             outsideWorktree,
             targetExists,
           });
@@ -120,6 +154,27 @@ export async function inspectSession(worktreePath) {
   return { exists: true, digest, entries, emptyDirectories, externalSymlinks };
 }
 
+export async function resolveRemovalRoots(paths, { exclude = null } = {}) {
+  const excluded = exclude === null ? null : await fs.realpath(exclude);
+  const roots = await Promise.all(paths.filter(Boolean).map(async value => {
+    const lexical = path.resolve(value);
+    try {
+      const real = await fs.realpath(lexical);
+      return real === excluded ? [] : [lexical, real];
+    } catch (error) {
+      if (error.code === 'ENOENT') return [lexical];
+      throw error;
+    }
+  }));
+  return sortText([...new Set(roots.flat())]);
+}
+
+export function externalTargetRetained(link, removalRoots) {
+  return link.targetExists && link.outsideWorktree && Boolean(link.lexicalResolved)
+    && removalRoots.length > 0
+    && !removalRoots.some(root => link.lexicalLocations.some(location => isInside(location, root)) || isInside(link.resolved, root));
+}
+
 function parseIgnored(output) {
   return output.split('\0')
     .filter(Boolean)
@@ -130,11 +185,94 @@ function parseIgnored(output) {
 
 export function cacheLike(file) {
   const normalized = file.replace(/\/$/u, '');
-  if (normalized === '.vite-hooks/_' || normalized.startsWith('.vite-hooks/_/')) return true;
-  if (normalized === 'apps/public-pages/next-env.d.ts') return true;
   const parts = normalized.split('/');
+  if (parts.some((_, index) => regenerablePaths.has(parts.slice(0, index + 1).join('/')))) return true;
+  if (regenerableNames.has(parts.at(-1))) return true;
   if (parts.some(part => cacheRoots.has(part))) return true;
   return parts.some(part => part.startsWith('__generated_') || part.includes('.generated.source') || part.endsWith('.tsbuildinfo'));
+}
+
+/** Prove the only omitted bytes are classified caches, or were already absent. */
+// Lexically inside the worktree, allowing an alias of the worktree root
+// itself, such as macOS's /var for /private/var. A path that reaches the
+// worktree only through a symlink below its root is still outside.
+async function lexicallyInside(lexicalPath, worktreePath) {
+  if (isInside(lexicalPath, worktreePath)) return true;
+  // The alias must name the worktree's own directory entry: the same name
+  // under a parent that resolves to the worktree's real parent.
+  const realParent = await fs.realpath(path.dirname(worktreePath));
+  const name = path.basename(worktreePath);
+  for (let ancestor = lexicalPath; ; ancestor = path.dirname(ancestor)) {
+    if (path.dirname(ancestor) === ancestor) return false;
+    if (path.basename(ancestor) !== name) continue;
+    try {
+      if ((await fs.lstat(ancestor)).isSymbolicLink()) continue;
+      if (await fs.realpath(path.dirname(ancestor)) === realParent) return true;
+    } catch (error) {
+      if (error.code !== 'ENOENT' && error.code !== 'ENOTDIR') throw error;
+    }
+  }
+}
+
+export async function inspectOmittedSessionTarget(worktreePath, link) {
+  if (link.outsideWorktree) return null;
+  const relativeTarget = toGitPath(path.relative(worktreePath, link.resolved));
+  if (!(await lexicallyInside(link.lexicalResolved, worktreePath)) || relativeTarget === '') return null;
+  const detail = {
+    path: link.path, target: link.target, relativeTarget,
+    lexicalResolved: link.lexicalResolved, resolved: link.resolved,
+    targetExists: link.targetExists, outsideWorktree: false,
+  };
+  if (!link.targetExists) {
+    // A missing suffix is internal only when its nearest existing ancestor is
+    // internal too. A dangling ancestor symlink is not evidence of absence.
+    let ancestor = link.lexicalResolved;
+    const missing = [];
+    while (true) {
+      try {
+        await fs.lstat(ancestor);
+        const resolved = path.join(await fs.realpath(ancestor), ...missing);
+        if (!isInside(resolved, worktreePath)) return null;
+        return {
+          ...detail, resolved, relativeTarget: toGitPath(path.relative(worktreePath, resolved)),
+          preservation: 'internal_target_was_missing',
+        };
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+        // Existing dangling symlinks must not be treated as missing files.
+        try { await fs.lstat(ancestor); return null; }
+        catch (statError) { if (statError.code !== 'ENOENT') throw statError; }
+        missing.unshift(path.basename(ancestor));
+        const parent = path.dirname(ancestor);
+        if (parent === ancestor) return null;
+        ancestor = parent;
+      }
+    }
+  }
+  if (cacheLike(relativeTarget)) return { ...detail, preservation: 'regenerable_cache_target_not_copied' };
+
+  const directories = [];
+  const cacheRoots = [];
+  const visit = async relative => {
+    const absolute = safeChild(worktreePath, relative);
+    const stat = await fs.lstat(absolute);
+    const type = stat.isDirectory() ? 'directory' : stat.isSymbolicLink() ? 'symlink' : stat.isFile() ? 'file' : 'special';
+    if (cacheLike(relative)) {
+      cacheRoots.push({ path: relative, type });
+      return true;
+    }
+    if (!stat.isDirectory()) return false;
+    directories.push({ path: relative, mode: stat.mode & 0o777 });
+    for (const name of sortText(await fs.readdir(absolute))) {
+      if (!await visit(path.posix.join(relative, name))) return false;
+    }
+    return true;
+  };
+  if (!await visit(relativeTarget) || cacheRoots.length === 0) return null;
+  return {
+    ...detail, preservation: 'regenerable_cache_container_target_not_copied',
+    proof: { directories, cacheRoots },
+  };
 }
 
 export async function ignoredMaterial(worktreePath) {
@@ -142,11 +280,27 @@ export async function ignoredMaterial(worktreePath) {
     'status', '--porcelain=v1', '-z', '--ignored=matching', '--untracked-files=normal',
   ], { env: { GIT_OPTIONAL_LOCKS: '0' } });
   const all = sortText([...new Set(parseIgnored(output))]);
+  const stateRoots = new Set();
+  for (const file of all) if (await alchemyStateRoot(worktreePath, file)) stateRoots.add(file);
+  const regenerable = file => !stateRoots.has(file) && cacheLike(file);
   return {
     all,
-    cacheLike: all.filter(cacheLike),
-    usefulOrUnknown: all.filter(file => !cacheLike(file)),
+    cacheLike: all.filter(regenerable),
+    usefulOrUnknown: all.filter(file => !regenerable(file)),
   };
+}
+
+/** An `.alchemy` directory with a local state store, the record that destroys its stack's resources. */
+async function alchemyStateRoot(worktreePath, file) {
+  const normalized = file.replace(/\/$/u, '');
+  if (path.posix.basename(normalized) !== '.alchemy') return false;
+  try {
+    await fs.lstat(safeChild(worktreePath, path.posix.join(normalized, 'state')));
+    return true;
+  } catch (error) {
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  }
 }
 
 const fileMode = stat => Number(stat.mode & 0o7777n);
@@ -286,7 +440,7 @@ async function verifyIgnoredArchive(archive) {
   return true;
 }
 
-async function archiveIgnoredMaterial(worktreePath, branch, runId, checkpointId, snapshot, archiveRoot) {
+export async function archiveIgnoredMaterial(worktreePath, branch, runId, checkpointId, snapshot, archiveRoot) {
   if (snapshot.roots.length === 0) return null;
   const requestedRoot = path.resolve(archiveRoot ?? path.join(os.homedir(), '.codex', 'worktree-cleanup', 'ignored-archives'));
   await fs.mkdir(requestedRoot, { recursive: true, mode: 0o700 });
@@ -299,8 +453,11 @@ async function archiveIgnoredMaterial(worktreePath, branch, runId, checkpointId,
   const runDirectory = path.join(realRoot, sanitizeId(runId));
   await fs.mkdir(runDirectory, { recursive: true, mode: 0o700 });
   await fs.chmod(runDirectory, 0o700);
-  const archiveName = `${sanitizeId(branch)}-${sha256(branch).slice(0, 12)}-${checkpointId}`;
-  const finalPath = path.join(runDirectory, archiveName);
+  const archivePrefix = `${sanitizeId(branch)}-${sha256(branch).slice(0, 12)}-`;
+  // A retried preservation in the same run finds the bytes it already archived.
+  const existing = await reusableIgnoredArchive(runDirectory, archivePrefix, realWorktree, snapshot);
+  if (existing !== null) return existing;
+  const finalPath = path.join(runDirectory, `${archivePrefix}${checkpointId}`);
   try {
     await fs.lstat(finalPath);
     fail('Ignored-material archive path already exists', { path: finalPath });
@@ -347,13 +504,7 @@ async function archiveIgnoredMaterial(worktreePath, branch, runId, checkpointId,
     };
     const manifestPath = path.join(staging, 'manifest.json');
     await writeJson(manifestPath, manifest);
-    const archive = {
-      ...manifest,
-      path: finalPath,
-      payloadPath: path.join(finalPath, 'payload'),
-      manifestPath: path.join(finalPath, 'manifest.json'),
-      restoreCommand: `mkdir -p -- ${shellQuote(realWorktree)} && cp -a ${shellQuote(`${path.join(finalPath, 'payload')}/.`)} ${shellQuote(`${realWorktree}/`)}`,
-    };
+    const archive = ignoredArchiveRecord(manifest, finalPath);
     await verifyIgnoredArchive({ ...archive, path: staging, payloadPath, manifestPath });
     const live = await inspectIgnoredPaths(worktreePath, snapshot.roots);
     if (live.digest !== snapshot.digest) {
@@ -366,6 +517,36 @@ async function archiveIgnoredMaterial(worktreePath, branch, runId, checkpointId,
     await fs.rm(staging, { recursive: true, force: true }).catch(() => {});
     throw error;
   }
+}
+
+function ignoredArchiveRecord(manifest, finalPath) {
+  return {
+    ...manifest,
+    path: finalPath,
+    payloadPath: path.join(finalPath, 'payload'),
+    manifestPath: path.join(finalPath, 'manifest.json'),
+    restoreCommand: `mkdir -p -- ${shellQuote(manifest.sourceWorktree)} && cp -a ${shellQuote(`${path.join(finalPath, 'payload')}/.`)} ${shellQuote(`${manifest.sourceWorktree}/`)}`,
+  };
+}
+
+/** A finished archive of this branch in this run whose bytes are the snapshot's, verified on disk. */
+async function reusableIgnoredArchive(runDirectory, archivePrefix, realWorktree, snapshot) {
+  for (const name of sortText(await fs.readdir(runDirectory))) {
+    if (!name.startsWith(archivePrefix)) continue;
+    const finalPath = path.join(runDirectory, name);
+    let manifest;
+    try {
+      manifest = JSON.parse(await fs.readFile(path.join(finalPath, 'manifest.json'), 'utf8'));
+    } catch (error) {
+      if (error.code === 'ENOENT') continue;
+      throw error;
+    }
+    if (manifest.sourceWorktree !== realWorktree || manifest.digest !== snapshot.digest) continue;
+    const archive = ignoredArchiveRecord(manifest, finalPath);
+    await verifyIgnoredArchive(archive);
+    return archive;
+  }
+  return null;
 }
 
 async function withTemporaryIndex(repo, callback) {
@@ -440,6 +621,15 @@ function parseIndexEntries(output) {
   });
 }
 
+function parseTreeEntries(output) {
+  return output.split('\0').filter(Boolean).map(record => {
+    const separator = record.indexOf('\t');
+    if (separator < 0) fail('Malformed Git tree entry while preserving .session');
+    const [mode, type, oid] = record.slice(0, separator).split(' ');
+    return { mode, type, oid, path: record.slice(separator + 1) };
+  });
+}
+
 async function sessionTree(worktreePath, parent, exists) {
   return await withTemporaryIndex(worktreePath, async env => {
     await git(worktreePath, ['read-tree', parent], { env });
@@ -472,7 +662,26 @@ async function sessionTreeFromGit(repo, parent, source, sourceSessionTree) {
   });
 }
 
-async function verifyStagedSession(worktreePath, snapshot, entries) {
+async function sessionFileHashes(file, objectFormat) {
+  const handle = await fs.open(file, fsConstants.O_RDONLY | fsConstants.O_NOFOLLOW);
+  try {
+    const before = await handle.stat({ bigint: true });
+    if (!before.isFile()) fail('A .session file changed type while staging the checkpoint', { path: file });
+    const raw = createHash('sha256');
+    const blob = createHash(objectFormat).update(`blob ${before.size}\0`);
+    for await (const chunk of handle.createReadStream({ autoClose: false })) {
+      raw.update(chunk);
+      blob.update(chunk);
+    }
+    const after = await handle.stat({ bigint: true });
+    if (!sameStat(before, after)) fail('A .session file changed while verifying the checkpoint', { path: file });
+    return { sha256: raw.digest('hex'), oid: blob.digest('hex'), executable: Boolean(before.mode & 0o111n) };
+  } finally {
+    await handle.close().catch(() => {});
+  }
+}
+
+export async function verifyStagedSession(worktreePath, snapshot, entries) {
   const expected = snapshot.entries.filter(entry => entry.type !== 'directory');
   const byPath = new Map(entries.map(entry => [entry.path, entry]));
   if (byPath.size !== expected.length || entries.length !== expected.length) {
@@ -481,6 +690,9 @@ async function verifyStagedSession(worktreePath, snapshot, entries) {
       actual: entries.map(entry => entry.path),
     });
   }
+  if (expected.length === 0) return;
+  const objectFormat = (await git(worktreePath, ['rev-parse', '--show-object-format'])).trim();
+  if (!['sha1', 'sha256'].includes(objectFormat)) fail('Unsupported Git object format', { objectFormat });
   for (const item of expected) {
     const staged = byPath.get(item.path);
     if (staged === undefined) {
@@ -497,16 +709,22 @@ async function verifyStagedSession(worktreePath, snapshot, entries) {
       });
     }
     const absolute = path.join(worktreePath, item.path);
-    if (item.type === 'file' && await hashFile(absolute) !== item.sha256) {
-      fail('A .session file changed after the filesystem snapshot', { path: item.path });
+    let oid;
+    if (item.type === 'symlink') {
+      if (!(await fs.lstat(absolute)).isSymbolicLink()) fail('A .session symlink changed type while staging the checkpoint', { path: item.path });
+      const target = await fs.readlink(absolute, { encoding: 'buffer' });
+      if (!target.equals(Buffer.from(item.target))) fail('A .session symlink changed after the filesystem snapshot', { path: item.path });
+      oid = createHash(objectFormat).update(`blob ${target.byteLength}\0`).update(target).digest('hex');
+    } else {
+      const hashes = await sessionFileHashes(absolute, objectFormat);
+      if (hashes.sha256 !== item.sha256) fail('A .session file changed after the filesystem snapshot', { path: item.path });
+      if (hashes.executable !== item.executable) fail('A .session file mode changed after the filesystem snapshot', { path: item.path });
+      oid = hashes.oid;
     }
-    const hashed = item.type === 'symlink'
-      ? await git(worktreePath, ['hash-object', '--stdin'], { input: item.target })
-      : await git(worktreePath, ['hash-object', '--no-filters', '--', absolute]);
-    if (hashed.trim() !== staged.oid) {
+    if (oid !== staged.oid) {
       fail('A .session file changed while staging the checkpoint', {
         path: item.path,
-        expected: hashed.trim(),
+        expected: oid,
         actual: staged.oid,
       });
     }
@@ -545,19 +763,26 @@ async function remoteRef(repo, remote, ref) {
   return lines[0].split(/\s+/u)[0];
 }
 
-async function assertExternalLinksPreserved(worktreePath, sourceHead, snapshot, ignoredArchive) {
+export async function assertExternalLinksPreserved(worktreePath, sourceHead, snapshot, ignoredArchive, removalRoots) {
   const annotations = [];
+  const otherRemovalRoots = await resolveRemovalRoots(removalRoots, { exclude: worktreePath });
+  let sourcePaths;
   for (const link of snapshot.externalSymlinks) {
+    const lexicalTargetRemovedElsewhere = otherRemovalRoots.some(root => link.lexicalLocations.some(location => isInside(location, root)));
+    if (!link.outsideSession && !lexicalTargetRemovedElsewhere) continue;
     const relativeTarget = toGitPath(path.relative(worktreePath, link.resolved));
-    if (cacheLike(relativeTarget)) {
-      annotations.push({
-        path: link.path,
-        target: link.target,
-        relativeTarget,
-        targetExists: link.targetExists,
-        outsideWorktree: link.outsideWorktree,
-        preservation: 'regenerable_cache_target_not_copied',
+    if (externalTargetRetained(link, removalRoots)) {
+      annotations.push({ ...link, relativeTarget, preservation: 'external_target_retained_in_place' });
+      continue;
+    }
+    if (link.outsideWorktree || lexicalTargetRemovedElsewhere) {
+      fail('A .session symlink target is missing or lies inside a removal root', {
+        link: link.path, target: link.target, resolved: link.resolved, lexicalResolved: link.lexicalResolved,
       });
+    }
+    const omitted = await inspectOmittedSessionTarget(worktreePath, link);
+    if (omitted) {
+      annotations.push(omitted);
       continue;
     }
     if (!link.outsideWorktree && ignoredArchive?.entries.some(entry => entry.path === relativeTarget)) {
@@ -580,8 +805,12 @@ async function assertExternalLinksPreserved(worktreePath, sourceHead, snapshot, 
         outsideWorktree: link.outsideWorktree,
       });
     }
-    const result = await run('git', ['-C', worktreePath, 'cat-file', '-e', `${sourceHead}:${relativeTarget}`], { allowFailure: true });
-    if (result.code !== 0) {
+    sourcePaths ??= new Map(parseTreeEntries(await git(worktreePath, [
+      'ls-tree', '-r', '-t', '-z', '--full-tree', sourceHead,
+    ])).map(entry => [entry.path, entry]));
+    const source = sourcePaths.get(relativeTarget);
+    // Gitlinks name submodule commits; they do not preserve live checkout bytes.
+    if (source?.type !== 'blob' && source?.type !== 'tree') {
       fail('A .session symlink points to worktree data that the code commit does not preserve', {
         link: link.path,
         target: link.target,
@@ -599,7 +828,11 @@ function sanitizeId(value) {
 
 function restoreLinkRemaps(externalLinkPreservation) {
   return externalLinkPreservation
-    .filter(link => link.preservation === 'regenerable_cache_target_not_copied' && !link.outsideWorktree)
+    .filter(link => [
+      'regenerable_cache_target_not_copied',
+      'regenerable_cache_container_target_not_copied',
+      'internal_target_was_missing',
+    ].includes(link.preservation) && !link.outsideWorktree)
     .map(link => {
       const linkPath = safeRelativePath(link.path, { allowSession: true });
       const targetPath = safeRelativePath(link.relativeTarget);
@@ -608,7 +841,45 @@ function restoreLinkRemaps(externalLinkPreservation) {
     });
 }
 
-function renderRestoreBody(emptyDirectories, sessionExists, externalLinkPreservation) {
+function renderChunkRestore(sessionArchive) {
+  if (!sessionArchive) return [];
+  const lines = [];
+  for (const [index, file] of sessionArchive.files.entries()) {
+    const temporaryDirectory = `${sessionArchive.storageRoot}/.assemble-${index}`;
+    const assembled = `${temporaryDirectory}/file`;
+    const destination = safeRelativePath(file.path, { allowSession: true });
+    lines.push(`test ! -e ${shellQuote(destination)}`, `test ! -L ${shellQuote(destination)}`);
+    for (const chunk of file.chunks) {
+      lines.push(
+        `test -f ${shellQuote(chunk.path)}`, `test ! -L ${shellQuote(chunk.path)}`,
+        `test "$(git hash-object --no-filters -- ${shellQuote(chunk.path)})" = ${shellQuote(chunk.oid)}`,
+      );
+    }
+    lines.push(
+      `mkdir -m 700 -- ${shellQuote(temporaryDirectory)}`,
+      `cat -- ${file.chunks.map(chunk => shellQuote(chunk.path)).join(' ')} > ${shellQuote(assembled)}`,
+      `test "$(wc -c < ${shellQuote(assembled)})" -eq ${file.size}`,
+      `test "$(git hash-object --no-filters -- ${shellQuote(assembled)})" = ${shellQuote(file.oid)}`,
+      `chmod ${file.mode === '100755' ? '755' : '644'} ${shellQuote(assembled)}`,
+      `mkdir -p -- ${shellQuote(path.posix.dirname(destination))}`,
+      // POSIX link() uses the exact destination; unlike ln, a new directory
+      // cannot redirect the output into itself between validation and creation.
+      `link ${shellQuote(assembled)} ${shellQuote(destination)}`,
+      `test -f ${shellQuote(destination)}`, `test ! -L ${shellQuote(destination)}`,
+      `test "$(git hash-object --no-filters -- ${shellQuote(destination)})" = ${shellQuote(file.oid)}`,
+      `rm -- ${shellQuote(assembled)}`,
+      `rmdir -- ${shellQuote(temporaryDirectory)}`,
+      `${file.mode === '100755' ? 'test -x' : 'test ! -x'} ${shellQuote(destination)}`,
+    );
+  }
+  for (const file of sessionArchive.files) {
+    for (const chunk of file.chunks) lines.push(`rm -- ${shellQuote(chunk.path)}`);
+  }
+  lines.push(`rmdir -- ${shellQuote(sessionArchive.storageRoot)}`);
+  return lines;
+}
+
+function renderRestoreBody(emptyDirectories, sessionExists, externalLinkPreservation, sessionArchive) {
   const lines = [
     'test "$(git rev-parse HEAD)" = "$1"',
     'test "$(git show -s --format=%P "$1")" = "$2"',
@@ -616,6 +887,7 @@ function renderRestoreBody(emptyDirectories, sessionExists, externalLinkPreserva
     'git reset --mixed "$2"',
     'test "$(git rev-parse HEAD)" = "$2"',
   ];
+  lines.push(...renderChunkRestore(sessionArchive));
   for (const directory of emptyDirectories) lines.push(`mkdir -p -- ${shellQuote(directory)}`);
   if (sessionExists) {
     lines.push(
@@ -637,6 +909,23 @@ function renderRestoreBody(emptyDirectories, sessionExists, externalLinkPreserva
   } else {
     lines.push('test ! -e .session');
   }
+  const restoredDirectories = new Map();
+  for (const link of externalLinkPreservation) {
+    for (const directory of link.proof?.directories ?? []) {
+      const relative = safeRelativePath(directory.path);
+      if (restoredDirectories.has(relative)) continue;
+      restoredDirectories.set(relative, directory.mode);
+      lines.push(`test ! -L ${shellQuote(relative)}`, `mkdir -p -- ${shellQuote(relative)}`);
+    }
+    if (link.preservation === 'internal_target_was_missing') {
+      const relative = safeRelativePath(link.relativeTarget);
+      lines.push(`test ! -e ${shellQuote(relative)}`, `test ! -L ${shellQuote(relative)}`);
+    }
+  }
+  // Restrictive parent modes must not prevent descendant creation.
+  for (const [directory, mode] of [...restoredDirectories].sort(([left], [right]) => right.split('/').length - left.split('/').length)) {
+    lines.push(`chmod ${mode.toString(8)} ${shellQuote(`./${directory}`)}`);
+  }
   for (const link of restoreLinkRemaps(externalLinkPreservation)) {
     lines.push(
       `test -L ${shellQuote(link.linkPath)}`,
@@ -657,9 +946,9 @@ function renderRestoreBody(emptyDirectories, sessionExists, externalLinkPreserva
 
 function renderMessage({
   repo, remote, remoteUrl, branch, parent, archiveRef, localArchiveRef,
-  sessionTreeOid, sessionExists, emptyDirectories, externalLinkPreservation,
+  sessionTreeOid, sessionExists, emptyDirectories, externalLinkPreservation, sessionArchive,
 }) {
-  const body = renderRestoreBody(emptyDirectories, sessionExists, externalLinkPreservation);
+  const body = renderRestoreBody(emptyDirectories, sessionExists, externalLinkPreservation, sessionArchive);
   const expectedRemote = remoteUrl ?? '';
   const sessionTreeCheck = sessionTreeOid === null
     ? 'test "$(git ls-tree "$checkpoint" -- .session)" = ""'
@@ -716,11 +1005,16 @@ function renderMessage({
     "$branch" --execute sh -- -eu -c ${shellQuote(body)} \\
     restore "$checkpoint" "$parent" "$upstream"
 )`;
-  const regeneration = externalLinkPreservation.filter(link => link.preservation === 'regenerable_cache_target_not_copied');
+  const regeneration = externalLinkPreservation.filter(link => [
+    'regenerable_cache_target_not_copied', 'regenerable_cache_container_target_not_copied',
+  ].includes(link.preservation));
+  const missingInternal = externalLinkPreservation.filter(link => link.preservation === 'internal_target_was_missing');
+  const retainedExternal = externalLinkPreservation.filter(link => link.preservation === 'external_target_retained_in_place');
   const remapped = restoreLinkRemaps(externalLinkPreservation);
   const regenerationNote = regeneration.length === 0 ? '' : `
 Regenerable cache targets referenced by these .session symlinks are not stored in this checkpoint:
-${regeneration.map(link => `- ${JSON.stringify(link.path)} -> ${JSON.stringify(link.relativeTarget)}`).join('\n')}
+${regeneration.map(link => `- ${JSON.stringify(link.path)} -> ${JSON.stringify(link.relativeTarget)}${link.proof ? `; omitted cache roots: ${link.proof.cacheRoots.map(root => JSON.stringify(root.path)).join(', ')}` : ''}`).join('\n')}
+Cache-container proofs record the omitted classified cache roots and directory skeleton; the restore script recreates those directories without cache bytes.
 ${remapped.length === 0
     ? 'Recreate those dependency/generated-cache targets after restoring the checkout.'
     : 'The restore script remaps in-worktree links to the restored checkout; recreate those dependency/generated-cache targets there.'}
@@ -728,11 +1022,22 @@ ${remapped.length === 0
   return `Preserve .session for ${branch}
 
 This checkpoint is the session-only child of ${parent}. The ordinary feature ref remains at its parent.
+${sessionArchive ? `\nLarge session files are stored as binary chunks of at most ${sessionArchive.chunkBytes} bytes. The restore script verifies chunk and original blob IDs, restores file modes, and removes only the synthetic chunk files/directories.\n` : ''}
 
 \`\`\`sh
 ${script}
 \`\`\`
 ${regenerationNote}
+${missingInternal.length === 0 ? '' : `
+These in-worktree targets were already missing before preservation; no target bytes existed to store:
+${missingInternal.map(link => `- ${JSON.stringify(link.path)} -> ${JSON.stringify(link.relativeTarget)}`).join('\n')}
+The restore script remaps those links into the restored checkout and verifies that their targets remain absent.
+`}
+${retainedExternal.length === 0 ? '' : `
+These .session symlinks retain external targets in place; their target bytes are not stored in this checkpoint:
+${retainedExternal.map(link => `- ${JSON.stringify(link.path)} -> ${JSON.stringify(link.target)}`).join('\n')}
+Those external targets must remain available when restoring the checkout.
+`}
 
 ${preservationMarker}
 Codex-Source-Branch: ${branch}
@@ -883,6 +1188,7 @@ async function buildStablePreservation(repo, options, checkpointId) {
     branch, path: worktreePath, head: requestedHead, remote, remoteUrl, runId, ignoredArchiveRoot,
   } = options;
   const absolutePath = worktreePath === null ? null : await fs.realpath(worktreePath);
+  const removalRoots = await resolveRemovalRoots([...(options.removalRoots ?? []), worktreePath, absolutePath]);
   await git(repo, ['check-ref-format', '--branch', branch]);
   await assertBranchAndHead(repo, absolutePath, branch, requestedHead);
   const configuredRemoteUrl = normalizeRemoteUrl((await git(repo, ['remote', 'get-url', remote])).trim());
@@ -942,7 +1248,7 @@ async function buildStablePreservation(repo, options, checkpointId) {
   const snapshot = live?.sessionSnapshot ?? branchSession;
   const externalLinkPreservation = absolutePath === null
     ? []
-    : await assertExternalLinksPreserved(absolutePath, sourceHead, snapshot, ignoredArchive);
+    : await assertExternalLinksPreserved(absolutePath, sourceHead, snapshot, ignoredArchive, removalRoots);
 
   const archiveRef = `refs/heads/codex/archive/${branch}/${checkpointId}`;
   const localArchiveRef = `refs/codex/wt-cleanup/${branch}/${checkpointId}`;
@@ -978,6 +1284,7 @@ async function buildStablePreservation(repo, options, checkpointId) {
     remoteUrl: configuredRemoteUrl,
     runId,
     path: absolutePath,
+    removalRoots,
     sessionSnapshot: {
       ...snapshot,
       gitEntries: session.entries,
@@ -993,6 +1300,112 @@ async function buildStablePreservation(repo, options, checkpointId) {
   };
 }
 
+function oversizedSessionFiles(record, chunkBytes) {
+  if (!Number.isSafeInteger(chunkBytes) || chunkBytes < 1 || chunkBytes > defaultChunkBytes) throw new TypeError('chunkBytes must be between 1 and 64 MiB');
+  return record.sessionArchive ? [] : record.sessionSnapshot.entries.filter(entry => entry.type === 'file' && entry.size > chunkBytes);
+}
+
+async function chunkSessionCheckpoint(repo, record, chunkBytes) {
+  const files = oversizedSessionFiles(record, chunkBytes);
+  if (files.length === 0) return record;
+  if (record.path === null) fail('Chunk preparation requires the original live session worktree');
+  const originals = new Map(record.sessionSnapshot.gitEntries.map(entry => [entry.path, entry]));
+  const objectFormat = (await git(repo, ['rev-parse', '--show-object-format'])).trim();
+  if (!['sha1', 'sha256'].includes(objectFormat)) fail('Unsupported Git object format', { objectFormat });
+  const storageRoot = `${sessionRoot}/.codex-session-chunks-${randomUUID()}`;
+  if (record.sessionSnapshot.entries.some(entry => entry.path === storageRoot || entry.path.startsWith(`${storageRoot}/`) || storageRoot.startsWith(`${entry.path}/`))) {
+    fail('Session chunk storage collides with original session contents', { storageRoot });
+  }
+  const manifest = [];
+  for (const [fileIndex, file] of files.entries()) {
+    const original = originals.get(file.path);
+    if (!original || !['100644', '100755'].includes(original.mode)) fail('Oversized session file has no regular-file checkpoint entry', { path: file.path });
+    const handle = await fs.open(path.join(record.path, file.path), fsConstants.O_RDONLY | fsConstants.O_NOFOLLOW);
+    const chunks = [];
+    try {
+      const before = await handle.stat({ bigint: true });
+      if (!before.isFile() || Number(before.size) !== file.size || Boolean(before.mode & 0o111n) !== file.executable) fail('Oversized session file changed before chunking', { path: file.path });
+      const raw = createHash('sha256');
+      const blob = createHash(objectFormat).update(`blob ${before.size}\0`);
+      const buffer = Buffer.allocUnsafe(Math.min(chunkBytes, file.size));
+      let position = 0;
+      while (position < file.size) {
+        const size = Math.min(chunkBytes, file.size - position);
+        let filled = 0;
+        while (filled < size) {
+          const { bytesRead } = await handle.read(buffer, filled, size - filled, position + filled);
+          if (bytesRead === 0) fail('Oversized session file was truncated while chunking', { path: file.path });
+          filled += bytesRead;
+        }
+        const bytes = buffer.subarray(0, size);
+        raw.update(bytes);
+        blob.update(bytes);
+        const expected = createHash(objectFormat).update(`blob ${size}\0`).update(bytes).digest('hex');
+        const oid = (await git(repo, ['hash-object', '-w', '--stdin'], { input: bytes })).trim();
+        if (oid !== expected) fail('Git stored different session chunk bytes', { path: file.path });
+        chunks.push({ path: `${storageRoot}/${fileIndex}-${chunks.length}.bin`, oid, size });
+        position += size;
+      }
+      if (!sameStat(before, await handle.stat({ bigint: true })) || raw.digest('hex') !== file.sha256 || blob.digest('hex') !== original.oid) fail('Oversized session file changed while chunking', { path: file.path });
+    } finally {
+      await handle.close().catch(() => {});
+    }
+    manifest.push({ path: file.path, oid: original.oid, mode: original.mode, size: file.size, chunks });
+  }
+  const stored = await withTemporaryIndex(repo, async env => {
+    await git(repo, ['read-tree', record.checkpoint], { env });
+    const zero = '0'.repeat(objectFormat === 'sha1' ? 40 : 64);
+    const changes = manifest.flatMap(file => [
+      `0 ${zero}\t${file.path}\0`,
+      ...file.chunks.map(chunk => `100644 ${chunk.oid}\t${chunk.path}\0`),
+    ]).join('');
+    await git(repo, ['update-index', '-z', '--index-info'], { env, input: changes });
+    return {
+      tree: (await git(repo, ['write-tree'], { env })).trim(),
+      entries: parseIndexEntries(await git(repo, ['ls-files', '--stage', '-z', '--', sessionRoot], { env })),
+    };
+  });
+  const sessionArchive = {
+    chunkBytes, storageRoot, files: manifest, gitEntries: stored.entries,
+    tree: await sessionTreeOid(repo, stored.tree),
+  };
+  const checkpointId = `${new Date().toISOString().replace(/[-:.]/gu, '')}-chunks-${randomUUID()}`;
+  const archiveRef = `refs/heads/codex/archive/${record.branch}/${checkpointId}`;
+  const localArchiveRef = `refs/codex/wt-cleanup/${record.branch}/${checkpointId}`;
+  const message = renderMessage({
+    repo: path.resolve(repo), remote: record.remote, remoteUrl: record.remoteUrl,
+    branch: record.branch, parent: record.sourceHead, archiveRef, localArchiveRef,
+    sessionTreeOid: sessionArchive.tree, sessionExists: record.sessionSnapshot.exists,
+    emptyDirectories: record.sessionSnapshot.emptyDirectories,
+    externalLinkPreservation: record.sessionSnapshot.externalLinkPreservation ?? [], sessionArchive,
+  });
+  const checkpoint = await commitTree(repo, stored.tree, [record.sourceHead], message);
+  await git(repo, ['update-ref', localArchiveRef, checkpoint, '']);
+  const committedMessage = await git(repo, ['show', '-s', '--format=%B', checkpoint]);
+  const refreshed = {
+    ...record, checkpoint, archiveRef, localArchiveRef, sessionArchive,
+    commitMessageSha256: sha256(committedMessage),
+    previousCheckpoints: [...(record.previousCheckpoints ?? []), {
+      checkpoint: record.checkpoint, archiveRef: record.archiveRef, localArchiveRef: record.localArchiveRef,
+      commitMessageSha256: record.commitMessageSha256, tree: record.sessionSnapshot.tree,
+      reason: 'large_session_blob_chunking',
+    }],
+  };
+  await verifySessionArchive(repo, refreshed);
+  return refreshed;
+}
+
+export async function refreshLargeSessionCheckpoint(repo, record, { chunkBytes = defaultChunkBytes } = {}) {
+  if (oversizedSessionFiles(record, chunkBytes).length === 0) return record;
+  await verifyPreservation(repo, record, { allowMissingArchive: true });
+  try {
+    return await chunkSessionCheckpoint(repo, record, chunkBytes);
+  } catch (error) {
+    error.preservationRecord = record;
+    throw error;
+  }
+}
+
 export async function createPreservation(repo, {
   branch,
   path: worktreePath = null,
@@ -1001,13 +1414,16 @@ export async function createPreservation(repo, {
   remoteUrl,
   runId,
   ignoredArchiveRoot,
+  removalRoots,
+  chunkBytes = defaultChunkBytes,
 }) {
   if (!branch || !head || !runId) throw new TypeError('branch, head, and runId are required');
   const timestamp = new Date().toISOString().replace(/[-:.]/gu, '').replace('Z', 'Z');
   const checkpointId = `${timestamp}-${sanitizeId(runId)}`;
-  return await buildStablePreservation(repo, {
-    branch, path: worktreePath, head, remote, remoteUrl, runId, ignoredArchiveRoot,
+  const record = await buildStablePreservation(repo, {
+    branch, path: worktreePath, head, remote, remoteUrl, runId, ignoredArchiveRoot, removalRoots,
   }, checkpointId);
+  return await chunkSessionCheckpoint(repo, record, chunkBytes);
 }
 
 export async function pushPreservation(repo, record) {
@@ -1056,10 +1472,11 @@ export async function refreshRestoreCheckpoint(repo, record, { sourceRemoved = f
     parent: record.sourceHead,
     archiveRef,
     localArchiveRef,
-    sessionTreeOid: record.sessionSnapshot.tree,
+    sessionTreeOid: record.sessionArchive?.tree ?? record.sessionSnapshot.tree,
     sessionExists: record.sessionSnapshot.exists,
     emptyDirectories: record.sessionSnapshot.emptyDirectories,
     externalLinkPreservation: record.sessionSnapshot.externalLinkPreservation ?? [],
+    sessionArchive: record.sessionArchive,
   });
   const checkpoint = await commitTree(repo, tree, [record.sourceHead], message);
   const committedMessage = await git(repo, ['show', '-s', '--format=%B', checkpoint]);
@@ -1103,15 +1520,48 @@ function sameJson(left, right) {
 
 async function treeEntries(repo, checkpoint) {
   const output = await git(repo, ['ls-tree', '-r', '-z', checkpoint, '--', sessionRoot]);
-  return output.split('\0').filter(Boolean).map(record => {
-    const separator = record.indexOf('\t');
-    if (separator < 0) fail('Malformed .session tree entry while verifying preservation');
-    const [mode, type, oid] = record.slice(0, separator).split(' ');
-    return { mode, type, oid, path: record.slice(separator + 1) };
-  }).map(({ mode, oid, path: file }) => ({ mode, oid, stage: 0, path: file }));
+  return parseTreeEntries(output).map(({ mode, oid, path: file }) => ({ mode, oid, stage: 0, path: file }));
 }
 
-export async function verifyPreservation(repo, record, { sourceRemoved = false } = {}) {
+async function verifySessionArchive(repo, record) {
+  const archive = record.sessionArchive;
+  if (!archive) return;
+  oversizedSessionFiles(record, archive.chunkBytes);
+  const storageRoot = safeRelativePath(archive.storageRoot, { allowSession: true });
+  if (path.posix.dirname(storageRoot) !== sessionRoot || !path.posix.basename(storageRoot).startsWith('.codex-session-chunks-') || archive.files.length === 0) fail('Invalid session chunk storage root');
+  if (record.sessionSnapshot.entries.some(entry => entry.path === storageRoot || entry.path.startsWith(`${storageRoot}/`) || storageRoot.startsWith(`${entry.path}/`))) fail('Session chunk storage collides with original session contents');
+  const originals = new Map(record.sessionSnapshot.gitEntries.map(entry => [entry.path, entry]));
+  const sourceFiles = new Map(record.sessionSnapshot.entries.filter(entry => entry.type === 'file').map(entry => [entry.path, entry]));
+  const stored = new Map(originals);
+  const seen = new Set();
+  const chunks = [];
+  for (const [fileIndex, file] of archive.files.entries()) {
+    const original = originals.get(file.path);
+    const source = sourceFiles.get(file.path);
+    if (seen.has(file.path) || !original || !source || !['100644', '100755'].includes(file.mode)
+      || file.oid !== original.oid || file.mode !== original.mode || file.size !== source.size
+      || file.size <= archive.chunkBytes || file.chunks.length < 2) fail('Chunk manifest does not match the original session snapshot', { path: file.path });
+    seen.add(file.path);
+    stored.delete(file.path);
+    let size = 0;
+    for (const [chunkIndex, chunk] of file.chunks.entries()) {
+      if (chunk.path !== `${storageRoot}/${fileIndex}-${chunkIndex}.bin`
+        || !Number.isSafeInteger(chunk.size) || chunk.size < 1 || chunk.size > archive.chunkBytes
+        || (chunkIndex < file.chunks.length - 1 && chunk.size !== archive.chunkBytes)) fail('Invalid session chunk manifest entry', { path: chunk.path });
+      size += chunk.size;
+      chunks.push(chunk);
+      stored.set(chunk.path, { mode: '100644', oid: chunk.oid, stage: 0, path: chunk.path });
+    }
+    if (size !== file.size) fail('Session chunk sizes do not reconstruct the original file', { path: file.path });
+  }
+  const expected = [...stored.values()].sort((left, right) => Buffer.compare(Buffer.from(left.path), Buffer.from(right.path)));
+  if (!sameJson(expected, archive.gitEntries)) fail('Stored session entries do not match the chunk manifest');
+  const output = await git(repo, ['cat-file', '--batch-check=%(objectname) %(objecttype) %(objectsize)'], { input: chunks.map(chunk => chunk.oid).join('\n') + '\n' });
+  const objects = output.trim().split('\n');
+  if (objects.length !== chunks.length || objects.some((line, index) => line !== `${chunks[index].oid} blob ${chunks[index].size}`)) fail('A session chunk object is missing or has changed');
+}
+
+export async function verifyPreservation(repo, record, { sourceRemoved = false, allowMissingArchive = false } = {}) {
   if (record.ignoredArchive !== null && record.ignoredArchive !== undefined) {
     await verifyIgnoredArchive(record.ignoredArchive);
   }
@@ -1133,7 +1583,7 @@ export async function verifyPreservation(repo, record, { sourceRemoved = false }
   const featureRemote = await remoteRef(repo, record.remote, `refs/heads/${record.branch}`);
   if (featureRemote !== record.sourceHead) fail('Remote feature ref is not the preserved source head', { expected: record.sourceHead, actual: featureRemote });
   const archiveRemote = await remoteRef(repo, record.remote, record.archiveRef);
-  if (archiveRemote !== record.checkpoint) fail('Remote archive ref is not the checkpoint', { expected: record.checkpoint, actual: archiveRemote });
+  if (archiveRemote !== record.checkpoint && !(allowMissingArchive && archiveRemote === null)) fail('Remote archive ref is not the checkpoint', { expected: record.checkpoint, actual: archiveRemote });
 
   const parents = (await git(repo, ['show', '-s', '--format=%P', record.checkpoint])).trim();
   if (parents !== record.sourceHead) fail('Checkpoint no longer has exactly the recorded source parent', { parents });
@@ -1146,15 +1596,21 @@ export async function verifyPreservation(repo, record, { sourceRemoved = false }
   ], { allowFailure: true });
   if (outsideSession.code !== 0) fail('Checkpoint changes files outside .session');
   const savedEntries = await treeEntries(repo, record.checkpoint);
-  if (!sameJson(savedEntries, record.sessionSnapshot.gitEntries)) {
-    fail('Checkpoint .session tree differs from the staged snapshot', { expected: record.sessionSnapshot.gitEntries, actual: savedEntries });
+  const archiveEntries = record.sessionArchive?.gitEntries ?? record.sessionSnapshot.gitEntries;
+  if (!sameJson(savedEntries, archiveEntries)) {
+    fail('Checkpoint .session tree differs from the staged snapshot', { expected: archiveEntries, actual: savedEntries });
   }
   const savedSessionTree = await sessionTreeOid(repo, `${record.checkpoint}^{tree}`);
-  if (savedSessionTree !== record.sessionSnapshot.tree) {
+  const archiveTree = record.sessionArchive?.tree ?? record.sessionSnapshot.tree;
+  if (savedSessionTree !== archiveTree) {
     fail('Checkpoint .session tree object changed', {
-      expected: record.sessionSnapshot.tree,
+      expected: archiveTree,
       actual: savedSessionTree,
     });
+  }
+  await verifySessionArchive(repo, record);
+  for (const previous of record.previousCheckpoints ?? []) {
+    if (await localRef(repo, previous.localArchiveRef) !== previous.checkpoint) fail('Previous session recovery ref changed', { ref: previous.localArchiveRef });
   }
 
   if (record.path !== null && !sourceRemoved) {
@@ -1181,6 +1637,21 @@ export async function verifyPreservation(repo, record, { sourceRemoved = false }
       }
     } else if (live.ignoredMaterial.usefulOrUnknown.length) {
       fail('Unpreserved ignored material appeared after preservation', { paths: live.ignoredMaterial.usefulOrUnknown });
+    }
+  }
+  const removalRoots = await resolveRemovalRoots([...(record.removalRoots ?? []), record.path]);
+  for (const saved of record.sessionSnapshot.externalLinkPreservation ?? []) {
+    if (!sourceRemoved && [
+      'regenerable_cache_container_target_not_copied', 'internal_target_was_missing',
+    ].includes(saved.preservation)) {
+      const link = { ...saved, ...await inspectSessionTarget(saved.lexicalResolved) };
+      const observed = await inspectOmittedSessionTarget(record.path, link);
+      if (!sameJson(observed, saved)) fail('Omitted internal .session target changed after preservation', { path: saved.path });
+    }
+    if (saved.preservation !== 'external_target_retained_in_place') continue;
+    const link = { ...saved, ...await inspectSessionTarget(saved.lexicalResolved) };
+    if (!externalTargetRetained(link, removalRoots) || link.resolved !== saved.resolved) {
+      fail('Retained external .session symlink target changed or is inside a removal root', { path: saved.path });
     }
   }
   return true;

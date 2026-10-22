@@ -62,6 +62,11 @@ else
     warn "File default app sync failed"
 fi
 
+info "Configuring accessibility..."
+# Cuts WindowServer's compositing cost. Writing this domain
+# needs the terminal to have Full Disk Access.
+set_default "com.apple.universalaccess" "reduceTransparency" "-bool" "true" "Reduce transparency" || warn "Reduce transparency not set (grant the terminal Full Disk Access)"
+
 info "Checking iCloud Desktop & Documents..."
 icloud_desktop=$(defaults read com.apple.finder FXICloudDriveDesktop 2>/dev/null || echo "0")
 icloud_docs=$(defaults read com.apple.finder FXICloudDriveDocuments 2>/dev/null || echo "0")

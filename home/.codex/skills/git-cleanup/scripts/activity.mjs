@@ -14,7 +14,7 @@ const staleLockMs = 30_000;
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const latestIso = values => {
   const epochs = values.filter(Boolean).map(value => Date.parse(value)).filter(Number.isFinite);
-  return epochs.length === 0 ? null : new Date(Math.max(...epochs)).toISOString();
+  return epochs.length === 0 ? null : new Date(epochs.reduce((a, b) => (b > a ? b : a))).toISOString();
 };
 
 const capturedDate = value => {

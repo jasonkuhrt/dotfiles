@@ -22,6 +22,13 @@ if ! grep -q "pam_tid.so" /etc/pam.d/sudo_local 2>/dev/null; then
     needed=true
 fi
 
+# Spotlight indexing
+spotlight_on=false
+if mdutil -s /System/Volumes/Data 2>/dev/null | grep -q 'Indexing enabled'; then
+    spotlight_on=true
+    needed=true
+fi
+
 # Fish as default shell
 fish_path="/opt/homebrew/bin/fish"
 if [ -x "$fish_path" ]; then
@@ -39,6 +46,7 @@ if $needed; then
     printf "${BOLD}Next:${RESET} Run ${CYAN}just sudo-setup${RESET} for:\n"
     [ "$current_sleep" != "10" ] && printf "  ${DIM}* Power management (display sleep)${RESET}\n"
     grep -q "pam_tid.so" /etc/pam.d/sudo_local 2>/dev/null || printf "  ${DIM}* Touch ID for sudo${RESET}\n"
+    $spotlight_on && printf "  ${DIM}* Spotlight indexing off${RESET}\n"
     if [ -x "$fish_path" ]; then
         grep -q "$fish_path" /etc/shells 2>/dev/null || printf "  ${DIM}* Add Fish to /etc/shells${RESET}\n"
         [ "$configured_shell" != "$fish_path" ] && printf "  ${DIM}* Set Fish as default shell${RESET}\n"

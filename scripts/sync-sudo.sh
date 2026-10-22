@@ -43,6 +43,13 @@ if [ "$(id -u)" -ne 0 ]; then
         printf "  ${CYAN}echo 'auth       sufficient     pam_tid.so' | sudo tee /etc/pam.d/sudo_local${RESET}\n"
     fi
 
+    # Spotlight indexing
+    if mdutil -s /System/Volumes/Data 2>/dev/null | grep -q 'Indexing enabled'; then
+        printf "  ${CYAN}sudo mdutil -a -i off${RESET}\n"
+    else
+        printf "  ${SKIP} ${DIM}Spotlight indexing already off${RESET}\n"
+    fi
+
     # Fish shell setup
     FISH_PATH="/opt/homebrew/bin/fish"
     if [ -x "$FISH_PATH" ]; then
@@ -103,6 +110,26 @@ if [ -f "$SUDO_LOCAL" ] && grep -q "pam_tid.so" "$SUDO_LOCAL" 2>/dev/null; then
 else
     echo "auth       sufficient     pam_tid.so" > "$SUDO_LOCAL"
     task "Touch ID for sudo enabled"
+fi
+
+# ─────────────────────────────────────────────────────────────
+# Spotlight
+# ─────────────────────────────────────────────────────────────
+# Indexing off on every volume. The Data volume refuses with
+# error -1 unless the terminal has Full Disk Access; then use
+# System Settings → Spotlight → Search Privacy instead.
+
+printf "\n${BOLD}Spotlight${RESET}\n"
+
+if mdutil -s /System/Volumes/Data 2>/dev/null | grep -q 'Indexing enabled'; then
+    mdutil -a -i off >/dev/null || true
+    if mdutil -s /System/Volumes/Data 2>/dev/null | grep -q 'Indexing enabled'; then
+        warn "Spotlight still indexing Data volume (grant the terminal Full Disk Access)"
+    else
+        task "Spotlight indexing off"
+    fi
+else
+    skip "Spotlight indexing off"
 fi
 
 # ─────────────────────────────────────────────────────────────

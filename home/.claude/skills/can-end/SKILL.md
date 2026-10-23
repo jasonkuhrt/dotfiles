@@ -24,7 +24,7 @@ Check every row with a tool this turn. Memory of what happened earlier in the ch
 | Asks | an ask from the user is neither done nor deferred by the user | reread the user's messages since the session began (and the compaction summary, if there is one) |
 | Running work | a subagent, side session, Astra or codex run, background shell task, monitor, cron or wakeup is still going | `ListAgents`, linked sessions (`list_sessions` with `linked: true`), `pgrep -fl codex`, task notifications not yet received, `CronList` |
 | PRs | a PR this session owns is open, and landing it needs this session (no auto-merge, or a failure Auto-fix would wake this session to fix) | `gh pr view <n> --json state,autoMergeRequest,mergeStateStatus`, `get_status` |
-| Git | a worktree this session touched has uncommitted, unpushed or stashed work of its own, beyond what the post-PR-merge procedure classifies as noise | `git status --short`, `git log @{u}..`, `git stash list` in each |
+| Git | a worktree this session touched has uncommitted, unpushed or stashed work of its own, beyond what the repo's `post-pr-merge` skill classifies as noise | `git status --short`, `git log @{u}..`, `git stash list` in each |
 | Worktrees | a worktree this session created or runs in is still on disk, or its local or remote branch still exists, after its PR merged | `git worktree list`, `git branch --list`, `git ls-remote --heads origin`, `gh pr view` of each branch |
 | Processes | a dev server, engine or port this session started is still running | `lsof -nP -iTCP -sTCP:LISTEN`, the process list |
 | Loose ends | a finding, bug or follow-up raised in the chat is neither done nor filed | reread the chat; search the tracker for it |
@@ -39,7 +39,7 @@ When no row blocks, do these, then report:
 1. **File loose ends** in the project's tracker, following its issue rules. Only findings and follow-ups nobody asked to have done now go here, never an undone ask.
 2. **Stop processes** this session started that nothing else uses.
 3. **Write the final state** into the session's record, if it has one.
-4. **Clean worktrees and branches.** A yes that leaves the user a worktree or a branch to delete fails. For each worktree this session created or runs in whose PR merged, follow the post-PR-merge procedure: the repo's `.claude/procedures/post-pr-merge.md` when it exists, else `~/.claude/procedures/post-pr-merge.md`. Do the worktree you run in last. A worktree the procedure keeps, for work in it or an unmerged PR, goes under the Git row.
+4. **Clean worktrees and branches.** A yes that leaves the user a worktree or a branch to delete fails. For each worktree this session created or runs in whose PR merged, follow the protocol the repo's `post-pr-merge` skill gives the current developer. Do the worktree you run in last. A worktree it keeps, for work in it or an unmerged PR, goes under the Git row; a repo without the skill leaves its worktrees for the Git row too, with that reason.
 
 When a row blocks, do every end step that doesn't depend on the blocker, and keep working on what is yours.
 

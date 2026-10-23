@@ -15,13 +15,13 @@ Pipeline:
 
 1. `pr-to-ready`
 2. `gh-ci`, then remote merge on green
-3. the post-PR-merge procedure: the repo's `.claude/procedures/post-pr-merge.md` when it exists, else `~/.claude/procedures/post-pr-merge.md`
+3. the repo's `post-pr-merge` skill: the protocol it gives the current developer. A repo without the skill gets no cleanup step; report that.
 
-First, read the pipeline's skills and the procedure so you understand the pipeline.
+First, read the pipeline's skills so you understand the pipeline.
 Then determine your actual current position in that pipeline.
 Then jump to the step that encompasses that position and carry it out faithfully.
 
-Do not duplicate the operational knowledge already encoded in `pr-to-ready`, `gh-ci`, or the procedure. This skill only routes between them and performs the merge step between ready PR and merged PR.
+Do not duplicate the operational knowledge already encoded in `pr-to-ready`, `gh-ci`, or `post-pr-merge`. This skill only routes between them and performs the merge step between ready PR and merged PR.
 
 Invoking this skill on an open PR is explicit merge intent. Do not ask for another merge confirmation unless the repository state is ambiguous or the PR cannot be resolved.
 
@@ -33,7 +33,7 @@ Read these before acting:
 
 - `pr-to-ready`
 - `gh-ci`
-- the post-PR-merge procedure
+- the repo's `post-pr-merge` skill
 
 ### 2. Capture Context
 
@@ -51,7 +51,7 @@ Inspect enough git/GitHub state to choose exactly one position:
 
 - If the current worktree/branch is not yet a ready PR, run `pr-to-ready` from this context and follow it faithfully.
 - If there is an open, ready PR, run `gh-ci`; when it is green for the current head SHA, merge it remotely.
-- If the PR is already merged, follow the post-PR-merge procedure (the repo's `.claude/procedures/post-pr-merge.md` when it exists, else `~/.claude/procedures/post-pr-merge.md`) from the original invocation worktree context.
+- If the PR is already merged, follow the repo's `post-pr-merge` skill (the protocol it gives the current developer) from the original invocation worktree context.
 - If the PR is closed but not merged, or the position is ambiguous, stop and report the blocker.
 
 ### 4. Merge On Green
@@ -132,7 +132,7 @@ Important multi-worktree rule:
 - `--delete-branch` is not remote-only; it can try to switch the current worktree and delete a local branch.
 - In a PR worktree, that can fail after the remote merge because Git cannot delete the checked-out branch or check out a base branch already used by another worktree.
 
-Leave every branch deletion to the post-PR-merge procedure, which removes the PR worktree and deletes the branch locally and on the remote; do not bundle any of it into the merge command.
+Leave every branch deletion to the repo's `post-pr-merge` skill; do not bundle any of it into the merge command.
 
 ### 5. Verify Merge
 
@@ -146,7 +146,7 @@ Proceed only when `state` is `MERGED`.
 
 ### 6. Clean Up After The Merge
 
-Follow the post-PR-merge procedure (the repo's `.claude/procedures/post-pr-merge.md` when it exists, else `~/.claude/procedures/post-pr-merge.md`) from the original invocation worktree context captured in step 2, exactly as written; do not inline its rules here.
+Follow the repo's `post-pr-merge` skill (the protocol it gives the current developer) from the original invocation worktree context captured in step 2, exactly as written; do not inline its rules here.
 
 ## Stop Conditions
 
@@ -158,7 +158,7 @@ Stop and report clearly if:
 - any required check is red
 - required PR-control E2E checks fail
 - the PR head SHA changes after checks were observed green
-- the cleanup worktree holds work, not just noise, as the post-PR-merge procedure classifies it
+- the cleanup worktree holds work, as the repo's `post-pr-merge` skill classifies it
 
 ## Output
 
@@ -168,4 +168,4 @@ Keep the closeout short:
 - Greptile outcome.
 - Remote check and PR-control E2E outcome.
 - Merge commit.
-- The post-PR-merge procedure's report: base sync, noise deleted, worktree removal, and local and remote branch deletion.
+- The `post-pr-merge` skill's report, or that the repo has none.

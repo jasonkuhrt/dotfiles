@@ -1,4 +1,4 @@
 interface:
   display_name: "PR To Landed"
   short_description: "Ready, merged on green, and cleaned up"
-  default_prompt: "Use $pr-to-landed to run $pr-to-ready, merge on green through $gh-ci, then follow the post-PR-merge procedure to remove the worktree and delete the branch locally and on the remote."
+  default_prompt: "Use $pr-to-landed to run $pr-to-ready, merge on green through $gh-ci, then follow the repo's $post-pr-merge skill for the current developer's cleanup."

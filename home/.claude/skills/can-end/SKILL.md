@@ -25,7 +25,7 @@ Check every row with a tool this turn. Memory of what happened earlier in the ch
 | Running work | a subagent, side session, Astra or codex run, background shell task, monitor, cron or wakeup is still going | `ListAgents`, linked sessions (`list_sessions` with `linked: true`), `pgrep -fl codex`, task notifications not yet received, `CronList` |
 | PRs | a PR this session owns is open, and landing it needs this session (no auto-merge, or a failure Auto-fix would wake this session to fix) | `gh pr view <n> --json state,autoMergeRequest,mergeStateStatus`, `get_status` |
 | Git | a worktree this session touched has uncommitted, unpushed or stashed work of its own | `git status --short`, `git log @{u}..`, `git stash list` in each |
-| Worktrees | a worktree this session created is still on disk after its branch merged | `git worktree list`, `gh pr view` of its branch |
+| Worktrees | a worktree this session created or runs in is still on disk, or its local or remote branch still exists, after its PR merged | `git worktree list`, `git branch --list`, `git ls-remote --heads origin`, `gh pr view` of each branch |
 | Processes | a dev server, engine or port this session started is still running | `lsof -nP -iTCP -sTCP:LISTEN`, the process list |
 | Loose ends | a finding, bug or follow-up raised in the chat is neither done nor filed | reread the chat; search the tracker for it |
 | Record | the session's notes or record file lacks the final state | read the file |
@@ -37,9 +37,14 @@ Only the first four rows can block the end. Worktrees, processes, loose ends and
 When no row blocks, do these, then report:
 
 1. **File loose ends** in the project's tracker, following its issue rules. Only findings and follow-ups nobody asked to have done now go here, never an undone ask.
-2. **Clean worktrees** whose branch merged and whose tree is clean, through the repo's own cleanup skill (`land-merged`, `git-cleanup`) when there is one. Leave a dirty or unmerged one on disk and report it.
-3. **Stop processes** this session started that nothing else uses.
-4. **Write the final state** into the session's record, if it has one.
+2. **Stop processes** this session started that nothing else uses.
+3. **Write the final state** into the session's record, if it has one.
+4. **Clean worktrees and branches.** A yes that leaves the user a worktree or a branch to delete fails. For each worktree this session created, and the one it runs in, whose PR merged and whose tree holds nothing unpreserved:
+   - remove the worktree and delete its local branch, through the repo's cleanup skill (`land-merged`) when there is one; a squash-merged branch needs `git branch -D`;
+   - check the remote for the branch itself (`git ls-remote --heads origin <branch>`), never a repo's delete-on-merge setting, and delete it when it is there (`git push origin --delete <branch>`);
+   - do the worktree this session runs in last, from the primary checkout (`git -C <primary> worktree remove <path>`, then the branch), as the turn's last command: the session's working directory goes with it.
+
+   A dirty or unmerged worktree stays on disk: report it under the Git row, with its files or its PR.
 
 When a row blocks, do every end step that doesn't depend on the blocker, and keep working on what is yours.
 
@@ -48,7 +53,7 @@ When a row blocks, do every end step that doesn't depend on the blocker, and kee
 1. **Verdict, first sentence:** "Yes, you can close it." or "Not yet: <the blockers, in plain words>."
 2. **Not yet:** what closing now would lose, for each blocker, and what happens next (who acts, and the signal that ends it).
 3. **The audit** as a table: row, state, how it was checked.
-4. **What the end steps did:** issues filed, worktrees removed, processes stopped. List issues as a table with at least the id (linked) and the title. A bare run of keys ("Filed: HEA-1, HEA-2") fails.
+4. **What the end steps did:** issues filed, processes stopped, worktrees removed, branches deleted (local and remote). List issues as a table with at least the id (linked) and the title. A bare run of keys ("Filed: HEA-1, HEA-2") fails.
 
 Closing the session is the user's act. Never archive, stop or close this session yourself.
 
@@ -62,3 +67,5 @@ Closing the session is the user's act. Never archive, stop or close this session
 | "Nothing is running as far as I remember." | Check with the tools this turn. Background tasks and side sessions outlive your memory of them. |
 | "Auto-merge is on, so the PR is fine." | Only if nothing else needs this session: a failing check that Auto-fix would wake this session for still needs it. |
 | "I'll ask whether to clean up the merged worktree." | A merged, clean worktree this session created is an end step: clean it. |
+| "The worktree is merged, so the user can delete it whenever." | Then the session wasn't endable. Remove the worktree and its branches before saying yes. |
+| "I can't remove the worktree I'm running in." | Remove it last, from the primary checkout. |

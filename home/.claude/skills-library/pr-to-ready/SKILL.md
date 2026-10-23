@@ -1,80 +1,38 @@
 ---
-name: land-pr
-description: Prepare a branch or GitHub PR to an open, ready PR through authorized verification, land-worktree, PR creation and readiness, existing Greptile feedback, an independent subagent review, and current-head PR checks including required E2E. Use when the user says to land to PR, prepare a PR, create or ready the PR, undraft and handle existing Greptile feedback, finish review-comment closeout, run a subagent/code-review pass during PR landing, handle PR E2E mode, or get the PR green without merging.
+name: pr-to-ready
+description: Use when the user wants a PR taken to ready without merging, says "pr to ready", "get the PR green", "ready the PR", "undraft and handle Greptile", "finish review-comment closeout", or asks for a subagent review or PR E2E as part of readying a PR. Also composed by pr-to-landed.
 ---
 
-# Land PR
+# PR To Ready
 
 ## Contract
 
-This skill prepares a worktree/branch to an open GitHub PR that is ready for review or merge. It creates the PR when needed. It never merges.
+Takes the work to an open PR that is ready for review or merge. It creates the PR when needed, through `pr-to-draft`. It never merges.
 
-Target end state: an open, non-draft PR with review feedback handled and required remote gates green or explicitly reported.
+Target end state: an open, non-draft PR with review feedback handled and required remote gates green, or explicitly reported.
 
-Type role: PR-ready segment. A human can merge after this and then run `land-merged`; `land-complete` automates that pipe as `land-pr` -> remote merge on green -> `land-merged`.
+Type role: second segment of the PR family. It composes `pr-to-draft`; `pr-to-landed` composes it.
 
 Core flow:
 
-1. Run relevant verification permitted by the user's policy and repository gates, then run `land-worktree` to resolve task context, normalize the current worktree, create/attach a branch when needed, commit intended dirty work, and push the branch.
-2. Resolve or create the PR from the prepared branch unless the user gave a PR URL or number.
-3. Move the PR out of draft.
-4. Scan for existing Greptile review feedback. Do not wait for Greptile to appear or settle.
-5. Use the PR-review-comments rule to address actionable Greptile feedback only when it already exists.
-6. Run one independent subagent review iteration against the current PR diff, then address actionable findings.
-7. Verify fixes under the active check policy, batch them, push once, and watch the requested remote checks at a quiet cadence.
-8. If the PR requires E2E, follow the repository's E2E submission and continuation contract, then wait for its current-head checks.
-9. Report the PR URL, branch, review outcome, remote check state, and any intentionally open blockers.
+1. Run `pr-to-draft`: local checks green, work committed and pushed, a draft PR open.
+2. Move the PR out of draft.
+3. Scan for existing Greptile review feedback. Do not wait for Greptile to appear or settle.
+4. Address actionable Greptile feedback, only when it already exists.
+5. Run one independent subagent review iteration against the current PR diff, then address actionable findings.
+6. Verify fixes under the active check policy, batch them, push once, and watch the requested remote checks at a quiet cadence.
+7. If the PR requires E2E, follow the repository's E2E submission and continuation contract, then wait for its current-head checks.
+8. Report the PR URL, branch, review outcome, remote check state, and any intentionally open blockers.
 
 ## Workflow
 
-### 1. Verify, Then Prepare Worktree
+### 1. Take It To Draft
 
-Run permitted local verification before invoking `land-worktree`, because its push step can start CI. Follow the user's active check policy and repository agent gates; this skill does not override them. Use CI for required checks that are gated or only available remotely.
+Load and follow the `pr-to-draft` skill from the current skills list, exactly as written from the invocation context. Do not duplicate, partially reimplement, or reinterpret its task-context, local-check, detached-head, branch-creation, commit, push, or PR-creation workflow here. Work that `pr-to-draft-top-down` left unchecked gets its local checks here, through `pr-to-draft`; replace the PR body's note that no local check ran with the checks that did.
 
-Prefer the smallest local gate that completely covers the current delta:
+Use the task context `pr-to-draft` resolved for PR title and body decisions.
 
-- Use a repo-defined affected or targeted check when available.
-- Otherwise select the relevant package/project tests, types, lint, formatting, or build checks from the diff and repository instructions.
-- Expand to broad local checks only when the change breadth or repository landing policy warrants them.
-- Keep E2E under the explicit policy in section 8; do not add local E2E by default.
-
-Fix known failures before continuing, using permitted local feedback or CI when the proving check is gated or only available remotely.
-
-Load and follow the `land-worktree` skill from the current skills list.
-
-Run `land-worktree` exactly as written from the invocation context. Do not duplicate, partially reimplement, or reinterpret its task-context, detached-head, branch-creation, dirty-work commit, or push workflow here.
-
-Use the task context resolved by `land-worktree` for PR title/body decisions. Do not let `gh pr create --fill` override a clear chat-derived Linear issue.
-
-### 2. Resolve Or Create The PR
-
-Use local git plus GitHub CLI:
-
-```bash
-gh pr view --json number,url,isDraft,headRefName,headRefOid
-```
-
-If the user gave a PR URL or number, use that PR. Otherwise resolve the PR from the current branch.
-
-If no current-branch PR exists, create one for the current branch instead of asking for a PR number. Prefer explicit `--title` and `--body` from the resolved task context when a chat-derived issue or PR scope exists. Use `gh pr create --fill` only when the resolved task context and commit history point to the same title/body:
-
-```bash
-gh pr create --fill
-```
-
-After creating the PR, re-read it:
-
-```bash
-gh pr view --json number,url,isDraft,headRefName,headRefOid
-```
-
-After creating or resolving a PR, verify that its title/body match the resolved task context. If they do not and the chat context is unambiguous, update the metadata before continuing:
-
-```bash
-gh pr edit <number> --title "<context-derived title>" --body-file <body-file>
-```
-
-### 3. Move Out Of Draft
+### 2. Move Out Of Draft
 
 If `isDraft` is true:
 
@@ -84,7 +42,7 @@ gh pr ready <number>
 
 If it is already ready, treat this step as complete and say so.
 
-### 4. Scan Greptile
+### 3. Scan Greptile
 
 Greptile is opportunistic in this workflow. It may be off, delayed, or broken. Never wait for Greptile to appear, never wait for a Greptile check/status to settle, and never treat Greptile silence as a blocker.
 
@@ -101,7 +59,7 @@ Use GitHub GraphQL for thread-aware reads when checking review threads. A Grepti
 
 If Greptile has already posted, continue to the feedback-handling step. If not, report "no Greptile material found" and continue to the subagent review iteration.
 
-### 5. Address Existing Greptile Feedback
+### 4. Address Existing Greptile Feedback
 
 Close each addressed thread directly with GitHub GraphQL once the fix is pushed: `addPullRequestReviewThreadReply` with a body naming the commit and the concrete change (or why no code change was needed), then `resolveReviewThread`, then re-fetch `reviewThreads` and confirm `isResolved: true` with the reply present. Every addressed thread must close the loop with a reply + resolve, not just a code push. In Codex, `github:gh-address-comments` covers the same steps.
 
@@ -113,12 +71,12 @@ When working through threads:
 - Resolve addressed threads after fixes are pushed and the requested verification passes.
 - Leave ambiguous, conflicting, informational, or still-failing threads open with a clear reason.
 
-### 6. Subagent Review Iteration
+### 5. Subagent Review Iteration
 
 Use the active harness's native in-thread subagent tools. In Codex, load and
 follow the `dispatch-codex-sub` skill from the current skills list.
 
-After existing Greptile feedback has been handled, dispatch one in-thread subagent for an independent code-review pass on the current PR diff. The subagent review is a required PR-landing gate, not a substitute for Greptile, CI, or the main agent's own review.
+After existing Greptile feedback has been handled, dispatch one in-thread subagent for an independent code-review pass on the current PR diff. The subagent review is a required gate, not a substitute for Greptile, CI, or the main agent's own review.
 
 Use this prompt shape:
 
@@ -136,7 +94,7 @@ Handle the subagent result:
 
 If fixes from the subagent review materially change the PR, re-check unresolved PR review threads before moving to CI watching.
 
-### 7. Local-First Checks, Then Remote Gates
+### 6. Local-First Checks, Then Remote Gates
 
 Use the user's active verification policy and repository gates. Where local checks are permitted, prefer them over repeated CI feedback.
 
@@ -155,9 +113,9 @@ Keep CI observation token-efficient:
 - When useful local checks, review, or diagnosis are running concurrently with CI, set `GH_CI_POLL=300` or otherwise wait up to five minutes before reading the watcher again. Resume the normal cadence after local work finishes.
 - Do not narrate unchanged snapshots. Surface transitions, actionable failures, head changes, and terminal green only.
 
-Do not report the land pass complete while selected Greptile threads are still unresolved, any required review conversation is unresolved, the PR has merge conflicts, or actionable CI checks are still red. Treat `mergeStateStatus: BLOCKED` as a TODO like a failing check: it usually means merge conflicts, unresolved required conversations, or both. If a required external gate cannot be satisfied from the agent environment, report it explicitly.
+Do not report the pass complete while selected Greptile threads are still unresolved, any required review conversation is unresolved, the PR has merge conflicts, or actionable CI checks are still red. Treat `mergeStateStatus: BLOCKED` as a TODO like a failing check: it usually means merge conflicts, unresolved required conversations, or both. If a required external gate cannot be satisfied from the agent environment, report it explicitly.
 
-### 8. Heartbeat E2E
+### 7. Heartbeat E2E
 
 For Heartbeat PRs with requested or required E2E, follow the repository's `e2e-running`
 skill and its command reference for selectors, submission, continuation, and
@@ -169,7 +127,7 @@ invalidated. Wait for the required current-head checks through `gh-ci`.
 Keep the closeout short:
 
 - PR URL and branch.
-- Whether dirty work was committed, pushed, and whether a PR had to be created.
+- `pr-to-draft`'s outcome: local checks, commit, push, and whether the PR was created.
 - Whether the PR was moved out of draft or was already ready.
 - Whether Greptile feedback appeared.
 - Which Greptile threads were addressed/resolved, or that none were actionable.

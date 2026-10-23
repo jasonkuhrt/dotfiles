@@ -75,7 +75,7 @@
     "content": "Before selecting optional discipline passes, run `typesafe review` with the\nfull `change` and `context`. Use its six applicability judgments to choose\noptional passes; always run required and user-requested passes, and send\nuncertain cases to the lead. TypeSafe does not judge findings: the lead still\nverifies every mechanism against the code and follows the verifier rules above."
   },
   {
-    "path": ".claude/skills/land-pr/SKILL.md",
+    "path": ".claude/skills/pr-to-ready/SKILL.md",
     "heading": "TypeSafe judgments",
     "content": "Classify one review comment or thread per `typesafe feedback` invocation. Put\nthe feedback text in `feedback`; put its stable thread ID and all applicable\ndiff, discussion, and verification evidence in `context`, retaining that mapping\nin the caller. Consume the actionable, informational, ambiguous, or unresolved\nchoice inside the existing feedback workflow; fixes, replies, resolution, and\npushes remain owned here."
   },

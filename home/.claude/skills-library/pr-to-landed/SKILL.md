@@ -1,39 +1,39 @@
 ---
-name: land-complete
-description: Orchestrate land-pr, gh-ci, and land-merged into one end-to-end landing pipeline. Use when the user asks to land complete, land and merge, merge on green, finish a PR end to end, or land without another confirmation loop.
+name: pr-to-landed
+description: Use when the user wants a PR merged and cleaned up end to end, says "pr to landed", "land it", "land and merge", "merge on green", "finish a PR end to end", or "land without another confirmation loop"; or, after a PR merged, "PR is merged, clean up" or "clean up the merged PR's worktree". On an open PR, invoking it is merge intent.
 ---
 
-# Land Complete
+# PR To Landed
 
 ## Contract
 
-Use this when the target end state is an end-to-end landed PR: ready, merged, and locally cleaned up.
+Takes the work to a landed PR: ready, merged, and cleaned up locally and on the remote.
 
-Target end state: a merged PR, with post-merge local worktree and branch cleanup completed or explicitly blocked.
+Target end state: a merged PR, with its worktree removed and its branch deleted locally and on the remote, or a blocker reported.
 
 Pipeline:
 
-1. `land-pr`
+1. `pr-to-ready`
 2. `gh-ci`, then remote merge on green
-3. `land-merged`
+3. the post-PR-merge procedure: the repo's `.claude/procedures/post-pr-merge.md` when it exists, else `~/.claude/procedures/post-pr-merge.md`
 
-First, read the respective skills so you understand the pipeline.
+First, read the pipeline's skills and the procedure so you understand the pipeline.
 Then determine your actual current position in that pipeline.
-Then jump to the respective skill that encompasses that position and carry it out faithfully.
+Then jump to the step that encompasses that position and carry it out faithfully.
 
-Do not duplicate the operational knowledge already encoded in `land-pr`, `gh-ci`, or `land-merged`. This skill only routes between them and performs the merge step between ready PR and merged PR.
+Do not duplicate the operational knowledge already encoded in `pr-to-ready`, `gh-ci`, or the procedure. This skill only routes between them and performs the merge step between ready PR and merged PR.
 
-Invoking this skill is explicit merge intent. Do not ask for another merge confirmation unless the repository state is ambiguous or the PR cannot be resolved.
+Invoking this skill on an open PR is explicit merge intent. Do not ask for another merge confirmation unless the repository state is ambiguous or the PR cannot be resolved.
 
 ## Workflow
 
-### 1. Load The Pipeline Skills
+### 1. Load The Pipeline
 
 Read these before acting:
 
-- `land-pr`
+- `pr-to-ready`
 - `gh-ci`
-- `land-merged`
+- the post-PR-merge procedure
 
 ### 2. Capture Context
 
@@ -43,15 +43,15 @@ Capture the invocation worktree before any merge or cleanup:
 git rev-parse --show-toplevel
 ```
 
-Do not require a PR to exist yet. The starting flow is the same as `land-pr`: it may commit intended dirty work, push the branch, and create the PR when missing.
+Do not require a PR to exist yet. The starting flow is `pr-to-ready`'s: it may commit intended work, push the branch, and create the PR when missing.
 
 ### 3. Find Your Pipeline Position
 
 Inspect enough git/GitHub state to choose exactly one position:
 
-- If the current worktree/branch is not yet a ready PR, run `land-pr` from this context and follow it faithfully.
+- If the current worktree/branch is not yet a ready PR, run `pr-to-ready` from this context and follow it faithfully.
 - If there is an open, ready PR, run `gh-ci`; when it is green for the current head SHA, merge it remotely.
-- If the PR is already merged, run `land-merged` from the original invocation worktree context and follow it faithfully.
+- If the PR is already merged, follow the post-PR-merge procedure (the repo's `.claude/procedures/post-pr-merge.md` when it exists, else `~/.claude/procedures/post-pr-merge.md`) from the original invocation worktree context.
 - If the PR is closed but not merged, or the position is ambiguous, stop and report the blocker.
 
 ### 4. Merge On Green
@@ -110,7 +110,7 @@ branch is stale, and do not guess that it is conflicting:
    }'
    ```
 
-3. If unresolved actionable review feedback exists, return to the `land-pr`
+3. If unresolved actionable review feedback exists, return to the `pr-to-ready`
    feedback-handling step: implement the fix or document why it is not
    actionable. Reply to and resolve bot threads within the authorized workflow.
    Draft replies to human reviewers and obtain Jason's approval for the exact send
@@ -132,13 +132,7 @@ Important multi-worktree rule:
 - `--delete-branch` is not remote-only; it can try to switch the current worktree and delete a local branch.
 - In a PR worktree, that can fail after the remote merge because Git cannot delete the checked-out branch or check out a base branch already used by another worktree.
 
-If the user wants the remote PR branch deleted, delete only the remote ref separately:
-
-```bash
-git push origin --delete <headRefName>
-```
-
-Do local worktree and local branch cleanup separately with `land-merged`; do not bundle it into the merge command.
+Leave every branch deletion to the post-PR-merge procedure, which removes the PR worktree and deletes the branch locally and on the remote; do not bundle any of it into the merge command.
 
 ### 5. Verify Merge
 
@@ -150,9 +144,9 @@ gh pr view <number> --json state,mergedAt,mergeCommit,url,headRefName,baseRefNam
 
 Proceed only when `state` is `MERGED`.
 
-### 6. Clean Up With Land Merged
+### 6. Clean Up After The Merge
 
-Run cleanup from the original invocation worktree context captured in step 2. Follow `land-merged` exactly as written; do not inline its cleanup rules here.
+Follow the post-PR-merge procedure (the repo's `.claude/procedures/post-pr-merge.md` when it exists, else `~/.claude/procedures/post-pr-merge.md`) from the original invocation worktree context captured in step 2, exactly as written; do not inline its rules here.
 
 ## Stop Conditions
 
@@ -164,7 +158,7 @@ Stop and report clearly if:
 - any required check is red
 - required PR-control E2E checks fail
 - the PR head SHA changes after checks were observed green
-- the selected cleanup worktree is dirty
+- the cleanup worktree holds work, not just noise, as the post-PR-merge procedure classifies it
 
 ## Output
 
@@ -174,4 +168,4 @@ Keep the closeout short:
 - Greptile outcome.
 - Remote check and PR-control E2E outcome.
 - Merge commit.
-- Whether base sync, PR worktree removal, and local branch deletion completed.
+- The post-PR-merge procedure's report: base sync, noise deleted, worktree removal, and local and remote branch deletion.

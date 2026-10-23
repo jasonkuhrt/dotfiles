@@ -1,6 +1,6 @@
 ---
 name: heartbeat-dep-gardener
-description: Find and land one high-leverage Heartbeat app dependency removal or update. Use when the user asks to audit app dependencies, remove weak or unused dependencies, update stale packages, make dependency usage Effect-native, create an internal monorepo package for a dependency concern, or run a repeatable dependency gardening pass that ends with land-pr when a real change is made.
+description: Find and land one high-leverage Heartbeat app dependency removal or update. Use when the user asks to audit app dependencies, remove weak or unused dependencies, update stale packages, make dependency usage Effect-native, create an internal monorepo package for a dependency concern, or run a repeatable dependency gardening pass that ends with pr-to-ready when a real change is made.
 ---
 
 # Heartbeat Dep Gardener
@@ -9,7 +9,7 @@ description: Find and land one high-leverage Heartbeat app dependency removal or
 
 Run one dependency gardening pass for the Heartbeat monorepo.
 
-Target end state: one app dependency is removed, updated, or moved behind a better internal/Effect-native surface, then the branch is prepared with `land-pr`. If no high-confidence candidate exists, make no code changes and report the evidence.
+Target end state: one app dependency is removed, updated, or moved behind a better internal/Effect-native surface, then the work is taken to a ready PR with `pr-to-ready`. If no high-confidence candidate exists, make no code changes and report the evidence.
 
 Keep the pass intentionally narrow: one app, one dependency candidate, one reviewable PR.
 
@@ -75,13 +75,13 @@ Prefer narrow checks tied to the changed package or app. Re-run the scorecard to
 
 ## Landing
 
-If code or manifests changed, load and follow the `land-pr` skill from the active skill list. If needed, use:
+If code or manifests changed, load and follow the `pr-to-ready` skill from the active skill list. If needed, use:
 
 ```text
-/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.claude/skills/land-pr/SKILL.md
+/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.claude/skills/pr-to-ready/SKILL.md
 ```
 
-Do not copy or reinterpret `land-pr`; follow it as the terminal phase. If no change was made, do not land a PR.
+Do not copy or reinterpret `pr-to-ready`; follow it as the terminal phase. If no change was made, do not land a PR.
 
 Use `refactor: ...` for the PR title and merge subject. Dependency removals, updates, internalized replacements, and Effect-native adapter moves are architecture/ownership cleanups, even when the diff is manifest-only.
 
@@ -93,4 +93,4 @@ Keep the closeout short:
 - Candidate dependency and evidence.
 - Action taken: removed, updated, internalized, or Effect-native adapter/package.
 - Verification run.
-- PR URL and any remaining blocker when `land-pr` ran.
+- PR URL and any remaining blocker when `pr-to-ready` ran.

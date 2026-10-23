@@ -1,17 +1,17 @@
 ---
-name: land-worktree
-description: Prepare the current git worktree and branch for landing by resolving task context, creating a task branch from a detached base worktree when needed, committing intended dirty work when needed, and pushing the branch upstream. Use before land-pr when the worktree may be detached, unnamed, dirty, missing an upstream, or otherwise not ready for PR creation.
+name: pr-to-draft
+description: Use when the user wants work taken to a draft PR, says "pr to draft", "open a draft PR", "push this as a draft", or "get this up for review as a draft", or when the worktree may be detached, unnamed, dirty or missing an upstream before any PR work. Also composed by pr-to-ready.
 ---
 
-# Land Worktree
+# PR To Draft
 
 ## Contract
 
-This skill prepares the current git worktree to be a real pushed task branch. It does not create, edit, ready, review, check, or merge a PR.
+Takes the current work to a draft PR that is ready for review.
 
-Target end state: the current worktree is on a named branch, intended dirty work is committed, and the branch has been pushed upstream or any blocker is explicitly reported.
+Target end state: the delta is green under local checks, intended work is committed on a named branch, the branch is pushed, and an open draft PR whose title and body match the task context exists. It never moves the PR out of draft and never merges.
 
-Type role: prefix segment. `land-pr` composes this skill before GitHub PR work. `land-complete` reaches this segment only by composing `land-pr`.
+Type role: first segment of the PR family. `pr-to-ready` composes it; `pr-to-draft-top-down` is its variant for top-down work, which skips step 2.
 
 ## Workflow
 
@@ -34,7 +34,20 @@ When a Linear issue is resolved from chat context:
 - Use that issue identifier/title for detached-worktree branch naming when a new branch is needed.
 - Include parent issues only as related context.
 
-### 2. Inspect Worktree
+### 2. Verify Locally
+
+Run the local checks that prove the current delta before anything is pushed, because a push can start CI. Follow the user's active check policy and the repository's agent gates; this skill does not override them.
+
+Prefer the smallest local gate that completely covers the current delta:
+
+- Use a repo-defined affected or targeted check when available.
+- Otherwise select the relevant package/project tests, types, lint, formatting, or build checks from the diff and repository instructions.
+- Expand to broad local checks only when the change breadth or repository landing policy warrants them.
+- Leave E2E to `pr-to-ready`; do not add local E2E by default.
+
+Fix known failures before continuing. A check that only CI can run is left to CI and named in the output.
+
+### 3. Inspect Worktree
 
 Use local git plus GitHub CLI:
 
@@ -104,9 +117,9 @@ If `git branch --show-current` is empty, handle detached `HEAD` before continuin
 
 7. If detached `HEAD` is not at or behind the resolved base and no matching branch or PR can be confidently resolved, stop and report the ambiguity instead of inventing a branch.
 
-### 3. Commit Intended Dirty Work
+### 4. Commit Intended Dirty Work
 
-If there are dirty changes that are part of the current land request, commit them before creating or updating a PR:
+If there are dirty changes that are part of the current request, commit them before creating or updating a PR:
 
 ```bash
 git diff --stat
@@ -115,9 +128,9 @@ git add <relevant-files>
 git commit -m "<concrete message>"
 ```
 
-Do not leave intended work uncommitted just because no PR exists yet. Do not silently commit ambiguous or unrelated user changes; if the dirty state contains changes that cannot be confidently tied to the land request, ask before staging those files.
+Do not leave intended work uncommitted just because no PR exists yet. Do not silently commit ambiguous or unrelated user changes; if the dirty state contains changes that cannot be confidently tied to the request, ask before staging those files.
 
-### 4. Push Branch
+### 5. Push Branch
 
 If the branch has an upstream, inspect unpushed commits:
 
@@ -131,13 +144,37 @@ If the branch has no upstream or has unpushed commits, push it:
 git push -u origin HEAD
 ```
 
+### 6. Open The Draft PR
+
+Use local git plus GitHub CLI:
+
+```bash
+gh pr view --json number,url,isDraft,headRefName,headRefOid
+```
+
+If the user gave a PR URL or number, use that PR. Otherwise resolve the PR from the current branch.
+
+If no current-branch PR exists, create one as a draft instead of asking for a PR number. Prefer explicit `--title` and `--body` from the resolved task context when a chat-derived issue or PR scope exists. Use `--fill` only when the resolved task context and commit history point to the same title/body:
+
+```bash
+gh pr create --draft --title "<context-derived title>" --body-file <body-file>
+```
+
+After creating or resolving the PR, re-read it and verify that its title/body match the resolved task context. If they do not and the chat context is unambiguous, update the metadata:
+
+```bash
+gh pr edit <number> --title "<context-derived title>" --body-file <body-file>
+```
+
+A PR that is already out of draft stays that way: this skill never moves a PR back to draft. Say so in the output.
+
 ## Output
 
 Keep the closeout short:
 
-- Branch name and worktree path.
-- Whether a detached worktree was attached to a branch.
-- Whether the detached worktree was fast-forwarded to its resolved base first.
-- Whether dirty work was committed.
-- Whether the branch was pushed and whether an upstream exists.
-- Any ambiguity or blocker that prevents PR creation from safely continuing.
+- PR URL, branch name and worktree path.
+- Which local checks ran and passed, and any check left to CI.
+- Whether a detached worktree was attached to a branch, and whether it was fast-forwarded to its resolved base first.
+- Whether dirty work was committed, and whether the branch was pushed.
+- Whether the PR was created as a draft, or already existed (and whether it was already out of draft).
+- Any ambiguity or blocker that stopped the skill.

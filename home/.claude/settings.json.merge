@@ -44,7 +44,6 @@
     "plugin-dev@claude-plugins-official": false,
     "ralph-loop@claude-plugins-official": false,
     "skill-creator@claude-plugins-official": false,
-    "superpowers-dev@superpowers-marketplace": true,
     "tsgo-lsp@jasonkuhrt": false,
     "linear@claude-plugins-official": true,
     "diagram-design@diagram-design": true

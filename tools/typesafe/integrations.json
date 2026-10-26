@@ -1,11 +1,11 @@
 [
   {
-    "path": ".codex/skills/meos-email-read/SKILL.md",
+    "path": "me/.agents/skills/meos-email-read/SKILL.md",
     "heading": "TypeSafe judgments",
     "content": "At the semantic classification step, use `typesafe triage`; the exact recipe\nlives in the inbox-triage reference. Pass explicit thread evidence only; the\nhelper does not acquire or mutate mail."
   },
   {
-    "path": ".codex/skills/meos-email-read/references/inbox-triage.md",
+    "path": "me/.agents/skills/meos-email-read/references/inbox-triage.md",
     "heading": "TypeSafe judgments",
     "content": "After reading the decision-relevant threads, run `typesafe triage` with\n`threads` containing stable `id`, `subject`, and complete `evidence` fields. Use\nits outcome, owner, liability, and urgency judgments as resolution\nrecommendations. Standing rules, approvals, frozen message IDs, and every\nmailbox action remain owned by this workflow."
   },
@@ -30,7 +30,7 @@
     "content": "At the Sort step, run `typesafe brief` with gathered `items` containing stable\n`id`, decision text, and `evidenceRefs`. Use the attention, resolved, and safe\nomission judgments to propose the two lists and their order, then perform the\nrequired live-thread checks. Calendar classification, rendering, and actions\nremain owned by this skill."
   },
   {
-    "path": ".claude/skills/meos-shopping/SKILL.md",
+    "path": "me/.agents/skills/meos-shopping/SKILL.md",
     "heading": "TypeSafe judgments",
     "content": "After candidates pass the exact gates, use `typesafe verify` for material\nqualitative claims, supplying stable sources and claims with exact source\nquotes. Use `typesafe rank` to score viable candidates on explicit ordered\ndimensions and caller-defined levels. The caller derives the final order; exact\nstock, variant, region, dimensions, price, delivery, and visual verification\nremain owned here."
   },

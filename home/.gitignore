@@ -6,11 +6,6 @@
 
 # Absolute symlinks into private or sibling checkouts; broken on any other machine.
 .codex/skills/session
-.codex/skills/meos-kids-school-sync
-
-# Personal-life skills: this repo is public.
-.codex/skills/meos-*
-.claude/skills/meos-*
 
 # Machine state: absolute repo paths written by git maintenance.
 .config/git/local.gitconfig

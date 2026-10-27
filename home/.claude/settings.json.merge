@@ -86,6 +86,7 @@
   "skipAutoPermissionPrompt": true,
   "attribution": {
     "commit": "",
-    "pr": ""
+    "pr": "> Written by an AI agent (Claude) on behalf of @jasonkuhrt.",
+    "sessionUrl": false
   }
 }

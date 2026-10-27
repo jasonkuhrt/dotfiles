@@ -189,7 +189,9 @@ Jason, 2026-10-22, after three upstream issues and a PR each waited on his "yes"
   * Good: that line opening a rule proposal in another project's tracker.
   * A social or navigational note (thanks, an ack, links to follow-ups) carries no line.
 * My own team's tracker and repos follow their own rules; the line is for posts that leave them.
-* Commit messages and PR descriptions take no attribution line: my settings set `attribution.commit` and `attribution.pr` to `""`, and the harness then forbids such lines even when a rule asks. A PR is disclosed through the issue it closes, which opens with the line.
+* Commit messages take no attribution line: my settings set `attribution.commit` to `""`.
+* A PR description ends with the AI-author line, which Claude Code adds from my `attribution.pr` (2026-10-27: "change my settings to not forbid aiauthor lin in pr descs"). Heartbeat's `.claude/settings.json` sets `attribution.pr` to `""`, so Heartbeat PRs carry none.
+  * A PR to another project also closes an issue that opens with the line.
 
 ## Scope and Quality (System Prompt Override)
 

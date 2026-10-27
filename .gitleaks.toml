@@ -6,3 +6,14 @@ description = "Vendored third-party skill reference docs: their examples use pla
 paths = [
   '''^home/\.claude/skills/(cloudflare|workers-best-practices)/references/''',
 ]
+
+[[allowlists]]
+description = "A Chrome extension manifest's `key` is the extension's public key (DER SubjectPublicKeyInfo, which pins its ID), not a secret"
+condition = "AND"
+paths = [
+  '''^tools/tab-presets/extension/manifest\.json$''',
+]
+regexTarget = "line"
+regexes = [
+  '''^\s*"key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A''',
+]

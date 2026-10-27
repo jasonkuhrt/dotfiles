@@ -14,12 +14,14 @@ import { dryRun } from './dry-run.mjs';
 export const stateRoot = path.join(os.homedir(), '.codex', 'worktree-cleanup', 'runs');
 
 async function checkoutPathsForBranch(repo, branch) {
-  const records = (await git(repo, ['worktree', 'list', '--porcelain', '-z'])).split('\0');
+  const blocks = (await git(repo, ['worktree', 'list', '--porcelain', '-z'])).split('\0\0');
   const paths = [];
-  let current;
-  for (const record of records) {
-    if (record.startsWith('worktree ')) current = record.slice(9);
-    if (record === `branch refs/heads/${branch}`) paths.push(current);
+  for (const block of blocks) {
+    const records = block.split('\0');
+    // A prunable entry's folder is gone, so it no longer checks out its branch.
+    if (records.some(record => record.startsWith('prunable'))) continue;
+    const current = records.find(record => record.startsWith('worktree '))?.slice(9);
+    if (current && records.includes(`branch refs/heads/${branch}`)) paths.push(current);
   }
   return paths;
 }
@@ -317,6 +319,7 @@ export async function applyPlan(plan, options = {}) {
           completeInventory: false,
           ...(options.activityStateRoot ? { activityStateRoot: options.activityStateRoot } : {}),
         });
+        if (activity.vanishedWorktrees.length > 0) throw new Error('The branch checkout was removed during cleanup; plan again.');
         const latest = activity.branches[0];
         const replaced = target.activity?.incarnation && latest?.incarnation !== target.activity.incarnation;
         const recentlyActive = target.rule === 'older_than_threshold' && (!latest?.activityAt || Date.parse(latest.activityAt) >= Date.now() - fresh.ageDays * 86400000);

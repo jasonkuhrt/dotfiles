@@ -1605,6 +1605,49 @@ try {
   assert.equal(await git(repo, ['ls-remote', '--heads', 'origin', `refs/heads/${reincarnationBranch}`]), '');
   checks.push('a closed-PR plan retains a same-name same-SHA branch recreated with a new reflog incarnation');
 
+  const deletedFolderBranch = 'codex/deleted-folder';
+  const deletedFolder = await worktree(deletedFolderBranch, base);
+  await fs.rm(deletedFolder, { recursive: true, force: true });
+  evidence.pullRequests = [
+    pr(5, deletedFolderBranch, 'MERGED', '2026-09-20T00:00:00Z', '2026-09-20T01:00:00Z'),
+  ];
+  const deletedFolderStateRoot = path.join(activityStateRoot, 'deleted-folder');
+  const deletedFolderPlan = await inventory(repo, {
+    remote: 'origin',
+    prEvidence: evidence,
+    activityStateRoot: deletedFolderStateRoot,
+  });
+  const deletedFolderRow = row(deletedFolderPlan, deletedFolderBranch);
+  assert.equal(deletedFolderRow.path, null);
+  assert.equal(deletedFolderRow.activity.counts.worktrees, 0);
+  assert.equal(deletedFolderRow.decision, 'remove_after_preservation');
+  deletedFolderPlan.branches = [deletedFolderRow];
+  const deletedFolderResult = await applyPlan(deletedFolderPlan, {
+    prEvidence: evidence,
+    runId: 'fixture-deleted-folder',
+    journalFile: path.join(root, 'deleted-folder-journal.json'),
+    activityStateRoot: deletedFolderStateRoot,
+  });
+  assert.equal(deletedFolderResult.complete, true, JSON.stringify(deletedFolderResult.failures));
+  assert.equal(deletedFolderResult.records[0].phase, 'removed');
+  assert.equal((await run('git', ['-C', repo, 'show-ref', '--verify', '--quiet', `refs/heads/${deletedFolderBranch}`], { allowFailure: true })).code, 1);
+  await git(repo, ['worktree', 'prune']);
+  checks.push('a worktree whose folder was deleted is planned and removed as branch-only; its stale entry crashes neither inventory');
+
+  const vanishingBranch = 'codex/vanishing-checkout';
+  await git(repo, ['branch', vanishingBranch, base]);
+  const vanishingActivity = await observeActivity({
+    capturedAt: new Date(),
+    stateName: 'vanishing-checkout',
+    branches: [{ branch: vanishingBranch, head: base }],
+    worktrees: [{ branch: vanishingBranch, path: path.join(root, 'vanishing-checkout') }],
+    completeInventory: false,
+  });
+  assert.deepEqual(vanishingActivity.vanishedWorktrees, [path.join(root, 'vanishing-checkout')]);
+  assert.equal(vanishingActivity.branches[0].counts.worktrees, 0);
+  await git(repo, ['branch', '-D', vanishingBranch]);
+  checks.push('a checkout removed between the worktree listing and its scan is reported as vanished instead of failing the scan');
+
   evidence.pullRequests = [
     pr(1, 'codex/reused-young', 'CLOSED', '2026-01-01T00:00:00Z', '2026-09-30T23:00:00Z'),
     pr(2, 'codex/reused-young', 'OPEN', '2026-09-30T00:00:00Z', '2026-09-30T00:00:00Z'),

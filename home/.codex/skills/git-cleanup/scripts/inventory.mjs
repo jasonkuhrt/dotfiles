@@ -36,6 +36,7 @@ async function readOnlyWorktrees(repo) {
     else if (current && field.startsWith('branch refs/heads/')) current.branch = field.slice('branch refs/heads/'.length);
     else if (current && field.startsWith('HEAD ')) current.head = field.slice(5);
     else if (current && field === 'bare') current.bare = true;
+    else if (current && field.startsWith('prunable')) current.prunable = { reason: field.slice('prunable '.length) };
   }
   if (current) rows.push(current);
   if (!rows.length || rows[0].bare) throw new Error('A primary checkout is required for cleanup.');
@@ -43,7 +44,11 @@ async function readOnlyWorktrees(repo) {
     stdout: JSON.stringify({
       schema: 2,
       repo: {},
-      items: rows.map((row, index) => ({ branch: row.branch ?? null, head: row.head, worktree: { path: row.path, main: index === 0 } })),
+      items: rows.map((row, index) => ({
+        branch: row.branch ?? null,
+        head: row.head,
+        worktree: { path: row.path, main: index === 0, ...(row.prunable ? { prunable: row.prunable } : {}) },
+      })),
     }),
   };
 }
@@ -408,7 +413,8 @@ export async function inventory(repo, options = {}) {
   const localBranchNames = new Set(refRows.map(row => row.branch));
   const reviewMarkers = parseReviewMarkers(reviewConfigRaw);
 
-  const worktreeRows = wt.items.filter(item => item.worktree);
+  // A prunable entry's folder is gone, so it no longer checks out its branch.
+  const worktreeRows = wt.items.filter(item => item.worktree && !item.worktree.prunable);
   const mainRows = worktreeRows.filter(item => item.worktree.main);
   if (mainRows.length !== 1) throw new Error(`Expected exactly one primary worktree, found ${mainRows.length}`);
   const mainRow = mainRows[0];
@@ -435,14 +441,6 @@ export async function inventory(repo, options = {}) {
   if (!repository) throw new Error('Pull-request evidence did not establish a GitHub repository identity');
   const mainStatus = parseStatus(statusRaw);
 
-  const worktreesByBranch = new Map();
-  for (const row of worktreeRows) {
-    if (!row.branch) continue;
-    const rows = worktreesByBranch.get(row.branch) ?? [];
-    rows.push(row);
-    worktreesByBranch.set(row.branch, rows);
-  }
-
   const capturedAt = suppliedCapturedAt ? new Date(suppliedCapturedAt) : new Date();
   if (!Number.isFinite(capturedAt.getTime())) throw new TypeError('capturedAt must be a valid date/time');
   const cutoff = new Date(capturedAt.getTime() - ageDays * DAY_MS);
@@ -456,6 +454,17 @@ export async function inventory(repo, options = {}) {
     ...(activityStateRoot ? { activityStateRoot } : {}),
   });
   const activityByBranch = new Map(activity.branches.map(item => [item.branch, item]));
+
+  // A checkout removed while the inventory was read is no longer a worktree of its branch.
+  const vanishedWorktrees = new Set(activity.vanishedWorktrees);
+  const liveWorktreeRows = worktreeRows.filter(row => !vanishedWorktrees.has(row.worktree.path));
+  const worktreesByBranch = new Map();
+  for (const row of liveWorktreeRows) {
+    if (!row.branch) continue;
+    const rows = worktreesByBranch.get(row.branch) ?? [];
+    rows.push(row);
+    worktreesByBranch.set(row.branch, rows);
+  }
 
   const branches = refRows.map(row => {
     const rows = worktreesByBranch.get(row.branch) ?? [];
@@ -515,7 +524,7 @@ export async function inventory(repo, options = {}) {
       status: mainStatus,
     },
     totals: {
-      worktrees: worktreeRows.length,
+      worktrees: liveWorktreeRows.length,
       localBranches: branches.length,
       branchOnly: branches.filter(branch => branch.path === null).length,
       selected: selected.length,

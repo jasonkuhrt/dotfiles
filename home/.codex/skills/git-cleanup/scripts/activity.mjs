@@ -304,6 +304,16 @@ const scanWorktree = async (worktree, suppliedStatus) => {
   };
 };
 
+const pathExists = async target => {
+  try {
+    await fs.lstat(target);
+    return true;
+  } catch (error) {
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  }
+};
+
 const mapLimit = async (items, limit, callback) => {
   const results = new Array(items.length);
   let next = 0;
@@ -492,7 +502,14 @@ export async function meaningfulLocalActivity(repo, options) {
   const scanned = await mapLimit(worktrees, 4, async worktree => {
     const branch = uniqueBranches.get(worktree.branch);
     if (!branch) throw new Error(`Worktree branch is absent from branch input: ${worktree.branch}`);
-    const observation = await scanWorktree({ ...worktree, head: branch.head }, worktree.status);
+    let observation;
+    try {
+      observation = await scanWorktree({ ...worktree, head: branch.head }, worktree.status);
+    } catch (error) {
+      // Another tool can remove a checkout between the worktree listing and this scan.
+      if (await pathExists(worktree.path)) throw error;
+      return null;
+    }
     const branchLog = branchLogs.get(branch.branch);
     return {
       ...observation,
@@ -506,11 +523,13 @@ export async function meaningfulLocalActivity(repo, options) {
       })),
     };
   });
+  const vanishedWorktrees = worktrees.filter((_, index) => scanned[index] === null).map(worktree => worktree.path);
+  const observations = scanned.filter(observation => observation !== null);
   const resolved = persistActivity
-    ? await persistObservations({ stateFile, commonDir, capturedAt, observations: scanned, completeInventory })
+    ? await persistObservations({ stateFile, commonDir, capturedAt, observations, completeInventory })
     : projectObservations({
         previous: await readState(stateFile, commonDir), commonDir, capturedAt,
-        observations: scanned, completeInventory,
+        observations, completeInventory,
       }).resolved;
   const byBranch = new Map();
   for (const observation of resolved) {
@@ -574,5 +593,5 @@ export async function meaningfulLocalActivity(repo, options) {
       reason,
     };
   });
-  return { capturedAt, stateFile, branches: activityBranches };
+  return { capturedAt, stateFile, branches: activityBranches, vanishedWorktrees };
 }

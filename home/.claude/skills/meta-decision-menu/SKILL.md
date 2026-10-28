@@ -1,6 +1,6 @@
 ---
 name: meta-decision-menu
-description: Use when the user asks to turn a long thread or turn into a decision menu, to state their choices or what is waiting on them ("state my choices", "what do you need from me", "decision menu", "as compactly as possible"), or invokes meta-decision-menu. Also before ending any turn that leaves two or more decisions with the user.
+description: Use when the user asks to turn a long thread or turn into a decision menu, to state their choices or what is waiting on them ("state my choices", "what do you need from me", "decision menu", "as compactly as possible"), or invokes meta-decision-menu.
 ---
 
 # Decision menu
@@ -59,7 +59,7 @@ Bad, a `Choice` column that `Do` repeats, no why-not, and an unnumbered
 
 > | Choice | Do | Why |
 > |---|---|---|
-> | Merge #3077 | Merge it after #3079 | Checks green. |
+> | Merge #3077 | Merge it | Checks green. |
 >
 > **Doing without asking:**
 > - Fix `gh-ci`.

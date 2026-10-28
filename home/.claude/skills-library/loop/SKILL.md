@@ -246,7 +246,6 @@ For `cancel`:
 
 ## Rules
 
-- Do not use `.session/SESSION.md` as loop state.
 - Do not depend on repo task files for hook activation.
 - Do not invent alternate activation paths.
 - Always use the shared activation-file contract consumed by the stop hook.

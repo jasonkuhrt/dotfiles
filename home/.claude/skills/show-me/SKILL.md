@@ -108,7 +108,7 @@ src/
 ## Choose the delivery format
 
 - **Inline** when a static view answers the question in about 40 lines: fenced text, `diff`, `mermaid`, or a table.
-- **A page** when interaction helps the user vary assumptions, compare outcomes, or follow a mechanism; also use it for color, many items, or views side by side. Create one focused HTML file. Publish it with the Artifact tool when the session has one, following its quickstart; otherwise write `show-me-<topic>.html` beside the work's notes (`.session/context/` in a session) and `open` it. Use the product's own colors, type and components when it has them, and make it work at phone width and in dark mode. On a page, draw a diagram with the `diagram-design` skill and a chart with `dataviz`, not freehand; where a session lacks one, use the nearest it has (`artifact-diagramming` for a diagram, `diagram-design` for a chart). Hand the drawing skill the diagram's type, size and content, so it draws without asking again.
+- **A page** when interaction helps the user vary assumptions, compare outcomes, or follow a mechanism; also use it for color, many items, or views side by side. Create one focused HTML file. Publish it with the Artifact tool when the session has one, following its quickstart; otherwise write `show-me-<topic>.html` beside the work's notes and `open` it. Use the product's own colors, type and components when it has them, and make it work at phone width and in dark mode. On a page, draw a diagram with the `diagram-design` skill and a chart with `dataviz`, not freehand; where a session lacks one, use the nearest it has (`artifact-diagramming` for a diagram, `diagram-design` for a chart). Hand the drawing skill the diagram's type, size and content, so it draws without asking again.
 - **A timed explanation** when seeing motion or changing quantities clarifies the mechanism: use a stepped HTML animation, or a short explainer video when the available tools support it and motion or narration improves understanding. Give each scene one relationship to explain, with visible labels. Provide pause, replay, and step controls for animations; respect reduced motion.
 
 Whatever the format, the layers keep their order. Inline, send `R0` and stop at the layer the question needs; put the layers below it in the page or file the reply links. On a page, show the map and `R0` first, and keep each layer below one step away (a section, a tab, a disclosure), reachable from its end point.
@@ -128,7 +128,6 @@ This format guidance adapts [Karpathy's post on understanding model outputs](htt
 - An arrow says what moves along it (`writes`, `polls every 30s`). An arrow the layout already implies is removed.
 - Aim for labels of six words or fewer. Keep exact technical names and necessary qualifiers; split the view when a label becomes hard to read.
 - When the picture stands in for a longer written report, link the report, and both say the same thing.
-- In a session, a view explains one item and is linked from it; the `session` board stays the one work queue.
 
 The table test, the diagram budget, the single accent and the delete pass adapt [diagram-design](https://github.com/cathrynlavery/diagram-design/blob/7a2e22170ee838e859d8142ba825d83f8b6375e6/skills/diagram-design/SKILL.md).
 

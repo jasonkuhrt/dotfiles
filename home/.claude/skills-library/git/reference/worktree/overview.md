@@ -17,18 +17,6 @@ wt remove                              # Remove current worktree
 wt step copy-ignored                   # Copy build caches to current worktree
 ```
 
-## Session Integration
-
-The `session` CLI has no worktree subcommands. Create and remove worktrees with `wt` directly, then
-run `session init` inside the new worktree if it needs its own `.session`:
-
-```bash
-wt switch --create my-feature
-session init
-```
-
-Worktrunk handles path naming, dependency installation, and build cache copying via its hook system.
-
 ## Project Configuration
 
 Place project-specific hooks in `.config/wt.toml` (committed):

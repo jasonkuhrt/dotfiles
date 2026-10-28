@@ -46,7 +46,7 @@ Where the edges start and end, by subject. This is where to look, not a template
 
 ## Procedure
 
-`ladder.mjs` sits beside this file. Call it as `node <this directory>/ladder.mjs`; `format` prints the data file's format. The data file is the record: keep it in `.session/context/<item>/` in a session, else the scratchpad, as `<subject>.ladder.json`.
+`ladder.mjs` sits beside this file. Call it as `node <this directory>/ladder.mjs`; `format` prints the data file's format. The data file is the record: keep it in the scratchpad as `<subject>.ladder.json`.
 
 1. **Scope.** Name the subject, its top (what the outside takes) and the question, one line each. A probe only when the user gave one: never invent one.
 2. **Candidates.** `ladder.mjs imports <the top's file, or the subject's directory>`: who imports whom, by height, with each file's exports. These are candidates, not edges.

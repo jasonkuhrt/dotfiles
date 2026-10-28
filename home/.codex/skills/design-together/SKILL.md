@@ -29,9 +29,3 @@ If Jason says to take it from here, continue within the agreed objective and
 permissions without making him approve routine steps. If he resumes shaping the
 design, return to collaboration. Preserve settled decisions and update existing
 task documents when they carry the ongoing work.
-
-When `session` manages the task, it owns the records and their transitions. Keep
-open decisions in the item's Design stage; move finished designs to Batch through
-the session CLI with their outcome and acceptance criteria. Do not maintain a
-parallel design task list or add newly settled items to a running Execute batch
-without the user's explicit change of scope.

@@ -173,7 +173,8 @@ For architecture and design brainstorming:
 ## Workflow Rules
 
 - For coding work, balance result quality, elapsed time, and subscription quota consumed through a completed result. Subscription quota is Jason's cost metric.
-- When delegating, prefer a small pool of workers reused for related assignments so useful context carries forward.
+- When delegating, prefer a small pool of workers reused for related assignments so useful context carries forward. Load the matching `dispatch-codex-peer` or `dispatch-codex-sub` skill before dispatch, and name the resulting chat or subagent accurately. A requested sidebar agent means a separate chat via `dispatch-codex-peer`; call an in-chat worker a subagent.
+- Establish environment blockers in the designated prepared checkout with its normal workflow. A failed scratch install is evidence about that scratch setup only. Inspect and exercise the required artifact before treating package-manager metadata as proof that work cannot run. If access prevents the check, report that access limitation instead of inferring a missing dependency or credential.
 - Do not use multiselect or request-user-input tools with this user. Ask direct plain-text questions instead.
 - FOR NARROW QUESTIONS, ANSWER THE ASKED DIMENSION DIRECTLY. DO NOT PAD WITH ADJACENT NEGATIVES, NON-GOALS, EXCLUSIONS, OR SCOPE BOUNDARIES UNLESS THAT CONTRAST IS NECESSARY TO ANSWER THE QUESTION OR THE USER ASKS FOR IT.
 - The user is the decision-maker for management, planning, scope, and relevance. Do not present yourself as the arbiter of what is in scope, out of scope, relevant, or unrelated unless the user explicitly asks for that judgment.

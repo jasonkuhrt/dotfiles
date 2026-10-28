@@ -66,6 +66,7 @@ brew "up"            # interactive piping (Ultimate Plumber)
 # Apple ecosystem CLIs (EventKit/Shortcuts/iCloud-native tools — preferred over AppleScript for speed)
 brew "electrikmilk/cherri/cherri", trusted: true  # compile .cherri to .shortcut files
 brew "steipete/tap/remindctl", trusted: true  # Reminders CLI (EventKit)
+brew "steipete/tap/imsg", trusted: true  # Messages CLI (iMessage/SMS)
 
 # Git & GitHub
 brew "git"
@@ -157,15 +158,20 @@ cask "loom"           # screen recording
 cask "1password"      # password manager
 cask "notion"
 cask "obsidian"       # local-first markdown notes / knowledge vault
+cask "wispr-flow"     # voice dictation
+cask "granola"        # meeting notes
+cask "brave-browser"  # browser
 cask "linear"
 cask "figma"
 
 # Development
 cask "zed"            # editor
+cask "zed-delta"      # multiplayer coding with agents
 cask "visual-studio-code" # editor (configured via dotfiles + vscode-neovim)
 cask "ghostty"        # terminal engine / config surface consumed by cmux
 cask "docker-desktop"
 cask "ngrok"
+cask "tableplus"      # database GUI
 
 # AI
 cask "claude"

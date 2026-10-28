@@ -25,6 +25,35 @@ macos-default-apps:
 macos-default-apps-check:
     home/.local/bin/duti-sync --check home/.config/duti.yml
 
+# Upgrade explicitly selected npm globals without replacing linked local tools.
+tooling-npm-globals-upgrade +packages:
+    npm install --global {{packages}}
+
+# Upgrade the standalone pnpm installation retained behind the Vite+ wrappers.
+tooling-pnpm-upgrade:
+    ~/Library/pnpm/bin/pnpm self-update
+
+gh-extensions-upgrade:
+    gh extension upgrade --all
+
+# Inspect or upgrade the standalone 1Password CLI, retaining the old binary.
+tooling-op-check:
+    DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/20-1password-cli.sh --check
+
+tooling-op-upgrade:
+    DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/20-1password-cli.sh --update
+
+tooling-yo-upgrade:
+    DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/16-yo-install.sh
+
+# Upgrade the signed Apple Calendar driver at its existing privacy-granted path.
+tooling-calendar-upgrade:
+    ~/.local/bin/CheICalMCP --self-update
+
+# Apply a reviewed plugin commit plan while preserving configured version pins.
+update-nvim-plugins plan:
+    python3 scripts/update-nvim-plugins.py {{quote(plan)}}
+
 # Install claude-swap if missing and apply only CodexBar's machine-local settings.
 codexbar-setup:
     DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/22-codexbar.sh
@@ -100,8 +129,8 @@ raycast-setup:
     printf 'Activation steps: %s/README.md\n' "$raycast_target"
 
 # Verify Git Cleanup in isolated temporary Git repositories.
-git-cleanup-check:
-    cd "{{justfile_directory()}}/home/.claude/skills/git-cleanup" && vp exec node scripts/verify.mjs
+git-cleanup-check *args:
+    cd "{{justfile_directory()}}/home/.claude/skills/git-cleanup" && vp exec node scripts/verify.mjs {{args}}
 
 # Validate one skill's frontmatter and unfinished scaffold markers.
 skill-check skill:

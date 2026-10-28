@@ -1,79 +1,61 @@
 # Node Package Management
 
-```
-┌───────────────────────────────────────────────────────────────┐
-│  BOOTSTRAP (first just up)                                    │
-├───────────────────────────────────────────────────────────────┤
-│                                                               │
-│  pnpm installer ───▶ pnpm runtime ───▶ npm globals            │
-│        │                  │                  │                │
-│        ▼                  ▼                  ▼                │
-│  pnpm (native,       node LTS           CLI tools             │
-│  needs no node)      (global)           (~/.npm-global)       │
-│                                                               │
-└───────────────────────────────────────────────────────────────┘
-```
+Vite+ manages the active Node.js and package-manager commands. Fish puts
+`~/.vite-plus/bin` first, so `node`, `npm`, `npx`, `pnpm`, and `bun` resolve through
+its shims. Each shim selects the runtime or package manager for the current
+directory using the project's version declaration and the managed defaults.
 
-## PATH & Tool Layout
+## PATH and Tool Layout
 
-The order `config.fish` establishes in a login shell (its PATH block is a single
-`fish_add_path -gP`, first argument first):
+`home/.config/fish/config.fish` establishes this order with one
+`fish_add_path -gPm` block. The `-m` flag restores that order in nested shells.
 
-| Priority | Location             | Holds                                               |
-| -------- | -------------------- | --------------------------------------------------- |
-| 1st      | `~/.local/bin`       | standalone installs, which must win (e.g. `codex`)  |
-| 2nd      | `~/.npm-global/bin`  | global CLI tools, and npm itself                    |
-| 3rd      | `~/Library/pnpm/bin` | pnpm, and the `node` shim for pnpm's global runtime |
-| 4th      | `/opt/homebrew/bin`  | Homebrew's node: fallback, and a fresh machine's first npm |
+| Priority | Location | Holds |
+| --- | --- | --- |
+| 1 | `~/.vite-plus/bin` | Vite+ and active Node/package-manager shims |
+| 2 | `~/.local/bin` | Standalone installs such as Codex |
+| 3 | `~/.npm-global/bin` | Global npm CLI tools |
+| 4 | `~/Library/pnpm/bin` | Standalone pnpm and its Node runtime |
+| 5 | `~/.bun/bin` | Standalone Bun and Bun global commands |
+| Later | `/opt/homebrew/bin` | Homebrew tools and bootstrap Node/npm |
 
-`~/Library/pnpm` itself is not on PATH. Older pnpm versions put binaries there directly; a leftover
-`node` symlink at that level shadows the runtime shim and runs pnpm instead of node.
+Global npm tools live in `~/.npm-global` independently of the active Node
+version. A Vite+ shim and a binary in a later PATH directory can therefore have
+different versions; check the resolved command when auditing an upgrade.
 
-A nested shell inherits its parent's order: `fish_add_path` guarantees an entry is present, not that
-it is repositioned, so it never reshuffles what the parent set.
+## Bootstrap
 
-## Bootstrap Flow
+`just up` runs `04-node-toolchain.sh` and `05-npm-globals.sh`. They ensure
+standalone pnpm, its current Node LTS runtime, and the packages declared in
+`scripts/data/npm/global-packages.txt` are installed. The npm setup also updates
+existing global packages.
 
-Handled by `just up` (scripts `04-node-toolchain` and `05-npm-globals`):
+The pnpm installer writes shell setup to a temporary file, because Fish's PATH
+is already managed by this repository. Homebrew Node provides the first npm on
+a fresh machine; pnpm's Node runtimes ship without npm.
 
-```
-↓   curl -fsSL https://get.pnpm.io/install.sh | sh -    pnpm, into ~/Library/pnpm/bin
-↓   pnpm runtime set node lts -g                         global node LTS
-↓   npm install -g ...                                   globals, into ~/.npm-global
-```
-
-The script aims the installer's shell-rc edit at a throwaway file: `config.fish` already manages PATH
-and is a symlink into this repo.
-
-pnpm's node runtimes ship without npm (since pnpm 11). On a fresh machine the first `npm install -g`
-therefore runs Homebrew node's npm; once `npm` itself is a global, `~/.npm-global/bin/npm` takes over.
-
-## npx Fallback Chain
-
-```
-↓   local node_modules
-↓   ~/.npm-global
-↓   downloads (npx fetches)
-```
-
-This is why we use npm (not pnpm) for globals — npx checks npm's global dir.
-
-## Key Insight
-
-npm globals install to `~/.npm-global` independent of node version. `pnpm runtime set node 22 -g`
-won't break your global tools.
+The active Vite+ installation is managed independently of those bootstrap
+tools. Its bundled documentation is available under
+`~/.vite-plus/current/node_modules/vite-plus/docs/guide`.
 
 ## Updating Tools
 
-| Tool | Command                        | Why                                           |
-| ---- | ------------------------------ | --------------------------------------------- |
-| pnpm | `pnpm self-update`             | pnpm's documented update path                 |
-| node | `pnpm runtime set node lts -g` | moves the global node to the current LTS      |
+Run the machine-level workflows through their existing root recipes:
+
+| Tool | Recipe |
+| --- | --- |
+| Vite+ | `just --justfile ~/me/justfile tooling-vite-upgrade` |
+| Managed Node LTS | `just --justfile ~/me/justfile tooling-node-lts` |
+| Managed npm/npx | `just --justfile ~/me/justfile tooling-npm-upgrade` |
+| Standalone pnpm | `just tooling-pnpm-upgrade` |
+| Global npm tools | `just tooling-npm-globals-upgrade PACKAGE@VERSION ...` |
+
+Use the project's package-manager workflow to update its dependencies and
+lockfile. Projects in the `~/me` Bun workspace install from `~/me`, so workspace
+packages share one physical copy of Effect.
 
 ## Project-Specific Versions
 
-pnpm reads a project's `packageManager` and `devEngines.packageManager` fields itself: inside a project
-that pins pnpm that way, `pnpm self-update` updates the pin rather than the global pnpm.
-
-To run a different pnpm for one invocation, ignoring the pin, use `pnpm with <version> <command>`
-(see `pnpm help with`).
+Vite+ reads project declarations before managed defaults. Use `vp env current`
+to inspect the resolved selection. Its `env.md` documentation explains project
+pins, global defaults, and temporary shell selections.

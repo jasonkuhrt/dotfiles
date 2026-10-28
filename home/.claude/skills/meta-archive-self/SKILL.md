@@ -1,6 +1,6 @@
 ---
 name: meta-archive-self
-description: Use when the user invokes meta-archive-self, or tells the agent to archive itself or this session ("archive yourself", "archive this session", "you can archive now"). Archives this session at once. Works in the Claude desktop app and in Codex.
+description: Use when the user invokes meta-archive-self, or tells the agent to archive itself or this session ("archive yourself", "archive this session", "you can archive now"). Archives this session at once. Works in the Claude desktop app, in Codex, and in Conductor cloud workspaces.
 ---
 
 # Archive self
@@ -22,6 +22,8 @@ The user has decided this session is done and wants it gone from their list. Arc
 - refuses while background work is live.
 
 Archived sessions reopen from the Archived list.
+
+**Conductor cloud workspace** (`CONDUCTOR_IS_LOCAL=0`, whichever agent you are, so check this before Codex). Run `conductor workspace archive`, with no ID, as the final shell command. The workspace's own token archives it and the sandbox stops, so the command returns nothing (checked 2026-10-28 from a Codex agent). The API's `POST /v0/workspaces/{id}/unarchive` restores it. `codex archive` there would archive only Codex's internal thread and leave the workspace running.
 
 **Codex.** Run `codex archive "$CODEX_THREAD_ID"` as the final shell command. Codex puts the session's own id in `CODEX_THREAD_ID` for every command it runs (checked 2026-10-28, codex-cli 0.162.1). `codex unarchive <id>` brings it back. Archiving a finished session was checked; archiving from inside the session's own running turn was not, so run it last.
 

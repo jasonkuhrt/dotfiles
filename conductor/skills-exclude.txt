@@ -29,8 +29,6 @@ cloudflare
 git-cleanup
 git-cleanup-dry-run
 
-# Not yet cloud-aware: would archive Codex's internal thread
-meta-archive-self
 
 # A container of synced skills, not a skill
 synced

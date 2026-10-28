@@ -61,6 +61,18 @@ review directed at you ("review this with me") and a required author
 self-review stay in this conversation. Do not launch a Claude subagent for
 a new independent review by default.
 
+Astra reads code through the repository's `review` skill at `small`, when the
+repository has one: `.agents/skills/review/SKILL.md`, which Codex lists as a
+skill, or `.claude/skills/review/SKILL.md`. `medium` and `large` run only when
+the user names them. Then the lead launches each of their workers, verifiers
+and sweeps as its own read-only Astra run and assembles the report itself: an
+Astra run never dispatches another.
+
+- Bad (2026-10-27, PR #3057): `pr-to-ready`'s review gate dispatched a Claude
+  subagent, which spent about 300,000 tokens reviewing an 8-file diff.
+- Good: the gate is one read-only Astra run whose brief names the base and the
+  `review` skill, and its findings are checked as `with-astra-sidekicks` says.
+
 ## When the gate applies
 
 A ping is a turn that ends on the user: it asks them a question, brings them a

@@ -76,7 +76,7 @@ more than the task.
 ## Launching
 
 ```sh
-codex exec -C <dir> \
+codex exec -C <dir> --skip-git-repo-check \
   -c 'model="gpt-6-astra"' -c 'model_reasoning_effort="ultra"' \
   -o <scratchpad>/astra-<slug>.txt \
   "<prompt, or the brief's path>" \
@@ -85,6 +85,15 @@ codex exec -C <dir> \
 
 - Run it in the background (`run_in_background: true`) and keep working; the
   completion notice brings you back.
+- `--skip-git-repo-check` is on every command, so a run starts from any
+  `<dir>`: a skill folder, a scratchpad, the home directory. Without it,
+  Codex refuses any directory that is neither a git repo nor under a trusted
+  path in `~/.codex/config.toml`. Jason, 2026-10-28: "they can access for
+  example my home dir down i dont have a problem with that at all".
+  - Bad: `-C ~/.claude/skills/worth-owning` without the flag. The run exited
+    at once with "Not inside a trusted directory", and the lead relaunched
+    it from another directory by hand.
+  - Good: the same `-C`, with the flag, starting on the first try.
 - Name the model and effort on every command. `~/.codex/config.toml` sets
   another default model.
 - `< /dev/null` is required. Without it a background run waits forever at
@@ -95,10 +104,11 @@ codex exec -C <dir> \
 - A review or an opinion adds `--sandbox read-only`. The config's default is
   full access with no approvals, so any other run can edit and commit: check
   `git status` in `<dir>` after it.
-- A review of a branch with no instructions of your own is
-  `codex exec review --base origin/develop` with the same `-c` flags. With
-  instructions, it is a read-only `codex exec` whose prompt names the base to
-  diff against.
+- A review is a read-only `codex exec` whose prompt names the base to diff
+  against and has Astra read the change through the repository's `review`
+  skill at `small`, when the repository has one (`gate-astra-review`, "New independent
+  reviews use Astra"). Without one, `codex exec review --base origin/develop` with
+  the same `-c` flags reviews a branch you have no instructions for.
 - To correct a run, stop it and continue its session:
   `codex exec resume <session id> "<correction>"`, with the same flags and
   redirects. A fresh `codex exec` starts from nothing.

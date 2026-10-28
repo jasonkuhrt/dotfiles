@@ -23,7 +23,7 @@ Check every row with a tool this turn. Memory of what happened earlier in the ch
 | --- | --- | --- |
 | Asks | an ask from the user is neither done nor deferred by the user | reread the user's messages since the session began (and the compaction summary, if there is one) |
 | Running work | a subagent, a side session still under this one, an Astra or codex run, a background shell task, monitor, cron or wakeup is still going | `ListAgents`, linked sessions (`list_sessions` with `linked: true`), `pgrep -fl codex`, task notifications not yet received, `CronList` |
-| PRs | a PR this session owns is open, and landing it needs this session (no auto-merge, or a failure Auto-fix would wake this session to fix) | `gh pr view <n> --json state,autoMergeRequest,mergeStateStatus`, `get_status` |
+| PRs | a PR this session owns is open in the user's own repo, and landing it needs this session (no auto-merge, or a failure Auto-fix would wake this session to fix) | `gh pr view <n> --json state,autoMergeRequest,mergeStateStatus`, `get_status` |
 | Git | a worktree this session touched has uncommitted, unpushed or stashed work of its own, beyond what the repo's `post-pr-merge` skill classifies as noise | `git status --short`, `git log @{u}..`, `git stash list` in each |
 | Worktrees | a worktree this session created or runs in is still on disk, or its local or remote branch still exists, after its PR merged | `git worktree list`, `git branch --list`, `git ls-remote --heads origin`, `gh pr view` of each branch |
 | Processes | a dev server, engine or port this session started is still running | `lsof -nP -iTCP -sTCP:LISTEN`, the process list |
@@ -35,6 +35,11 @@ A side session the user moved to top level is theirs, not this session's. `get_s
 - Bad: "Not yet: the remote-sandboxes session is still working", about a session Jason had detached, found through the unlinked `list_sessions` listing.
 - Good: the linked listing comes back empty, so the Running work row passes.
 
+An upstream PR, one to a project outside the user's own repos, is its maintainers' to merge on their schedule. It never blocks the end, and its worktree (under `~/repo-references/`) stays for the review rounds to come: no end step removes it or reports it as left to delete. Jason, 2026-10-28: "treat upstream prs different, they aren't expected to get merged and closing their wts is not expected either".
+
+- Bad: "Not yet: CodeRabbit hasn't reviewed the fix I pushed to MapleTechLabs/maple#1943", then a Git row that kept its worktree "because #1943 hasn't merged".
+- Good: the PRs row reads "MapleTechLabs/maple#1943, upstream: its maintainers merge it", and the end steps leave its worktree alone without listing it.
+
 Only the first four rows can block the end. Worktrees, processes, loose ends and the record are end steps: you do them on a yes.
 
 ## End steps
@@ -44,7 +49,12 @@ When no row blocks, do these, then report them:
 1. **File loose ends** in the project's tracker, following its issue rules. Only findings and follow-ups nobody asked to have done now go here, never an undone ask.
 2. **Stop processes** this session started that nothing else uses.
 3. **Write the final state** into the session's record, if it has one.
-4. **Clean worktrees and branches.** A yes that leaves the user a worktree or a branch to delete fails. For each worktree this session created or runs in whose PR merged, follow the protocol the repo's `post-pr-merge` skill gives the current developer. Do the worktree you run in last. A worktree it keeps, for work in it or an unmerged PR, goes under the Git row; a repo without the skill leaves its worktrees for the Git row too, with that reason.
+4. **Clean worktrees and branches.** A yes that leaves the user a worktree or a branch to delete fails. For each worktree this session created or runs in whose PR merged, follow the protocol the repo's `post-pr-merge` skill gives the current developer. A worktree it keeps, for work in it or an unmerged PR, goes under the Git row; a repo without the skill leaves its worktrees for the Git row too, with that reason. An upstream PR's worktree stays and goes unlisted (see the audit).
+
+   Do the worktree you run in last, and remove it only once the session has left it. Call `mcp__ccd_directory__change_directory` alone, in a message of its own, and read its result before any removal. Claude Desktop refuses the move for a session in a worktree the app made ("can't be moved"). Such a worktree goes when the session is archived (`archive_session` cleans up its worktree), so the session never removes it, and it doesn't fail the yes: the report says it goes with the archive.
+
+   - Bad (2026-10-28, HEA-6611): `change_directory` and `git worktree remove` of the session's own worktree sent in one batch, for a worktree with no PR at all. The move was refused, the removal ran anyway, and the session's folder was gone until it was recreated with `git worktree add`.
+   - Good: `change_directory` alone; on its refusal, the worktree stays and the report says archiving removes it.
 
 When a row blocks, skip the end steps: they belong to the end, and this isn't it. Keep working on what is yours. The next meta-can-end, once nothing blocks, does them.
 
@@ -84,3 +94,5 @@ Closing the session is the user's act. Never archive, stop or close this session
 | "I'll ask whether to clean up the merged worktree." | A merged, clean worktree this session created is an end step: clean it. |
 | "The worktree is merged, so the user can delete it whenever." | Then the session wasn't endable. Remove the worktree and its branches before saying yes. |
 | "The worktree still has a `.env`; let me check it matches the main checkout's before I remove it." | Gitignored files aren't the end's concern. Remove the worktree; never raise them. |
+| "The upstream PR is still open, so it's not yet." | An upstream PR is its maintainers' to merge. It never blocks, and its worktree stays. |
+| "I'll move out and remove my own worktree in one go." | The removal waits for `change_directory`'s result. A refused move means the worktree goes with the archive, never by the session's hand. |

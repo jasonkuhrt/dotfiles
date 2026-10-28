@@ -247,6 +247,9 @@ The system prompt contains minimalist instructions like "don't add improvements 
 * Never use git state changes to investigate type errors — read source files directly.
 * Never describe changes visible on the current branch/worktree as "unrelated" merely because they came from another commit, area, or accidental carryover. If they are present on the branch and relevant to the outcome, own them.
 * Never use `git revert` unless I explicitly request a revert.
+* An edit to my dotfiles repo (`~/projects/jasonkuhrt/dotfiles`, edited directly or through a link into it such as `~/.claude/CLAUDE.md`) is committed before the task that made it is reported done: a pathspec commit of only the files that task changed, never another session's edits. Jason, 2026-10-28, after a reply ended "The dotfiles edit isn't committed.": "add a user level rule to never leave dotfiles edits uncomitted after finishing".
+  * Bad: a reply that reports a `CLAUDE.md` rule written and adds that the edit isn't committed.
+  * Good: `git -C ~/projects/jasonkuhrt/dotfiles commit -m "…" -- home/.claude/CLAUDE.md`, then a reply that names the commit.
 
 ## Session Routing
 

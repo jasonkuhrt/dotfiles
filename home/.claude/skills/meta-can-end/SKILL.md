@@ -68,7 +68,7 @@ That is the whole reply. No audit table, no rows that passed, no end steps, no c
 2. **The audit** as a table: row, state, how it was checked.
 3. **What the end steps did:** issues filed, processes stopped, worktrees removed, branches deleted (local and remote). List issues as a table with at least the id (linked) and the title. A bare run of keys ("Filed: HEA-1, HEA-2") fails.
 
-Closing the session is the user's act. Never archive, stop or close this session yourself.
+Closing the session is the user's act. Never archive, stop or close this session yourself, unless the user invoked `meta-archive-self`, which archives after this verdict says yes.
 
 ## Common mistakes
 

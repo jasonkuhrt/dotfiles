@@ -102,7 +102,7 @@ cart.inStock();
 There are six kinds. The state and place annotations start with `// ── `; the divider is `// ` and its rule; the note, pointer and spacer annotations start with `//` alone.
 
 * **State annotation:** `// ── CURRENT` for code as it is on develop, `// ── IDEA` for code that doesn't exist yet, with nothing after the word. Jason first called it the position annotation, then took the agent's word ("'position' annotation i rename as your term 'state'").
-* **Divider annotation:** `// ` and a rule of 57 `─`, so it ends at column 60, the longest any line in a block can be (Jason, 2026-10-21: "the rulers should end at col 60, so they align nicely with the max a annotation could ever be"). It sits directly above every place annotation.
+* **Divider annotation:** `// ` and a rule of 57 `─`, so it ends at column 60, the longest any line in a block can be (Jason, 2026-10-21: "the rulers should end at col 60, so they align nicely with the max a annotation could ever be"). It sits directly above every place annotation in a block that has a state (see State modes).
 * **Place annotation:** `// ── @ <where>`. It names where the code below it lives: a file path, or the context when there is no file (a terminal, a generated client, a type at hover). Jason, 2026-10-20: "from now on no code block will be sans an indication of placement".
 * **Note annotation:** `//`, four spaces, then the note, so its text starts in the column of the place annotation's `@`. A note too long for one line wraps onto more lines at the same indent. It explains the whole lines under it, on its own lines above them (Jason, 2026-10-20: "' // [3]' etc. annotations must be in own line above position"). It carries no marker, arrow or number.
 
@@ -124,7 +124,7 @@ There are six kinds. The state and place annotations start with `// ── `; th
 
 Jason, 2026-10-20: "current/idea are meant to be contiguous markers, the format is merciliess: * lead with current * lead with current, later in block, idea. nothing else is ever valid, ever." Jason, 2026-10-21, added idea alone: after two blocks comparing an Inngest workflow with a for loop each opened on the same filler `CURRENT` lines, "my rules about state annotations are backfiring right now. its not helping me read your turn", then "right now my config forbids idea on its own. that is one problem i feel."
 
-A block is in exactly one of three state modes, never two and never another:
+A block of the codebase's code is in exactly one of three state modes, never two and never another:
 
 * **State mode 1, current:** the block leads with the `CURRENT` state annotation, and all of it is code as it is on develop.
 * **State mode 2, current then idea:** the block leads with the `CURRENT` state annotation, then all the current code. One `IDEA` state annotation follows, and everything after it is code that doesn't exist yet.
@@ -139,6 +139,11 @@ Each state annotation appears once, and a `CURRENT` after `IDEA` is invalid. A `
   * Bad: `CURRENT` shows the app's `FolderWithDocuments`, and `IDEA` shows a test in `libs/prisma-scope` over that suite's own models, with nothing linking the two.
   * Good: `CURRENT` shows the prisma-scope test file as it is, and `IDEA` shows the test added to it.
 
+A block that shows no code of the codebase has no state, so it has no state annotation and no divider: its place annotation opens it. Examples are a deploy request's schema diff, a terminal's output, a query's rows and a payload on the wire. Jason, 2026-10-28, of a deploy request's `CREATE TABLE` block that opened on `-- ── CURRENT` and a divider: "can u see how its fucking useless to describe 'current' there to me? it would be less confusing if u said maybe .... nothing? meaning no header/underline on first two lines?"
+
+* Bad: `-- ── CURRENT`, the divider, then `-- ── @ heartbeat-main deploy request #365, new table SequenceVersion`, then the diff.
+* Good: `-- ── @ SequenceVersion`, then the diff, under a line that links the deploy request in the PlanetScale dashboard (see Titles).
+
 ### Titles
 
 Every code block in a reply has a title: one bold line directly above its fence, saying what the block shows. Jason, 2026-10-21: "codeblocks should always have a title before them in your output."
@@ -146,9 +151,14 @@ Every code block in a reply has a title: one bold line directly above its fence,
 * Bad: a sentence of prose, then the fence of the for-loop sketch.
 * Good: `**Mayhul's for loop, run when the person enters**`, then the fence.
 
+A deploy request's schema diff is the one exception: its blocks have no title. One line above them links the request in the PlanetScale dashboard, and each block's place annotation names only its table, so it already says what a title would. Jason, 2026-10-28, of a diff whose blocks each had a title and opened on `-- ── @ heartbeat-main deploy request #365, new table SequenceVersion`: "links to the dashboard should be used and u r repeating things in the '@' part that don't need to be, the best format is probably sticking to the '@' style but ditching the titles u added above each block".
+
+* Bad: `**New table SequenceVersion**`, then a block opening on `-- ── @ heartbeat-main deploy request #365, new table SequenceVersion`.
+* Good: `[Deploy request #365](https://app.planetscale.com/heartbeat/heartbeat-main/deploy-requests/365)` once, then each table's block opening on `-- ── @ SequenceVersion`.
+
 ### Layout
 
-* Each place opens with a header: one run of comment lines with no empty line inside it. In order, it holds the state annotation (only where a part starts), the divider, the place annotation, and, when a note explains the code right under the header, a spacer annotation and that note. One empty line separates the header from the code under it.
+* Each place opens with a header: one run of comment lines with no empty line inside it. In order, it holds the state annotation (only where a part starts) and the divider, both only in a block that has a state, then the place annotation, and, when a note explains the code right under the header, a spacer annotation and that note. One empty line separates the header from the code under it.
 * Every change of place opens a new header, with one empty line between it and the code above.
 * A note annotation further down, below a code line rather than under a header, has one empty line above it and one below.
 * A pointer annotation touches the code line above it.

@@ -196,8 +196,12 @@ the upstream's own note quoted, and the patch.
   tsrs closes them, and on tsrs#722 Boshen turned the inline patch into
   [tsrs#727](https://github.com/oxc-project/tsrs/pull/727).
 - A B item gets an issue only, and its PR once a maintainer agrees.
-- **Goodwill budget:** at most 3 open asks per upstream at a time, strongest
-  first. B items wait until that repo's A items land.
+- **Goodwill budget:** an A item's PR goes out whatever else is open there:
+  it asks a maintainer for a review, not a decision. At most 3 B asks are
+  open per upstream at a time, strongest first, and B items wait until that
+  repo's A items land. Jason, 2026-10-28, of the old cap of 3 on every ask:
+  "why is there a limit?" No reason was recorded, and on vite-task an A PR
+  (#887) merged 30 hours after it opened while 9 issues had no reply.
 - Posts follow the user's posting rules. A CLA is the user's to sign.
 - Where a repo's norms require the person who posts to shepherd it
   (microsoft/TypeScript: AI-written work only with a disclosure and a human

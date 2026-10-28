@@ -60,6 +60,7 @@ normalize_checks() {
           state: $state,
           conclusion: $state,
           url: url,
+          started: (.startedAt // .createdAt // ""),
           terminal: has(["SUCCESS", "ERROR", "FAILURE"]; $state),
           success: ($state == "SUCCESS"),
           skipped: false,
@@ -74,6 +75,7 @@ normalize_checks() {
           state: $status,
           conclusion: $conclusion,
           url: url,
+          started: (.startedAt // ""),
           terminal: ($status == "COMPLETED"),
           success: (
             $status == "COMPLETED"
@@ -87,6 +89,11 @@ normalize_checks() {
         }
       end
     ]
+    # A check that ran again for the same head (a rerun, or a run for a later
+    # event such as a label) supersedes its earlier runs, as GitHub judges
+    # required checks by the newest.
+    | group_by(.workflow + "\u0000" + .name)
+    | map(max_by(.started))
   '
 }
 
@@ -276,6 +283,9 @@ while true; do
   raw_workflow_run_total=$(jq 'length' <<<"$raw_workflow_runs")
   workflow_run_total=$(jq 'length' <<<"$workflow_runs")
   ignored_workflow_run_total=$((raw_workflow_run_total - workflow_run_total))
+  # The newest run of a workflow for one event supersedes its earlier runs.
+  workflow_runs=$(jq -c 'group_by(.event + "\u0000" + .name) | map(max_by(.createdAt))' <<<"$workflow_runs")
+  workflow_run_total=$(jq 'length' <<<"$workflow_runs")
   signature=$(
     jq -S -c \
       -n \

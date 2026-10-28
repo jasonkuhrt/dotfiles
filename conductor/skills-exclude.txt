@@ -32,3 +32,6 @@ git-cleanup-dry-run
 
 # A container of synced skills, not a skill
 synced
+
+# Codex's own cache of system skills, not a skill
+.system

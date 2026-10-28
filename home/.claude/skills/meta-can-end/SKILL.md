@@ -22,13 +22,18 @@ Check every row with a tool this turn. Memory of what happened earlier in the ch
 | Row | Blocks the end when | Check with |
 | --- | --- | --- |
 | Asks | an ask from the user is neither done nor deferred by the user | reread the user's messages since the session began (and the compaction summary, if there is one) |
-| Running work | a subagent, side session, Astra or codex run, background shell task, monitor, cron or wakeup is still going | `ListAgents`, linked sessions (`list_sessions` with `linked: true`), `pgrep -fl codex`, task notifications not yet received, `CronList` |
+| Running work | a subagent, a side session still under this one, an Astra or codex run, a background shell task, monitor, cron or wakeup is still going | `ListAgents`, linked sessions (`list_sessions` with `linked: true`), `pgrep -fl codex`, task notifications not yet received, `CronList` |
 | PRs | a PR this session owns is open, and landing it needs this session (no auto-merge, or a failure Auto-fix would wake this session to fix) | `gh pr view <n> --json state,autoMergeRequest,mergeStateStatus`, `get_status` |
 | Git | a worktree this session touched has uncommitted, unpushed or stashed work of its own, beyond what the repo's `post-pr-merge` skill classifies as noise | `git status --short`, `git log @{u}..`, `git stash list` in each |
 | Worktrees | a worktree this session created or runs in is still on disk, or its local or remote branch still exists, after its PR merged | `git worktree list`, `git branch --list`, `git ls-remote --heads origin`, `gh pr view` of each branch |
 | Processes | a dev server, engine or port this session started is still running | `lsof -nP -iTCP -sTCP:LISTEN`, the process list |
 | Loose ends | a finding, bug or follow-up raised in the chat is neither done nor filed | reread the chat; search the tracker for it |
 | Record | the session's notes or record file lacks the final state | read the file |
+
+A side session the user moved to top level is theirs, not this session's. `get_session` shows it `detached: true`, and `list_sessions` with `linked: true` leaves it out. It never blocks the end, and nothing waits on its report. Jason, 2026-10-28: "that session is turned top level, its not under you, can't you see that? my can end skill should never block ending on sessions i made top level!"
+
+- Bad: "Not yet: the remote-sandboxes session is still working", about a session Jason had detached, found through the unlinked `list_sessions` listing.
+- Good: the linked listing comes back empty, so the Running work row passes.
 
 Only the first four rows can block the end. Worktrees, processes, loose ends and the record are end steps: you do them on a yes.
 

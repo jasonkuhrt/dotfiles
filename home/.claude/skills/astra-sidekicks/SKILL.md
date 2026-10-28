@@ -10,13 +10,15 @@ thing in words, and holds until the user ends it (`/astra-sidekicks off`, "no
 Astra", or words that say so). It survives compaction and handoffs: carry
 "astra-sidekicks is on" in whatever you hand yourself.
 
-Its peer `astra-review` holds whether this mode is on or off: before a ping
-that puts your work in front of the user, Astra reviews the work and you
-resolve every finding. `/astra-sidekicks off` leaves it on; "no Astra" ends
-both.
+Its peer `astra-review` owns whether existing review is sufficient and when
+new review is needed, whether this mode is on or off. Consult that gate before
+launching a reviewer; this skill supplies launch mechanics, not another
+handoff review. `/astra-sidekicks off` leaves that gate on; "no Astra" ends both.
 
-This skill is for a Claude lead session. A Codex agent reading it is the
-sidekick: do the task you were given and dispatch nothing.
+The side-task mode is for a Claude lead session. Its launch mechanics are also
+used by a Codex lead when `astra-review` requires a new independent review.
+A worker assigned a task does that task and dispatches nothing; role follows
+the assignment, not the harness name.
 
 Why: Astra (gpt-6-astra through the Codex CLI) runs on the user's OpenAI
 subscription, so every task it takes is Claude quota saved. It cannot be

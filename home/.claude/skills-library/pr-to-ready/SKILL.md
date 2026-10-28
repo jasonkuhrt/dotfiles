@@ -19,7 +19,7 @@ Core flow:
 2. Move the PR out of draft.
 3. Scan for existing Greptile review feedback. Do not wait for Greptile to appear or settle.
 4. Address actionable Greptile feedback, only when it already exists.
-5. Run one independent subagent review iteration against the current PR diff, then address actionable findings.
+5. Invoke `astra-review` to reuse sufficient independent review or dispatch only missing review, then address actionable findings.
 6. Verify fixes under the active check policy, batch them, push once, and watch the requested remote checks at a quiet cadence.
 7. If the PR requires E2E, follow the repository's E2E submission and continuation contract, then wait for its current-head checks.
 8. Report the PR URL, branch, review outcome, remote check state, and any intentionally open blockers.
@@ -71,28 +71,28 @@ When working through threads:
 - Resolve addressed threads after fixes are pushed and the requested verification passes.
 - Leave ambiguous, conflicting, informational, or still-failing threads open with a clear reason.
 
-### 5. Subagent Review Iteration
+### 5. Ensure Independent Review
 
-Use the active harness's native in-thread subagent tools. In Codex, load and
-follow the `dispatch-codex-sub` skill from the current skills list.
+Load and invoke [astra-review](../../skills/astra-review/SKILL.md) as the single owner of
+review reuse and dispatch. Give it the current base/head and diff, required
+repository criteria, and existing self-review, peer review, and finding records
+from the preceding workflow. Follow its reuse decision instead of launching
+another reviewer because this skill was entered.
 
-After existing Greptile feedback has been handled, dispatch one in-thread subagent for an independent code-review pass on the current PR diff. The subagent review is a required gate, not a substitute for Greptile, CI, or the main agent's own review.
+An implementation review completed during `loop-improve-e2e` can satisfy this
+gate. The gate owner checks its coverage and independence; author self-review
+and proposal review remain distinct. Any required self-review precedes a new
+peer pass. The repository's `review` skill owns the roster and supported size;
+this workflow carries no separate prompt or size alias.
 
-Use this prompt shape:
-
-```text
-Review PR <number> on branch <branch> for correctness, regressions, missing verification, and repo-convention violations. Other agents may be editing the repo; do not revert unrelated changes. Do not edit files. Report only actionable findings with severity, file/line evidence, and the smallest fix that would satisfy the concern.
-```
-
-Handle the subagent result:
+Handle findings through the gate owner's result rules:
 
 - Implement actionable correctness, regression, verification, or repo-convention findings.
 - Leave opinion-only or ambiguous findings unimplemented unless local evidence confirms them.
-- Verify the applied fixes under the active check policy and repository gates.
-- Commit the intended fixes under the active history policy, then push.
-- If the subagent reports no actionable findings, record that outcome and continue.
+- Verify the fixes under the active check policy and repository gates, then commit and push them under the active history policy.
+- Record the reused or new review and resolved findings, then continue.
 
-If fixes from the subagent review materially change the PR, re-check unresolved PR review threads before moving to CI watching.
+If fixes materially change the PR, re-check unresolved PR review threads before moving to CI watching.
 
 ### 6. Local-First Checks, Then Remote Gates
 
@@ -131,7 +131,7 @@ Keep the closeout short:
 - Whether the PR was moved out of draft or was already ready.
 - Whether Greptile feedback appeared.
 - Which Greptile threads were addressed/resolved, or that none were actionable.
-- Which subagent review findings were addressed, or that the subagent reported no actionable findings.
+- Which independent review was reused or run, and which findings were addressed.
 - Remote check status and any remaining external blockers.
 
 ## TypeSafe judgments

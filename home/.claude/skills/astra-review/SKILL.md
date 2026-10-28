@@ -1,38 +1,77 @@
 ---
 name: astra-review
-description: Use when about to end a turn that pulls the user in over work you did: asking a question about it, bringing a decision, proposal, plan or finding, or reporting code, a PR or a document as ready for review. Also when the user invokes astra-review or says to stop it. Holds whether astra-sidekicks is on or off.
+description: Ensure independent review before a workflow gate or user-facing handoff of work. Reuse sufficient recorded review and dispatch only missing review to Astra. Owns review reuse and dispatch for composing skills; repository review skills own criteria. Also when the user invokes astra-review or says to stop it. Holds whether astra-sidekicks is on or off.
 ---
 
 # Astra review
 
-Before you pull the user into the conversation over your work, Astra reviews
-the work and you resolve every finding. The user then reads work a second
-model has already been through, and the findings they would have caught
-themselves are fixed or answered before they look.
+Before a review gate or user-facing handoff, ensure the work has sufficient
+independent review and resolve its findings. Reuse a valid review already
+completed for that work; launch only the review that is missing.
 
-Peer of `astra-sidekicks`. That skill holds how to launch Astra, how to brief
-it and how to check what it reports. This one holds when a review round runs,
-what it reviews, and when the round counts as resolved.
+This skill owns the reuse and dispatch decision. Callers such as
+`loop-improve-e2e` and `pr-to-ready` cite and invoke this gate with the work and
+existing review records; they do not copy a launch prompt or require another
+round themselves. `astra-sidekicks` owns launch, briefing, and result-handling
+mechanics. The repository's `review` skill owns criteria and size.
 
 It is standing, not a mode: it holds whether `astra-sidekicks` is on or off.
 It stops when the user ends it (`/astra-review off`) or says "no Astra", which
 ends both skills. Carry "astra-review is off" in whatever you hand yourself
 across compaction and handoffs.
 
-This skill is for the session the user talks to. A worker reporting to its
-lead, or a side session reporting to the session that started it, isn't
-pinging the user: the session that talks to the user runs the round. A Codex
-agent reading this skill is the reviewer: review what you were given and
-dispatch nothing.
+This gate is owned by the lead session, whether Claude or Codex. A worker
+assigned a review performs that review and dispatches nothing; its harness
+does not make it a lead. A required author self-review stays in the lead's
+context, before independent review, and does not satisfy the peer gate.
 
-## When a round runs
+## Reuse before dispatch
+
+Read the existing checkpoint and review reports before starting a reviewer.
+A review can satisfy multiple composing skills and handoffs when:
+
+- Its role and stage fit: an independent implementation review covers an
+  implementation gate; an author self-review or proposal review does not.
+- Its recorded scope and applicable criteria cover the work now being handed
+  off. Check the base and head, or reviewed content hashes for uncommitted
+  work later committed unchanged, including relevant supporting evidence.
+- Its reviewer did not implement the work, its findings have recorded
+  dispositions, and no unresolved actionable finding blocks this gate.
+
+Record the reused report and why it still covers the current work in the
+existing checkpoint; do not introduce another review registry. A new caller,
+approval, draft-to-ready transition, unchanged-byte commit, or different
+default reviewer model is not a reason to repeat sufficient review. Honor an
+explicit user request for a fresh review or a specific reviewer.
+
+When code, base context, evidence, or claims change, check what prior coverage
+that change invalidates. Review only missing or materially affected portions,
+retaining the rest. A changed handoff claim can need a claim-only review, not
+another code review. Run any required lead self-review before that peer pass.
+A prior report without enough evidence to establish coverage cannot satisfy
+the gate merely because it says "no findings".
+
+## New independent reviews use Astra
+
+Jason, 2026-10-27: "make my defualt be to alawys use astra for reviews to save
+my claude quota". When independent review is missing, dispatch it to Astra
+unless the user names another reviewer. This applies to this skill's rounds,
+composed workflow gates, and review requests not directed at the lead. A
+review directed at you ("review this with me") and a required author
+self-review stay in this conversation. Do not launch a Claude subagent for
+a new independent review by default.
+
+## When the gate applies
 
 A ping is a turn that ends on the user: it asks them a question, brings them a
 decision, or reports work as ready for their review.
 
-Run a round before a ping that puts work of yours in front of the user: code,
+Ensure sufficient review before a ping that puts work of yours in front of
+the user: code,
 a diff or a PR, a design, a proposal, a plan, an issue or a doc, a finding, or
-the options of a decision. The work's size doesn't change this.
+the options of a decision. The work's size doesn't change this. Apply the
+reuse decision first; a workflow's completed peer review can satisfy this
+handoff too.
 
 Run none when the ping:
 
@@ -48,7 +87,9 @@ line. A round the user releases there still can't write the tests or fixes
 the mode holds, so a code defect it finds is carried (below). Rounds run as
 usual once the mode ends.
 
-## The round
+## A new round
+
+Run this only for coverage the reuse check found missing.
 
 1. **Draft the ping:** the message you would send the user now.
 2. **Brief Astra** (below), writing the brief to
@@ -69,12 +110,16 @@ usual once the mode ends.
 
 Write it whole, by `astra-sidekicks`' brief rules. It holds:
 
-- **The work.** For code: the checkout, and the base to diff its working tree
-  against. The base is the commit the last resolved round on this work
-  reviewed, or the branch's base on the first round. For other work: the paths
-  of the files that hold it, and of the sources it rests on.
+- **The work.** Use the scope selected by the reuse gate. For code, pin the
+  checkout, base/head and any uncommitted content. Missing criteria on
+  unchanged code or a requested fresh full review use the original PR diff;
+  use a later reviewed commit as the base only when the missing coverage is
+  that subsequent delta. For other work, name the files and source evidence.
 - **The ping.** The draft in full, and what the user will be asked to do with
   it.
+- **The criteria.** For code, the repository's `review` skill at `small`,
+  narrowed to the missing passes selected by the gate. A new full review uses
+  every applicable pass. Then what to look for below.
 - **What to look for:**
   - a defect: a case where the work gives a wrong result, crashes or
     regresses, with the input that shows it;
@@ -82,9 +127,10 @@ Write it whole, by `astra-sidekicks`' brief rules. It holds:
   - a question in the ping that the asker could settle by checking.
 - **What is settled.** The findings earlier rounds on this work answered, each
   with its reason. Raise one again only to show its reason is wrong.
-- **The report's shape.** One entry per finding: the claim in one sentence,
-  its file:line, and the case or command that shows it. "No findings" when
-  there are none.
+- **The report's shape.** Name the reviewed scope and criteria, then one entry
+  per finding: the claim in one sentence, its file:line, and the case or
+  command that shows it. "No findings" when there are none. Keep the brief,
+  report and finding dispositions together as the next caller's reuse evidence.
 - **No edits.**
 
 ## Resolving
@@ -104,13 +150,16 @@ round reviewed:
   back, or a code defect whose test and fix the `top-down` mode holds, given
   with its case. It joins the ping's decision, with your pick.
 
-The round is resolved when every finding has an outcome. One round per ping:
-its fixes aren't reviewed again now. The next round, before the next ping,
-diffs from this round's commit and so covers them.
+The round is resolved when every finding has an outcome. Do not automatically
+start another full round for its fixes or the next ping. At the next gate,
+check whether fixes or new work materially invalidate coverage, then review
+only that missing delta. Record carried findings explicitly; carrying a
+blocking defect does not satisfy an implementation gate.
 
 ## The account
 
-The ping carries one line on the round: its last line, or the line above its
+The ping carries one line on the review, saying when it was reused: its last
+line, or the line above its
 question when it ends on one. It names what the round reviewed (the commit,
 or the other work in a few words) and each fix to the work, with its test
 when it has one. Nothing else from the round reaches the user: answered
@@ -127,6 +176,9 @@ When Astra can't run (the run errors on auth, the model or the OpenAI quota,
 or it hangs again after one relaunch), ping without a round and say so:
 
 > No Astra round: OpenAI usage limit reached.
+
+An unavailable reviewer leaves a required workflow review gate unmet; this
+notice does not certify the work or satisfy that gate.
 
 Never put a Claude reviewer in Astra's place on your own: it spends the quota
 Astra saves, and that call is the user's.
@@ -152,6 +204,6 @@ Astra saves, and that call is the user's.
 | "I'll list what Astra found so the user sees the review." | The account is one line: what the round reviewed, and each fix with its test. |
 | "Astra flagged it, so I'll fix it." | Reproduce it first. A finding that doesn't reproduce is answered, not fixed. |
 | "Astra is down; a subagent can review instead." | Ping with "No Astra round: <why>". A substitute reviewer is the user's call. |
-| "My fixes are new code; I'll run another round before pinging." | One round per ping. The next round covers the fixes. |
+| "A different workflow or another ping needs its own review." | Reuse sufficient review; dispatch only missing or materially affected coverage. |
 | "Astra's design suggestion is good; I'll adopt it." | A design point that is the user's call is carried into the decision, with your pick. |
 | "astra-sidekicks is off, so there's no review." | This skill holds either way. Only `/astra-review off` or "no Astra" stops it. |

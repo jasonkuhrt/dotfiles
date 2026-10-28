@@ -189,4 +189,33 @@
   //     },
   //     "showModifierHoldHints" : true
   //   },
+
+  // Zed is the source of truth for these keys (see zed/keymap.json):
+  //   Cmd+H                     toggle the left sidebar            (Zed: toggle left dock)
+  //   Cmd+L                     open and focus the right sidebar,
+  //                             or close it when it has focus      (Zed: toggle right dock)
+  //   Ctrl+Cmd+L / Ctrl+Cmd+J   split right / down                 (Zed: same keys)
+  // Cmd+H is taken from the macOS "Hide cmux" menu item. The two browser
+  // actions move off the keys the sidebar took.
+  //
+  // Cmd+L is two actions on one key, split by `when`. cmux's own toggle opens
+  // the sidebar without focusing it, so from a terminal the key runs
+  // `focusRightSidebar` (opens and focuses), and from anywhere else it runs the
+  // toggle (closes). The split is on `terminalFocus` because `sidebarFocus`
+  // lagged a press behind in 0.65.0 and fired the wrong action.
+  "shortcuts" : {
+    "bindings" : {
+      "toggleSidebar" : "cmd+h",
+      "focusRightSidebar" : "cmd+l",
+      "toggleFileExplorer" : "cmd+l",
+      "splitRight" : "ctrl+cmd+l",
+      "splitDown" : "ctrl+cmd+j",
+      "focusBrowserAddressBar" : "cmd+opt+l",
+      "openBrowser" : "cmd+opt+b"
+    },
+    "when" : {
+      "focusRightSidebar" : "terminalFocus",
+      "toggleFileExplorer" : "!terminalFocus"
+    }
+  },
 }

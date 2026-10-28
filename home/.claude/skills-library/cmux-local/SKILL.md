@@ -44,7 +44,8 @@ both: restoring an agent session with `cmux restore <agent> <id>`
 
 ## Navigation
 
-cmux's native shortcuts, no custom mode: `Cmd+Opt+arrows` focus a pane, `Cmd+D` and
-`Cmd+Shift+D` split right and down, `Cmd+Shift+Enter` zooms, `Cmd+Shift+[`/`]`
+cmux's native shortcuts, with a few keys overridden in `cmux.json` to match Zed: `Cmd+Opt+arrows` focus a pane, `Ctrl+Cmd+L` and
+`Ctrl+Cmd+J` split right and down (Zed's keys), `Cmd+H` toggles the left sidebar, `Cmd+L` opens and
+focuses the right sidebar and closes it when it has focus, `Cmd+Shift+Enter` zooms, `Cmd+Shift+[`/`]`
 switch tabs, `Cmd+Ctrl+[`/`]` switch workspaces. cmux has no resize binding, and
 there is no split-left or split-up. Full cross-tool table: `hjkl-navigation.md`.

@@ -56,3 +56,6 @@ home/.config/zed/prompts/
 # Claude Code writes its synced skills and trash into ~/.claude/skills, which is this directory
 home/.claude/skills/synced/
 home/.claude/skills/.trash/
+
+# flock sentinel the cmux-settings helper leaves beside cmux.json on every write
+*.cmux-write.lock

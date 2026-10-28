@@ -32,7 +32,7 @@ cmux ships these defaults. Override them under `shortcuts.bindings` in
 | Action | Keys |
 |--------|------|
 | Focus pane left/down/up/right | `Cmd+Opt+←/↓/↑/→` |
-| Split right / down | `Cmd+D` / `Cmd+Shift+D` |
+| Split right / down | `Ctrl+Cmd+L` / `Ctrl+Cmd+J` (override, same keys as Zed; cmux default is `Cmd+D` / `Cmd+Shift+D`) |
 | Toggle split zoom | `Cmd+Shift+Enter` |
 | Previous / next tab | `Cmd+Shift+[` / `Cmd+Shift+]` |
 | Select tab by position | `Ctrl+<n>` |
@@ -42,7 +42,9 @@ cmux ships these defaults. Override them under `shortcuts.bindings` in
 | Select workspace by position | `Cmd+<n>` |
 | Go to workspace | `Cmd+P` |
 | Rename tab / workspace | `Cmd+R` / `Cmd+Shift+R` |
-| Toggle sidebar | `Cmd+B` |
+| Toggle sidebar | `Cmd+H` (override; cmux default is `Cmd+B`) |
+| Open and focus right sidebar; close it when focused | `Cmd+L` (override, two actions split by `shortcuts.when`) |
+| Browser: focus address bar / open browser | `Cmd+Opt+L` / `Cmd+Opt+B` (moved off the sidebar keys) |
 | Command palette | `Cmd+Shift+P` |
 | Reload configuration | `Cmd+Shift+,` |
 
@@ -96,7 +98,7 @@ File: `zed/keymap.json`
 | Ctrl+hjkl | pane nav | `workspace::ActivatePane{Left,Down,Up,Right}` |
 | Ctrl+Cmd+hjkl | create split | `pane::Split{Left,Down,Up,Right}` |
 | Ctrl+j/k in menus | next/prev | `menu::SelectNext` / `SelectPrevious` |
-| Cmd+hjkl | dock toggles | `workspace::Toggle{Left,Bottom,Right}Dock` |
+| Cmd+h/j/l | dock toggles | `workspace::Toggle{Left,Bottom,Right}Dock` |
 
 ## Limitations
 

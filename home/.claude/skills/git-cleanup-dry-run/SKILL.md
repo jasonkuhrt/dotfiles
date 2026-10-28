@@ -10,7 +10,7 @@ An explicit invocation of `$git-cleanup-dry-run` alone requests a compact cleanu
 Read the shared [Git Cleanup instructions](../git-cleanup/SKILL.md), then run its dry-run mode:
 
 ```sh
-vp exec node ~/.codex/skills/git-cleanup/scripts/cleanup.mjs dry-run --repo "$PWD"
+vp exec node ~/.agents/skills/git-cleanup/scripts/cleanup.mjs dry-run --repo "$PWD"
 ```
 
 Show the compact Markdown report: totals, the main-checkout change, one row per worktree with its decision and signal, branch-only counts, and shared repairs. Keep the chat reply to a few lines plus the report link. Detailed branch names, destinations, commands, paths, and session inventories stay in the JSON report; read or show them when requested. Distinguish confirmed removals from outcomes requiring checks or repair.

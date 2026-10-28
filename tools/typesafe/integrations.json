@@ -40,7 +40,7 @@
     "content": "After `goplaces` resolves a small candidate set, use `typesafe rank` for\nqualitative relevance. Supply stable candidate and dimension IDs, complete\ncandidate evidence in `text`, and ordered levels for every dimension. Consume\nthe returned per-dimension scores; exact identity, routes, distance, duration,\ntraffic, hours, and final ordering remain on `goplaces`."
   },
   {
-    "path": ".codex/skills/msgvault-search/SKILL.md",
+    "path": ".claude/skills/msgvault-search/SKILL.md",
     "heading": "TypeSafe judgments",
     "content": "After the archive query yields a bounded candidate set, use `typesafe rank`\nfor semantic relevance. Supply stable message and dimension IDs, complete\ncandidate evidence in `text`, and ordered levels for every dimension. Consume\nthe returned per-dimension scores; msgvault acquisition, exact filters, archive\noperations, and final ordering remain owned here."
   },

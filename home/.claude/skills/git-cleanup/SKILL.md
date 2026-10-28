@@ -35,7 +35,7 @@ Requires Node 22+, Git, `wt`, and authenticated `gh` for GitHub PR evidence. Scr
 Invoke `$git-cleanup-dry-run` alone, or `$git-cleanup dry-run`, to show what a real run would do in the current repository:
 
 ```sh
-vp exec node ~/.codex/skills/git-cleanup/scripts/cleanup.mjs dry-run --repo "$PWD"
+vp exec node ~/.agents/skills/git-cleanup/scripts/cleanup.mjs dry-run --repo "$PWD"
 ```
 
 The default Markdown is compact: totals, primary preparation, one decision/signal row per worktree, branch-only counts, and repairs grouped once. The JSON retains every branch's commits, push/archive destinations, verification, deletion steps, file paths, and conditions. Display the compact report with a brief chat summary; inspect the JSON when detail is requested. Remote history not available locally remains conditional on fetch/comparison.
@@ -45,19 +45,19 @@ This mode leaves Git objects, refs, indexes, worktree contents, remote refs, and
 To preview an existing plan against live evidence using the same target reconciliation as apply:
 
 ```sh
-vp exec node ~/.codex/skills/git-cleanup/scripts/cleanup.mjs apply --dry-run --plan /absolute/path/to/plan.json
+vp exec node ~/.agents/skills/git-cleanup/scripts/cleanup.mjs apply --dry-run --plan /absolute/path/to/plan.json
 ```
 
 ### Plan and apply
 
 ```sh
-vp exec node ~/.codex/skills/git-cleanup/scripts/cleanup.mjs plan --repo "$PWD"
+vp exec node ~/.agents/skills/git-cleanup/scripts/cleanup.mjs plan --repo "$PWD"
 ```
 
 The command reports absolute paths to its JSON plan and Markdown preview, including branch-only targets, PR/upstream facts, last local activity, decisions and reasons. Activity fingerprints live under `~/.codex/worktree-cleanup/activity/`; planning writes this external observation state while leaving repository contents intact. Inspect that report, then for an authorized cleanup run:
 
 ```sh
-vp exec node ~/.codex/skills/git-cleanup/scripts/cleanup.mjs apply --plan /absolute/path/to/plan.json
+vp exec node ~/.agents/skills/git-cleanup/scripts/cleanup.mjs apply --plan /absolute/path/to/plan.json
 ```
 
 An audit request authorizes planning. A cleanup request authorizes automatic commits, preservation pushes, primary-dirt evacuation/sync, and selected local deletions under this policy. Carry an authorized cleanup through without asking again merely because feature files or `.session` are dirty. Creating this skill does not itself run cleanup.
@@ -71,7 +71,7 @@ Check the journal's `complete` field, verified remote destinations, removed refs
 A failed step retains recovery state and a repair entry. Resume that journal instead of starting a replacement run. The journal's original eligibility and preservation record continue to govern its targets because automatic preservation changes branch history and can reset the live age clock; resume still rechecks live identity, source/session/ignored contents, remote destinations, and removal state. Intervene within the authorized scope, finish the affected target, and improve its helper when the observed case can be automated. Do not turn ordinary feature dirt into a permanent unexplained skip.
 
 ```sh
-vp exec node ~/.codex/skills/git-cleanup/scripts/cleanup.mjs resume --journal /absolute/path/to/run.journal.json
+vp exec node ~/.agents/skills/git-cleanup/scripts/cleanup.mjs resume --journal /absolute/path/to/run.journal.json
 ```
 
 For a legacy journal that does not embed its selected targets, also pass `--plan /absolute/path/to/original.plan.json`.
@@ -83,7 +83,7 @@ Verify helper changes in scratch Git repositories outside Heartbeat. Do not run 
 The bundled verifier creates and removes its own isolated repositories:
 
 ```sh
-(cd ~/.codex/skills/git-cleanup && vp exec node scripts/verify.mjs)
+(cd ~/.agents/skills/git-cleanup && vp exec node scripts/verify.mjs)
 ```
 
 ## Restore

@@ -4,8 +4,5 @@
 # Vendored system skills: reinstalled by the agent, not ours to version.
 .codex/skills/.system/
 
-# Absolute symlinks into private or sibling checkouts; broken on any other machine.
-.codex/skills/session
-
 # Machine state: absolute repo paths written by git maintenance.
 .config/git/local.gitconfig

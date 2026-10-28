@@ -101,7 +101,7 @@ raycast-setup:
 
 # Verify Git Cleanup in isolated temporary Git repositories.
 git-cleanup-check:
-    cd "{{justfile_directory()}}/home/.codex/skills/git-cleanup" && vp exec node scripts/verify.mjs
+    cd "{{justfile_directory()}}/home/.claude/skills/git-cleanup" && vp exec node scripts/verify.mjs
 
 # Validate one skill's frontmatter and unfinished scaffold markers.
 skill-check skill:

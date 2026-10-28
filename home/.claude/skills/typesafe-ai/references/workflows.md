@@ -3,8 +3,8 @@
 `typesafe` is installed at `~/.local/bin/typesafe`. Its maintained implementation is
 in the dotfiles checkout at `tools/typesafe/`. It uses Effect services for filesystem,
 configuration, process, and network access, and calls the official TypeSafe API.
-The same TypeSafe skill is exposed to both Codex and Claude Code; Claude's
-`~/.claude/skills/typesafe-ai` links to the installed copy in `~/.codex/skills`.
+The same TypeSafe skill is exposed to both Codex and Claude Code from
+`~/.claude/skills/typesafe-ai`, which Codex reads through `~/.agents/skills`.
 
 ## Setup
 

@@ -199,7 +199,9 @@ Jason, 2026-10-22, after three upstream issues and a PR each waited on his "yes"
   * Good: that line opening a rule proposal in another project's tracker.
   * A social or navigational note (thanks, an ack, links to follow-ups) carries no line.
 * My own team's tracker and repos follow their own rules; the line is for posts that leave them.
-* Commit messages take no attribution line: my settings set `attribution.commit` to `""`.
+* Commit messages take no attribution line by default: my settings set `attribution.commit` to `""`. That blank is a default, not a ban: a repo whose contribution rules ask for one gets it (2026-10-28, of vite-task's `AGENTS.md` asking AI-assisted commits for a `Co-authored-by:` trailer naming the model: "i dont need to forbid it").
+  * Bad: #901's commits left without the trailer vite-task asks for, citing the blank setting.
+  * Good: `Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>` on each commit of a vite-task PR.
 * A PR description ends with the AI-author line, which Claude Code adds from my `attribution.pr` (2026-10-27: "change my settings to not forbid aiauthor lin in pr descs"). Heartbeat's `.claude/settings.json` sets `attribution.pr` to `""`, so Heartbeat PRs carry none.
   * A PR to another project also closes an issue that opens with the line.
 

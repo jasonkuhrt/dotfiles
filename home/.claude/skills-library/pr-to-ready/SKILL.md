@@ -62,16 +62,23 @@ Handle findings through the gate owner's result rules:
 
 ### 3. Record Proof
 
-Prove the head that will go ready, on this machine, the way the repository says. When it has a proof skill or rule (Heartbeat: the `local-proof` skill, `vp exec vpp pr run` and `vp exec vpp pr proof list`), that is the step; per-package or file-scoped runs are the inner loop, never the proof. Otherwise, run the repository's full local check set on the committed head.
+Prove the head that will go ready, on this machine, the way the repository says. When it has a proof skill or rule (Heartbeat: the `local-proof` skill, `vp exec vpp pr run`, then `vp exec vpp pr proof done --check`), that is the step; per-package or file-scoped runs are the inner loop, never the proof. Otherwise, run the repository's full local check set on the committed head.
 
+- The proof `pr-to-draft` ran stands while nothing has been committed since; run it again only for a head that moved, such as step 2's fixes.
 - Commit first, run the proof on the committed head, then push it.
 - Run the E2E the change needs locally, through the repository's E2E skill (Heartbeat: `e2e-running`). A user-reachable behavior the diff changes with no journey gets one now, before ready.
-- Read the result on the pushed head: every task the repository's CI would run is proven, or is one that can't record proof (its cache is off) or that a Mac can't run (Linux-only installs, the workflow files themselves), named in the report as left to CI. Read it from the proof itself (Heartbeat: `pr proof list`), not from a plan that treats a draft as running nothing.
+- Read the result on the pushed head: every task the repository's CI would run is proven, or is one that can't record proof (its cache is off) or that a Mac can't run (Linux-only installs, the workflow files themselves), named in the report as left to CI. Read it from the proof itself (Heartbeat: `pr proof done --check`, whose refusals name their fix and whose `left to CI` lines go in the report), not from a plan that treats a draft as running nothing.
 - A task still running, red, or not rerun after a later commit keeps the PR in draft. Fix it, commit, prove again.
 
 ### 4. Move Out Of Draft
 
-Only once step 3 holds for the pushed head, and after any skip label the repository wants applied while the PR is a draft (Heartbeat: `pr/greptile/skip`, `pr/task/skip`):
+Only once step 3 holds for the pushed head, and after any skip label the repository wants applied while the PR is a draft (Heartbeat: `pr/greptile/skip`, `pr/task/skip`), through the repository's own command when it has one. Heartbeat's checks the proof again first, and its gates hook refuses a bare `gh pr ready` for a developer who set `vpp.pr.proofBeforeReady`:
+
+```bash
+vp exec vpp pr proof done
+```
+
+Elsewhere:
 
 ```bash
 gh pr ready <number>

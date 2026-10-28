@@ -132,6 +132,27 @@ raycast-setup:
 git-cleanup-check *args:
     cd "{{justfile_directory()}}/home/.claude/skills/git-cleanup" && vp exec node scripts/verify.mjs {{args}}
 
+# Check cloud agent-home installation in an isolated temporary home.
+conductor-install-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    repo_root="{{justfile_directory()}}"
+    agent_test_home="$(mktemp -d)"
+    trap 'rm -rf "$agent_test_home"' EXIT
+    HOME="$agent_test_home" bash "$repo_root/conductor/install.sh"
+    for skills in .claude/skills .agents/skills .codex/skills; do
+        for skill in "$agent_test_home/$skills"/*; do
+            [[ -L "$skill" && -f "$skill/SKILL.md" ]] || { printf 'Broken skill: %s\n' "$skill" >&2; exit 1; }
+        done
+        while IFS= read -r name || [[ -n "$name" ]]; do
+            [[ -z "$name" || "$name" == \#* ]] && continue
+            target="$agent_test_home/$skills/$name"
+            [[ ! -e "$target" && ! -L "$target" ]] || { printf 'Excluded skill: %s\n' "$target" >&2; exit 1; }
+        done < "$repo_root/conductor/skills-exclude.txt"
+    done
+    [[ -f "$agent_test_home/.claude/CLAUDE.md" && -f "$agent_test_home/.codex/AGENTS.md" ]]
+    printf 'PASS: conductor-install-check\n'
+
 # Validate one skill's frontmatter and unfinished scaffold markers.
 skill-check skill:
     python3 "{{justfile_directory()}}/home/.codex/skills/.system/skill-creator/scripts/quick_validate.py" "{{skill}}"

@@ -1,0 +1,36 @@
+# Mac-only apps and GUI workflows
+cmux
+cmux-browser
+cmux-cloud-vm
+cmux-cua
+cmux-custom-sidebar
+cmux-customization
+cmux-diagnostics
+cmux-keyboard-shortcuts
+cmux-local
+cmux-markdown
+cmux-settings
+cmux-workspace
+chrome-extensions
+claude-in-chrome
+computer-use
+sys-clean
+meta-sidebar-restore
+hunk-review
+
+# Personal tools unavailable in a cloud workspace
+msgvault-analytics
+msgvault-attachments
+msgvault-search
+typesafe-ai
+cloudflare
+
+# Worktrunk/worktree cleanup is unnecessary in a one-checkout sandbox
+git-cleanup
+git-cleanup-dry-run
+
+# Not yet cloud-aware: would archive Codex's internal thread
+meta-archive-self
+
+# A container of synced skills, not a skill
+synced

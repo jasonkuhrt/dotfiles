@@ -119,8 +119,8 @@ const help = `Usage:
   bun score-deps.ts --repo <heartbeat-root> [--registry] [--app <name-or-path>] [--top <n>] [--json]
 
 Examples:
-  bun /Users/jasonkuhrt/.codex/skills/heartbeat-dep-gardener/scripts/score-deps.ts --repo . --registry
-  bun /Users/jasonkuhrt/.codex/skills/heartbeat-dep-gardener/scripts/score-deps.ts --repo . --app apps/heartbeat --json
+  bun ~/.claude/skills-library/heartbeat-dep-gardener/scripts/score-deps.ts --repo . --registry
+  bun ~/.claude/skills-library/heartbeat-dep-gardener/scripts/score-deps.ts --repo . --app apps/heartbeat --json
 `
 
 const parseArgs = (argv: string[]): CliOptions => {

@@ -108,7 +108,7 @@ Never silently "fill in" an ambiguous done condition without either:
 Use this CLI:
 
 ```bash
-bun ~/.codex/skills/loop/scripts/loop.ts <activate|status|cancel> [options]
+bun ~/.claude/skills-library/loop/scripts/loop.ts <activate|status|cancel> [options]
 ```
 
 ## Session Identity
@@ -131,7 +131,7 @@ When the user asks to start loop mode:
 5. Run:
 
 ```bash
-bun ~/.codex/skills/loop/scripts/loop.ts activate \
+bun ~/.claude/skills-library/loop/scripts/loop.ts activate \
   --continue-prompt "<prompt>" \
   --system-message "<message>" \
   [--stop-reason "<reason>"]
@@ -173,7 +173,7 @@ Rules:
 To inspect whether the current session is looped:
 
 ```bash
-bun ~/.codex/skills/loop/scripts/loop.ts status
+bun ~/.claude/skills-library/loop/scripts/loop.ts status
 ```
 
 If the user asks:
@@ -195,7 +195,7 @@ Rules:
 To disable loop mode for the current session:
 
 ```bash
-bun ~/.codex/skills/loop/scripts/loop.ts cancel
+bun ~/.claude/skills-library/loop/scripts/loop.ts cancel
 ```
 
 ## Already Active

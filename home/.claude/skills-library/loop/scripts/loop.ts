@@ -28,9 +28,9 @@ const usage = (): never => {
   console.error(
     [
       "Usage:",
-      "  bun ~/.codex/skills/loop/scripts/loop.ts activate [--session-id <id>] [--continue-prompt <text>] [--system-message <text>] [--stop-reason <text>] [--token <text>]",
-      "  bun ~/.codex/skills/loop/scripts/loop.ts status [--session-id <id>]",
-      "  bun ~/.codex/skills/loop/scripts/loop.ts cancel [--session-id <id>]",
+      "  bun ~/.claude/skills-library/loop/scripts/loop.ts activate [--session-id <id>] [--continue-prompt <text>] [--system-message <text>] [--stop-reason <text>] [--token <text>]",
+      "  bun ~/.claude/skills-library/loop/scripts/loop.ts status [--session-id <id>]",
+      "  bun ~/.claude/skills-library/loop/scripts/loop.ts cancel [--session-id <id>]",
     ].join("\n"),
   )
   process.exit(1)

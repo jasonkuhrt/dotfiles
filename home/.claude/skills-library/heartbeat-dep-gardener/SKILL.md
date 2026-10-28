@@ -18,7 +18,7 @@ Keep the pass intentionally narrow: one app, one dependency candidate, one revie
 From the Heartbeat repo root, start with the bundled Bun script:
 
 ```bash
-bun /Users/jasonkuhrt/.codex/skills/heartbeat-dep-gardener/scripts/score-deps.ts --repo . --registry
+bun ~/.claude/skills-library/heartbeat-dep-gardener/scripts/score-deps.ts --repo . --registry
 ```
 
 Use `--app <package-name-or-path>` only when the user names a specific app. Use `--json` when another script or subagent needs structured output.

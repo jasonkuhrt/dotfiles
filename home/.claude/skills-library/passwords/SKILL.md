@@ -55,13 +55,13 @@ Cache lookup order:
 1. Check the Keychain cache with:
 
 ```sh
-~/.codex/skills/passwords/scripts/credential-cache-status.sh <service>
+~/.claude/skills-library/passwords/scripts/credential-cache-status.sh <service>
 ```
 
 2. If found, copy only the password to the clipboard with:
 
 ```sh
-~/.codex/skills/passwords/scripts/credential-cache-copy-password.sh <service>
+~/.claude/skills-library/passwords/scripts/credential-cache-copy-password.sh <service>
 ```
 
 The status helper may print the username, but the copy helper must never print the password.
@@ -69,7 +69,7 @@ The status helper may print the username, but the copy helper must never print t
 3. If missing, fall back to Passwords.app. After selecting the correct Passwords.app entry, port it into the Keychain cache:
 
 ```sh
-~/.codex/skills/passwords/scripts/credential-cache-save-selected-passwords-entry.sh <service>
+~/.claude/skills-library/passwords/scripts/credential-cache-save-selected-passwords-entry.sh <service>
 ```
 
 This reads the selected Passwords.app entry by menu actions, stores the username as the Keychain account and the password as the Keychain secret, and clears the clipboard. It does not print the password.
@@ -96,7 +96,7 @@ printf '' | pbcopy
 If Computer Use refuses to paste because focus has moved through `com.apple.LocalAuthenticationRemoteService`, use the local Accessibility fallback instead of stopping. This is the approved narrow fallback for the already-focused Passwords.app unlock field:
 
 ```sh
-~/.codex/skills/passwords/scripts/unlock-passwords-app.sh
+~/.claude/skills-library/passwords/scripts/unlock-passwords-app.sh
 ```
 
 The helper:

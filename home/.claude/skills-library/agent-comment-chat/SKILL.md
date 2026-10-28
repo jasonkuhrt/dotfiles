@@ -78,7 +78,7 @@ If the user did not specify cadence, ask one concise plain-text question for the
 2. Run the scanner once:
 
 ```bash
-bun ~/.codex/skills/agent-comment-chat/scripts/poll-agent-comments.ts <target...>
+bun ~/.claude/skills-library/agent-comment-chat/scripts/poll-agent-comments.ts <target...>
 ```
 
    The scanner includes merged source context windows by default:

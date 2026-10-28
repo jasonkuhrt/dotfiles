@@ -31,6 +31,18 @@ local function set_open_recursive(tree, node, open)
 end
 
 local snacks_opts = {
+  lazygit = {
+    win = {
+      keys = {
+        -- `k` goes straight to lazygit. Otherwise the terminal-mode `kj` escape
+        -- in config/keymaps.lua makes every `k` wait for a possible `j`, so
+        -- moving up lags and `k j` leaves lazygit. Snacks maps window keys with
+        -- `nowait`, which ends the wait. (Ctrl+hjkl already pass through:
+        -- LazyVim sends them to the program in floating Snacks terminals.)
+        lazygit_k = { "k", "k", mode = "t", expr = true, desc = "Send k to lazygit" },
+      },
+    },
+  },
   dashboard = {
     preset = {
       keys = {

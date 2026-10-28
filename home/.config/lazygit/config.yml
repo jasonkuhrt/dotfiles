@@ -34,7 +34,7 @@ gui:
 git:
   # Commit messages starting with this prefix are committed with --no-verify
   # (skips pre-commit / commit-msg hooks). Only a single prefix is supported.
-  skipHookPrefix: 'rachet'
+  skipHookPrefix: '_'
   # `pagers` is a LIST (see `lazygit --config`).
   # delta reads its own behaviour (navigate, line-numbers, hyperlinks,
   # theme) from ~/.gitconfig's [delta] section; this only names the
@@ -50,6 +50,18 @@ os:
   # declares the `Dockerfile` filename, while Zed declares no Dockerfile type.
   # This forces Zed for every `o` file-open (links still use os.openLink).
   open: 'zed -- {{filename}}'
+keybinding:
+  universal:
+    # Ctrl+L switches focus between a side panel and the diff, as in the
+    # gh-pr-viewed extension. In a side panel the panel's own binding
+    # (focusMainView) wins over the global one; in the focused diff nothing
+    # claims Ctrl+L, so it falls through to `return`, which goes back. The
+    # cost: wherever no panel claims it, Ctrl+L also acts as Esc.
+    focusMainView: ['0', '<ctrl+l>']
+    return: ['<esc>', '<ctrl+l>']
+  commits:
+    # Unused, and it held Ctrl+L in the commits panel.
+    openLogMenu: <disabled>
 customCommands:
   - key: 'H'
     context: 'normal'

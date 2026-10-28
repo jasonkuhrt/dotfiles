@@ -1,22 +1,22 @@
 ---
-name: astra-sidekicks
-description: A mode the user switches on to stretch the Claude quota. Use when the user invokes astra-sidekicks, says to use Astra (gpt-6-astra through codex) for side tasks, reviews or second opinions, or says to stop using it; and, while the mode is on, before every dispatch of a worker, fork or subagent, and before taking on yourself a self-contained task that is not the main line of the chat.
+name: with-astra-sidekicks
+description: A mode the user switches on to stretch the Claude quota. Use when the user invokes with-astra-sidekicks, says to use Astra (gpt-6-astra through codex) for side tasks, reviews or second opinions, or says to stop using it; and, while the mode is on, before every dispatch of a worker, fork or subagent, and before taking on yourself a self-contained task that is not the main line of the chat.
 ---
 
 # Astra sidekicks
 
 A mode, not a task. It starts when the user invokes this skill, or says the same
-thing in words, and holds until the user ends it (`/astra-sidekicks off`, "no
+thing in words, and holds until the user ends it (`/with-astra-sidekicks off`, "no
 Astra", or words that say so). It survives compaction and handoffs: carry
-"astra-sidekicks is on" in whatever you hand yourself.
+"with-astra-sidekicks is on" in whatever you hand yourself.
 
-Its peer `astra-review` owns whether existing review is sufficient and when
+Its peer `gate-astra-review` owns whether existing review is sufficient and when
 new review is needed, whether this mode is on or off. Consult that gate before
 launching a reviewer; this skill supplies launch mechanics, not another
-handoff review. `/astra-sidekicks off` leaves that gate on; "no Astra" ends both.
+handoff review. `/with-astra-sidekicks off` leaves that gate on; "no Astra" ends both.
 
 The side-task mode is for a Claude lead session. Its launch mechanics are also
-used by a Codex lead when `astra-review` requires a new independent review.
+used by a Codex lead when `gate-astra-review` requires a new independent review.
 A worker assigned a task does that task and dispatches nothing; role follows
 the assignment, not the harness name.
 

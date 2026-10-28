@@ -1,6 +1,6 @@
 ---
-name: astra-review
-description: Ensure independent review before a workflow gate or user-facing handoff of work. Reuse sufficient recorded review and dispatch only missing review to Astra. Owns review reuse and dispatch for composing skills; repository review skills own criteria. Also when the user invokes astra-review or says to stop it. Holds whether astra-sidekicks is on or off.
+name: gate-astra-review
+description: Ensure independent review before a workflow gate or user-facing handoff of work. Reuse sufficient recorded review and dispatch only missing review to Astra. Owns review reuse and dispatch for composing skills; repository review skills own criteria. Also when the user invokes gate-astra-review or says to stop it. Holds whether with-astra-sidekicks is on or off.
 ---
 
 # Astra review
@@ -12,12 +12,12 @@ completed for that work; launch only the review that is missing.
 This skill owns the reuse and dispatch decision. Callers such as
 `loop-improve-e2e` and `pr-to-ready` cite and invoke this gate with the work and
 existing review records; they do not copy a launch prompt or require another
-round themselves. `astra-sidekicks` owns launch, briefing, and result-handling
+round themselves. `with-astra-sidekicks` owns launch, briefing, and result-handling
 mechanics. The repository's `review` skill owns criteria and size.
 
-It is standing, not a mode: it holds whether `astra-sidekicks` is on or off.
-It stops when the user ends it (`/astra-review off`) or says "no Astra", which
-ends both skills. Carry "astra-review is off" in whatever you hand yourself
+It is standing, not a mode: it holds whether `with-astra-sidekicks` is on or off.
+It stops when the user ends it (`/gate-astra-review off`) or says "no Astra", which
+ends both skills. Carry "gate-astra-review is off" in whatever you hand yourself
 across compaction and handoffs.
 
 This gate is owned by the lead session, whether Claude or Codex. A worker
@@ -95,7 +95,7 @@ Run this only for coverage the reuse check found missing.
 2. **Brief Astra** (below), writing the brief to
    `<scratchpad>/astra-review-<topic>-<n>.brief.md`, where `n` counts the
    rounds on the same work.
-3. **Launch one read-only run** as `astra-sidekicks` launches a review with
+3. **Launch one read-only run** as `with-astra-sidekicks` launches a review with
    instructions: `codex exec` with `--sandbox read-only`, model and effort
    named, the brief's path as its prompt, its report to
    `astra-review-<topic>-<n>.txt` and its log to `.log` in the scratchpad, in
@@ -108,7 +108,7 @@ Run this only for coverage the reuse check found missing.
 
 ## The brief
 
-Write it whole, by `astra-sidekicks`' brief rules. It holds:
+Write it whole, by `with-astra-sidekicks`' brief rules. It holds:
 
 - **The work.** Use the scope selected by the reuse gate. For code, pin the
   checkout, base/head and any uncommitted content. Missing criteria on
@@ -135,7 +135,7 @@ Write it whole, by `astra-sidekicks`' brief rules. It holds:
 
 ## Resolving
 
-Astra's report is a claim, checked as `astra-sidekicks` ("Its result") says.
+Astra's report is a claim, checked as `with-astra-sidekicks` ("Its result") says.
 Give every finding one of three outcomes, one line each, in
 `<scratchpad>/astra-review-<topic>-<n>.resolved.md`, headed by the commit the
 round reviewed:
@@ -206,4 +206,4 @@ Astra saves, and that call is the user's.
 | "Astra is down; a subagent can review instead." | Ping with "No Astra round: <why>". A substitute reviewer is the user's call. |
 | "A different workflow or another ping needs its own review." | Reuse sufficient review; dispatch only missing or materially affected coverage. |
 | "Astra's design suggestion is good; I'll adopt it." | A design point that is the user's call is carried into the decision, with your pick. |
-| "astra-sidekicks is off, so there's no review." | This skill holds either way. Only `/astra-review off` or "no Astra" stops it. |
+| "with-astra-sidekicks is off, so there's no review." | This skill holds either way. Only `/gate-astra-review off` or "no Astra" stops it. |

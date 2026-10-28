@@ -19,7 +19,7 @@ Core flow:
 2. Move the PR out of draft.
 3. Scan for existing Greptile review feedback. Do not wait for Greptile to appear or settle.
 4. Address actionable Greptile feedback, only when it already exists.
-5. Invoke `astra-review` to reuse sufficient independent review or dispatch only missing review, then address actionable findings.
+5. Invoke `gate-astra-review` to reuse sufficient independent review or dispatch only missing review, then address actionable findings.
 6. Verify fixes under the active check policy, batch them, push once, and watch the requested remote checks at a quiet cadence.
 7. If the PR requires E2E, follow the repository's E2E submission and continuation contract, then wait for its current-head checks.
 8. Report the PR URL, branch, review outcome, remote check state, and any intentionally open blockers.
@@ -73,7 +73,7 @@ When working through threads:
 
 ### 5. Ensure Independent Review
 
-Load and invoke [astra-review](../../skills/astra-review/SKILL.md) as the single owner of
+Load and invoke [gate-astra-review](../../skills/gate-astra-review/SKILL.md) as the single owner of
 review reuse and dispatch. Give it the current base/head and diff, required
 repository criteria, and existing self-review, peer review, and finding records
 from the preceding workflow. Follow its reuse decision instead of launching

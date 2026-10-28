@@ -1,5 +1,5 @@
 ---
-name: compact-safely
+name: meta-compact-safely
 description: Use when the user wants to compact the conversation, asks whether now is a good time to compact, or context is getting long while work is still in flight
 ---
 

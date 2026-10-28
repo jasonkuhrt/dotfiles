@@ -1,6 +1,6 @@
 ---
-name: can-end
-description: Use when the user asks whether they can end, close, leave or archive the session, or says they are about to ("can I end?", "ok to close?", "done here?", "I will close this session now"), or invokes can-end. The question asks for a verdict; it never stops, cuts or defers work.
+name: meta-can-end
+description: Use when the user asks whether they can end, close, leave or archive the session, or says they are about to ("can I end?", "ok to close?", "done here?", "I will close this session now"), or invokes meta-can-end. The question asks for a verdict; it never stops, cuts or defers work.
 ---
 
 # Can end
@@ -41,7 +41,7 @@ When no row blocks, do these, then report them:
 3. **Write the final state** into the session's record, if it has one.
 4. **Clean worktrees and branches.** A yes that leaves the user a worktree or a branch to delete fails. For each worktree this session created or runs in whose PR merged, follow the protocol the repo's `post-pr-merge` skill gives the current developer. Do the worktree you run in last. A worktree it keeps, for work in it or an unmerged PR, goes under the Git row; a repo without the skill leaves its worktrees for the Git row too, with that reason.
 
-When a row blocks, skip the end steps: they belong to the end, and this isn't it. Keep working on what is yours. The next can-end, once nothing blocks, does them.
+When a row blocks, skip the end steps: they belong to the end, and this isn't it. Keep working on what is yours. The next meta-can-end, once nothing blocks, does them.
 
 ## The reply
 

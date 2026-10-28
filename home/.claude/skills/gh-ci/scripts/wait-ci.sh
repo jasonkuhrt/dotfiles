@@ -62,6 +62,7 @@ normalize_checks() {
           url: url,
           terminal: has(["SUCCESS", "ERROR", "FAILURE"]; $state),
           success: ($state == "SUCCESS"),
+          skipped: false,
           failure: has(["ERROR", "FAILURE"]; $state)
         }
       else
@@ -78,6 +79,7 @@ normalize_checks() {
             $status == "COMPLETED"
             and has(["SUCCESS", "NEUTRAL", "SKIPPED"]; $conclusion)
           ),
+          skipped: ($status == "COMPLETED" and $conclusion == "SKIPPED"),
           failure: (
             $status == "COMPLETED"
             and has(["FAILURE", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED", "STALE", "STARTUP_FAILURE"]; $conclusion)
@@ -112,6 +114,7 @@ normalize_workflow_runs() {
             $status == "completed"
             and has(["success", "neutral", "skipped"]; $conclusion)
           ),
+          skipped: ($status == "completed" and $conclusion == "skipped"),
           failure: (
             $status == "completed"
             and has(["failure", "cancelled", "timed_out", "action_required", "startup_failure", "stale"]; $conclusion)
@@ -288,7 +291,7 @@ while true; do
 
   # Quiet by default: every progress line is a turn for the agent that is
   # waiting, and a 25-minute run produced a dozen of them. Only terminal states
-  # (FAILED / ALL GREEN / BLOCKED / STALE HEAD / CONFLICT) print unless
+  # (FAILED / ALL GREEN / NOTHING RAN / BLOCKED / STALE HEAD / CONFLICT) print unless
   # GH_CI_VERBOSE=1 asks for the rollup on every change.
   if [ "${GH_CI_VERBOSE:-0}" = "1" ] && [ "$signature" != "$prev_signature" ]; then
     printed_waiting_green=0
@@ -329,7 +332,21 @@ while true; do
 
   success_count=$(jq '[.[] | select(.success)] | length' <<<"$checks")
   workflow_run_success_count=$(jq '[.[] | select(.success)] | length' <<<"$workflow_runs")
+  # GitHub counts a skipped check as passing, but it verified nothing: a
+  # draft PR or a path filter skips CI, and Heartbeat's `e2e` skips until
+  # requested. The verdict names every skip so the reader can judge it.
+  skipped_count=$(jq '[.[] | select(.skipped)] | length' <<<"$checks")
+  skipped_checks=$(jq -r '[.[] | select(.skipped) | .name] | unique | join(", ")' <<<"$checks")
+  skipped_workflow_runs=$(jq -r '[.[] | select(.skipped) | .name] | unique | join(", ")' <<<"$workflow_runs")
+  skip_note=""
+  [ -n "$skipped_checks" ] && skip_note="$skip_note"$'\n'"  skipped checks: $skipped_checks"
+  [ -n "$skipped_workflow_runs" ] && skip_note="$skip_note"$'\n'"  skipped workflow runs: $skipped_workflow_runs"
   if [ "$total" -gt 0 ] && [ "$success_count" -eq "$total" ]; then
+    if [ "$skipped_count" -eq "$total" ]; then
+      echo "=== NOTHING RAN ==="
+      echo "PR #$pr_number head ${head_sha:0:10}: all $total checks were skipped, so nothing verified this head.$skip_note"
+      exit 3
+    fi
     if [ "$workflow_run_total" -gt 0 ] && [ "$workflow_run_success_count" -eq "$workflow_run_total" ]; then
       if [ "$merge_state" = "BLOCKED" ]; then
         echo "=== BLOCKED ==="
@@ -337,7 +354,7 @@ while true; do
         exit 1
       fi
       echo "=== ALL GREEN ==="
-      echo "PR #$pr_number head ${head_sha:0:10}: $total checks successful; $workflow_run_total current-head workflow runs completed successfully."
+      echo "PR #$pr_number head ${head_sha:0:10}: $((total - skipped_count)) checks passed, $skipped_count skipped; $workflow_run_total current-head workflow runs completed successfully.$skip_note"
       exit 0
     fi
     if [ "$workflow_run_total" -eq 0 ] && [ "$raw_workflow_run_total" -gt 0 ]; then
@@ -347,7 +364,7 @@ while true; do
         exit 1
       fi
       echo "=== ALL GREEN ==="
-      echo "PR #$pr_number head ${head_sha:0:10}: $total checks successful; no relevant current-head workflow runs remain after ignoring $ignored_workflow_run_total no-job dashboard run(s)."
+      echo "PR #$pr_number head ${head_sha:0:10}: $((total - skipped_count)) checks passed, $skipped_count skipped; no relevant current-head workflow runs remain after ignoring $ignored_workflow_run_total no-job dashboard run(s).$skip_note"
       exit 0
     fi
     if [ "${GH_CI_VERBOSE:-0}" = "1" ] && [ "$printed_waiting_green" -eq 0 ]; then

@@ -29,7 +29,7 @@ must stay within the task's existing authorization.
 
 ### Claude Code
 
-Use `Monitor` when available. The script is quiet by default: it prints nothing until a terminal state (ALL GREEN / FAILED / BLOCKED / STALE HEAD / CONFLICT), so the waiting agent spends one turn per verdict, not one per poll. A 25-minute run once cost a dozen progress turns; that is tokens taken from other agents.
+Use `Monitor` when available. The script is quiet by default: it prints nothing until a terminal state (ALL GREEN / NOTHING RAN / FAILED / BLOCKED / STALE HEAD / CONFLICT), so the waiting agent spends one turn per verdict, not one per poll. A 25-minute run once cost a dozen progress turns; that is tokens taken from other agents.
 
 ```bash
 Monitor:
@@ -84,6 +84,10 @@ The script:
 - Exits `1` immediately on terminal red conclusions.
 - Polls GitHub Actions workflow runs for the same head SHA.
 - Exits `0` only after all visible checks are green, every relevant current-head workflow run has completed successfully, and GitHub no longer reports the PR as merge-blocked.
+- Counts a skipped check as passing, as GitHub does, but names every skipped check and workflow run under its ALL GREEN line. A skipped check verified nothing: read the names before calling a head verified. Heartbeat's `e2e`, for example, skips until `/pr task e2e request`.
+  - Bad (2026-10-28, #3079): "20 checks successful", while `e2e` had skipped, and Jason had to ask why there was no E2E evidence.
+  - Good: "17 checks passed, 6 skipped", then `skipped checks: …, e2e, …`.
+- Exits `3` (NOTHING RAN) when every check was skipped, as on a draft PR whose CI skipped: nothing verified the head.
 - Ignores cancelled `pull_request_target` workflow runs that created zero jobs; those dashboard/comment runs never became PR checks and are not evidence that the PR head is red.
 
 Tunables via env:

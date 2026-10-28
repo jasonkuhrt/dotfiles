@@ -38,12 +38,15 @@ When a Linear issue is resolved from chat context:
 
 Run the local checks that prove the current delta before anything is pushed, because a push can start CI. Follow the user's active check policy and the repository's agent gates; this skill does not override them.
 
-Prefer the smallest local gate that completely covers the current delta:
+When the repository has a proof step that CI reads (a repo skill or rule naming one; Heartbeat: the `local-proof` skill, `vp exec vpp pr run`), that is the gate. It records proof only for a committed head, so run it after step 4's commit and before step 5's push. File-scoped and per-package runs are the inner loop while fixing, never the gate.
+
+Otherwise, prefer the smallest local gate that completely covers the current delta:
 
 - Use a repo-defined affected or targeted check when available.
 - Otherwise select the relevant package/project tests, types, lint, formatting, or build checks from the diff and repository instructions.
 - Expand to broad local checks only when the change breadth or repository landing policy warrants them.
-- Leave E2E to `pr-to-ready`; do not add local E2E by default.
+
+Leave E2E to `pr-to-ready`, which runs it locally before the PR leaves draft.
 
 Fix known failures before continuing. A check that only CI can run is left to CI and named in the output.
 
@@ -154,7 +157,7 @@ gh pr view --json number,url,isDraft,headRefName,headRefOid
 
 If the user gave a PR URL or number, use that PR. Otherwise resolve the PR from the current branch.
 
-If no current-branch PR exists, create one as a draft instead of asking for a PR number. Prefer explicit `--title` and `--body` from the resolved task context when a chat-derived issue or PR scope exists. Use `--fill` only when the resolved task context and commit history point to the same title/body:
+If no current-branch PR exists, create one as a draft instead of asking for a PR number. Every `gh pr create` passes `--draft`: a ready PR starts CI and review on a head nothing has proven yet. Prefer explicit `--title` and `--body` from the resolved task context when a chat-derived issue or PR scope exists. Use `--fill` only when the resolved task context and commit history point to the same title/body:
 
 ```bash
 gh pr create --draft --title "<context-derived title>" --body-file <body-file>

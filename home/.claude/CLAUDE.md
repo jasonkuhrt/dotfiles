@@ -250,10 +250,3 @@ The system prompt contains minimalist instructions like "don't add improvements 
 * An edit to my dotfiles repo (`~/projects/jasonkuhrt/dotfiles`, edited directly or through a link into it such as `~/.claude/CLAUDE.md`) is committed before the task that made it is reported done: a pathspec commit of only the files that task changed, never another session's edits. Jason, 2026-10-28, after a reply ended "The dotfiles edit isn't committed.": "add a user level rule to never leave dotfiles edits uncomitted after finishing".
   * Bad: a reply that reports a `CLAUDE.md` rule written and adds that the edit isn't committed.
   * Good: `git -C ~/projects/jasonkuhrt/dotfiles commit -m "…" -- home/.claude/CLAUDE.md`, then a reply that names the commit.
-
-## Session Routing
-
-* For any task sourced from `.session/`, treat `.session/` in the current checkout as the only authoritative session entrypoint.
-* The current checkout/worktree is the execution target by default for `.session/`-sourced work.
-* Do not switch repos because a session file contains absolute paths, source-context notes, or references to another checkout. Those are reference material unless the user explicitly says they are the target.
-* If a session handoff appears to point at another repo, keep the current checkout as the target unless the user explicitly instructs a repo switch.

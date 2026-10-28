@@ -5,8 +5,6 @@
 # packages in full with `trusted: true`; brew bundle records the grant.
 tap "electrikmilk/cherri"
 tap "planetscale/tap"
-tap "polidog/kilar"
-tap "manaflow-ai/cmux"
 tap "bendews/tap"
 tap "mobile-dev-inc/tap"
 tap "steipete/tap"
@@ -118,9 +116,6 @@ brew "wget"
 brew "unar"          # universal archive extractor
 brew "sevenzip"      # 7-Zip (yazi archive preview)
 brew "duti"          # default document and URL handlers
-# TEMPORARILY DISABLED (2026-02-17): upstream v0.2.4 asset checksum
-# does not match tap formula checksum; re-enable when fixed upstream.
-# brew "polidog/kilar/kilar"  # interactive port/process manager
 
 # Database
 brew "planetscale/tap/pscale", trusted: true

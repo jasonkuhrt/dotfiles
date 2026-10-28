@@ -1,6 +1,6 @@
 ---
 name: top-down
-description: A mode the user switches on to stay in the loop. Use when the user invokes top-down, says to work top down, or says to stop bottom-up, test-first, check-heavy or review-heavy work. Until the user ends it, write the top of the work as you wish it to be, in short turns he can approve, and do no bottom-up work he has not authorized.
+description: A mode the user switches on to stay in the loop. Use when the user invokes top-down, says to work top down, asks for top down with the bottom built in parallel, or says to stop bottom-up, test-first, check-heavy or review-heavy work. Until the user ends it, write the top of the work as you wish it to be, in short turns he can approve, and do no bottom-up work he has not authorized; in the parallel-bottom variant, workers build the bottom behind each approved slice at once.
 ---
 
 # Top down
@@ -80,10 +80,66 @@ No implementation and no test is written while a type error stands.
 - Any other check after an edit: lint, generation, a build, a gate set, CI.
   Nothing is verified along the way.
 - A review: a review pass of your own, a review agent, a second opinion.
-- A worker, a subagent or a workflow that runs without the user watching.
+- A worker, a subagent or a workflow that runs without the user watching. The
+  parallel-bottom variant, once the user turns it on, authorizes the bottom's
+  workers and everything they do on their side.
 
 When one of these seems necessary, name it and its reason in one line, and go on
 with the top. The user authorizes it or does not.
+
+## Parallel bottom
+
+A variant the user turns on in words, such as "top down with the bottom in
+parallel". The top runs exactly as above. In the same moment, workers build the
+bottom, so the two meet sooner than if the bottom waited.
+
+It is a bet, and the user places it. Use it only when the bottom is known well
+enough to start, and the bet is that at least one of these holds:
+
+1. **The top stays ahead.** Each slice is approved before the bottom needs it,
+   so the bottom always builds on approved tracks.
+2. **Running ahead is cheap.** Where the bottom gets ahead of the top, what it
+   builds will be close enough to the final top that correcting it later costs
+   less than making it wait.
+
+And this one must hold either way:
+
+3. **The bottom can be steered.** It can be redirected as each slice lands. If the
+   top uncovers a large hidden problem (an iceberg), it can be halted outright.
+
+Don't use it when the bottom isn't known yet, when the top is likely to swing,
+or when a wrong bottom is costly to undo, as with a migration or a change to
+stored data.
+
+When it is on:
+
+- **Every approved slice goes to the bottom at once.** The moment the user
+  approves a slice, a worker gets it by message and builds what is under it: the
+  omitted bodies, the types passing, the tests. Nothing waits for "after the
+  top". A contract the top wishes for in a lower layer, such as a library
+  feature, gets a worker from the start, with the wish as its brief.
+- **The bottom never moves the top.** A worker keeps every shape the top wrote
+  (caller code, signatures, names), allows itself only a trivial deviation, and
+  names each one in its report. It builds to the approved slices, never to a
+  slice still being written.
+- **It stops on a ruling, not on the whole.** A part that needs the user's
+  decision stops that part; the worker builds the rest and reports the question.
+  Bring that question to the user in the turn it arrives, in one line.
+- **Steer by the delta.** A new slice that changes what the bottom assumed goes
+  to the worker as the change alone. When the top turns up an iceberg and the
+  bet fails, halt the bottom: stop the worker, keep what is committed, and say
+  what the top now makes wrong.
+- **The levels are the bottom's.** A worker runs the type checks, tests and gates
+  of its own side as it goes. The top's slices stay unchecked until the user
+  raises a level, as above.
+- **One index.** When the user stages the top in a worktree the workers share,
+  a worker never touches the index: it commits only with
+  `git commit -- <its paths>`, adds a new file of its own right before that
+  commit and nothing else, and never commits a file that holds hunks it did not
+  write.
+
+The user's own gates still hold for every worker: no push, no merge and no
+destructive act without his word.
 
 ## What a failure is
 
@@ -105,8 +161,10 @@ claim about a library. Those run when the user releases them.
 
 ## Starting and ending
 
-- **Start:** answer with one line, "Top down: on". If something bottom-up is
-  running (a check, a worker, a watch), name it and ask nothing: the user stops
-  it or lets it finish. Then name the next slice of top.
+- **Start:** answer with one line, "Top down: on", or "Top down: on, bottom in
+  parallel" for the variant. If something bottom-up is running (a check, a
+  worker, a watch), name it and ask nothing: the user stops it or lets it
+  finish, unless the variant takes it on as its bottom. Then name the next slice
+  of top, and in the variant, the workers that start on the bottom.
 - **End** (`/top-down off`, or the user says the mode is over): list what was
   never checked, as the work that is now due, and go back to your defaults.

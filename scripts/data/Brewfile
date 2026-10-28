@@ -178,6 +178,7 @@ cask "claude"
 cask "chatgpt"
 cask "codexbar"       # subscription quota menu bar; local setup in 22-codexbar.sh
 cask "cmux"           # Claude session multiplexer
+cask "conductor"      # parallel agents; cloud workspaces run heavy checks off the Mac
 
 # Communication
 cask "discord"

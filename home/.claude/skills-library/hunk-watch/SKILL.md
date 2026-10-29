@@ -1,4 +1,5 @@
 ---
+name: hunk-watch
 description: Toggle the Hunk flush watcher on or off for this worktree
 ---
 

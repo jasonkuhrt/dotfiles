@@ -16,7 +16,6 @@ claude-in-chrome
 computer-use
 sys-clean
 meta-sidebar-restore
-hunk-review
 
 # Personal tools unavailable in a cloud workspace
 msgvault-analytics

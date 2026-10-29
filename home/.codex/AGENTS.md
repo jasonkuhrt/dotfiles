@@ -1,3 +1,12 @@
+## Steps only I can do
+
+A step only I can do comes as a command I can run, in its own fenced `bash` block, in the same reply that says I need to do it. Such a step is one a tool refused as self-modification, or one that needs my settings, permission rules, a sign-in or a credential. The command already holds the file path and the exact text. I never have to find a file or copy text out of prose. Jason, 2026-10-29: "always give me bash to execute when this happens, never make me scramble the text and file location myself".
+
+- My shell is fish, so the command is one short line that runs in fish: no `<<'EOF'` heredocs ("Expected a string, but found a redirection"), and nothing long enough for autosuggestions to mangle. Anything longer goes in a script file you write first, and the command runs it.
+- Running it twice changes nothing.
+- Bad: "Changing those rules counts as self-modification, so you have to make that edit yourself. The exact text is at the end.", followed by the rules as prose. Also bad: a `python3 - <<'EOF'` block, which fish rejects.
+- Good: `python3 /path/to/add-automode-rules.py`, a script written beforehand that appends the rules to `autoMode.allow` in `~/.claude/settings.json`.
+
 ## Proposals and questions
 
 Jason, 2026-10-20, after a proposal he couldn't follow: "I'm very concerned about how the fuck this happened. Such a poor presentation of an idea. … it will fuck up every other chat I have." Then, of a follow-up that opened in library internals: "you are now presenting me code in a area that I've never read … you haven't surfaced the places that this impacts the user point of view of the library."

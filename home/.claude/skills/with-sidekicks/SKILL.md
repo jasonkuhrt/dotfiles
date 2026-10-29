@@ -89,16 +89,20 @@ than the task.
 
 ## Where you run
 
-Launch each sidekick with the agent-launching feature of the place the lead
-runs in:
+Launch each sidekick with the first-class agent feature of the place the lead
+runs in. In Conductor, Conductor launches every sidekick. On a Mac, a sidekick
+on the lead's own harness is that harness's sub-agent, and a sidekick on the
+other harness runs as that harness's CLI in a subprocess:
 
-| Where the lead runs                                  | `sonnet`              | `astra`, `sol`      |
-| ---------------------------------------------------- | --------------------- | ------------------- |
-| A Conductor cloud workspace (`CONDUCTOR_IS_LOCAL=0`) | a Conductor session   | a Conductor session |
-| A Mac, as a Claude lead                              | the Agent tool        | `codex exec`        |
-| A Mac, as a Codex lead                               | not available: say so | `codex exec`        |
+| Where the lead runs                                  | `sonnet`                    | `astra`, `sol`                |
+| ---------------------------------------------------- | --------------------------- | ----------------------------- |
+| A Conductor cloud workspace (`CONDUCTOR_IS_LOCAL=0`) | a Conductor session         | a Conductor session           |
+| A Mac, as a Claude lead                              | sub-agent: the Agent tool   | subprocess: `codex exec`      |
+| A Mac, as a Codex lead                               | subprocess: `claude -p`     | sub-agent: `spawn_agent`      |
 
 A Mac covers the Claude app, the Codex app and a local Conductor workspace.
+A Codex lead may instead make the sidekick a peer thread (`dispatch-codex-peer`)
+when the user should watch or steer it in its own chat.
 
 ## Launching in Conductor
 
@@ -146,7 +150,31 @@ can steer it there.
 A review or an opinion says in its brief that it changes no file except its
 report: a Conductor session has no read-only switch.
 
-## Launching `sonnet` on a Mac
+## Launching from a Codex lead on a Mac
+
+- **`astra`, `sol`:** Codex's `spawn_agent` (skill `dispatch-codex-sub`), with
+  its model override set to the sidekick's model, its effort to `ultra` where
+  the tool takes one, and `fork_turns: "none"`, since the brief carries what it
+  needs. Its final answer comes back to you when it finishes; correct it with
+  `send_message`. When the tool's list of model overrides lacks the model,
+  launch it with `codex exec` as below.
+- **`sonnet`:** Claude Code's CLI in the background:
+
+  ```sh
+  claude -p --agent sonnet-xhigh --model sonnet --effort xhigh \
+    --permission-mode bypassPermissions --output-format json \
+    "<prompt, or the brief's path>" \
+    < /dev/null > <scratch>/sonnet-<slug>.json 2> <scratch>/sonnet-<slug>.log
+  ```
+
+  The JSON's `result` is its final message and `is_error` says whether it
+  failed; a usage limit shows there as an error result. Correct it with
+  `claude -p --resume <session_id> "<correction>"` and the same flags.
+  `bypassPermissions` because nobody is there to approve its tools: the brief
+  names the files it owns, and a review's brief says it changes no file but its
+  report.
+
+## Launching `sonnet` from a Claude lead on a Mac
 
 - Write the brief to a file, then call the Agent tool with
   `subagent_type: "sonnet-xhigh"` and the brief's path as its prompt. It runs
@@ -157,7 +185,10 @@ report: a Conductor session has no read-only switch.
 - To correct a run, send it the correction with `SendMessage`. It keeps its
   context.
 
-## Launching `astra` and `sol` on a Mac
+## Launching `astra` and `sol` with `codex exec`
+
+A Claude lead on a Mac launches them this way, and so does a Codex lead whose
+`spawn_agent` can't take the model.
 
 ```sh
 codex exec -C <dir> --skip-git-repo-check \

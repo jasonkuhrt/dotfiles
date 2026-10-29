@@ -4,7 +4,7 @@ Runs Claude Code as one of several accounts. `claude1`, `claude2` and `claude3` 
 
 The tool is `claude-account.fish`, `claude.fish`, `claude-default.fish` and `claude1.fish` to `claude3.fish` in `home/.config/fish/functions/`. `just claude-account-check` verifies it against `scripts/tests/fake-claude.sh`.
 
-Plain `claude` from any other shell gets the same choice through `home/.local/shims/claude`, which hands its arguments to the fish function. Agents' shells are zsh, so without it an agent's `claude -p` ran on account 2 whatever its limit. `~/.local/shims` comes before the installer's `~/.local/bin` on PATH: in `config.fish`, and in `~/.zshenv` and `~/.zprofile`, which this repo does not manage. claude-account runs the binary by its path, `~/.local/bin/claude`, so the shim never calls itself.
+Plain `claude` from any other shell gets the same choice through `home/.local/shims/claude`, which hands its arguments to the fish function. Agents' shells are zsh, so without it an agent's `claude -p` ran on account 2 whatever its limit. `~/.local/shims` comes before the installer's `~/.local/bin` on PATH: in `config.fish`, and in `home/.zshenv` and `home/.zprofile`. claude-account runs the binary by its path, `~/.local/bin/claude`, so the shim never calls itself.
 
 ## The goal, and the one simpler design
 

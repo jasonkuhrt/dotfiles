@@ -51,6 +51,25 @@ Jason, 2026-10-29, after "Say the word and I'll merge it" on a green, reviewed P
 * Still put to me first: a design I haven't approved, a change a follow-up PR can't undo (a schema migration, a production deploy, deleted data), and a PR someone else owns.
 * Bad: a green, reviewed PR with its measurements in hand, then "Say the word and I'll merge it". Good: "#3164 merges when green unless you say no", with auto-merge on.
 
+## Posting on my behalf
+
+Jason, 2026-10-22, after three upstream issues and a PR each waited on his "yes" to their exact text: "change my user level rules from halting to just guidance on conventions like leading with transparency about ai being the author … except i want nuance, for example the reply of ty+links is small and chatty not load bearing worthy of ai disclosure header". On 2026-10-29 he asked for these conventions to be available to Codex too.
+
+* A post that the task I gave explicitly includes goes out without a stop for my approval of its text: an issue, a PR, a review, a comment, a reply, in any repo or tracker. Report what was posted, with links, after.
+  * Bad: drafting upstream issues I had asked for, then asking "Should I post these?".
+  * Good: posting them and replying with the links.
+  * A post the task never asked for is still put to me first, in one line.
+* A load-bearing post opens with one line saying an AI agent wrote it for me: `> Written by an AI agent (Codex) on behalf of @jasonkuhrt.` A post is load-bearing when it asks its reader to evaluate something: a claim, a bug, a proposal, a design, code.
+  * Bad: that line on "Thanks for shipping all three so fast! Follow-ups: #890, #891".
+  * Good: that line opening a rule proposal in another project's tracker.
+  * A social or navigational note (thanks, an ack, links to follow-ups) carries no line.
+* My own team's tracker and repos follow their own rules; the line is for posts that leave them.
+* Commit messages take no AI attribution line by default. A repo whose contribution rules ask for one gets it, naming the actual agent model and version; do not invent a model variant the runtime has not exposed.
+  * Bad: leaving commits without the trailer vite-task asks for, citing a default of no attribution.
+  * Good: using the actual model's `Co-authored-by:` trailer on each commit when the target repo requires it.
+* A PR description also ends with the AI-author line above; Codex adds it explicitly. Heartbeat PRs carry none, following that repo's attribution convention.
+  * A PR to another project also closes an issue that opens with the line.
+
 ## Code in replies
 
 Jason, 2026-10-20: "its very confusing to me if u dupliate prose in points or codeblocks. … literally nothing else is wanted from you ever anywhere on my machine ever in any chat forever".
@@ -203,7 +222,7 @@ For architecture and design brainstorming:
 - FOR NARROW QUESTIONS, ANSWER THE ASKED DIMENSION DIRECTLY. DO NOT PAD WITH ADJACENT NEGATIVES, NON-GOALS, EXCLUSIONS, OR SCOPE BOUNDARIES UNLESS THAT CONTRAST IS NECESSARY TO ANSWER THE QUESTION OR THE USER ASKS FOR IT.
 - The user is the decision-maker for management, planning, scope, and relevance. Do not present yourself as the arbiter of what is in scope, out of scope, relevant, or unrelated unless the user explicitly asks for that judgment.
 - When the user asks for opinions, feedback, or technical evaluation, assume the asked-about thing is relevant because the user has the planning context. Focus on the technical answer, tradeoffs, and execution details rather than scope policing.
-- Never send or submit an external communication to a human—email, contact form, direct message, comment, ticket, or post—without Jason's explicit approval for that exact send. Creating drafts is allowed without approval.
+- External communications follow "Posting on my behalf" above: a task that explicitly requests a post authorizes that post; an unrequested send still needs Jason's approval. Creating drafts is allowed without approval.
 - Automated system interactions with non-human bots—such as replying to and resolving Greptile review threads—do not require approval and should proceed autonomously when part of the authorized workflow.
 - When debugging hook behavior in Codex, treat `~/.codex` as the canonical hook/config surface first: inspect `~/.codex/config.toml`, `~/.codex/hooks.json`, and `~/.codex/hooks/*` before looking at `~/.claude`. Only inspect `~/.claude` hooks if the Codex hook config explicitly delegates there.
 - For macOS administrator commands, use interactive `sudo` with a PTY so Touch ID can authenticate. Avoid AppleScript `with administrator privileges` for shell elevation. A failed `sudo -n` check does not establish that Touch ID is unavailable.

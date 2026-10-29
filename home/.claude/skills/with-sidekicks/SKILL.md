@@ -242,7 +242,20 @@ the sidekick's name.
   `codex exec resume <session id> "<correction>"`, with the same flags and
   redirects. A fresh `codex exec` starts from nothing.
 
-Say in one line in the chat what each sidekick is doing.
+Say in one line in the chat what each sidekick is doing. For `astra` and `sol`,
+the line ends with the run's link, `codex://threads/<session id>`, taking the
+session id from the log's head. The link opens the run in the Codex Desktop app,
+where the user can read it and reply to it, while it runs or after. Jason,
+2026-10-29, of sessions a Claude lead starts: "make codex session that are not
+blocked from me accessing".
+
+- Bad: "Astra is researching agent messaging." The run exists only in a log file.
+- Good: "Astra is researching agent messaging:
+  `codex://threads/01a189e6-d1ba-7772-9c62-5b95e6f36a98`." The user opens it,
+  or asks the lead to, which runs `open "codex://threads/<session id>"`.
+
+To message a run that is still open, see `codex queue --thread <session id>
+--message <text>`: it starts the thread's next turn when the thread is idle.
 
 ## The brief
 

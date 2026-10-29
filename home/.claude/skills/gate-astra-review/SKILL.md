@@ -1,6 +1,6 @@
 ---
 name: gate-astra-review
-description: Ensure independent review before a workflow gate or user-facing handoff of work. Reuse sufficient recorded review and dispatch only missing review to Astra. Owns review reuse and dispatch for composing skills; repository review skills own criteria. Also when the user invokes gate-astra-review or says to stop it. Holds whether with-astra-sidekicks is on or off.
+description: Ensure independent review before a workflow gate or user-facing handoff of work. Reuse sufficient recorded review and dispatch only missing review to Astra. Owns review reuse and dispatch for composing skills; repository review skills own criteria. Also when the user invokes gate-astra-review or says to stop it. Holds whether with-sidekicks is on or off, and whichever sidekick it names.
 ---
 
 # Astra review
@@ -12,13 +12,15 @@ completed for that work; launch only the review that is missing.
 This skill owns the reuse and dispatch decision. Callers such as
 `loop-improve-e2e` and `pr-to-ready` cite and invoke this gate with the work and
 existing review records; they do not copy a launch prompt or require another
-round themselves. `with-astra-sidekicks` owns launch, briefing, and result-handling
-mechanics. The repository's `review` skill owns criteria and size.
+round themselves. `with-sidekicks` (its `astra` launch) owns launch, briefing,
+and result-handling mechanics. The repository's `review` skill owns criteria and
+size.
 
-It is standing, not a mode: it holds whether `with-astra-sidekicks` is on or off.
-It stops when the user ends it (`/gate-astra-review off`) or says "no Astra", which
-ends both skills. Carry "gate-astra-review is off" in whatever you hand yourself
-across compaction and handoffs.
+It is standing, not a mode: it holds whether `with-sidekicks` is on or off, and
+whichever sidekick it names. It stops when the user ends it
+(`/gate-astra-review off`) or says "no Astra", which also ends `with-sidekicks`
+while it names `astra`. Carry "gate-astra-review is off" in whatever you hand yourself across
+compaction and handoffs.
 
 This gate is owned by the lead session, whether Claude or Codex. A worker
 assigned a review performs that review and dispatches nothing; its harness
@@ -71,7 +73,7 @@ Astra run never dispatches another.
 - Bad (2026-10-27, PR #3057): `pr-to-ready`'s review gate dispatched a Claude
   subagent, which spent about 300,000 tokens reviewing an 8-file diff.
 - Good: the gate is one read-only Astra run whose brief names the base and the
-  `review` skill, and its findings are checked as `with-astra-sidekicks` says.
+  `review` skill, and its findings are checked as `with-sidekicks` says.
 
 ## When the gate applies
 
@@ -107,7 +109,7 @@ Run this only for coverage the reuse check found missing.
 2. **Brief Astra** (below), writing the brief to
    `<scratchpad>/astra-review-<topic>-<n>.brief.md`, where `n` counts the
    rounds on the same work.
-3. **Launch one read-only run** as `with-astra-sidekicks` launches a review with
+3. **Launch one read-only run** as `with-sidekicks` launches an `astra` review with
    instructions: `codex exec` with `--sandbox read-only`, model and effort
    named, the brief's path as its prompt, its report to
    `astra-review-<topic>-<n>.txt` and its log to `.log` in the scratchpad, in
@@ -120,7 +122,7 @@ Run this only for coverage the reuse check found missing.
 
 ## The brief
 
-Write it whole, by `with-astra-sidekicks`' brief rules. It holds:
+Write it whole, by `with-sidekicks`' brief rules. It holds:
 
 - **The work.** Use the scope selected by the reuse gate. For code, pin the
   checkout, base/head and any uncommitted content. Missing criteria on
@@ -147,7 +149,7 @@ Write it whole, by `with-astra-sidekicks`' brief rules. It holds:
 
 ## Resolving
 
-Astra's report is a claim, checked as `with-astra-sidekicks` ("Its result") says.
+Astra's report is a claim, checked as `with-sidekicks` ("Its result") says.
 Give every finding one of three outcomes, one line each, in
 `<scratchpad>/astra-review-<topic>-<n>.resolved.md`, headed by the commit the
 round reviewed:
@@ -218,4 +220,4 @@ Astra saves, and that call is the user's.
 | "Astra is down; a subagent can review instead." | Ping with "No Astra round: <why>". A substitute reviewer is the user's call. |
 | "A different workflow or another ping needs its own review." | Reuse sufficient review; dispatch only missing or materially affected coverage. |
 | "Astra's design suggestion is good; I'll adopt it." | A design point that is the user's call is carried into the decision, with your pick. |
-| "with-astra-sidekicks is off, so there's no review." | This skill holds either way. Only `/gate-astra-review off` or "no Astra" stops it. |
+| "with-sidekicks is off, or names Sonnet or Sol, so there's no Astra review." | This skill holds either way. Only `/gate-astra-review off` or "no Astra" stops it. |

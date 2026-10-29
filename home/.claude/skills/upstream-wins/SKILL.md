@@ -11,7 +11,7 @@ post the issue (and the PR, when it qualifies) on the user's word.
 
 You are the lead, not a relay: you decide every outcome and category, verify
 the claims that decide them, and write every text the user or a maintainer
-reads. Astra (see `with-astra-sidekicks` for launching) does the sweeps and evidence
+reads. Astra (see `with-sidekicks` for launching) does the sweeps and evidence
 runs.
 
 ## The one parameter

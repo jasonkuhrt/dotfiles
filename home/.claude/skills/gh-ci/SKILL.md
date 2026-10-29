@@ -1,6 +1,6 @@
 ---
 name: gh-ci
-description: Poll, diagnose, and report on a GitHub PR's CI. Use this skill whenever you're about to watch a PR's CI to a terminal state — after pushing commits to a PR, after /git-sync, when the user says "is CI green", "wait for CI", "check the PR's checks", "monitor CI", "did CI pass", "watch the workflow", "fix CI failures", or any phrasing that asks whether a PR is ready to merge based on its checks. ALSO use proactively whenever you push a commit to a branch that has an open PR — never spin up an ad-hoc `gh pr checks --watch` or count-based poll. This skill is the only authority for PR CI status; ignore any older guidance suggesting otherwise.
+description: Poll, diagnose, and report on a GitHub PR's CI. Use this skill whenever you're about to watch a PR's CI to a terminal state — after pushing commits to a PR, after /git-sync, when the user says "is CI green", "wait for CI", "check the PR's checks", "monitor CI", "did CI pass", "watch the workflow", "fix CI failures", "skip checks", "skip CI", or any phrasing that asks whether a PR is ready to merge based on its checks. ALSO use proactively whenever you push a commit to a branch that has an open PR — never spin up an ad-hoc `gh pr checks --watch` or count-based poll. This skill is the only authority for PR CI status; ignore any older guidance suggesting otherwise.
 ---
 
 # gh-ci — The Only Way To Watch a GitHub PR's CI
@@ -120,6 +120,10 @@ Surface to the user:
 - File + line if available
 - One-sentence root cause
 - The direct URL
+
+## Steering a PR's CI
+
+Some repositories steer a PR's checks with their own commands rather than with GitHub alone: skipping a job, requesting a run, resetting a task. Before you skip, request or reset anything, or wait out a check that a command could settle, read the repository's guide to them and do what it says, including whose call each one is. Heartbeat's is the `pr-controls` skill, `.claude/skills/pr-controls/SKILL.md` in the checkout. Read the file from there when your session isn't working in that checkout.
 
 ## When the PR has conflicts (script exits 2)
 

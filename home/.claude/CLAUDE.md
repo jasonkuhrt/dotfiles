@@ -49,6 +49,16 @@ Two rules follow from it:
 
 Jason, 2026-10-20: "its very confusing to me if u dupliate prose in points or codeblocks. … literally nothing else is wanted from you ever anywhere on my machine ever in any chat forever".
 
+### Code or a drawing
+
+Jason, 2026-10-28, of a design reply on how vpp's progress and proof decide what a change invalidates, whose every view was a `text` fence in this format: "needvisual explaination and your cdoe block formats for this were not helpful at all using my format but its all lacking syntax coloruing and not code". Then: "i need cold start … show me a seq diagram".
+
+* A code block holds code: source, a command, a query, a diff, a schema, under a language tag the app colors (`ts`, `sh`, `sql`, `diff`). The rest of this section applies to those blocks.
+* A mechanism, a flow or a set of states that isn't code is drawn: a sequence diagram for actors over time, an inline widget for many items with states or for options to switch between. A reply that is mostly fences of something that isn't code fails, however well annotated.
+* A term the reader hasn't met is defined, in plain words, before the drawing that uses it.
+* Bad: "The four directions, as the agent meets them": one `text` fence of four places, each a note annotation over the same `vp exec vpp pr run` line, plus faked terminal output and doc prose re-wrapped into fences.
+* Good: a widget with the suite's 118 test cases colored by what happens to each, a switch between the three ways to prove a commit, and what CI, the undraft gate and develop conclude under each; then a sequence diagram of the pick.
+
 ### Modes
 
 Every code block in a reply takes exactly one of three modes:

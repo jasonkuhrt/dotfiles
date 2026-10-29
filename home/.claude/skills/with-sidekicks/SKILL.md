@@ -100,7 +100,8 @@ other harness runs as that harness's CLI in a subprocess:
 | A Mac, as a Claude lead                              | sub-agent: the Agent tool   | subprocess: `codex exec`      |
 | A Mac, as a Codex lead                               | subprocess: `claude -p`     | sub-agent: `spawn_agent`      |
 
-A Mac covers the Claude app, the Codex app and a local Conductor workspace.
+A Mac covers the Claude app, the Codex app and a local Conductor workspace,
+which gets no Conductor API URL or token.
 A Codex lead may instead make the sidekick a peer thread (`dispatch-codex-peer`)
 when the user should watch or steer it in its own chat.
 
@@ -158,18 +159,26 @@ report: a Conductor session has no read-only switch.
   needs. Its final answer comes back to you when it finishes; correct it with
   `send_message`. When the tool's list of model overrides lacks the model,
   launch it with `codex exec` as below.
-- **`sonnet`:** Claude Code's CLI in the background:
+- **`sonnet`:** Claude Code's CLI in the background, through the user's
+  `claude` fish function:
 
   ```sh
-  claude -p --agent sonnet-xhigh --model sonnet --effort xhigh \
+  fish -c 'claude $argv' -- \
+    -p --agent sonnet-xhigh --model sonnet --effort xhigh \
     --permission-mode bypassPermissions --output-format json \
     "<prompt, or the brief's path>" \
     < /dev/null > <scratch>/sonnet-<slug>.json 2> <scratch>/sonnet-<slug>.log
   ```
 
+  The fish function picks the Claude account: with `claude-default auto`, the
+  one with quota left whose week resets soonest. The binary called from any
+  other shell runs on account 2 whatever its limit. The `--` keeps fish from
+  reading the flags as its own (`-p` is fish's `--profile`).
+
   The JSON's `result` is its final message and `is_error` says whether it
-  failed; a usage limit shows there as an error result. Correct it with
-  `claude -p --resume <session_id> "<correction>"` and the same flags.
+  failed; a usage limit shows there as an error result. Correct it with the
+  same command, adding `--resume <session_id>` and the correction as the
+  prompt.
   `bypassPermissions` because nobody is there to approve its tools: the brief
   names the files it owns, and a review's brief says it changes no file but its
   report.

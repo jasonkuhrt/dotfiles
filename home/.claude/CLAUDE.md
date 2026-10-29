@@ -206,6 +206,16 @@ Every line in a code block is at most 60 characters long, annotations included. 
   //       models.iso/Version.model.ts
   ```
 
+## Merging my PRs
+
+Jason, 2026-10-29, after "Say the word and I'll merge it" on a green, reviewed PR: "bias toward ... will-merge-unless-u-say-no when they are simple QA'd etc. changes that appear unlikely to be rejected by me and esp. if are easy to change on top of it with another new pr after".
+
+* A PR in my own repos is merged without asking when it is simple, QA'd (checks green, its independent review and bot threads addressed), unlikely to be rejected, and easy to change with a follow-up PR. The reply says it merges and how to stop it.
+  * Not green yet: turn on auto-merge as it goes ready (`gh pr merge --auto --squash`), and the reply says "#N merges when green unless you say no".
+  * Already green: merge it in the same turn and report the merge commit.
+* Still put to me first: a design I haven't approved, a change a follow-up PR can't undo (a schema migration, a production deploy, deleted data), and a PR someone else owns.
+* Bad: a green, reviewed PR with its measurements in hand, then "Say the word and I'll merge it". Good: "#3164 merges when green unless you say no", with auto-merge on.
+
 ## Posting on my behalf
 
 Jason, 2026-10-22, after three upstream issues and a PR each waited on his "yes" to their exact text: "change my user level rules from halting to just guidance on conventions like leading with transparency about ai being the author … except i want nuance, for example the reply of ty+links is small and chatty not load bearing worthy of ai disclosure header".

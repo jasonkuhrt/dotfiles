@@ -362,16 +362,28 @@
      import { Invoice, Order } from './models/__.js'
      Order.is(x)
      ```
-   * __7e. Schema.suspend() for recursive references__
-     `suspend()` defers schema evaluation to break circular references — self-referencing or cross-file circular imports.
-     * Always annotate the return type: `(): S.Schema<Type, Encoded>`
-     * Self-references need `as any` — class isn't fully defined during its own body evaluation
-     * When `Encoded` differs from `Type`, forward-declare an `interface` for the Encoded form before the class
-     1. Wrong example
+   - **7e. Schema.suspend() for recursive references — Effect 4**
+     `suspend()` defers access to a schema until it is needed. Use it for self-references or mutually recursive schemas, with an explicit callback return type to break TypeScript's recursive inference cycle.
+     - Annotate the callback with `Schema.Codec<Type, Encoded>`. In Effect 4, `Schema.Schema<Type>` describes only the decoded type; `Codec` also carries the encoded type and service requirements.
+     - Use `Schema.Codec<Type>` only when `Encoded` is the same as `Type`, since the second parameter defaults to the first.
+     - Return the class directly, without `as any`. The callback defers the reference until the class exists.
+     - For a transformed recursive class, forward-declare an interface extending `Schema.Codec.Encoded<typeof Tree>`. The schema then owns the encoded structure, including the recursive fields and `_tag`.
+     - If decoding or encoding requires services, preserve them in `Schema.Codec<Type, Encoded, DecodingServices, EncodingServices>`; both service parameters default to `never`.
+     1. Wrong example — Effect 3 annotation and an unnecessary cast
      ```typescript
-     children: S.Array(S.suspend(() => Tree as any))
+     children: S.Array(S.suspend((): S.Schema<Tree, TreeEncoded> => Tree as any));
      ```
-     2. Correct example
+     2. Correct example — decoded values are numbers; encoded values are strings
      ```typescript
-     children: S.Array(S.suspend((): S.Schema<Tree, TreeEncoded> => Tree as any))
+     import { Schema } from "effect";
+
+     interface TreeEncoded extends Schema.Codec.Encoded<typeof Tree> {}
+
+     export class Tree extends Schema.TaggedClass<Tree>()("Tree", {
+       value: Schema.FiniteFromString,
+       children: Schema.Array(Schema.suspend((): Schema.Codec<Tree, TreeEncoded> => Tree)),
+     }) {
+       static is = Schema.is(Tree);
+     }
      ```
+     Source: the installed `effect` package's `AGENTS.md` and `src/Schema.ts` (`suspend`), and Effect 4's `packages/effect/SCHEMA.md` ("Recursive Classes"). Check the installed version's docs and source when applying this template.

@@ -52,6 +52,7 @@ If step 1 can't be written because nobody is hurt or held back, it isn't a probl
 Two rules follow from it:
 
 * A question to Jason carries facts the agent checked, never a worry the agent could have checked. When a check settles it, do the check and bring the answer. Bad: asking him to dispatch a test for a leak nobody had looked for. Good: "It can't leak: the filter goes on a copy (file:line)."
+* A downside named to Jason is a concrete cost that the work brings for certain: a real DX hit, a real latency hit, a real security hole, real tech debt, money, or work thrown away. A risk, meaning what could go wrong if the work is done badly, is never one; review and tests answer it. Jason, 2026-10-29: "risks are useless to me. concrete problems, not speculative … 'we might write the wrong code' is never a 'risk'". Bad: "the edit sits on a shared helper every machine's build runs through". Good: "it's a second mechanism to delete once the upstream fix ships".
 * A proposal opens with one plain sentence that says what it is, before any code. Bad: a block of test code, then "Dispatch the test?". Good: "I propose one test: two tenants read through one shared projection, and the second gets only its own rows."
 
 ## Code in replies

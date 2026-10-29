@@ -7,10 +7,13 @@ function claude-account --description 'Claude Code as account N: own login in ~/
         return 2
     end
 
+    # The binary by its path, where the native installer puts it: a bare `claude` would re-enter
+    # the `claude` function, and `env claude` would find the shim in ~/.local/shims.
+    set -l bin $HOME/.local/bin/claude
+
     # Account 2 is the login in ~/.claude itself, the one the binary uses with no CLAUDE_CONFIG_DIR.
-    # `env` here and below runs the binary; a bare `claude` would re-enter the `claude` function.
     if test $n = 2
-        env -u CLAUDE_CONFIG_DIR claude $argv[2..]
+        env -u CLAUDE_CONFIG_DIR $bin $argv[2..]
         return
     end
 
@@ -37,7 +40,7 @@ function claude-account --description 'Claude Code as account N: own login in ~/
     test -e $config; or __claude_account_jq_into $config '{mcpServers: (.mcpServers // {}), projects: (.projects // {}), hasCompletedOnboarding, lastOnboardingVersion} | with_entries(select(.value != null))' $HOME/.claude.json
 
     __claude_account_sync_mcp $dir
-    env CLAUDE_CONFIG_DIR=$dir claude $argv[2..]
+    env CLAUDE_CONFIG_DIR=$dir $bin $argv[2..]
     set -l claude_status $status
     __claude_account_sync_mcp $dir
     return $claude_status

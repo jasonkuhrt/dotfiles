@@ -159,21 +159,17 @@ report: a Conductor session has no read-only switch.
   needs. Its final answer comes back to you when it finishes; correct it with
   `send_message`. When the tool's list of model overrides lacks the model,
   launch it with `codex exec` as below.
-- **`sonnet`:** Claude Code's CLI in the background, through the user's
-  `claude` fish function:
+- **`sonnet`:** Claude Code's CLI in the background:
 
   ```sh
-  fish -c 'claude $argv' -- \
-    -p --agent sonnet-xhigh --model sonnet --effort xhigh \
+  claude -p --agent sonnet-xhigh --model sonnet --effort xhigh \
     --permission-mode bypassPermissions --output-format json \
     "<prompt, or the brief's path>" \
     < /dev/null > <scratch>/sonnet-<slug>.json 2> <scratch>/sonnet-<slug>.log
   ```
 
-  The fish function picks the Claude account: with `claude-default auto`, the
-  one with quota left whose week resets soonest. The binary called from any
-  other shell runs on account 2 whatever its limit. The `--` keeps fish from
-  reading the flags as its own (`-p` is fish's `--profile`).
+  Call it by its plain name, `claude`, so whatever the user's machine puts on
+  that name applies, such as a launcher that picks which account runs it.
 
   The JSON's `result` is its final message and `is_error` says whether it
   failed; a usage limit shows there as an error result. Correct it with the

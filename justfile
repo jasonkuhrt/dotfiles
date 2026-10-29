@@ -740,8 +740,8 @@ claude-account-check:
     hub="$home/.claude.json"
     one="$home/.claude-1/.claude.json"
     three="$home/.claude-3/.claude.json"
-    mkdir -p "$tmpdir/bin" "$home/.claude"
-    cp "$fake_claude" "$tmpdir/bin/claude"
+    mkdir -p "$tmpdir/bin" "$home/.claude" "$home/.local/bin"
+    cp "$fake_claude" "$home/.local/bin/claude"
     printf '%s\n' '{"userID":"hub","mcpServers":{"shared":{"type":"stdio","command":"a"}}}' > "$hub"
 
     fail() {
@@ -756,7 +756,7 @@ claude-account-check:
         fish_run "claude-account $*"
     }
     direct() {
-        CLAUDE_CONFIG_DIR="$home/.claude-$1" "$tmpdir/bin/claude" "${@:2}"
+        CLAUDE_CONFIG_DIR="$home/.claude-$1" "$home/.local/bin/claude" "${@:2}"
     }
     expect() {
         local got
@@ -809,6 +809,15 @@ claude-account-check:
     # Plain claude follows claude-default, and lands on account 2 until one is set.
     [ "$(fish_run 'claude where')" = "$home" ] || fail 'plain claude did not default to account 2'
     [ "$(fish_run 'claude-default 3; claude where')" = "$home/.claude-3" ] || fail 'plain claude ignored claude-default'
+
+    # Another shell's plain claude reaches the same choice through the shim.
+    # The fish runs above made an empty functions directory; the shim's fish needs the real ones.
+    rm -rf "$home/.config/fish/functions"
+    ln -s "$functions" "$home/.config/fish/functions"
+    # fish_run's --no-config keeps universal variables in memory, so set the default where they persist.
+    HOME="$home" XDG_CONFIG_HOME="$home/.config" fish -c 'claude-default 3'
+    shim_where="$(HOME="$home" XDG_CONFIG_HOME="$home/.config" PATH="$PWD/home/.local/shims:$tmpdir/bin:$PATH" sh -c 'claude where' 2>/dev/null)"
+    [ "$shim_where" = "$home/.claude-3" ] || fail "the shim took ${shim_where:-nothing}, want $home/.claude-3"
 
     # On auto, plain claude takes the account to finish next: of those with quota left, the one
     # whose week resets soonest. A row with no usage or no launcher alias is skipped.

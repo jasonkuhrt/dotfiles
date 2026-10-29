@@ -10,7 +10,9 @@
 # deliberately does not touch the universal `fish_user_paths`: universal PATH
 # entries are machine state that outlives this file and cannot be reviewed here.
 #
-# First argument wins. Vite+ owns Node; ~/.local/bin keeps standalone installs
+# First argument wins. Vite+ owns Node; ~/.local/shims puts plain `claude`'s
+# account choice ahead of the installer's binary in ~/.local/bin
+# (docs/claude-account.md); ~/.local/bin keeps standalone installs
 # such as Codex's official installer ahead of Homebrew. Installer-appended blocks for
 # pnpm, bun, cargo, go and grok are folded in here; if one re-appends its own
 # block, delete it.
@@ -21,6 +23,7 @@ set -gx BUN_INSTALL "$HOME/.bun"
 
 fish_add_path -gPm \
     "$HOME/.vite-plus/bin" \
+    "$HOME/.local/shims" \
     "$HOME/.local/bin" \
     "$NPM_GLOBAL/bin" \
     "$PNPM_HOME/bin" \

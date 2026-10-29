@@ -1,0 +1,7 @@
+#!/bin/sh
+# Plain `claude` from a shell other than fish runs the account choice fish's `claude` function
+# makes (docs/claude-account.md). Agents' shells are zsh, so without this their `claude` ran on
+# account 2 whatever its limit. fish reaches its own function before this file, and
+# claude-account runs the binary by its path, so this never calls itself. Where the function
+# is missing, it runs the binary as it is.
+exec fish -c 'if functions -q claude; claude $argv; else; exec $HOME/.local/bin/claude $argv; end' -- "$@"

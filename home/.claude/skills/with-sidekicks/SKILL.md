@@ -7,11 +7,14 @@ description: A mode the user switches on to hand side work to one named sidekick
 
 A mode, not a task. `/with-sidekicks <name>` turns it on with one sidekick:
 
-| Name     | Model                 | Runs through                                     |
-| -------- | --------------------- | ------------------------------------------------ |
-| `sonnet` | Claude Sonnet, xhigh  | the Agent tool, `subagent_type: "sonnet-xhigh"`  |
-| `astra`  | `gpt-6-astra`, ultra  | `codex exec`, on the user's OpenAI subscription  |
-| `sol`    | `gpt-6.1-sol`, ultra  | `codex exec`, on the user's OpenAI subscription  |
+| Name     | Model         | Effort | Conductor agent and model  |
+| -------- | ------------- | ------ | -------------------------- |
+| `sonnet` | Claude Sonnet | xhigh  | `claude`, `sonnet-5-5-1m`  |
+| `astra`  | `gpt-6-astra` | ultra  | `codex`, `gpt-6-astra`     |
+| `sol`    | `gpt-6.1-sol` | ultra  | `codex`, `gpt-6.1-sol`     |
+
+How it launches depends on where the lead runs; see
+[Where you run](#where-you-run).
 
 With no name it is `astra`. One sidekick is on at a time: invoking the skill
 again with another name switches to it. The mode holds until the user ends it
@@ -25,10 +28,10 @@ names. Its reviews always run on Astra, through the `astra` launch below; this
 skill supplies launch mechanics, not another handoff review.
 `/with-sidekicks off` leaves that gate on; "no Astra" ends both.
 
-The mode is for a Claude lead session. A Codex lead uses its `astra` launch when
-`gate-astra-review` requires a new independent review. A worker assigned a task
-does that task and dispatches nothing; role follows the assignment, not the
-harness name.
+The lead is whichever session runs the mode, Claude or Codex. A Codex lead also
+uses the `astra` launch when `gate-astra-review` requires a new independent
+review. A worker assigned a task does that task and dispatches nothing; role
+follows the assignment, not the harness name.
 
 Why: every task a sidekick takes is off the lead's model. Astra and Sol run on
 the user's OpenAI subscription, so they spend no Claude quota at all; Sonnet
@@ -84,7 +87,66 @@ than the task.
 - Bad: the lead making forty Linear writes itself after the user ruled on
   them. Good: the lead writes the edit list; the sidekick applies it.
 
-## Launching `sonnet`
+## Where you run
+
+Launch each sidekick with the agent-launching feature of the place the lead
+runs in:
+
+| Where the lead runs                                  | `sonnet`              | `astra`, `sol`      |
+| ---------------------------------------------------- | --------------------- | ------------------- |
+| A Conductor cloud workspace (`CONDUCTOR_IS_LOCAL=0`) | a Conductor session   | a Conductor session |
+| A Mac, as a Claude lead                              | the Agent tool        | `codex exec`        |
+| A Mac, as a Codex lead                               | not available: say so | `codex exec`        |
+
+A Mac covers the Claude app, the Codex app and a local Conductor workspace.
+
+## Launching in Conductor
+
+A sidekick is a new session in the lead's own workspace, so it shares the
+workspace's files and branch, and the user sees it in Conductor's sidebar and
+can steer it there.
+
+1. **Brief.** Write the brief to `.context/sidekicks/<name>-<slug>.brief.md` in
+   the workspace (`.context` is Conductor's uncommitted handoff folder). It
+   names its report file, `.context/sidekicks/<name>-<slug>.report.md`, which
+   the sidekick writes before it ends its turn.
+2. **Launch.**
+
+   ```sh
+   ws=${CONDUCTOR_WORKSPACE_ID:-$(conductor --json session status \
+     "$CONDUCTOR_SESSION_ID" | jq -r .workspaceId)}
+   conductor --json session create --workspace "$ws" \
+     --agent <agent> --model <model> --effort <effort> \
+     --name "<name>: <slug>" \
+     --message "Read .context/sidekicks/<name>-<slug>.brief.md and do exactly what it says." \
+     > .context/sidekicks/<name>-<slug>.session.json
+   ```
+
+   The agent, model and effort come from the table at the top. The result
+   holds the session's `id` and its `deepLink`; give the user the link with
+   the one line on what the sidekick is doing. Without the `conductor` CLI,
+   the same call is `POST /v0/sessions` with `workspaceId`, `agent`, `model`,
+   `effort`, `name` and `message`, authorized with `CONDUCTOR_API_KEY`, or
+   with `CONDUCTOR_API_TOKEN` when that is unset.
+3. **Wait** in a background shell loop, never a model loop. Poll
+   `conductor --json session status <id>` every 30 s. `status` is `idle`,
+   `working` or `error`; count `idle` as done only after you have seen
+   `working`, since a session reads `idle` until its first message is
+   delivered. Stop after 20 minutes to look at it, not to give up on it.
+4. **Correct** a running sidekick with
+   `conductor message create --session <id> --message-file <file>`. The
+   message is steered into its running turn. Never `conductor session cancel`:
+   it drops queued messages.
+5. **Read** the report file. When it is missing, read the session's last
+   messages with `conductor --json session message <id> --limit 20`,
+   redirected to a file.
+6. **Archive** the session with `conductor session archive <id>` once you have
+   checked its result.
+
+A review or an opinion says in its brief that it changes no file except its
+report: a Conductor session has no read-only switch.
+
+## Launching `sonnet` on a Mac
 
 - Write the brief to a file, then call the Agent tool with
   `subagent_type: "sonnet-xhigh"` and the brief's path as its prompt. It runs
@@ -95,7 +157,7 @@ than the task.
 - To correct a run, send it the correction with `SendMessage`. It keeps its
   context.
 
-## Launching `astra` and `sol`
+## Launching `astra` and `sol` on a Mac
 
 ```sh
 codex exec -C <dir> --skip-git-repo-check \

@@ -106,14 +106,16 @@ usual once the mode ends.
 Run this only for coverage the reuse check found missing.
 
 1. **Draft the ping:** the message you would send the user now.
-2. **Brief Astra** (below), writing the brief to
-   `<scratchpad>/astra-review-<topic>-<n>.brief.md`, where `n` counts the
-   rounds on the same work.
-3. **Launch one read-only run** as `with-sidekicks` launches an `astra` review with
-   instructions: `codex exec` with `--sandbox read-only`, model and effort
-   named, the brief's path as its prompt, its report to
-   `astra-review-<topic>-<n>.txt` and its log to `.log` in the scratchpad, in
-   the background. Check the log's head as that skill says.
+2. **Brief Astra** (below), writing the brief as
+   `astra-review-<topic>-<n>.brief.md`, where `n` counts the rounds on the same
+   work, in the folder `with-sidekicks` uses where you run: the scratchpad on a
+   Mac, `.context/sidekicks/` in Conductor.
+3. **Launch one read-only run** as `with-sidekicks` launches an `astra` review
+   where you run. On a Mac: `codex exec` with `--sandbox read-only`, model and
+   effort named, the brief's path as its prompt, its report to
+   `astra-review-<topic>-<n>.txt` and its log to `.log` beside the brief, in
+   the background; check the log's head as that skill says. In Conductor: a
+   Conductor session whose brief says it changes no file but its report.
 4. **Leave the work as it is** while the round runs: a change made under it
    goes unreviewed. If your turn ends while you wait, it ends on one line
    saying what Astra is reviewing. That line isn't the ping.

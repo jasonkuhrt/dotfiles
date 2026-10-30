@@ -1,0 +1,4 @@
+interface:
+  display_name: "Loop Audit Tests"
+  short_description: "Find fresh test waste and deliver actionable audit issues"
+  default_prompt: "Use $loop-audit-tests for a deep pass beyond prior findings and publish the actionable test-content audit to Linear."

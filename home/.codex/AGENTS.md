@@ -51,6 +51,12 @@ Jason, 2026-10-29, after "Say the word and I'll merge it" on a green, reviewed P
 * Still put to me first: a design I haven't approved, a change a follow-up PR can't undo (a schema migration, a production deploy, deleted data), and a PR someone else owns.
 * Bad: a green, reviewed PR with its measurements in hand, then "Say the word and I'll merge it". Good: "#3164 merges when green unless you say no", with auto-merge on.
 
+## Linear issue templates
+
+- Never create a Linear issue ad hoc. Always use the existing issue template that best fits the issue being created.
+- Before drafting or creating an issue, discover the templates available to the target team and read the chosen template. Pass its ID through the creation tool's template option when supported. The selected template governs structure and required fields; put skill guidance inside it rather than replacing or reordering it with a custom outline.
+- If no available template fits, ask Jason which template to use before creating the issue. Do not fall back to an ad hoc issue.
+
 ## Posting on my behalf
 
 Jason, 2026-10-22, after three upstream issues and a PR each waited on his "yes" to their exact text: "change my user level rules from halting to just guidance on conventions like leading with transparency about ai being the author … except i want nuance, for example the reply of ty+links is small and chatty not load bearing worthy of ai disclosure header". On 2026-10-29 he asked for these conventions to be available to Codex too.

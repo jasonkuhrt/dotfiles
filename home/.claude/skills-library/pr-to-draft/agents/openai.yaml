@@ -1,4 +1,0 @@
-interface:
-  display_name: "PR To Draft"
-  short_description: "Locally green work, pushed, as a draft PR"
-  default_prompt: "Use $pr-to-draft to resolve task context, run the local checks that prove the delta, normalize a detached worktree when needed, commit intended work, push the branch, and open a draft PR ready for review."

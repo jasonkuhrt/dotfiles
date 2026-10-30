@@ -75,11 +75,7 @@ Prefer narrow checks tied to the changed package or app. Re-run the scorecard to
 
 ## Landing
 
-If code or manifests changed, load and follow the `pr-to-ready` skill from the active skill list. If needed, use:
-
-```text
-/Users/jasonkuhrt/projects/jasonkuhrt/dotfiles/home/.claude/skills/pr-to-ready/SKILL.md
-```
+If code or manifests changed, load and follow the `pr-to-ready` skill from the active skill list.
 
 Do not copy or reinterpret `pr-to-ready`; follow it as the terminal phase. If no change was made, do not land a PR.
 

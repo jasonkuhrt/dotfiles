@@ -75,11 +75,6 @@
     "content": "Before selecting optional discipline passes, run `typesafe review` with the\nfull `change` and `context`. Use its six applicability judgments to choose\noptional passes; always run required and user-requested passes, and send\nuncertain cases to the lead. TypeSafe does not judge findings: the lead still\nverifies every mechanism against the code and follows the verifier rules above."
   },
   {
-    "path": ".claude/skills/pr-to-ready/SKILL.md",
-    "heading": "TypeSafe judgments",
-    "content": "Classify one review comment or thread per `typesafe feedback` invocation. Put\nthe feedback text in `feedback`; put its stable thread ID and all applicable\ndiff, discussion, and verification evidence in `context`, retaining that mapping\nin the caller. Consume the actionable, informational, ambiguous, or unresolved\nchoice inside the existing feedback workflow; fixes, replies, resolution, and\npushes remain owned here."
-  },
-  {
     "path": "projects/heartbeat-chat/Heartbeat/.claude/skills/pulse-content/SKILL.md",
     "heading": "TypeSafe judgments",
     "content": "When drafted content needs a semantic behavior judgment, run `typesafe pulse`\nwith `items` containing stable `id`, `currentText`, `proposedText`, and all\napplicable `exactFacts` as stable `{ id, text }` entries. Consume the typed\njudgment before validation and preserve the returned facts unchanged. Lifecycle,\ncompatibility, manifests, formatting, and repository checks remain authoritative."

@@ -1,4 +1,0 @@
-interface:
-  display_name: "PR To Draft, Top Down"
-  short_description: "Top-down work, pushed unchecked, as a draft PR"
-  default_prompt: "Use $pr-to-draft-top-down to take work done in $top-down mode to a draft PR: follow $pr-to-draft without its local checks, skip hooks, and say in the PR body that nothing was checked."

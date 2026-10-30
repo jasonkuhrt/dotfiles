@@ -136,8 +136,9 @@ are priced as one. Nothing is the set when no action pays.
   release with a minimal reproduction that holds none of our code, the same
   code read in the latest release and on main, against the dependency's own
   contract, with no open issue or PR already covering it, and every name in
-  it checked against the version it names. Filing goes through the
-  `upstream-wins` skill and the user's posting rules.
+  it checked against the version it names. Filing follows the project's
+  upstream workflow (`loop-adopt-upstream-wins` in Heartbeat) and the user's
+  posting rules.
   - Bad: #7245's first follow-up told 3.x users to import
     `BasicTracerProvider` from `@opentelemetry/sdk-trace`, which exports
     `TracerProvider`; it was corrected after.

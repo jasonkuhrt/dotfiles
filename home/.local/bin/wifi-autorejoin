@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# wifi-autorejoin — turn Wi-Fi off and on when macOS stops rejoining.
+#
+# On this Mac the Broadcom Wi-Fi driver resets itself in bursts
+# (watchdog "No Free Commands Left"). After a few resets in a row
+# macOS loses the network it was on and never rejoins until someone
+# clicks Join. Turning Wi-Fi off and on makes it auto-join again in
+# about 4 seconds. Run by the LaunchAgent that
+# `just wifi-autorejoin-setup` installs.
+#
+# Does nothing while Wi-Fi is switched off.
+
+set -uo pipefail
+
+iface="${WIFI_AUTOREJOIN_IFACE:-en0}"
+interval=5    # seconds between checks
+misses=3      # failed checks in a row before acting (~15s)
+cooldown=60   # seconds between power cycles; doubles while they don't help
+max_wait=1800
+
+log() { printf '%s %s\n' "$(date '+%F %T')" "$*"; }
+
+router_answers() {
+	local router
+	router=$(ipconfig getoption "$iface" router 2>/dev/null) || return 1
+	[[ -n "$router" ]] || return 1
+	ping -c 1 -t 2 -q -b "$iface" "$router" >/dev/null 2>&1
+}
+
+failed=0
+wait_s=$cooldown
+last_cycle=0
+log "watching $iface"
+
+while true; do
+	if networksetup -getairportpower "$iface" 2>/dev/null | grep -q ': On$'; then
+		if router_answers; then
+			((failed > 0)) && log "router answers again"
+			failed=0
+			wait_s=$cooldown
+		else
+			((failed++))
+			now=$(date +%s)
+			if ((failed >= misses && now - last_cycle >= wait_s)); then
+				log "router silent for $((failed * interval))s; turning Wi-Fi off and on"
+				networksetup -setairportpower "$iface" off
+				sleep 2
+				networksetup -setairportpower "$iface" on
+				last_cycle=$now
+				failed=0
+				wait_s=$((wait_s * 2 > max_wait ? max_wait : wait_s * 2))
+			fi
+		fi
+	else
+		failed=0
+	fi
+	sleep "$interval"
+done

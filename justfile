@@ -88,10 +88,6 @@ matter-server-setup:
 codex-plugins-setup:
     DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/25-codex-plugins.sh
 
-# Keep Wi-Fi rejoining on its own after the Wi-Fi driver's reset bursts.
-wifi-autorejoin-setup:
-    DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/26-wifi-autorejoin.sh
-
 # Build the bookmarks Chrome extension and install its native messaging host.
 # Chrome loads the printed extension directory once through chrome://extensions.
 bookmarks-chrome-setup:

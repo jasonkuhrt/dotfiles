@@ -208,8 +208,11 @@ cask "font-symbols-only-nerd-font"  # icon glyphs (yazi, terminal)
 mas "DaisyDisk", id: 411643860
 mas "Pixelmator Pro", id: 1289583905
 mas "Refined GitHub", id: 1519867270
-mas "TripMode", id: 1513400665
 mas "Unsplash Wallpapers", id: 1284863847
+# Not TripMode (removed 2026-10-30): its network filter makes the Mac hear
+# its own AWDL announcements (AirDrop, iPhone Live Activities) as a name
+# conflict, and the storm that follows resets the Wi-Fi driver ("No Free
+# Commands Left") many times a day. Turning its filter off stopped it.
 
 # Shortcuts Extensions (for Cherri/automation workflows)
 mas "Actions", id: 1586435171          # 180+ utility actions (Sindre Sorhus)

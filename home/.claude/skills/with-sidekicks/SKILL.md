@@ -162,9 +162,9 @@ report: a Conductor session has no read-only switch.
 - **`sonnet`:** Claude Code's CLI in the background:
 
   ```sh
-  claude -p --agent sonnet-xhigh --model sonnet --effort xhigh \
+  claude -p --model sonnet --effort xhigh \
     --permission-mode bypassPermissions --output-format json \
-    "<prompt, or the brief's path>" \
+    "<prompt, or: Read <brief's path> and do exactly what it says.>" \
     < /dev/null > <scratch>/sonnet-<slug>.json 2> <scratch>/sonnet-<slug>.log
   ```
 
@@ -182,8 +182,9 @@ report: a Conductor session has no read-only switch.
 ## Launching `sonnet` from a Claude lead on a Mac
 
 - Write the brief to a file, then call the Agent tool with
-  `subagent_type: "sonnet-xhigh"` and the brief's path as its prompt. It runs
-  in the background; its completion notice brings you back.
+  `subagent_type: "general-purpose"`, `model: "sonnet"` and `effort: "xhigh"`,
+  and the prompt `Read <brief's path> and do exactly what it says.` It runs in
+  the background; its completion notice brings you back.
 - Pass `isolation: "worktree"` when it edits a checkout that other agents are
   editing. Otherwise the brief names the files it owns and has it commit only
   those, by pathspec.

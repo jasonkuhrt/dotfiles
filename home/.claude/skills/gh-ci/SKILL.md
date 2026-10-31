@@ -141,9 +141,9 @@ You are not done with CI. Treat unresolved required review conversations exactly
 
 1. Fetch thread-aware review data, not flat comments.
 2. Address each actionable thread with code or a clear explanation.
-3. Reply to and resolve bot threads within the authorized workflow. Draft replies
-   to human reviewers and obtain Jason's approval for the exact send before posting;
-   resolve addressed threads after verification.
+3. Reply to and resolve every thread, a bot's or a person's, within the
+   authorized workflow; replies follow Jason's posting rules. Resolve addressed
+   threads after verification.
 4. Re-fetch thread state and verify `isResolved: true`.
 5. Re-invoke this skill for the current head SHA.
 

@@ -199,6 +199,17 @@ notice does not certify the work or satisfy that gate.
 Never put a Claude reviewer in Astra's place on your own: it spends the quota
 Astra saves, and that call is the user's.
 
+A loop run nobody watches is the exception, and Jason made the call here: when
+Astra can't run there, the round goes to `sonnet`, launched as `with-sidekicks`
+launches it where the run is, and the account line says so. Jason, 2026-10-31,
+on unattended loops: "I should not be involved in every PR anymore."
+
+> Sonnet round on `a1b2c3d`, Astra unavailable (OpenAI usage limit): nothing
+> to fix.
+
+When Sonnet can't run either, the gate stays unmet and the run ends as the
+`loop` contract says, for a later run to retry.
+
 ## Examples
 
 - Bad (2026-10-07, PR #2538): the lead relayed five Astra findings, two

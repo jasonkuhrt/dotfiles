@@ -62,7 +62,17 @@ If the user separately chooses to end or requests cleanup or archiving, follow t
 
 Lead with a plain recommendation to continue, stop, or decide a named question first, and give the reason.
 
-Include only findings that bear on that recommendation. When several remain, a compact table can show the item, its next useful action, and why to do it now, discuss it, or defer it. Propose issues with their purpose and deferral rationale; link existing ones without treating their existence as the rationale.
+Include only findings that bear on that recommendation. When several remain, use these separate timing columns:
+
+| Work | Why continue now | Why defer |
+| --- | --- | --- |
+| Fix reproduced bug | **Confirmed user failure; small, understood fix** | — |
+| Resolve API choice | **Your decision determines the behavior we implement** | Current API works; changing it isn't urgent |
+| Benchmark unreleased driver | — | **No released version to measure; results now wouldn't guide adoption** |
+
+These rows illustrate the format; use the session's actual remaining work. Keep each reason succinct and bold the reason supporting your recommendation. A user discussion is work that can justify continuing now. Use an em dash where no concrete argument exists; do not invent one to fill the table. Omit routine housekeeping rows and a separate action-only recommendation column. If nothing worthwhile remains, skip the table and give a short recommendation with the reason.
+
+Propose issues with their purpose and deferral rationale; link existing ones without treating their existence as the rationale.
 
 For work to do now, say what you are continuing. For a user decision, ask it directly with the checked alternatives. For deferral, explain why, the trigger or owner for resuming, and whether tracking is proposed or already authorized.
 

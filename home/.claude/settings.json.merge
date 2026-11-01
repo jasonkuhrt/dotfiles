@@ -16,9 +16,11 @@
       "Skill(dotfiles-doctor)",
       "mcp__Claude_Preview",
       "mcp__mcp-registry",
-      "mcp__Claude_in_Chrome"
+      "mcp__Claude_in_Chrome",
+      "Bash(gh pr merge *)",
+      "Bash(vp exec vpp pr control *)"
     ],
-    "deny": [],
+    "deny": ["Bash(gh pr merge *--admin*)"],
     "defaultMode": "bypassPermissions",
     "additionalDirectories": [
       "/Users/jasonkuhrt"

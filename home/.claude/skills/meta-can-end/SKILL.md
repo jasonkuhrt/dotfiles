@@ -20,7 +20,7 @@ Reread the user's requests, accepted decisions and compaction summary. Refresh t
 | Unresolved decisions | What design, behavior, priority or tradeoff has not been discussed with the user? Bring checked facts and a recommendation rather than silently turning it into backlog. |
 | Delivery state | Check owned PRs, current CI/reviews, Git diff, unpushed commits and stashes. Establish ownership and relevance before deciding whether a leftover needs delivery, preservation or retirement. |
 | Running work and ownership | Check owned workers, linked sessions, shell tasks and scheduled wakeups. Establish whether useful work still depends on this chat, or has a verified independent owner and delivery path. |
-| Context and resources | What would closing lose: pending findings, a needed decision, coordination, useful runtime state or an unrecorded next action? Inspect the relevant worktrees, processes and record. |
+| Context and resources | What would closing lose: pending findings, a needed decision, coordination, useful runtime state or an unrecorded next action? Inspect the relevant worktrees and processes, and check the relevant Linear issues for useful context still missing. |
 
 Use the host's current tools. A detached top-level session belongs to the user and does not depend on this one. An upstream PR does not need to wait here for its maintainers to merge, but review or fixes currently owed by this session still count.
 
@@ -56,7 +56,15 @@ This invocation does not authorize ending the chat, archiving a workspace, stopp
 
 Continue delivery and cleanup already required by separate user instructions or the repository's normal landing protocol under that existing authority. Preserve other sessions' work, protected primary checkouts and upstream review worktrees. Any recommendation to retire a candidate must account for useful changes before removal.
 
-If the user separately chooses to end or requests cleanup or archiving, follow the appropriate host/repository lifecycle skill. Never treat the recommendation question itself as that choice. A record may capture the current findings and recommendation; do not mark the session closed or record proposed deferrals as accepted decisions.
+If the user separately chooses to end or requests cleanup or archiving, follow the appropriate host/repository lifecycle skill. Never treat the recommendation question itself as that choice. Do not mark the session closed or record proposed deferrals as accepted decisions.
+
+## Preserve useful context in Linear
+
+Never create local session-handoff, closeout, final-state or similar end-of-session record files. Preserve useful findings, decisions, measurements, design context and relevant review conclusions in the relevant Linear issues, following the team's existing template and issue conventions.
+
+Check those issues and update only useful context that is missing. If nothing useful is missing, create no extra record to satisfy a checklist. When a separately authorized closing or cleanup workflow requires recording final state, update the relevant Linear issues instead of writing a local record. If no relevant issue exists, apply the issue-creation authorization rules above; do not create a local handoff as a fallback.
+
+This applies to end-of-session records, not necessary transient working files or actual repository source and artifacts.
 
 ## Reply
 

@@ -225,6 +225,17 @@ report: a Conductor session has no read-only switch.
   automated event began, such as a background watcher's notice. A start that
   comes due then waits for the user's next turn, or for the
   `<side-sessions-event>` turn a finishing sidekick brings.
+- The app also refuses every start while the user is connected over Remote
+  Control ("you can start a session only on a message typed in the desktop
+  app"). Then a unit that needs no steering launches at once as a CLI
+  background session, in its own worktree:
+  `claude --bg --name <name> --model sonnet --effort xhigh --permission-mode bypassPermissions "Read <brief's path> and do exactly what it says." < /dev/null`.
+  The lead can't message it mid-run (`--resume` starts a copy), so its brief
+  says to write a blocking question in its report and stop.
+  - Bad (2026-11-01): holding a unit that removes reruns from every other
+    worker until the user is back at the desktop.
+  - Good: the same unit launched with `claude --bg` on that turn, and one
+    line in the chat saying why.
 
 ## Launching `sonnet` from a Claude lead in a terminal
 

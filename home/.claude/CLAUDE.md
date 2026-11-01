@@ -214,6 +214,7 @@ Jason, 2026-10-29, after "Say the word and I'll merge it" on a green, reviewed P
   * Not green yet: turn on auto-merge as it goes ready (`gh pr merge --auto --squash`), and the reply says "#N merges when green unless you say no".
   * Already green: merge it in the same turn and report the merge commit.
 * Still put to me first: a design I haven't approved, a change a follow-up PR can't undo (a schema migration, a production deploy, deleted data), and a PR someone else owns.
+* A loop campaign I start or schedule is my approval of the designs inside its scope. Its PRs land under that repository's `loop` contract, which holds only what a follow-up PR can't undo, with no PR waiting on me (2026-10-31: "I should not be involved in every PR anymore").
 * Bad: a green, reviewed PR with its measurements in hand, then "Say the word and I'll merge it". Good: "#3164 merges when green unless you say no", with auto-merge on.
 
 ## Linear issue templates

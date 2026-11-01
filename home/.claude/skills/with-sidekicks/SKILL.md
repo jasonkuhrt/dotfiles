@@ -1,6 +1,6 @@
 ---
 name: with-sidekicks
-description: A mode the user switches on to hand side work to one named sidekick, `sonnet` (a Claude Sonnet subagent), `astra` (gpt-6-astra through codex) or `sol` (gpt-6.1-sol through codex), to stretch the Claude quota. Use when the user invokes with-sidekicks with one of those names, says to use Sonnet, Astra or Sol for side tasks, reviews or second opinions, or says to stop; and, while the mode is on, before every dispatch of a worker, fork or subagent, and before taking on yourself a self-contained task that is not the main line of the chat.
+description: A mode the user switches on to hand side work to one named sidekick, `sonnet` (a Claude Sonnet session or subagent), `astra` (gpt-6-astra through codex) or `sol` (gpt-6.1-sol through codex), to stretch the Claude quota. Use when the user invokes with-sidekicks with one of those names, says to use Sonnet, Astra or Sol for side tasks, reviews or second opinions, or says to stop; and, while the mode is on, before every dispatch of a worker, fork or subagent, and before taking on yourself a self-contained task that is not the main line of the chat.
 ---
 
 # Sidekicks
@@ -51,14 +51,26 @@ to whichever sidekick it names:
 > lead on an API, an abstraction, a library's design or taste. The point is to
 > stretch the Claude quota.
 
+Jason narrowed "short-lived" on 2026-11-01: "the one run of minutes limitation
+is only if the main chat would be blocked from steering". A long task is side
+work when the lead can still steer the sidekick while the chat goes on.
+
 Before each piece of work you would hand off or do yourself, apply the test. It
 goes to the sidekick when all four hold:
 
 1. **Briefed in full now.** You can write the whole brief this turn: the
    question, the files, what done looks like, the report's shape. Nothing in it
    waits on the user.
-2. **One run.** It finishes in one run of minutes, not a loop of rounds you
-   would steer.
+2. **Steerable from here.** It finishes in one run, or it runs as a sidekick
+   the lead can message and correct while the chat goes on. A long run never
+   fails this test; a sidekick the lead can't reach until it ends fails it
+   once the work needs steering.
+   - Bad (2026-10-31): a lead in the Claude app read "one run of minutes" as
+     ruling out campaign units that each run for hours to a merged PR, so
+     nothing sent them to an app session, and it ran them as `claude --bg`
+     sessions Jason couldn't see in his sidebar.
+   - Good: each unit as an app session on Sonnet, which the lead messages
+     with each ruling and Jason sees nested under the lead.
 3. **An input, not the line.** Its result feeds your work (a fact, a
    measurement, a finding, an opinion, an applied edit list the user has
    already ruled on). It is not the thing the chat is building.
@@ -90,18 +102,29 @@ than the task.
 ## Where you run
 
 Launch each sidekick with the first-class agent feature of the place the lead
-runs in. In Conductor, Conductor launches every sidekick. On a Mac, a sidekick
-on the lead's own harness is that harness's sub-agent, and a sidekick on the
-other harness runs as that harness's CLI in a subprocess:
+runs in: the one that lets the lead steer it and the user see it. In
+Conductor, Conductor launches every sidekick; in the Claude desktop app, the
+app launches a `sonnet` one. Elsewhere on a Mac, a sidekick on the lead's own
+harness is that harness's sub-agent, and a sidekick on the other harness runs
+as that harness's CLI in a subprocess:
 
-| Where the lead runs                                  | `sonnet`                    | `astra`, `sol`                |
-| ---------------------------------------------------- | --------------------------- | ----------------------------- |
-| A Conductor cloud workspace (`CONDUCTOR_IS_LOCAL=0`) | a Conductor session         | a Conductor session           |
-| A Mac, as a Claude lead                              | sub-agent: the Agent tool   | subprocess: `codex exec`      |
-| A Mac, as a Codex lead                               | subprocess: `claude -p`     | sub-agent: `spawn_agent`      |
+| Where the lead runs                                  | `sonnet`                        | `astra`, `sol`           |
+| ---------------------------------------------------- | ------------------------------- | ------------------------ |
+| A Conductor cloud workspace (`CONDUCTOR_IS_LOCAL=0`) | a Conductor session             | a Conductor session      |
+| The Claude desktop app, as a Claude lead             | an app session: `start_session` | subprocess: `codex exec` |
+| A Mac terminal, as a Claude lead                     | sub-agent: the Agent tool       | subprocess: `codex exec` |
+| A Mac, as a Codex lead                               | subprocess: `claude -p`         | sub-agent: `spawn_agent` |
 
-A Mac covers the Claude app, the Codex app and a local Conductor workspace,
-which gets no Conductor API URL or token.
+A lead is in the Claude desktop app when its tools include
+`mcp__ccd_session__start_session`. A Mac terminal covers Claude Code in a
+shell and a local Conductor workspace, which gets no Conductor API URL or
+token.
+
+- Bad (2026-10-31): a lead in the Claude app sent its Sonnet workers to the
+  Agent tool, which the app blocks from writing outside the lead's own
+  worktree, then to `claude --bg` sessions outside the app.
+- Good: one app session per worker, each in its own worktree, which the lead
+  steers with `SendMessage` and Jason opens from his sidebar.
 A Codex lead may instead make the sidekick a peer thread (`dispatch-codex-peer`)
 when the user should watch or steer it in its own chat.
 
@@ -179,7 +202,31 @@ report: a Conductor session has no read-only switch.
   names the files it owns, and a review's brief says it changes no file but its
   report.
 
-## Launching `sonnet` from a Claude lead on a Mac
+## Launching `sonnet` from a Claude lead in the Claude app
+
+- Write the brief to a file. Call `mcp__ccd_session__start_session` with
+  `initiation: "user_asked"` (turning the mode on is the user's ask for
+  background side work), `context: "fresh"`, `model: "claude-sonnet-5-5"`,
+  `effort: "xhigh"`, a `title`, a short `name`, `prompt`
+  `Read <brief's path> and do exactly what it says.` and a `background` of
+  at least 80 characters on the goal the work serves.
+- Work that ends in its own branch or PR takes `use_worktree: true`. Its
+  worktree is cut from the lead's base branch, so a brief that needs another
+  base says which (`git switch -c <branch> origin/develop`), or the call
+  passes `source_branch`. A review or an opinion takes `use_worktree: false`,
+  and its brief says it changes no file but its report.
+- Say in one line in the chat what it is doing, with its link,
+  `[<title>](#local_<id>)`, from the result.
+- Correct it while it runs with `SendMessage` to its `local_…` id. It keeps
+  its context.
+- When its turn ends, a note brings the lead back with the first 400
+  characters of its report; read the report file before acting on it.
+- The app refuses a start on a turn that another session's message or an
+  automated event began, such as a background watcher's notice. A start that
+  comes due then waits for the user's next turn, or for the
+  `<side-sessions-event>` turn a finishing sidekick brings.
+
+## Launching `sonnet` from a Claude lead in a terminal
 
 - Write the brief to a file, then call the Agent tool with
   `subagent_type: "general-purpose"`, `model: "sonnet"` and `effort: "xhigh"`,

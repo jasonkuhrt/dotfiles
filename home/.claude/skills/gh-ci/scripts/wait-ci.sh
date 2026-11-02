@@ -10,7 +10,7 @@
 #   0 — all visible checks green, relevant current-head workflow runs completed green, and PR is merge-unblocked
 #   1 — at least one check failed/cancelled/timed out/action-required, or required review conversations remain unresolved
 #   2 — stale head or merge conflict; rerun/fix before polling further
-#   3 — usage error
+#   3 — nothing ran (all checks skipped, or merged with no checks/runs), or usage error
 #
 # Env tunables:
 #   GH_CI_POLL     — poll interval seconds (default 120)
@@ -243,8 +243,9 @@ summarize_workflow_runs() {
 }
 
 while true; do
-  raw=$(gh pr view "$pr_number" --json headRefName,headRefOid,mergeable,mergeStateStatus,statusCheckRollup)
+  raw=$(gh pr view "$pr_number" --json state,headRefName,headRefOid,mergeable,mergeStateStatus,statusCheckRollup)
 
+  pr_state=$(jq -r '.state' <<<"$raw")
   current_sha=$(jq -r '.headRefOid' <<<"$raw")
   current_branch=$(jq -r '.headRefName' <<<"$raw")
   mergeable=$(jq -r '.mergeable' <<<"$raw")
@@ -338,6 +339,12 @@ while true; do
       done
     fi
     exit 1
+  fi
+
+  if [ "$pr_state" = "MERGED" ] && [ "$total" -eq 0 ] && [ "$workflow_run_total" -eq 0 ]; then
+    echo "=== NOTHING RAN ==="
+    echo "PR #$pr_number head ${head_sha:0:10}: merged with no checks or relevant current-head workflow runs, so nothing verified this head."
+    exit 3
   fi
 
   success_count=$(jq '[.[] | select(.success)] | length' <<<"$checks")

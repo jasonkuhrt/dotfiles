@@ -13,7 +13,7 @@ A PR's "done?" question must be anchored to the current PR head SHA and answered
 
 | #   | Layer                            | API                                                                   | What it tells you                                                                                                                                        |
 | --- | -------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **PR identity and mergeability** | `gh pr view --json headRefOid,headRefName,mergeable,mergeStateStatus` | Which SHA you are waiting for, and whether conflicts or unresolved required conversations make CI insufficient.                                          |
+| 1   | **PR identity and mergeability** | `gh pr view --json state,headRefOid,headRefName,mergeable,mergeStateStatus` | Which SHA you are waiting for, whether the PR is merged, and whether conflicts or unresolved required conversations make CI insufficient.                                          |
 | 2   | **PR check rollup**              | `gh pr view --json statusCheckRollup`                                 | Every current check run/status context GitHub attaches to that PR head.                                                                                  |
 | 3   | **Current-head workflow runs**   | `gh api repos/<repo>/actions/runs?head_sha=<sha>`                     | Whether Actions workflows spawned from the current commit are still creating/running jobs. This replaces fixed "green but wait N seconds" grace windows. |
 | 4   | **Failed job logs**              | `gh run view <run-id> --log-failed --job <job-id>`                    | The exact failing step/log excerpt, read only after the rollup is red.                                                                                   |
@@ -88,6 +88,7 @@ The script:
   - Bad (2026-10-28, #3079): "20 checks successful", while `e2e` had skipped, and Jason had to ask why there was no E2E evidence.
   - Good: "17 checks passed, 6 skipped", then `skipped checks: …, e2e, …`.
 - Exits `3` (NOTHING RAN) when every check was skipped, as on a draft PR whose CI skipped: nothing verified the head.
+- Also exits `3` when the PR is `MERGED` at the watched head with no checks and no relevant current-head workflow runs. An open PR with no checks, or an empty rollup with a queued/running workflow, keeps waiting.
 - Ignores cancelled `pull_request_target` workflow runs that created zero jobs; those dashboard/comment runs never became PR checks and are not evidence that the PR head is red.
 
 Tunables via env:

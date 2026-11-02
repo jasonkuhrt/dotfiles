@@ -1,11 +1,11 @@
 ---
-name: with-sidekicks
-description: A mode the user switches on to hand side work to one named sidekick, `sonnet` (a Claude Sonnet session or subagent), `astra` (gpt-6-astra through codex) or `sol` (gpt-6.1-sol through codex), to stretch the Claude quota. Use when the user invokes with-sidekicks with one of those names, says to use Sonnet, Astra or Sol for side tasks, reviews or second opinions, or says to stop; and, while the mode is on, before every dispatch of a worker, fork or subagent, and before taking on yourself a self-contained task that is not the main line of the chat.
+name: use-workers
+description: A mode the user switches on to hand side work to one named worker, `sonnet` (a Claude Sonnet session or subagent), `astra` (gpt-6-astra through codex) or `sol` (gpt-6.1-sol through codex), to stretch the Claude quota. Use when the user invokes use-workers with one of those names, says to use Sonnet, Astra or Sol for side tasks, reviews or second opinions, or says to stop; and, while the mode is on, before every dispatch of a worker, fork, subagent or cloud session, before putting several workers on CI, and before taking on yourself a self-contained task that is not the main line of the chat. Never launches a worker as a routine.
 ---
 
-# Sidekicks
+# Workers
 
-A mode, not a task. `/with-sidekicks <name>` turns it on with one sidekick:
+A mode, not a task. `/use-workers <name>` turns it on with one worker:
 
 | Name     | Model         | Effort | Conductor agent and model  |
 | -------- | ------------- | ------ | -------------------------- |
@@ -16,32 +16,32 @@ A mode, not a task. `/with-sidekicks <name>` turns it on with one sidekick:
 How it launches depends on where the lead runs; see
 [Where you run](#where-you-run).
 
-With no name it is `astra`. One sidekick is on at a time: invoking the skill
+With no name it is `astra`. One worker is on at a time: invoking the skill
 again with another name switches to it. The mode holds until the user ends it
-(`/with-sidekicks off`, or words that say so; "no Astra" ends it while it names
-`astra`). It survives compaction and handoffs: carry "with-sidekicks is on:
+(`/use-workers off`, or words that say so; "no Astra" ends it while it names
+`astra`). It survives compaction and handoffs: carry "use-workers is on:
 <name>" in whatever you hand yourself.
 
 Its peer `gate-astra-review` owns whether existing review is sufficient and when
-new review is needed, whether this mode is on or off and whichever sidekick it
+new review is needed, whether this mode is on or off and whichever worker it
 names. Its reviews always run on Astra, through the `astra` launch below; this
 skill supplies launch mechanics, not another handoff review.
-`/with-sidekicks off` leaves that gate on; "no Astra" ends both.
+`/use-workers off` leaves that gate on; "no Astra" ends both.
 
 The lead is whichever session runs the mode, Claude or Codex. A Codex lead also
 uses the `astra` launch when `gate-astra-review` requires a new independent
 review. A worker assigned a task does that task and dispatches nothing; role
 follows the assignment, not the harness name.
 
-Why: every task a sidekick takes is off the lead's model. Astra and Sol run on
+Why: every task a worker takes is off the lead's model. Astra and Sol run on
 the user's OpenAI subscription, so they spend no Claude quota at all; Sonnet
 spends Claude quota, at a smaller model than the lead's. None of them shares
 your context, so they take only the work that loses nothing from that.
 
 ## The rule
 
-The user's rule, in its final wording. He said it of Astra; the mode applies it
-to whichever sidekick it names:
+The user's rule, in its final wording. He said it of Astra, when this skill's workers were
+called sidekicks; the mode applies it to whichever worker it names:
 
 > **Astra sidekicks.** Send Astra (gpt-6-astra, ultra, via codex) the side
 > work: a short-lived discrete task briefed in full up front, a targeted
@@ -53,17 +53,17 @@ to whichever sidekick it names:
 
 Jason narrowed "short-lived" on 2026-11-01: "the one run of minutes limitation
 is only if the main chat would be blocked from steering". A long task is side
-work when the lead can still steer the sidekick while the chat goes on.
+work when the lead can still steer the worker while the chat goes on.
 
 Before each piece of work you would hand off or do yourself, apply the test. It
-goes to the sidekick when all four hold:
+goes to the worker when all four hold:
 
 1. **Briefed in full now.** You can write the whole brief this turn: the
    question, the files, what done looks like, the report's shape. Nothing in it
    waits on the user.
-2. **Steerable from here.** It finishes in one run, or it runs as a sidekick
+2. **Steerable from here.** It finishes in one run, or it runs as a worker
    the lead can message and correct while the chat goes on. A long run never
-   fails this test; a sidekick the lead can't reach until it ends fails it
+   fails this test; a worker the lead can't reach until it ends fails it
    once the work needs steering.
    - Bad (2026-10-31): a lead in the Claude app read "one run of minutes" as
      ruling out campaign units that each run for hours to a merged PR, so
@@ -82,30 +82,30 @@ When the test fails, the work stays with Claude: you, or a fork of you (Agent
 tool, `subagent_type: "fork"`) when it should run in the background while the
 chat goes on.
 
-When the test passes, use the sidekick. Doing it yourself or in a fork spends
+When the test passes, use the worker. Doing it yourself or in a fork spends
 the quota this mode exists to save. The one exception is a task you finish in a
 couple of tool calls (one grep, one file read), where the brief would cost more
 than the task.
 
 ## Examples
 
-- Bad: a sidekick building a run switch whose design the user had just approved
-  in the PR. Good: a fork builds it; the sidekick reviews the fork's diff.
+- Bad: a worker building a run switch whose design the user had just approved
+  in the PR. Good: a fork builds it; the worker reviews the fork's diff.
 - Bad: a fork measuring four tasks' peak memory with `/usr/bin/time -l` and
-  reporting a table. Good: the sidekick takes the measurement, while a fork,
+  reporting a table. Good: the worker takes the measurement, while a fork,
   steered from the chat, chooses the concurrency budget from it.
-- Bad: a sidekick reworking a library's `Compiler` API. Good: a sidekick giving
+- Bad: a worker reworking a library's `Compiler` API. Good: a worker giving
   a second opinion on whether a WASM build fits a Cloudflare Worker's limits.
 - Bad: the lead making forty Linear writes itself after the user ruled on
-  them. Good: the lead writes the edit list; the sidekick applies it.
+  them. Good: the lead writes the edit list; the worker applies it.
 
 ## Where you run
 
-Launch each sidekick with the first-class agent feature of the place the lead
+Launch each worker with the first-class agent feature of the place the lead
 runs in: the one that lets the lead steer it and the user see it. In
-Conductor, Conductor launches every sidekick; in the Claude desktop app, the
-app launches a `sonnet` one. Elsewhere on a Mac, a sidekick on the lead's own
-harness is that harness's sub-agent, and a sidekick on the other harness runs
+Conductor, Conductor launches every worker; in the Claude desktop app, the
+app launches a `sonnet` one. Elsewhere on a Mac, a worker on the lead's own
+harness is that harness's sub-agent, and a worker on the other harness runs
 as that harness's CLI in a subprocess:
 
 | Where the lead runs                                  | `sonnet`                        | `astra`, `sol`           |
@@ -125,19 +125,61 @@ token.
   worktree, then to `claude --bg` sessions outside the app.
 - Good: one app session per worker, each in its own worktree, which the lead
   steers with `SendMessage` and Jason opens from his sidebar.
-A Codex lead may instead make the sidekick a peer thread (`dispatch-codex-peer`)
+A Codex lead may instead make the worker a peer thread (`dispatch-codex-peer`)
 when the user should watch or steer it in its own chat.
+
+## Every worker stays reachable
+
+Jason, 2026-11-01, after the campaign's cloud units kept pushing and taking
+PRs out of draft once he had paused it: "routine fired should not be used for
+campiagns, that would be iuc better as a loop by u with delay? if we can msg
+cloud then we can at least force stop them that way via msg request".
+
+- A worker is a session the lead can stop: an app session, a Conductor
+  session, a `codex exec` run, a `claude --bg` session (`claude stop <id>`),
+  or a cloud session the app starts (`start_session` with `target: "cloud"`),
+  which takes a message but can't answer, so its PR and transcript confirm
+  the stop.
+- Never a routine run (RemoteTrigger). Once it fires, no message reaches it
+  and no tool stops it; only its claude.ai page does. RemoteTrigger's `run`
+  ignores a body's events and starts a fresh session on the stored prompt.
+- The lead paces its workers with its own loop: a background watcher, or
+  `/loop` with a wakeup. A routine is for a schedule, never for a worker.
+- When the app refuses a cloud start (Remote Control, below), ask Jason in one
+  line or use Conductor.
+- Bad (2026-11-01): nine campaign units launched as one-time routines a few
+  minutes out. After the pause, five kept pushing and undrafting PRs, and
+  only Jason could stop them, one claude.ai page at a time.
+- Good: the same units as cloud sessions the app starts, each in
+  `ListAgents`, stopped by one message each.
+
+## Many workers at once
+
+Jason, 2026-11-01, after his "use ci for running checks instead of gating on
+my machine resources" became a rule in every worker's brief: "the bug was
+that i was never made awares that i was authorizing ci for more than 1 or 2
+prs. i did not realize i was authorizing dozens of prs that would be
+concurrent and cost dollars very fast."
+
+- Before a launch or a ruling puts more than one or two workers on paid
+  compute (CI, cloud sessions), say how many run at once and what that costs,
+  and wait for his yes.
+- Bad: "CI proves everything" written into the header every worker reads,
+  then 17 more units launched that hour, with about 30 PRs running CI's whole
+  task set at once.
+- Good: "Leaving proof to CI puts the 20 open units on CI at once, each
+  unproven head running the full task set. All 20, or these two?"
 
 ## Launching in Conductor
 
-A sidekick is a new session in the lead's own workspace, so it shares the
+A worker is a new session in the lead's own workspace, so it shares the
 workspace's files and branch, and the user sees it in Conductor's sidebar and
 can steer it there.
 
-1. **Brief.** Write the brief to `.context/sidekicks/<name>-<slug>.brief.md` in
+1. **Brief.** Write the brief to `.context/workers/<name>-<slug>.brief.md` in
    the workspace (`.context` is Conductor's uncommitted handoff folder). It
-   names its report file, `.context/sidekicks/<name>-<slug>.report.md`, which
-   the sidekick writes before it ends its turn.
+   names its report file, `.context/workers/<name>-<slug>.report.md`, which
+   the worker writes before it ends its turn.
 2. **Launch.**
 
    ```sh
@@ -146,13 +188,13 @@ can steer it there.
    conductor --json session create --workspace "$ws" \
      --agent <agent> --model <model> --effort <effort> \
      --name "<name>: <slug>" \
-     --message "Read .context/sidekicks/<name>-<slug>.brief.md and do exactly what it says." \
-     > .context/sidekicks/<name>-<slug>.session.json
+     --message "Read .context/workers/<name>-<slug>.brief.md and do exactly what it says." \
+     > .context/workers/<name>-<slug>.session.json
    ```
 
    The agent, model and effort come from the table at the top. The result
    holds the session's `id` and its `deepLink`; give the user the link with
-   the one line on what the sidekick is doing. Without the `conductor` CLI,
+   the one line on what the worker is doing. Without the `conductor` CLI,
    the same call is `POST /v0/sessions` with `workspaceId`, `agent`, `model`,
    `effort`, `name` and `message`, authorized with `CONDUCTOR_API_KEY`, or
    with `CONDUCTOR_API_TOKEN` when that is unset.
@@ -161,7 +203,7 @@ can steer it there.
    `working` or `error`; count `idle` as done only after you have seen
    `working`, since a session reads `idle` until its first message is
    delivered. Stop after 20 minutes to look at it, not to give up on it.
-4. **Correct** a running sidekick with
+4. **Correct** a running worker with
    `conductor message create --session <id> --message-file <file>`. The
    message is steered into its running turn. Never `conductor session cancel`:
    it drops queued messages.
@@ -177,7 +219,7 @@ report: a Conductor session has no read-only switch.
 ## Launching from a Codex lead on a Mac
 
 - **`astra`, `sol`:** Codex's `spawn_agent` (skill `dispatch-codex-sub`), with
-  its model override set to the sidekick's model, its effort to `ultra` where
+  its model override set to the worker's model, its effort to `ultra` where
   the tool takes one, and `fork_turns: "none"`, since the brief carries what it
   needs. Its final answer comes back to you when it finishes; correct it with
   `send_message`. When the tool's list of model overrides lacks the model,
@@ -224,7 +266,7 @@ report: a Conductor session has no read-only switch.
 - The app refuses a start on a turn that another session's message or an
   automated event began, such as a background watcher's notice. A start that
   comes due then waits for the user's next turn, or for the
-  `<side-sessions-event>` turn a finishing sidekick brings.
+  `<side-sessions-event>` turn a finishing worker brings.
 - The app also refuses every start while the user is connected over Remote
   Control ("you can start a session only on a message typed in the desktop
   app"). Then a unit that needs no steering launches at once as a CLI
@@ -265,7 +307,7 @@ codex exec -C <dir> --skip-git-repo-check \
 ```
 
 `<model>` is `gpt-6-astra` for `astra` and `gpt-6.1-sol` for `sol`; `<name>` is
-the sidekick's name.
+the worker's name.
 
 - Run it in the background (`run_in_background: true`) and keep working; the
   completion notice brings you back.
@@ -292,7 +334,7 @@ the sidekick's name.
   full access with no approvals, so any other run can edit and commit: check
   `git status` in `<dir>` after it.
 - A review is a read-only `codex exec` whose prompt names the base to diff
-  against and has the sidekick read the change through the repository's
+  against and has the worker read the change through the repository's
   `review` skill at `small`, when the repository has one (`gate-astra-review`,
   "New independent reviews use Astra"). Without one,
   `codex exec review --base origin/develop` with the same `-c` flags reviews a
@@ -301,7 +343,7 @@ the sidekick's name.
   `codex exec resume <session id> "<correction>"`, with the same flags and
   redirects. A fresh `codex exec` starts from nothing.
 
-Say in one line in the chat what each sidekick is doing. For `astra` and `sol`,
+Say in one line in the chat what each worker is doing. For `astra` and `sol`,
 the line ends with the run's link, `codex://threads/<session id>`, taking the
 session id from the log's head. The link opens the run in the Codex Desktop app,
 where the user can read it and reply to it, while it runs or after. Jason,
@@ -318,7 +360,7 @@ To message a run that is still open, see `codex queue --thread <session id>
 
 ## The brief
 
-A sidekick takes a brief to the letter, Codex models most of all: a
+A worker takes a brief to the letter, Codex models most of all: a
 prohibition at its widest, a permission at its narrowest.
 
 - Write it whole: the question, the files, what done looks like, and the exact
@@ -329,7 +371,7 @@ prohibition at its widest, a permission at its narrowest.
   gone"), never as a whole-file count ("grep finds nothing"), which it will
   meet by rewriting unrelated code.
 - Say whether other agents are editing the same checkout, and which files the
-  sidekick owns.
+  worker owns.
 
 ## Its result
 

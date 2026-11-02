@@ -3,9 +3,10 @@ name: git-sync
 description: >-
   Synchronize a GitHub pull-request branch or stacked pull-request chain with its
   trunk while preserving concurrent agent work. Use for sync, sync with develop,
-  update branch, merge develop, PR conflicts, branch behind, stacked PR sync, or
-  /git-sync. Stacks use direction-aware isolated synchronization; standalone PRs
-  use a merge commit and ordinary push.
+  update branch, merge develop, PR conflicts, stacked PR sync, or /git-sync.
+  Being behind the trunk alone is not a reason to sync: sync when the work needs
+  something from it (a conflict, an edit, a fix). Stacks use direction-aware
+  isolated synchronization; standalone PRs use a merge commit and ordinary push.
 ---
 
 # Git sync

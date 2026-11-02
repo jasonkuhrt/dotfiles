@@ -9,6 +9,7 @@ tap "bendews/tap"
 tap "mobile-dev-inc/tap"
 tap "steipete/tap"
 tap "terrastruct/tap"
+tap "usefulsoftwareco/tap"
 tap "withgraphite/tap"
 
 # ═══════════════════════════════════════════════════════════
@@ -77,6 +78,7 @@ brew "worktrunk"     # git worktree manager (parallel AI agents)
 brew "pre-commit"    # git hooks framework
 brew "flock"         # file-lock CLI; serializes concurrent git hooks (not shipped on macOS)
 brew "withgraphite/tap/graphite", trusted: true  # gt — stacked pull requests
+brew "usefulsoftwareco/tap/executor-beta", trusted: true  # executor — Executor apps CLI (executor.sh)
 
 # Development
 brew "node"          # first npm on a fresh machine (pnpm runtimes ship without npm); pnpm's LTS shadows it

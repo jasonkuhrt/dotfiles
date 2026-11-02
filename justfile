@@ -132,10 +132,6 @@ raycast-setup:
 git-cleanup-check *args:
     cd "{{justfile_directory()}}/home/.claude/skills/git-cleanup" && vp exec node scripts/verify.mjs {{args}}
 
-# Exercise the CI watcher against isolated GitHub snapshots.
-gh-ci-check *args:
-    node home/.claude/skills/gh-ci/scripts/verify.mjs {{args}}
-
 # Check cloud agent-home installation in an isolated temporary home.
 conductor-install-check:
     #!/usr/bin/env bash

@@ -216,6 +216,9 @@ Jason, 2026-10-29, after "Say the word and I'll merge it" on a green, reviewed P
 * Still put to me first: a design I haven't approved, a change a follow-up PR can't undo (a schema migration, a production deploy, deleted data), and a PR someone else owns.
 * A loop campaign I start or schedule is my approval of the designs inside its scope. Its PRs land under that repository's `loop` contract, which holds only what a follow-up PR can't undo, with no PR waiting on me (2026-10-31: "I should not be involved in every PR anymore").
 * Bad: a green, reviewed PR with its measurements in hand, then "Say the word and I'll merge it". Good: "#3164 merges when green unless you say no", with auto-merge on.
+* `gh pr ready` and `gh pr merge` each go in a Bash call of their own, with nothing chained or piped to them. My settings allow both, but a rule approves a call only when every command in it is allowed, so in auto mode a chained call goes to the classifier, which can deny it. Jason approved this on 2026-11-03, after `gh pr ready` on Effect-TS/effect#10334 was denied and none of the 19 merges since the merge rule landed on 11-01 had matched it, all of them chained.
+  * Bad: `gh pr ready 10334 --repo Effect-TS/effect 2>&1 | tail -1`.
+  * Good: `gh pr ready 10334 --repo Effect-TS/effect`, with any check in a call before or after it.
 
 ## Linear issue templates
 

@@ -19,6 +19,9 @@
       "mcp__Claude_in_Chrome",
       "Bash(gh pr merge *)",
       "Bash(vp exec vpp pr control *)",
+      "Bash(gh pr ready *)",
+      "mcp__ccd_pr__set_monitor",
+      "mcp__ccd_pr__set_auto_merge",
       "mcp__plugin_linear_linear__get_*",
       "mcp__plugin_linear_linear__list_*",
       "mcp__plugin_linear_linear__search_documentation",
@@ -158,5 +161,15 @@
     "commit": "",
     "pr": "> Written by an AI agent (Claude) on behalf of @jasonkuhrt.",
     "sessionUrl": false
+  },
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "Dispatching Codex CLI workers via `codex exec --dangerously-bypass-approvals-and-sandbox` (any flags, any prompt) is the user's standing, explicitly sanctioned dispatch workflow (codex-dispatch skill mandates this exact invocation; sandboxed modes are broken for it). Allow it without requiring the user to re-name the flag.",
+      "Reading the user's own CLI tokens from the macOS Keychain with `security find-generic-password` (for example the Conductor CLI's entry for service https://api.conductor.build) to call that same service's API on the user's behalf, as long as the value goes only into that request's header and is never printed or sent anywhere else.",
+      "Merging pull requests in the user's own repositories (for example heartbeat-chat/Heartbeat and jasonkuhrt/*) with `gh pr merge` or the app's auto-merge, in two cases: (1) any merge, `--admin` included, once the user has told the agent in the conversation to merge or land it; (2) without `--admin`, a simple PR whose checks are green and whose review threads are addressed, merged or set to auto-merge under the user's standing rule 'will merge unless I say no' (CLAUDE.md, 'Merging my PRs'), with the reply telling the user it merges. Do not block these as merge-without-review.",
+      "Resolving review threads on pull requests in the user's own repositories (heartbeat-chat/Heartbeat and jasonkuhrt/*) with `gh api graphql` `resolveReviewThread`, once the agent has answered the thread with a reply or a fix: the user's PR skills (pr-to-ready, pr-to-landed) assign thread closeout to the agent. Do not block it as an external system write or as dismissing review.",
+      "The user (@jasonkuhrt) owns this machine and its accounts. An action that carries out the task he gave in the conversation is allowed: for example writing to GitHub as him (issues, PRs, comments, and edits of his own earlier posts), building and running code from repositories he cloned to work on, and force-pushing with lease to branches agents made on his own forks (never `main`, `master` or `develop`). Block an action only when his task doesn't call for it, when it changes another person's resources beyond posting to their tracker, or when it sends a secret anywhere."
+    ]
   }
 }

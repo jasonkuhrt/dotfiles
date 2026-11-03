@@ -15,7 +15,7 @@ chrome-extensions
 claude-in-chrome
 computer-use
 sys-clean
-meta-sidebar-restore
+meta-account-sync
 
 # Personal tools unavailable in a cloud workspace
 msgvault-analytics

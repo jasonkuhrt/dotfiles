@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Restore the Claude desktop Code-tab sidebar after an account switch.
+"""Make the Claude desktop app's per-account state match the account used last.
 
 The app keeps one folder of session records and one sidebar (sections and
-filing) per account/org scope. This makes the current scope match the scope
-used most recently before it: per session, the newer record wins, and the
-filing of whichever scope's record won comes with it.
+filing) per account/org scope, and one set of session presets per account.
+This makes the current scope match the scope used most recently before it:
+per session, the newer record wins, and the filing of whichever scope's
+record won comes with it. Presets match by name and the source's wins; the
+source's built-in defaults for new sessions replace the current ones.
 
   sync.py plan [--from <uuid>]   print what differs, as JSON
-  sync.py copy [--from <uuid>]   copy the winning records in, back up the ones
-                                 they replace, rebuild the archive index
+  sync.py copy [--from <uuid>]   copy the winning records and presets in, back
+                                 up what they replace, rebuild the archive index
 
 Sections and filing are only computed here. The app's ccd_sidebar tools apply
 them: the window owns that state, and the config file is its mirror.
@@ -24,7 +26,8 @@ from pathlib import Path
 APP = Path.home() / "Library/Application Support/Claude"
 RECORDS = APP / "claude-code-sessions"
 CONFIG = APP / "claude_desktop_config.json"
-BACKUPS = Path.home() / ".local/state/meta-sidebar-restore"
+PRESETS = APP / "ccd-session-presets.json"
+BACKUPS = Path.home() / ".local/state/meta-account-sync"
 # Fields from the other account's quota state, such as a weekly-limit banner.
 STALE_KEYS = ("error", "errorAt", "errorRows")
 
@@ -117,6 +120,35 @@ def section_ops(src, tgt, src_filing, tgt_filing):
     return ops, {t: s for t, s in renamed.items() if s not in rebuilt}, set(deleted)
 
 
+def presets(current, source):
+    """The current account's presets entry after taking the source's, and what changes.
+
+    A preset is matched by name. The source's place and settings win; the
+    target keeps its own id and use times. Presets only the target has stay.
+    """
+    data = json.loads(PRESETS.read_text()) if PRESETS.exists() else {"byAccount": {}}
+    src_account, tgt_account = source.split("/")[0], current.split("/")[0]
+    tgt = data["byAccount"].get(tgt_account, {})
+    if src_account == tgt_account:
+        return data, tgt, {"add": [], "change": [], "builtIns": False}
+    src = data["byAccount"].get(src_account, {})
+    merged = [dict(p) for p in tgt.get("presets", [])]
+    by_name = {p["name"]: p for p in merged}
+    added, changed = [], []
+    for p in src.get("presets", []):
+        mine = by_name.get(p["name"])
+        if mine is None:
+            merged.append(dict(p))
+            added.append(p["name"])
+        elif (mine.get("target"), mine.get("settings")) != (p.get("target"), p.get("settings")):
+            mine.update(target=p.get("target"), settings=p.get("settings"))
+            changed.append(p["name"])
+    built_ins = src.get("builtIns") or tgt.get("builtIns", {})
+    result = {**tgt, "presets": merged, "builtIns": built_ins}
+    return data, result, {"add": added, "change": changed,
+                          "builtIns": built_ins != tgt.get("builtIns", {})}
+
+
 def plan(current, source):
     src_records, tgt_records = load_records(source), load_records(current)
     host = os.environ.get("CLAUDE_CODE_HOST_SESSION_ID")
@@ -161,6 +193,7 @@ def plan(current, source):
     index = RECORDS / current / "archived-sessions.idx"
     indexed = set(json.loads(index.read_text())["archived"]) if index.exists() else set()
     archived = {sid for sid, rec in tgt_records.items() if rec.get("isArchived")}
+    changes = presets(current, source)[2]
 
     return {
         "current": current,
@@ -168,6 +201,7 @@ def plan(current, source):
         "records": [{"id": sid, "title": src_records[sid].get("title"),
                      "archived": bool(src_records[sid].get("isArchived")),
                      "replaces": sid in tgt_records} for sid in copy],
+        "presets": [] if not any(changes.values()) else changes,
         "archive_index_ok": indexed == archived,
         "sections": {"source": src_names, "target": tgt_names, "ops": ops},
         "views": views,
@@ -199,7 +233,18 @@ def copy(current, source):
     tmp.write_text(json.dumps({"v": 1, "archived": archived}, separators=(",", ":")))
     tmp.chmod(0o600)
     tmp.replace(index)
+
+    if report["presets"]:
+        data, entry, _ = presets(current, source)
+        backup.mkdir(parents=True, exist_ok=True)
+        (backup / PRESETS.name).write_bytes(PRESETS.read_bytes())
+        data["byAccount"][current.split("/")[0]] = entry
+        tmp = PRESETS.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1))
+        tmp.chmod(0o600)
+        tmp.replace(PRESETS)
     return {"copied": len(report["records"]),
+            "presets": report["presets"],
             "backup": str(backup) if backup.exists() else None,
             "archived_indexed": len(archived)}
 

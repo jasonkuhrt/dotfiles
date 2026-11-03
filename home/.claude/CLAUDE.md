@@ -230,7 +230,11 @@ Jason, 2026-10-22, after three upstream issues and a PR each waited on his "yes"
 * A post that the task I gave includes goes out without a stop for my approval of its text: an issue, a PR, a review, a comment, a reply, in any repo or tracker. Report what was posted, with links, after.
   * Bad: drafting Effect-TS/tsgo issues I had asked for, then asking "Should I post these?".
   * Good: posting them and replying with the links.
-  * A post the task never asked for is still put to me first, in one line.
+  * A post the task never asked for is still put to me first, in one line, except in my team's Linear.
+* My team's Linear isn't gated. A comment on an issue, or an edit to its description, goes out without asking whenever it's useful, and the reply links it after. Jason, 2026-11-03, after being asked to approve a correction to an issue's stale row: "this is dumb busy work, i dont want to gate this garden".
+  * Bad: "may I post one comment on HEA-6217 … and correct HEA-7073's `_tag` row?", then a second ask for the description edit alone.
+  * Good: posting the HEA-6217 comment and fixing HEA-7073's row, then replying with both links.
+  * A new issue still follows "Linear issue templates".
 * A load-bearing post opens with one line saying an AI agent wrote it for me: `> Written by an AI agent (Claude) on behalf of @jasonkuhrt.` A post is load-bearing when it asks its reader to evaluate something: a claim, a bug, a proposal, a design, code.
   * Bad: that line on "Thanks for shipping all three so fast! Follow-ups: #890, #891".
   * Good: that line opening a rule proposal in another project's tracker.

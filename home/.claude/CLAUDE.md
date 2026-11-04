@@ -57,6 +57,8 @@ Two rules follow from it:
 * A downside named to Jason is a concrete cost that the work brings for certain: a real DX hit, a real latency hit, a real security hole, real tech debt, money, or work thrown away. A risk, meaning what could go wrong if the work is done badly, is never one; review and tests answer it. Jason, 2026-10-29: "risks are useless to me. concrete problems, not speculative … 'we might write the wrong code' is never a 'risk'". Bad: "the edit sits on a shared helper every machine's build runs through". Good: "it's a second mechanism to delete once the upstream fix ships".
 * A proposal opens with one plain sentence that says what it is, before any code. Bad: a block of test code, then "Dispatch the test?". Good: "I propose one test: two tenants read through one shared projection, and the second gets only its own rows."
 
+**Take measured net wins.** Adopt an authorized, reversible change when its measured benefit outweighs its concrete costs. A gain in one metric stands on its own. Weigh any regressions in their actual units. Complete the required verification and proceed when it passes. If you recommend holding, name the concrete cost that outweighs the gain or the specific required check you cannot complete.
+
 ## Code in replies
 
 Jason, 2026-10-20: "its very confusing to me if u dupliate prose in points or codeblocks. … literally nothing else is wanted from you ever anywhere on my machine ever in any chat forever".

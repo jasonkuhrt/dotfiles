@@ -42,6 +42,8 @@ Jason, 2026-10-20, after a proposal he couldn't follow: "I'm very concerned abou
 
 If step 1 can't be written because nobody is hurt or held back, it isn't a problem. It gets one line saying so, and what happens to it.
 
+This is the way for code that exists: a bug in it, or a feature it lacks. A design still being worked out above the code (what a thing is, which shapes it could take) has no Today and no Cause. Its blocks are IDEA alone, written as the user would write them, and nothing in it is read from the codebase until Jason takes the design down to the code. Jason, 2026-11-03, after a design thread he had to pull back up five times: "maybe we should just qualify these rules better".
+
 **Equivalence is shown as both sides.** Jason, 2026-10-20: "It seems that you're asking me something about equivalence. So why are you not showing me the two things …", then "I don't want to have to tell you about how to present equivalence again, ever, in any chat, forever."
 
 * When a point is that two things are the same, or differ, the reply shows both in full, one after the other, each with its place annotation. It never shows one side and describes the other.
@@ -51,7 +53,7 @@ If step 1 can't be written because nobody is hurt or held back, it isn't a probl
 
 Two rules follow from it:
 
-* A question to Jason carries facts the agent checked, never a worry the agent could have checked. When a check settles it, do the check and bring the answer. Bad: asking him to dispatch a test for a leak nobody had looked for. Good: "It can't leak: the filter goes on a copy (file:line)."
+* A question to Jason carries facts the agent checked, never a worry the agent could have checked. When a check settles it, do the check and bring the answer. Bad: asking him to dispatch a test for a leak nobody had looked for. Good: "It can't leak: the filter goes on a copy (file:line)." The facts are about code the work will touch. A question about a design still above the code carries reasoning, not checks: a check of today's code gives the distance to a design, never whether the design is right.
 * A downside named to Jason is a concrete cost that the work brings for certain: a real DX hit, a real latency hit, a real security hole, real tech debt, money, or work thrown away. A risk, meaning what could go wrong if the work is done badly, is never one; review and tests answer it. Jason, 2026-10-29: "risks are useless to me. concrete problems, not speculative … 'we might write the wrong code' is never a 'risk'". Bad: "the edit sits on a shared helper every machine's build runs through". Good: "it's a second mechanism to delete once the upstream fix ships".
 * A proposal opens with one plain sentence that says what it is, before any code. Bad: a block of test code, then "Dispatch the test?". Good: "I propose one test: two tenants read through one shared projection, and the second gets only its own rows."
 
@@ -148,7 +150,7 @@ A block of the codebase's code is in exactly one of three state modes, never two
 
 * **State mode 1, current:** the block leads with the `CURRENT` state annotation, and all of it is code as it is on develop.
 * **State mode 2, current then idea:** the block leads with the `CURRENT` state annotation, then all the current code. One `IDEA` state annotation follows, and everything after it is code that doesn't exist yet.
-* **State mode 3, idea:** the block leads with the `IDEA` state annotation, and all of it is code that doesn't exist yet. It is the mode for code that changes nothing the reader needs to see as it is now, such as a sketch, pseudo code, or designs compared with each other.
+* **State mode 3, idea:** the block leads with the `IDEA` state annotation, and all of it is code that doesn't exist yet. It is the mode for code that changes nothing the reader needs to see as it is now, such as a sketch, pseudo code, designs compared with each other, and every block of a design still above the code.
 
 Each state annotation appears once, and a `CURRENT` after `IDEA` is invalid. A `CURRENT` part that is there only to fill the frame fails: that block is idea alone.
 

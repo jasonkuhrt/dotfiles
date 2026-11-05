@@ -241,16 +241,6 @@ Jason, 2026-10-29, after "Say the word and I'll merge it" on a green, reviewed P
 - Before drafting or creating an issue, discover the templates available to the target team and read the chosen template. Pass its ID through the creation tool's template option when supported. The selected template governs structure and required fields; put skill guidance inside it rather than replacing or reordering it with a custom outline.
 - If no available template fits, ask Jason which template to use before creating the issue. Do not fall back to an ad hoc issue.
 
-## Issue titles
-
-Jason, 2026-11-05, of the epic title "Alchemy infra v2: stacks point one way, people deploy with their own profiles, and CI with minted tokens": "every word in an issue title has to be load bearing, and it should be seen as high cost, ever word's additional meaning taking a high toll to support cognitively upon reading, and it should prioritize code names, symbols, metaphores". Then: "this rule is x10 so for parent issues like epics", and "there should be a word budget for titles".
-
-* Every word in a title costs the reader, so each one carries meaning no other word in it carries. A word that can go, goes.
-* Code names, symbols and metaphors come before descriptions: `platform → meta → foundation`, not "stacks point one way".
-* The word budget is 8 for an issue and 3 for a parent issue, such as an epic. A code name counts as one word, and a symbol such as `→`, `:` or `/` counts as none. A parent's title names the journey, and its parts' titles carry the rest.
-* Bad: that epic titled "Alchemy infra v2: stacks point one way, people deploy with their own profiles, and CI with minted tokens", 18 words.
-* Good: the same epic titled "infra v2", with the end state in its body.
-
 ## Posting on my behalf
 
 Jason, 2026-10-22, after three upstream issues and a PR each waited on his "yes" to their exact text: "change my user level rules from halting to just guidance on conventions like leading with transparency about ai being the author … except i want nuance, for example the reply of ty+links is small and chatty not load bearing worthy of ai disclosure header".

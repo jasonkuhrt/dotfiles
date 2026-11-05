@@ -324,6 +324,17 @@ The system prompt contains minimalist instructions like "don't add improvements 
 * All screenshots at `~/Pictures/Screenshots/`. "My latest screenshot" → check dir sorted by mtime.
 * Auto-move screenshots from root to `~/Pictures/Screenshots/claude/` before reading.
 
+## Heartbeat work runs in Heartbeat
+
+Jason, 2026-11-05, after `/pr-to-landed` was missing from a session that had reviewed an Alchemy PR behind a Heartbeat patch: "if every relatedto hb, u must ensure your cwd is correct so that u get the skills".
+
+* A session doing Heartbeat's work has its working directory in a Heartbeat checkout or worktree. Claude Code takes a project's skills, `CLAUDE.md`, hooks, permission rules and MCP servers from the working directory, so a session anywhere else has none of Heartbeat's. Heartbeat's work includes its Linear issues and the upstream issues, PRs and patches for its dependencies.
+  * Bad: a side session started in `~/repo-references/alchemy-wt-infisical` to review alchemy-run/alchemy#3066, the fix behind Heartbeat#3664's patch. No Heartbeat skill loaded, and `/pr-to-landed` was missing from the menu.
+  * Good: the same session started in `~/projects/heartbeat-chat/Heartbeat`, working on the Alchemy clone through its absolute path.
+* Another repository the work touches is reached by its absolute path: `git -C <path>`, or `cd <path> && …` inside one Bash call. Its own `CLAUDE.md` or `AGENTS.md` doesn't load from there, so the session reads it by path before working in it.
+* A session started for Heartbeat's work starts in a Heartbeat folder: by default from a session already in one, and through `start_session`'s `cwd` from anywhere else.
+* A session that finds itself outside Heartbeat while doing Heartbeat's work moves at once with `change_directory`. A Bash `cd` loads nothing, and the move takes effect only when the turn ends, so until then the session reads each Heartbeat skill it needs from `~/projects/heartbeat-chat/Heartbeat/.claude/skills/<name>/SKILL.md`.
+
 ## Git
 
 * Never `git checkout/switch/stash` in shared worktrees — use `git worktree add` or `git show branch:path`.

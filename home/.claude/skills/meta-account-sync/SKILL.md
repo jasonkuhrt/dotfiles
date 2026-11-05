@@ -27,7 +27,11 @@ screenshot.
    source, not just this one, and prints what each still lacks.
    - `dead_login` names the command that signs that account in again. Only
      a sign-in revives it. Give each command in its own `bash` block in the
-     closing message, and make signing in part of the turn's ask (step 3).
+     closing message, with the org row to pick (see What to know), and make
+     signing in part of the turn's ask (step 3). After the sign-in, confirm
+     the org on the server before `copy`: `GET /api/oauth/profile` with the
+     token and header `anthropic-beta: oauth-2025-04-20` returns
+     `organization.uuid`.
    - `only_here` environments stay. Name them in the close.
 2. Run `python3 ~/.claude/skills/meta-account-sync/scripts/sync.py plan`.
 3. If `records` or `presets` is not empty, run the same script with `copy`.
@@ -84,6 +88,11 @@ screenshot.
   it (account 1, refreshed Nov 3, still lapsed Nov 4). Past it the login is
   dead: `cloud.py` reports it without running the CLI, which would blank
   the keychain item.
+- The sign-in page's org picker shows accounts 1 and 2 (both
+  jasonkuhrt@me.com, same name, plan and creation time) as two identical
+  "Personal Ultra" rows. Account 2 is the second row (checked on the server
+  2026-11-04). Account 1 is the first, going by claude.ai's
+  `/api/organizations` order, which put account 2 second.
 - The API: list `GET /v1/environment_providers`, read and save
   `GET`/`POST /v1/environment_providers/<id>`, create
   `POST /v1/environment_providers/cloud/create` with `kind: anthropic_cloud`,

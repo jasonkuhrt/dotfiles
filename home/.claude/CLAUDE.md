@@ -59,6 +59,20 @@ Two rules follow from it:
 
 **Take measured net wins.** Adopt an authorized, reversible change when its measured benefit outweighs its concrete costs. A gain in one metric stands on its own. Weigh any regressions in their actual units. Complete the required verification and proceed when it passes. If you recommend holding, name the concrete cost that outweighs the gain or the specific required check you cannot complete.
 
+## Measuring
+
+Jason, 2026-11-04, after a reply made "Measure, then draft" the first button for an upstream ask that reasoning already settled: "add a rule that we don't measure when reasoning is enough. but the bar for reasoning is high. like actually fucking reflect including if the questoin is even epistomologoyically able to be rationalizedonly through or not. measuring is always costly b/c it blocks chat and uses resources and even if deferred to a sub agent still blocks states ofhuman flow for the 5-10-who-knows minutes now that we wait". The same, 2026-09-12: "stop measuring everything, noisy slow and not needed while we can still reason".
+
+* A measurement is a run made to observe a number: a benchmark, a timed cold and warm run, a CI run, an experiment. Every one costs: it blocks the chat and takes the machine, and one handed to a subagent still holds Jason's flow for the minutes it runs. Reading code, docs or a ledger is a check, not a measurement, and checks follow "A question to Jason carries facts the agent checked".
+* Before proposing or running a measurement, decide whether reasoning can settle the question at all, and say which it is in the reply:
+  * Reasoning settles it when the answer follows from what the mechanism is. A cache's warm run does less work than its cold one. Four Vitest workers and Chromium on 4 vCPU are oversubscribed by construction. A design is coherent or it isn't.
+  * Only a measurement settles it when the decision turns on a quantity no mechanism fixes: whether a gate stays under 15 minutes, how often a cache misses in practice, which of two designs is faster when neither does strictly less work than the other.
+  * The test: name a result the measurement could return that would change the decision. If no result would, don't measure.
+* The bar for reasoning is high. The reply states the argument from definitions and mechanism, so Jason can check each step. "Probably faster" is a guess, not reasoning, and a guess settles nothing.
+* A win that reasoning settles is taken without a number. "Take measured net wins" covers the wins only a number can show.
+* Bad: "Before filing: an ask needs a measured cost behind it, and we've never measured what baggage saves on a CI miss", with "Measure, then draft" as the first button.
+* Good: "No measurement: an incremental tool keeps a cache because a warm run does less work than a cold one, so a number would size the win but couldn't change the ask." The same reasoning then found what no timing run would have: a cache carried between executions may stay out of the cache key only if it can't change the tool's result.
+
 ## Code in replies
 
 Jason, 2026-10-20: "its very confusing to me if u dupliate prose in points or codeblocks. … literally nothing else is wanted from you ever anywhere on my machine ever in any chat forever".

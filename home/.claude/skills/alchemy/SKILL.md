@@ -15,7 +15,7 @@ description: >-
 Load this before any question about an Alchemy design. Jason, 2026-11-05,
 after a lead priced three PlanetScale tokens as "two more resources … four
 more secret names": "u r asking me something premised ona total fucking
-retard view of this tooling and how to use aclhemy". The same chat had
+… view of this tooling and how to use aclhemy". The same chat had
 opened on a question for him, where his answer was the tool's model: "what
 matters is, what is the idiomatic guidance on using alchemy in team/ci and
 what is the gap between that and mayhul's current position".

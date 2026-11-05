@@ -2,12 +2,13 @@
 """Make this account's cloud environments match the org used last.
 
 Cloud environments live on Anthropic's servers, one set per org. Each org is
-reached through the Claude Code login claude-account keeps for it
-(docs/claude-account.md in the dotfiles): the config dir whose .claude.json
-names the org, and that dir's keychain item. A token reaches only its own org,
-whatever org a request names. Environments match by name. Only this org and
-the source are touched, so a run needs only their two logins; another account
-catches up when it is the one in use.
+reached through a Claude Code login claude-account keeps (docs/claude-account.md
+in the dotfiles): a config dir and its keychain item. A token reaches only its
+own org, whatever org a request names, so the server says which org each login
+reaches. A .claude.json can't: the desktop app runs Claude Code in the default
+dir, and each of its sessions writes the app's own org into ~/.claude.json.
+Environments match by name. Only this org and the source are touched; another
+account catches up when it is the one in use.
 
   cloud.py plan [--from <uuid>]   print what differs, as JSON
   cloud.py copy [--from <uuid>]   create or update this org's environments
@@ -36,18 +37,18 @@ NETWORK_FIELDS = ("allowed_hosts", "allow_default_hosts")
 
 
 def logins():
-    """org uuid -> config dir (None for the default dir) of the login for it."""
-    found = {}
-    candidates = [(None, HOME / ".claude.json")]
-    candidates += [(d, d / ".claude.json") for d in sorted(HOME.glob(".claude-*")) if d.is_dir()]
-    for config_dir, path in candidates:
-        try:
-            org = json.loads(path.read_text()).get("oauthAccount", {}).get("organizationUuid")
-        except (OSError, json.JSONDecodeError):
-            continue
-        if org:
-            found.setdefault(org, config_dir)
-    return found
+    """Config dirs holding a claude-account login: None for ~/.claude, then ~/.claude-N."""
+    dirs = [None] + sorted(d for d in HOME.glob(".claude-[1-9]") if d.is_dir())
+    return [d for d in dirs if read_login(d)]
+
+
+def claimed_org(config_dir):
+    """The org config_dir's .claude.json names: a hint for ordering, never the answer."""
+    try:
+        path = (config_dir or HOME) / ".claude.json"
+        return json.loads(path.read_text()).get("oauthAccount", {}).get("organizationUuid")
+    except (OSError, json.JSONDecodeError):
+        return None
 
 
 def keychain_item(config_dir):
@@ -59,7 +60,14 @@ def keychain_item(config_dir):
 def read_login(config_dir):
     out = subprocess.run(["security", "find-generic-password", "-s", keychain_item(config_dir), "-w"],
                          capture_output=True, text=True).stdout
-    return json.loads(out)["claudeAiOauth"] if out else None
+    try:
+        return json.loads(out)["claudeAiOauth"]
+    except (ValueError, KeyError):
+        return None
+
+
+def live(login):
+    return login["expiresAt"] >= time.time() * 1000 + 120_000
 
 
 class DeadLogin(Exception):
@@ -72,8 +80,8 @@ def sign_in_command(config_dir):
     return f"claude{n} auth login"
 
 
-def token(org, config_dir):
-    """A live access token for org, refreshed the way the CLI does it.
+def token(config_dir):
+    """A live access token for config_dir's login, refreshed the way the CLI does it.
 
     A stored token lasts hours. Running the CLI once on that account renews
     it, even when the account is at its usage limit and the request fails.
@@ -82,7 +90,7 @@ def token(org, config_dir):
     """
     login = read_login(config_dir)
     now = time.time() * 1000
-    if login and login["expiresAt"] >= now + 120_000:
+    if login and live(login):
         return login["accessToken"]
     if not login or not login.get("refreshToken") or login.get("refreshTokenExpiresAt", now + 1) < now:
         raise DeadLogin(sign_in_command(config_dir))
@@ -100,18 +108,14 @@ def token(org, config_dir):
 
 
 class Org:
-    def __init__(self, org, config_dir):
-        self.org = org
-        self.headers = {"Authorization": f"Bearer {token(org, config_dir)}",
+    def __init__(self, token):
+        self.org = None
+        self.headers = {"Authorization": f"Bearer {token}",
                         "anthropic-beta": "ccr-byoc-2025-07-29",
                         "anthropic-version": "2023-06-01",
-                        "x-organization-uuid": org,
                         "content-type": "application/json"}
-        # The org a login was saved under is only what .claude.json says; the token decides.
-        actual = self.call("GET", "/api/oauth/profile", beta="oauth-2025-04-20")["organization"]["uuid"]
-        if actual != org:
-            sys.exit(f"The login {config_dir or '~/.claude'} keeps for org {org} belongs to org {actual}. "
-                     f"Sign it in again: {sign_in_command(config_dir)}")
+        self.org = self.call("GET", "/api/oauth/profile", beta="oauth-2025-04-20")["organization"]["uuid"]
+        self.headers["x-organization-uuid"] = self.org
 
     def call(self, method, path, body=None, beta=None):
         data = json.dumps(body).encode() if body is not None else None
@@ -160,20 +164,42 @@ def diff(src_envs, tgt_envs):
     }
 
 
+def reach(wanted):
+    """org -> Org for each wanted org, and the sign-in commands that could revive the rest.
+
+    Asking a live token costs one request and renewing one costs a CLI run, so
+    live logins go first, and those whose .claude.json names a wanted org go
+    first among each. A dead login's org can't be asked: it counts for the org
+    its .claude.json names, and when no dead login names a missing org, any of
+    them could be the one.
+    """
+    found, dead = {}, {}
+    for config_dir in sorted(logins(), key=lambda d: (not live(read_login(d)), claimed_org(d) not in wanted)):
+        if all(org in found for org in wanted):
+            break
+        try:
+            org = Org(token(config_dir))
+        except DeadLogin as login:
+            dead[config_dir] = str(login)
+            continue
+        found.setdefault(org.org, org)
+    revive = []
+    for org in wanted:
+        if org in found:
+            continue
+        candidates = [c for d, c in dead.items() if claimed_org(d) == org] or list(dead.values())
+        if not candidates:
+            sys.exit(f"No Claude Code login reaches org {org}.")
+        revive += [c for c in candidates if c not in revive]
+    return found, revive
+
+
 def run(command, wanted):
-    found = logins()
     current = current_scope()
     target = current.split("/")[1]
     source = source_scope(current, wanted).split("/")[1]
     report = {"source_org": source, "target_org": target}
-    orgs, dead = {}, []
-    for org in (source, target):
-        if org not in found:
-            sys.exit(f"No Claude Code login names org {org}.")
-        try:
-            orgs[org] = Org(org, found[org])
-        except DeadLogin as login:
-            dead.append(str(login))
+    orgs, dead = reach([source, target])
     if dead:
         return {**report, "dead_login": dead}
     src_envs, tgt = orgs[source].environments(), orgs[target]

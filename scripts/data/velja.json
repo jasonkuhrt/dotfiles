@@ -1,10 +1,10 @@
 {
-  "defaultBrowser": "com.google.Chrome",
+  "defaultBrowser": "browser:com.google.Chrome",
   "rules": [
     {
       "id": "27F527BE-A225-411D-9862-1C079B4EFE00",
       "title": "Claude sign-in: pick the browser signed in as that account",
-      "browser": "com.sindresorhus.Velja.promptMarker",
+      "openTarget": "prompt",
       "isEnabled": true,
       "matchers": [
         {
@@ -26,12 +26,13 @@
       "onlyFromAirdrop": false,
       "runAfterBuiltinRules": false,
       "isTransformScriptEnabled": false,
-      "transformScript": ""
+      "transformScript": "",
+      "transformTestURL": ""
     },
     {
       "id": "ED681D21-8419-40AA-8FA7-12C027EBDB68",
       "title": "YouTube in Brave",
-      "browser": "com.brave.Browser",
+      "openTarget": "browser:com.brave.Browser",
       "isEnabled": true,
       "matchers": [
         {
@@ -53,7 +54,8 @@
       "onlyFromAirdrop": false,
       "runAfterBuiltinRules": false,
       "isTransformScriptEnabled": false,
-      "transformScript": ""
+      "transformScript": "",
+      "transformTestURL": ""
     }
   ]
 }

@@ -8,7 +8,7 @@ Plain `claude` from any other shell gets the same choice through `home/.local/sh
 
 ## Signing in
 
-A login lasts about four weeks from its sign-in, and using it does not push that date back. `claudeN auth login` renews it with one click: claude-account sets `BROWSER` to `home/.local/bin/claude-sign-in-browser`, so the sign-in page opens set to the account's org and email (the `orgUUID` and `login_hint` parameters, read from that account's `.claude.json`). Without that, accounts 1 and 2, which share an email, show as two identical "Personal Ultra" rows in the page's org picker. Account 3 has its own email, so its page opens in Safari, which stays signed in to claude.ai as that email; Chrome holds the other one. Every other URL goes to `open` unchanged.
+A login lasts about four weeks from its sign-in, and using it does not push that date back. The same login also feeds CodexBar's usage cards, so it is the only one per account to keep. `claudeN auth login` renews it with one click: claude-account sets `BROWSER` to `home/.local/bin/claude-sign-in-browser`, so the sign-in page opens set to the account's org and email (the `orgUUID` and `login_hint` parameters, read from that account's `.claude.json`). Without that, accounts 1 and 2, which share an email, show as two identical "Personal Ultra" rows in the page's org picker. Account 3 has its own email, so its page opens in Safari, which stays signed in to claude.ai as that email; Chrome holds the other one. Every other URL goes to `open` unchanged.
 
 ## The goal, and the one simpler design
 
@@ -42,7 +42,7 @@ The rule is use it or lose it. On `claude-default auto`, each launch of plain `c
 
 claude-swap's aliases carry the launcher names, so the row aliased `claudeN` is account N. The choice adds about 0.13 seconds to a launch.
 
-The figures come from the logins claude-swap keeps for the meter, which are separate from the launchers' own. An account whose meter login has expired (its CodexBar card reads "Re-login required") has no figures and is passed over until that login is renewed. With no figures at all, the launch goes to account 2.
+The figures come from `cswap-meter`, which reads them with the launchers' own logins (see [codexbar.md](codexbar.md)). An account whose login has expired (its CodexBar card reads "Re-login required") has no figures and is passed over until `claudeN auth login`. With no figures at all, the launch goes to account 2.
 
 ## Delete when
 

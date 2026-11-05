@@ -1,25 +1,154 @@
 #!/bin/sh
-# CodexBar's claude-swap source, read-only.
+# CodexBar's claude-swap source, read from claude-account's own logins.
 #
-# Claude Code accounts each have their own login directory (see the
-# claude-account fish function), so nothing may swap the default login any
-# more. CodexBar still needs claude-swap to list every account's usage. The
-# list goes through with supportsAccountSwitching set to false, which CodexBar
-# 0.65 and later reads as "show the cards, offer no switch". Everything but the
-# list and the version is still refused in claude-swap's own error format, for
-# a CodexBar that does not read the flag.
+# CodexBar lists several Claude accounts only through claude-swap, so it calls
+# this as claude-swap. Each claude-account login (~/.claude for account 2,
+# ~/.claude-N otherwise; see the claude-account fish function) already signs in
+# to its account, so the list reads usage with that login's token instead of a
+# second login per account kept by claude-swap. claude-swap's own modules build
+# the rows, so the format is the one CodexBar parses.
+#
+# A token lasts hours. An expired one is renewed by Claude Code itself, under
+# its own lock, by running its local /usage command for that account: no model
+# request, and no second party refreshing the rotating refresh token. A login
+# past its refresh token's expiry shows as relogin_required until
+# `claudeN auth login`. The list says supportsAccountSwitching false, so the
+# cards offer no switch, and everything but the list and the version is refused
+# in claude-swap's error format.
+
+swap="$HOME/.local/share/uv/tools/claude-swap"
 
 case "$*" in
   '--list --json')
-    list=$("$HOME/.local/bin/cswap" "$@") || {
-      status=$?
-      printf '%s\n' "$list"
-      exit "$status"
-    }
-    # /usr/bin/jq ships with macOS, and CodexBar launches this with a bare PATH.
-    # A list jq cannot read goes through untouched.
-    printf '%s\n' "$list" | /usr/bin/jq '.supportsAccountSwitching = false' || printf '%s\n' "$list"
-    exit
+    exec "$swap/bin/python" - <<'PY'
+import json
+import os
+import subprocess
+import time
+from concurrent.futures import ThreadPoolExecutor
+from hashlib import sha256
+from pathlib import Path
+
+from claude_swap import oauth
+from claude_swap.json_output import (SCHEMA_VERSION, USAGE_NO_CREDENTIALS, USAGE_RELOGIN_REQUIRED,
+                                     USAGE_TOKEN_EXPIRED, account_row)
+
+HOME = Path.home()
+CLAUDE = HOME / ".local/bin/claude"
+STATE = HOME / ".cache/cswap-meter"
+CACHE = STATE / "usage.json"
+# A measurement this young is served again, so CodexBar's polling doesn't hit the usage API.
+FRESH_S = 60
+# A token this close to expiry is renewed first.
+MARGIN_MS = 60_000
+
+
+def accounts():
+    """(number, config dir or None, oauthAccount) for every claude-account login."""
+    found = [(2, None, HOME / ".claude.json")]
+    found += [(int(d.name[-1]), d, d / ".claude.json") for d in HOME.glob(".claude-[1-9]") if d.is_dir()]
+    out = []
+    for number, config_dir, path in sorted(found):
+        try:
+            who = json.loads(path.read_text()).get("oauthAccount") or {}
+        except (OSError, ValueError):
+            continue
+        if who.get("emailAddress"):
+            out.append((number, config_dir, who))
+    return out
+
+
+def default_account():
+    """The account plain `claude` runs (claude-default): unset is 2, auto is none."""
+    try:
+        for line in (HOME / ".config/fish/fish_variables").read_text().splitlines():
+            if line.startswith("SETUVAR claude_default_account:"):
+                value = line.split(":", 1)[1]
+                return int(value) if value.isdigit() else None
+    except OSError:
+        pass
+    return 2
+
+
+def login(config_dir):
+    item = "Claude Code-credentials"
+    if config_dir is not None:
+        item += "-" + sha256(str(config_dir).encode()).hexdigest()[:8]
+    out = subprocess.run(["/usr/bin/security", "find-generic-password", "-s", item, "-w"],
+                         capture_output=True, text=True).stdout
+    try:
+        return json.loads(out)["claudeAiOauth"]
+    except (ValueError, KeyError):
+        return None
+
+
+def renew(config_dir):
+    """Run Claude Code's local /usage as this account, which renews its token under its lock."""
+    env = {"HOME": str(HOME), "PATH": "/usr/bin:/bin", "USER": os.environ.get("USER", "")}
+    if config_dir is not None:
+        env["CLAUDE_CONFIG_DIR"] = str(config_dir)
+    try:
+        # From a directory with no project settings, so no hooks run.
+        subprocess.run([str(CLAUDE), "-p", "/usage", "--no-session-persistence", "--setting-sources", "project"],
+                       env=env, cwd=STATE, capture_output=True, timeout=60)
+    except subprocess.TimeoutExpired:
+        pass
+
+
+def usage(config_dir):
+    """A usage dict, or one of claude-swap's sentinels, or None when the fetch failed."""
+    now = time.time() * 1000
+    token = login(config_dir)
+    if not token:
+        return USAGE_NO_CREDENTIALS
+    if not token.get("refreshToken") or token.get("refreshTokenExpiresAt", now + 1) < now:
+        return USAGE_RELOGIN_REQUIRED
+    if token["expiresAt"] < now + MARGIN_MS:
+        renew(config_dir)
+        token = login(config_dir)
+        if not token or token["expiresAt"] < time.time() * 1000 + MARGIN_MS:
+            return USAGE_TOKEN_EXPIRED
+    try:
+        return oauth.build_usage_result(oauth.request_usage_data(token["accessToken"]))
+    except Exception:
+        return None
+
+
+def main():
+    STATE.mkdir(parents=True, exist_ok=True)
+    try:
+        cache = json.loads(CACHE.read_text())
+    except (OSError, ValueError):
+        cache = {}
+    now = time.time()
+    found = accounts()
+    stale = [(n, d) for n, d, _ in found if now - cache.get(str(n), {}).get("fetchedAt", 0) >= FRESH_S]
+    with ThreadPoolExecutor() as pool:
+        fetched = dict(zip([n for n, _ in stale], pool.map(lambda account: usage(account[1]), stale)))
+
+    active = default_account()
+    rows = []
+    for number, _, who in found:
+        last = cache.get(str(number))
+        entry = fetched.get(number, last and last["usage"])
+        if number in fetched and isinstance(entry, dict):
+            last = cache[str(number)] = {"fetchedAt": now, "usage": entry}
+        at = last["fetchedAt"] if last else None
+        rows.append(account_row(
+            number, who["emailAddress"], who.get("organizationName", ""), who.get("organizationUuid", ""),
+            number == active, entry, usage_fetched_at=at, usage_age_s=now - at if at else None,
+            last_good_usage=last and last["usage"], alias=f"claude{number}"))
+
+    tmp = CACHE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(cache))
+    tmp.replace(CACHE)
+    print(json.dumps({"schemaVersion": SCHEMA_VERSION,
+                      "activeAccountNumber": active if any(n == active for n, _, _ in found) else None,
+                      "accounts": rows, "supportsAccountSwitching": False}))
+
+
+main()
+PY
     ;;
   '--version')
     exec "$HOME/.local/bin/cswap" "$@"

@@ -19,9 +19,8 @@ if ! has_cmd node || ! has_cmd npm; then
     exit 1
 fi
 
-# The package publishes no bin entry, so neither `npx matter-server` nor a
-# global install yields a command. Install it into its own directory and let
-# home/.local/bin/matter-server run the entry file.
+# Keep the controller's exact version isolated from global npm tools.
+# home/.local/bin/matter-server runs the package's CLI entry.
 install_root="$HOME/.local/share/matter-server"
 manifest="$install_root/node_modules/matter-server/package.json"
 

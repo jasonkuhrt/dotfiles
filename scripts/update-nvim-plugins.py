@@ -80,8 +80,10 @@ if any(row["name"] == "nvim-treesitter" for row in selected):
     subprocess.run(
         [
             "nvim", "--headless", "-u", "NONE",
-            "-c", "lua vim.opt.rtp:append(vim.fn.stdpath('data') .. '/lazy/nvim-treesitter'); "
-            "assert(require('nvim-treesitter').update(nil, {summary=true, max_jobs=4}):wait(600000))",
+            "-c", "lua local ok, result = pcall(function() "
+            "vim.opt.rtp:append(vim.fn.stdpath('data') .. '/lazy/nvim-treesitter'); "
+            "assert(require('nvim-treesitter').update(nil, {summary=true, max_jobs=4}):wait(600000)) "
+            "end); if not ok then print(result); vim.cmd('cquit 1') end",
             "-c", "qa",
         ],
         check=True,

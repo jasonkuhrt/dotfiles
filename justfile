@@ -50,6 +50,13 @@ tooling-yo-upgrade:
 tooling-calendar-upgrade:
     ~/.local/bin/CheICalMCP --self-update
 
+# Upgrade the installed fish plugins and dprint formatter plugins.
+tooling-fisher-upgrade:
+    DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/07-fisher-plugins.sh
+
+tooling-dprint-upgrade:
+    DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/11-dprint-update.sh
+
 # Apply a reviewed plugin commit plan while preserving configured version pins.
 update-nvim-plugins plan:
     python3 scripts/update-nvim-plugins.py {{quote(plan)}}

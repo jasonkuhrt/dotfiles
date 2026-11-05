@@ -2,10 +2,10 @@
 # CodexBar's claude-swap source, read from claude-account's own logins.
 #
 # CodexBar lists several Claude accounts only through claude-swap, so it calls
-# this as claude-swap. Each claude-account login (~/.claude for account 2,
-# ~/.claude-N otherwise; see the claude-account fish function) already signs in
-# to its account, so the list reads usage with that login's token instead of a
-# second login per account kept by claude-swap. claude-swap's own modules build
+# this as claude-swap. Each claude-account login (~/.claude-N; see the
+# claude-account fish function) already signs in to its account, so the list
+# reads usage with that login's token instead of a second login per account
+# kept by claude-swap. claude-swap's own modules build
 # the rows, so the format is the one CodexBar parses.
 #
 # A token lasts hours. An expired one is renewed by Claude Code itself, under
@@ -44,9 +44,8 @@ MARGIN_MS = 60_000
 
 
 def accounts():
-    """(number, config dir or None, oauthAccount) for every claude-account login."""
-    found = [(2, None, HOME / ".claude.json")]
-    found += [(int(d.name[-1]), d, d / ".claude.json") for d in HOME.glob(".claude-[1-9]") if d.is_dir()]
+    """(number, config dir, oauthAccount) for every claude-account login."""
+    found = [(int(d.name[-1]), d, d / ".claude.json") for d in HOME.glob(".claude-[1-9]") if d.is_dir()]
     out = []
     for number, config_dir, path in sorted(found):
         try:
@@ -71,9 +70,7 @@ def default_account():
 
 
 def login(config_dir):
-    item = "Claude Code-credentials"
-    if config_dir is not None:
-        item += "-" + sha256(str(config_dir).encode()).hexdigest()[:8]
+    item = "Claude Code-credentials-" + sha256(str(config_dir).encode()).hexdigest()[:8]
     out = subprocess.run(["/usr/bin/security", "find-generic-password", "-s", item, "-w"],
                          capture_output=True, text=True).stdout
     try:
@@ -84,9 +81,8 @@ def login(config_dir):
 
 def renew(config_dir):
     """Run Claude Code's local /usage as this account, which renews its token under its lock."""
-    env = {"HOME": str(HOME), "PATH": "/usr/bin:/bin", "USER": os.environ.get("USER", "")}
-    if config_dir is not None:
-        env["CLAUDE_CONFIG_DIR"] = str(config_dir)
+    env = {"HOME": str(HOME), "PATH": "/usr/bin:/bin", "USER": os.environ.get("USER", ""),
+           "CLAUDE_CONFIG_DIR": str(config_dir)}
     try:
         # From a directory with no project settings, so no hooks run.
         subprocess.run([str(CLAUDE), "-p", "/usage", "--no-session-persistence", "--setting-sources", "project"],

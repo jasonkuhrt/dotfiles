@@ -76,14 +76,12 @@ screenshot.
   name, the source's place and settings win, and the source's `builtIns`
   (model, effort and worktree for a new session) replace this account's.
 - Cloud environments are reached through each account's Claude Code login:
-  a config dir (`~/.claude` for account 2, `~/.claude-N` otherwise) and its
-  keychain item, `Claude Code-credentials` plus `-` and the first 8 hex of
-  the dir path's SHA-256 for a non-default dir. A token reaches only its own
-  org, whatever org a request names, so `cloud.py` asks the server which org
-  each token reaches (`GET /api/oauth/profile`). A `.claude.json` can't say:
-  the desktop app runs Claude Code with no `CLAUDE_CONFIG_DIR`, so each of
-  its sessions writes the app's own org into `~/.claude.json`, over account
-  2's (Nov 4: it named account 1's org while its token reached account 2's).
+  `~/.claude-N` and its keychain item, `Claude Code-credentials-` plus the
+  first 8 hex of the dir path's SHA-256. A token reaches only its own org,
+  whatever org a request names, so `cloud.py` asks the server which org each
+  token reaches (`GET /api/oauth/profile`), never a `.claude.json`. The
+  desktop app writes its own login into `~/.claude.json`, which is why no
+  account's login is kept in `~/.claude` (`docs/claude-account.md`).
 - A stored token expires within hours. `cloud.py` renews it by running that
   account's CLI once, which works even at the usage limit. The refresh token
   has its own expiry, `refreshTokenExpiresAt`, and a refresh doesn't extend

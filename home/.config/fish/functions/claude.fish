@@ -11,7 +11,7 @@ end
 #
 # The figures are the ones cswap-meter collects for CodexBar. claude-swap's aliases carry the
 # launcher names, so the row aliased claudeN is account N. A row without trusted figures is
-# skipped, and with no figures at all the answer is account 2, the login the binary uses alone.
+# skipped, and with no figures at all the answer is account 2, claude-default's own default.
 function __claude_auto_account
     # Unset CLAUDE_CONFIG_DIR so the meter reads what it reads for CodexBar, whatever shell this is.
     set -l pick (env -u CLAUDE_CONFIG_DIR cswap-meter --list --json 2>/dev/null | jq -r '

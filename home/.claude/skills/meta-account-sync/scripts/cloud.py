@@ -3,10 +3,9 @@
 
 Cloud environments live on Anthropic's servers, one set per org. Each org is
 reached through a Claude Code login claude-account keeps (docs/claude-account.md
-in the dotfiles): a config dir and its keychain item. A token reaches only its
-own org, whatever org a request names, so the server says which org each login
-reaches. A .claude.json can't: the desktop app runs Claude Code in the default
-dir, and each of its sessions writes the app's own org into ~/.claude.json.
+in the dotfiles): a ~/.claude-N dir and its keychain item. A token reaches only
+its own org, whatever org a request names, so the server says which org each
+login reaches; a .claude.json only says what a client last wrote there.
 Environments match by name. Only this org and the source are touched; another
 account catches up when it is the one in use.
 
@@ -37,23 +36,19 @@ NETWORK_FIELDS = ("allowed_hosts", "allow_default_hosts")
 
 
 def logins():
-    """Config dirs holding a claude-account login: None for ~/.claude, then ~/.claude-N."""
-    dirs = [None] + sorted(d for d in HOME.glob(".claude-[1-9]") if d.is_dir())
-    return [d for d in dirs if read_login(d)]
+    """The ~/.claude-N dirs holding a claude-account login."""
+    return [d for d in sorted(HOME.glob(".claude-[1-9]")) if d.is_dir() and read_login(d)]
 
 
 def claimed_org(config_dir):
     """The org config_dir's .claude.json names: a hint for ordering, never the answer."""
     try:
-        path = (config_dir or HOME) / ".claude.json"
-        return json.loads(path.read_text()).get("oauthAccount", {}).get("organizationUuid")
+        return json.loads((config_dir / ".claude.json").read_text()).get("oauthAccount", {}).get("organizationUuid")
     except (OSError, json.JSONDecodeError):
         return None
 
 
 def keychain_item(config_dir):
-    if config_dir is None:
-        return "Claude Code-credentials"
     return "Claude Code-credentials-" + hashlib.sha256(str(config_dir).encode()).hexdigest()[:8]
 
 
@@ -76,8 +71,7 @@ class DeadLogin(Exception):
 
 def sign_in_command(config_dir):
     """The fish command that signs claude-account's account for config_dir in again."""
-    n = "2" if config_dir is None else config_dir.name.removeprefix(".claude-")
-    return f"claude{n} auth login"
+    return f"claude{config_dir.name.removeprefix('.claude-')} auth login"
 
 
 def token(config_dir):
@@ -96,9 +90,7 @@ def token(config_dir):
         raise DeadLogin(sign_in_command(config_dir))
     env = {k: v for k, v in os.environ.items()
            if not k.startswith(("CLAUDE_CODE_", "CLAUDECODE", "ANTHROPIC_"))}
-    env.pop("CLAUDE_CONFIG_DIR", None)
-    if config_dir is not None:
-        env["CLAUDE_CONFIG_DIR"] = str(config_dir)
+    env["CLAUDE_CONFIG_DIR"] = str(config_dir)
     subprocess.run([str(CLAUDE), "-p", "reply with ok", "--model", "haiku"], env=env,
                    cwd=HOME, capture_output=True, timeout=120)
     login = read_login(config_dir)

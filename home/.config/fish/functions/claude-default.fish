@@ -1,6 +1,6 @@
 function claude-default --description 'Show or set the account plain `claude` runs: claude-default [1-9|auto]'
     if not set -q argv[1]
-        # Unset means account 2, the login the binary uses on its own in ~/.claude.
+        # Unset means account 2.
         set -q claude_default_account; or set -l claude_default_account 2
         echo $claude_default_account
         return

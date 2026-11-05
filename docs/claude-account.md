@@ -1,6 +1,8 @@
 # claude-account
 
-Runs Claude Code as one of several accounts. `claude1`, `claude2` and `claude3` pin an account. Plain `claude` runs the one `claude-default` names, or with `claude-default auto` the account to finish next: of those with quota left, the one whose week resets soonest. Each account signs in once to its own directory (`~/.claude-1`, `~/.claude`, `~/.claude-3`); the setup, plugins and conversation history are symlinked to `~/.claude`, and user-scope MCP servers are merged through `~/.claude.json`.
+Runs Claude Code as one of several accounts. `claude1`, `claude2` and `claude3` pin an account. Plain `claude` runs the one `claude-default` names, or with `claude-default auto` the account to finish next: of those with quota left, the one whose week resets soonest. Each account signs in once to its own directory (`~/.claude-1`, `~/.claude-2`, `~/.claude-3`); the setup, plugins and conversation history are symlinked to `~/.claude`, and user-scope MCP servers are merged through `~/.claude.json`.
+
+`~/.claude` itself is no account's login. The desktop app runs Claude Code there, with no `CLAUDE_CONFIG_DIR`, and each of its sessions writes the app's own login into `~/.claude.json`. Account 2's login lived there until 2026-11-04, when the file named account 1's org while its token reached account 2's: the sign-in helper below and `cswap-meter` read the org from that file, so both took the app's account for account 2.
 
 The tool is `claude-account.fish`, `claude.fish`, `claude-default.fish` and `claude1.fish` to `claude3.fish` in `home/.config/fish/functions/`. `just claude-account-check` verifies it against `scripts/tests/fake-claude.sh`.
 

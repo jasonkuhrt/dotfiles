@@ -18,12 +18,9 @@ function claude-account --description 'Claude Code as account N: own login in ~/
     set -l browser BROWSER=$HOME/.local/bin/claude-sign-in-browser CLAUDE_ACCOUNT_SIGN_IN_BROWSER=
     test $n = 3; and set browser[2] CLAUDE_ACCOUNT_SIGN_IN_BROWSER=Safari
 
-    # Account 2 is the login in ~/.claude itself, the one the binary uses with no CLAUDE_CONFIG_DIR.
-    if test $n = 2
-        env -u CLAUDE_CONFIG_DIR $browser $bin $argv[2..]
-        return
-    end
-
+    # Every account has a directory of its own, account 2 included. ~/.claude itself is where the
+    # desktop app runs Claude Code, and each of its sessions writes the app's login into
+    # ~/.claude.json, so a login kept there would be told it is whichever account the app is on.
     set -l base $HOME/.claude
     set -l dir $HOME/.claude-$n
     mkdir -p $dir

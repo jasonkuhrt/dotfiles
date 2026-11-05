@@ -762,17 +762,24 @@ claude-account-check:
     direct() {
         CLAUDE_CONFIG_DIR="$home/.claude-$1" "$home/.local/bin/claude" "${@:2}"
     }
+    # The binary with no CLAUDE_CONFIG_DIR, as the desktop app runs it: it edits the hub.
+    on_hub() {
+        env -u CLAUDE_CONFIG_DIR HOME="$home" "$home/.local/bin/claude" "$@"
+    }
     expect() {
         local got
         got="$(jq -c '.mcpServers | keys' "$2")"
         [ "$got" = "$3" ] || fail "$1: ${2#"$home/"} has $got, want $3"
     }
 
-    # A new account starts with the hub's servers and none of its identity.
+    # A new account starts with the hub's servers and none of its identity. Account 2 too
+    # gets a directory of its own: the hub's identity is whatever the desktop app wrote.
     account 1
     account 3
     expect 'seed' "$one" '["shared"]'
     [ "$(jq -r .userID "$one")" = null ] || fail 'seed copied the hub identity'
+    [ "$(account 2 where)" = "$home/.claude-2" ] || fail 'account 2 ran outside ~/.claude-2'
+    expect 'seed' "$home/.claude-2/.claude.json" '["shared"]'
     direct 1 identify one
 
     # An add under one account reaches the hub at exit and the next account at launch.
@@ -789,15 +796,15 @@ claude-account-check:
     expect 'unsynced add' "$one" '["added","shared","unsynced"]'
     expect 'unsynced add' "$hub" '["added","shared","unsynced"]'
 
-    # A removal travels the same way, and so does a change made on the hub.
+    # A removal travels the same way, and so does a change the desktop app makes on the hub.
     account 3 mcp remove shared
-    account 2 mcp add hubside d
+    on_hub mcp add hubside d
     account 1
     expect 'remove and hub add' "$one" '["added","hubside","unsynced"]'
 
     # Changes on both sides at once are both kept.
     direct 1 mcp add left e
-    account 2 mcp add right f
+    on_hub mcp add right f
     account 1
     expect 'both sides' "$one" '["added","hubside","left","right","unsynced"]'
     expect 'both sides' "$hub" '["added","hubside","left","right","unsynced"]'
@@ -819,7 +826,7 @@ claude-account-check:
         got="$(account "$n" browser)"
         [ "$got" = "$want" ] || fail "account $n opens URLs with '$got', want '$want'"
     done
-    [ "$(fish_run 'claude where')" = "$home" ] || fail 'plain claude did not default to account 2'
+    [ "$(fish_run 'claude where')" = "$home/.claude-2" ] || fail 'plain claude did not default to account 2'
     [ "$(fish_run 'claude-default 3; claude where')" = "$home/.claude-3" ] || fail 'plain claude ignored claude-default'
 
     # Another shell's plain claude reaches the same choice through the shim.
@@ -873,7 +880,7 @@ claude-account-check:
     } | meter
     expect_auto 'every account at its limit' "$home/.claude-3"
     rm "$meter"
-    expect_auto 'no usage figures' "$home"
+    expect_auto 'no usage figures' "$home/.claude-2"
 
     # A config that lost its server list was reset, not emptied on purpose: it gets the list
     # back, and the loss is not replayed onto the other side.

@@ -44,11 +44,16 @@ def write(managed):
                 break
             time.sleep(0.1)
     rules = [json.dumps(rule, sort_keys=True, separators=(",", ":")) for rule in managed["rules"]]
-    for args in (["defaultBrowser", "-string", managed["defaultBrowser"]], ["rules", "-array", *rules]):
-        if subprocess.run(["defaults", "write", DOMAIN, *args]).returncode != 0:
-            sys.exit("macOS refused the write to Velja's settings. Run this from your own terminal and "
-                     "allow it to access data from other apps when macOS asks (System Settings › "
-                     "Privacy & Security).")
+    for key, value in (("defaultBrowser", managed["defaultBrowser"]), ("rules", rules)):
+        # An XML plist fragment keeps each rule a string: `-array` would parse a JSON object
+        # as a plist dictionary.
+        fragment = plistlib.dumps(value, fmt=plistlib.FMT_XML).decode()
+        fragment = fragment[fragment.index("<plist version=\"1.0\">") + len("<plist version=\"1.0\">"):]
+        fragment = fragment[:fragment.rindex("</plist>")].strip()
+        if subprocess.run(["defaults", "write", DOMAIN, key, fragment]).returncode != 0:
+            sys.exit("Writing Velja's settings failed (see above). A terminal inside the Claude app is "
+                     "always refused; from your own terminal, allow access to other apps' data when "
+                     "macOS asks (System Settings › Privacy & Security).")
     subprocess.run(["open", "-g", "-b", DOMAIN])
 
 

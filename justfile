@@ -58,6 +58,10 @@ update-nvim-plugins plan:
 codexbar-setup:
     DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/22-codexbar.sh
 
+# Apply Velja's primary browser and rules from scripts/data/velja.json (docs/velja.md).
+velja-setup:
+    DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/26-velja.sh
+
 # Link HomeClaw's bundled HomeKit CLI into ~/.local/bin.
 homeclaw-setup:
     DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/23-homeclaw.sh

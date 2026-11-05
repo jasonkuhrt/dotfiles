@@ -1,0 +1,59 @@
+{
+  "defaultBrowser": "com.google.Chrome",
+  "rules": [
+    {
+      "id": "27F527BE-A225-411D-9862-1C079B4EFE00",
+      "title": "Claude sign-in: pick the browser signed in as that account",
+      "browser": "com.sindresorhus.Velja.promptMarker",
+      "isEnabled": true,
+      "matchers": [
+        {
+          "id": "54BD3489-FD6E-441D-9EFA-743421CA96E3",
+          "kind": "urlPrefix",
+          "pattern": "claude.ai/login",
+          "fixture": "https://claude.ai/login/app-google-auth"
+        },
+        {
+          "id": "3D37FDFB-9DB4-49DF-AD10-D46A88A5362B",
+          "kind": "urlPrefix",
+          "pattern": "claude.ai/magic-link",
+          "fixture": "https://claude.ai/magic-link#token"
+        }
+      ],
+      "sourceApps": [],
+      "forceNewWindow": false,
+      "openInBackground": false,
+      "onlyFromAirdrop": false,
+      "runAfterBuiltinRules": false,
+      "isTransformScriptEnabled": false,
+      "transformScript": ""
+    },
+    {
+      "id": "ED681D21-8419-40AA-8FA7-12C027EBDB68",
+      "title": "YouTube in Brave",
+      "browser": "com.brave.Browser",
+      "isEnabled": true,
+      "matchers": [
+        {
+          "id": "852E993F-8021-4CD8-819B-663E5092E7BB",
+          "kind": "hostSuffix",
+          "pattern": "youtube.com",
+          "fixture": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+        },
+        {
+          "id": "60B3D3F9-50E4-4EB3-B223-2269574F900D",
+          "kind": "host",
+          "pattern": "youtu.be",
+          "fixture": "https://youtu.be/jNQXAC9IVRw"
+        }
+      ],
+      "sourceApps": [],
+      "forceNewWindow": false,
+      "openInBackground": false,
+      "onlyFromAirdrop": false,
+      "runAfterBuiltinRules": false,
+      "isTransformScriptEnabled": false,
+      "transformScript": ""
+    }
+  ]
+}

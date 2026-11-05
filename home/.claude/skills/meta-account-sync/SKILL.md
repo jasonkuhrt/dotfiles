@@ -90,9 +90,8 @@ screenshot.
   the keychain item.
 - The sign-in page's org picker shows accounts 1 and 2 (both
   jasonkuhrt@me.com, same name, plan and creation time) as two identical
-  "Personal Ultra" rows. Account 2 is the second row (checked on the server
-  2026-11-04). Account 1 is the first, going by claude.ai's
-  `/api/organizations` order, which put account 2 second.
+  "Personal Ultra" rows: account 1 is the first, account 2 the second
+  (both checked on the server, 2026-11-04).
 - The API: list `GET /v1/environment_providers`, read and save
   `GET`/`POST /v1/environment_providers/<id>`, create
   `POST /v1/environment_providers/cloud/create` with `kind: anthropic_cloud`,

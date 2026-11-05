@@ -29,6 +29,10 @@ macos-default-apps-check:
 tooling-npm-globals-upgrade +packages:
     npm install --global {{packages}}
 
+# Upgrade explicitly selected registry/git Cargo tools, retaining local source tools.
+tooling-cargo-upgrade +args:
+    cargo install --locked {{args}}
+
 # Upgrade the standalone pnpm installation retained behind the Vite+ wrappers.
 tooling-pnpm-upgrade:
     ~/Library/pnpm/bin/pnpm self-update

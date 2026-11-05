@@ -285,6 +285,9 @@ The system prompt contains minimalist instructions like "don't add improvements 
 * Always do the complete cut — never "move now, remodel later."
 * Never guess APIs. Always check actual exports, signatures, and JSDoc. If unknown: clone repo to `tmp/` or read the source.
 * NEVER use PR size, diff size, or "separate PR" as a reason to defer, split, or reduce scope. Quality is the only dimension. "That's a separate PR" is banned. "Defer to a follow-up" is banned when the issue is known now. Work is done when it's right, not when the diff is small.
+* In an Alchemy design, a count of resources is never a cost. What's weighed is clean stack code and clean relations between resources: each resource has one purpose, and each relation says why it exists. Jason, 2026-11-05, after one shared PlanetScale token for nine CI jobs was weighed against three, priced as "two more resources … four more secret names": "add rule that resource count is never a factor, clean alchemy stack code is, clean relations between resources is".
+  * Bad: "One token is simpler. Three tokens is what your rule asks for", with the extra resources as the price.
+  * Good: one token per job definition, each holding only that job's permissions, declared from one table in the stack.
 
 ## Information Quality
 

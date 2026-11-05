@@ -25,16 +25,19 @@ screenshot.
 1. Run `python3 ~/.claude/skills/meta-account-sync/scripts/cloud.py copy`.
    It brings every account with a Claude Code login up to date with the
    source, not just this one, and prints what each still lacks.
-   - `dead_login` names the command that signs that account in again. Give
-     it to Jason in a `bash` block; once he has run it, run `copy` again.
+   - `dead_login` names the command that signs that account in again. Only
+     a sign-in revives it. Give each command in its own `bash` block in the
+     closing message, and make signing in part of the turn's ask (step 3).
    - `only_here` environments stay. Name them in the close.
 2. Run `python3 ~/.claude/skills/meta-account-sync/scripts/sync.py plan`.
 3. If `records` or `presets` is not empty, run the same script with `copy`.
    The app reads both only at launch, and `move_sessions` fails on a session
    it hasn't loaded. So end the turn with `wrap_up`: the recap says what came
    over, the ask is to quit the app with Cmd+Q and reopen it, and one button,
-   "Restarted", sends "Restarted, finish the account sync". After the
-   restart, start again at step 2.
+   "Restarted", sends "Restarted, finish the account sync". With no restart
+   needed but a `dead_login` left, end the turn the same way: the ask is to
+   sign in, and one button, "Signed in", sends "Signed in, finish the account
+   sync". After either, start again at step 1, so `copy` runs again.
 4. With `records` and `presets` empty, apply the rest through the
    `ccd_sidebar` tools, mapping names to ids with `list_sections`:
    - `sections.ops`, in order: `rename` with `rename_section`, `delete` with
@@ -76,8 +79,11 @@ screenshot.
   path's SHA-256 for a non-default dir. A token reaches only its own org,
   whatever org a request names.
 - A stored token expires within hours. `cloud.py` renews it by running that
-  account's CLI once, which works even at the usage limit. A login whose
-  refresh fails is dead and needs Jason's sign-in.
+  account's CLI once, which works even at the usage limit. The refresh token
+  has its own expiry, `refreshTokenExpiresAt`, and a refresh doesn't extend
+  it (account 1, refreshed Nov 3, still lapsed Nov 4). Past it the login is
+  dead: `cloud.py` reports it without running the CLI, which would blank
+  the keychain item.
 - The API: list `GET /v1/environment_providers`, read and save
   `GET`/`POST /v1/environment_providers/<id>`, create
   `POST /v1/environment_providers/cloud/create` with `kind: anthropic_cloud`,

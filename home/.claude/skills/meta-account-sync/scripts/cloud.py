@@ -75,17 +75,23 @@ def token(org, config_dir):
 
     A stored token lasts hours. Running the CLI once on that account renews
     it, even when the account is at its usage limit and the request fails.
+    The refresh token has its own expiry, which a refresh doesn't extend:
+    past it only a sign-in helps, and the CLI run would blank the item.
     """
     login = read_login(config_dir)
-    if not login or login["expiresAt"] < (time.time() + 120) * 1000:
-        env = {k: v for k, v in os.environ.items()
-               if not k.startswith(("CLAUDE_CODE_", "CLAUDECODE", "ANTHROPIC_"))}
-        env.pop("CLAUDE_CONFIG_DIR", None)
-        if config_dir is not None:
-            env["CLAUDE_CONFIG_DIR"] = str(config_dir)
-        subprocess.run([str(CLAUDE), "-p", "reply with ok", "--model", "haiku"], env=env,
-                       cwd=HOME, capture_output=True, timeout=120)
-        login = read_login(config_dir)
+    now = time.time() * 1000
+    if login and login["expiresAt"] >= now + 120_000:
+        return login["accessToken"]
+    if not login or not login.get("refreshToken") or login.get("refreshTokenExpiresAt", now + 1) < now:
+        raise DeadLogin(sign_in_command(config_dir))
+    env = {k: v for k, v in os.environ.items()
+           if not k.startswith(("CLAUDE_CODE_", "CLAUDECODE", "ANTHROPIC_"))}
+    env.pop("CLAUDE_CONFIG_DIR", None)
+    if config_dir is not None:
+        env["CLAUDE_CONFIG_DIR"] = str(config_dir)
+    subprocess.run([str(CLAUDE), "-p", "reply with ok", "--model", "haiku"], env=env,
+                   cwd=HOME, capture_output=True, timeout=120)
+    login = read_login(config_dir)
     if not login or login["expiresAt"] < time.time() * 1000:
         raise DeadLogin(sign_in_command(config_dir))
     return login["accessToken"]

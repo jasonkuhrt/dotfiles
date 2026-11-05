@@ -57,16 +57,13 @@ def accounts():
     return out
 
 
-def default_account():
-    """The account plain `claude` runs (claude-default): unset is 2, auto is none."""
+def desktop_org():
+    """The org the desktop app is signed in to: its Claude Code sessions run in ~/.claude
+    with no CLAUDE_CONFIG_DIR and write that login into ~/.claude.json."""
     try:
-        for line in (HOME / ".config/fish/fish_variables").read_text().splitlines():
-            if line.startswith("SETUVAR claude_default_account:"):
-                value = line.split(":", 1)[1]
-                return int(value) if value.isdigit() else None
-    except OSError:
-        pass
-    return 2
+        return (json.loads((HOME / ".claude.json").read_text()).get("oauthAccount") or {}).get("organizationUuid")
+    except (OSError, ValueError):
+        return None
 
 
 def login(config_dir):
@@ -122,7 +119,9 @@ def main():
     with ThreadPoolExecutor() as pool:
         fetched = dict(zip([n for n, _ in stale], pool.map(lambda account: usage(account[1]), stale)))
 
-    active = default_account()
+    # Active is the account the desktop app is on; none when no login is for its org.
+    org = desktop_org()
+    active = next((n for n, _, who in found if org and who.get("organizationUuid") == org), None)
     rows = []
     for number, _, who in found:
         last = cache.get(str(number))
@@ -139,7 +138,7 @@ def main():
     tmp.write_text(json.dumps(cache))
     tmp.replace(CACHE)
     print(json.dumps({"schemaVersion": SCHEMA_VERSION,
-                      "activeAccountNumber": active if any(n == active for n, _, _ in found) else None,
+                      "activeAccountNumber": active,
                       "accounts": rows, "supportsAccountSwitching": False}))
 
 

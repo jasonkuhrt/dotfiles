@@ -100,6 +100,16 @@ File: `zed/keymap.json`
 | Ctrl+j/k in menus | next/prev | `menu::SelectNext` / `SelectPrevious` |
 | Cmd+h/j/l | dock toggles | `workspace::Toggle{Left,Bottom,Right}Dock` |
 
+### Raycast
+
+Enable Vim Motions in Raycast Settings → Keyboard → Navigation Bindings.
+Raycast owns `Ctrl+J/K` list navigation directly.
+
+### Caps Lock
+
+macOS owns Caps Lock → Control under System Settings → Keyboard → Keyboard
+Shortcuts → Modifier Keys. Apply it to each physical keyboard that should use it.
+
 ## Limitations
 
 - cmux has no pane-resize shortcut, and splits open right or down only.
@@ -115,6 +125,5 @@ File: `zed/keymap.json`
 | `nvim/lua/config/keymaps.lua` | Shift J/K, kj escape, terminal mode |
 | `cmux/cmux.json` | cmux shortcut overrides (defaults are listed there, commented) |
 | `ghostty/config` | terminal bindings cmux reads |
-| `karabiner/karabiner.json` | fn handling and Raycast list navigation |
 | `fish/config.fish` | vi mode, kj escape, cursor shapes |
 | `zed/keymap.json` | Ctrl+hjkl panes, Ctrl+Cmd splits, Cmd docks |

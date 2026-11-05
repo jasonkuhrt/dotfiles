@@ -145,7 +145,7 @@ home/
       .spread
     ghostty/             # dir-symlink (pure config)
     nvim/                # dir-symlink
-    karabiner/           # dir-symlink
+    karabiner/           # dir-symlink (retained rollback config)
     zed/                 # dir-symlink
     starship.toml        # file symlink
     duti.yml             # file symlink (read by 08-macos-defaults.sh)
@@ -214,7 +214,7 @@ State lives under `~/.local/state/dotctl/`: `deployed.json` (the ledger of deplo
 ## Further Reading
 
 - [CodexBar](docs/codexbar.md) — local quota-tracker setup alongside iCloud settings sync
-- [Karabiner](docs/karabiner.md) — mental model, failure layers, and recovery workflows
+- [Keyboard settings](docs/karabiner.md) — native Caps Lock and Raycast navigation settings
 - [CLI tools](docs/cli-tools.md) — installed tools and shell abbreviations
 - [Node setup](docs/node-setup.md) — pnpm/node/npm-global layout and PATH order
 - [Worktrunk](docs/worktrunk.md) — git worktree manager for parallel AI agents

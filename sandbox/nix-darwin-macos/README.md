@@ -116,7 +116,7 @@ This is the useful capture set because it is:
 
 Even in the ideal `nix-darwin` version, these stay outside this sandbox:
 
-- Karabiner rules in `home/.config/karabiner/karabiner.json`
+- Raycast's native Vim Motions setting; the former Karabiner config is retained only for rollback
 - Ghostty, Fish, Neovim, Claude, and other app config already cleanly owned as files
 - Wispr Flow app-specific hotkey mutation in `scripts/setup/after/onchange/18-wispr-flow-shortcut.sh`
 - iCloud Desktop & Documents, which is still manual here
@@ -133,7 +133,6 @@ If this sandbox became authoritative for macOS settings, the deletion pass is st
   - `README.md`
   - `README.new.md`
 - trim the native-setting assertions from `justfile` recipe `fn-wispr-qa`
-  - keep the Karabiner assertions
   - keep the Wispr assertions
 
 ## What You Gain

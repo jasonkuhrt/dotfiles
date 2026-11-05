@@ -189,7 +189,6 @@ cask "transmission"   # torrent client
 # Utilities
 cask "caffeine"       # prevent sleep
 cask "dropbox"
-cask "karabiner-elements"  # keyboard remapping (Fn sticky/toggle mode)
 cask "keyboardcleantool"  # disable keyboard for cleaning
 
 # ═══════════════════════════════════════════════════════════

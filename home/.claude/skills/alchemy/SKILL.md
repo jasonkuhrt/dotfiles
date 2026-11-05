@@ -91,7 +91,13 @@ can't answer.
 - **Output and reference:** what a stack's effect returns is stored per
   stage. Another stack reads it through a typed handle: `yield* Backend`
   reads the same stage, `Backend.stage.prod` pins one. The upstream deploys
-  first and is destroyed last.
+  first and is destroyed last. Every reference form (`Resource.ref`, a stack
+  handle, `Output.ref`) resolves through the deploy's own state store
+  (`cloudflare/data/shared-database.mdx`, "When to use which"), so a stage
+  whose state lives in another account, or another store, can't be
+  referenced at all. Name the resource by its plain identifier instead, where
+  the resource's props accept one. The PlanetScale idiom for branches off a
+  long-lived database is `planetscale/guides/preview-branches.mdx`.
 
 GitHub's nouns, which a CI design uses:
 

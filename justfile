@@ -807,6 +807,14 @@ claude-account-check:
     [ "$status" = 7 ] || fail "exit status was $status, want 7"
 
     # Plain claude follows claude-default, and lands on account 2 until one is set.
+    # Every account opens URLs through the sign-in helper; only account 3's sign-in goes to Safari.
+    helper="$home/.local/bin/claude-sign-in-browser"
+    for n in 1 2 3; do
+        want="$helper default"
+        [ "$n" = 3 ] && want="$helper Safari"
+        got="$(account "$n" browser)"
+        [ "$got" = "$want" ] || fail "account $n opens URLs with '$got', want '$want'"
+    done
     [ "$(fish_run 'claude where')" = "$home" ] || fail 'plain claude did not default to account 2'
     [ "$(fish_run 'claude-default 3; claude where')" = "$home/.claude-3" ] || fail 'plain claude ignored claude-default'
 

@@ -23,15 +23,13 @@ screenshot.
 ## Steps
 
 1. Run `python3 ~/.claude/skills/meta-account-sync/scripts/cloud.py copy`.
-   It brings every account with a Claude Code login up to date with the
-   source, not just this one, and prints what each still lacks.
-   - `dead_login` names the command that signs that account in again. Only
-     a sign-in revives it. Give each command in its own `bash` block in the
-     closing message, with the org row to pick (see What to know), and make
-     signing in part of the turn's ask (step 3). After the sign-in, confirm
-     the org on the server before `copy`: `GET /api/oauth/profile` with the
-     token and header `anthropic-beta: oauth-2025-04-20` returns
-     `organization.uuid`.
+   It brings this account's environments up to date with the source's and
+   prints what this account still lacks. It touches no other account.
+   - `dead_login` lists the commands that sign the source's or this
+     account's login in again. Only a sign-in revives one. Run each yourself
+     with `run_in_terminal`, each in its own tab. Each opens a sign-in page
+     offering only that account's org, so Jason's part is one click per page.
+     Make approving them part of the turn's ask (step 3).
    - `only_here` environments stay. Name them in the close.
 2. Run `python3 ~/.claude/skills/meta-account-sync/scripts/sync.py plan`.
 3. If `records` or `presets` is not empty, run the same script with `copy`.
@@ -40,8 +38,9 @@ screenshot.
    over, the ask is to quit the app with Cmd+Q and reopen it, and one button,
    "Restarted", sends "Restarted, finish the account sync". With no restart
    needed but a `dead_login` left, end the turn the same way: the ask is to
-   sign in, and one button, "Signed in", sends "Signed in, finish the account
-   sync". After either, start again at step 1, so `copy` runs again.
+   approve the sign-in page, and one button, "Signed in", sends "Signed in,
+   finish the account sync". After either, close the sign-in tabs and start
+   again at step 1, so `copy` runs again.
 4. With `records` and `presets` empty, apply the rest through the
    `ccd_sidebar` tools, mapping names to ids with `list_sections`:
    - `sections.ops`, in order: `rename` with `rename_section`, `delete` with
@@ -54,7 +53,7 @@ screenshot.
    `moves`, and `archive_index_ok` true. Anything left is a bug in the
    script: fix it and repeat.
 6. Close with what the sidebar holds now, section by section, active
-   sessions only, and which environments each account has. `collapsed` has
+   sessions only, and which environments this account has. `collapsed` has
    no tool: name those sections, to be clicked by hand.
 
 ## What to know
@@ -81,17 +80,18 @@ screenshot.
   account 2, `~/.claude-N/.claude.json` otherwise) and that dir's keychain
   item, `Claude Code-credentials` plus `-` and the first 8 hex of the dir
   path's SHA-256 for a non-default dir. A token reaches only its own org,
-  whatever org a request names.
+  whatever org a request names, so `cloud.py` checks each token's org on the
+  server (`GET /api/oauth/profile`) and stops on a mismatch.
 - A stored token expires within hours. `cloud.py` renews it by running that
   account's CLI once, which works even at the usage limit. The refresh token
   has its own expiry, `refreshTokenExpiresAt`, and a refresh doesn't extend
   it (account 1, refreshed Nov 3, still lapsed Nov 4). Past it the login is
   dead: `cloud.py` reports it without running the CLI, which would blank
   the keychain item.
-- The sign-in page's org picker shows accounts 1 and 2 (both
-  jasonkuhrt@me.com, same name, plan and creation time) as two identical
-  "Personal Ultra" rows: account 1 is the first, account 2 the second
-  (both checked on the server, 2026-11-04).
+- `claudeN auth login` opens the sign-in page set to that account's org
+  (claude-account's `claude-sign-in-browser`, in `docs/claude-account.md`),
+  so the page offers one row instead of the picker's look-alike rows for
+  accounts 1 and 2. Account 3's opens in Safari, which holds its email.
 - The API: list `GET /v1/environment_providers`, read and save
   `GET`/`POST /v1/environment_providers/<id>`, create
   `POST /v1/environment_providers/cloud/create` with `kind: anthropic_cloud`,

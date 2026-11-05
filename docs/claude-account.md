@@ -6,6 +6,10 @@ The tool is `claude-account.fish`, `claude.fish`, `claude-default.fish` and `cla
 
 Plain `claude` from any other shell gets the same choice through `home/.local/shims/claude`, which hands its arguments to the fish function. Agents' shells are zsh, so without it an agent's `claude -p` ran on account 2 whatever its limit. `~/.local/shims` comes before the installer's `~/.local/bin` on PATH: in `config.fish`, and in `home/.zshenv` and `home/.zprofile`. claude-account runs the binary by its path, `~/.local/bin/claude`, so the shim never calls itself.
 
+## Signing in
+
+A login lasts about four weeks from its sign-in, and using it does not push that date back. `claudeN auth login` renews it with one click: claude-account sets `BROWSER` to `home/.local/bin/claude-sign-in-browser`, so the sign-in page opens set to the account's org and email (the `orgUUID` and `login_hint` parameters, read from that account's `.claude.json`). Without that, accounts 1 and 2, which share an email, show as two identical "Personal Ultra" rows in the page's org picker. Account 3 has its own email, so its page opens in Safari, which stays signed in to claude.ai as that email; Chrome holds the other one. Every other URL goes to `open` unchanged.
+
 ## The goal, and the one simpler design
 
 The goal is one Claude Code setup with more quota: a single subscription does not last a week, so a second and third stand behind it. Nothing about the setup should differ between accounts.

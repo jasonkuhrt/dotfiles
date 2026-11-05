@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+"""Open a URL for Claude Code, with its sign-in page set to the account's org.
+
+claude-account sets BROWSER to this script, and Claude Code opens every URL
+through BROWSER when it is set. A Claude sign-in page gets the account's org
+(orgUUID) and email (login_hint) from that account's .claude.json, so the page
+offers that one org instead of a picker of look-alike rows, and it opens in
+CLAUDE_ACCOUNT_SIGN_IN_BROWSER when that names an app. Every other URL opens
+as `open` would open it. See docs/claude-account.md in the dotfiles.
+"""
+
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+from urllib.parse import parse_qs, urlencode, urlsplit
+
+SIGN_IN_HOSTS = ("claude.ai", "claude.com")
+
+
+def account():
+    """The oauthAccount of the login Claude Code is running as."""
+    config_dir = os.environ.get("CLAUDE_CONFIG_DIR")
+    path = Path(config_dir) / ".claude.json" if config_dir else Path.home() / ".claude.json"
+    try:
+        return json.loads(path.read_text()).get("oauthAccount") or {}
+    except (OSError, ValueError):
+        return {}
+
+
+def main(url):
+    parts = urlsplit(url)
+    app = None
+    if parts.hostname in SIGN_IN_HOSTS and parts.path.endswith("/oauth/authorize"):
+        present = parse_qs(parts.query)
+        known = account()
+        extra = {key: known.get(field) for key, field in
+                 (("orgUUID", "organizationUuid"), ("login_hint", "emailAddress"))
+                 if known.get(field) and key not in present}
+        if extra:
+            url += ("&" if parts.query else "?") + urlencode(extra)
+        app = os.environ.get("CLAUDE_ACCOUNT_SIGN_IN_BROWSER") or None
+    return subprocess.run(["/usr/bin/open", *(["-a", app] if app else []), url]).returncode
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1]))

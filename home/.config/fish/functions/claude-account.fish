@@ -11,9 +11,16 @@ function claude-account --description 'Claude Code as account N: own login in ~/
     # the `claude` function, and `env claude` would find the shim in ~/.local/shims.
     set -l bin $HOME/.local/bin/claude
 
+    # Claude Code opens URLs through BROWSER, so its sign-in page goes through a helper that sets
+    # the page to this account's org: accounts 1 and 2 share an email, and the page's picker
+    # shows their orgs as identical rows. Account 3's email is one the browser holding the other
+    # two isn't signed in as, so its sign-in opens in Safari.
+    set -l browser BROWSER=$HOME/.local/bin/claude-sign-in-browser CLAUDE_ACCOUNT_SIGN_IN_BROWSER=
+    test $n = 3; and set browser[2] CLAUDE_ACCOUNT_SIGN_IN_BROWSER=Safari
+
     # Account 2 is the login in ~/.claude itself, the one the binary uses with no CLAUDE_CONFIG_DIR.
     if test $n = 2
-        env -u CLAUDE_CONFIG_DIR $bin $argv[2..]
+        env -u CLAUDE_CONFIG_DIR $browser $bin $argv[2..]
         return
     end
 
@@ -40,7 +47,7 @@ function claude-account --description 'Claude Code as account N: own login in ~/
     test -e $config; or __claude_account_jq_into $config '{mcpServers: (.mcpServers // {}), projects: (.projects // {}), hasCompletedOnboarding, lastOnboardingVersion} | with_entries(select(.value != null))' $HOME/.claude.json
 
     __claude_account_sync_mcp $dir
-    env CLAUDE_CONFIG_DIR=$dir $bin $argv[2..]
+    env CLAUDE_CONFIG_DIR=$dir $browser $bin $argv[2..]
     set -l claude_status $status
     __claude_account_sync_mcp $dir
     return $claude_status

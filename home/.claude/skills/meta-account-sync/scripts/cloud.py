@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Make every account's cloud environments match the org used last.
+"""Make this account's cloud environments match the org used last.
 
 Cloud environments live on Anthropic's servers, one set per org. Each org is
 reached through the Claude Code login claude-account keeps for it
 (docs/claude-account.md in the dotfiles): the config dir whose .claude.json
 names the org, and that dir's keychain item. A token reaches only its own org,
-whatever org a request names. Environments match by name.
+whatever org a request names. Environments match by name. Only this org and
+the source are touched, so a run needs only their two logins; another account
+catches up when it is the one in use.
 
-  cloud.py plan [--from <uuid>]   print what differs per org, as JSON
-  cloud.py copy [--from <uuid>]   create or update the other orgs' environments
+  cloud.py plan [--from <uuid>]   print what differs, as JSON
+  cloud.py copy [--from <uuid>]   create or update this org's environments
 
 Values are never printed: a variable or setup script shows as changed or not.
 """
@@ -105,10 +107,16 @@ class Org:
                         "anthropic-version": "2023-06-01",
                         "x-organization-uuid": org,
                         "content-type": "application/json"}
+        # The org a login was saved under is only what .claude.json says; the token decides.
+        actual = self.call("GET", "/api/oauth/profile", beta="oauth-2025-04-20")["organization"]["uuid"]
+        if actual != org:
+            sys.exit(f"The login {config_dir or '~/.claude'} keeps for org {org} belongs to org {actual}. "
+                     f"Sign it in again: {sign_in_command(config_dir)}")
 
-    def call(self, method, path, body=None):
+    def call(self, method, path, body=None, beta=None):
         data = json.dumps(body).encode() if body is not None else None
-        request = urllib.request.Request(API + path, data=data, method=method, headers=self.headers)
+        headers = {**self.headers, **({"anthropic-beta": beta} if beta else {})}
+        request = urllib.request.Request(API + path, data=data, method=method, headers=headers)
         try:
             with urllib.request.urlopen(request) as response:
                 return json.loads(response.read() or b"null")
@@ -154,35 +162,32 @@ def diff(src_envs, tgt_envs):
 
 def run(command, wanted):
     found = logins()
-    source = source_scope(current_scope(), wanted).split("/")[1]
-    if source not in found:
-        sys.exit(f"No Claude Code login names the source org {source}.")
-    try:
-        src = Org(source, found[source])
-    except DeadLogin as dead:
-        sys.exit(f"The source org's login is dead. Sign it in again with: {dead}")
-    src_envs = src.environments()
-    report = {"source_org": source, "source_environments": sorted(src_envs), "orgs": {}}
-    for org, config_dir in found.items():
-        if org == source:
-            continue
+    current = current_scope()
+    target = current.split("/")[1]
+    source = source_scope(current, wanted).split("/")[1]
+    report = {"source_org": source, "target_org": target}
+    orgs, dead = {}, []
+    for org in (source, target):
+        if org not in found:
+            sys.exit(f"No Claude Code login names org {org}.")
         try:
-            tgt = Org(org, config_dir)
-        except DeadLogin as dead:
-            report["orgs"][org] = {"dead_login": str(dead)}
-            continue
-        tgt_envs = tgt.environments()
-        changes = diff(src_envs, tgt_envs)
-        if command == "copy":
-            for name in changes["create"]:
-                tgt.call("POST", "/v1/environment_providers/cloud/create",
-                         {"kind": "anthropic_cloud", **writable(src_envs[name])})
-            for name in changes["update"]:
-                tgt.call("POST", f"/v1/environment_providers/{tgt_envs[name]['environment_id']}",
-                         writable(src_envs[name]))
-            changes = diff(src_envs, tgt.environments())
-        report["orgs"][org] = changes
-    return report
+            orgs[org] = Org(org, found[org])
+        except DeadLogin as login:
+            dead.append(str(login))
+    if dead:
+        return {**report, "dead_login": dead}
+    src_envs, tgt = orgs[source].environments(), orgs[target]
+    tgt_envs = tgt.environments()
+    changes = diff(src_envs, tgt_envs)
+    if command == "copy":
+        for name in changes["create"]:
+            tgt.call("POST", "/v1/environment_providers/cloud/create",
+                     {"kind": "anthropic_cloud", **writable(src_envs[name])})
+        for name in changes["update"]:
+            tgt.call("POST", f"/v1/environment_providers/{tgt_envs[name]['environment_id']}",
+                     writable(src_envs[name]))
+        changes = diff(src_envs, tgt.environments())
+    return {**report, "source_environments": sorted(src_envs), **changes}
 
 
 def main():

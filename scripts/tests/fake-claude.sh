@@ -25,6 +25,9 @@ case "${1:-} ${2:-}" in
     "where ")
         printf '%s\n' "${CLAUDE_CONFIG_DIR:-$HOME}"
         ;;
+    "browser ")
+        printf '%s %s\n' "${BROWSER:-}" "${CLAUDE_ACCOUNT_SIGN_IN_BROWSER:-default}"
+        ;;
     "exit "*)
         exit "$2"
         ;;

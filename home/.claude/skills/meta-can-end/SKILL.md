@@ -22,7 +22,12 @@ Reread the user's requests, accepted decisions and compaction summary. Refresh t
 | Running work and ownership | Check owned workers, linked sessions, shell tasks and scheduled wakeups. Establish whether useful work still depends on this chat, or has a verified independent owner and delivery path. |
 | Context and resources | What would closing lose: pending findings, a needed decision, coordination, useful runtime state or an unrecorded next action? Inspect the relevant worktrees and processes, and check the relevant Linear issues for useful context still missing. |
 
-Use the host's current tools. A detached top-level session belongs to the user and does not depend on this one. An upstream PR does not need to wait here for its maintainers to merge, but review or fixes currently owed by this session still count.
+Use the host's current tools. A detached top-level session belongs to the user and does not depend on this one.
+
+An upstream PR or issue waiting on its maintainers' feedback is generally no reason to keep the session open. Until a maintainer writes, nothing is owed. Their review reaches the user, who is the post's author, through the forge's notifications, and any later session can make the fixes from the PR's branch. What still counts is work owed now: a review comment not yet answered, a failing check, or a fix the session promised. Context needed to answer a future review goes on the PR or the relevant Linear issue, not into keeping the chat open. A wait with nothing owed gets no row in the reply's table.
+
+- Bad: "Continue: alchemy-run/alchemy#2771 and #3082 still await maintainer review", for two green upstream PRs with no comment from a maintainer.
+- Good: "Stop. The upstream PRs are green and owe nothing; a maintainer's review reaches you on GitHub, and any session can answer it from the PR's branch."
 
 Do not call uncommitted or stashed work a blocker without reading its actual diff and history. Resolve routine ownership and preservation questions yourself within existing authorization; do not hand the user an unexplored "finish or discard" choice.
 

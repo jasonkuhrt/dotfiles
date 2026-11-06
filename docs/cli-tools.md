@@ -54,6 +54,7 @@ Full list in `home/.config/fish/config.fish`.
 | **Git**     | `gh`         | GitHub CLI (PRs, issues, repos)       | `gh pr create`, `gh issue list`                 |
 | Git         | `git learn`  | Custom Git modernization coach        | `git learn switch`, `git cheat config`          |
 | AI          | `codex2`     | Codex wrapper with cmux tab sync      | `codex2`, `codex2 resume --last`                |
+| AI          | `amp`        | Amp CLI, beside the Amp app           | `amp login`, `amp config model-providers list`  |
 | Git         | `git-crypt`  | Encrypt files in git transparently    | `git-crypt init`                                |
 | Git         | `git-delta`  | Better git diffs inside LazyGit/add-p | (auto via lazygit/gitconfig)                    |
 | Git         | `hunk`       | Review-first terminal diff viewer     | `hunk diff --watch`, `hunk session list`        |

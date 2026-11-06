@@ -73,6 +73,10 @@ codexbar-setup:
 velja-setup:
     DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/26-velja.sh
 
+# Install the Amp CLI with Amp's own installer, linked from ~/.local/bin.
+amp-cli-setup:
+    DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/27-amp-cli.sh
+
 # Link HomeClaw's bundled HomeKit CLI into ~/.local/bin.
 homeclaw-setup:
     DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/23-homeclaw.sh

@@ -16,7 +16,9 @@ A login lasts about four weeks from its sign-in, and using it does not push that
 
 Each account also has a token from `claude setup-token`, stored in the login keychain on 2026-11-06 under service `claude-code-oauth-token`, with the launcher's name as the account: `claude1`, `claude2` or `claude3`. A token lasts one year, so all three expire around 2027-11-06. Store a new one under the same name before then.
 
-They exist for the Amp app, which connects to a Claude subscription by token. Amp keeps at most two Claude subscriptions linked, one of them active, and only its app can link one (Settings → Model Routing → Claude Subscription). Its CLI can switch which linked one is active, list them and delete one, but can't set a token. So switching to a third account means deleting a link in the app and pasting that account's token. The `claudeN` launchers don't use them and shouldn't, because such a token can only make model requests (see the next section).
+They are for any integration that takes a Claude subscription by token. Each account has one token, and every integration shares it: a deliberate choice, made knowing that one leaked token exposes every integration using it. The `claudeN` launchers don't use them and shouldn't, because such a token can only make model requests (see the next section).
+
+The Amp app is one such integration. Amp keeps at most two Claude subscriptions linked, one of them active, and only its app can link one (Settings → Model Routing → Claude Subscription). Its CLI can switch which linked one is active, list them and delete one, but can't set a token. So switching to a third account means deleting a link in the app and pasting that account's token.
 
 ```sh
 # Copy account 2's token, to paste into Amp

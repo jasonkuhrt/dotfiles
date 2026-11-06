@@ -16,11 +16,13 @@ A login lasts about four weeks from its sign-in, and using it does not push that
 
 Each account also has a token from `claude setup-token`, stored in the login keychain on 2026-11-06 under service `claude-code-oauth-token`, with the launcher's name as the account: `claude1`, `claude2` or `claude3`. A token lasts one year, so all three expire around 2027-11-06. Store a new one under the same name before then.
 
-They exist for the Amp app, which connects to a Claude subscription by token: switching the subscription Amp uses means pasting another account's token into it. The `claudeN` launchers don't use them and shouldn't, because such a token can only make model requests (see the next section).
+They exist for the Amp app, which connects to a Claude subscription by token. Amp keeps at most two Claude subscriptions linked, one of them active, and only its app can link one (Settings → Model Routing → Claude Subscription). Its CLI can switch which linked one is active, list them and delete one, but can't set a token. So switching to a third account means deleting a link in the app and pasting that account's token. The `claudeN` launchers don't use them and shouldn't, because such a token can only make model requests (see the next section).
 
 ```sh
 # Copy account 2's token, to paste into Amp
 security find-generic-password -s claude-code-oauth-token -a claude2 -w | pbcopy
+# Make a linked subscription the active one (IDs from `amp config model-providers list`)
+amp config model-providers activate <connection-id>
 # Store a new token from the clipboard as account 1's (-U replaces the old one)
 security add-generic-password -U -s claude-code-oauth-token -a claude1 -l 'Claude Code OAuth token (claude1)' -w "$(pbpaste)"
 ```

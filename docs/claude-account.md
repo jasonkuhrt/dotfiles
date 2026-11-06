@@ -12,6 +12,17 @@ Plain `claude` from any other shell gets the same choice through `home/.local/sh
 
 A login lasts about four weeks from its sign-in, and using it does not push that date back. The same login also feeds CodexBar's usage cards, so it is the only one per account to keep. `claudeN auth login` renews it with one click: claude-account sets `BROWSER` to `home/.local/bin/claude-sign-in-browser`, so the sign-in page opens set to the account's org and email (the `orgUUID` and `login_hint` parameters, read from that account's `.claude.json`). Without that, accounts 1 and 2, which share an email, show as two identical "Personal Ultra" rows in the page's org picker. Account 3 has its own email, so its page opens in Safari, which stays signed in to claude.ai as that email; Chrome holds the other one. Every other URL goes to `open` unchanged. The desktop app signs in through the default browser too, which is [Velja](velja.md): its Claude sign-in rule asks whether to approve in Chrome or Safari.
 
+## One-year tokens
+
+Each account also has a token from `claude setup-token`, stored in the login keychain on 2026-11-06 under service `claude-code-oauth-token`, with the launcher's name as the account: `claude1`, `claude2` or `claude3`. A token lasts one year, so all three expire around 2027-11-06. Store a new one under the same name before then. Nothing in this repo reads them yet. Passed as `CLAUDE_CODE_OAUTH_TOKEN`, such a token can only make model requests (see the next section).
+
+```sh
+# Read account 1's token
+security find-generic-password -s claude-code-oauth-token -a claude1 -w
+# Store a new token from the clipboard as account 1's (-U replaces the old one)
+security add-generic-password -U -s claude-code-oauth-token -a claude1 -l 'Claude Code OAuth token (claude1)' -w "$(pbpaste)"
+```
+
 ## The goal, and the one simpler design
 
 The goal is one Claude Code setup with more quota: a single subscription does not last a week, so a second and third stand behind it. Nothing about the setup should differ between accounts.

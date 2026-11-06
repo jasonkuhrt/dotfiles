@@ -14,11 +14,13 @@ A login lasts about four weeks from its sign-in, and using it does not push that
 
 ## One-year tokens
 
-Each account also has a token from `claude setup-token`, stored in the login keychain on 2026-11-06 under service `claude-code-oauth-token`, with the launcher's name as the account: `claude1`, `claude2` or `claude3`. A token lasts one year, so all three expire around 2027-11-06. Store a new one under the same name before then. Nothing in this repo reads them yet. Passed as `CLAUDE_CODE_OAUTH_TOKEN`, such a token can only make model requests (see the next section).
+Each account also has a token from `claude setup-token`, stored in the login keychain on 2026-11-06 under service `claude-code-oauth-token`, with the launcher's name as the account: `claude1`, `claude2` or `claude3`. A token lasts one year, so all three expire around 2027-11-06. Store a new one under the same name before then.
+
+They exist for the Amp app, which connects to a Claude subscription by token: switching the subscription Amp uses means pasting another account's token into it. The `claudeN` launchers don't use them and shouldn't, because such a token can only make model requests (see the next section).
 
 ```sh
-# Read account 1's token
-security find-generic-password -s claude-code-oauth-token -a claude1 -w
+# Copy account 2's token, to paste into Amp
+security find-generic-password -s claude-code-oauth-token -a claude2 -w | pbcopy
 # Store a new token from the clipboard as account 1's (-U replaces the old one)
 security add-generic-password -U -s claude-code-oauth-token -a claude1 -l 'Claude Code OAuth token (claude1)' -w "$(pbpaste)"
 ```

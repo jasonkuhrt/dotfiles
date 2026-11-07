@@ -74,7 +74,13 @@ msgvault_release_check() {
 }
 
 step "Homebrew" homebrew
-step "App Store" mas upgrade
+if [ -n "$(mas list 2>/dev/null)" ]; then
+    step "App Store" mas upgrade
+else
+    # Spotlight indexing is off (just sudo-setup), and mas finds apps through it.
+    header "App Store"
+    printf "  %s mas sees no apps with Spotlight off; the App Store's own automatic updates cover them\n" "$SKIP"
+fi
 step "uv tools" uv tool upgrade --all
 step "npm globals" npm_globals
 step "pnpm" "$HOME/Library/pnpm/bin/pnpm" self-update

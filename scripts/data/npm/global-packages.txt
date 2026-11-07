@@ -6,10 +6,8 @@
 @antfu/ni
 ajv-cli
 @mermaid-js/mermaid-cli
-@typescript/native-preview
 dprint
 hunkdiff
 npm-name-cli
 nx
 typescript
-typescript-language-server

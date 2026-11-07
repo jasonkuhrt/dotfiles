@@ -47,7 +47,6 @@ Full list in `home/.config/fish/config.fish`.
 | Network     | `xh`         | Colorized curl alternative            | `xh GET api.example.com/users`                  |
 | **Data**    | `fx`         | Interactive JSON viewer               | `cat data.json \| fx`                           |
 | Data        | `jq`         | JSON processor (query, transform)     | `cat data.json \| jq '.users[0].name'`          |
-| Data        | `yj`         | Convert between YAML/JSON/TOML        | `yj < config.yaml > config.json`                |
 | **Search**  | `fzf`        | Fuzzy finder for anything             | `ctrl+r` (history), `vim $(fzf)`                |
 | Search      | `tldr`       | Simplified man pages via `tlrc`       | `tldr tar`, `tldr git rebase`                   |
 | Search      | `z` (zoxide) | Jump to frecent directories           | `z proj` → `~/projects`                         |
@@ -76,14 +75,9 @@ Full list in `home/.config/fish/config.fish`.
 | Shell       | `shellcheck` | Lint shell scripts                    | `shellcheck script.sh`                          |
 | Shell       | `shfmt`      | Format shell scripts                  | `shfmt -w script.sh`                            |
 | Shell       | `starship`   | Cross-shell prompt                    | config: `~/.config/starship.toml`               |
-| Shell       | `up`         | Interactive piping (Ultimate Plumber) | `cat file \| up`                                |
 | **Media**   | `ffmpeg`     | Audio/video processing Swiss Army knife | `ffmpeg -i in.mp4 out.gif`                    |
 | **Docs**    | `glow`       | Render markdown in terminal           | `glow README.md`                                |
 | Docs        | `pandoc`     | Convert between doc formats           | `pandoc doc.md -o doc.pdf`                      |
-| **Email**   | `himalaya`   | Read/send email from CLI              | `himalaya list`                                 |
-| Email       | `imapfilter` | Server-side email filtering           | (see config)                                    |
-| Email       | `mbsync`     | Sync IMAP to local Maildir            | `mbsync -a`                                     |
-| Email       | `notmuch`    | Index and search email                | `notmuch search tag:inbox`                      |
 | **Messages** | `imsg`      | Messages.app CLI (read, watch, send)  | `imsg watch --json`, `imsg history --chat-id 1` |
 | **Passwords** | `apw`      | CLI for Apple Passwords (iCloud Keychain) | `apw pw list authentication.td.com` — see [apw notes](#apw-apple-passwords-cli) |
 | **macOS**   | `dockutil`   | Manage Dock programmatically          | `dockutil --add /Applications/App.app`          |

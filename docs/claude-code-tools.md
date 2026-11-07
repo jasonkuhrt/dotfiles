@@ -35,7 +35,6 @@ under `enabledPlugins`.
 | ------------------- | ---------- | ---------------------------------------------------------- | --------------------------------------------- |
 | `effect-docs`       | stdio      | Effect library docs — search and retrieve                  | `npx -y effect-mcp@latest`                    |
 | `msgvault`          | stdio      | Local mail and message archive — search, aggregate, export | `msgvault mcp`                                |
-| `macos-automator`   | stdio      | AppleScript and JXA execution, plus scripting tips         | `npx -y @steipete/macos-automator-mcp@latest` |
 | `peekaboo`          | stdio      | macOS screenshots and native UI automation                 | `peekaboo-mcp`                                |
 | `planetscale`       | HTTP       | PlanetScale branches, queries, insights                    | `mcp.pscale.dev`                              |
 | `linear`            | HTTP       | Linear issues and projects, supplied by the plugin         | `mcp.linear.app`                              |

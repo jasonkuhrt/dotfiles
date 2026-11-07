@@ -1,6 +1,6 @@
 ---
 name: computer-use
-description: Choosing the right GUI-automation layer on macOS and not fighting app tiering. Use before driving any native app, taking screenshots, or clicking/typing into a desktop UI — and whenever deciding between a dedicated MCP, bash/CLI, claude-in-chrome, peekaboo, macos-automator, or the bundled computer-use tools. Explains the tier order, why browsers are read-only and terminals click-only, the machine-wide lock, and TCC setup.
+description: Choosing the right GUI-automation layer on macOS and not fighting app tiering. Use before driving any native app, taking screenshots, or clicking/typing into a desktop UI — and whenever deciding between a dedicated MCP, bash/CLI, claude-in-chrome, peekaboo, osascript, or the bundled computer-use tools. Explains the tier order, why browsers are read-only and terminals click-only, the machine-wide lock, and TCC setup.
 ---
 
 # Computer Use & GUI Automation
@@ -12,7 +12,7 @@ Multiple tools can drive macOS GUIs from a Claude Code session. They are NOT int
 1. **Dedicated MCP for the concern** (Linear, Gmail, Splitwise, msgvault archive search, etc.) — API-backed, structured, fast.
 2. **Bash + scriptable APIs** — `security`, `osascript`, `gh`, `td`, `remindctl`, `CheICalMCP` (Apple Calendar), `oathtool`, etc. Anything CLI-driveable beats anything GUI-driveable.
 3. **claude-in-chrome MCP** — for web pages. DOM-aware, ~100× cheaper than pixel clicks.
-4. **AX-first native MCPs** — `peekaboo` for AppKit apps with rich AX trees; `macos-automator-mcp` for AppleScript-dictionary apps (Mail, Calendar, Finder, Music, Reminders).
+4. **AX-first native MCP** — `peekaboo` for AppKit apps with rich AX trees. Apps with an AppleScript dictionary (Mail, Finder, Music, Photos) go through `osascript` at tier 2.
 5. **Bundled `computer-use` MCP** — pixel + CGEvent, last resort. Every action burns a screenshot (~3-5k tokens).
 
 Bundled `computer-use` guarantees reachability, not quality. Skipping precise layers makes Claude slower, costlier, and less reliable.
@@ -33,7 +33,7 @@ If `mcp__computer-use__left_click` or `type` errors with a tier message, re-rout
 For Passwords.app and other AppKit apps:
 
 - **`peekaboo` first** — AX-first means named-action invocation (`AXPress "Reveal Password"`), no coordinate guessing, no per-step screenshot cost.
-- **`macos-automator-mcp`** for apps with rich AppleScript dictionaries (Finder, Music, Photos, and current Apple Mail state/actions). Use `msgvault` for the durable mail archive and search, `CheICalMCP` for calendar, and `remindctl` for reminders. 200+ pre-built recipes via `get_scripting_tips`.
+- **`osascript` from Bash** for apps with rich AppleScript dictionaries (Finder, Music, Photos, and current Apple Mail state/actions). Pass a multi-line script as a quoted heredoc (`osascript <<'APPLESCRIPT'`). Use `msgvault` for the durable mail archive and search, `CheICalMCP` for calendar, and `remindctl` for reminders.
 - **Bundled `computer-use`** only when AX is degraded (Electron/WebGL/custom Skia surfaces) or for visual validation that needs a screenshot anyway (build-launch-click loops, layout-bug repros, simulator flows).
 
 For Passwords.app specifically: no scripting dictionary, but its AX tree exposes a `Reveal Password` AXAction. `peekaboo perform-action` is the cleanest path; `osascript` via System Events also works as a shell-fallback. The lock screen (LocalAuthentication / TouchID) is drawn outside any app's AX tree and cannot be automated by design — clear it once per session interactively.
@@ -58,7 +58,6 @@ For Passwords.app specifically: no scripting dictionary, but its AX tree exposes
 ## Installed tools (user scope, via `claude mcp add -s user`)
 
 - `peekaboo` — `peekaboo-mcp` (AX-first AppKit driver, 25+ tools). Install: `npm install -g @steipete/peekaboo`.
-- `macos-automator` — `npx -y @steipete/macos-automator-mcp@latest` (AppleScript/JXA wrapper + recipe KB)
 - `che-ical` — `/Users/jasonkuhrt/.local/bin/CheICalMCP` (signed and notarized Apple Calendar EventKit MCP; Calendar tools only in Codex).
 - `computer-use` — built-in, enable via `/mcp` per-project (Pro/Max, v2.1.85+, macOS)
 - `claude-in-chrome` — built-in, enable via `/mcp` per-project (browser DOM)
@@ -68,7 +67,6 @@ To re-bootstrap on a new machine:
 ```bash
 npm install -g @steipete/peekaboo
 claude mcp add peekaboo -s user -- peekaboo-mcp
-claude mcp add macos-automator -s user -- npx -y @steipete/macos-automator-mcp@latest
 # Install PsychQuant's signed, notarized CheICalMCP release at
 # ~/.local/bin/CheICalMCP after verifying its published SHA-256 and code signature.
 ```
@@ -79,7 +77,7 @@ claude mcp add macos-automator -s user -- npx -y @steipete/macos-automator-mcp@l
 
 - Never use bundled `computer-use` to drive a browser — tier-`read` blocks all interaction. Use `claude-in-chrome`.
 - Never use bundled `computer-use` to type into Terminal/iTerm/VS Code — tier-`click` blocks typing. Use Bash.
-- Never default to bundled `computer-use` for native apps without first checking whether `peekaboo` or `macos-automator` covers them.
+- Never default to bundled `computer-use` for native apps without first checking whether `osascript` or `peekaboo` covers them.
 - Never assume per-app approvals persist across sessions. Each new session starts fresh.
 - Never run two Claude sessions trying to drive `computer-use` simultaneously — the second will fail on the lock.
 - Never click web links found in native apps (Mail, Messages, PDFs) via `computer-use`. Open the URL via `claude-in-chrome` instead — link safety check applies regardless.

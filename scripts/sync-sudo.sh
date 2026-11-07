@@ -50,6 +50,13 @@ if [ "$(id -u)" -ne 0 ]; then
         printf "  ${SKIP} ${DIM}Spotlight indexing already off${RESET}\n"
     fi
 
+    # App Store automatic updates (mas can't see apps with Spotlight off)
+    if [ "$(defaults read /Library/Preferences/com.apple.commerce AutoUpdate 2>/dev/null)" = "1" ]; then
+        printf "  ${SKIP} ${DIM}App Store automatic updates already on${RESET}\n"
+    else
+        printf "  ${CYAN}sudo defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool true${RESET}\n"
+    fi
+
     # Fish shell setup
     FISH_PATH="/opt/homebrew/bin/fish"
     if [ -x "$FISH_PATH" ]; then
@@ -82,7 +89,6 @@ printf "\n"
 
 # Get the actual user (not root)
 ACTUAL_USER="${SUDO_USER:-$USER}"
-ACTUAL_HOME=$(eval echo "~$ACTUAL_USER")
 
 # ─────────────────────────────────────────────────────────────
 # Power Management
@@ -130,6 +136,21 @@ if mdutil -s /System/Volumes/Data 2>/dev/null | grep -q 'Indexing enabled'; then
     fi
 else
     skip "Spotlight indexing off"
+fi
+
+# ─────────────────────────────────────────────────────────────
+# App Store
+# ─────────────────────────────────────────────────────────────
+# With Spotlight off, mas can't find installed apps, so the App
+# Store's own automatic updates are the only update path for them.
+
+printf "\n${BOLD}App Store${RESET}\n"
+
+if [ "$(defaults read /Library/Preferences/com.apple.commerce AutoUpdate 2>/dev/null)" = "1" ]; then
+    skip "App Store automatic updates on"
+else
+    defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool true
+    task "App Store automatic updates on"
 fi
 
 # ─────────────────────────────────────────────────────────────

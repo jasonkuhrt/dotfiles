@@ -25,6 +25,10 @@ macos-default-apps:
 macos-default-apps-check:
     home/.local/bin/duti-sync --check home/.config/duti.yml
 
+# Upgrade every tool: Homebrew, App Store, uv, npm, pnpm, bun, Cargo, gh, self-updaters.
+tooling-upgrade:
+    DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/tooling-upgrade.sh
+
 # Upgrade explicitly selected npm globals without replacing linked local tools.
 tooling-npm-globals-upgrade +packages:
     npm install --global {{packages}}

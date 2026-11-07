@@ -4,8 +4,8 @@
 # A step that fails is reported at the end and the rest still run.
 # Casks that update themselves (auto_updates) are left to their own updaters,
 # so a running app is never replaced under itself.
-# msgvault is built from source and only reported here: a new release can
-# migrate the archive's schema, which a rollback cannot undo.
+# msgvault's own updater installs a new release and restarts its daemon; a dev
+# build from main at or past the latest release is kept.
 
 source "$DOTFILES_ROOT/scripts/lib/helpers.sh"
 eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -61,16 +61,13 @@ plannotator_binary() {
     return $status
 }
 
-msgvault_release_check() {
+msgvault_upgrade() {
+    # A dev build reads as v0.23.0-93-gf2b96b09: its base tag is the release it builds on.
     local installed latest
     installed=$(msgvault version | awk 'NR==1 {print $2}')
     latest=$(gh release view --repo kenn-io/msgvault --json tagName --jq .tagName)
-    if [ "$installed" = "$latest" ]; then
-        printf "  %s msgvault %s is the latest release\n" "$CHECK" "$installed"
-    else
-        printf "  %s msgvault %s installed, %s released: build it from" "$WARN" "$installed" "$latest"
-        printf " ~/repo-references/msgvault with make install\n"
-    fi
+    [ "${installed%%-*}" = "$latest" ] && return 0
+    msgvault update --yes --force
 }
 
 step "Homebrew" homebrew
@@ -98,8 +95,7 @@ step "Calendar driver" "$HOME/.local/bin/CheICalMCP" --self-update
 step "fish plugins" bash "$DOTFILES_ROOT/scripts/setup/after/07-fisher-plugins.sh"
 step "dprint plugins" bash "$DOTFILES_ROOT/scripts/setup/after/11-dprint-update.sh"
 
-header "msgvault"
-msgvault_release_check
+step "msgvault" msgvault_upgrade
 
 header "Installed outside the Brewfile"
 # Without --force this only lists them: add each to the Brewfile or uninstall it.

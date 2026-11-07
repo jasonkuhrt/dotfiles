@@ -277,6 +277,7 @@
       ", w": "diagnostics::ToggleWarnings", // "w" is close to "e" ...
       ", space": "editor::ToggleSoftWrap",
       ", g": "project_panel::ToggleHideGitIgnore", // gitignore visibility (built-in; writes project_panel.hide_gitignore)
+      ", h": "project_panel::ToggleHideHidden", // meta-file visibility (hidden_files in settings; writes project_panel.hide_hidden)
       ", G": ["task::Spawn", { "task_name": "toggle: generated" }], // __generated__ in/out of tree+finder+search
       // ━ Reload
       ", R": "workspace::Reload",

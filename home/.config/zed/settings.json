@@ -328,6 +328,7 @@
     "dock": "left",
     "auto_fold_dirs": false,
     "hide_gitignore": false,
+    "hide_hidden": true, // meta files (hidden_files) start hidden; , h toggles
     "entry_spacing": "standard",
     "button": false
   },
@@ -399,6 +400,17 @@
   // NOTE: setting this key REPLACES Zed's default exclusions, so the defaults are
   // re-listed first.
   // ──────────────────────────────────────────────────────────────────────────
+  // Meta files: what tools and agents read, not content. Hidden while
+  // project_panel.hide_hidden is on; , h toggles (project_panel::ToggleHideHidden).
+  "hidden_files": [
+    "...", // Zed default: every dot entry (**/.*)
+    "**/AGENTS.md",
+    "**/CLAUDE.md",
+    "**/justfile",
+    "**/package.json",
+    "**/*.lock",
+    "**/tsconfig*.json"
+  ],
   "file_scan_exclusions": [
     "**/__generated__",
     // Zed defaults (re-listed — this key replaces, not merges):

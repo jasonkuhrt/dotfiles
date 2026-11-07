@@ -10,8 +10,9 @@ The same TypeSafe skill is exposed to both Codex and Claude Code from
 
 Run `typesafe auth` in a terminal and paste an API key from
 [TypeSafe keys](https://console.typesafe.ai/keys) at the masked prompt.
-The key is stored as service `typesafe-ai-api-key`, account `typesafe`; it never
-belongs in a request file or a skill. `TYPESAFE_API_KEY` overrides Keychain when
+The key is stored in the 1Password item `TypeSafe API key` in vault MeOS, in its
+`credential` field, which `typesafe` reads and writes through `meos-op`; it never
+belongs in a request file or a skill. `TYPESAFE_API_KEY` overrides 1Password when
 already supplied by the environment. `typesafe models` verifies account access.
 `TYPESAFE_MODEL` selects a model; the default is `jev-latest`.
 

@@ -1,6 +1,9 @@
-import { Cause, ConfigProvider, Effect, Layer, Redacted, Result, Stream } from "effect";
+import { BunFileSystem, BunPath } from "@effect/platform-bun";
+import { Cause, ConfigProvider, Effect, Layer, Redacted, Result } from "effect";
 import { HttpClient, HttpClientResponse } from "effect/unstable/http";
 import { ChildProcessSpawner } from "effect/unstable/process";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { dirname } from "node:path";
 import { expect, it } from "vite-plus/test";
 import {
   choice,
@@ -55,17 +58,23 @@ const configLayer = ConfigProvider.layer(
   }),
 );
 
-const childProcessLayer = Layer.succeed(
-  ChildProcessSpawner.ChildProcessSpawner,
-  ChildProcessSpawner.make(() => Effect.die("The configured test key must bypass Keychain")),
+const bypassingSpawner = ChildProcessSpawner.make(() =>
+  Effect.die("The configured test key must bypass 1Password"),
 );
 
-const makeTypeSafeLayer = (body: unknown) => {
+const makeTypeSafeLayer = (
+  body: unknown,
+  options: {
+    readonly spawner?: ChildProcessSpawner.ChildProcessSpawner["Service"];
+    readonly authorization?: string;
+  } = {},
+) => {
   const httpLayer = Layer.succeed(
     HttpClient.HttpClient,
     HttpClient.make((request, url) =>
       Effect.sync(() => {
         expect(url.href).toBe("https://api.typesafe.ai/v1/systemone");
+        expect(request.headers["authorization"]).toBe(options.authorization ?? "Bearer test-key");
         return HttpClientResponse.fromWeb(
           request,
           new Response(JSON.stringify(body), {
@@ -76,9 +85,11 @@ const makeTypeSafeLayer = (body: unknown) => {
       }),
     ),
   );
-  const typeSafeLayer = TypeSafe.layer.pipe(
-    Layer.provide(Layer.mergeAll(httpLayer, childProcessLayer)),
+  const spawnerLayer = Layer.succeed(
+    ChildProcessSpawner.ChildProcessSpawner,
+    options.spawner ?? bypassingSpawner,
   );
+  const typeSafeLayer = TypeSafe.layer.pipe(Layer.provide(Layer.mergeAll(httpLayer, spawnerLayer)));
   return typeSafeLayer;
 };
 
@@ -219,78 +230,198 @@ const roundedChoiceAnswers = [
   },
 ];
 
-it("stores credentials through child stdin without putting them in arguments or environment", async () => {
-  const secret = "ts-test-secret";
+const credentialReference = "op://MeOS/TypeSafe API key/credential";
+
+interface TemplateWrite {
+  readonly args: ReadonlyArray<string>;
+  readonly file: string;
+  readonly mode: number;
+  readonly template: unknown;
+}
+
+// A fake `meos-op` that answers from one vault's state and records each templated write,
+// reading the template file while the write is running.
+const fakeMeosOp = (vault: {
+  readonly items: ReadonlyArray<{ readonly id: string; readonly title: string }>;
+  readonly item?: { readonly id: string };
+  readonly stored: string;
+}) => {
+  const answers: Readonly<Record<string, string>> = {
+    "item list --vault MeOS --format json": JSON.stringify(vault.items),
+    [`read ${credentialReference}`]: `${vault.stored}\n`,
+    ...(vault.item === undefined
+      ? {}
+      : { [`item get ${vault.item.id} --vault MeOS --format json`]: JSON.stringify(vault.item) }),
+  };
+  const writes: Array<TemplateWrite> = [];
   const unusedSpawner = ChildProcessSpawner.make(() => Effect.die("spawn is unused"));
   const spawner = ChildProcessSpawner.ChildProcessSpawner.of({
     ...unusedSpawner,
-    string: (command) => {
-      expect(command._tag).toBe("StandardCommand");
-      if (command._tag !== "StandardCommand") {
-        return Effect.die("Expected a standard security command");
-      }
-      expect(command.command).toBe("security");
-      expect(command.args).toEqual([
-        "find-generic-password",
-        "-s",
-        "typesafe-ai-api-key",
-        "-a",
-        "typesafe",
-        "-w",
-      ]);
-      return Effect.succeed(`${secret}\n`);
-    },
+    string: (command) =>
+      Effect.sync(() => {
+        if (command._tag !== "StandardCommand") throw new Error("Expected a standard command");
+        expect(command.command).toBe("meos-op");
+        expect(command.options.stdin).toBe("ignore");
+        const answer = answers[command.args.join(" ")];
+        if (answer === undefined) throw new Error(`Unexpected meos-op ${command.args.join(" ")}`);
+        return answer;
+      }),
     exitCode: (command) =>
-      Effect.gen(function* () {
-        if (command._tag !== "StandardCommand") {
-          return yield* Effect.die("Expected a standard security command");
-        }
-        expect(command.command).toBe("security");
-        expect(command.args).toEqual([
-          "add-generic-password",
-          "-U",
-          "-s",
-          "typesafe-ai-api-key",
-          "-a",
-          "typesafe",
-          "-w",
-        ]);
-        expect(command.args).not.toContain(secret);
+      Effect.sync(() => {
+        if (command._tag !== "StandardCommand") throw new Error("Expected a standard command");
+        expect(command.command).toBe("meos-op");
+        expect(command.options).toMatchObject({ stdin: "ignore", stdout: "ignore" });
         expect(command.options.env).toBeUndefined();
-        expect(command.options.detached).toBe(true);
-        expect(command.options.stdout).toBe("ignore");
-
-        const stdin = command.options.stdin;
-        if (stdin === undefined || typeof stdin === "string" || Stream.isStream(stdin)) {
-          return yield* Effect.die("Expected configured stdin");
-        }
-        if (!Stream.isStream(stdin.stream)) {
-          return yield* Effect.die("Expected the credential on a stdin stream");
-        }
-        const input = yield* stdin.stream.pipe(Stream.decodeText(), Stream.mkString);
-        expect(input).toBe(`${secret}\n${secret}\n`);
+        expect(command.args.at(-2)).toBe("--template");
+        const file = command.args.at(-1) ?? "";
+        writes.push({
+          args: command.args,
+          file,
+          mode: statSync(file).mode & 0o777,
+          template: JSON.parse(readFileSync(file, "utf8")),
+        });
         return ChildProcessSpawner.ExitCode(0);
       }),
   });
+  return { spawner, writes };
+};
 
-  await Effect.runPromise(
-    storeApiKey(Redacted.make(secret)).pipe(
+const store = (spawner: ChildProcessSpawner.ChildProcessSpawner["Service"], key: string) =>
+  Effect.runPromise(
+    storeApiKey(Redacted.make(key)).pipe(
       Effect.provideService(ChildProcessSpawner.ChildProcessSpawner, spawner),
+      Effect.provide(Layer.mergeAll(BunFileSystem.layer, BunPath.layer)),
+      Effect.result,
     ),
   );
-});
 
-it("rejects a credential write whose Keychain readback does not match", async () => {
-  const unusedSpawner = ChildProcessSpawner.make(() => Effect.die("spawn is unused"));
-  const spawner = ChildProcessSpawner.ChildProcessSpawner.of({
-    ...unusedSpawner,
-    exitCode: () => Effect.succeed(ChildProcessSpawner.ExitCode(0)),
-    string: () => Effect.succeed("different-key\n"),
+it("creates the 1Password item from a private template file, never from an argument", async () => {
+  const secret = "ts-test-secret";
+  const { spawner, writes } = fakeMeosOp({
+    items: [{ id: "other-id", title: "Other API key" }],
+    stored: secret,
   });
 
+  const result = await store(spawner, secret);
+
+  expect(Result.isSuccess(result)).toBe(true);
+  expect(writes).toEqual([
+    {
+      args: ["item", "create", "--vault", "MeOS", "--template", expect.any(String)],
+      file: expect.any(String),
+      mode: 0o600,
+      template: {
+        title: "TypeSafe API key",
+        category: "API_CREDENTIAL",
+        fields: [{ id: "credential", type: "CONCEALED", label: "credential", value: secret }],
+      },
+    },
+  ]);
+  expect(existsSync(dirname(writes[0]?.file ?? "."))).toBe(false);
+});
+
+it("edits the existing 1Password item, keeping its other fields and properties", async () => {
+  const secret = "ts-new-secret";
+  const username = { id: "username", type: "STRING", label: "username", value: "jason" };
+  const credential = {
+    id: "credential",
+    type: "CONCEALED",
+    label: "credential",
+    value: "ts-old-secret",
+    reference: credentialReference,
+  };
+  const hostname = { id: "hostname", type: "STRING", label: "hostname", value: "api.typesafe.ai" };
+  const item = {
+    id: "item-id",
+    title: "TypeSafe API key",
+    version: 3,
+    vault: { id: "vault-id", name: "MeOS" },
+    category: "API_CREDENTIAL",
+    fields: [username, credential, hostname],
+  };
+  const { spawner, writes } = fakeMeosOp({
+    items: [{ id: "item-id", title: "TypeSafe API key" }],
+    item,
+    stored: secret,
+  });
+
+  const result = await store(spawner, secret);
+
+  expect(Result.isSuccess(result)).toBe(true);
+  expect(writes).toEqual([
+    {
+      args: ["item", "edit", "item-id", "--vault", "MeOS", "--template", expect.any(String)],
+      file: expect.any(String),
+      mode: 0o600,
+      template: { ...item, fields: [username, { ...credential, value: secret }, hostname] },
+    },
+  ]);
+  expect(existsSync(dirname(writes[0]?.file ?? "."))).toBe(false);
+});
+
+it.each([
+  {
+    name: "a write whose 1Password readback does not match",
+    items: [],
+    stored: "different-key",
+    writes: 1,
+  },
+  {
+    name: "a write to a vault where two items share the key's title, which makes reads ambiguous",
+    items: [
+      { id: "first-id", title: "TypeSafe API key" },
+      { id: "second-id", title: "TypeSafe API key" },
+    ],
+    stored: "expected-key",
+    writes: 0,
+  },
+])("rejects $name", async (vault) => {
+  const { spawner, writes } = fakeMeosOp(vault);
+
+  const result = await store(spawner, "expected-key");
+
+  expect(writes).toHaveLength(vault.writes);
+  expect(Result.isFailure(result)).toBe(true);
+  if (Result.isFailure(result)) {
+    expect(result.failure).toMatchObject({
+      _tag: "TypeSafeCredentialStoreError",
+      reason: "store-failed",
+    });
+  }
+});
+
+it("reads the API key from 1Password when TYPESAFE_API_KEY is unset", async () => {
+  const { spawner } = fakeMeosOp({ items: [], stored: "ts-vault-key" });
+
   const result = await Effect.runPromise(
-    storeApiKey(Redacted.make("expected-key")).pipe(
-      Effect.provideService(ChildProcessSpawner.ChildProcessSpawner, spawner),
+    Effect.gen(function* () {
+      const client = yield* TypeSafe;
+      return yield* client.systemOne(request);
+    }).pipe(
+      Effect.provide(
+        makeTypeSafeLayer(officialAnswerFixtures, {
+          spawner,
+          authorization: "Bearer ts-vault-key",
+        }),
+      ),
+      Effect.provide(ConfigProvider.layer(ConfigProvider.fromUnknown({}))),
+      Effect.result,
+    ),
+  );
+
+  expect(Result.isSuccess(result)).toBe(true);
+});
+
+it("reports an empty 1Password read as an unavailable credential", async () => {
+  const { spawner } = fakeMeosOp({ items: [], stored: "" });
+
+  const result = await Effect.runPromise(
+    Effect.gen(function* () {
+      const client = yield* TypeSafe;
+      return yield* client.systemOne(request);
+    }).pipe(
+      Effect.provide(makeTypeSafeLayer(officialAnswerFixtures, { spawner })),
+      Effect.provide(ConfigProvider.layer(ConfigProvider.fromUnknown({}))),
       Effect.result,
     ),
   );
@@ -298,8 +429,8 @@ it("rejects a credential write whose Keychain readback does not match", async ()
   expect(Result.isFailure(result)).toBe(true);
   if (Result.isFailure(result)) {
     expect(result.failure).toMatchObject({
-      _tag: "TypeSafeCredentialStoreError",
-      reason: "store-failed",
+      _tag: "TypeSafeCredentialError",
+      reason: "credential-unavailable",
     });
   }
 });

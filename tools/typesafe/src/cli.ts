@@ -15,7 +15,7 @@ import {
 import { Argument, CliConfig, Command, Flag, GlobalFlag, Prompt } from "effect/unstable/cli";
 import { FetchHttpClient } from "effect/unstable/http";
 import { Console as NodeConsole } from "node:console";
-import { storeApiKey, TypeSafe } from "./TypeSafe.ts";
+import { CREDENTIAL_ITEM, CREDENTIAL_ITEM_NAME, storeApiKey, TypeSafe } from "./TypeSafe.ts";
 import * as Workflow from "./Workflow.ts";
 import * as SkillInstall from "./SkillInstall.ts";
 
@@ -136,9 +136,15 @@ const auth = Command.make(
     }
     const apiKey = yield* Prompt.run(Prompt.Password({ message: "TypeSafe API key" }));
     yield* storeApiKey(apiKey);
-    yield* Console.log("Saved in macOS Keychain. Run typesafe models to verify access.");
+    yield* Console.log(
+      `Saved in the ${CREDENTIAL_ITEM_NAME}. Run typesafe models to verify access.`,
+    );
   }),
-).pipe(Command.withDescription("Store an API key in macOS Keychain through a masked prompt"));
+).pipe(
+  Command.withDescription(
+    `Store an API key in 1Password vault ${CREDENTIAL_ITEM.vault} through a masked prompt`,
+  ),
+);
 
 const models = Command.make(
   "models",

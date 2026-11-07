@@ -4,13 +4,14 @@ import {
   Context,
   Data,
   Effect,
+  FileSystem,
   Function,
   Layer,
   Option,
+  Path,
   Redacted,
   Schema,
   SchemaIssue,
-  Stream,
 } from "effect";
 import {
   HttpClient,
@@ -28,6 +29,16 @@ const REQUEST_TIMEOUT = "10 seconds";
 const ROUNDING_ERROR = 0.005;
 // Headroom for binary arithmetic on decimals; the API itself sends values like 0.8200000000000001.
 const FLOAT_ERROR = 1e-9;
+
+/** The 1Password item that holds the API key, reached through `meos-op`. */
+export const CREDENTIAL_ITEM = {
+  vault: "MeOS",
+  title: "TypeSafe API key",
+  field: "credential",
+} as const;
+
+const CREDENTIAL_REFERENCE = `op://${CREDENTIAL_ITEM.vault}/${CREDENTIAL_ITEM.title}/${CREDENTIAL_ITEM.field}`;
+export const CREDENTIAL_ITEM_NAME = `1Password item "${CREDENTIAL_ITEM.title}" in vault ${CREDENTIAL_ITEM.vault}`;
 
 export const EntrySchema = Schema.Union([
   Schema.String,
@@ -265,13 +276,13 @@ export class TypeSafeProtocolError extends Data.TaggedError("TypeSafeProtocolErr
 export class TypeSafeCredentialError extends Data.TaggedError("TypeSafeCredentialError")<{
   readonly reason: "credential-unavailable";
 }> {
-  readonly message = `${this.reason}: Run \`typesafe auth\` to store a TypeSafe API key.`;
+  readonly message = `${this.reason}: The ${CREDENTIAL_ITEM_NAME} has no readable ${CREDENTIAL_ITEM.field}. Run \`typesafe auth\` to store a TypeSafe API key there.`;
 }
 
 export class TypeSafeCredentialStoreError extends Data.TaggedError("TypeSafeCredentialStoreError")<{
   readonly reason: "empty-key" | "store-failed";
 }> {
-  readonly message = `${this.reason}: The TypeSafe API key could not be stored. Run \`typesafe auth\` again.`;
+  readonly message = `${this.reason}: The TypeSafe API key could not be stored in the ${CREDENTIAL_ITEM_NAME}. Run \`typesafe auth\` again.`;
 }
 
 export class TypeSafeConfigurationError extends Data.TaggedError("TypeSafeConfigurationError")<{
@@ -338,6 +349,60 @@ const responseFailure = (
   }
 };
 
+// `meos-op` is `op` signed in with the MeOS agent token. Its stdin is closed, so `op` never takes
+// an open pipe for an item template, and its own errors reach the terminal.
+const meosOp = (args: ReadonlyArray<string>, options: { readonly stdout?: "ignore" } = {}) =>
+  ChildProcess.make("meos-op", args, { stdin: "ignore", stderr: "inherit", ...options });
+
+const readCredential = meosOp(["read", CREDENTIAL_REFERENCE]);
+
+const OpItemListSchema = Schema.fromJsonString(
+  Schema.Array(Schema.Struct({ id: Schema.String, title: Schema.String })),
+);
+
+// The item as `op item get` returns it, every property kept, so an edit sends back the item's
+// other fields unchanged.
+const JsonProperties = Schema.Record(Schema.String, Schema.Json);
+const OpItemSchema = Schema.fromJsonString(
+  Schema.StructWithRest(
+    Schema.Struct({
+      fields: Schema.Array(
+        Schema.StructWithRest(Schema.Struct({ id: Schema.String }), [JsonProperties]),
+      ),
+    }),
+    [JsonProperties],
+  ),
+);
+
+const credentialField = (value: string) => ({
+  id: CREDENTIAL_ITEM.field,
+  type: "CONCEALED",
+  label: CREDENTIAL_ITEM.field,
+  value,
+});
+
+const withCredential = (fields: ReadonlyArray<{ readonly id: string }>, value: string) =>
+  fields.some((field) => field.id === CREDENTIAL_ITEM.field)
+    ? fields.map((field) => (field.id === CREDENTIAL_ITEM.field ? { ...field, value } : field))
+    : [...fields, credentialField(value)];
+
+// The template holds the key, so it is created 0600 inside a fresh directory that mkdtemp makes
+// 0700, and the directory is removed when the write ends, whether or not it succeeded.
+const withTemplateFile = <A, E, R>(
+  template: unknown,
+  use: (file: string) => Effect.Effect<A, E, R>,
+) =>
+  Effect.scoped(
+    Effect.gen(function* () {
+      const fs = yield* FileSystem.FileSystem;
+      const path = yield* Path.Path;
+      const directory = yield* fs.makeTempDirectoryScoped({ prefix: "typesafe-auth-" });
+      const file = path.join(directory, "item.json");
+      yield* fs.writeFileString(file, JSON.stringify(template), { flag: "wx", mode: 0o600 });
+      return yield* use(file);
+    }),
+  );
+
 export const storeApiKey = Effect.fn("TypeSafe.storeApiKey")(function* (
   apiKey: Redacted.Redacted<string>,
 ) {
@@ -347,41 +412,53 @@ export const storeApiKey = Effect.fn("TypeSafe.storeApiKey")(function* (
   }
 
   const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
-  const code = yield* spawner
-    .exitCode(
-      ChildProcess.make(
-        "security",
-        ["add-generic-password", "-U", "-s", "typesafe-ai-api-key", "-a", "typesafe", "-w"],
-        {
-          stdin: {
-            stream: Stream.make(`${value}\n${value}\n`).pipe(Stream.encodeText),
-            endOnDone: true,
+  const storeFailed = () => new TypeSafeCredentialStoreError({ reason: "store-failed" });
+  const vault = CREDENTIAL_ITEM.vault;
+
+  const items = yield* spawner
+    .string(meosOp(["item", "list", "--vault", vault, "--format", "json"]))
+    .pipe(
+      Effect.flatMap(Schema.decodeUnknownEffect(OpItemListSchema)),
+      Effect.mapError(storeFailed),
+    );
+  const matches = items.filter((item) => item.title === CREDENTIAL_ITEM.title);
+  // Reads name the item by title, so a second item with that title makes every read ambiguous.
+  if (matches.length > 1) {
+    return yield* storeFailed();
+  }
+  const [existing] = matches;
+
+  const write =
+    existing === undefined
+      ? {
+          args: ["item", "create", "--vault", vault],
+          template: {
+            title: CREDENTIAL_ITEM.title,
+            category: "API_CREDENTIAL",
+            fields: [credentialField(value)],
           },
-          stdout: "ignore",
-          stderr: "inherit",
-          detached: true,
-        },
-      ),
-    )
-    .pipe(Effect.mapError(() => new TypeSafeCredentialStoreError({ reason: "store-failed" })));
+        }
+      : {
+          args: ["item", "edit", existing.id, "--vault", vault],
+          template: yield* spawner
+            .string(meosOp(["item", "get", existing.id, "--vault", vault, "--format", "json"]))
+            .pipe(
+              Effect.flatMap(Schema.decodeUnknownEffect(OpItemSchema)),
+              Effect.map((item) => ({ ...item, fields: withCredential(item.fields, value) })),
+              Effect.mapError(storeFailed),
+            ),
+        };
+
+  const code = yield* withTemplateFile(write.template, (file) =>
+    spawner.exitCode(meosOp([...write.args, "--template", file], { stdout: "ignore" })),
+  ).pipe(Effect.mapError(storeFailed));
   if (code !== 0) {
-    return yield* new TypeSafeCredentialStoreError({ reason: "store-failed" });
+    return yield* storeFailed();
   }
 
-  const stored = yield* spawner
-    .string(
-      ChildProcess.make("security", [
-        "find-generic-password",
-        "-s",
-        "typesafe-ai-api-key",
-        "-a",
-        "typesafe",
-        "-w",
-      ]),
-    )
-    .pipe(Effect.mapError(() => new TypeSafeCredentialStoreError({ reason: "store-failed" })));
+  const stored = yield* spawner.string(readCredential).pipe(Effect.mapError(storeFailed));
   if (stored.trim() !== value) {
-    return yield* new TypeSafeCredentialStoreError({ reason: "store-failed" });
+    return yield* storeFailed();
   }
 });
 
@@ -540,16 +617,7 @@ const resolveApiKey = Effect.fnUntraced(function* () {
 
   const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
   const value = yield* spawner
-    .string(
-      ChildProcess.make("security", [
-        "find-generic-password",
-        "-s",
-        "typesafe-ai-api-key",
-        "-a",
-        "typesafe",
-        "-w",
-      ]),
-    )
+    .string(readCredential)
     .pipe(Effect.mapError(() => new TypeSafeCredentialError({ reason: "credential-unavailable" })));
   const key = value.trim();
   if (key.length === 0) {

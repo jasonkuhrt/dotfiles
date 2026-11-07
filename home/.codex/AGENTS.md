@@ -289,6 +289,13 @@ For architecture and design brainstorming:
 - Use `just lua-fmt` to normalize Lua formatting.
 - The local staged-only Lua pre-commit hook is installed via `just hooks-install`.
 
+## Personal credentials
+
+Jason, 2026-11-07, after the move to 1Password: "are my rules clear about how agents should use 1pw ijust had one try to use keychain cli still". My personal credentials live only in the 1Password vault MeOS. An agent in any folder follows the "Credentials" section of `~/me/AGENTS.md`: it reads them with `op` and the MeOS token, never from the Keychain, a note or a file.
+
+* Bad: reading a site's password with `security find-generic-password`.
+* Good: `op read "op://MeOS/<item>/password"` with `OP_SERVICE_ACCOUNT_TOKEN` set from the Keychain item `op-service-account:meos`, the one credential the Keychain keeps for agents.
+
 ## Condensed command output
 
 Shell output passes through rtk, which condenses it before you read it. Treat a condensed result as complete, and batch related commands into one call. Re-run a command as `rtk bypass <command>` only when its result is unusable: empty when output was expected, at odds with its exit code, or garbled.

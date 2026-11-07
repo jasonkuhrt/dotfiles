@@ -342,6 +342,13 @@ Jason, 2026-11-05, after `/pr-to-landed` was missing from a session that had rev
 * A session started for Heartbeat's work starts in a Heartbeat folder: by default from a session already in one, and through `start_session`'s `cwd` from anywhere else.
 * A session that finds itself outside Heartbeat while doing Heartbeat's work moves at once with `change_directory`. A Bash `cd` loads nothing, and the move takes effect only when the turn ends, so until then the session reads each Heartbeat skill it needs from `~/projects/heartbeat-chat/Heartbeat/.claude/skills/<name>/SKILL.md`.
 
+## Personal credentials
+
+Jason, 2026-11-07, after the move to 1Password: "are my rules clear about how agents should use 1pw ijust had one try to use keychain cli still". My personal credentials live only in the 1Password vault MeOS. An agent in any folder follows the "Credentials" section of `~/me/AGENTS.md`: it reads them with `op` and the MeOS token, never from the Keychain, a note or a file.
+
+* Bad: reading a site's password with `security find-generic-password`.
+* Good: `op read "op://MeOS/<item>/password"` with `OP_SERVICE_ACCOUNT_TOKEN` set from the Keychain item `op-service-account:meos`, the one credential the Keychain keeps for agents.
+
 ## Git
 
 * Never `git checkout/switch/stash` in shared worktrees — use `git worktree add` or `git show branch:path`.

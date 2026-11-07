@@ -67,7 +67,9 @@ msgvault_upgrade() {
     installed=$(msgvault version | awk 'NR==1 {print $2}')
     latest=$(gh release view --repo kenn-io/msgvault --json tagName --jq .tagName)
     [ "${installed%%-*}" = "$latest" ] && return 0
-    msgvault update --yes --force
+    # A release can migrate the archive's schema, so snapshot it first.
+    msgvault backup create --repo "$HOME/.local/state/msgvault-backups" --tag "pre-$latest" &&
+        msgvault update --yes --force
 }
 
 step "Homebrew" homebrew

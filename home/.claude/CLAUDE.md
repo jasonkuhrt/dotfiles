@@ -51,6 +51,13 @@ This is the way for code that exists: a bug in it, or a feature it lacks. A desi
 * Bad: showing `tenantPrisma.resourceFolder.project(Models.FolderWithDocuments).findMany()` and saying a plugin "treats it exactly like the same `findMany` with its select written by hand".
 * Good: that line, then the hand-written `findMany({ select: { … } })` it becomes, with every field, under the place annotation of the code that builds it.
 
+**Systematic fix first.** Jason, 2026-11-07, of a clean-sweep plan for `~/me` whose first step was landing 578 uncommitted paths: "everysuggestion has to br framed as systematic before one off fixes if there is one, the firstpoint is sovled with a rule that commits shoudl be made once work is done always, without asking the user".
+
+* A suggestion opens with the rule or mechanism that stops its problem from coming back, when one exists, and only then the one-off fix for what has already piled up.
+* When the rule already exists and the problem came back anyway, the system to fix is whatever lets writers miss it, and the suggestion names those writers (the agent's reading).
+* Bad: "Begin by landing the 578 uncommitted paths", as step 1 of the sweep.
+* Good: the commit rule first (commits are made once work is done, without asking), with the writers that still leave work uncommitted, then the backlog from before the rule, once.
+
 **Weighing a proposal.**
 
 * A downside named to Jason is a concrete cost that the work brings for certain: a real DX hit, a real latency hit, a real security hole, real tech debt, money, or work thrown away. A risk, meaning what could go wrong if the work is done badly, is never one; review and tests answer it. Jason, 2026-10-29: "risks are useless to me. concrete problems, not speculative … 'we might write the wrong code' is never a 'risk'". Bad: "the edit sits on a shared helper every machine's build runs through". Good: "it's a second mechanism to delete once the upstream fix ships".

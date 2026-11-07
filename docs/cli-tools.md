@@ -30,11 +30,9 @@ Full list in `home/.config/fish/config.fish`.
 | Files       | `rg`         | Fast grep (ripgrep)                   | `rg "TODO"`, `rg -t ts "import"`               |
 | Files       | `sd`         | Simpler sed                           | `sd 'foo' 'bar' file.txt`                       |
 | Files       | `tree`       | Directory tree view                   | `tree -L 2`                                     |
-| Files       | `unar`       | Universal archive extractor           | `unar file.zip`, `unar file.tar.gz`             |
 | Files       | `yazi`       | Terminal file manager (Rust, previews)| `yazi`, `yazi /path/to/dir`                      |
 | Files       | `7z`         | 7-Zip archive tool                    | `7z x archive.7z`, `7z a out.7z dir/`           |
 | **Logs**    | `lnav`       | Log navigator (search, filter, SQL)   | `lnav app.log`, `less +F` for quick             |
-| Logs        | `multitail`  | Tail multiple files in split view     | `multitail file1.log file2.log`                 |
 | **Monitor** | `btm`        | Modern system monitor (replaces top)  | `btm`                                           |
 | Monitor     | `dust`       | Visual du with bars                   | `dust`, `dust -d 2`                             |
 | Monitor     | `duf`        | Modern df with colors                 | `duf`                                           |

@@ -127,8 +127,8 @@ ZED_CUSTOM_RUST_PACKAGE: (Rust-specific) name of the parent package of $ZED_FILE
     "use_new_terminal": true
   },
   {
-    "label": "television",
-    "command": "zed \"$(tv files)\"",
+    "label": "fzf files",
+    "command": "zed \"$(fd --type f --hidden --exclude .git | fzf)\"",
     "hide": "always",
     "allow_concurrent_runs": true,
     "use_new_terminal": true

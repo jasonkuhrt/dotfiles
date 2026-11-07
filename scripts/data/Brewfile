@@ -31,14 +31,12 @@ brew "doggo"         # dig replacement, colorized DNS (dog successor)
 brew "gping"         # ping with live graph
 brew "difftastic"    # syntax-aware diff (code-aware)
 brew "lnav"          # log file navigator (syntax-aware, searchable, SQL)
-brew "multitail"     # tail multiple files in split view
 brew "onefetch"      # git repo info (neofetch for repos)
 # macOS ships `networkQuality`; removed deprecated `speedtest-cli`
 brew "fastfetch"     # system info (modern neofetch replacement)
 
 # Search & navigation
 brew "fzf"           # fuzzy finder
-brew "television"    # fuzzy finder (Telescope-style, Rust)
 brew "tree"          # directory tree view
 brew "tlrc"          # tldr pages client (provides `tldr`)
 brew "zoxide"        # smart cd (frecency-based, z/cd replacement)
@@ -113,7 +111,6 @@ brew "oath-toolkit"  # TOTP code generation from keychain-stored secrets (oathto
 brew "watch"         # run command repeatedly
 brew "watchman"      # file watcher
 brew "wget"
-brew "unar"          # universal archive extractor
 brew "sevenzip"      # 7-Zip (yazi archive preview)
 brew "duti"          # default document and URL handlers
 

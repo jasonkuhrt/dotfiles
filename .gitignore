@@ -57,5 +57,10 @@ home/.config/zed/prompts/
 home/.claude/skills/synced/
 home/.claude/skills/.trash/
 
+# msgvault generates its agent skills from its own binary; msgvault-sign
+# regenerates them whenever the binary changes
+home/.claude/skills/msgvault-*/
+home/.codex/skills/msgvault-*/
+
 # flock sentinel the cmux-settings helper leaves beside cmux.json on every write
 *.cmux-write.lock

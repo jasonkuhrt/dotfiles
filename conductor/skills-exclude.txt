@@ -18,9 +18,6 @@ sys-clean
 meta-account-sync
 
 # Personal tools unavailable in a cloud workspace
-msgvault-analytics
-msgvault-attachments
-msgvault-search
 typesafe-ai
 cloudflare
 

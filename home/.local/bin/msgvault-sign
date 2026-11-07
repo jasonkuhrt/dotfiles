@@ -12,7 +12,8 @@
 # The LaunchAgent com.jasonkuhrt.msgvault.sign runs this whenever the binary
 # changes, and at login. It's safe to run by hand: an already signed binary is
 # left alone. After signing it restarts the launchd-run daemon
-# (com.jasonkuhrt.msgvault.serve) so the new binary serves.
+# (com.jasonkuhrt.msgvault.serve) so the new binary serves, and regenerates
+# the msgvault agent skills from it.
 set -euo pipefail
 
 BIN="${MSGVAULT_BIN:-$HOME/.local/bin/msgvault}"
@@ -55,3 +56,11 @@ if launchctl print "$SERVE_JOB" >/dev/null 2>&1; then
   launchctl kickstart -k "$SERVE_JOB"
   log "restarted $SERVE_JOB"
 fi
+
+# The msgvault-* agent skills are generated from the binary's own command
+# tree, so a new binary regenerates them for Claude Code and Codex, and
+# TypeSafe puts back the section it owns in msgvault-search. They're
+# gitignored in dotfiles, so this leaves no diff behind.
+"$BIN" --no-log-file skills install
+PATH="$HOME/.vite-plus/bin:$PATH" "$HOME/.local/bin/typesafe" install-skills >/dev/null
+log "refreshed the msgvault agent skills"

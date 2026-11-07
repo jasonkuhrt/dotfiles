@@ -7,7 +7,7 @@ readonly keychain_service="goplaces-google-maps-api-key"
 readonly keychain_account="jasonkuhrt@me.com"
 
 if [[ ! -x "$goplaces_bin" ]]; then
-  echo "goplaces: install with 'brew install --cask openclaw/tap/goplaces'" >&2
+  echo "goplaces: install with 'brew install openclaw/tap/goplaces'" >&2
   exit 127
 fi
 

@@ -95,6 +95,16 @@ step "dprint plugins" bash "$DOTFILES_ROOT/scripts/setup/after/11-dprint-update.
 header "msgvault"
 msgvault_release_check
 
+header "Installed outside the Brewfile"
+# Without --force this only lists them: add each to the Brewfile or uninstall it.
+undeclared=$(brew bundle cleanup --file="$DOTFILES_ROOT/scripts/data/Brewfile" 2>/dev/null |
+    grep -v '^Run ')
+if [ -n "$undeclared" ]; then
+    printf '%s\n' "$undeclared"
+else
+    task "none"
+fi
+
 header "Summary"
 if [ ${#failed[@]} -eq 0 ]; then
     task "every step succeeded"

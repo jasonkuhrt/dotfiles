@@ -7,6 +7,7 @@ tap "electrikmilk/cherri"
 tap "planetscale/tap"
 tap "bendews/tap"
 tap "mobile-dev-inc/tap"
+tap "openclaw/tap"
 tap "steipete/tap"
 tap "terrastruct/tap"
 tap "usefulsoftwareco/tap"
@@ -66,6 +67,7 @@ brew "up"            # interactive piping (Ultimate Plumber)
 brew "electrikmilk/cherri/cherri", trusted: true  # compile .cherri to .shortcut files
 brew "steipete/tap/remindctl", trusted: true  # Reminders CLI (EventKit)
 brew "steipete/tap/imsg", trusted: true  # Messages CLI (iMessage/SMS)
+brew "openclaw/tap/goplaces", trusted: true  # Google Places CLI; key from Keychain via ~/.local/bin/goplaces
 
 # Git & GitHub
 brew "git"

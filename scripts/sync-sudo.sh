@@ -176,6 +176,7 @@ if [ -x "$FISH_PATH" ]; then
     else
         chsh -s "$FISH_PATH" "$ACTUAL_USER"
         task "Fish set as default shell for $ACTUAL_USER"
+        SHELL_CHANGED=1
     fi
 else
     warn "Fish not installed at $FISH_PATH"
@@ -190,5 +191,7 @@ printf "${BOLD}${GREEN}╔══════════════════
 printf "${BOLD}${GREEN}║${RESET}      ${BOLD}${GREEN}✓ Sudo Setup Complete${RESET}         ${BOLD}${GREEN}║${RESET}\n"
 printf "${BOLD}${GREEN}╚══════════════════════════════════════╝${RESET}\n"
 printf "\n"
-printf "${DIM}Log out and back in for shell change to take effect.${RESET}\n"
-printf "\n"
+if [ -n "${SHELL_CHANGED:-}" ]; then
+    printf "${DIM}Log out and back in for shell change to take effect.${RESET}\n"
+    printf "\n"
+fi

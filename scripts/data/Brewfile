@@ -171,6 +171,7 @@ cask "zoom"
 
 # Media
 cask "iina"          # media player; default for video in home/.config/duti.yml
+cask "netnewswire"    # feed reader; syncs with Inoreader (see ~/me Decisions: Keeping tabs on people, tools and blogs)
 cask "steam"
 cask "transmission"   # torrent client
 

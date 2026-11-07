@@ -356,3 +356,11 @@ Jason, 2026-11-05, after `/pr-to-landed` was missing from a session that had rev
 ## Condensed command output
 
 Shell output passes through rtk, which condenses it before you read it. Treat a condensed result as complete, and batch related commands into one call. Re-run a command as `rtk bypass <command>` only when its result is unusable: empty when output was expected, at odds with its exit code, or garbled.
+
+## Code search and code changes
+
+Jason, 2026-11-07, of ast-grep: "i wont remember, so we have to make agents educated to use it proactively autoamtically".
+
+* A change to a code shape across files (a rename and its call sites, a call's arguments, an import, a library migration) is made with ast-grep, unasked, and so is a search where text would also hit comments, strings or look-alike names. The `ast-grep` skill has the commands. rg and sd stay for text that isn't code.
+  * Bad: `sd 'loadYaml\(' 'parseYaml(' $(rg -l loadYaml)`, which also rewrites comments and strings.
+  * Good: `ast-grep run -l ts -p 'loadYaml($A)' -r 'parseYaml($A)' -U .`, then the type check.

@@ -1,6 +1,6 @@
 ---
 name: ast-grep
-description: Search or rewrite code by its syntax with ast-grep instead of by text with rg or sd. Use before changing a code shape across several files (renaming a function and its calls, changing a call's arguments, moving an import, migrating a library API), when a text search would also hit comments, strings or look-alike names, and to prove a codemod left no matches. Not for prose, config values, filenames or a one-off edit in one file.
+description: Search or rewrite code by its syntax with ast-grep instead of by text with rg or sd, without being asked. Use before changing a code shape across several files (renaming a function and its calls, changing a call's arguments, moving an import, migrating a library API), when a text search would also hit comments, strings or look-alike names, and to prove a codemod left no matches. Not for prose, config values, filenames or a one-off edit in one file.
 ---
 
 # ast-grep

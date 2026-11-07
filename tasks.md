@@ -2,6 +2,8 @@
 
 - [ ] Try [AeroSpace](https://github.com/nikitabobko/AeroSpace) for macOS window management with cmux and Zed.
 - [ ] Switch the pre-push secret scan from gitleaks to [betterleaks](https://github.com/betterleaks/betterleaks) once its v2 is the Homebrew release (v2.0.0-rc.7 on 2026-11-07). v2 drops `--log-opts` for `--revision=A..B`, no longer auto-loads `.gitleaks.toml` (pass `--config`), and replaces `[[allowlists]]` with `filter` expressions, so `.git-hooks/pre-push.d/10-gitleaks.sh` and `.gitleaks.toml` move together, once.
+- [ ] `just macos-default-apps` fails on `.go` and `.rs` (duti error -50: no app declares a UTI for them, so the dynamic UTI can't take a handler). Fix the `zed-code` handler in `home/.config/duti.yml` so the recipe and its check exit 0.
+- [ ] Delete `~/.msgvault/msgvault.db.pre-v33-2026-11-07`, the APFS clone taken before msgvault's 2026-11-07 move to main (schema 27 to 33), once the build has run a few days; the native snapshot `pre-0.23.0` in `~/.local/state/msgvault-backups` also holds schema 27.
 
 ## /readme skill: eval-driven generalization
 

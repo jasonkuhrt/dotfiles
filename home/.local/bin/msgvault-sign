@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# msgvault-sign: keep ~/.local/bin/msgvault signed with Jason's Apple
+# Development identity, so its Full Disk Access grant survives rebuilds.
+#
+# msgvault's installer and `go build` leave an ad-hoc signature, whose
+# designated requirement is the binary's cdhash. macOS ties a Full Disk Access
+# grant to that requirement, so every rebuild silently drops the grant and
+# iMessage imports start failing. A certificate signature's requirement names
+# the identifier and the certificate's subject instead, and those stay the
+# same across rebuilds and certificate renewals.
+#
+# The LaunchAgent com.jasonkuhrt.msgvault.sign runs this whenever the binary
+# changes, and at login. It's safe to run by hand: an already signed binary is
+# left alone. After signing it restarts the launchd-run daemon
+# (com.jasonkuhrt.msgvault.serve) so the new binary serves.
+set -euo pipefail
+
+BIN="${MSGVAULT_BIN:-$HOME/.local/bin/msgvault}"
+IDENTIFIER="com.jasonkuhrt.msgvault"
+CERT_CN="Apple Development: jasonkuhrt@me.com (SNM2NM3XAG)"
+SERVE_JOB="gui/$(id -u)/com.jasonkuhrt.msgvault.serve"
+
+log() { echo "$(date '+%Y-%m-%dT%H:%M:%S%z') msgvault-sign: $*"; }
+
+# Let an installer finish writing before reading the file.
+sleep "${MSGVAULT_SIGN_SETTLE_SECONDS:-3}"
+
+[ -f "$BIN" ] || { log "$BIN is missing"; exit 0; }
+
+requirement=$(codesign -d -r- "$BIN" 2>&1 | sed -n 's/^designated => //p')
+if [[ $requirement == *"identifier \"$IDENTIFIER\""* && $requirement == *"$CERT_CN"* ]] &&
+  codesign --verify "$BIN" 2>/dev/null; then
+  log "already signed"
+  exit 0
+fi
+
+sha1=$(security find-identity -v -p codesigning |
+  awk -v cn="\"$CERT_CN\"" 'index($0, cn) { print $2; exit }')
+if [ -z "$sha1" ]; then
+  log "no valid code-signing identity \"$CERT_CN\"" >&2
+  exit 1
+fi
+
+tmp="$(dirname "$BIN")/.msgvault.signing.$$"
+trap 'rm -f "$tmp"' EXIT
+cp -p "$BIN" "$tmp"
+codesign --force --sign "$sha1" --identifier "$IDENTIFIER" "$tmp"
+codesign --verify "$tmp"
+"$tmp" version >/dev/null
+mv -f "$tmp" "$BIN"
+trap - EXIT
+log "signed $("$BIN" version | head -1)"
+
+if launchctl print "$SERVE_JOB" >/dev/null 2>&1; then
+  launchctl kickstart -k "$SERVE_JOB"
+  log "restarted $SERVE_JOB"
+fi

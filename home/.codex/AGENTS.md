@@ -288,3 +288,7 @@ For architecture and design brainstorming:
 - For Lua or Neovim Lua changes, run `just lua-check` before closing the task.
 - Use `just lua-fmt` to normalize Lua formatting.
 - The local staged-only Lua pre-commit hook is installed via `just hooks-install`.
+
+## Condensed command output
+
+Shell output passes through rtk, which condenses it before you read it. Treat a condensed result as complete, and batch related commands into one call. Re-run a command as `rtk bypass <command>` only when its result is unusable: empty when output was expected, at odds with its exit code, or garbled.

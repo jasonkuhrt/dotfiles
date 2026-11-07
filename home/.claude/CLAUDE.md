@@ -352,3 +352,7 @@ Jason, 2026-11-05, after `/pr-to-landed` was missing from a session that had rev
   * Bad: a reply that reports a `CLAUDE.md` rule written and adds that the edit isn't committed, or that it's committed but not pushed.
   * Good: `git -C ~/projects/jasonkuhrt/dotfiles commit -m "…" -- home/.claude/CLAUDE.md`, then `git -C ~/projects/jasonkuhrt/dotfiles push`, then a reply that names the commit.
   * When the push is rejected because `origin` moved, say so in the reply. Never stash, reset or rebase over another session's uncommitted edits to make it go through.
+
+## Condensed command output
+
+Shell output passes through rtk, which condenses it before you read it. Treat a condensed result as complete, and batch related commands into one call. Re-run a command as `rtk bypass <command>` only when its result is unusable: empty when output was expected, at odds with its exit code, or garbled.

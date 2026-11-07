@@ -28,6 +28,7 @@ Full list in `home/.config/fish/config.fish`.
 | Files       | `fd`         | Simpler find, respects .gitignore     | `fd "\.ts$"`                                    |
 | Files       | `lsd`        | Ls with icons, colors, tree view      | `lsd -la` or `lsd --tree`                       |
 | Files       | `rg`         | Fast grep (ripgrep)                   | `rg "TODO"`, `rg -t ts "import"`               |
+| Files       | `ast-grep`   | Search and rewrite code by syntax (also `sg`) | `ast-grep run -l ts -p 'foo($A)'`        |
 | Files       | `sd`         | Simpler sed                           | `sd 'foo' 'bar' file.txt`                       |
 | Files       | `tree`       | Directory tree view                   | `tree -L 2`                                     |
 | Files       | `yazi`       | Terminal file manager (Rust, previews)| `yazi`, `yazi /path/to/dir`                      |
@@ -59,6 +60,7 @@ Full list in `home/.config/fish/config.fish`.
 | Git         | `wt`         | Git worktree manager ([docs](worktrunk.md)) | `wt switch -c feat`, `wt list`, `wt merge` |
 | Git         | `onefetch`   | Git repo stats (neofetch for repos)   | `onefetch` (run in any repo)                    |
 | Git         | `prek`       | Git hooks framework (pre-commit configs) | `prek run --all-files`                       |
+| Agents      | `rtk`        | Condenses shell output for agents (hooked) | `rtk gain`, `rtk bypass git log`             |
 | AI          | `agentsview` | Browse and search local agent sessions | `agentsview`, `just agentsview-install`         |
 | **Dev**     | `deno`       | Secure JS/TS runtime                  | `deno run script.ts`                            |
 | Dev         | `dprint`     | Fast code formatter                   | `dprint fmt`                                    |

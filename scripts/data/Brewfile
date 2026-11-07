@@ -21,6 +21,7 @@ brew "bat"           # cat with syntax highlighting
 brew "bottom"        # top/htop replacement (btm)
 brew "fd"            # find replacement
 brew "ripgrep"       # grep replacement (rg)
+brew "ast-grep"      # structural code search and rewrite (sg); skill: home/.claude/skills/ast-grep
 brew "lsd"           # ls with icons/colors
 brew "xh"            # curl/httpie replacement
 brew "dust"          # du replacement, visual bars
@@ -73,6 +74,7 @@ brew "gitleaks"      # secret scanner (pre-push hook; this repo is public)
 brew "lazygit"       # terminal UI for git
 brew "worktrunk"     # git worktree manager (parallel AI agents)
 brew "prek"          # git hooks framework (runs .pre-commit-config.yaml; Rust, no Python)
+brew "rtk"           # condenses shell output before agents read it; hooked in settings.json.merge and .codex/hooks.json
 brew "flock"         # file-lock CLI; serializes concurrent git hooks (not shipped on macOS)
 brew "usefulsoftwareco/tap/executor-beta", trusted: true  # executor — Executor apps CLI (executor.sh)
 

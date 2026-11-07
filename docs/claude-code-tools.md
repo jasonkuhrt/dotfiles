@@ -48,8 +48,9 @@ Google Drive, Gmail, and Calendar connectors are present but disabled per projec
 
 ## Hooks
 
-`home/.claude/settings.json.merge` configures no hooks of its own; the repo's hook scripts were removed in
-`05bc64c6`.
+`home/.claude/settings.json.merge` configures one hook of its own: a `PreToolUse` hook on `Bash` that runs
+`rtk hook claude`, so rtk condenses shell output before Claude reads it. Codex gets the same hook
+(`rtk hook codex`) in `home/.codex/hooks.json`. The repo's own hook scripts were removed in `05bc64c6`.
 
 Every hook that actually fires comes from cmux, injected at launch rather than written to disk.
 `/Applications/cmux.app/Contents/Resources/bin/cmux-claude-wrapper` writes a temporary settings file

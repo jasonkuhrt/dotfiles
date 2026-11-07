@@ -58,7 +58,7 @@ Full list in `home/.config/fish/config.fish`.
 | Git         | `lazygit`    | Terminal UI for git                   | `lazygit`                                       |
 | Git         | `wt`         | Git worktree manager ([docs](worktrunk.md)) | `wt switch -c feat`, `wt list`, `wt merge` |
 | Git         | `onefetch`   | Git repo stats (neofetch for repos)   | `onefetch` (run in any repo)                    |
-| Git         | `pre-commit` | Git hooks framework                   | `pre-commit install`                            |
+| Git         | `prek`       | Git hooks framework (pre-commit configs) | `prek run --all-files`                       |
 | AI          | `agentsview` | Browse and search local agent sessions | `agentsview`, `just agentsview-install`         |
 | **Dev**     | `deno`       | Secure JS/TS runtime                  | `deno run script.ts`                            |
 | Dev         | `dprint`     | Fast code formatter                   | `dprint fmt`                                    |

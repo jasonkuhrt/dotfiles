@@ -28,3 +28,17 @@ handlers:
       - sql
       - prisma
       - graphql
+  - id: iina-video
+    bundleId: com.colliderli.iina
+    role: all
+    extensions:
+      - mp4
+      - m4v
+      - mov
+      - mkv
+      - webm
+      - avi
+      - wmv
+      - flv
+      - mpg
+      - mpeg

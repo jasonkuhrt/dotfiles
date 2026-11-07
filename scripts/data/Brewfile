@@ -72,7 +72,7 @@ brew "git-crypt"     # transparent file encryption
 brew "gitleaks"      # secret scanner (pre-push hook; this repo is public)
 brew "lazygit"       # terminal UI for git
 brew "worktrunk"     # git worktree manager (parallel AI agents)
-brew "pre-commit"    # git hooks framework
+brew "prek"          # git hooks framework (runs .pre-commit-config.yaml; Rust, no Python)
 brew "flock"         # file-lock CLI; serializes concurrent git hooks (not shipped on macOS)
 brew "usefulsoftwareco/tap/executor-beta", trusted: true  # executor — Executor apps CLI (executor.sh)
 
@@ -168,12 +168,13 @@ cask "discord"
 cask "zoom"
 
 # Media
-cask "vlc"
+cask "iina"          # media player; default for video in home/.config/duti.yml
 cask "steam"
 cask "transmission"   # torrent client
 
 # Utilities
 cask "caffeine"       # prevent sleep
+cask "windscribe"     # VPN (Windscribe Limited, Ontario)
 cask "dropbox"
 cask "keyboardcleantool"  # disable keyboard for cleaning
 

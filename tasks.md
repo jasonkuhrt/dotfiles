@@ -1,6 +1,7 @@
 # Personal Tasks
 
 - [ ] Try [AeroSpace](https://github.com/nikitabobko/AeroSpace) for macOS window management with cmux and Zed.
+- [ ] Switch the pre-push secret scan from gitleaks to [betterleaks](https://github.com/betterleaks/betterleaks) once its v2 is the Homebrew release (v2.0.0-rc.7 on 2026-11-07). v2 drops `--log-opts` for `--revision=A..B`, no longer auto-loads `.gitleaks.toml` (pass `--config`), and replaces `[[allowlists]]` with `filter` expressions, so `.git-hooks/pre-push.d/10-gitleaks.sh` and `.gitleaks.toml` move together, once.
 
 ## /readme skill: eval-driven generalization
 

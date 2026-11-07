@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# op, signed in as the MeOS agent token, so it never asks Jason for Touch ID.
+# Every agent and every MeOS tool reads and writes the 1Password vault MeOS
+# through this command:
+#   meos-op read "op://MeOS/<item>/<field>"
+#   meos-op item get <item> --vault MeOS --otp
+# The token lives in the Keychain item op-service-account:meos (see the
+# meos-credentials skill in ~/me).
+
+set -euo pipefail
+
+if ! token="$(security find-generic-password -s op-service-account:meos -w 2>/dev/null)"; then
+  echo "meos-op: the Keychain has no op-service-account:meos item; see the meos-credentials skill" >&2
+  exit 78
+fi
+
+unset OP_ACCOUNT
+export OP_SERVICE_ACCOUNT_TOKEN="$token"
+exec op "$@"

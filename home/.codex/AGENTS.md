@@ -291,10 +291,10 @@ For architecture and design brainstorming:
 
 ## Personal credentials
 
-Jason, 2026-11-07, after the move to 1Password: "are my rules clear about how agents should use 1pw ijust had one try to use keychain cli still". My personal credentials live only in the 1Password vault MeOS. An agent in any folder follows the "Credentials" section of `~/me/AGENTS.md`: it reads them with `op` and the MeOS token, never from the Keychain, a note or a file.
+Jason, 2026-11-07, after the move to 1Password: "are my rules clear about how agents should use 1pw ijust had one try to use keychain cli still". My personal credentials live only in the 1Password vault MeOS. An agent in any folder follows the "Credentials" section of `~/me/AGENTS.md`: it reads them with `meos-op`, never from the Keychain, a note or a file.
 
 * Bad: reading a site's password with `security find-generic-password`.
-* Good: `op read "op://MeOS/<item>/password"` with `OP_SERVICE_ACCOUNT_TOKEN` set from the Keychain item `op-service-account:meos`, the one credential the Keychain keeps for agents.
+* Good: `meos-op read "op://MeOS/<item>/password"`. `meos-op` is `op` signed in with the agent token from the Keychain item `op-service-account:meos`, the one credential the Keychain keeps for agents.
 
 ## Condensed command output
 

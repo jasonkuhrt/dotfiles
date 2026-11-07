@@ -3,8 +3,7 @@
 set -euo pipefail
 
 readonly goplaces_bin="/opt/homebrew/bin/goplaces"
-readonly keychain_service="goplaces-google-maps-api-key"
-readonly keychain_account="jasonkuhrt@me.com"
+readonly api_key_ref="op://MeOS/Google Maps API key/credential"
 
 if [[ ! -x "$goplaces_bin" ]]; then
   echo "goplaces: install with 'brew install openclaw/tap/goplaces'" >&2
@@ -12,13 +11,8 @@ if [[ ! -x "$goplaces_bin" ]]; then
 fi
 
 if [[ -z "${GOOGLE_PLACES_API_KEY:-}" ]]; then
-  if ! GOOGLE_PLACES_API_KEY="$(
-    security find-generic-password \
-      -s "$keychain_service" \
-      -a "$keychain_account" \
-      -w 2>/dev/null
-  )"; then
-    echo "goplaces: API key missing from macOS Keychain" >&2
+  if ! GOOGLE_PLACES_API_KEY="$(meos-op read "$api_key_ref" 2>/dev/null)"; then
+    echo "goplaces: no API key at $api_key_ref" >&2
     exit 78
   fi
   export GOOGLE_PLACES_API_KEY

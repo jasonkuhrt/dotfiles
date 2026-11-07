@@ -21,6 +21,12 @@ A step only I can do comes as a command I can run, in its own fenced `bash` bloc
 * Bad: "Changing those rules counts as self-modification, so you have to make that edit yourself. The exact text is at the end.", followed by the rules as prose. Also bad: a `python3 - <<'EOF'` block, which fish rejects.
 * Good: `python3 /path/to/add-automode-rules.py`, a script written beforehand that appends the rules to `autoMode.allow` in `~/.claude/settings.json`.
 
+A step Claude's own rules forbid is one of these too: entering a password, key, token or card number into a field (a 1Password item included), or signing in. When a script can do it, it comes as that script, written beforehand, and the command that runs it. Never a hand-off to Codex or a bead. Jason, 2026-11-07, after the Keychain's secrets were filed as a bead for Codex to move into 1Password: "give me a prompt for codex or a script i can press play on for here and if u can give taht script play prompt that is ALAWYS what u should do".
+
+* The script reads each secret from where it is (the Keychain, the clipboard, a file) and never prints it.
+* Bad: "Moving these means entering keys into 1Password, which I don't do, so Codex will (bead me-q8b.67)."
+* Good: `bash /path/to/keychain-to-1password.sh`, which moves each secret, checks that 1Password returns the same value, then deletes the Keychain's copy.
+
 ## Proposals and questions
 
 Jason, 2026-10-20, after a proposal he couldn't follow: "I'm very concerned about how the fuck this happened. Such a poor presentation of an idea. … it will fuck up every other chat I have." Then, of a follow-up that opened in library internals: "you are now presenting me code in a area that I've never read … you haven't surfaced the places that this impacts the user point of view of the library."
@@ -344,10 +350,10 @@ Jason, 2026-11-05, after `/pr-to-landed` was missing from a session that had rev
 
 ## Personal credentials
 
-Jason, 2026-11-07, after the move to 1Password: "are my rules clear about how agents should use 1pw ijust had one try to use keychain cli still". My personal credentials live only in the 1Password vault MeOS. An agent in any folder follows the "Credentials" section of `~/me/AGENTS.md`: it reads them with `op` and the MeOS token, never from the Keychain, a note or a file.
+Jason, 2026-11-07, after the move to 1Password: "are my rules clear about how agents should use 1pw ijust had one try to use keychain cli still". My personal credentials live only in the 1Password vault MeOS. An agent in any folder follows the "Credentials" section of `~/me/AGENTS.md`: it reads them with `meos-op`, never from the Keychain, a note or a file.
 
 * Bad: reading a site's password with `security find-generic-password`.
-* Good: `op read "op://MeOS/<item>/password"` with `OP_SERVICE_ACCOUNT_TOKEN` set from the Keychain item `op-service-account:meos`, the one credential the Keychain keeps for agents.
+* Good: `meos-op read "op://MeOS/<item>/password"`. `meos-op` is `op` signed in with the agent token from the Keychain item `op-service-account:meos`, the one credential the Keychain keeps for agents.
 
 ## Git
 

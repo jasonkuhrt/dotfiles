@@ -307,3 +307,11 @@ Jason, 2026-11-07, of ast-grep: "i wont remember, so we have to make agents educ
 * A change to a code shape across files (a rename and its call sites, a call's arguments, an import, a library migration) is made with ast-grep, unasked, and so is a search where text would also hit comments, strings or look-alike names. The `ast-grep` skill has the commands. rg and sd stay for text that isn't code.
   * Bad: `sd 'loadYaml\(' 'parseYaml(' $(rg -l loadYaml)`, which also rewrites comments and strings.
   * Good: `ast-grep run -l ts -p 'loadYaml($A)' -r 'parseYaml($A)' -U .`, then the type check.
+
+## Browser work
+
+Jason, 2026-11-07, after a session reached for Claude in Chrome, found it disconnected, and told him to reinstall it: "u should be using opencode browse shouldn't you?"
+
+* Browser work in Jason's Chrome goes through `browse` first: the `browse` CLI (`browse execute --session <name> '<Playwright>'`) or its MCP server. It drives his own Chrome, signed in where he is; `browse status` checks the connection and `browse skill` prints its playbook. Claude in Chrome comes second, only when browse is unavailable or a sign-in needs 1Password autofill (`request_credentials`).
+  * Bad: `navigate` through Claude in Chrome, "not connected", then a reply asking Jason to reinstall the extension.
+  * Good: `browse status` shows the extension connected, and `browse execute --session miniflux` opens and reads the page.

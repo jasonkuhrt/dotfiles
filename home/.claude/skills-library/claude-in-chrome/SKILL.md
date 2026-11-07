@@ -1,12 +1,14 @@
 ---
 name: claude-in-chrome
-description: The authoritative playbook for driving a browser with the Claude in Chrome integration. Use whenever browser work is starting — web app testing, navigating or clicking pages, reading the DOM or console, filling forms, extracting data, recording a demo GIF, or any mcp__claude-in-chrome__* tool — and whenever the user mentions Chrome, Edge, the browser extension, "the chrome plugin", remote debugging, or browser permissions, even if no specific tool is named. Load it BEFORE touching any browser tool; it prevents conflating the extension with CDP / remote-debugging and guessing at the tooling.
+description: The playbook for the Claude in Chrome integration, the second browser path after `browse`. Use when `browse` is unavailable, when a sign-in needs 1Password autofill (`request_credentials`, which only Claude in Chrome has), when any mcp__claude-in-chrome__* tool is in play, and whenever the user mentions the Claude in Chrome extension, "the chrome plugin", remote debugging, or browser permissions. Load it before touching these tools; it prevents conflating the extension with CDP / remote-debugging and guessing at the tooling.
 ---
 
 # Claude in Chrome
 
-The playbook for the Claude in Chrome browser integration, loaded on demand when
-browser work starts. Never drive a browser on a guessed model of the tooling.
+The playbook for the Claude in Chrome browser integration. Browser work in
+Jason's own Chrome starts with `browse` (the `computer-use` skill's tier 3);
+this integration is the fallback when browse is unavailable, and the only path
+to 1Password autofill. Never drive a browser on a guessed model of the tooling.
 
 ## The one distinction that matters
 
@@ -86,8 +88,8 @@ The extension gates browser work — not Claude Code:
 
 Browser failures are **setup or permission problems, not scripting problems.** A
 denied action or a "not connected" error is resolved by extension setup, a
-`/chrome` reconnect, or a user permission decision — never by a workaround CLI,
-and never by guessing. There is no CLI-managed "navigation allowlist"; never
+`/chrome` reconnect, or a user permission decision, or by switching to `browse`
+(`browse status`), never by guessing. There is no CLI-managed "navigation allowlist"; never
 invent concepts like "re-allowing navigation". If browser work is blocked, stop
 and surface it to the user.
 

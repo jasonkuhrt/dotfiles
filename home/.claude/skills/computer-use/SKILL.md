@@ -1,6 +1,6 @@
 ---
 name: computer-use
-description: Choosing the right GUI-automation layer on macOS and not fighting app tiering. Use before driving any native app, taking screenshots, or clicking/typing into a desktop UI — and whenever deciding between a dedicated MCP, bash/CLI, claude-in-chrome, peekaboo, osascript, or the bundled computer-use tools. Explains the tier order, why browsers are read-only and terminals click-only, the machine-wide lock, and TCC setup.
+description: Choosing the right GUI-automation layer on macOS and not fighting app tiering. Use before driving any native app, taking screenshots, or clicking/typing into a desktop UI — and whenever deciding between a dedicated MCP, bash/CLI, browse, claude-in-chrome, peekaboo, osascript, or the bundled computer-use tools. Explains the tier order, why browsers are read-only and terminals click-only, the machine-wide lock, and TCC setup.
 ---
 
 # Computer Use & GUI Automation
@@ -11,7 +11,7 @@ Multiple tools can drive macOS GUIs from a Claude Code session. They are NOT int
 
 1. **Dedicated MCP for the concern** (Linear, Gmail, Splitwise, msgvault archive search, etc.) — API-backed, structured, fast.
 2. **Bash + scriptable APIs** — `security`, `osascript`, `gh`, `td`, `remindctl`, `CheICalMCP` (Apple Calendar), `oathtool`, etc. Anything CLI-driveable beats anything GUI-driveable.
-3. **claude-in-chrome MCP** — for web pages. DOM-aware, ~100× cheaper than pixel clicks.
+3. **`browse`** — for web pages, in Jason's own Chrome through the browse extension: the `browse` CLI (`browse execute --session <name> '<Playwright>'`) or its MCP server. It shares his Chrome's sign-ins; `browse skill` prints its playbook. DOM-aware, ~100× cheaper than pixel clicks. **claude-in-chrome** comes second, only when browse is unavailable or a sign-in needs 1Password autofill (`request_credentials`), which only claude-in-chrome has.
 4. **AX-first native MCP** — `peekaboo` for AppKit apps with rich AX trees. Apps with an AppleScript dictionary (Mail, Finder, Music, Photos) go through `osascript` at tier 2.
 5. **Bundled `computer-use` MCP** — pixel + CGEvent, last resort. Every action burns a screenshot (~3-5k tokens).
 
@@ -21,7 +21,7 @@ Bundled `computer-use` guarantees reachability, not quality. Skipping precise la
 
 | App category | Tier | What's blocked |
 |---|---|---|
-| Browsers (Safari/Chrome/Firefox/Arc/etc.) | `read` | Clicks and typing — use `claude-in-chrome` instead |
+| Browsers (Safari/Chrome/Firefox/Arc/etc.) | `read` | Clicks and typing — use `browse` instead |
 | Terminals/IDEs (Terminal/iTerm/VS Code/Warp/JetBrains) | `click` | Typing, key presses, right-click, modifier-clicks, drag — use Bash for shell |
 | Trading platforms | `read` | Same as browsers |
 | Everything else | `full` | Nothing |
@@ -60,7 +60,8 @@ For Passwords.app specifically: no scripting dictionary, but its AX tree exposes
 - `peekaboo` — `peekaboo-mcp` (AX-first AppKit driver, 25+ tools). Install: `npm install -g @steipete/peekaboo`.
 - `che-ical` — `/Users/jasonkuhrt/.local/bin/CheICalMCP` (signed and notarized Apple Calendar EventKit MCP; Calendar tools only in Codex).
 - `computer-use` — built-in, enable via `/mcp` per-project (Pro/Max, v2.1.85+, macOS)
-- `claude-in-chrome` — built-in, enable via `/mcp` per-project (browser DOM)
+- `browse` — `/Users/jasonkuhrt/.local/bin/browse mcp` (Jason's Chrome through the browse extension; `browse status` checks the connection)
+- `claude-in-chrome` — built-in, enable via `/mcp` per-project (browser DOM; the fallback, and the 1Password autofill path)
 
 To re-bootstrap on a new machine:
 
@@ -75,12 +76,12 @@ claude mcp add peekaboo -s user -- peekaboo-mcp
 
 ## Never do these
 
-- Never use bundled `computer-use` to drive a browser — tier-`read` blocks all interaction. Use `claude-in-chrome`.
+- Never use bundled `computer-use` to drive a browser — tier-`read` blocks all interaction. Use `browse`.
 - Never use bundled `computer-use` to type into Terminal/iTerm/VS Code — tier-`click` blocks typing. Use Bash.
 - Never default to bundled `computer-use` for native apps without first checking whether `osascript` or `peekaboo` covers them.
 - Never assume per-app approvals persist across sessions. Each new session starts fresh.
 - Never run two Claude sessions trying to drive `computer-use` simultaneously — the second will fail on the lock.
-- Never click web links found in native apps (Mail, Messages, PDFs) via `computer-use`. Open the URL via `claude-in-chrome` instead — link safety check applies regardless.
+- Never click web links found in native apps (Mail, Messages, PDFs) via `computer-use`. Open the URL via `browse` instead — link safety check applies regardless.
 
 ## Launching apps is allowed — launch ≠ quit
 

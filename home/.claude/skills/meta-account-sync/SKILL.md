@@ -72,6 +72,9 @@ screenshot.
   `dframe-code-sections`.
 - `move_sessions` refuses archived sessions, so `moves` holds active ones
   only. An archived session keeps whatever filing this account gave it.
+- A session started from another (a record with `spawnedFrom.sessionId` and
+  no `lineageDetached`) shows in its parent's section. `move_sessions`
+  reports it moved but the app records nothing, so `moves` leaves it out.
 - Records with a `scheduledTaskId` are routine runs. They show only in the
   Routines section, which Jason keeps switched off.
 - Conversations (`~/.claude/projects/**/<cliSessionId>.jsonl`) are shared by

@@ -139,6 +139,11 @@ def stored_presets(account):
     return json.loads(raw) if raw else None
 
 
+def settled(settings):
+    """A preset's settings as the app treats them: it drops fastMode false, its default (Nov 8)."""
+    return {k: v for k, v in (settings or {}).items() if (k, v) != ("fastMode", False)}
+
+
 def presets(current, source):
     """The current account's stored presets after taking the source's, and what changes.
 
@@ -161,7 +166,8 @@ def presets(current, source):
         if mine is None:
             merged.append(dict(p))
             added.append(p["name"])
-        elif (mine.get("target"), mine.get("settings")) != (p.get("target"), p.get("settings")):
+        elif (mine.get("target"), settled(mine.get("settings"))) != (
+                p.get("target"), settled(p.get("settings"))):
             mine.update(target=p.get("target"), settings=p.get("settings"))
             changed.append(p["name"])
     built_ins = src_state.get("builtIns") or tgt_state.get("builtIns", {})
@@ -191,6 +197,8 @@ def plan(current, source):
         record = src_records[sid] if sid in copy else tgt_records[sid]
         if record.get("isArchived"):
             continue  # the app files only active sessions; move_sessions refuses archived ones
+        if (record.get("spawnedFrom") or {}).get("sessionId") and not record.get("lineageDetached"):
+            continue  # a session started from another shows in its parent's section and can't move alone
         if sid in source_wins:
             want = src_filing.get(sid)
         else:

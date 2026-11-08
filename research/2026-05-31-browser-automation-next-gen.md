@@ -247,13 +247,12 @@ Result: migrate to `chrome-default`; preserve TOTP broker.
 Paths:
 
 ```text
-/Users/jasonkuhrt/projects/jasonkuhrt/cra/cra
 /Users/jasonkuhrt/projects/jasonkuhrt/rq/gov
 ```
 
 Source facts:
 
-- `/Users/jasonkuhrt/projects/jasonkuhrt/cra/cra:4` describes CRA automation through `dev-browser --connect` with real Chrome preferred for SSO redirects/eToken/2FA.
+- The standalone CRA skeleton was retired to Trash on 2026-11-07. CRA mail capture now belongs to `~/projects/jasonkuhrt/rq/browser-agent/adapters/cra/`; sign-in belongs to `~/me/code/scripts/meos-gov-sign-in.ts`.
 - `/Users/jasonkuhrt/projects/jasonkuhrt/rq/gov:4` covers RQ/HQ/SAAQ/CRA flows.
 - `/Users/jasonkuhrt/projects/jasonkuhrt/rq/gov:86` defaults `GOV_BROWSER_MODE=managed`.
 - `/Users/jasonkuhrt/projects/jasonkuhrt/rq/gov:112` supports managed/connect modes and bootstraps `chrome-debug` in connect mode.
@@ -888,7 +887,6 @@ Local:
 - `/Users/jasonkuhrt/projects/jasonkuhrt/claude-chrome-allow/bin/cli.ts`
 - `/Users/jasonkuhrt/projects/jasonkuhrt/td/td`
 - `/Users/jasonkuhrt/projects/jasonkuhrt/rippling/rippling`
-- `/Users/jasonkuhrt/projects/jasonkuhrt/cra/cra`
 - `/Users/jasonkuhrt/projects/jasonkuhrt/rq/gov`
 - `/Users/jasonkuhrt/projects/jasonkuhrt/acc/src/dev-browser.ts`
 - `/Users/jasonkuhrt/projects/jasonkuhrt/classifieds/src/browser.ts`

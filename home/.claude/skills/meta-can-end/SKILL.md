@@ -24,6 +24,11 @@ Reread the user's requests, accepted decisions and compaction summary. Refresh t
 
 Use the host's current tools. A detached top-level session belongs to the user and does not depend on this one.
 
+Every row in the reply is work this session would do, or a decision this session needs from the user. Something only the user or another tool can do (a payment made in another agent, a sign-in this session can't make) or a reply someone else owes gets no row and no mention. It is neither a reason to continue nor something to defer, because this session does nothing about it either way.
+
+- Bad: a first row "November rent | Still unpaid… You do this step in Codex", in a reply that recommends continuing, from a session that can't sign in to the bank. Jason, 2026-11-07: "how can u propose keeping this session open when u literally won't fucking do this … u literally have no right putting this row here".
+- Good: the table holds only the digest-skill fix and the rippling port, which this session would do, and the Codex-handoff decision it needs from Jason.
+
 An upstream PR or issue waiting on its maintainers' feedback is generally no reason to keep the session open. Until a maintainer writes, nothing is owed. Their review reaches the user, who is the post's author, through the forge's notifications, and any later session can make the fixes from the PR's branch. What still counts is work owed now: a review comment not yet answered, a failing check, or a fix the session promised. Context needed to answer a future review goes on the PR or the relevant Linear issue, not into keeping the chat open. A wait with nothing owed gets no row in the reply's table.
 
 - Bad: "Continue: alchemy-run/alchemy#2771 and #3082 still await maintainer review", for two green upstream PRs with no comment from a maintainer.

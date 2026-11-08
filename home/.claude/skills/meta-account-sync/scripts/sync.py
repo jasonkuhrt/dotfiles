@@ -6,7 +6,8 @@ filing) per account/org scope, and one set of session presets per account.
 This makes the current scope match the scope used most recently before it:
 per session, the newer record wins, and the filing of whichever scope's
 record won comes with it. Presets match by name and the source's wins; the
-source's built-in defaults for new sessions replace the current ones.
+source's built-in defaults for new sessions replace the current ones. Scheduled
+tasks match by id, and the more recent state wins.
 
   sync.py plan [--from <uuid>]   print what differs, as JSON
   sync.py copy [--from <uuid>]   copy the winning records in, back up what they
@@ -14,12 +15,15 @@ source's built-in defaults for new sessions replace the current ones.
                                  an at-quit waiter
   sync.py at-quit --scope <account/org> --from <account/org>
                                  wait for the app to quit, write the presets
-                                 into its localStorage, reopen it
+                                 into its localStorage and the scheduled
+                                 tasks into their file, reopen it
 
 Sections and filing are only computed here. The app's ccd_sidebar tools apply
 them: the window owns that state, and the config file is its mirror. Presets
 live in the app's localStorage, which a running app holds locked and rewrites
-its presets file from, so only a closed app takes them.
+its presets file from, so only a closed app takes them. The app keeps its
+scheduled tasks in memory and writes their file on every change, so those too
+are written only once it has quit.
 """
 
 import argparse
@@ -37,6 +41,7 @@ import localstorage
 APP = Path.home() / "Library/Application Support/Claude"
 RECORDS = APP / "claude-code-sessions"
 CONFIG = APP / "claude_desktop_config.json"
+TASKS = "scheduled-tasks.json"
 PRESETS_KEY = "persisted.ccd-session-presets.{}"
 BACKUPS = Path.home() / ".local/state/meta-account-sync"
 WAITER = BACKUPS / "at-quit.pid"
@@ -176,6 +181,42 @@ def presets(current, source):
                     "builtIns": built_ins != tgt_state.get("builtIns", {})}
 
 
+def load_tasks(scope):
+    try:
+        return json.loads((RECORDS / scope / TASKS).read_text())
+    except (OSError, json.JSONDecodeError):
+        return {"scheduledTasks": []}
+
+
+def recency(task):
+    """How recent a task's state is: its last run, else its creation."""
+    return task.get("lastRunAt") or "", task.get("createdAt") or 0
+
+
+def scheduled(current, source):
+    """The current scope's scheduled tasks after taking the source's, and what changes.
+
+    The app runs only the signed-in account's tasks, so a task follows Jason
+    from account to account. Per id, the more recent state wins: a one-time
+    task that already ran doesn't fire again, and a routine's missed runs
+    aren't caught up twice. Tasks only the target has stay, and so does the
+    rest of the target's file (the app's own flags).
+    """
+    src, tgt = load_tasks(source), load_tasks(current)
+    merged = {t["id"]: t for t in tgt.get("scheduledTasks", [])}
+    added, changed = [], []
+    for task in src.get("scheduledTasks", []):
+        mine = merged.get(task["id"])
+        if mine is None:
+            added.append(task["id"])
+        elif mine != task and recency(task) >= recency(mine):
+            changed.append(task["id"])
+        else:
+            continue
+        merged[task["id"]] = task
+    return {**tgt, "scheduledTasks": list(merged.values())}, {"add": added, "change": changed}
+
+
 def plan(current, source):
     src_records, tgt_records = load_records(source), load_records(current)
     host = os.environ.get("CLAUDE_CODE_HOST_SESSION_ID")
@@ -223,6 +264,7 @@ def plan(current, source):
     indexed = set(json.loads(index.read_text())["archived"]) if index.exists() else set()
     archived = {sid for sid, rec in tgt_records.items() if rec.get("isArchived")}
     changes = presets(current, source)[1]
+    tasks = scheduled(current, source)[1]
 
     return {
         "current": current,
@@ -231,6 +273,7 @@ def plan(current, source):
                      "archived": bool(src_records[sid].get("isArchived")),
                      "replaces": sid in tgt_records} for sid in copy],
         "presets": [] if not any(changes.values()) else changes,
+        "scheduled": [] if not any(tasks.values()) else tasks,
         "archive_index_ok": indexed == archived,
         "sections": {"source": src_names, "target": tgt_names, "ops": ops},
         "views": views,
@@ -265,6 +308,7 @@ def copy(current, source):
 
     return {"copied": len(report["records"]),
             "presets": report["presets"],
+            "scheduled": report["scheduled"],
             "backup": str(backup) if backup.exists() else None,
             "archived_indexed": len(archived),
             "at_quit": wait_for_quit(current, source)}
@@ -296,7 +340,7 @@ def app_running():
 
 
 def at_quit(current, source):
-    """Once the app has quit, write the source's presets into its localStorage and reopen it."""
+    """Once the app has quit, write the source's presets and scheduled tasks, then reopen it."""
     say = lambda *parts: print(time.strftime("%Y-%m-%dT%H:%M:%S"), current, *parts, flush=True)
     say("waiting for the app to quit, source", source)
     try:
@@ -307,6 +351,7 @@ def at_quit(current, source):
                     return say("gave up: the app did not quit within 12 hours")
                 time.sleep(0.5)
             if write_presets(current, source, say):
+                write_scheduled(current, source, say)
                 break
             say("the app reopened before its database was free; waiting for the next quit")
         subprocess.run(["open", "-a", "Claude"])
@@ -334,6 +379,23 @@ def write_presets(current, source, say):
             if app_running():
                 return False
             time.sleep(0.2)  # the app's last process is still closing the database
+
+
+def write_scheduled(current, source, say):
+    """Write the merged scheduled tasks into a closed app's file, backing up the old one."""
+    stored, changes = scheduled(current, source)
+    if not any(changes.values()):
+        return say("scheduled tasks already match")
+    path = RECORDS / current / TASKS
+    if path.exists():
+        backup = BACKUPS / time.strftime("%Y%m%dT%H%M%S") / current
+        backup.mkdir(parents=True, exist_ok=True)
+        (backup / TASKS).write_bytes(path.read_bytes())
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(stored, ensure_ascii=False, indent=2))
+    tmp.chmod(0o600)
+    tmp.replace(path)
+    say("wrote scheduled tasks", json.dumps(changes))
 
 
 def main():

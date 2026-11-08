@@ -1,6 +1,6 @@
 ---
 name: meta-account-sync
-description: Use when Jason invokes meta-account-sync (formerly meta-sidebar-restore), asks to sync, restore or fix his Claude setup after switching Claude accounts or orgs, or says sessions, sidebar sections or groups, session presets, new-session defaults or cloud environments are missing or stale after a switch. Makes this account's sidebar, presets and cloud environments match the account he used last, with no screenshot or input from him.
+description: Use when Jason invokes meta-account-sync (formerly meta-sidebar-restore), asks to sync, restore or fix his Claude setup after switching Claude accounts or orgs, or says sessions, sidebar sections or groups, session presets, new-session defaults, scheduled tasks or cloud environments are missing or stale after a switch. Makes this account's sidebar, presets, scheduled tasks and cloud environments match the account he used last, with no screenshot or input from him.
 ---
 
 # Account sync
@@ -14,6 +14,7 @@ skill makes it match the account just left. Ask nothing: invoking it is the go.
 | --- | --- | --- |
 | Session records, sidebar sections and filing | per account/org, in the desktop app | `scripts/sync.py` |
 | Session presets, built-in new-session defaults | per account, in the desktop app | `scripts/sync.py` |
+| Scheduled tasks | per account/org, in the desktop app | `scripts/sync.py` |
 | Cloud environments | per org, on Anthropic's servers | `scripts/cloud.py` |
 
 The source is the other account whose session records were written last.
@@ -32,10 +33,10 @@ screenshot.
      Make approving them part of the turn's ask (step 3).
    - `only_here` environments stay. Name them in the close.
 2. Run `python3 ~/.claude/skills/meta-account-sync/scripts/sync.py plan`.
-3. If `records` or `presets` is not empty, run the same script with `copy`.
+3. If `records`, `presets` or `scheduled` is not empty, run the same script with `copy`.
    The app reads records only at launch, and `move_sessions` fails on a
-   session it hasn't loaded. It takes presets only while it is closed, so
-   `copy` also leaves a waiter that writes them once the app quits, then
+   session it hasn't loaded. It takes presets and scheduled tasks only while it
+   is closed, so `copy` also leaves a waiter that writes them once the app quits, then
    reopens the app (its log is `~/.local/state/meta-account-sync/at-quit.log`).
    So end the turn with `wrap_up`: the recap says what came over, the ask is
    to quit the app with Cmd+Q (it reopens by itself), and one button,
@@ -44,7 +45,7 @@ screenshot.
    approve the sign-in page, and one button, "Signed in", sends "Signed in,
    finish the account sync". After either, close the sign-in tabs and start
    again at step 1, so `copy` runs again.
-4. With `records` and `presets` empty, apply the rest through the
+4. With `records`, `presets` and `scheduled` empty, apply the rest through the
    `ccd_sidebar` tools, mapping names to ids with `list_sections`:
    - `sections.ops`, in order: `rename` with `rename_section`, `delete` with
      `delete_section`, `create` with `create_section`. Invoking this skill is
@@ -52,7 +53,7 @@ screenshot.
    - `views`: `set_view` with the section's id and `sort_by`.
    - `moves`: `move_sessions` per key, with that section's id, or `"sessions"`
      for the key `""` (ungrouped); at most 100 ids per call.
-5. Run `plan` again. It must show no `records`, `presets`, `ops`, `views` or
+5. Run `plan` again. It must show no `records`, `presets`, `scheduled`, `ops`, `views` or
    `moves`, and `archive_index_ok` true. Anything left is a bug in the
    script: fix it and repeat.
 6. Close with what the sidebar holds now, section by section, active
@@ -114,5 +115,16 @@ screenshot.
   `/v1/environment_providers/private/…` routes refuse OAuth tokens.
 - Environment variables and setup scripts are copied server to server and
   never printed.
-- Not synced, by design: routines (a copy would run on every account) and
-  claude.ai connectors (each is its own sign-in).
+- Scheduled tasks are listed in each scope's `scheduled-tasks.json`; their
+  prompts are `~/.claude/scheduled-tasks/<id>/SKILL.md`, shared by every
+  account. The app runs only the signed-in account's tasks, so a copied task
+  runs once, wherever Jason is signed in. Per id the more recent state wins
+  (last run, else creation), so a one-time task that ran doesn't fire again,
+  and one the source never ran fires at the next launch here. The app holds
+  them in memory and rewrites the file on every change, so the waiter writes
+  it once the app has quit.
+- Never bring a missing task back with `create_scheduled_task`: it refuses an
+  id whose folder exists and offers `<id>-2`, which then runs beside the
+  original once a sync brings that over. Nov 8, after a switch dropped the
+  morning digest: `daily-digest-2` would have doubled it.
+- Not synced, by design: claude.ai connectors (each is its own sign-in).

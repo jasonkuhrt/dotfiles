@@ -418,6 +418,14 @@ Jason, 2026-11-07, of ast-grep: "i wont remember, so we have to make agents educ
   * Bad: `sd 'loadYaml\(' 'parseYaml(' $(rg -l loadYaml)`, which also rewrites comments and strings.
   * Good: `ast-grep run -l ts -p 'loadYaml($A)' -r 'parseYaml($A)' -U .`, then the type check.
 
+## TypeScript compiler
+
+Jason, 2026-11-07: "tsrs must be fucking used, perf matters", then "on my entire fucking machine, i ban tsc do u fucking get me? and tsgo".
+
+* Type checks and type-aware lint run on tsrs, in every project on this machine, never on `tsc`, `tsgo` or `oxlint-tsgolint`. A project depends on `tsrs`, not `typescript`; tsrs's `tsrs/sync`, `tsrs/async` and `tsrs/ast` exports cover the compiler API, and its `tsrs-lint` is the backend oxlint picks for type-aware rules. An Effect project runs Effect's build, swapped in by `effect-tsgo patch --typescript=false --tsrs`.
+  * Bad: `"check:types": "tsc --noEmit"`, with `typescript` and `oxlint-tsgolint` in devDependencies.
+  * Good: `"check:types": "tsrs --noEmit --fast"`, with `tsrs` installed and `oxlint --type-aware` running on `tsrs-lint`, as every MeOS workspace package does (`~/me/code/config`).
+
 ## Browser work
 
 Jason, 2026-11-07, after a session reached for Claude in Chrome, found it disconnected, and told him to reinstall it: "u should be using opencode browse shouldn't you?"

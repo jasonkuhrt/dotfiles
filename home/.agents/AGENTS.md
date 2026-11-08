@@ -338,8 +338,20 @@ For architecture and design brainstorming:
 * Never present speculation, opinion, or unverified claims as facts. Hedge with "likely", "probably", "needs verification", or omit. This applies to docs, brainstorms, and conversation.
 * A claim about what a library, platform or tool does comes from, in order: its matching local skill, its official source and docs cloned at `~/repo-references/<name>/` at the version in use (clone it if missing), then the web. Exports, signatures and JSDoc are read, never guessed. When none of them settles it, halt and propose creating local docs; never proceed on partial knowledge.
 * Check dotfiles, codebase configs, Brewfile before asking the user questions.
+* A named tool is checked by its literal name before substituting a near-name match. Bad: answering a `react-doctor` question from `react-compiler-doctor`'s source. Good: find the exact tool and read its actual config and command.
 
 ## Memory
+
+Instruction quality is signal, not length. A skill earns its overhead only when
+it changes a likely wrong decision with a real consequence; generic knowledge,
+jagged incident-specific lenses and obsolete fallback tables fail that test.
+Library behavior belongs beside its owner, and decidable constraints belong in
+lint or its backlog. Check existing lint, language-service policy and shipped
+agent docs before retaining prose that repeats them. Prune repeated meaning;
+never trim or split merely to reach a word count.
+
+* Bad (2026-09-18): a skill restating effect-prisma behavior and fragile source citations.
+* Good: the library's README owns that behavior; the skill keeps only the useful decision it must change.
 
 * A rule that the team or another agent (Codex) also needs is never a memory. It goes, in the same turn, into the rules everyone reads: the project's `AGENTS.md` or a file it points to (`agent-context/<developer>.md` for one developer), a skill (edited or created), or this file for my rules across projects. A memory holds only what no other person or agent needs. Jason, 2026-11-08, after incident rules went into Claude's memory: "any memory that would need to be used by the team or by codex too is not a fucking memory its a fucking new project rule and/or skill edit/creation".
   * Bad: "Both rules are saved as memories: incident fixes go straight to CI, and a vendor ticket only asks for what we can't read ourselves."

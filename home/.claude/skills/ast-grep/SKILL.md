@@ -20,6 +20,13 @@ more.
 rg stays the tool for text: messages, config keys, prose, filenames, and
 anything that isn't code.
 
+For that text search, line numbers are `rg -n`, never `rg -rn`: `-r` replaces
+matched text in the output. An empty pattern or stray `r` flag is a typo to
+remove before running. Use `-r` only deliberately with `-o` for capture
+extraction, and `--no-filename` when several inputs must yield bare matches.
+Before declaring a path or script broken from search output, read the actual
+file; transformed output is not source evidence.
+
 ## Commands
 
 ```sh

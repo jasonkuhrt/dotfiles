@@ -5,10 +5,12 @@
 # msgvault never schedules extraction, so the LaunchAgent
 # com.jasonkuhrt.msgvault.documents runs this at 01:00, 02:00, 03:00 and
 # 04:00. A run with no document waiting reads msgvault's status and exits
-# without starting Docling. Otherwise it starts Docling Serve on loopback,
-# extracts at most MSGVAULT_DOCUMENTS_LIMIT documents (100 by default),
-# retries any that are due, and stops Docling, so its ~1.2 GB stays free
-# between runs.
+# without starting Docling. Otherwise it runs again under docling-serve-lease,
+# which starts Docling Serve on loopback unless it already answers, extracts
+# at most MSGVAULT_DOCUMENTS_LIMIT documents (100 by default), retries any
+# that are due, and lets the lease go. The server stops after its last lease,
+# so its ~1.2 GB stays free between runs, and MeOS's document text pass can
+# share it without either stopping it under the other.
 #
 # Why at night: msgvault runs a CLI build while holding its daemon's
 # operation gate for the whole run, and every scheduled sync waits behind it
@@ -18,9 +20,6 @@ set -euo pipefail
 
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 BIN="$HOME/.local/bin/msgvault"
-DOCLING="$HOME/.local/bin/docling-serve"
-STATE="$HOME/.local/state/docling-serve"
-PORT=5001
 LIMIT="${MSGVAULT_DOCUMENTS_LIMIT:-100}"
 
 log() { echo "$(date '+%Y-%m-%dT%H:%M:%S%z') msgvault-documents-build: $*"; }
@@ -32,21 +31,8 @@ if [ "$missing" -eq 0 ] && [ "$retrying" -eq 0 ]; then
   exit 0
 fi
 
-mkdir -p "$STATE"
-if curl -sf "http://127.0.0.1:$PORT/health" >/dev/null; then
-  log "Docling Serve is already answering on port $PORT; using it"
-else
-  (cd "$STATE" && exec "$DOCLING" run --host 127.0.0.1 --port "$PORT") \
-    >>"$STATE/serve.log" 2>&1 &
-  docling=$!
-  trap 'kill "$docling" 2>/dev/null; wait "$docling" 2>/dev/null || true' EXIT
-  for _ in $(seq 1 150); do
-    curl -sf "http://127.0.0.1:$PORT/health" >/dev/null && break
-    kill -0 "$docling" 2>/dev/null || { log "Docling Serve exited at startup; see $STATE/serve.log"; exit 1; }
-    sleep 2
-  done
-  curl -sf "http://127.0.0.1:$PORT/health" >/dev/null ||
-    { log "Docling Serve didn't answer within 5 minutes"; exit 1; }
+if [ -z "${DOCLING_SERVE_LEASED:-}" ]; then
+  DOCLING_SERVE_LEASED=1 exec "$HOME/.local/bin/docling-serve-lease" "$0" "$@"
 fi
 
 log "$missing missing, $retrying retrying; extracting at most $LIMIT"

@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+# docling-serve-lease: run a command while Docling Serve answers on
+# 127.0.0.1:5001, sharing one server among every caller.
+#
+#   docling-serve-lease <command...>
+#
+# Docling Serve holds about 1.2 GB while it runs, so it runs only while
+# someone needs it. msgvault's nightly extraction (msgvault-documents-build)
+# and MeOS's document text pass (meos-documents text) both use it, at times
+# that can overlap. Each caller takes a lease: the first starts the server,
+# the last to finish stops it, and no caller stops it under another. A server
+# this helper didn't start (one already answering when a lease began) is never
+# stopped.
+#
+# State in ~/.local/state/docling-serve: serve.log (the server's output),
+# server.pid (the server this helper started), leases/<pid> (one per running
+# caller), and lease.lock (a mkdir lock held while leases change, recovered
+# when the process holding it is gone).
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+DOCLING="${DOCLING_SERVE_BIN:-$HOME/.local/bin/docling-serve}"
+STATE="${DOCLING_SERVE_STATE:-$HOME/.local/state/docling-serve}"
+PORT="${DOCLING_SERVE_PORT:-5001}"
+LOCK="$STATE/lease.lock"
+LEASES="$STATE/leases"
+SERVER_PID="$STATE/server.pid"
+
+if [ "$#" -eq 0 ]; then
+  echo "usage: docling-serve-lease <command...>" >&2
+  exit 2
+fi
+
+log() { echo "$(date '+%Y-%m-%dT%H:%M:%S%z') docling-serve-lease[$$]: $*" >&2; }
+healthy() { curl -sf -m 5 "http://127.0.0.1:$PORT/health" >/dev/null; }
+alive() { kill -0 "$1" 2>/dev/null; }
+
+# Take the mkdir lock. A lock whose holder is gone (killed while holding it)
+# is removed and taken.
+lock() {
+  until mkdir "$LOCK" 2>/dev/null; do
+    holder=$(cat "$LOCK/pid" 2>/dev/null || true)
+    if [ -n "$holder" ] && ! alive "$holder"; then
+      log "removing the lock left by $holder, which is gone"
+      rm -rf "$LOCK"
+      continue
+    fi
+    sleep 0.2
+  done
+  echo "$$" >"$LOCK/pid"
+}
+unlock() { rm -rf "$LOCK"; }
+
+# Drop the leases of callers that are gone.
+prune() {
+  for lease in "$LEASES"/*; do
+    [ -e "$lease" ] || continue
+    alive "$(basename "$lease")" || rm -f "$lease"
+  done
+}
+
+# Stop the server this helper started, if one is recorded and still running.
+stop_server() {
+  [ -f "$SERVER_PID" ] || return 0
+  pid=$(cat "$SERVER_PID")
+  rm -f "$SERVER_PID"
+  alive "$pid" || return 0
+  log "stopping Docling Serve ($pid): no lease remains"
+  kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+  for _ in $(seq 1 50); do
+    alive "$pid" || return 0
+    sleep 0.2
+  done
+  kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+}
+
+release() {
+  status=$?
+  lock
+  rm -f "$LEASES/$$"
+  prune
+  if [ -z "$(ls -A "$LEASES")" ]; then stop_server; fi
+  unlock
+  exit "$status"
+}
+
+mkdir -p "$STATE" "$LEASES"
+lock
+prune
+if ! healthy; then
+  if [ -f "$SERVER_PID" ] && alive "$(cat "$SERVER_PID")"; then
+    log "waiting for the Docling Serve already starting ($(cat "$SERVER_PID"))"
+  else
+    rm -f "$SERVER_PID"
+    log "starting Docling Serve on 127.0.0.1:$PORT; its log is $STATE/serve.log"
+    # Job control gives the server its own process group, so it outlives this
+    # caller's group (a launchd job's, or a terminal's Ctrl-C) and serves the
+    # next lease; release() stops it after the last one.
+    set -m
+    (cd "$STATE" && exec "$DOCLING" run --host 127.0.0.1 --port "$PORT") \
+      >>"$STATE/serve.log" 2>&1 &
+    echo "$!" >"$SERVER_PID"
+    set +m
+  fi
+  for _ in $(seq 1 150); do
+    healthy && break
+    if ! alive "$(cat "$SERVER_PID")"; then
+      log "Docling Serve exited at startup; see $STATE/serve.log"
+      rm -f "$SERVER_PID"
+      unlock
+      exit 1
+    fi
+    sleep 2
+  done
+  if ! healthy; then
+    log "Docling Serve didn't answer within 5 minutes; see $STATE/serve.log"
+    if [ -z "$(ls -A "$LEASES")" ]; then stop_server; fi
+    unlock
+    exit 1
+  fi
+fi
+touch "$LEASES/$$"
+unlock
+trap release EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+"$@"

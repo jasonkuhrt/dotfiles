@@ -33,9 +33,12 @@ screenshot.
    - `only_here` environments stay. Name them in the close.
 2. Run `python3 ~/.claude/skills/meta-account-sync/scripts/sync.py plan`.
 3. If `records` or `presets` is not empty, run the same script with `copy`.
-   The app reads both only at launch, and `move_sessions` fails on a session
-   it hasn't loaded. So end the turn with `wrap_up`: the recap says what came
-   over, the ask is to quit the app with Cmd+Q and reopen it, and one button,
+   The app reads records only at launch, and `move_sessions` fails on a
+   session it hasn't loaded. It takes presets only while it is closed, so
+   `copy` also leaves a waiter that writes them once the app quits, then
+   reopens the app (its log is `~/.local/state/meta-account-sync/at-quit.log`).
+   So end the turn with `wrap_up`: the recap says what came over, the ask is
+   to quit the app with Cmd+Q (it reopens by itself), and one button,
    "Restarted", sends "Restarted, finish the account sync". With no restart
    needed but a `dead_login` left, end the turn the same way: the ask is to
    approve the sign-in page, and one button, "Signed in", sends "Signed in,
@@ -60,7 +63,8 @@ screenshot.
 
 - Records live in `~/Library/Application Support/Claude/claude-code-sessions/<account>/<org>/`,
   beside `archived-sessions.idx`, which `copy` rebuilds to match them.
-  Replaced records and presets are backed up under `~/.local/state/meta-account-sync/`.
+  Replaced records, and the app's localStorage before a presets write, are
+  backed up under `~/.local/state/meta-account-sync/`.
 - Sections and filing are owned by the app window. The config file's
   `preferences.epitaxyPrefs` (`dframe-code-sections`, `dframe-group-scopes`)
   is its mirror: `plan` reads it, nothing writes it.
@@ -72,9 +76,17 @@ screenshot.
   Routines section, which Jason keeps switched off.
 - Conversations (`~/.claude/projects/**/<cliSessionId>.jsonl`) are shared by
   every account; only the records, the sidebar and the presets are per account.
-- Presets are `ccd-session-presets.json`'s `byAccount`. A preset matches by
-  name, the source's place and settings win, and the source's `builtIns`
-  (model, effort and worktree for a new session) replace this account's.
+- Presets live in the app's localStorage (`Local Storage/leveldb`, origin
+  `https://claude.ai`), under `persisted.ccd-session-presets.<account>`. At
+  launch the app rewrites `ccd-session-presets.json`'s `byAccount` from it and
+  never reads that file back, so a write to the file is lost (Nov 8). A
+  running app holds the leveldb's lock, so the waiter writes once it has quit:
+  one record appended to the leveldb's log (`scripts/localstorage.py`), which
+  the next launch replays.
+- A preset matches by name, the source's place and settings win, and the
+  source's `builtIns` (model, effort and worktree for a new session) replace
+  this account's. The rest of this account's preset state (recent places)
+  stays.
 - Cloud environments are reached through each account's Claude Code login:
   `~/.claude-N` and its keychain item, `Claude Code-credentials-` plus the
   first 8 hex of the dir path's SHA-256. A token reaches only its own org,

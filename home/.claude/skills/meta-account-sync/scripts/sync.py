@@ -9,25 +9,38 @@ record won comes with it. Presets match by name and the source's wins; the
 source's built-in defaults for new sessions replace the current ones.
 
   sync.py plan [--from <uuid>]   print what differs, as JSON
-  sync.py copy [--from <uuid>]   copy the winning records and presets in, back
-                                 up what they replace, rebuild the archive index
+  sync.py copy [--from <uuid>]   copy the winning records in, back up what they
+                                 replace, rebuild the archive index, and leave
+                                 an at-quit waiter
+  sync.py at-quit --scope <account/org> --from <account/org>
+                                 wait for the app to quit, write the presets
+                                 into its localStorage, reopen it
 
 Sections and filing are only computed here. The app's ccd_sidebar tools apply
-them: the window owns that state, and the config file is its mirror.
+them: the window owns that state, and the config file is its mirror. Presets
+live in the app's localStorage, which a running app holds locked and rewrites
+its presets file from, so only a closed app takes them.
 """
 
 import argparse
 import json
 import os
+import shutil
+import signal
+import subprocess
 import sys
 import time
 from pathlib import Path
 
+import localstorage
+
 APP = Path.home() / "Library/Application Support/Claude"
 RECORDS = APP / "claude-code-sessions"
 CONFIG = APP / "claude_desktop_config.json"
-PRESETS = APP / "ccd-session-presets.json"
+PRESETS_KEY = "persisted.ccd-session-presets.{}"
 BACKUPS = Path.home() / ".local/state/meta-account-sync"
+WAITER = BACKUPS / "at-quit.pid"
+APP_BINARY = "/Claude.app/Contents/MacOS/Claude"
 # Fields from the other account's quota state, such as a weekly-limit banner.
 STALE_KEYS = ("error", "errorAt", "errorRows")
 
@@ -120,22 +133,30 @@ def section_ops(src, tgt, src_filing, tgt_filing):
     return ops, {t: s for t, s in renamed.items() if s not in rebuilt}, set(deleted)
 
 
+def stored_presets(account):
+    """An account's presets as the app stores them: {"state": {...}, "version": n}."""
+    raw = localstorage.read(PRESETS_KEY.format(account))
+    return json.loads(raw) if raw else None
+
+
 def presets(current, source):
-    """The current account's presets entry after taking the source's, and what changes.
+    """The current account's stored presets after taking the source's, and what changes.
 
     A preset is matched by name. The source's place and settings win; the
-    target keeps its own id and use times. Presets only the target has stay.
+    target keeps its own id and use times. Presets only the target has stay,
+    and so does the rest of the target's state (its recent places).
     """
-    data = json.loads(PRESETS.read_text()) if PRESETS.exists() else {"byAccount": {}}
     src_account, tgt_account = source.split("/")[0], current.split("/")[0]
-    tgt = data["byAccount"].get(tgt_account, {})
-    if src_account == tgt_account:
-        return data, tgt, {"add": [], "change": [], "builtIns": False}
-    src = data["byAccount"].get(src_account, {})
-    merged = [dict(p) for p in tgt.get("presets", [])]
+    none = {"add": [], "change": [], "builtIns": False}
+    src = stored_presets(src_account) if src_account != tgt_account else None
+    if src is None:
+        return None, none
+    tgt = stored_presets(tgt_account) or {"state": {"presets": []}, "version": src.get("version")}
+    src_state, tgt_state = src["state"], tgt["state"]
+    merged = [dict(p) for p in tgt_state.get("presets", [])]
     by_name = {p["name"]: p for p in merged}
     added, changed = [], []
-    for p in src.get("presets", []):
+    for p in src_state.get("presets", []):
         mine = by_name.get(p["name"])
         if mine is None:
             merged.append(dict(p))
@@ -143,10 +164,10 @@ def presets(current, source):
         elif (mine.get("target"), mine.get("settings")) != (p.get("target"), p.get("settings")):
             mine.update(target=p.get("target"), settings=p.get("settings"))
             changed.append(p["name"])
-    built_ins = src.get("builtIns") or tgt.get("builtIns", {})
-    result = {**tgt, "presets": merged, "builtIns": built_ins}
-    return data, result, {"add": added, "change": changed,
-                          "builtIns": built_ins != tgt.get("builtIns", {})}
+    built_ins = src_state.get("builtIns") or tgt_state.get("builtIns", {})
+    result = {**tgt, "state": {**tgt_state, "presets": merged, "builtIns": built_ins}}
+    return result, {"add": added, "change": changed,
+                    "builtIns": built_ins != tgt_state.get("builtIns", {})}
 
 
 def plan(current, source):
@@ -193,7 +214,7 @@ def plan(current, source):
     index = RECORDS / current / "archived-sessions.idx"
     indexed = set(json.loads(index.read_text())["archived"]) if index.exists() else set()
     archived = {sid for sid, rec in tgt_records.items() if rec.get("isArchived")}
-    changes = presets(current, source)[2]
+    changes = presets(current, source)[1]
 
     return {
         "current": current,
@@ -234,28 +255,89 @@ def copy(current, source):
     tmp.chmod(0o600)
     tmp.replace(index)
 
-    if report["presets"]:
-        data, entry, _ = presets(current, source)
-        backup.mkdir(parents=True, exist_ok=True)
-        (backup / PRESETS.name).write_bytes(PRESETS.read_bytes())
-        data["byAccount"][current.split("/")[0]] = entry
-        tmp = PRESETS.with_suffix(".json.tmp")
-        tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1))
-        tmp.chmod(0o600)
-        tmp.replace(PRESETS)
     return {"copied": len(report["records"]),
             "presets": report["presets"],
             "backup": str(backup) if backup.exists() else None,
-            "archived_indexed": len(archived)}
+            "archived_indexed": len(archived),
+            "at_quit": wait_for_quit(current, source)}
+
+
+def wait_for_quit(current, source):
+    """Start the at-quit waiter, in place of any earlier one, and return its pid."""
+    BACKUPS.mkdir(parents=True, exist_ok=True)
+    try:
+        old = int(WAITER.read_text())
+        command = subprocess.run(["ps", "-o", "command=", "-p", str(old)],
+                                 capture_output=True, text=True).stdout
+        if "at-quit" in command:
+            os.kill(old, signal.SIGTERM)
+    except (OSError, ValueError):
+        pass
+    with open(BACKUPS / "at-quit.log", "a") as log:
+        waiter = subprocess.Popen(
+            [sys.executable, __file__, "at-quit", "--scope", current, "--from", source],
+            stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
+            start_new_session=True)  # outlives this session when the app quits
+    WAITER.write_text(str(waiter.pid))
+    return waiter.pid
+
+
+def app_running():
+    out = subprocess.run(["ps", "-axo", "comm="], capture_output=True, text=True).stdout
+    return any(line.endswith(APP_BINARY) for line in out.splitlines())
+
+
+def at_quit(current, source):
+    """Once the app has quit, write the source's presets into its localStorage and reopen it."""
+    say = lambda *parts: print(time.strftime("%Y-%m-%dT%H:%M:%S"), current, *parts, flush=True)
+    say("waiting for the app to quit, source", source)
+    try:
+        deadline = time.time() + 12 * 3600
+        while True:
+            while app_running():
+                if time.time() > deadline:
+                    return say("gave up: the app did not quit within 12 hours")
+                time.sleep(0.5)
+            if write_presets(current, source, say):
+                break
+            say("the app reopened before its database was free; waiting for the next quit")
+        subprocess.run(["open", "-a", "Claude"])
+        say("reopened the app")
+    finally:
+        WAITER.unlink(missing_ok=True)
+
+
+def write_presets(current, source, say):
+    """Write the presets once the database is free; False if the app opens first."""
+    while True:
+        try:
+            with localstorage.closed():
+                stored, changes = presets(current, source)
+                if stored is not None and any(changes.values()):
+                    backup = BACKUPS / time.strftime("%Y%m%dT%H%M%S") / current / "leveldb"
+                    shutil.copytree(localstorage.DIR, backup)
+                    localstorage.put(PRESETS_KEY.format(current.split("/")[0]),
+                                     json.dumps(stored, ensure_ascii=False, separators=(",", ":")))
+                    say("wrote presets", json.dumps(changes), "backup", backup)
+                else:
+                    say("presets already match")
+            return True
+        except BlockingIOError:
+            if app_running():
+                return False
+            time.sleep(0.2)  # the app's last process is still closing the database
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("command", choices=["plan", "copy"])
+    parser.add_argument("command", choices=["plan", "copy", "at-quit"])
     parser.add_argument("--from", dest="source", help="uuid (or part) of the source account or org")
+    parser.add_argument("--scope", help="account/org to sync into (at-quit only)")
     args = parser.parse_args()
-    current = current_scope()
+    current = args.scope or current_scope()
     source = source_scope(current, args.source)
+    if args.command == "at-quit":
+        return at_quit(current, source)
     result = plan(current, source) if args.command == "plan" else copy(current, source)
     json.dump(result, sys.stdout, indent=2, ensure_ascii=False)
     print()

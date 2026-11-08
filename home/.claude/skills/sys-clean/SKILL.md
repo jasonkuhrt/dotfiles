@@ -12,7 +12,7 @@ freed. Each routine has its own owner and policy; this skill only composes them.
 ## The daily disk clean
 
 MeOS runs `meos-sys-clean` at 04:30 every day (launchd
-`com.jasonkuhrt.meos-sys-clean`, code in `~/me/code/lib/sys-clean/`). Its
+`com.jasonkuhrt.meos-sys-clean`, code in `~/me/.machinery/code/lib/sys-clean/`). Its
 policy lives in that code's `POLICY`; each step takes back only what its owner
 can rebuild or has already preserved:
 

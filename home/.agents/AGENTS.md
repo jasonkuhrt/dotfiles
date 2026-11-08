@@ -424,7 +424,7 @@ Jason, 2026-11-07: "tsrs must be fucking used, perf matters", then "on my entire
 
 * Type checks and type-aware lint run on tsrs, in every project on this machine, never on `tsc`, `tsgo` or `oxlint-tsgolint`. A project depends on `tsrs`, not `typescript`; tsrs's `tsrs/sync`, `tsrs/async` and `tsrs/ast` exports cover the compiler API, and its `tsrs-lint` is the backend oxlint picks for type-aware rules. An Effect project runs Effect's build, swapped in by `effect-tsgo patch --typescript=false --tsrs`.
   * Bad: `"check:types": "tsc --noEmit"`, with `typescript` and `oxlint-tsgolint` in devDependencies.
-  * Good: `"check:types": "tsrs --noEmit --fast"`, with `tsrs` installed and `oxlint --type-aware` running on `tsrs-lint`, as every MeOS workspace package does (`~/me/code/config`).
+  * Good: `"check:types": "tsrs --noEmit --fast"`, with `tsrs` installed and `oxlint --type-aware` running on `tsrs-lint`, as every MeOS workspace package does (`~/me/.machinery/code/config`).
 
 ## Browser work
 

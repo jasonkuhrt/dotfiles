@@ -71,8 +71,9 @@ assignment determines its role, not its harness.
    rebuilds that context from a brief and its own reads.
 5. **Steering.** Consider whether Jason or the lead will want to talk to
    the run while it works. A Claude app session is easiest to chat with;
-   a `codex exec` run takes replies through its `codex://` thread or stop
-   and resume; Jev takes none. Steering an unreachable run can cost a restart.
+   a `codex exec` run takes a correction only by being stopped and resumed,
+   because nothing reaches its turn while it runs; Jev takes none. Steering
+   an unreachable run can cost a restart.
    Jason, 2026-11-08: "sonnet or opus have benefit of being easier to chat
    with iiuc, so that's another tradeoff in the decision tree".
 6. **Checking the result.** Someone reviews what a worker returns. When
@@ -380,12 +381,15 @@ the worker's name, and `<effort>` is the calculated effort.
   branch you have no instructions for.
 - To correct a run, stop it and continue its session:
   `codex exec resume <session id> "<correction>"`, with the same flags and
-  redirects. A fresh `codex exec` starts from nothing.
+  redirects. A fresh `codex exec` starts from nothing. This is the only way to
+  correct a `codex exec` run: its app server lives inside the process, so no
+  message reaches its turn while it runs, and the process exits when the turn
+  ends. A correction that can wait for the run to end is a resume after it.
 
 Say in one line in the chat what each worker is doing. For `astra` and `sol`,
 the line ends with the run's link, `codex://threads/<session id>`, taking the
 session id from the log's head. The link opens the run in the Codex Desktop app,
-where the user can read it and reply to it, while it runs or after. Jason,
+where the user can read it while it runs and reply to it once it ends. Jason,
 2026-10-29, of sessions a Claude lead starts: "make codex session that are not
 blocked from me accessing".
 
@@ -394,8 +398,17 @@ blocked from me accessing".
   `codex://threads/01a189e6-d1ba-7772-9c62-5b95e6f36a98`." The user opens it,
   or asks the lead to, which runs `open "codex://threads/<session id>"`.
 
-To message a run that is still open, see `codex queue --thread <session id>
---message <text>`: it starts the thread's next turn when the thread is idle.
+`codex queue` never corrects a running worker. It stores the message and runs
+it as a new turn once the thread is idle (Codex 0.167.0,
+`ext/queue/src/service.rs:549`), and a `codex exec` run has exited by then,
+so nothing runs it. "Queued message …" means stored, not delivered. Its
+`--resume` flag loads the thread on another server and still waits for idle.
+
+- Bad (2026-11-08): a lead queued "rebase onto main" to a running Sol worker,
+  read "Queued message …" as delivered, and kept going. The worker finished
+  on the old base without seeing it.
+- Good: stop the run and `codex exec resume <session id> "rebase onto main"`,
+  as the bullet above says.
 
 ## The brief
 

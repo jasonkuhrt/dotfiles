@@ -3,15 +3,17 @@
 # with the local Docling Serve, a few at a time.
 #
 # msgvault never schedules extraction, so the LaunchAgent
-# com.jasonkuhrt.msgvault.documents runs this every 20 minutes. A run with no
-# document waiting reads msgvault's status and exits without starting Docling.
-# Otherwise it starts Docling Serve on loopback, extracts at most
-# MSGVAULT_DOCUMENTS_LIMIT documents (10 by default), retries any that are
-# due, and stops Docling, so its ~1.2 GB stays free between runs.
+# com.jasonkuhrt.msgvault.documents runs this at 01:00, 02:00, 03:00 and
+# 04:00. A run with no document waiting reads msgvault's status and exits
+# without starting Docling. Otherwise it starts Docling Serve on loopback,
+# extracts at most MSGVAULT_DOCUMENTS_LIMIT documents (100 by default),
+# retries any that are due, and stops Docling, so its ~1.2 GB stays free
+# between runs.
 #
-# The limit keeps each run short: msgvault runs a CLI build while holding its
-# daemon's operation gate, and scheduled syncs wait behind it. At ~13 s a
-# document a run holds it for about two minutes.
+# Why at night: msgvault runs a CLI build while holding its daemon's
+# operation gate for the whole run, and every scheduled sync waits behind it
+# (kenn-io/msgvault#1996). Ten documents held it for 6m22s on 2026-11-07,
+# long enough for a sign-in to miss an emailed code.
 set -euo pipefail
 
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
@@ -19,7 +21,7 @@ BIN="$HOME/.local/bin/msgvault"
 DOCLING="$HOME/.local/bin/docling-serve"
 STATE="$HOME/.local/state/docling-serve"
 PORT=5001
-LIMIT="${MSGVAULT_DOCUMENTS_LIMIT:-10}"
+LIMIT="${MSGVAULT_DOCUMENTS_LIMIT:-100}"
 
 log() { echo "$(date '+%Y-%m-%dT%H:%M:%S%z') msgvault-documents-build: $*"; }
 

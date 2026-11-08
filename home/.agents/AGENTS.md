@@ -386,6 +386,10 @@ Jason, 2026-11-07, after the move to 1Password: "are my rules clear about how ag
   * Bad: a reply that reports an `AGENTS.md` rule written and adds that the edit isn't committed, or that it's committed but not pushed.
   * Good: `git -C ~/projects/jasonkuhrt/dotfiles commit -m "…" -- home/.agents/AGENTS.md`, then `git -C ~/projects/jasonkuhrt/dotfiles push`, then a reply that names the commit.
   * When the push is rejected because `origin` moved, say so in the reply. Never stash, reset or rebase over another session's uncommitted edits to make it go through.
+* In MeOS's repositories (`~/me` and the repositories under `~/projects/jasonkuhrt` it runs), work lands on the default branch and is pushed. A branch or worktree exists only while a worker builds in it: once the lead has checked the work, it is merged into the default branch and pushed, and the branch and worktree are deleted in the same turn. Review and fixes happen on the default branch, never on a branch kept for them. Jason, 2026-11-08, after a bookmarks build waited on two branches for review: "it should not be on a branch, ensure all meos related repos do not have dumb lingering brnaches, merge all value, clean and done".
+  * Bad: `tsrs` and `reading-list` kept as branches in `~/projects/jasonkuhrt/bookmarks` while Sol reviewed them.
+  * Good: both fast-forwarded into `main` and pushed, their worktrees removed, and the review's fixes committed on `main`.
+  * Going live is a separate step from landing. Where a daemon runs from the checkout, stop it before landing and restart it once the live switch is done.
 
 ## Workflow Rules
 

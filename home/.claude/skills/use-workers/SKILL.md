@@ -141,6 +141,12 @@ token.
   A Codex lead may instead make the worker a peer thread (`dispatch-codex-peer`)
   when the user should watch or steer it in its own chat.
 
+Claude reviews dispatched from Codex follow the shared independent-review
+workflow in `~/.codex/skills/.shared/independent-review/workflow.md`: prefer
+an app-hosted session, otherwise an interactive CLI session opened in the app.
+Name them `Via Codex – <short title>`. This review-specific route takes
+precedence over the generic `claude -p` worker route above and below.
+
 ## Every worker stays reachable
 
 Jason, 2026-11-01, after the campaign's cloud units kept pushing and taking

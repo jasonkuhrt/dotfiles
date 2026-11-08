@@ -347,6 +347,17 @@ For architecture and design brainstorming:
 * All screenshots at `~/Pictures/Screenshots/`. "My latest screenshot" → check dir sorted by mtime.
 * Auto-move screenshots from root to `~/Pictures/Screenshots/claude/` before reading.
 
+## Claude reviews from Codex
+
+An independent Claude review dispatched by Codex is visible in the Claude app
+and named `Via Codex – <short title>`. Prefer the app's session tool; when it
+is unavailable, use the interactive CLI route documented by `opus-review` or
+`fable-review` and open the same session in the app. State which route ran.
+Do not use a terminal-workspace manager for agent work.
+
+* Bad: a review hidden in a terminal workspace, or named `Codex review · Opus 5.5 · Heartbeat · incident-response`.
+* Good: an app-visible session named `Via Codex – Incident response review`.
+
 ## Heartbeat work runs in Heartbeat
 
 Jason, 2026-11-05, after `/pr-to-landed` was missing from a session that had reviewed an Alchemy PR behind a Heartbeat patch: "if every relatedto hb, u must ensure your cwd is correct so that u get the skills".

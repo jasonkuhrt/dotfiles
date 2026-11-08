@@ -60,8 +60,8 @@ after verifying your report; do not impose a new approval stop on that work.
 ## Relay
 
 Write the finished review to <absolute report path>. The coordinating Codex
-chat will read this file; do not guess its cmux surface, send terminal
-keystrokes, or launch another Codex session.
+chat will read this file; do not guess a chat or terminal destination,
+send keystrokes to another session, or launch another Codex session.
 
 Include:
 
@@ -77,6 +77,6 @@ Only after the report is finished, make its final nonempty line exactly:
 
 INDEPENDENT_REVIEW_COMPLETE
 
-Then print a short terminal completion message naming the report. Remain in
+Then print a short completion message naming the report. Remain in
 this Claude session for focused follow-up questions. If blocked, state the
 blocking condition; do not add the completion marker to an unfinished review.

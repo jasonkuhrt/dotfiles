@@ -1,9 +1,8 @@
 # Independent Claude review workflow
 
-Run one independent review through the local Claude CLI, then return an
+Run one independent review in an app-visible Claude session, then return an
 evidence-checked assessment to the originating Codex chat. The invoking public
-skill supplies four defaults: model, effort, reviewer label, and run-name
-prefix. Jason's explicit values override those defaults. Select the model
+skill supplies defaults for model, effort, and reviewer label. Jason's explicit values override those defaults. Select the model
 before the reviewer label: use an explicit reviewer label when supplied;
 otherwise derive the label from the selected model. The wrapper's default
 label applies only to its default model. For example, `claude-opus-5-5` is
@@ -50,48 +49,73 @@ every placeholder and choosing a bounded set of questions for this task. Never
 copy another review's paths, session identifiers, or architectural answers.
 The reviewer creates `review.md`; never seed it with the completion marker.
 
-## Launch in native cmux
+## Launch an app-visible Claude session
 
-Read the installed `cmux`, `cmux-local`, and `cmux-workspace` skills for current
-commands and routing. Resolve the caller window from cmux context. If it is
-absent, use `cmux identify --json` and state that the focused window is the
-fallback.
+Name the session `Via Codex – <short title>`, for example
+`Via Codex – Incident response review`. Keep model and effort in the session
+metadata rather than adding them to the title. Do not create a worktree for a
+read-only review.
 
-Create a **new workspace** in the established repository directory. Name it
-from the selected run-name prefix and target, for example
-`<run-name-prefix>-<topic>`. Do not create a worktree. Set `--focus false` and
-launch via `cmux new-workspace --command`: cmux must start its native
-interactive shell so Claude session restoration works. Do not replace the shell
-with a Ghostty command, run a detached headless review, or use a Codex subagent
-as a substitute.
+Prefer the Claude app's session-creation tool when connected. Discover its
+current schema, then pass the repository cwd, selected model and effort,
+title, and a prompt pointing to the filled brief. Record the returned session
+identifier and verify its actual settings.
 
-The command delivered to that shell has this shape:
+When that tool is unavailable, use the installed CLI's supported interactive
+route. Inspect `claude --help` first. With the currently verified CLI:
 
-```text
-claude --model '<selected-model>' --effort <selected-effort>
-  --name '<topic> <reviewer-label> review' --disallowedTools Agent,Task
-  --add-dir '<artifact-directory>' --session-id '<fresh-uuid>'
-  -- 'Read <absolute-brief-path> and conduct the independent review now. Follow its output and relay instructions exactly.'
-```
+1. Establish one interactive PTY session in the repository with a fresh UUID,
+   the selected model and effort, and the required title. Its initial prompt
+   asks it to confirm its settings and wait without starting the review:
 
-Construct one shell-safe command, then pass it as one `--command` argument to
-cmux using an argv-based process call. Shell-quote every substituted value for
-the native shell; JSON encoding is not shell escaping. Keep the substantial
-prompt in the brief file. Do not pass a model fallback or permission-bypass
-flag.
+   ```sh
+   claude --model '<selected-model>' --effort <selected-effort> \
+     --name 'Via Codex – <short title>' --disallowedTools Agent,Task \
+     --add-dir '<artifact-directory>' --session-id '<fresh-uuid>' \
+     -- 'Confirm your active model and effort if verifiable, then wait. Do not start the review or use tools yet.'
+   ```
 
-Capture the created window, workspace, and surface refs and UUIDs; Claude
-session UUID; requested model and effort; source baseline; brief, input, and
-report paths; originating public skill and coordinator receipt policy; task
-and check limits; originating Codex thread ID when available; and eventual relay
-automation ID in `review-session.json`. Inspect only that new surface to verify
-Claude is working and actually displays the requested model and effort. Record
-requested and verified settings separately. An unavailable or unverifiable
-setting is a reported failure, never grounds for a silent substitution.
+2. After the acknowledgment, exit that CLI process without deleting the
+   session. The desktop launcher refuses a session locked by another terminal.
+   From a PTY, open the same saved session in the app:
+
+   ```sh
+   claude --desktop --resume '<same-session-uuid>'
+   ```
+
+3. Resume that same session interactively with the selected settings and
+   submit the filled brief. This is CLI-hosted execution with app visibility:
+
+   ```sh
+   claude --resume '<same-session-uuid>' \
+     --model '<selected-model>' --effort <selected-effort> \
+     --disallowedTools Agent,Task --add-dir '<artifact-directory>' \
+     -- 'Read <absolute-brief-path> and conduct the independent review now. Follow its output and relay instructions exactly.'
+   ```
+
+The verified `--desktop` launcher accepts neither an initial prompt nor the
+model, effort, name, session-id, or add-dir flags. It opens or resumes a
+session; it does not by itself submit the review brief. Do not start a second
+review to make the first visible. Report whether execution is app-hosted or
+CLI-hosted with app visibility, and report any failure to open it in the app.
+Never claim app-hosted execution merely because the launcher succeeded.
+
+Quote substituted shell arguments for the actual shell; JSON encoding is not
+shell escaping. Keep the substantial prompt in the brief file. Do not use a
+headless `-p` review, a terminal-workspace manager, a permission-bypass flag,
+or a different reviewer as a substitute.
+
+Record the Claude session ID, app session ID when distinct, execution route,
+CLI process handle when applicable, requested and verified model and effort,
+source baseline, artifact paths, originating public skill, coordinator receipt
+policy, task and check limits, originating Codex thread ID when available,
+and any relay automation ID in `review-session.json`. Inspect only this
+session to verify the model and effort. Unavailable or unverifiable settings
+are reported failures, never grounds for silent substitution.
 
 ## Relay without another Codex session
 
-The report file is the relay. A terminal completion message is insufficient:
+The report file is the relay. A session completion message is insufficient:
 the report's final nonempty line must equal `INDEPENDENT_REVIEW_COMPLETE`
 exactly. Partial files are still in progress. Each run has its own report, so an
 old completion marker cannot satisfy a new review.
@@ -109,7 +133,7 @@ prompt must:
   policy and the task's existing authorization and check limits. Do not copy
   the reviewer's read-only restriction onto the coordinator's follow-up work.
 - Stay quiet while work progresses and notify only on completion, failure, or
-  required user input. Inspect the review surface only to diagnose a stall or
+  required user input. Inspect the recorded session only to diagnose a stall or
   input request.
 - On completion, read the report, verify consequential findings against source
   and current state, then apply the recorded receipt policy. When it includes
@@ -125,13 +149,11 @@ Without a follow-up tool, use bounded checks in the active turn. Do not promise
 an automatic later notification that has not been arranged. Never launch
 another Codex session or send text to a guessed terminal to simulate the relay.
 
-A workspace can move between windows. If saved routing fails, find the same
-workspace UUID in the current window inventory and update the session metadata;
-do not create a duplicate reviewer. Routine review-related input may be
-answered in its exact surface. Permission changes or additional work require
-the existing authorization to cover them. Preserve an interrupted session and
-resume that session with the same model and effort only when continuation
-remains authorized.
+Use the recorded session ID for routine review-related input. If its route
+changes, locate that same session and update the metadata; do not create a
+duplicate reviewer. Permission changes or additional work require existing
+authorization. Preserve an interrupted session and resume it with the same
+model and effort only when continuation remains authorized.
 
 ## Receive and assess
 
@@ -155,7 +177,7 @@ continuing independent approved work.
 
 Use the existing Claude session for a focused follow-up only when its answer
 would resolve a material uncertainty. Do not repeat a whole review by default.
-Keep the cmux workspace and session available; do not close them as cleanup.
+Keep the Claude session available for focused follow-up; do not delete it as cleanup.
 
 Deliver a concise verdict, important corrections, remaining decisions, and
 links to the original report and revised artifact. State the repairs completed

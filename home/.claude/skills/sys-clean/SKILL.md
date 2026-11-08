@@ -19,7 +19,7 @@ can rebuild or has already preserved:
 | Step | What it does | Skips when |
 |---|---|---|
 | Worktrees | `git-cleanup` plan and apply on Heartbeat | a changed file in the primary checkout was written in the last 24 hours |
-| Reference clones | keeps the fewest heads in `~/repo-references` (below) | per head: written in the last 3 days, a submodule with uncommitted changes; for a head that isn't a fork worktree, also uncommitted changes, a commit on no branch, a stash or unpushed commits |
+| Reference clones | keeps the fewest heads in `~/repo-references` (below), saving any uncommitted work first | per head: written in the last 3 days, or a submodule with uncommitted changes; a clone also when its commit is only here, or it has a stash or unpushed commits |
 | Cargo targets | deletes a `target/` (with `CACHEDIR.TAG` and a sibling `Cargo.toml`) under `~/projects` and `~/repo-references` with no file written in 3 days | |
 | Go cache | keeps `go env GOCACHE` to its 20 GB most recently used entries | Go isn't installed |
 | pnpm store | `pnpm store prune` | a pnpm install is running: the prune has no lock and would sweep packages it is linking |
@@ -40,14 +40,26 @@ thing". Heads are grouped by their origin (`owner/repo`):
   brings a version back.
 - A fork (a `jasonkuhrt/` remote) keeps its clones; its worktrees are extra.
   Removing one keeps its branch in the clone, so `git worktree add` restores it.
-- An extra head goes only when deleting it loses nothing (the skip column).
-  An idle fork worktree with uncommitted changes, or with commits no branch
-  holds, first has them saved: a commit whose parent is its HEAD, on
-  `refs/sys-clean/preserved/<name>/<date>` in its clone, checked to hold every
-  file `.gitignore` doesn't exclude. Restore with `git worktree add <path>
-  <ref>`, then `git reset HEAD~1` in it. Ignored files (`node_modules`, a local
-  `.env`) go with the folder (Jason's OK, 2026-11-07).
-- A head whose submodule has uncommitted changes stays.
+- Every other extra head goes. The only ones kept are in the skip column, and
+  uncommitted work is saved first. Jason, 2026-11-08, after a session left 21
+  saveable heads and suggested deferring them: "why not remove those ref
+  heads???", then "consider this a skill failure".
+  - **A worktree:** its changes, and any commits no branch holds, become a
+    commit whose parent is its HEAD, on
+    `refs/sys-clean/preserved/<name>/<time>` in its clone, which stays. To
+    restore: `git worktree add <path> <ref>`, then `git reset HEAD~1` in it.
+  - **A clone** on a commit its origin has: re-cloneable, so it goes. Any
+    changes are saved first to
+    `~/.local/state/meos-sys-clean/preserved/<name>/<time>.patch`: one
+    `deleted: <path>` line per deleted file, then a patch of everything else,
+    headed by the restore command.
+  - The save starts from the checkout's own index, so files a sparse checkout
+    skips aren't recorded as deletions. It is checked to hold every file
+    `.gitignore` doesn't exclude before anything is deleted, and it never
+    overwrites an earlier save. Ignored files (`node_modules`, a local `.env`)
+    go with the folder (Jason's OK, 2026-11-07).
+  - Read-only folders, such as a Go module cache inside a worktree, are made
+    writable before deleting.
 - "Last used" is write time. Read time (atime) is useless here: something
   reads every clone at once now and then, and on 2026-11-02 11 of 58 sampled
   clones were last read in the same hour.
@@ -115,9 +127,10 @@ The order matters: processes hold worktrees open, so they go first.
 4. **What the daily clean skips or can't reach.**
    - A worktrees step it skipped because the primary checkout is in use:
      the `git-cleanup` skill by hand, once that session is done.
-   - Reference heads the daily clean kept (its log names each with the
-     reason): a pure reference with uncommitted changes is Jason's experiment
-     or an install's leftovers; read the diff before deciding.
+   - A reference head the daily clean couldn't save or remove (its log says
+     `failed:`): fix the step in `~/me/code/lib/sys-clean/` and run it
+     again. Never leave a head that could be saved and removed, and never
+     defer one because disk isn't short.
    - Other repositories with many worktrees: the `git-cleanup` skill.
 5. **Background apps.** These are helpers using more than 10% CPU with nothing
    visible to show for it, such as updater agents. Quitting an app is his to do: name it.

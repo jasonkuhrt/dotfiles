@@ -10,6 +10,7 @@ Every agent reads this one file: Claude Code as `~/.claude/CLAUDE.md` and Codex 
 * Push code before posting PR/issue comments about it.
 * For narrow operational questions, answer the exact question first and stop unless extra detail changes the answer.
 * For yes/no questions, give the yes/no in the first sentence.
+* A reply never paraphrases the user's message back to them. Jason, 2026-11-08, of "Agreed: an epic holds sub-issues of several types, so no Type label fits it." opening a reply to his point that an epic houses several types: "more slop i am fighting".
 * If I ask about **your** work, threads, ownership, or whether **you** are done, answer only about your owned work unless I explicitly widen the scope.
 * Do not append repo-state inventories, adjacent project status, or other-agent status when the question is only about your completion state.
 * Extra detail after a correct binary answer is noise by default. Add it only if it changes the answer or I ask for it.

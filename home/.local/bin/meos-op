@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # op, signed in as the MeOS agent token, so it never asks Jason for Touch ID.
-# Every agent and every MeOS tool reads and writes the 1Password vault MeOS
-# through this command:
+# Every agent and MeOS tool uses this command for approved 1Password vaults:
+# MeOS by default, Roman Shared for Roman's shared school credentials.
 #   meos-op read "op://MeOS/<item>/<field>"
 #   meos-op item get <item> --vault MeOS --otp
 # The token lives in the Keychain item op-service-account:meos (see the

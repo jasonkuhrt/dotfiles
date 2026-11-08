@@ -375,7 +375,7 @@ Jason, 2026-11-05, after `/pr-to-landed` was missing from a session that had rev
 
 ## Personal credentials
 
-Jason, 2026-11-07, after the move to 1Password: "are my rules clear about how agents should use 1pw ijust had one try to use keychain cli still". My personal credentials live only in the 1Password vault MeOS. An agent in any folder follows the "Credentials" section of `~/me/AGENTS.md`: it reads them with `meos-op`, never from the Keychain, a note or a file.
+Jason, 2026-11-07, after the move to 1Password: "are my rules clear about how agents should use 1pw ijust had one try to use keychain cli still". Credentials live only in 1Password: MeOS is my default vault; Roman Shared holds Roman's school credentials maintained by me, Roman and agents. Roman's own Private vault is unshared. An agent in any folder follows the "Credentials" section of `~/me/AGENTS.md`: it reads the canonical item in its owning vault with `meos-op`, never from the Keychain, a note or a file. Jason approved Roman Shared on 2026-11-08; preserve unattended agent access when moving an item.
 
 * Bad: reading a site's password with `security find-generic-password`.
 * Good: `meos-op read "op://MeOS/<item>/password"`. `meos-op` is `op` signed in with the agent token from the Keychain item `op-service-account:meos`, the one credential the Keychain keeps for agents.

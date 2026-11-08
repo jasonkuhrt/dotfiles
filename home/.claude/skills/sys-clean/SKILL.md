@@ -19,7 +19,7 @@ can rebuild or has already preserved:
 | Step | What it does | Skips when |
 |---|---|---|
 | Worktrees | `git-cleanup` plan and apply on Heartbeat | a changed file in the primary checkout was written in the last 24 hours |
-| Reference clones | keeps the fewest heads in `~/repo-references` (below) | per head: written in the last 3 days, uncommitted changes, a commit on no branch, a stash or unpushed commits |
+| Reference clones | keeps the fewest heads in `~/repo-references` (below) | per head: written in the last 3 days, a submodule with uncommitted changes; for a head that isn't a fork worktree, also uncommitted changes, a commit on no branch, a stash or unpushed commits |
 | Cargo targets | deletes a `target/` (with `CACHEDIR.TAG` and a sibling `Cargo.toml`) under `~/projects` and `~/repo-references` with no file written in 3 days | |
 | Go cache | keeps `go env GOCACHE` to its 20 GB most recently used entries | Go isn't installed |
 | pnpm store | `pnpm store prune` | a pnpm install is running: the prune has no lock and would sweep packages it is linking |
@@ -41,6 +41,13 @@ thing". Heads are grouped by their origin (`owner/repo`):
 - A fork (a `jasonkuhrt/` remote) keeps its clones; its worktrees are extra.
   Removing one keeps its branch in the clone, so `git worktree add` restores it.
 - An extra head goes only when deleting it loses nothing (the skip column).
+  An idle fork worktree with uncommitted changes, or with commits no branch
+  holds, first has them saved: a commit whose parent is its HEAD, on
+  `refs/sys-clean/preserved/<name>/<date>` in its clone, checked to hold every
+  file `.gitignore` doesn't exclude. Restore with `git worktree add <path>
+  <ref>`, then `git reset HEAD~1` in it. Ignored files (`node_modules`, a local
+  `.env`) go with the folder (Jason's OK, 2026-11-07).
+- A head whose submodule has uncommitted changes stays.
 - "Last used" is write time. Read time (atime) is useless here: something
   reads every clone at once now and then, and on 2026-11-02 11 of 58 sampled
   clones were last read in the same hour.
@@ -109,7 +116,8 @@ The order matters: processes hold worktrees open, so they go first.
    - A worktrees step it skipped because the primary checkout is in use:
      the `git-cleanup` skill by hand, once that session is done.
    - Reference heads the daily clean kept (its log names each with the
-     reason): an unpushed commit goes to the fork first, then the head goes.
+     reason): a pure reference with uncommitted changes is Jason's experiment
+     or an install's leftovers; read the diff before deciding.
    - Other repositories with many worktrees: the `git-cleanup` skill.
 5. **Background apps.** These are helpers using more than 10% CPU with nothing
    visible to show for it, such as updater agents. Quitting an app is his to do: name it.

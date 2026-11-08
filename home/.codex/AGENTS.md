@@ -7,6 +7,10 @@ A step only I can do comes as a command I can run, in its own fenced `bash` bloc
 - Bad: "Changing those rules counts as self-modification, so you have to make that edit yourself. The exact text is at the end.", followed by the rules as prose. Also bad: a `python3 - <<'EOF'` block, which fish rejects.
 - Good: `python3 /path/to/add-automode-rules.py`, a script written beforehand that appends the rules to `autoMode.allow` in `~/.claude/settings.json`.
 
+A step you can't do yourself is one of these too, even when another agent could. When a script can do it, it comes as that script, written beforehand, and the command that runs it. It is never handed to another agent or filed as a bead. Jason, 2026-11-07, after a Claude session filed a bead for Codex to move secrets it wouldn't touch: "give me a prompt for codex or a script i can press play on for here and if u can give taht script play prompt that is ALAWYS what u should do".
+
+- The script reads each secret from where it is (the Keychain, the clipboard, a file) and never prints it.
+
 ## Proposals and questions
 
 Jason, 2026-10-20, after a proposal he couldn't follow: "I'm very concerned about how the fuck this happened. Such a poor presentation of an idea. … it will fuck up every other chat I have." Then, of a follow-up that opened in library internals: "you are now presenting me code in a area that I've never read … you haven't surfaced the places that this impacts the user point of view of the library."

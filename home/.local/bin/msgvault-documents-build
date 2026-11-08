@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# msgvault-documents-build: extract the text of archived document attachments
+# with the local Docling Serve, a few at a time.
+#
+# msgvault never schedules extraction, so the LaunchAgent
+# com.jasonkuhrt.msgvault.documents runs this every 20 minutes. A run with no
+# document waiting reads msgvault's status and exits without starting Docling.
+# Otherwise it starts Docling Serve on loopback, extracts at most
+# MSGVAULT_DOCUMENTS_LIMIT documents (10 by default), retries any that are
+# due, and stops Docling, so its ~1.2 GB stays free between runs.
+#
+# The limit keeps each run short: msgvault runs a CLI build while holding its
+# daemon's operation gate, and scheduled syncs wait behind it. At ~13 s a
+# document a run holds it for about two minutes.
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+BIN="$HOME/.local/bin/msgvault"
+DOCLING="$HOME/.local/bin/docling-serve"
+STATE="$HOME/.local/state/docling-serve"
+PORT=5001
+LIMIT="${MSGVAULT_DOCUMENTS_LIMIT:-10}"
+
+log() { echo "$(date '+%Y-%m-%dT%H:%M:%S%z') msgvault-documents-build: $*"; }
+
+status=$("$BIN" --no-log-file documents status --json)
+missing=$(jq -r '.status.missing_owners' <<<"$status")
+retrying=$(jq -r '.status.retry_owners' <<<"$status")
+if [ "$missing" -eq 0 ] && [ "$retrying" -eq 0 ]; then
+  exit 0
+fi
+
+mkdir -p "$STATE"
+if curl -sf "http://127.0.0.1:$PORT/health" >/dev/null; then
+  log "Docling Serve is already answering on port $PORT; using it"
+else
+  (cd "$STATE" && exec "$DOCLING" run --host 127.0.0.1 --port "$PORT") \
+    >>"$STATE/serve.log" 2>&1 &
+  docling=$!
+  trap 'kill "$docling" 2>/dev/null; wait "$docling" 2>/dev/null || true' EXIT
+  for _ in $(seq 1 150); do
+    curl -sf "http://127.0.0.1:$PORT/health" >/dev/null && break
+    kill -0 "$docling" 2>/dev/null || { log "Docling Serve exited at startup; see $STATE/serve.log"; exit 1; }
+    sleep 2
+  done
+  curl -sf "http://127.0.0.1:$PORT/health" >/dev/null ||
+    { log "Docling Serve didn't answer within 5 minutes"; exit 1; }
+fi
+
+log "$missing missing, $retrying retrying; extracting at most $LIMIT"
+if [ "$missing" -gt 0 ]; then
+  "$BIN" documents build --limit "$LIMIT" --yes | tail -n 1
+fi
+if [ "$retrying" -gt 0 ]; then
+  "$BIN" documents resume --limit "$LIMIT" --yes | tail -n 1
+fi

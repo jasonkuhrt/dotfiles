@@ -1,11 +1,11 @@
 # Review: README.md
 
-Assess README quality against the actual project. Read `~/.claude/skills/readme/core.md` and `~/.claude/skills/readme/core-readme.md` for the quality protocols.
+Assess README quality against the actual project. Read `.claude/skills/readme/core.md` and `.claude/skills/readme/core-readme.md` for the quality protocols.
 
 Two kinds of errors exist and the review must catch both:
 
-- __Mentioned but wrong__ — the README describes something inaccurately
-- __Not mentioned at all__ — the README omits a concept, feature, or capability that exists in the source
+- **Mentioned but wrong** — the README describes something inaccurately
+- **Not mentioned at all** — the README omits a concept, feature, or capability that exists in the source
 
 ## Steps
 
@@ -29,14 +29,14 @@ Read the existing README.md fully.
 
 Compare the source truth checklist against what the README covers:
 
-- __Missing concepts__ — domain terms or capabilities in the source that the README never mentions
-- __Missing features__ — recent git log entries with no README coverage
-- __Stale content__ — README describes things that no longer exist in the source
-- __Proportion__ — is the README's depth proportional to the project's complexity?
+- **Missing concepts** — domain terms or capabilities in the source that the README never mentions
+- **Missing features** — recent git log entries with no README coverage
+- **Stale content** — README describes things that no longer exist in the source
+- **Proportion** — is the README's depth proportional to the project's complexity?
 
 ### 4. Quality checks
 
-Run checks from `~/.claude/skills/readme/core.md` and `~/.claude/skills/readme/core-readme.md` (respects Focus — whole README, or scoped to named sections):
+Run checks from `.claude/skills/readme/core.md` and `.claude/skills/readme/core-readme.md` (respects Focus — whole README, or scoped to named sections):
 
 - **Cardinal Rule: Public/Private Surface Separation** — RUN THIS GREP FIRST:
   ```bash
@@ -59,27 +59,32 @@ Run checks from `~/.claude/skills/readme/core.md` and `~/.claude/skills/readme/c
 
 Spawn four subagents in parallel, each with ONLY the README content. Run all four concurrently.
 
-__Reader A — New user (never seen this project)__
+**Reader A — New user (never seen this project)**
+
 1. What does this project do?
 2. How do I install and get it running?
 3. What problem does it solve that I can't solve with alternatives?
 
-__Reader B — Evaluator (deciding whether to adopt)__
+**Reader B — Evaluator (deciding whether to adopt)**
+
 1. What are the core concepts and how do they relate?
 2. What's the API surface — how big is this thing?
 3. What are the limitations or things it doesn't do?
 
-__Reader C — Practitioner (already decided to use it)__
+**Reader C — Practitioner (already decided to use it)**
+
 1. How do I accomplish [specific real task relevant to this project]?
 2. Where do I look up [specific API detail]?
 3. What does [domain term] mean exactly?
 
-__Reader D — Returning maintainer (built this, away 6 months, back now)__
+**Reader D — Returning maintainer (built this, away 6 months, back now)**
+
 1. What were the core design decisions and why were they made?
 2. Can I find a link to the changelog, contributing guide, or architecture docs?
 3. Does the glossary still match how I remember the domain terms being used?
 
-__Triangulation:__ After all four return, compare their answers:
+**Triangulation:** After all four return, compare their answers:
+
 - If 3-4 struggle with the same area → high severity, clear blind spot
 - If 2 struggle → medium severity, likely a clarity issue
 - If only 1 struggles → low severity, persona-specific gap
@@ -88,8 +93,8 @@ __Triangulation:__ After all four return, compare their answers:
 
 Present findings in three categories, with severity from triangulation:
 
-- __Coverage gaps__ — what the project has that the README doesn't mention
-- __Quality violations__ — G1-G4, anti-slop, structural issues
-- __Accuracy issues__ — reader test findings with severity
+- **Coverage gaps** — what the project has that the README doesn't mention
+- **Quality violations** — G1-G4, anti-slop, structural issues
+- **Accuracy issues** — reader test findings with severity
 
 Do not write unless the user explicitly instructs you to fix what you found.

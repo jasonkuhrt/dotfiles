@@ -10,7 +10,6 @@ This guide implements a spinner by:
 
 See `progress-ring` (via `npx -y modern-web-guidance@latest retrieve "progress-ring"`) for handling determinate tasks with a known duration.
 
-
 ## Implementation
 
 ### 1. Markup
@@ -24,6 +23,7 @@ Use the native `<progress>` element as both the semantic source of truth and the
 ### 2. Styles
 
 #### Hiding Native UI
+
 To style the `<progress>` element as a spinner, first hide the default browser styling for indeterminate progress bars.
 
 ```css
@@ -47,24 +47,27 @@ progress.loading-spinner:indeterminate::slider-fill {
 ```
 
 #### Spinner Ring and Trail
+
 The spinner uses a `conic-gradient` to create a visual trail.
 
 ```css
 @property --arc-start {
-  syntax: "<angle>";
+  syntax: '<angle>';
   inherits: false;
   initial-value: 0deg;
 }
 @property --arc-end {
-  syntax: "<angle>";
+  syntax: '<angle>';
   inherits: false;
   initial-value: 0deg;
 }
 /* Use a custom property to conditionally include the dash animation */
 @property --progress-dash-animation {
-  syntax: "*";
+  syntax: '*';
   inherits: false;
-  initial-value: , progress-dash 3s ease-in-out infinite;
+  initial-value:
+    ,
+    progress-dash 3s ease-in-out infinite;
 }
 
 progress.loading-spinner:indeterminate {
@@ -101,9 +104,8 @@ progress.loading-spinner:indeterminate {
   /* ... fallback for background-clip: border-area ... */
 
   /* The dash animation is only included if @property is supported */
-  animation:
-    progress-spin var(--_used-spinner-duration) linear infinite
-    var(--progress-dash-animation, );
+  animation: progress-spin var(--_used-spinner-duration) linear infinite
+    var(--progress-dash-animation,);
 
   @keyframes progress-spin {
     to {

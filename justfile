@@ -176,9 +176,49 @@ conductor-install-check:
     [[ -f "$agent_test_home/.claude/CLAUDE.md" && -f "$agent_test_home/.codex/AGENTS.md" ]]
     printf 'PASS: conductor-install-check\n'
 
+# Make a skill folder in another checkout (Heartbeat's shared skills, say) a
+# user-level skill: a tracked link in home/.claude/skills, which Claude Code
+# reads as ~/.claude/skills and Codex through ~/.agents/skills. Safe to rerun.
+# A cloud sandbox without that checkout skips the link (conductor/install.sh).
+skill-link source:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    source="$(cd "{{source}}" && pwd -P)"
+    [[ -f "$source/SKILL.md" ]] || { printf 'No SKILL.md in %s\n' "$source" >&2; exit 1; }
+    name="$(basename "$source")"
+    target="{{justfile_directory()}}/home/.claude/skills/$name"
+    if [[ -L "$target" ]]; then
+      if [[ "$(readlink "$target")" == "$source" ]]; then printf 'Already linked: %s\n' "$name"; exit 0; fi
+      printf 'Relinking %s (was %s)\n' "$name" "$(readlink "$target")"
+      rm "$target"
+    elif [[ -e "$target" ]]; then
+      printf '%s is a skill folder in dotfiles; give the skill one home first\n' "$target" >&2
+      exit 1
+    fi
+    ln -s "$source" "$target"
+    printf 'Linked %s -> %s\n' "$name" "$source"
+
+# List the user-level skills linked from other checkouts, and any that don't resolve.
+skill-links:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    status=0
+    for link in "{{justfile_directory()}}"/home/.claude/skills/*; do
+      [[ -L "$link" ]] || continue
+      target="$(readlink "$link")"
+      [[ "$target" == /* ]] || continue
+      if [[ -f "$link/SKILL.md" ]]; then
+        printf '%-24s %s\n' "$(basename "$link")" "$target"
+      else
+        printf '%-24s %s (does not resolve)\n' "$(basename "$link")" "$target"
+        status=1
+      fi
+    done
+    exit "$status"
+
 # Validate one skill's frontmatter and unfinished scaffold markers.
 skill-check skill:
-    python3 "{{justfile_directory()}}/home/.codex/skills/.system/skill-creator/scripts/quick_validate.py" "{{skill}}"
+    uv run --quiet --no-project --with pyyaml python "{{justfile_directory()}}/home/.codex/skills/.system/skill-creator/scripts/quick_validate.py" "{{skill}}"
 
 # Restore a sealed skills backup; refuses to overwrite subsequent edits.
 skills-restore backup_dir:

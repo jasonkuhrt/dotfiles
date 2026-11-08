@@ -23,26 +23,26 @@ The reader asks because they cannot hold the system in their head, so they canno
 
 ## Terms
 
-| Term | Meaning | Test |
-| --- | --- | --- |
-| rung | one kind of thing the subject makes | it has a name in the code, one builder at a `file:line`, and something takes what it makes, or it is a top |
-| builder | the function, class or declaration that makes a rung | its inputs are the rung's edges, all of them |
-| root | a rung whose builder takes nothing in the list | bedrock when it is a dependency (`outside`); else it says why it takes nothing |
-| ladder | a chain of rungs, each built from the one before | computed from the edges; you name what it builds, you never choose its rungs |
-| concern | one fact, rule or decision the code states and could have stated otherwise | another rung could state the same sentence |
-| owner | the identifier of a concern's first statement | what a later rung would call or import to use it |
-| tell | text that finds a concern, or a path, anywhere | see Concerns |
-| path | one form in which a fact reaches a consumer | see Paths |
+| Term    | Meaning                                                                    | Test                                                                                                       |
+| ------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| rung    | one kind of thing the subject makes                                        | it has a name in the code, one builder at a `file:line`, and something takes what it makes, or it is a top |
+| builder | the function, class or declaration that makes a rung                       | its inputs are the rung's edges, all of them                                                               |
+| root    | a rung whose builder takes nothing in the list                             | bedrock when it is a dependency (`outside`); else it says why it takes nothing                             |
+| ladder  | a chain of rungs, each built from the one before                           | computed from the edges; you name what it builds, you never choose its rungs                               |
+| concern | one fact, rule or decision the code states and could have stated otherwise | another rung could state the same sentence                                                                 |
+| owner   | the identifier of a concern's first statement                              | what a later rung would call or import to use it                                                           |
+| tell    | text that finds a concern, or a path, anywhere                             | see Concerns                                                                                               |
+| path    | one form in which a fact reaches a consumer                                | see Paths                                                                                                  |
 
 Things made the same way are one rung, named in the plural (twelve handlers); one made another way (it takes other inputs) is its own rung. A helper only its own rung calls is part of that rung. A re-export is no rung. A dependency is a rung only when a chain ends at it or a concern is first stated in it. A rung is never left out for looking redundant: showing that is the matrix's job.
 
 Where the edges start and end, by subject. This is where to look, not a template; a rung exists only where a builder does.
 
-| Subject | Bedrock | Top | Usually between |
-| --- | --- | --- | --- |
-| library | the dependency's primitive it wraps | the value a caller writes | datum, collection, derived forms, public value, client |
-| framework layer | the host's contract: a request, a lifecycle, an RPC library | what an app author declares | definition helpers, registry, wiring, generated glue |
-| app feature | the stored model | the route, job or component a user reaches | read shape, query, operation, contract, handler, client hook, component |
+| Subject         | Bedrock                                                     | Top                                        | Usually between                                                         |
+| --------------- | ----------------------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------- |
+| library         | the dependency's primitive it wraps                         | the value a caller writes                  | datum, collection, derived forms, public value, client                  |
+| framework layer | the host's contract: a request, a lifecycle, an RPC library | what an app author declares                | definition helpers, registry, wiring, generated glue                    |
+| app feature     | the stored model                                            | the route, job or component a user reaches | read shape, query, operation, contract, handler, client hook, component |
 
 ## Procedure
 
@@ -72,12 +72,12 @@ Budget: about one tool call per rung plus eight; reads sent together count once.
 
 The kind of a restatement is one check at the site, on the lines cited: is the owner used there? Check the site, not the rung: a rung can reach the owner through one input while another input reinvents.
 
-| Mark | Kind | The check | Means |
-| --- | --- | --- | --- |
-| `R` | reinvented | the owner is not on the lines | a missing edge: should be built from, is not |
-| `C` | re-carried | the owner is on them, or the text that takes it (`takes`) | has the edge, and still copies members, re-lists a list, re-declares a parameter |
-| `D` | derived twice | not on them; `parent` is a rung both are built from | two siblings derive it from one parent, neither uses the other |
-| `○` | missing | the rung states a list that claims the whole set this concern belongs to | the list lacks it; or, for a probe, where the change lands |
+| Mark | Kind          | The check                                                                | Means                                                                            |
+| ---- | ------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| `R`  | reinvented    | the owner is not on the lines                                            | a missing edge: should be built from, is not                                     |
+| `C`  | re-carried    | the owner is on them, or the text that takes it (`takes`)                | has the edge, and still copies members, re-lists a list, re-declares a parameter |
+| `D`  | derived twice | not on them; `parent` is a rung both are built from                      | two siblings derive it from one parent, neither uses the other                   |
+| `○`  | missing       | the rung states a list that claims the whole set this concern belongs to | the list lacks it; or, for a probe, where the change lands                       |
 
 A probe is a concern with `"probe": true`: marked where it is stated, and `○` at every rung that states its siblings without it.
 

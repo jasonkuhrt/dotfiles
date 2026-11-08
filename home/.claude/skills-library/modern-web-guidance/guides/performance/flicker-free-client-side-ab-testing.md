@@ -33,8 +33,7 @@ MANDATORY: Load the experimentation script with both `async` and `blocking="rend
   <script
     src="https://cdn.example.com/experiment-sdk.js"
     async
-    blocking="render"
-  ></script>
+    blocking="render"></script>
 </head>
 ```
 
@@ -52,8 +51,7 @@ If the experiment requires a variant stylesheet, use `blocking="render"` on the 
   <link
     rel="stylesheet"
     href="https://cdn.example.com/experiment-variant-b.css"
-    blocking="render"
-  >
+    blocking="render" />
 </head>
 ```
 
@@ -70,8 +68,9 @@ If the experiment logic is lightweight enough to inline, use an inline module sc
   -->
   <script type="module" blocking="render">
     // Fetch the experiment configuration from your testing platform.
-    const config = await fetch('/api/experiment?id=homepage-cta')
-      .then(res => res.json());
+    const config = await fetch('/api/experiment?id=homepage-cta').then((res) =>
+      res.json(),
+    );
 
     // Apply the variant by setting a data attribute on <html>.
     // CSS rules keyed to this attribute will style the variant.
@@ -85,7 +84,7 @@ If the experiment logic is lightweight enough to inline, use an inline module sc
     }
 
     /* Variant B styles, activated by the data attribute */
-    [data-variant="b"] .cta-button {
+    [data-variant='b'] .cta-button {
       background-color: green;
     }
   </style>
@@ -121,8 +120,7 @@ DO: Use a lightweight anti-flicker snippet as a fallback only when `blocking="re
   <script
     src="https://cdn.example.com/experiment-sdk.js"
     async
-    blocking="render"
-  ></script>
+    blocking="render"></script>
 
   <script>
     // DO: Only apply the anti-flicker fallback in browsers

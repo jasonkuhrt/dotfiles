@@ -3,8 +3,9 @@
 `typesafe` is installed at `~/.local/bin/typesafe`. Its maintained implementation is
 in the dotfiles checkout at `tools/typesafe/`. It uses Effect services for filesystem,
 configuration, process, and network access, and calls the official TypeSafe API.
-The same TypeSafe skill is exposed to both Codex and Claude Code from
-`~/.claude/skills/typesafe-ai`, which Codex reads through `~/.agents/skills`.
+This skill is committed in Heartbeat as one of Jason's developer skills
+(`.agents/developers/jason_kuhrt/skills/typesafe-ai`), and only that checkout
+loads it.
 
 ## Setup
 
@@ -41,21 +42,21 @@ after earlier answers exist; preparation does not invent those answers.
 
 ## Workflow map
 
-| Command | Supplied evidence | Consumer |
-|---|---|---|
-| `ask` | Explicit state and named Noul/Choice/Score questions | Custom bounded judgments |
-| `triage` | Complete threads and policy context | Seven inbox dispositions and next-action judgments |
-| `brief` | Current candidate items and context | Attention/resolved/drop recommendations |
-| `school` | Source-bound proposed facts and exact candidates | Audience, role, and evidence judgments for review |
-| `rank` | Candidate records and explicit qualitative rubric | Candidate IDs with scores for the caller to order |
-| `verify` | Claims, quotes, and source passages | Support/contradiction/insufficient-evidence report |
-| `structure` | Extracted text and source identity | Source-preserving Markdown structure |
-| `bucket` | Work items, current evidence, and standing rules | Needed/NTH and Simple/Complex buckets |
-| `select-skills` | Request and skill roster with instructions | Applicable skill suggestions, retaining explicit requests |
-| `review` | Pinned change evidence and pass criteria | Applicability for the six review disciplines |
-| `feedback` | Review threads and current evidence | Actionable/informational/ambiguous/unresolved routing |
-| `pulse` | Current/proposed prompt text and exact runtime facts | Advice about copy-only, hash-gated, or version-gated publication |
-| `grade` | Expectations and actual output evidence | Evidence-backed semantic evaluation |
+| Command         | Supplied evidence                                    | Consumer                                                         |
+| --------------- | ---------------------------------------------------- | ---------------------------------------------------------------- |
+| `ask`           | Explicit state and named Noul/Choice/Score questions | Custom bounded judgments                                         |
+| `triage`        | Complete threads and policy context                  | Seven inbox dispositions and next-action judgments               |
+| `brief`         | Current candidate items and context                  | Attention/resolved/drop recommendations                          |
+| `school`        | Source-bound proposed facts and exact candidates     | Audience, role, and evidence judgments for review                |
+| `rank`          | Candidate records and explicit qualitative rubric    | Candidate IDs with scores for the caller to order                |
+| `verify`        | Claims, quotes, and source passages                  | Support/contradiction/insufficient-evidence report               |
+| `structure`     | Extracted text and source identity                   | Source-preserving Markdown structure                             |
+| `bucket`        | Work items, current evidence, and standing rules     | Needed/NTH and Simple/Complex buckets                            |
+| `select-skills` | Request and skill roster with instructions           | Applicable skill suggestions, retaining explicit requests        |
+| `review`        | Pinned change evidence and pass criteria             | Applicability for the six review disciplines                     |
+| `feedback`      | Review threads and current evidence                  | Actionable/informational/ambiguous/unresolved routing            |
+| `pulse`         | Current/proposed prompt text and exact runtime facts | Advice about copy-only, hash-gated, or version-gated publication |
+| `grade`         | Expectations and actual output evidence              | Evidence-backed semantic evaluation                              |
 
 Use the command's schema rather than guessing field names from this summary.
 

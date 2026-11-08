@@ -44,6 +44,7 @@ precisely, so a type check sits far above running in the order of things to do.
    Any form of that idea will do: a thrown `'todo'`, a value written as
    `undefined as never`, an abstract member. The types are finished work. The
    bodies are not started until the user releases them.
+
 3. **One slice a turn, then stop.** Make the edit, or show the same code in chat
    where the user reviews there first. Say in a line or two what it is and what
    it assumes, and end the turn. The user approves or redirects, and the next

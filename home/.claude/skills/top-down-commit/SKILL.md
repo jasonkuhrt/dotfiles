@@ -22,9 +22,8 @@ ruling counts only where it quotes him.
 ## Check, in order
 
 1. **Paths.** The slice's own: a worker's reported list, or the lead's own edits.
-   A file another stream is also editing is staged by hunk, never whole. Without
-   interactive staging, apply only the slice's hunks to the index
-   (`git apply --cached`).
+   A file another stream is also editing goes in by hunk, never whole: write the
+   slice's hunks of it as a patch.
 2. **Every hunk serves the scope.** No rename, cleanup or extra beyond it. A
    hunk the scope needs in order to compile (an import, a moved caller) counts.
 3. **Nothing asked for is missing.** No old name left anywhere, no caller
@@ -34,16 +33,36 @@ ruling counts only where it quotes him.
 
 ## Then
 
-- **All four hold:** first check that no `CHERRY_PICK_HEAD` exists. Then stage
-  exactly those paths or hunks, and commit with hooks skipped, so lint-staged
-  and the pre-commit checks can't interrupt:
+- **All four hold:** first check that no `CHERRY_PICK_HEAD` exists. Then build
+  the commit in an index of its own, from `HEAD`, the slice's whole files and
+  its patch, and commit with hooks skipped, so lint-staged and the pre-commit
+  checks can't interrupt:
 
   ```sh
-  VP_GIT_HOOKS=0 git -c core.hooksPath=/dev/null commit -q -m "<message naming the slice>" -- <paths>
+  git apply --cached --check <slice.patch> &&
+    (
+      GIT_INDEX_FILE=$(git rev-parse --git-path top-down-commit.index) &&
+        export GIT_INDEX_FILE &&
+        git read-tree HEAD &&
+        git add -- <whole-file paths> &&
+        git apply --cached <slice.patch> &&
+        VP_GIT_HOOKS=0 git -c core.hooksPath=/dev/null commit -q -m "<message naming the slice>"
+    ) &&
+    git reset -q -- <whole-file paths> &&
+    git apply --cached <slice.patch>
   ```
 
-  `-- <paths>` keeps the commit to the slice even when other work is staged in
-  a shared index. Reply with the SHA in one line.
+  Neither the shared index nor another stream's edits in the same files reach
+  the commit. `git commit -- <paths>` would commit those files whole from the
+  working tree. Every step is chained with `&&`: `set -e` is ignored inside a
+  subshell on the left of `&&`, so a failed step leaves the shared index as it
+  was. After the commit, the whole files' shared entries move to the new
+  commit, and the patch is applied to the shared index too, so another
+  stream's staged hunks in those files stay staged. The first `--check` fails
+  when that stream's staging overlaps the slice's hunks; that is a failed
+  check. The next run's `read-tree` resets the private index. Reply with the
+  SHA in one line.
+
 - **Any check fails:** commit nothing, and list each failure with file:line, in
   at most five lines.
 

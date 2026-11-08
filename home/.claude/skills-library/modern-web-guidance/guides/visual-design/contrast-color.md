@@ -32,13 +32,13 @@ DO: Reference shared background variables inside `contrast-color()` to guarantee
   color: contrast-color(var(--theme-surface-color));
 }
 
-.theme-container[data-theme="light"] {
+.theme-container[data-theme='light'] {
   --theme-surface-color: #f4f4f4;
 }
-.theme-container[data-theme="dark"] {
+.theme-container[data-theme='dark'] {
   --theme-surface-color: #1a1a1a;
 }
-.theme-container[data-theme="custom"] {
+.theme-container[data-theme='custom'] {
   --theme-surface-color: var(--user-custom-theme);
 }
 ```
@@ -52,13 +52,13 @@ Supported by: Chrome 147 (Apr 2026), Edge 147 (Apr 2026), Firefox 146 (Dec 2025)
 
 To support browsers without `contrast-color()`, you must provide a fallback. If the background color is known and fixed, use a hard-coded contrasting color. For dynamic backgrounds where the color is unknown, choose a strategy from the table below based on your UI requirements and browser support targets.
 
-| Strategy | Best For... | Considerations |
-| :--- | :--- | :--- |
-| **Relative Color Syntax** | Automated, high-quality CSS-only contrast calculation. | Highest quality CSS-only fallback. |
-| **Text Shadow** | Quick readability boost on any background. | Can look "dirty" or "glowy"; may not fit all designs. |
-| **Text Stroke** | Preserving font weight while ensuring edge contrast. | Use `paint-order` to avoid thinning letterforms, if available. |
-| **Translucent Overlay** | Ensuring a minimum contrast area behind the text. | Changes the look of the background color under the text, requires a separate text element. |
-| **SVG Filters** | Reactive contrast that updates as the background changes. | Requires a separate text element; hacky implementation. |
+| Strategy                  | Best For...                                               | Considerations                                                                             |
+| :------------------------ | :-------------------------------------------------------- | :----------------------------------------------------------------------------------------- |
+| **Relative Color Syntax** | Automated, high-quality CSS-only contrast calculation.    | Highest quality CSS-only fallback.                                                         |
+| **Text Shadow**           | Quick readability boost on any background.                | Can look "dirty" or "glowy"; may not fit all designs.                                      |
+| **Text Stroke**           | Preserving font weight while ensuring edge contrast.      | Use `paint-order` to avoid thinning letterforms, if available.                             |
+| **Translucent Overlay**   | Ensuring a minimum contrast area behind the text.         | Changes the look of the background color under the text, requires a separate text element. |
+| **SVG Filters**           | Reactive contrast that updates as the background changes. | Requires a separate text element; hacky implementation.                                    |
 
 ### Recommended: Relative Color Syntax (RCS)
 
@@ -90,7 +90,7 @@ DO: Select the fallback that best matches your design constraints if RCS is not 
 
 #### Option 1: Text Stroke
 
-Baseline status for Text stroke and fill  (compatibility prefixes): Widely available. It's been Baseline since 2017-04-05.
+Baseline status for Text stroke and fill (compatibility prefixes): Widely available. It's been Baseline since 2017-04-05.
 Supported by: Chrome 4 (Jan 2010), Edge 15 (Apr 2017), Firefox 49 (Sep 2016), Safari 3 (Oct 2007), and Safari iOS 2 (Jul 2008).
 
 ```css
@@ -98,7 +98,7 @@ Supported by: Chrome 4 (Jan 2010), Edge 15 (Apr 2017), Firefox 49 (Sep 2016), Sa
   -webkit-text-stroke: 4px black;
 }
 ```
-  
+
 #### Option 2: Text Stroke with `paint-order` to preserve letterforms
 
 Baseline status for paint-order: Newly available. It's been Baseline since 2024-03-22.
@@ -120,7 +120,7 @@ Supported by: Chrome 123 (Mar 2024), Edge 123 (Mar 2024), Firefox ≤66, and Saf
   overflow: hidden;
 }
 .badge--overlay::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   background-color: rgb(0 0 0 / 0.4);
@@ -149,21 +149,26 @@ Supported by: Chrome 5 (May 2010), Edge 12 (Jul 2015), Firefox 3 (Jun 2008), and
 
 ```html
 <!-- Technique from https://miunau.com/posts/dynamic-text-contrast-in-css/ -->
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="0" style="display: none;">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  version="1.1"
+  height="0"
+  style="display: none;">
   <defs>
     <filter id="contrast-filter" color-interpolation-filters="sRGB">
-      <feColorMatrix type="matrix"
+      <feColorMatrix
+        type="matrix"
         values="0.2126 0.7152 0.0722 0 0
           0.2126 0.7152 0.0722 0 0
           0.2126 0.7152 0.0722 0 0
-          0 0 0 1 0"/>
-      <feMorphology operator="dilate" radius="2"/>
+          0 0 0 1 0" />
+      <feMorphology operator="dilate" radius="2" />
       <feComponentTransfer>
-        <feFuncR type="linear" slope="-255" intercept="128"/>
-        <feFuncG type="linear" slope="-255" intercept="128"/>
-        <feFuncB type="linear" slope="-255" intercept="128"/>
+        <feFuncR type="linear" slope="-255" intercept="128" />
+        <feFuncG type="linear" slope="-255" intercept="128" />
+        <feFuncB type="linear" slope="-255" intercept="128" />
       </feComponentTransfer>
-      <feComposite operator="in" in2="SourceGraphic"/>
+      <feComposite operator="in" in2="SourceGraphic" />
     </filter>
   </defs>
 </svg>
@@ -180,7 +185,7 @@ Supported by: Chrome 5 (May 2010), Edge 12 (Jul 2015), Firefox 3 (Jun 2008), and
 3. Apply the filter to the `<span>`.
 
 ```css
-.badge--svg span{
+.badge--svg span {
   color: var(--badge-bg);
   filter: url(#contrast-filter);
 }

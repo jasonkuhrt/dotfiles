@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Use Workers'
+  short_description: 'Hand side work to the worker Jason names'
+  default_prompt: 'Use $use-workers to hand the side work this task allows to the named worker, launched where the lead runs, reachable and stoppable, and checked before its result is used.'

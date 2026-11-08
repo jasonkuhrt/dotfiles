@@ -1,6 +1,6 @@
 # Directional Navigation Transitions
 
-Single Page Applications (SPAs) provide the appearance of navigation by replacing the content of the page without navigating to a new page. By default, the content is simply replaced, without any transitions. Directional transitions can visually reinforce a spatial relationship between views. 
+Single Page Applications (SPAs) provide the appearance of navigation by replacing the content of the page without navigating to a new page. By default, the content is simply replaced, without any transitions. Directional transitions can visually reinforce a spatial relationship between views.
 
 By sliding new content in from the direction the user is moving you create a mental map of the application structure. For instance, a product site may show a transition to the right for "forward," and to the left for "back", or a slideshow may transition up and down to show next and previous slides.
 
@@ -18,22 +18,30 @@ Define sliding animations to and from each direction. For best performance, anim
 /* Slide an element out to the left */
 @keyframes slide-to-left {
   /* Mandatory: animate `transform` instead of inset properties for better performance. */
-  to { transform: translateX(-100%); }
+  to {
+    transform: translateX(-100%);
+  }
 }
 
 /* Slide an element in from the right */
 @keyframes slide-from-right {
-  from { transform: translateX(100%); }
+  from {
+    transform: translateX(100%);
+  }
 }
 
 /* Slide an element out to the right */
 @keyframes slide-to-right {
-  to { transform: translateX(100%); }
+  to {
+    transform: translateX(100%);
+  }
 }
 
 /* Slide an element in from the left */
 @keyframes slide-from-left {
-  from { transform: translateX(-100%); }
+  from {
+    transform: translateX(-100%);
+  }
 }
 ```
 
@@ -42,7 +50,7 @@ Define sliding animations to and from each direction. For best performance, anim
 Use the `::view-transition-group(root)` selector to apply animation settings that are shared across all transitions.
 
 ```css
-::view-transition-group(root){
+::view-transition-group(root) {
   animation: 0.4s ease-in-out both;
 }
 ```
@@ -79,10 +87,9 @@ const updateDOM = yourUpdateDOMLogic();
 
 document.startViewTransition({
   update: updateDOM,
-  types: [transitionType] // Matches the CSS :active-view-transition-type() selectors
+  types: [transitionType], // Matches the CSS :active-view-transition-type() selectors
 });
 ```
-
 
 ### Accessibility
 
@@ -108,7 +115,8 @@ The View Transitions API is a progressive enhancement. In unsupported browsers, 
 
 ```javascript
 /**
- * Navigates to a new view with a directional transition.
+ * @description Navigates to a new view with a directional transition.
+ *
  * @param {Function} updateDOM - Callback to update the DOM state.
  * @param {string} direction - Either 'forward' or 'backward'.
  */
@@ -122,7 +130,7 @@ function navigate(updateDOM, direction) {
   // Start transition with the specific navigation type
   document.startViewTransition({
     update: updateDOM,
-    types: [direction] // Matches the CSS :active-view-transition-type() selectors
+    types: [direction], // Matches the CSS :active-view-transition-type() selectors
   });
 }
 ```

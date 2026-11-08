@@ -1,18 +1,18 @@
 # README-Specific Protocol
 
-Rules specific to README.md files. Use alongside `~/.claude/skills/readme/core.md` (shared quality rules).
+Rules specific to README.md files. Use alongside `.claude/skills/readme/core.md` (shared quality rules).
 
 ## Cardinal Rule: Public/Private Surface Separation
 
 **HARD RULE. NO EXCEPTIONS WITHOUT EXPLICIT USER OVERRIDE.**
 
-Every README emitted by this skill ships to OSS consumers who do NOT have the author's filesystem, sibling repositories, personal helpers, or local dev conventions. The following are PROHIBITED in every README under this skill's control:
+A README for a package that ships alone (published, or public) reaches consumers who do NOT have the author's filesystem, sibling repositories, personal helpers, or local dev conventions. The following are PROHIBITED in every such README. A private workspace package that ships with its siblings may link them by relative path (`docset.md` § Links in a private monorepo); the rest of this rule still holds for it:
 
-1. __Local filesystem paths.__ No `~/projects/...`, no `/Users/...`, no absolute paths to the author's machine. `~/.config/<package-name>/` is allowed ONLY when documenting the package's own default config path — verify against the package's own code, not author convention.
-2. __Relative paths to sibling repositories.__ No `[other-package](../other-package)`, no `[../sibling]` cross-repo links. Cross-references between OSS packages use NPM package names in backticks: `` `@scope/package` ``. URLs to canonical OSS locations (npm, GitHub) may be added only when the URL is known to be stable and public.
-3. __Phrasings that assume the reader shares the author's filesystem layout.__ No "one of three sibling projects in `~/projects/<user>/`", no "in my dotfiles", no "next to the other repos", no "as you can see in the parent directory", no "the user's config", no "Jason's setup".
-4. __Author-private helpers named as if canonical.__ If the author has a personal helper (e.g. a `vsmap()` lua helper in their nvim config), do NOT name it in OSS docs as though it were a documented upstream API. Either omit it or describe the behavior generically (what it does, not what the author calls it).
-5. __Any sentence that requires author-local context to parse.__ __Litmus test:__ Would a stranger clone this package from npm into a fresh filesystem and understand this sentence? If no, it is a violation.
+1. **Local filesystem paths.** No `~/projects/...`, no `/Users/...`, no absolute paths to the author's machine. `~/.config/<package-name>/` is allowed ONLY when documenting the package's own default config path — verify against the package's own code, not author convention.
+2. **Relative paths to sibling repositories.** No `[other-package](../other-package)`, no `[../sibling]` cross-repo links. Cross-references between OSS packages use NPM package names in backticks: `` `@scope/package` ``. URLs to canonical OSS locations (npm, GitHub) may be added only when the URL is known to be stable and public.
+3. **Phrasings that assume the reader shares the author's filesystem layout.** No "one of three sibling projects in `~/projects/<user>/`", no "in my dotfiles", no "next to the other repos", no "as you can see in the parent directory", no "the user's config", no "Jason's setup".
+4. **Author-private helpers named as if canonical.** If the author has a personal helper (e.g. a `vsmap()` lua helper in their nvim config), do NOT name it in OSS docs as though it were a documented upstream API. Either omit it or describe the behavior generically (what it does, not what the author calls it).
+5. **Any sentence that requires author-local context to parse.** **Litmus test:** Would a stranger clone this package from npm into a fresh filesystem and understand this sentence? If no, it is a violation.
 
 ### Where private context properly lives
 
@@ -30,6 +30,7 @@ Treat ANY match as a Cardinal Rule violation that must be resolved before comple
 
 - `~/.config/<package-name>/` referencing the package's own documented default config path (verified against the package's source)
 - `../` inside a fenced code block that is illustrating a consumer's own project layout (e.g., a test file importing `../src/extension.ts`) — must be unambiguous from surrounding context
+- `../` linking a workspace sibling from a private workspace package (`private: true`), per `docset.md` § Links in a private monorepo
 
 When unsure whether a match is legitimate, strip it. The cost of removing a legitimate path is zero. The cost of leaking author-private context into a published OSS surface is real and durable.
 
@@ -37,48 +38,51 @@ When unsure whether a match is legitimate, strip it. The cost of removing a legi
 
 Every README has these base sections in this order. None may be omitted. Structure goes broadest to most specific — cognitive funneling.
 
-| # | Section               | Purpose                                                                                     |
-| - | --------------------- | ------------------------------------------------------------------------------------------- |
-| 1 | __Title + One-liner__ | What is this, in one sentence. Comprehensible without reading further — no jargon.          |
-| 2 | __Grounding__         | What domain is this in? 1-3 sentences using only concepts the reader already has.           |
-| 3 | __Problem__           | What sucks without this. Concrete, not abstract.                                            |
-| 4 | __Solution__          | How this solves it. Three paragraphs max. No undefined terms.                               |
-| 5 | __Quickstart__        | Get running in <5 minutes. Copy-pasteable. Every step must succeed.                         |
-| 6 | __Concepts__          | Mental model. Narrative prose, dependency-ordered. Not a concept-per-heading dump.           |
-| 7 | _(conditional sections — see G5)_ | |
-| 8 | __Usage__             | Common tasks solved with real, copy-pasteable examples.                                     |
-| 9 | __API Reference__     | Every public export: type signature, purpose, configuration. See G6.                        |
-| 10 | __Glossary__         | Bounded-context Ubiquitous Language. Every domain term, alphabetical, one prose meaning each. See G7. |
+| #   | Section                           | Purpose                                                                                               |
+| --- | --------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 1   | **Title + One-liner**             | What is this, in one sentence. Comprehensible without reading further — no jargon.                    |
+| 2   | **Grounding**                     | What domain is this in? 1-3 sentences using only concepts the reader already has.                     |
+| 3   | **Problem**                       | What sucks without this. Concrete, not abstract.                                                      |
+| 4   | **Solution**                      | How this solves it. Three paragraphs max. No undefined terms.                                         |
+| 5   | **Quickstart**                    | Get running in <5 minutes. Copy-pasteable. Every step must succeed.                                   |
+| 6   | **Concepts**                      | Mental model. Narrative prose, dependency-ordered. Not a concept-per-heading dump.                    |
+| 7   | _(conditional sections — see G5)_ |                                                                                                       |
+| 8   | **Usage**                         | Common tasks solved with real, copy-pasteable examples.                                               |
+| 9   | **API Reference**                 | Every public export: type signature, purpose, configuration. See G6.                                  |
+| 10  | **Glossary**                      | Bounded-context Ubiquitous Language. Every domain term, alphabetical, one prose meaning each. See G7. |
 
-__Monorepo root exception:__ Replace Quickstart with __Getting Started__ (workspace setup + choosing a package), replace API Reference with __Package Index__ (table of packages with one-line descriptions), and adapt Concepts to cover architecture and how packages relate. The other sections apply as-is.
+**Monorepo root exception:** Replace Quickstart with **Getting Started** (workspace setup + choosing a package), replace API Reference with **Package Index** (table of packages with one-line descriptions), and adapt Concepts to cover architecture and how packages relate. The other sections apply as-is.
 
 ## G5: Conditional Sections
 
 These sections are **required** when their trigger condition is met. They are not optional extras — they are demanded by what the library does. Detect triggers during source truth extraction (step 2 of create/update). Conditional sections appear between Concepts and Usage, in this order when multiple apply.
 
-| Section | Trigger | Content |
-|---|---|---|
-| __Architecture__ | Library bridges two or more systems, creates runtime artifacts (functions, processes, connections), or has non-obvious execution lifecycle | What the library creates at runtime and why. How concepts in system A map to system B. Lifecycle diagrams showing control flow. Mapping tables are mandatory for bridge libraries — the mapping IS the library's value. |
-| __Observability__ | Library emits OTel spans, metrics, structured logs, or other telemetry | Exhaustive span/metric reference tables (name, source, kind, attributes, when present). Trace tree diagrams showing parent-child relationships. Configuration guidance for collectors. Correlation guidance across trace boundaries. |
-| __Error Reference__ | Library exports 3+ typed error classes, or errors are a primary debugging/recovery interface | Every error: when it fires, what it means, retryable vs terminal, recovery path. Table format. Not just names and one-liners — full operational semantics. |
+| Section             | Trigger                                                                                                                                    | Content                                                                                                                                                                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Architecture**    | Library bridges two or more systems, creates runtime artifacts (functions, processes, connections), or has non-obvious execution lifecycle | What the library creates at runtime and why. How concepts in system A map to system B. Lifecycle diagrams showing control flow. Mapping tables are mandatory for bridge libraries — the mapping IS the library's value.              |
+| **Observability**   | Library emits OTel spans, metrics, structured logs, or other telemetry                                                                     | Exhaustive span/metric reference tables (name, source, kind, attributes, when present). Trace tree diagrams showing parent-child relationships. Configuration guidance for collectors. Correlation guidance across trace boundaries. |
+| **Error Reference** | Library exports 3+ typed error classes, or errors are a primary debugging/recovery interface                                               | Every error: when it fires, what it means, retryable vs terminal, recovery path. Table format. Not just names and one-liners — full operational semantics.                                                                           |
 
 ### Trigger detection
 
 During source truth extraction, actively check for these signals:
 
 **Architecture triggers:**
+
 - Imports from 2+ distinct runtime systems (e.g., `effect` + `inngest`, `effect` + `stripe`)
 - Creates runtime artifacts: background functions, event listeners, database connections, subscriptions, scheduled tasks
 - Has an execution lifecycle that involves multiple phases (setup → run → teardown, or request → suspend → resume)
 - Internal callbacks or engine interfaces that map between systems
 
 **Observability triggers:**
+
 - Uses `Effect.withSpan`, `tracer.startActiveSpan`, or any OTel span creation API
 - Imports from `@opentelemetry/*` or `@effect/opentelemetry`
 - Has span attributes defined in code
 - Emits structured logs with correlation IDs
 
 **Error Reference triggers:**
+
 - Exports `Data.TaggedError` classes, custom Error subclasses, or error unions
 - Errors surface as the primary debugging interface (defects, typed channels, or catch patterns)
 - Error recovery requires caller knowledge (which are retryable, which are terminal, what to inspect)
@@ -100,7 +104,7 @@ No domain term may appear in prose before it has been formally introduced — me
 
 This extends to the domain itself. The Grounding section must establish what kind of thing the project is before the Problem section can describe what's wrong within that domain. A reader who doesn't know the domain cannot evaluate the problem.
 
-__Before writing Concepts:__
+**Before writing Concepts:**
 
 1. List every domain term the README will use
 2. Draw dependency edges (which terms reference which)
@@ -125,13 +129,13 @@ Introduction order: capability, slot, command, module, scope node, resolution.
 
 ## G4: Term Linking
 
-Domain terms in prose use backtick links to the glossary: `` [`term`](#term) ``. When a UL file is the vocabulary's home (`docset.md` rule 7), link only the README Glossary's own terms; the UL's rows have no anchors.
+Domain terms in prose use backtick links to the glossary: ``[`term`](#term)``. When a UL file is the vocabulary's home (`docset.md` rule 7), link only the README Glossary's own terms; the UL's rows have no anchors.
 
 Visually distinct from external links and plain code references. Use liberally after a term's first introduction. Glossary entries use `####` headings for anchor targets.
 
 ## G7: Glossary as Ubiquitous Language
 
-The Glossary is not a glossary in the colloquial sense (a friendly index of terms). It is the bounded context's __Ubiquitous Language__ (DDD): the canonical, shared vocabulary that domain stakeholders and implementers use to talk about the system. The package's Glossary IS its UL. Apply UL discipline.
+The Glossary is not a glossary in the colloquial sense (a friendly index of terms). It is the bounded context's **Ubiquitous Language** (DDD): the canonical, shared vocabulary that domain stakeholders and implementers use to talk about the system. The package's Glossary IS its UL. Apply UL discipline.
 
 ### G7.1: Domain concepts, not implementation constructs
 
@@ -143,7 +147,7 @@ Type-parameter signatures, generics, and call signatures never appear in the Ter
 
 The meaning is plain prose that explains what the concept IS. The meaning has NO inline code spans, NO type signatures, NO method calls, NO parameter lists, NO API call shapes, NO schema imports, NO library type names. If the concept's "what it is" cannot be expressed without code, the entry is in the wrong section — that material belongs in API Reference or Concepts.
 
-__Mechanical test:__ strip every backtick-quoted token from the meaning. If the remaining prose still defines the concept, the entry is correct. If the prose collapses into "is a `Foo` that takes `Bar`", the entry is an API restatement and must be rewritten.
+**Mechanical test:** strip every backtick-quoted token from the meaning. If the remaining prose still defines the concept, the entry is correct. If the prose collapses into "is a `Foo` that takes `Bar`", the entry is an API restatement and must be rewritten.
 
 ### G7.3: One row per canonical concept
 
@@ -171,10 +175,10 @@ When two team members disagree about what a term means, the Glossary decides. A 
 
 Some projects maintain a separate `UBIQUITOUS_LANGUAGE.md` at the repository or bounded-context root. The two artifacts have different shapes and overlapping content:
 
-| Artifact | Shape | Audience |
-| --- | --- | --- |
-| `UBIQUITOUS_LANGUAGE.md` | Strict two-column table. No headings, no preamble, no anchor targets. | Project-wide / bounded-context-wide |
-| README Glossary | `####` headings as anchor targets. Otherwise identical discipline. | Package-internal, integrated with the README's prose |
+| Artifact                 | Shape                                                                 | Audience                                             |
+| ------------------------ | --------------------------------------------------------------------- | ---------------------------------------------------- |
+| `UBIQUITOUS_LANGUAGE.md` | Strict two-column table. No headings, no preamble, no anchor targets. | Project-wide / bounded-context-wide                  |
+| README Glossary          | `####` headings as anchor targets. Otherwise identical discipline.    | Package-internal, integrated with the README's prose |
 
 The README Glossary uses headings because the README's body links into it via anchors; the project-wide UL file uses a flat table because nothing links into it. The textual discipline (G7.1-G7.7) is the same for both.
 
@@ -182,29 +186,29 @@ When a project-wide UL file exists, it is the vocabulary's home (`docset.md` pla
 
 ## Section Guidance
 
-__Title + One-liner__: Generate 5 candidates. Pick the one naming something unique to THIS project. Two tests: (1) could this describe a different project? If yes, reject it. (2) Can a developer understand it without reading further? If it requires domain knowledge to parse, simplify. No jargon in the one-liner.
+**Title + One-liner**: Generate 5 candidates. Pick the one naming something unique to THIS project. Two tests: (1) could this describe a different project? If yes, reject it. (2) Can a developer understand it without reading further? If it requires domain knowledge to parse, simplify. No jargon in the one-liner.
 
-__Grounding__: 1-3 sentences establishing what domain this project operates in, using only concepts the reader already has. Name the real-world things the reader already knows (command palettes, toolbars, keyboard shortcuts) before introducing the project's perspective on them. No project-specific terms yet — those come in Concepts. This paragraph is the bridge between "here's a name" and "here's what sucks."
+**Grounding**: 1-3 sentences establishing what domain this project operates in, using only concepts the reader already has. Name the real-world things the reader already knows (command palettes, toolbars, keyboard shortcuts) before introducing the project's perspective on them. No project-specific terms yet — those come in Concepts. This paragraph is the bridge between "here's a name" and "here's what sucks."
 
-__Problem__: 2-4 sentences. No jargon. A developer who has never heard of this project should understand what sucks. Be concrete: name the specific pain, not a category of pain.
+**Problem**: 2-4 sentences. No jargon. A developer who has never heard of this project should understand what sucks. Be concrete: name the specific pain, not a category of pain.
 
-__Solution__: ≤3 paragraphs. Only terms already introduced or common knowledge. NOT a feature list. Describe the approach and the key insight, not the feature set. Each paragraph should answer a specific pain from the Problem section — if Problem names four pains, Solution should address all four. A Solution that doesn't map back to the Problem is disconnected. Solution explains WHY the approach works; Concepts explains HOW it's structured. Implementation architecture (subsystem names, internal decomposition) belongs in Concepts, not Solution.
+**Solution**: ≤3 paragraphs. Only terms already introduced or common knowledge. NOT a feature list. Describe the approach and the key insight, not the feature set. Each paragraph should answer a specific pain from the Problem section — if Problem names four pains, Solution should address all four. A Solution that doesn't map back to the Problem is disconnected. Solution explains WHY the approach works; Concepts explains HOW it's structured. Implementation architecture (subsystem names, internal decomposition) belongs in Concepts, not Solution.
 
-__Quickstart__: Prerequisites → install → first meaningful use → what just happened. Copy-pasteable. Every step produces visible output. Under 5 minutes. Assume a completely fresh machine. Explain rationales beyond commands — not just "run this" but why.
+**Quickstart**: Prerequisites → install → first meaningful use → what just happened. Copy-pasteable. Every step produces visible output. Under 5 minutes. Assume a completely fresh machine. Explain rationales beyond commands — not just "run this" but why.
 
-__Concepts__: Narrative prose following topological sort. Bold-lead definitions woven into flowing paragraphs. [`term`](#term) links after first introduction. Reader builds complete mental model by reading linearly. This is the hardest section — it must teach, not list. For libraries, each concept should lead with a code block showing creation or usage before the prose explanation — the code IS the introduction, the prose adds understanding. Introduce each concept exactly once; do not briefly introduce a concept in one section and then fully define it later. If the Concepts code blocks are sufficient, Usage can be reduced or omitted — do not duplicate code across sections.
+**Concepts**: Narrative prose following topological sort. Bold-lead definitions woven into flowing paragraphs. [`term`](#term) links after first introduction. Reader builds complete mental model by reading linearly. This is the hardest section — it must teach, not list. For libraries, each concept should lead with a code block showing creation or usage before the prose explanation — the code IS the introduction, the prose adds understanding. Introduce each concept exactly once; do not briefly introduce a concept in one section and then fully define it later. If the Concepts code blocks are sufficient, Usage can be reduced or omitted — do not duplicate code across sections.
 
-__Usage__: 3-7 examples for libraries, 1-3 for small tools. Each solves a real task. Code must be copy-pasteable or clearly marked illustrative. Each example has a one-sentence motivation ("When you need to X, use Y").
+**Usage**: 3-7 examples for libraries, 1-3 for small tools. Each solves a real task. Code must be copy-pasteable or clearly marked illustrative. Each example has a one-sentence motivation ("When you need to X, use Y").
 
-__Architecture__ (conditional, see G5): Opens with what the library creates at runtime — concrete artifacts like functions, connections, or background processes. Then maps concepts between the bridged systems using tables or diagrams. Includes lifecycle diagrams showing control flow for non-obvious execution paths (suspend/resume, multi-phase, signal-based coordination). The mapping table is mandatory for bridge libraries: left column is system A concept, right column is system B mechanism. ASCII diagrams are preferred over prose for flow descriptions.
+**Architecture** (conditional, see G5): Opens with what the library creates at runtime — concrete artifacts like functions, connections, or background processes. Then maps concepts between the bridged systems using tables or diagrams. Includes lifecycle diagrams showing control flow for non-obvious execution paths (suspend/resume, multi-phase, signal-based coordination). The mapping table is mandatory for bridge libraries: left column is system A concept, right column is system B mechanism. ASCII diagrams are preferred over prose for flow descriptions.
 
-__Observability__ (conditional, see G5): Opens with the trace architecture — how many trace trees, why they're separate (if they are), what nests inside what. Then an exhaustive span reference: table of every span with name, source (which layer creates it), kind, root status, attributes, and when each attribute is present vs absent. Then OTel configuration guidance (how to register a provider, what the library does by default). Then correlation guidance (how to connect related traces across boundaries). Example queries for common debugging tasks are a bonus.
+**Observability** (conditional, see G5): Opens with the trace architecture — how many trace trees, why they're separate (if they are), what nests inside what. Then an exhaustive span reference: table of every span with name, source (which layer creates it), kind, root status, attributes, and when each attribute is present vs absent. Then OTel configuration guidance (how to register a provider, what the library does by default). Then correlation guidance (how to connect related traces across boundaries). Example queries for common debugging tasks are a bonus.
 
-__Error Reference__ (conditional, see G5): Table format with columns: error name, when it fires, what it means, recovery path. "When it fires" must name the API operations that can raise this error. "Recovery path" must distinguish retryable (transient) from terminal (configuration/logic error). Not just type names and descriptions — full operational semantics.
+**Error Reference** (conditional, see G5): Table format with columns: error name, when it fires, what it means, recovery path. "When it fires" must name the API operations that can raise this error. "Recovery path" must distinguish retryable (transient) from terminal (configuration/logic error). Not just type names and descriptions — full operational semantics.
 
-__API Reference__: Scales per G6. When the README is the sole documentation surface, this is the full reference: every public function with signature and purpose, every configuration type with option/type/default/description columns, every exported type with purpose. When an external docs site exists, this is a signpost table.
+**API Reference**: Scales per G6. When the README is the sole documentation surface, this is the full reference: every public function with signature and purpose, every configuration type with option/type/default/description columns, every exported type with purpose. When an external docs site exists, this is a signpost table.
 
-__Glossary__: The bounded context's Ubiquitous Language for this package. See G7 for the full discipline. Mechanics: every domain term introduced in the README, alphabetical, `####` heading per term as anchor target, one prose meaning each. The Glossary is reinforcement, not the place of first introduction. It is not limited to API exports — it covers the full domain vocabulary, including system terms with no direct API representation (e.g. "scope" as a runtime concept, "namespace" as an emergent structural property). If a reader needs to understand a term to use the system, it belongs in the Glossary regardless of whether the term maps to a constructor or type. Per G7.2, meanings contain no inline code spans, type signatures, or API call shapes — those live in API Reference.
+**Glossary**: The bounded context's Ubiquitous Language for this package. See G7 for the full discipline. Mechanics: every domain term introduced in the README, alphabetical, `####` heading per term as anchor target, one prose meaning each. The Glossary is reinforcement, not the place of first introduction. It is not limited to API exports — it covers the full domain vocabulary, including system terms with no direct API representation (e.g. "scope" as a runtime concept, "namespace" as an emergent structural property). If a reader needs to understand a term to use the system, it belongs in the Glossary regardless of whether the term maps to a constructor or type. Per G7.2, meanings contain no inline code spans, type signatures, or API call shapes — those live in API Reference.
 
 ## README Anti-Patterns
 
@@ -212,9 +216,12 @@ __Glossary__: The bounded context's Ubiquitous Language for this package. See G7
 
 ```markdown
 ### Module
+
 [3 sentences]
 [code block]
+
 ### Capability
+
 [3 sentences]
 [code block]
 ```
@@ -239,6 +246,7 @@ A Glossary whose entries restate type signatures, list parameter shapes, or desc
 
 ```markdown
 #### Builder
+
 A function `(ctx: LoaderContext) => Effect<A, E, R>` passed to `loader`, `beforeLoad`, `searchValidator`, or `paramsValidator`.
 ```
 
@@ -246,6 +254,7 @@ That is API Reference content shaped as a Glossary entry. Fix: rewrite as a doma
 
 ```markdown
 #### Builder
+
 A function from a route's per-call context to an Effect. Each callback wrapper takes one. The Builder is where domain code lives; the wrapper is mechanical.
 ```
 
@@ -269,4 +278,4 @@ Cross-references to sibling repos via `[../sibling-name]` markdown links, "sibli
 
 ## Exemplars
 
-For concrete READMEs to study — gold-standard examples annotated with their teaching techniques, plus real-world anti-pattern examples to avoid — read `~/.claude/skills/readme/exemplars.md`. Use them as models when writing the Solution and Concepts sections (where prose quality carries the most weight), and as cautions during review.
+For concrete READMEs to study — gold-standard examples annotated with their teaching techniques, plus real-world anti-pattern examples to avoid — read `.claude/skills/readme/exemplars.md`. Use them as models when writing the Solution and Concepts sections (where prose quality carries the most weight), and as cautions during review.

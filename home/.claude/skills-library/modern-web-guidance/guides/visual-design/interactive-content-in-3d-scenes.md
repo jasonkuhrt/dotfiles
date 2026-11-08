@@ -5,6 +5,7 @@ The HTML-in-Canvas API allows rendering real DOM directly inside a canvas elemen
 ## How to implement
 
 ### WebGL and WebGPU
+
 When using WebGL or WebGPU, follow these steps:
 
 1. Check if HTML-in-Canvas is supported in the browser:
@@ -39,10 +40,10 @@ const observer = new ResizeObserver(([entry]) => {
 });
 
 const supportsDevicePixelContentBox =
-  typeof ResizeObserverEntry !== "undefined" &&
-  "devicePixelContentBoxSize" in ResizeObserverEntry.prototype;
+  typeof ResizeObserverEntry !== 'undefined' &&
+  'devicePixelContentBoxSize' in ResizeObserverEntry.prototype;
 const options = supportsDevicePixelContentBox
-  ? { box: "device-pixel-content-box" }
+  ? { box: 'device-pixel-content-box' }
   : {};
 observer.observe(canvas, options);
 ```
@@ -176,10 +177,11 @@ if ('requestPaint' in HTMLCanvasElement.prototype) {
 2. Create a custom geometry and material for the HTML content.
 
 3. Pass the DOM element into THREE.HTMLTexture:
+
 ```js
-  material.map = new THREE.HTMLTexture(element);
-  mesh = new THREE.Mesh( geometry, material );
-  scene.add( mesh );
+material.map = new THREE.HTMLTexture(element);
+mesh = new THREE.Mesh(geometry, material);
+scene.add(mesh);
 ```
 
 ## Example code
@@ -195,9 +197,9 @@ if ('requestPaint' in HTMLCanvasElement.prototype) {
 </canvas>
 
 <script>
-  const canvas = document.getElementById("canvas");
-  const gl = canvas.getContext("webgl");
-  const uiElement = document.getElementById("ui-element");
+  const canvas = document.getElementById('canvas');
+  const gl = canvas.getContext('webgl');
+  const uiElement = document.getElementById('ui-element');
 
   // Setup WebGL texture...
   const texture = gl.createTexture();
@@ -257,9 +259,9 @@ if ('requestPaint' in HTMLCanvasElement.prototype) {
 </canvas>
 
 <script>
-  const canvas = document.getElementById("canvas");
-  const context = canvas.getContext("webgpu");
-  const uiElement = document.getElementById("ui-element");
+  const canvas = document.getElementById('canvas');
+  const context = canvas.getContext('webgpu');
+  const uiElement = document.getElementById('ui-element');
 
   // Setup WebGPU...
   // const device = ...
@@ -328,14 +330,17 @@ const element = document.createElement('div');
 element.innerHTML = '<h1>Hello World</h1>';
 
 // 4. Create geometry and material
-const geometry = new RoundedBoxGeometry( 100, 100, 100, 10, 10 );
-const material = new THREE.MeshStandardMaterial( { roughness: 0, metalness: 0.5 } );
+const geometry = new RoundedBoxGeometry(100, 100, 100, 10, 10);
+const material = new THREE.MeshStandardMaterial({
+  roughness: 0,
+  metalness: 0.5,
+});
 
 // 5. Pass the DOM element into THREE.HTMLTexture
 material.map = new THREE.HTMLTexture(element);
 
-mesh = new THREE.Mesh( geometry, material );
-scene.add( mesh );
+mesh = new THREE.Mesh(geometry, material);
+scene.add(mesh);
 
 // 6. Render Loop
 function animate() {

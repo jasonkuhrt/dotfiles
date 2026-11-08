@@ -13,14 +13,14 @@ Do not optimize the audit to produce "yes." Consider useful work discovered duri
 
 Reread the user's requests, accepted decisions and compaction summary. Refresh the evidence that could change the recommendation with tools this turn; prior reports and ticket status alone are not enough.
 
-| Consider | Establish |
-| --- | --- |
-| Requested work and WIP | What remains to implement, verify, review, land or resolve? What did the user actually agree to defer? |
-| Useful next work | For each finding, follow-up or abandoned candidate, what concrete consumer benefit can this session deliver next, and at what effort or cost? Inspect existing tickets as work candidates, not proof that the work belongs later. |
-| Unresolved decisions | What design, behavior, priority or tradeoff has not been discussed with the user? Bring checked facts and a recommendation rather than silently turning it into backlog. |
-| Delivery state | Check owned PRs, current CI/reviews, Git diff, unpushed commits and stashes. Establish ownership and relevance before deciding whether a leftover needs delivery, preservation or retirement. |
-| Running work and ownership | Check owned workers, linked sessions, shell tasks and scheduled wakeups. Establish whether useful work still depends on this chat, or has a verified independent owner and delivery path. |
-| Context and resources | What would closing lose: pending findings, a needed decision, coordination, useful runtime state or an unrecorded next action? Inspect the relevant worktrees and processes, and check the relevant Linear issues for useful context still missing. |
+| Consider                   | Establish                                                                                                                                                                                                                                           |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Requested work and WIP     | What remains to implement, verify, review, land or resolve? What did the user actually agree to defer?                                                                                                                                              |
+| Useful next work           | For each finding, follow-up or abandoned candidate, what concrete consumer benefit can this session deliver next, and at what effort or cost? Inspect existing tickets as work candidates, not proof that the work belongs later.                   |
+| Unresolved decisions       | What design, behavior, priority or tradeoff has not been discussed with the user? Bring checked facts and a recommendation rather than silently turning it into backlog.                                                                            |
+| Delivery state             | Check owned PRs, current CI/reviews, Git diff, unpushed commits and stashes. Establish ownership and relevance before deciding whether a leftover needs delivery, preservation or retirement.                                                       |
+| Running work and ownership | Check owned workers, linked sessions, shell tasks and scheduled wakeups. Establish whether useful work still depends on this chat, or has a verified independent owner and delivery path.                                                           |
+| Context and resources      | What would closing lose: pending findings, a needed decision, coordination, useful runtime state or an unrecorded next action? Inspect the relevant worktrees and processes, and check the relevant Linear issues for useful context still missing. |
 
 Use the host's current tools. A detached top-level session belongs to the user and does not depend on this one.
 
@@ -35,11 +35,11 @@ Do not call uncommitted or stashed work a blocker without reading its actual dif
 
 Recommend a disposition based on the actual next action, not whether an issue exists:
 
-| Recommendation | Explain |
-| --- | --- |
-| Continue now | The consumer benefit, the smallest useful next action, and why this session is well placed to finish or land it now. Include unfinished asks, active WIP and valuable follow-ups that are feasible now. Continue already-authorized work. |
-| Discuss now | The consequential choice or newly proposed work the user has not agreed to. Present the checked facts from the consumer's side, recommend an option, and ask the specific decision needed. Keep independent authorized work moving. |
-| Defer | Why continuing now is worse: an external prerequisite, missing decision-bearing evidence, a better delivery owner, or a concrete effort/cost tradeoff. Name what would make the work actionable and identify existing tracking. Propose a new issue when preserving a trigger, owner or next action adds concrete value. |
+| Recommendation | Explain                                                                                                                                                                                                                                                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Continue now   | The consumer benefit, the smallest useful next action, and why this session is well placed to finish or land it now. Include unfinished asks, active WIP and valuable follow-ups that are feasible now. Continue already-authorized work.                                                                                |
+| Discuss now    | The consequential choice or newly proposed work the user has not agreed to. Present the checked facts from the consumer's side, recommend an option, and ask the specific decision needed. Keep independent authorized work moving.                                                                                      |
+| Defer          | Why continuing now is worse: an external prerequisite, missing decision-bearing evidence, a better delivery owner, or a concrete effort/cost tradeoff. Name what would make the work actionable and identify existing tracking. Propose a new issue when preserving a trigger, owner or next action adds concrete value. |
 
 A ticket is a record, not a decision to defer. "It is filed," "the PR merged," "the tree is clean," and "nothing is running" do not establish that continuing has no value. Conversely, an open issue or upstream wait does not by itself establish useful work to do now.
 
@@ -77,11 +77,11 @@ Lead with a plain recommendation to continue, stop, or decide a named question f
 
 Include only findings that bear on that recommendation. When several remain, use these separate timing columns:
 
-| Work | Why continue now | Why defer |
-| --- | --- | --- |
-| Fix reproduced bug | **Confirmed user failure; small, understood fix** | — |
-| Resolve API choice | **Your decision determines the behavior we implement** | Current API works; changing it isn't urgent |
-| Benchmark unreleased driver | — | **No released version to measure; results now wouldn't guide adoption** |
+| Work                        | Why continue now                                       | Why defer                                                               |
+| --------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------- |
+| Fix reproduced bug          | **Confirmed user failure; small, understood fix**      | —                                                                       |
+| Resolve API choice          | **Your decision determines the behavior we implement** | Current API works; changing it isn't urgent                             |
+| Benchmark unreleased driver | —                                                      | **No released version to measure; results now wouldn't guide adoption** |
 
 These rows illustrate the format; use the session's actual remaining work. Keep each reason succinct and bold the reason supporting your recommendation. A user discussion is work that can justify continuing now. Use an em dash where no concrete argument exists; do not invent one to fill the table. Omit routine housekeeping rows and a separate action-only recommendation column. If nothing worthwhile remains, skip the table and give a short recommendation with the reason.
 

@@ -8,13 +8,13 @@ description: Dispatching GitHub Actions workflows via the API, especially branch
 ## The dispatch API addresses a REGISTERED workflow, dispatched against any ref
 
 `workflow_dispatch` via the API runs the workflow file **as it exists on the target
-`ref`** — any branch. The default branch is NOT required for the dispatched *content*.
+`ref`** — any branch. The default branch is NOT required for the dispatched _content_.
 
 ```bash
 gh api -X POST "repos/OWNER/REPO/actions/workflows/WORKFLOW.yml/dispatches" -f ref="any-branch"
 ```
 
-This is the correct way to test *modified* workflows before merging.
+This is the correct way to test _modified_ workflows before merging.
 
 ## The nuance: net-new workflows need registration first (verified 2026-07-09)
 
@@ -26,6 +26,7 @@ visible on the branch via the Contents API. Verified on Heartbeat with a branch-
 entries) did not, dispatch 404'd.
 
 A workflow gets registered when EITHER:
+
 1. the file lands on the default branch, OR
 2. the workflow **runs once via a real event trigger** (`push` / `pull_request`) from
    any branch.
@@ -39,14 +40,14 @@ permanent design anyway (the workflow runs exactly when its subject changes).
 
 ## Common mistake
 
-The `gh workflow run` CLI command looks up workflows from the default branch index — it
-WILL fail for branch-modified workflows even when the API would succeed. Always use
-`gh api` directly.
+`gh workflow run <file> --ref <branch>` finds a workflow through the registry, so it runs
+a branch's version of a registered workflow, and fails for a net-new one the registry lacks
+(above). Use `gh api` for one rule that covers both.
 
 ## Never do these
 
 - Never create "bootstrap" PRs to merge a workflow to develop/main just to register it —
   add a real `push`/`pull_request` trigger and let its first run register it
-- Never claim the dispatched *content* comes from the default branch — it comes from `ref`
+- Never claim the dispatched _content_ comes from the default branch — it comes from `ref`
 - Never diagnose a dispatch 404 as "file missing on ref" without checking
   `GET /actions/workflows` — registry absence is the usual cause for net-new files

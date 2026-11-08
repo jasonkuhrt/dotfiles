@@ -25,17 +25,16 @@ container.setHTML(untrustedHTML);
 
 ## 2. Using Custom Sanitizer Configurations
 
-You can customize the sanitization rules by creating a `Sanitizer` instance. This allows you to define exactly which elements and attributes are permitted for your specific use case. 
+You can customize the sanitization rules by creating a `Sanitizer` instance. This allows you to define exactly which elements and attributes are permitted for your specific use case.
 
 When using `Element.setHTML()` and `Document.parseHTML()`, the default `Sanitizer` settings remove all XSS-unsafe elements and attributes. You can not make a more permissive `Sanitizer` that allows those elements, but you can further restrict what is allowed.
-
 
 ```javascript
 // Define a restrictive configuration that only allows the specified elements and attributes.
 const config = {
-  elements: ["p", "b", "i", "strong", "em"],
-  attributes: ["class"],
-  replaceWithChildrenElements: ['div']
+  elements: ['p', 'b', 'i', 'strong', 'em'],
+  attributes: ['class'],
+  replaceWithChildrenElements: ['div'],
 };
 
 const mySanitizer = new Sanitizer(config);
@@ -48,7 +47,7 @@ If you need a more permissive `Sanitizer` that allows some XSS-unsafe elements o
 
 ## 3. Parsing User Input with `Document.parseHTML()`
 
-If you need to parse untrusted HTML without immediately inserting it into the live DOM, use `Document.parseHTML()`. This method returns a `Document` that has been sanitized according to default or custom rules. 
+If you need to parse untrusted HTML without immediately inserting it into the live DOM, use `Document.parseHTML()`. This method returns a `Document` that has been sanitized according to default or custom rules.
 
 This can be used for sanitizing user content before sending it to a server.
 
@@ -72,18 +71,18 @@ If the native Sanitizer API is not available in your target browsers, you MUST u
 function safeSetHTML(el, html) {
   if (Object.hasOwn(Element.prototype, 'setHTML') && 'Sanitizer' in window) {
     const config = {
-      elements: ["p", "b", "i", "strong", "em"],
-      attributes: ["style"],
-      replaceWithChildrenElements: ['div']
+      elements: ['p', 'b', 'i', 'strong', 'em'],
+      attributes: ['style'],
+      replaceWithChildrenElements: ['div'],
     };
 
     const mySanitizer = new Sanitizer(config);
-    el.setHTML(html, {sanitizer: mySanitizer});
+    el.setHTML(html, { sanitizer: mySanitizer });
   } else {
     // Load DOMPurify only in browsers that do not support Element.setHTML(). Match configuration.
     el.innerHTML = DOMPurify.sanitize(html, {
-      ALLOWED_TAGS: ["p", "b", "i", "strong", "em"],
-      ALLOWED_ATTR: ["style"]
+      ALLOWED_TAGS: ['p', 'b', 'i', 'strong', 'em'],
+      ALLOWED_ATTR: ['style'],
     });
   }
 }

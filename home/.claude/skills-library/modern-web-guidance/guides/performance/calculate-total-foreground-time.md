@@ -10,7 +10,7 @@ MANDATORY: You must query the `visibility-state` performance entries to calculat
 
 ```javascript
 /**
- * Calculates total time the page was in the visible state.
+ * @description Calculates total time the page was in the visible state.
  *
  * @returns {number} Total foreground time in milliseconds.
  */
@@ -34,11 +34,10 @@ function getTotalForegroundTime() {
 
       // The end time is the start time of the next state change,
       // or the current time if this is the final entry.
-      const end = i + 1 < entries.length
-          ? entries[i + 1].startTime
-          : performance.now();
+      const end =
+        i + 1 < entries.length ? entries[i + 1].startTime : performance.now();
 
-      totalForegroundTime += (end - start);
+      totalForegroundTime += end - start;
     }
   }
 

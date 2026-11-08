@@ -8,7 +8,7 @@ description: >-
   the readme", "update the contributing guide", "rewrite the docs", "restructure
   the docs", "the docs are scattered", "review the docs", or when a package's
   docs span more than one file (references, concepts, a docs/ directory).
-argument-hint: "[instruction]"
+argument-hint: '[instruction]'
 ---
 
 # /readme
@@ -19,14 +19,14 @@ Interpret the user's instruction, determine the operation, target, focus, and fi
 
 This skill manages two companion files:
 
-* __README.md__ — onboards users (default, always included)
-* __CONTRIBUTING.md__ — onboards contributors (included when relevant)
+- **README.md** — onboards users (default, always included)
+- **CONTRIBUTING.md** — onboards contributors (included when relevant)
 
-When a package's docs outgrow one README, they become a **doc set**: the README as orientation and index, `docs/references/` (one construct each), `docs/concepts/` (one cross-cutting idea each), and `contrib/` for maintainers. Read `~/.claude/skills/readme/docset.md` for when a package needs one and how its facts are placed.
+When a package's docs outgrow one README, they become a **doc set**: the README as orientation and index, `docs/references/` (one construct each), `docs/concepts/` (one cross-cutting idea each), and `contrib/` for maintainers. Read `.claude/skills/readme/docset.md` for when a package needs one and how its facts are placed.
 
 When the instruction mentions contributing, development setup, or contributor onboarding, include CONTRIBUTING.md. When creating a README from scratch, also create CONTRIBUTING.md if the project has more than one potential contributor. When reviewing, check both files for drift.
 
-For CONTRIBUTING.md protocol, read `~/.claude/skills/readme/core-contributing.md`.
+For CONTRIBUTING.md protocol, read `.claude/skills/readme/core-contributing.md`.
 
 ## Operations
 
@@ -54,9 +54,9 @@ Move an existing set of docs into the doc set layout and rewrite every line, wit
 
 Which README(s) to operate on. Orthogonal to the operation.
 
-* __Single__ — one README for the current project (default)
-* __Batch__ — multiple READMEs, e.g. every package in a monorepo
-* __Git-scoped__ — packages affected by a branch, PR, commit range, or time period
+- **Single** — one README for the current project (default)
+- **Batch** — multiple READMEs, e.g. every package in a monorepo
+- **Git-scoped** — packages affected by a branch, PR, commit range, or time period
 
 Interpret from the user's natural language. "That branch", "the packages I touched this week", "everything under packages/", "affected by this PR" are all valid. For git-scoped, resolve the reference (`git log`, `git diff`, branch comparison) to determine which packages are affected.
 
@@ -66,16 +66,16 @@ For batch or git-scoped: read `batch.md` from this skill's directory for the que
 
 Which parts of each README to touch. Orthogonal to both operation and target.
 
-* __Whole__ — the entire README, all sections (default for create)
-* __Affected__ — only sections implicated by specific changes (a PR, a branch, recent commits)
-* __Named__ — user-specified sections ("just the concepts", "the quickstart and usage")
+- **Whole** — the entire README, all sections (default for create)
+- **Affected** — only sections implicated by specific changes (a PR, a branch, recent commits)
+- **Named** — user-specified sections ("just the concepts", "the quickstart and usage")
 
 These combine freely with target:
 
-* all READMEs × only parts affected by this PR
-* one README × the whole thing from scratch
-* all READMEs × full rewrite from source
-* one README × just the concepts section
+- all READMEs × only parts affected by this PR
+- one README × the whole thing from scratch
+- all READMEs × full rewrite from source
+- one README × just the concepts section
 
 ## Announce, Don't Block
 
@@ -99,16 +99,16 @@ If you cannot confidently determine any dimension, ask. Do not guess.
 
 When the user's instruction doesn't name an operation explicitly, infer from context:
 
-* User asks about the skill itself ("help", "how does this work", "what can you do") → __help__ (takes precedence)
-* A trigger in `docset.md` § "When a package needs a doc set" holds, and the docs are not yet a doc set → __restructure__ (read that section to decide; it comes before the rules below)
-* No README exists → __create__
-* README exists + conversation has recent implementation work → __update__
-* README exists + the target package's files are dirty → __update__
-* README exists + no recent context + clean git → __review__
-* User says "rewrite", "from scratch", "start over" → __create__
-* User says "refresh", "add", "fix", "change" → __update__
-* User says "review", "check", "audit", "how does it look" → __review__
-* User says "restructure", "the docs are scattered", "rewrite all the docs", or the README passes ~600 lines → __restructure__
+- User asks about the skill itself ("help", "how does this work", "what can you do") → **help** (takes precedence)
+- A trigger in `docset.md` § "When a package needs a doc set" holds, and the docs are not yet a doc set → **restructure** (read that section to decide; it comes before the rules below)
+- No README exists → **create**
+- README exists + conversation has recent implementation work → **update**
+- README exists + the target package's files are dirty → **update**
+- README exists + no recent context + clean git → **review**
+- User says "rewrite", "from scratch", "start over" → **create**
+- User says "refresh", "add", "fix", "change" → **update**
+- User says "review", "check", "audit", "how does it look" → **review**
+- User says "restructure", "the docs are scattered", "rewrite all the docs", or the README passes ~600 lines → **restructure**
 
 ## File Sequencing
 
@@ -116,14 +116,14 @@ When both README.md and CONTRIBUTING.md are in scope, process README.md first. I
 
 ## Execution
 
-After confirmation, read the operation's file from `~/.claude/skills/readme/`:
+After announcing, read the operation's file from `.claude/skills/readme/`:
 
-| Operation | README.md | CONTRIBUTING.md |
-|-----------|-----------|-----------------|
-| create | `create.md` + `core.md` + `core-readme.md` | `create.md` + `core.md` + `core-contributing.md` |
-| update | `update.md` + `core.md` + `core-readme.md` | `update.md` + `core.md` + `core-contributing.md` |
-| review | `review-readme.md` + `core.md` + `core-readme.md` | `review-contributing.md` + `core.md` + `core-contributing.md` |
-| restructure | `restructure.md` + `docset.md` + `review-docset.md` + `core.md` + `core-readme.md` + `core-contributing.md` | (included) |
+| Operation   | README.md                                                                                                   | CONTRIBUTING.md                                               |
+| ----------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| create      | `create.md` + `core.md` + `core-readme.md`                                                                  | `create.md` + `core.md` + `core-contributing.md`              |
+| update      | `update.md` + `core.md` + `core-readme.md`                                                                  | `update.md` + `core.md` + `core-contributing.md`              |
+| review      | `review-readme.md` + `core.md` + `core-readme.md`                                                           | `review-contributing.md` + `core.md` + `core-contributing.md` |
+| restructure | `restructure.md` + `docset.md` + `review-docset.md` + `core.md` + `core-readme.md` + `core-contributing.md` | (included)                                                    |
 
 A review of a doc set reads `review-docset.md` + `docset.md` + `core.md`.
 

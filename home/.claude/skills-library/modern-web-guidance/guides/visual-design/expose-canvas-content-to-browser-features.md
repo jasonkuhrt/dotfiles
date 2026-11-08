@@ -37,10 +37,10 @@ const observer = new ResizeObserver(([entry]) => {
 });
 
 const supportsDevicePixelContentBox =
-  typeof ResizeObserverEntry !== "undefined" &&
-  "devicePixelContentBoxSize" in ResizeObserverEntry.prototype;
+  typeof ResizeObserverEntry !== 'undefined' &&
+  'devicePixelContentBoxSize' in ResizeObserverEntry.prototype;
 const options = supportsDevicePixelContentBox
-  ? { box: "device-pixel-content-box" }
+  ? { box: 'device-pixel-content-box' }
   : {};
 observer.observe(canvas, options);
 ```
@@ -197,9 +197,9 @@ targetHTMLElement.style.transform = computedTransform.toString();
 </canvas>
 
 <script>
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
-  const uiElement = document.getElementById("ui-element");
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const uiElement = document.getElementById('ui-element');
 
   canvas.onpaint = () => {
     ctx.reset();
@@ -223,10 +223,10 @@ targetHTMLElement.style.transform = computedTransform.toString();
   });
 
   const supportsDevicePixelContentBox =
-    typeof ResizeObserverEntry !== "undefined" &&
-    "devicePixelContentBoxSize" in ResizeObserverEntry.prototype;
+    typeof ResizeObserverEntry !== 'undefined' &&
+    'devicePixelContentBoxSize' in ResizeObserverEntry.prototype;
   const options = supportsDevicePixelContentBox
-    ? { box: "device-pixel-content-box" }
+    ? { box: 'device-pixel-content-box' }
     : {};
   observer.observe(canvas, options);
 </script>
@@ -243,9 +243,9 @@ targetHTMLElement.style.transform = computedTransform.toString();
 </canvas>
 
 <script>
-  const canvas = document.getElementById("canvas");
-  const gl = canvas.getContext("webgl");
-  const uiElement = document.getElementById("ui-element");
+  const canvas = document.getElementById('canvas');
+  const gl = canvas.getContext('webgl');
+  const uiElement = document.getElementById('ui-element');
 
   // Setup WebGL texture...
   const texture = gl.createTexture();
@@ -305,9 +305,9 @@ targetHTMLElement.style.transform = computedTransform.toString();
 </canvas>
 
 <script>
-  const canvas = document.getElementById("canvas");
-  const context = canvas.getContext("webgpu");
-  const uiElement = document.getElementById("ui-element");
+  const canvas = document.getElementById('canvas');
+  const context = canvas.getContext('webgpu');
+  const uiElement = document.getElementById('ui-element');
 
   // Setup WebGPU...
   // const device = ...

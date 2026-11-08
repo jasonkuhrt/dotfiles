@@ -1,6 +1,6 @@
 ---
 name: fast-feedback-development
-description: "Implement, fix, or refactor code through the fastest sound feedback loop: exact-case targeting, hot runner reuse, explicit runtime/type separation, invalidation-aware gates, and one authoritative assurance pass. Use for substantial coding work where repeated broad or cold validation would dominate delivery time."
+description: 'Implement, fix, or refactor code through the fastest sound feedback loop: exact-case targeting, hot runner reuse, explicit runtime/type separation, invalidation-aware gates, and one authoritative assurance pass. Use for substantial coding work where repeated broad or cold validation would dominate delivery time.'
 ---
 
 # Fast Feedback Development

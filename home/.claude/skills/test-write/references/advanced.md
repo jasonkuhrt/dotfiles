@@ -8,7 +8,7 @@ When arguments are verbose or redundant in snapshot output:
 Test.on(Tex.render)
   .snapshots({ arguments: false })
   .casesInput(complexBuilder1, complexBuilder2)
-  .test()
+  .test();
 ```
 
 ## Function-Based Cases with Setup Context
@@ -22,7 +22,7 @@ Test.on(transform)
     (ctx) => [[ctx.data.input], ctx.data.expected],
     (ctx) => [[ctx.data.other], ctx.data.otherExpected],
   )
-  .test()
+  .test();
 ```
 
 **Key behaviors:**
@@ -38,7 +38,7 @@ Test.on(transform)
 Test.on(extractPaths)
   .snapshotSchemas([FsLoc.FsLoc]) // Encode schema instances to primitives
   .casesInput(input1, input2)
-  .test()
+  .test();
 // Snapshots show './src/index.ts' instead of { _tag: 'RelFile', path: [...] }
 ```
 
@@ -48,9 +48,11 @@ For complex child configuration or deep nesting:
 
 ```typescript
 Test.on(parse)
-  .describe('valid', (t) => t.snapshots({ arguments: false }).casesInput('1.2.3', '0.0.1'))
+  .describe('valid', (t) =>
+    t.snapshots({ arguments: false }).casesInput('1.2.3', '0.0.1'),
+  )
   .describe('invalid', (t) => t.casesInput('bad', 'worse'))
-  .test()
+  .test();
 ```
 
 ## Nested Describe Strategies
@@ -74,7 +76,7 @@ Test.on(parse)
       .describe('basic', (t) => t.casesInput('1.2.3', '0.0.1'))
       .describe('edge cases', (t) => t.casesInput('0.0.0', '999.999.999')),
   )
-  .test()
+  .test();
 ```
 
 The `>` syntax is sugar for simple/shallow nesting. For complex hierarchies with per-group configuration, prefer the callback form.

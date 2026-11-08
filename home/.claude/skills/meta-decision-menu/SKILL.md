@@ -67,18 +67,19 @@ Bad (2026-10-28), a list of questions with no reasons:
 Bad, a `Choice` column that `Do` repeats, no why-not, and an unnumbered
 "doing" list:
 
-> | Choice | Do | Why |
-> |---|---|---|
+> | Choice      | Do       | Why           |
+> | ----------- | -------- | ------------- |
 > | Merge #3077 | Merge it | Checks green. |
 >
 > **Doing without asking:**
+>
 > - Fix `gh-ci`.
 
 Good:
 
-> | # | Do | Why | Why not |
-> |---|---|---|---|
-> | 1 | Work around the upstream cache bug in our own task config now | No wait on the upstream fix | Tech debt: a second mechanism to delete once the upstream fix ships. DX: generated files are missing for as long as the generator runs |
+> | #   | Do                                                            | Why                         | Why not                                                                                                                                |
+> | --- | ------------------------------------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+> | 1   | Work around the upstream cache bug in our own task config now | No wait on the upstream fix | Tech debt: a second mechanism to delete once the upstream fix ships. DX: generated files are missing for as long as the generator runs |
 >
 > **Doing without asking:**
 >
@@ -87,10 +88,10 @@ Good:
 
 ## Common mistakes
 
-| Thought | Reality |
-| --- | --- |
-| "I'll open with a sentence of context." | The table comes first. Context that matters is a numbered item under "Other". |
-| "No why-not, but merging is a big step, so I'll ask anyway." | No why-not means it isn't a question. List it under "Doing without asking" and do it. |
-| "It touches a shared path, so that's its why-not." | That's a risk, not a cost. Review and tests answer it. With no concrete cost left, the row moves to "Doing without asking". |
-| "The doing list is just FYI, it needs no numbers." | Every item carries a number so the user can stop it by one. |
-| "Each section gets its own 1, 2, 3." | One sequence across the reply. Two items numbered 1 make the user describe which one. |
+| Thought                                                      | Reality                                                                                                                     |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| "I'll open with a sentence of context."                      | The table comes first. Context that matters is a numbered item under "Other".                                               |
+| "No why-not, but merging is a big step, so I'll ask anyway." | No why-not means it isn't a question. List it under "Doing without asking" and do it.                                       |
+| "It touches a shared path, so that's its why-not."           | That's a risk, not a cost. Review and tests answer it. With no concrete cost left, the row moves to "Doing without asking". |
+| "The doing list is just FYI, it needs no numbers."           | Every item carries a number so the user can stop it by one.                                                                 |
+| "Each section gets its own 1, 2, 3."                         | One sequence across the reply. Two items numbered 1 make the user describe which one.                                       |

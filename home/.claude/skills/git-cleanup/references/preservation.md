@@ -34,7 +34,7 @@ Before deletion, copy every useful or unknown ignored path outside `.session` in
 
 The local archive preserves file bytes, zero-byte files, modes, symlinks as links, and empty directories without following link targets. It must live outside the worktree and is private local recovery state; never upload these files to GitHub commits, refs, artifacts, comments, or Secrets.
 
-Discard only ignored paths matched by the narrow, explicit dependency/generated-cache classifier. It recognizes named cache/build/tool-runtime roots (including `.alchemy`, `.wrangler` and `.tanstack`), known generated-source forms such as `__generated_*`, `*.generated.source*`, and `*.tsbuildinfo`, and Heartbeat paths whose writer is cited beside them in `preserve.mjs` (task outputs such as `libs/maple/.tmp/libchdb.so`, and files the dev stack rewrites); it does not infer disposability from a generic-looking directory name such as `.tmp`. An `.alchemy` directory holding a `state` child is a local Alchemy state store, the record that destroys its stack's resources, and stays preserved whole. Unknown ignored paths remain useful material and are archived.
+Discard only ignored paths matched by the narrow, explicit dependency/generated-cache classifier. It recognizes named cache/build/tool-runtime roots (including `.alchemy`, `.wrangler` and `.tanstack`), known generated-source forms such as `__generated_*`, `*.generated.source*`, and `*.tsbuildinfo`, and Heartbeat paths whose writer is cited beside them in `preserve.mjs` (files the dev stack rewrites); it does not infer disposability from a generic-looking directory name such as `.tmp`. An `.alchemy` directory holding a `state` child is a local Alchemy state store, the record that destroys its stack's resources, and stays preserved whole. Unknown ignored paths remain useful material and are archived.
 
 ## Commit message and restore
 
@@ -42,7 +42,7 @@ C's message contains an explanation, a fully rendered fenced `sh` restore script
 
 A commit cannot embed its own SHA. Fetch the unique archive into a dedicated local ref and derive C there, rather than relying on shared `FETCH_HEAD`. Verify its marker, sole parent P, and session-only changes before creating the feature branch.
 
-Use `wt switch --create --base <C> --no-hooks --no-cd --execute sh` to run the restore body inside the new worktree. Check HEAD=C, then `git reset --mixed <P>` removes C from the feature branch/index while keeping working files. Recreate empty directories and connect ordinary upstream tracking when it exists. A deleted ordinary remote does not prevent local restoration from the archive.
+Use `wt switch --create --base <C> --no-hooks --no-cd --execute sh` to run the restore body inside the new worktree; where `wt` is absent, `git worktree add -b <branch>` beside the primary checkout with hooks off, then run the body there. Check HEAD=C, then `git reset --mixed <P>` removes C from the feature branch/index while keeping working files. Recreate empty directories and connect ordinary upstream tracking when it exists. A deleted ordinary remote does not prevent local restoration from the archive.
 
 Do not overwrite an existing local branch or revert the checkpoint, which would remove session files. Keep partial restoration inspectable on failure. The archive stays C and normal feature remains P, so restoration needs no remote unwind or force-push. The message's script requires only Git, `wt` and a shell, with no external helper/document.
 

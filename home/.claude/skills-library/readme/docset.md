@@ -1,6 +1,6 @@
 # Doc Set Protocol
 
-Rules for a package whose docs outgrow one README. Use alongside `~/.claude/skills/readme/core.md` (shared quality rules) and `~/.claude/skills/readme/core-readme.md` (the README itself).
+Rules for a package whose docs outgrow one README. Use alongside `.claude/skills/readme/core.md` (shared quality rules) and `.claude/skills/readme/core-readme.md` (the README itself).
 
 ## When a package needs a doc set
 
@@ -67,19 +67,25 @@ Keep the G1 sections from `core-readme.md`, with two changes:
 ## <One section per facet, in the order a user meets them>
 
 ## Types
+
 <one annotated code block of valid declarations, e.g. `type Grammar = Circuit.Grammar<typeof laundry> // what it adds`: each export this construct owns, with what its signature and doc comment don't say>
 
 ## Rules
-- <One rule per bullet.> Held by [<source or test>](<link>).
+
+- <One rule per bullet.> Held by [<source or test>](link).
 
 ## Questions
+
 ### Does the library already <do the thing a user is about to build>?
+
 <code answer first, then one line naming the owner>
 
 ## Known gaps
+
 <one annotated code block, one line per gap, each with its issue key>
 
 ## Long form
+
 - <links to specs, concepts and research>
 ```
 
@@ -100,6 +106,7 @@ Every section is optional: omit a section with nothing true to say, and add no h
 <Two or three sentences: the idea, and why a user needs it.>
 
 ## <The idea in each construct it touches>
+
 <one example per construct, with a link to that construct's reference>
 
 ## Rules

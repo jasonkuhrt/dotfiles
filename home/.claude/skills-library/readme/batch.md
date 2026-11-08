@@ -17,6 +17,7 @@ cat package.json | jq -r '.workspaces[]' 2>/dev/null
 ```
 
 Filter to packages that actually have (or should have) a README:
+
 - Include if: has `src/` directory, has exports in package.json, is not a fixture/test-only package
 - Exclude if: name starts with `test-` or `fixture-`, has `"private": true` without exports
 
@@ -68,7 +69,7 @@ Fixed batches, not a mutable queue. Stateless between batches — no tracking wh
 
 ### Subagent prompt template
 
-Determine the operation ONCE (create/update/review) based on the user's instruction. Read the operation's file, `~/.claude/skills/readme/core.md`, AND the file-specific protocol (`~/.claude/skills/readme/core-readme.md` or `~/.claude/skills/readme/core-contributing.md`). Paste all three into each subagent prompt.
+Determine the operation ONCE (create/update/review) based on the user's instruction. Read the operation's file, `.claude/skills/readme/core.md`, AND the file-specific protocol (`.claude/skills/readme/core-readme.md` or `.claude/skills/readme/core-contributing.md`). Paste all three into each subagent prompt.
 
 Each subagent receives this prompt:
 

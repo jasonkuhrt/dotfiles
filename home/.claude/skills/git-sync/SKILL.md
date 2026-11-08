@@ -27,9 +27,16 @@ Resolve the target PR and GitHub stack membership before any mutation.
   remote leases so concurrent pushes cause a safe retry, never lost work.
 - Synchronize the largest safe prefix of the stack. Active descendants remain on
   unchanged refs and keep working; they are cascaded later.
+- Every push to a PR whose auto-merge is armed, a stack layer's included, disarms
+  it first and arms it again on the new head, as `pr-to-landed` step 4 says: an
+  armed PR merges a new head on the old head's settled checks.
 
 Only the native `gh stack` rebase machinery may calculate a stack cascade. Do not
 reimplement commit selection with hand-written Git rebases.
+
+In Heartbeat, a stack's rebase is the one exception to `docs/git-workflow.md`'s
+"Never rebase onto develop": a squash-merged layer's original commits leave
+the layers above it only through a rebase. A standalone PR merges.
 
 ## Resolve the target
 
@@ -44,6 +51,14 @@ Otherwise resolve the current branch and its PR:
 ```bash
 git branch --show-current
 gh pr view --json number,url,headRefName,baseRefName
+```
+
+A Claude Code cloud session refuses `gh pr view` (GitHub's GraphQL). Read the
+same fields over REST there:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/<pr-number> --jq '{number, url: .html_url, headRefName: .head.ref, baseRefName: .base.ref}'
+gh api "repos/{owner}/{repo}/pulls?head={owner}:$(git branch --show-current)" --jq '.[0] | {number, url: .html_url, headRefName: .head.ref, baseRefName: .base.ref}'
 ```
 
 When operating on the current checkout, confirm it owns the PR head exactly:

@@ -1,6 +1,6 @@
 # Operation: restructure
 
-Move an existing set of docs into the doc set layout (`~/.claude/skills/readme/docset.md`) and rewrite every line, without losing a user-facing fact. Read `core.md`, `core-readme.md`, `core-contributing.md`, `docset.md` and `review-docset.md` first.
+Move an existing set of docs into the doc set layout (`.claude/skills/readme/docset.md`) and rewrite every line, without losing a user-facing fact. Read `core.md`, `core-readme.md`, `core-contributing.md`, `docset.md` and `review-docset.md` first.
 
 ## Steps
 
@@ -12,6 +12,7 @@ Move an existing set of docs into the doc set layout (`~/.claude/skills/readme/d
    - stale: no longer true of the code or the decided design.
 
    Check a doubtful section against the source before you mark it stale.
+
 3. **Build the fact ledger.** For every user-facing and maintainer section, list its facts, one line each, with the source path and line range. Name a fact by what a reader can do or must know ("a case key is reached under `CASES`"), not by its wording. The ledger lives in a scratch file, never in the docs.
 4. **Map the targets.** Give every section a destination (file and section) under the placement rules in `docset.md`. Every fact in the ledger gets exactly one home.
 5. **Write.** Write each destination file whole. Destinations that share no facts can be written in parallel.

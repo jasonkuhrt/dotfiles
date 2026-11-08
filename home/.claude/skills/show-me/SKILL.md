@@ -1,6 +1,6 @@
 ---
 name: show-me
-description: "Use before writing a reply that would run past a few short paragraphs or a long list — an audit, review, findings report, plan, comparison, status roll-up, or a walkthrough of an architecture, a diff or a data flow — and whenever the user signals overload or confusion (\"I'm confused\", \"what is X even\", \"too long\", \"tl;dr\", \"fewer words\", \"show me\", \"visually\", \"diagram\"). Use for abstraction and library API design discussions, even when the answer is short. Also use when the material has a shape prose flattens: before and after, many items each with a state, flows, hierarchies, ownership, dependencies, or options weighed against criteria."
+description: 'Use before writing a reply that would run past a few short paragraphs or a long list — an audit, review, findings report, plan, comparison, status roll-up, or a walkthrough of an architecture, a diff or a data flow — and whenever the user signals overload or confusion ("I''m confused", "what is X even", "too long", "tl;dr", "fewer words", "show me", "visually", "diagram"). Use for abstraction and library API design discussions, even when the answer is short. Also use when the material has a shape prose flattens: before and after, many items each with a state, flows, hierarchies, ownership, dependencies, or options weighed against criteria.'
 ---
 
 # Show me
@@ -16,17 +16,17 @@ Every reply, of any size, is a stack of resolution layers. **Resolution** is how
 One phrasing, so that a direction is never in doubt:
 
 - The **root layer**, `R0`, is on top and is the coarsest. `R1`, `R2` and on lie below it, each finer than the one above.
-- Say *coarser* and *finer* for resolution, and *above* and *below* for place in the stack. *Higher* and *lower* read both ways; do not use them.
-- *Fidelity*, *zoom*, *altitude* and *level of detail* name the same thing. Write *resolution*.
+- Say _coarser_ and _finer_ for resolution, and _above_ and _below_ for place in the stack. _Higher_ and _lower_ read both ways; do not use them.
+- _Fidelity_, _zoom_, _altitude_ and _level of detail_ name the same thing. Write _resolution_.
 - An **end point** is a named thing that a layer shows and does not open: a box, a row, a name in code.
 
 The rules:
 
 - **Coarsest first, one resolution per view.** Label every view with its layer. A view that stops for one exact detail and then resumes is mixed resolution: raise the point, or move the view down a layer.
 - **Every layer is whole.** A reader who stops after it knows the subject at that resolution, and nothing in it is wrong for want of the layer below. A layer names what it leaves closed; it does not hide it.
-- **A view below `R0` starts at an end point.** Its first line names the end point of the layer above, by the same name, and what the view does to it: *deepens* it (the same thing, finer), *extends* it (what the layer above left out beside it), or *continues* it (the sequence from where the layer above stopped). A view with no end point above it is lost: add its end point, or cut the view.
+- **A view below `R0` starts at an end point.** Its first line names the end point of the layer above, by the same name, and what the view does to it: _deepens_ it (the same thing, finer), _extends_ it (what the layer above left out beside it), or _continues_ it (the sequence from where the layer above stopped). A view with no end point above it is lost: add its end point, or cut the view.
 - **Mark the way down and the way back.** An end point that a view below opens points to that view. If moving between layers feels like lost navigation, the reply has failed, whatever its content.
-- **Resolution is a dimension of the reply, never of the subject.** It is not an architectural layer, a tier, a call depth or a step of a data flow. A three-tier system at three resolutions is a three-by-three grid: each tier has its own `R0` to `R2`, and may stop at a different depth. A subject with two structures of its own, tiers and phases say, makes a cube, and a third makes more. Call the subject's parts by their own names, and keep *layer* and `R0`, `R1`, `R2` for resolution.
+- **Resolution is a dimension of the reply, never of the subject.** It is not an architectural layer, a tier, a call depth or a step of a data flow. A three-tier system at three resolutions is a three-by-three grid: each tier has its own `R0` to `R2`, and may stop at a different depth. A subject with two structures of its own, tiers and phases say, makes a cube, and a third makes more. Call the subject's parts by their own names, and keep _layer_ and `R0`, `R1`, `R2` for resolution.
 - **Lead with the map.** Before `R0`, show the reply's dimensions: resolution across, each of the subject's dimensions down, and in every cell the view that fills it. Leave a cell the reply does not fill visibly empty. The map keeps "where am I in this document" from ever being a question. A reply that is `R0` alone needs none; a two-layer reply's map is one line.
 - **Terms sit where they first become visible.** Terms that every layer uses go in one table before `R0`. A layer adds only the terms that first appear at its resolution, and no layer uses a term that is defined below it. The map and the shared terms are the only parts outside the layers.
 
@@ -71,21 +71,21 @@ When discussing an abstraction, make its value visible in the code that uses it.
 
 A diagram has to beat a table: when three columns say the same thing, send the table.
 
-| The material | The view |
-| --- | --- |
-| Logic or an algorithm | pseudocode |
-| A runtime path | call tree |
-| UI structure | component tree, with the state and module boundaries that matter |
-| Files and who owns what | shallow file tree, one `# role` comment per line |
-| Message order between actors | Mermaid `sequenceDiagram` |
-| Branches and decisions | Mermaid `flowchart` |
-| A change to an existing shape | a `diff` of that shape: file tree, call tree, component tree or code |
-| Many items, each with a state or fate | names colored by state, a legend, and before → after counts |
-| Options against criteria | a matrix with the recommended option marked |
-| Cause and effect, or options with changing assumptions | interactive controls with visible downstream changes and a live comparison |
-| A mechanism clarified by motion or changing quantities | a step-through animation or a short explainer video |
-| Problems or findings | one card each: a title of six words or fewer, one small picture, one "→ fix" line |
-| Code the user will copy | the whole block |
+| The material                                           | The view                                                                          |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| Logic or an algorithm                                  | pseudocode                                                                        |
+| A runtime path                                         | call tree                                                                         |
+| UI structure                                           | component tree, with the state and module boundaries that matter                  |
+| Files and who owns what                                | shallow file tree, one `# role` comment per line                                  |
+| Message order between actors                           | Mermaid `sequenceDiagram`                                                         |
+| Branches and decisions                                 | Mermaid `flowchart`                                                               |
+| A change to an existing shape                          | a `diff` of that shape: file tree, call tree, component tree or code              |
+| Many items, each with a state or fate                  | names colored by state, a legend, and before → after counts                       |
+| Options against criteria                               | a matrix with the recommended option marked                                       |
+| Cause and effect, or options with changing assumptions | interactive controls with visible downstream changes and a live comparison        |
+| A mechanism clarified by motion or changing quantities | a step-through animation or a short explainer video                               |
+| Problems or findings                                   | one card each: a title of six words or fewer, one small picture, one "→ fix" line |
+| Code the user will copy                                | the whole block                                                                   |
 
 ```diff
  submitForm
@@ -133,16 +133,7 @@ The table test, the diagram budget, the single accent and the delete pass adapt 
 
 ## Make the words unambiguous
 
-Reduce ambiguity before reducing word count. Apply these rules to labels, legends, callouts, and the text around the view:
-
-- **One name per thing.** Reuse the same term for the same concept. Preserve symbols, API names, statuses, paths, IDs, numbers, and units exactly. Explain an unfamiliar term once in a legend or callout.
-- **Clear actors and actions.** Use active verbs: "Planner selects tests". Prefer "save" to "perform persistence". In procedures, use the imperative and give one action per step. When the source leaves the actor unknown, show that uncertainty. Keep the words that identify who acts on what.
-- **One claim or action per label or step.** Split compound instructions and dense noun clusters into distinct steps or relations. Use plain words around necessary technical terms.
-- **Conditions stay attached.** Put a condition before the action it controls, or on the branch that leads to it. Keep exceptions and scope qualifiers beside the affected claim, including environment, role, and revision. "Staging credential" keeps "staging"; "passed on abc123" keeps "on abc123".
-- **Claim strength survives compression.** Preserve "must", "may", "could", and uncertainty about a cause or outcome. "May fail" stays "may fail". Use a longer label or callout when shortening would change the claim.
-- **Quality claims need evidence.** Replace promotional adjectives with the measurement or behavior the source supports. Keep source claims, inferences, and proposals distinguishable from observed results.
-
-These wording principles adapt the [ASD-STE100 skill](https://github.com/danyuchn/asd-ste100-skill/blob/7d4a135a199a5d7447c4886bcd7ffe742a627bc9/SKILL.md) and [Simplified Technical English](https://github.com/0xpili/simplified-technical-english/blob/1e148d670cba46685ad2b4c3f2354a637a7fdbbe/SKILL.md) to explanations, labels, and procedures.
+Reduce ambiguity before reducing word count. Write labels, legends, callouts and the text around the view by `plain-english` (`.claude/skills/plain-english/SKILL.md`). Its meaning rules matter most here, since a label shortens a claim: one claim per label, conditions kept beside what they limit, "may" kept as "may", and evidence for any quality claim.
 
 ## Before sending
 

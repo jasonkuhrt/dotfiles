@@ -11,14 +11,15 @@ The feature consists of two primary mechanisms:
 
 ## Best Practices
 
-*   **Prioritize Above-the-Fold Content**: Stream critical UI (header, hero, primary navigation, primary content) first. Use placeholders for "expensive" or lower priority components like comments, ads, or related content.
-*   **Implement Native Loading States**: Use the `<?start>` and `<?end>` markers to wrap fallback content. The browser automatically replaces everything between these markers when the corresponding `<template for>` arrives.
-*   **Minimize Cumulative Layout Shift (CLS)**: Always provide stable dimensions for placeholders. If the final content size is unknown, use skeleton screens or CSS `aspect-ratio` to reserve space and prevent jarring shifts.
-*   **Accessibility & Focus Management**: Be mindful that out-of-order updates can confuse screen reader users. Use `aria-live` regions for critical updates and ensure that focus isn't lost if a placeholder containing the active element is replaced.
+- **Prioritize Above-the-Fold Content**: Stream critical UI (header, hero, primary navigation, primary content) first. Use placeholders for "expensive" or lower priority components like comments, ads, or related content.
+- **Implement Native Loading States**: Use the `<?start>` and `<?end>` markers to wrap fallback content. The browser automatically replaces everything between these markers when the corresponding `<template for>` arrives.
+- **Minimize Cumulative Layout Shift (CLS)**: Always provide stable dimensions for placeholders. If the final content size is unknown, use skeleton screens or CSS `aspect-ratio` to reserve space and prevent jarring shifts.
+- **Accessibility & Focus Management**: Be mindful that out-of-order updates can confuse screen reader users. Use `aria-live` regions for critical updates and ensure that focus isn't lost if a placeholder containing the active element is replaced.
 
 ## Implementation Details
 
 ### 1. Declarative HTML Markers
+
 The browser looks for specific processing instructions to identify where content should be patched.
 
 ```html
@@ -30,7 +31,7 @@ The browser looks for specific processing instructions to identify where content
 <!-- A replacement range with loading state -->
 <main>
   <?start name="main-content">
-    <div class="skeleton">Loading content...</div>
+  <div class="skeleton">Loading content...</div>
   <?end>
 </main>
 
@@ -52,24 +53,26 @@ The browser looks for specific processing instructions to identify where content
 Once a `<template>` replaces an insertion point, that insertion point no longer exists, and can not be reused. However, a `<template>` may contain insertion points that can be used later in the stream.
 
 ```html
- <?start name="replaced-content">
-  <div class="skeleton">
-<?end>
-<!-- Later in the same stream, provide initial content -->
-<template for="replaced-content">
-  <?start name="replaced-content">
+<?start name="replaced-content">
+<div class="skeleton">
+  <?end>
+  <!-- Later in the same stream, provide initial content -->
+  <template for="replaced-content">
+    <?start name="replaced-content">
     <div>Quickly computed result</div>
-  <?end>
-</template>
-<!-- Later in the same stream, provide full content -->
-<template for="replaced-content">
-  <?start name="replaced-content">
+    <?end>
+  </template>
+  <!-- Later in the same stream, provide full content -->
+  <template for="replaced-content">
+    <?start name="replaced-content">
     <div>Full result</div>
-  <?end>
-</template>
+    <?end>
+  </template>
+</div>
 ```
 
 ### 2. Imperative JS Streaming
+
 You can now pipe fetch responses directly into the DOM without manual chunk handling.
 
 ```javascript
@@ -82,23 +85,21 @@ await response.body
   .pipeTo(main.streamHTMLUnsafe({ runScripts: true }));
 
 // Or use the `textStream()` convenience method which streams directly without needing the intermediate `TextDecoderStream()` step
-await response
-  .textStream()
-  .pipeTo(main.streamHTMLUnsafe({ runScripts: true }))
+await response.textStream().pipeTo(main.streamHTMLUnsafe({ runScripts: true }));
 ```
 
 ## Use Case Reference Matrix
 
-*   **Island Architecture**: Hydrate independent interactive components on top of static HTML without a full framework runtime.
-*   **Deferred "Expensive" Blocks**: Deliver the shell of a page immediately and stream database-heavy components as they become available.
-*   **Single Page Application (SPA) Updates**: Stream large UI transitions in SPAs using `streamHTML()` instead of waiting for a full JSON payload and manual DOM construction.
+- **Island Architecture**: Hydrate independent interactive components on top of static HTML without a full framework runtime.
+- **Deferred "Expensive" Blocks**: Deliver the shell of a page immediately and stream database-heavy components as they become available.
+- **Single Page Application (SPA) Updates**: Stream large UI transitions in SPAs using `streamHTML()` instead of waiting for a full JSON payload and manual DOM construction.
 
 ## Anti-Patterns & Warnings (DO NOT DO THIS)
 
-*   **Do not use OOO streaming for everything.** Over-fragmenting a page can increase the complexity of the stream and potentially delay content if the browser spends too much time patching small nodes.
-*   **Do not ignore Trusted Types.** When using `*Unsafe` methods in environments with Trusted Types enforced, ensure you are passing a sanitized policy object if required.
-*   **Do not assume script execution order.** Scripts inside a `<template for>` will execute as soon as they are patched into the document. Do not rely on them executing in a specific sequence relative to other deferred templates.
-*   **Do not use without a polyfill strategy.** Ensure you have a fallback or use polyfills (`html-setters-polyfill` and `template-for-polyfill`) to support your required browsers until this feature becomes Baseline.
+- **Do not use OOO streaming for everything.** Over-fragmenting a page can increase the complexity of the stream and potentially delay content if the browser spends too much time patching small nodes.
+- **Do not ignore Trusted Types.** When using `*Unsafe` methods in environments with Trusted Types enforced, ensure you are passing a sanitized policy object if required.
+- **Do not assume script execution order.** Scripts inside a `<template for>` will execute as soon as they are patched into the document. Do not rely on them executing in a specific sequence relative to other deferred templates.
+- **Do not use without a polyfill strategy.** Ensure you have a fallback or use polyfills (`html-setters-polyfill` and `template-for-polyfill`) to support your required browsers until this feature becomes Baseline.
 
 ## Fallback strategies
 

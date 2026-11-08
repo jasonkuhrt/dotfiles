@@ -1,27 +1,27 @@
 # CONTRIBUTING-Specific Protocol
 
-Rules specific to CONTRIBUTING.md files. Use alongside `~/.claude/skills/readme/core.md` (shared quality rules).
+Rules specific to CONTRIBUTING.md files. Use alongside `.claude/skills/readme/core.md` (shared quality rules).
 
 GitHub recognizes CONTRIBUTING.md at repo root, `.github/`, or `docs/` and surfaces it when someone opens an issue or PR.
 
 ## Required Sections in Fixed Order
 
-| # | Section | Purpose |
-|---|---------|---------|
-| 1 | __Getting Started__ | Clone/worktree → everything should just work. Push back on manual steps (see below). |
-| 2 | __Codebase Map__ | Physical layout. Directory/package structure. Where to find things. |
-| 3 | __Boundaries__ | Logical architecture. What knows about what. Separation of concerns. Dependency direction. |
-| 4 | __Extension Points__ | Where the codebase is designed for horizontal growth. How to add a new module, package, adapter, provider. What patterns to follow when extending. |
-| 5 | __Key Decisions__ | Why things are built the way they are. Compact table: decision, why, alternative rejected. Fill "alternative rejected" only from a record (a commit, a comment, a research record); never invent one. When the reason already lives in a doc comment (`@privateRemarks`), give it one line and point there. |
-| 6 | __Common Tasks__ | How to: add a feature, fix a bug, add a test, release. Recipe-style. |
+| #   | Section              | Purpose                                                                                                                                                                                                                                                                                                     |
+| --- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Getting Started**  | Clone/worktree → everything should just work. Push back on manual steps (see below).                                                                                                                                                                                                                        |
+| 2   | **Codebase Map**     | Physical layout. Directory/package structure. Where to find things.                                                                                                                                                                                                                                         |
+| 3   | **Boundaries**       | Logical architecture. What knows about what. Separation of concerns. Dependency direction.                                                                                                                                                                                                                  |
+| 4   | **Extension Points** | Where the codebase is designed for horizontal growth. How to add a new module, package, adapter, provider. What patterns to follow when extending.                                                                                                                                                          |
+| 5   | **Key Decisions**    | Why things are built the way they are. Compact table: decision, why, alternative rejected. Fill "alternative rejected" only from a record (a commit, a comment, a research record); never invent one. When the reason already lives in a doc comment (`@privateRemarks`), give it one line and point there. |
+| 6   | **Common Tasks**     | How to: add a feature, fix a bug, add a test, release. Recipe-style.                                                                                                                                                                                                                                        |
 
-__Monorepo exception:__ Codebase Map should include a __Package Map__ table — every package with a one-liner of what it does.
+**Monorepo exception:** Codebase Map should include a **Package Map** table — every package with a one-liner of what it does.
 
 ## Automate Setup, Document Design
 
 CONTRIBUTING.md exists for the 95% that can't be automated: architecture, design decisions, conventions, task recipes. The 5% that IS setup should be as close to zero-manual-steps as possible.
 
-__The ideal Getting Started:__
+**The ideal Getting Started:**
 
 ```markdown
 ## Getting Started
@@ -33,7 +33,7 @@ after install and configures hooks. If you need environment variables, copy
 
 That's it. If Getting Started needs more than a short paragraph, the project's automation has gaps.
 
-__When writing CONTRIBUTING, actively push back on manual setup steps.__ If the user describes manual prerequisites, installation sequences, or build steps, challenge them:
+**When writing CONTRIBUTING, actively push back on manual setup steps.** If the user describes manual prerequisites, installation sequences, or build steps, challenge them:
 
 - "Can this be automated in a `prepare` script?"
 - "Can the install hook handle this?"
@@ -45,9 +45,9 @@ Only accept manual steps after the user confirms automation isn't feasible (e.g.
 
 CONTRIBUTING describes how development works, not what scripts exist. If the project uses git hooks, pre-commit checks, or CI automation, the contributing guide explains the workflow those tools create — not the tools themselves.
 
-__Good:__ "Commit and push. The pre-commit hook runs formatting, linting, and type-checking automatically. If the hook fails, fix the issue and commit again."
+**Good:** "Commit and push. The pre-commit hook runs formatting, linting, and type-checking automatically. If the hook fails, fix the issue and commit again."
 
-__Bad:__ A list of 12 npm scripts with descriptions of what each one does. That's `package.json --help`, not a contributing guide.
+**Bad:** A list of 12 npm scripts with descriptions of what each one does. That's `package.json --help`, not a contributing guide.
 
 The test: if removing a script or renaming it would break the contributing guide, the guide is coupled to implementation details instead of describing the workflow.
 
@@ -71,6 +71,6 @@ If any of these require reading source code to answer, the CONTRIBUTING.md has g
 
 ## When to Create/Update
 
-- __Create alongside README__ — if the project has more than one contributor (including future-you), CONTRIBUTING.md should exist
-- __Update when workflows change__ — new build tool, new test runner, new lint rules, new package added
-- __Review when README is reviewed__ — they're a pair; drift between them is a bug
+- **Create alongside README** — if the project has more than one contributor (including future-you), CONTRIBUTING.md should exist
+- **Update when workflows change** — new build tool, new test runner, new lint rules, new package added
+- **Review when README is reviewed** — they're a pair; drift between them is a bug

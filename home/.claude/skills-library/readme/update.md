@@ -1,6 +1,6 @@
 # Operation: update
 
-Modify an existing README. Preserve what works, rewrite what doesn't. Read `~/.claude/skills/readme/core.md` (shared rules) and `~/.claude/skills/readme/core-readme.md` or `~/.claude/skills/readme/core-contributing.md` (file-specific rules).
+Modify an existing README. Preserve what works, rewrite what doesn't. Read `.claude/skills/readme/core.md` (shared rules) and `.claude/skills/readme/core-readme.md` or `.claude/skills/readme/core-contributing.md` (file-specific rules).
 
 ## Steps
 
@@ -13,4 +13,4 @@ Modify an existing README. Preserve what works, rewrite what doesn't. Read `~/.c
 
 ## Recovery
 
-If output is unsatisfactory, `git checkout -- README.md` restores the previous version.
+Before the first edit, copy the README to the scratchpad. If output is unsatisfactory, copy that file back. `git checkout -- README.md` would also discard edits that were there before this operation began.

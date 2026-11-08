@@ -1,6 +1,6 @@
 # Shared Quality Protocol
 
-Rules that apply to ALL files this skill produces (README.md, CONTRIBUTING.md). File-specific rules live in `~/.claude/skills/readme/core-readme.md` and `~/.claude/skills/readme/core-contributing.md`.
+Rules that apply to ALL files this skill produces (README.md, CONTRIBUTING.md). File-specific rules live in `.claude/skills/readme/core-readme.md` and `.claude/skills/readme/core-contributing.md`.
 
 ## G3: Heading Density
 
@@ -23,17 +23,7 @@ These rules hold for every file. A failure is a blocker in review, never polish.
 
 ## Sentences
 
-These rules come from ASD-STE100 Simplified Technical English. They apply its writing rules, not its controlled dictionary. Technical names and code identifiers are exempt.
-
-- A sentence that describes is at most 25 words. A sentence that instructs is at most 20 words and gives one instruction.
-- Use the active voice. Use the passive only to describe, and only when the actor does not matter.
-- Use the imperative for an instruction: "Run the generator."
-- One word has one meaning. One thing has one word. Do not cycle synonyms. Quoted output (an error message, a log line) keeps its own words; only the prose uses the one word. The inverse of a relation ("the node above it" for "stands under") is the same word seen from the other end, and is allowed.
-- Use articles ("a", "an", "the") where they fit.
-- Stack at most three nouns together.
-- Use simple tenses: present, past and future.
-- No em dashes. No slash between words, except "and/or".
-- Never change technical content to obey a sentence rule. If a rule and accuracy conflict, keep accuracy and keep the sentence plain.
+Write every sentence by `plain-english` (`.claude/skills/plain-english/SKILL.md`): its sentence limits, its one word per meaning, and its meaning rules. Technical names and code identifiers are exempt.
 
 ## Knowledge Delta Rule
 
@@ -57,14 +47,14 @@ Every claim must trace to a source. No evidence → no claim.
 
 ## Archetype Classification
 
-| Archetype      | Signals                             | Emphasis                                      |
-| -------------- | ----------------------------------- | --------------------------------------------- |
-| __Library__    | Exports, types, no bin              | Concepts + API surface + quickstart           |
-| __Bridge__     | Imports from 2+ runtime systems, maps concepts between them, creates runtime artifacts | Architecture (mapping tables, lifecycle diagrams) + Observability (if instrumented) + Error Reference (if typed errors) + Concepts + API surface. The mapping documentation IS the library's value — without it the library is a black box. |
-| __CLI tool__   | `bin` field, argc/commander, --help | Quickstart + usage tasks + command reference  |
-| __Monorepo__   | Multiple packages, workspace config | Orientation + package taxonomy + architecture |
-| __App/system__ | Services, entry points, infra       | Architecture + setup + guides                 |
-| __Utility__    | Small scope, <5 source files        | Lean docs, every section short                |
+| Archetype      | Signals                                                                                | Emphasis                                                                                                                                                                                                                                    |
+| -------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Library**    | Exports, types, no bin                                                                 | Concepts + API surface + quickstart                                                                                                                                                                                                         |
+| **Bridge**     | Imports from 2+ runtime systems, maps concepts between them, creates runtime artifacts | Architecture (mapping tables, lifecycle diagrams) + Observability (if instrumented) + Error Reference (if typed errors) + Concepts + API surface. The mapping documentation IS the library's value — without it the library is a black box. |
+| **CLI tool**   | `bin` field, argc/commander, --help                                                    | Quickstart + usage tasks + command reference                                                                                                                                                                                                |
+| **Monorepo**   | Multiple packages, workspace config                                                    | Orientation + package taxonomy + architecture                                                                                                                                                                                               |
+| **App/system** | Services, entry points, infra                                                          | Architecture + setup + guides                                                                                                                                                                                                               |
+| **Utility**    | Small scope, <5 source files                                                           | Lean docs, every section short                                                                                                                                                                                                              |
 
 Scale to project size. 3-file utility → 50-line README. Flagship library → 300+. Never more docs than source.
 
@@ -82,19 +72,20 @@ This keeps one source of truth for domain vocabulary. When reviewing both files,
 
 During source truth extraction, scan for these artifacts. If present, weave a reference into the appropriate section — not as a standalone "Links" dumping ground, but integrated where the reader would naturally want them.
 
-| Artifact | How to detect | Where |
-|----------|---------------|-------|
-| CHANGELOG.md | File exists | Title area or after Quickstart |
-| GitHub Releases | `gh release list` returns results | Title area: link or badge |
-| CONTRIBUTING.md | File exists | After Usage: "See [contributing guide](CONTRIBUTING.md)" |
-| LICENSE / LICENSE.md | File exists | Closing line: "Licensed under [X](LICENSE)" |
-| docs/ or doc site | Directory exists, or homepage in package.json | API Overview: "Full reference at [docs site](url)" |
-| examples/ | Directory exists | Usage: "More examples in [examples/](examples/)" |
-| GitHub Actions | .github/workflows/ exists | Title area: CI badge |
-| GitHub Discussions | Check repo settings or presence | Closing: "Questions? See [discussions](url)" |
-| Related packages | workspace siblings, or explicit in package.json | Solution or API Overview: mention the ecosystem |
+| Artifact             | How to detect                                   | Where                                                    |
+| -------------------- | ----------------------------------------------- | -------------------------------------------------------- |
+| CHANGELOG.md         | File exists                                     | Title area or after Quickstart                           |
+| GitHub Releases      | `gh release list` returns results               | Title area: link or badge                                |
+| CONTRIBUTING.md      | File exists                                     | After Usage: "See [contributing guide](CONTRIBUTING.md)" |
+| LICENSE / LICENSE.md | File exists                                     | Closing line: "Licensed under [X](LICENSE)"              |
+| docs/ or doc site    | Directory exists, or homepage in package.json   | API Overview: "Full reference at [docs site](url)"       |
+| examples/            | Directory exists                                | Usage: "More examples in [examples/](examples/)"         |
+| GitHub Actions       | .github/workflows/ exists                       | Title area: CI badge                                     |
+| GitHub Discussions   | Check repo settings or presence                 | Closing: "Questions? See [discussions](url)"             |
+| Related packages     | workspace siblings, or explicit in package.json | Solution or API Overview: mention the ecosystem          |
 
 Rules:
+
 - Only link what actually exists. Do not create placeholder links.
 - Prefer inline references over a link list.
 - Title area badges: use sparingly. CI status and npm version are useful. Vanity metrics are not.
@@ -108,11 +99,11 @@ Similarly, be honest about what the consumer builds vs what's automatic. If the 
 
 ## Anti-Slop Scan
 
-__Banned words__ — search and remove every instance:
+**Banned words** — search and remove every instance:
 
 "powerful", "flexible", "seamless", "robust", "elegant", "intuitive", "comprehensive", "streamlined", "cutting-edge", "leverage", "pivotal", "crucial", "vital", "groundbreaking", "vibrant", "nestled", "profound", "breathtaking", "delve", "multifaceted", "foster", "realm", "tapestry", "showcase", "underscore", "landscape" (abstract use), "interplay"
 
-__Banned phrases__ — search and rewrite:
+**Banned phrases** — search and rewrite:
 
 | Kill                            | Replace with                     |
 | ------------------------------- | -------------------------------- |
@@ -131,7 +122,7 @@ __Banned phrases__ — search and rewrite:
 | "The future looks bright"       | Cut entirely                     |
 | "Exciting times lie ahead"      | Cut entirely                     |
 
-__Banned structures__:
+**Banned structures**:
 
 - Sections that open by describing what they will cover
 - Sections that close by summarizing what was said
@@ -152,7 +143,7 @@ __Banned structures__:
 const config = Module.make({
   name: 'Config',
   capabilities: {/* ... */},
-})
+});
 ```
 
 The `/* ... */` makes this uncopyable. Either show real code or mark it explicitly: `// Conceptual — see Usage for runnable examples`.

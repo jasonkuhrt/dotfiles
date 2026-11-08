@@ -38,15 +38,7 @@ When creating a README, the skill also creates CONTRIBUTING.md if the project ha
 
 ## Guarantees
 
-Every README satisfies four hard rules:
-
-**G1: Required Sections in Fixed Order.** Title + One-liner, Problem, Solution, Quickstart, Concepts, Usage, API Overview, Glossary. Broadest to most specific (cognitive funneling).
-
-**G2: Semantic Term Ordering.** No domain term appears before it has been formally introduced. Topological sort of the concept dependency graph.
-
-**G3: Heading Density.** Every heading has at least 100 words of prose beneath it. Thin headings get merged into narrative sections.
-
-**G4: Term Linking.** Domain terms link to the glossary using `` [`term`](#term) `` backtick links, visually distinct from external links.
+Every README holds the guarantees `core-readme.md` states: G1 required sections in a fixed order, G2 semantic term ordering, G4 term linking, G5 conditional sections, G6 API reference depth and G7 the glossary as ubiquitous language. `core.md` adds G3 heading density for narrative sections and the readability rules.
 
 ## Anti-Slop
 
@@ -54,4 +46,4 @@ Banned words ("powerful", "flexible", "seamless", "robust", "elegant", "groundbr
 
 ## Design Rationale and Sources
 
-See `~/.claude/skills/readme/references.md` for the research that informed this skill's design.
+See `.claude/skills/readme/references.md` for the research that informed this skill's design.

@@ -59,13 +59,13 @@ Since the `Temporal` API is a newer feature and may not be supported in all brow
 
 ```html
 <!-- Conditionally load the Temporal polyfill only if not natively supported -->
-<script>
-  if (typeof Temporal === "undefined") {
+<script type="module">
+  if (typeof Temporal === 'undefined') {
     try {
-      const module = await import("https://esm.sh/@js-temporal/polyfill");
+      const module = await import('https://esm.sh/@js-temporal/polyfill');
       globalThis.Temporal = module.Temporal;
     } catch (e) {
-      console.error("Failed to load Temporal polyfill:", e);
+      console.error('Failed to load Temporal polyfill:', e);
     }
   }
 </script>

@@ -1,4 +1,4 @@
 interface:
   display_name: 'Use Workers'
-  short_description: 'Route work by kind, size, quota and effort'
-  default_prompt: 'Use $use-workers to calculate the worker and effort from kind, size and remaining quota, then launch it where the lead can steer it and check its result.'
+  short_description: 'Weigh the work and choose how to hand it off'
+  default_prompt: 'Use $use-workers to weigh this work, pick the engine, effort and number of runs, and explain the deciding considerations in one line.'

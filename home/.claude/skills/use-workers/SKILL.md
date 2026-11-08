@@ -3,11 +3,18 @@ name: use-workers
 description: >-
   Weigh how to do or hand off work using its kind, size, fixed cost, existing
   context, steering, checking, quota windows, speed and effort. Use when
-  considering workers or doing a piece yourself. Explain the pick in one
-  line; the considerations inform judgment rather than decide it.
+  invoking /use-workers or asking for workers without naming a model, or
+  considering a handoff. Pick the engine, effort and run count and explain
+  why in one line; a name is a rare override.
 ---
 
 # Workers
+
+`/use-workers`, or words asking for workers without a name, is the normal
+case: weigh the considerations, pick the engine, effort and number of runs,
+and say the pick in one line. A name is the rare override. Jason,
+2026-11-08: "imo i shouldn't have to name the model anymore 99% of the time
+whne i use useworkers skill".
 
 Choose in the context you hold. Jason, 2026-11-08: "this decision tree needs
 to stop over steering, it has to explain things to consider and why and be
@@ -24,11 +31,15 @@ for his yes. "i never want astra used unless I asked for it explicitly"
 "if any of my rules contradict or make difficult u doing the right thing u
 need to speak up" (2026-11-08).
 
-| Name | Model | Effort | Conductor agent and model |
+Effort is weighed for the work, not fixed by the engine.
+
+| Engine | Useful strengths | Quota and handoff cost | Route |
 | --- | --- | --- | --- |
-| `sonnet` | Claude Sonnet | weighed | `claude`, `sonnet-5-5-1m` |
-| `astra` | `gpt-6-astra`, only when named | weighed | `codex`, `gpt-6-astra` |
-| `sol` | `gpt-6.1-sol` | weighed | `codex`, `gpt-6.1-sol` |
+| Jev | Typed judgments over supplied evidence | TypeSafe quota; supplied state, no conversation | `typesafe` (`typesafe-ai`) |
+| Sonnet | Fully briefed work; easy steering in an app session | Claude quota; fresh context and result checking | Claude app or Agent tool; Conductor: `claude`, `sonnet-5-5-1m` |
+| Sol | Fully briefed work, bulk reads, mechanical edits and reviews | OpenAI quota, no Claude quota; fresh context and result checking | `gpt-6.1-sol`; Conductor: `codex`, `gpt-6.1-sol` |
+| Opus | Chat context, taste and design; lead, inheriting fork or subagent | Claude quota; an inheriting fork can reuse context | Lead or Claude session/Agent tool, using the available Opus model |
+| Astra | A reasoning worker or reviewer when Jason names it | OpenAI quota; fresh context and result checking | `gpt-6-astra`, only when named; Conductor: `codex`, `gpt-6-astra` |
 
 How it launches depends on where the lead runs; see
 [Where you run](#where-you-run). `gate-peer-review` owns whether existing

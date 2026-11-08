@@ -346,6 +346,7 @@ For architecture and design brainstorming:
   * Good: both written as axioms in Heartbeat's `incident-response` skill, in a PR, and the memories deleted.
 * A feedback memory's name, description and `MEMORY.md` line are the rule: sessions act on them without opening the file. They keep the scope of my own words ("asked to show code: …"). A wider scope is your reading: it stays in the body, labelled.
 * Write a rule as a test on the result ("a fence of only comments is prose"), with one bad and one good example from the incident. Never as a conversion ("prose becomes comments"): shortened, it loses its condition.
+* An instruction has one owner, with pointers elsewhere, and is scoped to the condition it changes. Prefer stable roles and skill names over fragile implementation line numbers; enforce command mechanics in hooks or lint. Jason, 2026-09-05: "be wary of fragile file paths", "be wary of over steering". Bad: three copies of a testing doctrine and a mandatory staged red. Good: one testing skill, a discriminating regression when it pays, and a hook enforcing the command.
 
 ## Screenshots
 

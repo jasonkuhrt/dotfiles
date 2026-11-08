@@ -1,4 +1,4 @@
 interface:
   display_name: 'Use Workers'
-  short_description: 'Hand side work to the worker Jason names'
-  default_prompt: 'Use $use-workers to hand the side work this task allows to the named worker, launched where the lead runs, reachable and stoppable, and checked before its result is used.'
+  short_description: 'Route work by kind, size, quota and effort'
+  default_prompt: 'Use $use-workers to calculate the worker and effort from kind, size and remaining quota, then launch it where the lead can steer it and check its result.'

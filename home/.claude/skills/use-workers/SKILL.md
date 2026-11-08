@@ -1,47 +1,37 @@
 ---
 name: use-workers
 description: >-
-  A mode, off unless Jason turns it on, that hands side work to one worker, the
-  default stack (Sol, then Opus) or the one he names: `sonnet` (a Claude Sonnet
-  session or subagent), `astra` (gpt-6-astra through codex) or `sol`
-  (gpt-6.1-sol through codex), to stretch the Claude quota. Use before every
-  dispatch of a worker, fork, subagent or cloud session, before putting several
-  workers on CI, before taking on yourself a self-contained task that is not the
-  main line of the chat, such as a PR's landing chores, and when the user names
-  another worker or says to stop. Never launches a worker as a routine.
+  Route work by kind, size, remaining quota and reasoning effort, then launch
+  the chosen worker where the lead can steer it. Use before doing or handing
+  off a piece of work, including bulk reads, typed judgments, reviews and
+  landing chores. A worker Jason names overrides the calculation; Astra runs
+  only when he names it. Never launches a worker as a routine.
 ---
 
 # Workers
 
-A mode, not a task, and off until Jason turns it on: `/use-workers` for the
-default stack, `/use-workers <name>` for one worker, or words that say so. Jason,
-2026-11-05: "i never want astra used unless I asked for it explicitly". No
-worker runs by default, and no rule may launch Astra on its own.
+Every piece of work gets a routing calculation before it is done or handed
+off. Jason, 2026-11-08: "sonnet, jev, sol, opus, all are appropiate at different
+times" and "everything about the situation is easily calculatable, including
+what kind of job yo're doing and what kind of effort u need". A worker Jason
+names overrides the calculation. Astra runs only when he names it:
+"i never want astra used unless I asked for it explicitly" (2026-11-05).
 
 | Name     | Model         | Effort | Conductor agent and model |
 | -------- | ------------- | ------ | ------------------------- |
-| `sonnet` | Claude Sonnet | xhigh  | `claude`, `sonnet-5-5-1m` |
-| `astra`  | `gpt-6-astra` | ultra  | `codex`, `gpt-6-astra`    |
-| `sol`    | `gpt-6.1-sol` | ultra  | `codex`, `gpt-6.1-sol`    |
+| `sonnet` | Claude Sonnet | calculated | `claude`, `sonnet-5-5-1m` |
+| `astra`  | `gpt-6-astra` | calculated | `codex`, `gpt-6-astra`    |
+| `sol`    | `gpt-6.1-sol` | calculated | `codex`, `gpt-6.1-sol`    |
 
 How it launches depends on where the lead runs; see
 [Where you run](#where-you-run).
 
-With no name, it takes the default stack: Sol (`sol`) at `ultra`, then Opus at
-`xhigh` when Sol can't run (quota, login, or a run that errors). Never ask which
-worker. One worker is on at a time:
-invoking the skill with another name switches to it. The user ends it with
-`/use-workers off`, or words that say so. It survives compaction and handoffs:
-carry "use-workers is off" or "use-workers is on: <name>" in whatever you hand
-yourself.
-
 Its peer `gate-peer-review` owns whether existing review is sufficient and when
-new review is needed, whether this mode is on or off. Its rounds run on its
+new review is needed. Its rounds run on its
 default reviewer stack, or on the reviewer Jason names; this skill supplies
-launch mechanics, not another handoff review. `/use-workers off` leaves that
-gate on.
+launch mechanics, not another handoff review.
 
-The lead is whichever session runs the mode, Claude or Codex. A worker
+The lead is the session steering the work, Claude or Codex. A worker
 assigned a task does that task and dispatches nothing; role follows the
 assignment, not the harness name.
 
@@ -50,26 +40,48 @@ the user's OpenAI subscription, so they spend no Claude quota at all; Sonnet
 spends Claude quota, at a smaller model than the lead's. None of them shares
 your context, so they take only the work that loses nothing from that.
 
-## The rule
+## Routing calculation
 
-The user's rule, in its final wording. He said it of Astra, when this skill's workers were
-called sidekicks. It now applies only while the mode is on, to the worker he
-named; it never turns a worker on by itself:
+State the pick in one line with the kind, estimated size, quota source and
+effort. Calculate from what is visible; label unavailable quota data rather
+than inventing it. A harness default never decides the pick.
 
-> **Astra sidekicks.** Send Astra (gpt-6-astra, ultra, via codex) the side
-> work: a short-lived discrete task briefed in full up front, a targeted
-> review, a second or third opinion, an off-topic one-off. Keep with Claude
-> (the lead, or a fork of the lead) the work that advances the chat's story,
-> that would gain from the user's steering or from the lead's context, and any
-> lead on an API, an abstraction, a library's design or taste. The point is to
-> stretch the Claude quota.
+1. **Kind.** A typed judgment over supplied evidence (bucket, rank, verify,
+   triage, select) goes to Jev through `typesafe`; read `typesafe-ai` for its
+   contract. Work briefed in full that needs none of the chat's context
+   (bulk reading or classification, mechanical edits, reviews, landing
+   chores) goes to Sol or Sonnet. Work carrying the chat's story, taste,
+   API or abstraction design stays with Opus, the lead or its fork. The
+   four tests below decide whether work is independent of the chat.
+2. **Size.** Estimate tokens read and written as bytes divided by four,
+   multiplied by the runs, including repeated context. Several runs at once
+   pass when each is short, about 50k tokens; otherwise use a few runs and
+   reuse them for related assignments.
+3. **Quota.** Claude's desktop `get_usage` gives percent used in each plan
+   window and reset time. Sol and Astra spend OpenAI quota; Jev spends
+   TypeSafe's. Compare the work with what remains. Near a cap, that side
+   does only what it alone can do. Missing access is stated; it never turns
+   old usage into a current reading.
+4. **Effort.** Pick the reasoning effort the kind needs, not the maximum.
+   Pass it explicitly where supported. A composing workflow's explicit
+   reviewer stack still governs its review.
+
+A rule that makes the calculation hard is named to Jason when it gets in
+the way: "if any of my rules contradict or make difficult u doing the right
+thing u need to speak up" (2026-11-08).
+
+- Bad: 19 Opus subagents reading 858 memory files at 99% weekly usage,
+  followed by a rule banning Opus fan-outs.
+- Good: Jev buckets the files, one Sol run reads and writes the targets,
+  and the Opus lead spends its tokens on the brief and routing design.
 
 Jason narrowed "short-lived" on 2026-11-01: "the one run of minutes limitation
 is only if the main chat would be blocked from steering". A long task is side
 work when the lead can still steer the worker while the chat goes on.
 
-Before each piece of work you would hand off or do yourself, apply the test. It
-goes to the worker when all four hold:
+### Kind: the four tests for side work
+
+Work goes to an independent worker when all four hold:
 
 1. **Briefed in full now.** You can write the whole brief this turn: the
    question, the files, what done looks like, the report's shape. Nothing in it
@@ -91,12 +103,12 @@ goes to the worker when all four hold:
    other matter of taste, and it writes no text the user reads (issue
    descriptions, docs, templates). You write or finally edit that text.
 
-When the test fails, the work stays with Claude: you, or a fork of you (Agent
-tool, `subagent_type: "fork"`) when it should run in the background while the
-chat goes on.
+When a test fails, keep the work with the lead or its fork. In Claude's Agent
+tool that is `subagent_type: "fork"`. A Claude subagent runs on the lead's
+model unless `model` is set: when the calculated pick is Sonnet, pass
+`model: "sonnet"` explicitly.
 
-When the test passes, use the worker. Doing it yourself or in a fork spends
-the quota this mode exists to save. The one exception is a task you finish in a
+When the tests pass, use the calculated worker. The exception is a task finished in a
 couple of tool calls (one grep, one file read), where the brief would cost more
 than the task.
 
@@ -211,7 +223,8 @@ can steer it there.
      > .context/workers/<name>-<slug>.session.json
    ```
 
-   The agent, model and effort come from the table at the top. The result
+   The agent and model come from the table; effort comes from the calculation.
+   The result
    holds the session's `id` and its `deepLink`; give the user the link with
    the one line on what the worker is doing. Without the `conductor` CLI,
    the same call is `POST /v0/sessions` with `workspaceId`, `agent`, `model`,
@@ -239,7 +252,7 @@ report: a Conductor session has no read-only switch.
 ## Launching from a Codex lead on a Mac
 
 - **`astra`, `sol`:** Codex's `spawn_agent` (skill `dispatch-codex-sub`), with
-  its model override set to the worker's model, its effort to `ultra` where
+  its model override set to the worker's model, its calculated effort where
   the tool takes one, and `fork_turns: "none"`, since the brief carries what it
   needs. Its final answer comes back to you when it finishes; correct it with
   `send_message`. When the tool's list of model overrides lacks the model,
@@ -247,7 +260,7 @@ report: a Conductor session has no read-only switch.
 - **`sonnet`:** Claude Code's CLI in the background:
 
   ```sh
-  claude -p --model sonnet --effort xhigh \
+  claude -p --model sonnet --effort <effort> \
     --permission-mode bypassPermissions --output-format json \
     "<prompt, or: Read <brief's path> and do exactly what it says.>" \
     < /dev/null > <scratch>/sonnet-<slug>.json 2> <scratch>/sonnet-<slug>.log
@@ -267,9 +280,8 @@ report: a Conductor session has no read-only switch.
 ## Launching `sonnet` from a Claude lead in the Claude app
 
 - Write the brief to a file. Call `mcp__ccd_session__start_session` with
-  `initiation: "user_asked"` (turning the mode on is the user's ask for
-  background side work), `context: "fresh"`, `model: "claude-sonnet-5-5"`,
-  `effort: "xhigh"`, a `title`, a short `name`, `prompt`
+  `initiation: "user_asked"` for the user's task, `context: "fresh"`,
+  `model: "claude-sonnet-5-5"`, the calculated `effort`, a `title`, a short `name`, `prompt`
   `Read <brief's path> and do exactly what it says.` and a `background` of
   at least 80 characters on the goal the work serves.
 - Work that ends in its own branch or PR takes `use_worktree: true`. Its
@@ -291,7 +303,7 @@ report: a Conductor session has no read-only switch.
   Control ("you can start a session only on a message typed in the desktop
   app"). Then a unit that needs no steering launches at once as a CLI
   background session, in its own worktree:
-  `claude --bg --name <name> --model sonnet --effort xhigh --permission-mode bypassPermissions "Read <brief's path> and do exactly what it says." < /dev/null`.
+  `claude --bg --name <name> --model sonnet --effort <effort> --permission-mode bypassPermissions "Read <brief's path> and do exactly what it says." < /dev/null`.
   The lead can't message it mid-run (`--resume` starts a copy), so its brief
   says to write a blocking question in its report and stop.
   - Bad (2026-11-01): holding a unit that removes reruns from every other
@@ -302,7 +314,7 @@ report: a Conductor session has no read-only switch.
 ## Launching `sonnet` from a Claude lead in a terminal
 
 - Write the brief to a file, then call the Agent tool with
-  `subagent_type: "general-purpose"`, `model: "sonnet"` and `effort: "xhigh"`,
+  `subagent_type: "general-purpose"`, `model: "sonnet"` and calculated `effort`,
   and the prompt `Read <brief's path> and do exactly what it says.` It runs in
   the background; its completion notice brings you back.
 - Pass `isolation: "worktree"` when it edits a checkout that other agents are
@@ -318,16 +330,16 @@ A Claude lead on a Mac launches them this way, and so does a Codex lead whose
 
 ```sh
 codex exec -C <dir> --skip-git-repo-check \
-  -c 'model="<model>"' -c 'model_reasoning_effort="ultra"' \
+  -c 'model="<model>"' -c 'model_reasoning_effort="<effort>"' \
   -c 'agents.default_subagent_model="<model>"' \
-  -c 'agents.default_subagent_reasoning_effort="ultra"' \
+  -c 'agents.default_subagent_reasoning_effort="<effort>"' \
   -o <scratchpad>/<name>-<slug>.txt \
   "<prompt, or the brief's path>" \
   < /dev/null > <scratchpad>/<name>-<slug>.log 2>&1
 ```
 
 `<model>` is `gpt-6-astra` for `astra` and `gpt-6.1-sol` for `sol`; `<name>` is
-the worker's name.
+the worker's name, and `<effort>` is the calculated effort.
 
 - Run it in the background (`run_in_background: true`) and keep working; the
   completion notice brings you back.
@@ -348,7 +360,7 @@ the worker's name.
 - `< /dev/null` is required. Without it a background run waits forever at
   "Reading additional input from stdin...".
 - Read the log's head within about 15 seconds. A live run shows
-  `model: <model>`, `reasoning effort: ultra` and `session id: <uuid>`. A log
+  `model: <model>`, the selected reasoning effort and `session id: <uuid>`. A log
   holding only the stdin line is a hung run, not a slow one.
 - A review or an opinion adds `--sandbox read-only`. The config's default is
   full access with no approvals, so any other run can edit and commit: check

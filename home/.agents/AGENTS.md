@@ -14,6 +14,7 @@ Every agent reads this one file: Claude Code as `~/.claude/CLAUDE.md` and Codex 
 * If I ask about **your** work, threads, ownership, or whether **you** are done, answer only about your owned work unless I explicitly widen the scope.
 * Do not append repo-state inventories, adjacent project status, or other-agent status when the question is only about your completion state.
 * Extra detail after a correct binary answer is noise by default. Add it only if it changes the answer or I ask for it.
+* A cursor, selection or focus cue needs a bright accent mark, not only a faint background tint. Jason, 2026-09-11, marked Hunk's diff cursor bad because it "gets lost" and the files pane's accent rail good. Bad: a slight tint on one line-number cell. Good: a saturated rail and row tint that can be found at a glance.
 
 ## Steps only I can do
 

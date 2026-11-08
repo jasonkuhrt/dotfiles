@@ -42,6 +42,27 @@ ast-grep run -l ts -p 'old($A)' -r 'neu($A)' -U .
 - After `-U`, run the repository's type check: ast-grep rewrites syntax, not
   types.
 
+## Verify the match set
+
+A bulk rewrite is applied only after its preview identifies the intended files
+and syntax nodes. Check the actual workspace roots and the producer package
+itself; a search over remembered directory names can omit consumers. Resolve
+each import's binding in its own file, including type-only imports and renamed
+bindings in code that has not yet adopted a no-alias convention.
+
+An empty search or successful command over zero files proves nothing. Test a
+known match in the same scope before accepting a negative, inspect the tool's
+processed-file count where available, and retain its output. Pass file lists as
+arrays or null-delimited arguments, never as one space-separated variable.
+
+Compare the applied diff with the preview: changed files, matched nodes and edit
+magnitude must agree. A reverse pattern is not an undo: the target shape may
+have existed before the rewrite. Undo only the exact edits owned by this run.
+
+- Bad (2026-07-22): reversing every `MutableType<Models.X>` changed 27 existing
+  aliases as well as the 17 owned edits.
+- Good: preview and retain the exact target set, then restore only those edits.
+
 ## Rules kept in a repository
 
 A repository gets an `sgconfig.yml` and a `rules/` folder, checked with

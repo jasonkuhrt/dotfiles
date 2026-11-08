@@ -1,8 +1,9 @@
 ---
 name: use-workers
 description: >-
-  Route work by kind, size, remaining quota and reasoning effort, then launch
-  the chosen worker where the lead can steer it. Use before doing or handing
+  Route work by kind, size, quota, effort, steering, run count and speed
+  against cost, then launch the chosen worker where the lead can steer it.
+  Use before doing or handing
   off a piece of work, including bulk reads, typed judgments, reviews and
   landing chores. A worker Jason names overrides the calculation; Astra runs
   only when he names it. Never launches a worker as a routine.
@@ -42,9 +43,10 @@ your context, so they take only the work that loses nothing from that.
 
 ## Routing calculation
 
-State the pick in one line with the kind, estimated size, quota source and
-effort. Calculate from what is visible; label unavailable quota data rather
-than inventing it. A harness default never decides the pick.
+State the pick and calculation in one line: kind, estimated size, quota,
+effort, steering, run count and speed against cost. Calculate from what is
+visible; label unavailable quota data rather than inventing it. A harness
+default never decides the pick. Staying in the lead is an option.
 
 1. **Kind.** A typed judgment over supplied evidence (bucket, rank, verify,
    triage, select) goes to Jev through `typesafe`; read `typesafe-ai` for its
@@ -54,9 +56,7 @@ than inventing it. A harness default never decides the pick.
    API or abstraction design stays with Opus, the lead or its fork. The
    four tests below decide whether work is independent of the chat.
 2. **Size.** Estimate tokens read and written as bytes divided by four,
-   multiplied by the runs, including repeated context. Several runs at once
-   pass when each is short, about 50k tokens; otherwise use a few runs and
-   reuse them for related assignments.
+   multiplied by the runs, including repeated context.
 3. **Quota.** Claude's desktop `get_usage` gives percent used in each plan
    window and reset time. Sol and Astra spend OpenAI quota; Jev spends
    TypeSafe's. Compare the work with what remains. Near a cap, that side
@@ -65,14 +65,35 @@ than inventing it. A harness default never decides the pick.
 4. **Effort.** Pick the reasoning effort the kind needs, not the maximum.
    Pass it explicitly where supported. A composing workflow's explicit
    reviewer stack still governs its review.
+5. **Steering.** Will Jason or the lead want to talk to the run while it
+   works? A Claude app session (Sonnet or Opus) is easiest to chat with;
+   a `codex exec` run takes a reply through its `codex://` thread or a
+   stop and resume; Jev takes none. The more steering needed, the more a
+   Claude session can be worth its quota. Jason, 2026-11-08: "sonnet or
+   opus have benefit of being easier to chat with iiuc, so that's another
+   tradeoff in the decision tree".
+6. **Run count.** Similar work is one run, not many. Each run pays for its
+   system prompt and tools, reading the brief and rereading shared files.
+   Split only when this overhead is a small fraction of each run's expected
+   tokens; doing it in the lead is an option. Jason, 2026-11-08: "it seems
+   fucking retarded to spawn many agents if the work is similar, the overhead
+   of running each should be a fraction of the expected token cost". His
+   earlier "19? no unless they are fucking short like 50k tkoens" illustrates
+   this overhead test; it is not a token threshold authorizing fan-out.
+7. **Speed against cost.** Parallel runs buy elapsed time with duplicated
+   overhead. Unless someone is waiting on the work or it blocks other work,
+   fewer and deeper runs win, if any run at all. Jason, 2026-11-08: "the
+   speed vs cost needs to be factored in, unless speed is specially important
+   then its likely better to have fewer deeper sub agents if sub agents at
+   fucking all".
 
 A rule that makes the calculation hard is named to Jason when it gets in
 the way: "if any of my rules contradict or make difficult u doing the right
 thing u need to speak up" (2026-11-08).
 
-- Bad: 19 Opus subagents reading 858 memory files at 99% weekly usage,
-  followed by a rule banning Opus fan-outs.
-- Good: Jev buckets the files, one Sol run reads and writes the targets,
+- Bad: similar classification work nobody was waiting on, split across
+  19 Opus subagents, each rereading the same rules at 99% weekly usage.
+- Good: Jev buckets the files, one deep Sol run reads and writes the targets,
   and the Opus lead spends its tokens on the brief and routing design.
 
 Jason narrowed "short-lived" on 2026-11-01: "the one run of minutes limitation

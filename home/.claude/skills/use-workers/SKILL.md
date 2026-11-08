@@ -1,149 +1,124 @@
 ---
 name: use-workers
 description: >-
-  Route work by kind, size, quota, effort, steering, run count and speed
-  against cost, then launch the chosen worker where the lead can steer it.
-  Use before doing or handing
-  off a piece of work, including bulk reads, typed judgments, reviews and
-  landing chores. A worker Jason names overrides the calculation; Astra runs
-  only when he names it. Never launches a worker as a routine.
+  Weigh how to do or hand off work using its kind, size, fixed cost, existing
+  context, steering, checking, quota windows, speed and effort. Use when
+  considering workers or doing a piece yourself. Explain the pick in one
+  line; the considerations inform judgment rather than decide it.
 ---
 
 # Workers
 
-Every piece of work gets a routing calculation before it is done or handed
-off. Jason, 2026-11-08: "sonnet, jev, sol, opus, all are appropiate at different
-times" and "everything about the situation is easily calculatable, including
-what kind of job yo're doing and what kind of effort u need". A worker Jason
-names overrides the calculation. Astra runs only when he names it:
-"i never want astra used unless I asked for it explicitly" (2026-11-05).
+Choose in the context you hold. Jason, 2026-11-08: "this decision tree needs
+to stop over steering, it has to explain things to consider and why and be
+useful as things to cover but not override agent's context and agency".
+The considerations below help cover the decision; they are not a routing
+tree. "sonnet, jev, sol, opus, all are appropiate at different times".
+State the pick and the considerations that decided it in one line.
 
-| Name     | Model         | Effort | Conductor agent and model |
-| -------- | ------------- | ------ | ------------------------- |
-| `sonnet` | Claude Sonnet | calculated | `claude`, `sonnet-5-5-1m` |
-| `astra`  | `gpt-6-astra` | calculated | `codex`, `gpt-6-astra`    |
-| `sol`    | `gpt-6.1-sol` | calculated | `codex`, `gpt-6.1-sol`    |
+The routing hard lines are Jason's explicit ones: use a worker he names;
+Astra runs only when he names it; before money is spent on more than one or
+two PRs or workers at once, state the scale, concurrency and cost and wait
+for his yes. "i never want astra used unless I asked for it explicitly"
+(2026-11-05). A rule that gets in the way of good judgment is named to him:
+"if any of my rules contradict or make difficult u doing the right thing u
+need to speak up" (2026-11-08).
+
+| Name | Model | Effort | Conductor agent and model |
+| --- | --- | --- | --- |
+| `sonnet` | Claude Sonnet | weighed | `claude`, `sonnet-5-5-1m` |
+| `astra` | `gpt-6-astra`, only when named | weighed | `codex`, `gpt-6-astra` |
+| `sol` | `gpt-6.1-sol` | weighed | `codex`, `gpt-6.1-sol` |
 
 How it launches depends on where the lead runs; see
-[Where you run](#where-you-run).
+[Where you run](#where-you-run). `gate-peer-review` owns whether existing
+review is sufficient and what needs review; the repository's `review`
+skill owns criteria. This skill supplies launch and result mechanics.
+The lead is the session steering the work, Claude or Codex; a worker's
+assignment determines its role, not its harness.
 
-Its peer `gate-peer-review` owns whether existing review is sufficient and when
-new review is needed. Its rounds run on its
-default reviewer stack, or on the reviewer Jason names; this skill supplies
-launch mechanics, not another handoff review.
+## Considerations and why they matter
 
-The lead is the session steering the work, Claude or Codex. A worker
-assigned a task does that task and dispatches nothing; role follows the
-assignment, not the harness name.
+1. **Kind of work.** Jev returns typed judgments over supplied evidence;
+   `typesafe-ai` explains its contracts. Sol and Sonnet are useful for fully
+   briefed work that needs none of the chat's context. Opus can carry the
+   chat's story, taste and design. Each is good at different work at a
+   different price; this is information, not a kind-to-engine mapping.
+2. **Size.** Compute tokens read and written as bytes divided by four and
+   account for the proposed runs. This is most of the work's cost.
+3. **Fixed cost of a run.** Every run pays a baseline before useful work,
+   then the brief and files it rereads. A Heartbeat Claude session measured
+   about 117k baseline tokens on 2026-11-08 (`get_usage`): MCP tool schemas
+   35k, system tools 30k, memory index 31k, system prompt 11k, skills 10k.
+   A subagent's baseline is likely different and remains unmeasured. Compare
+   repeated overhead with each run's useful work: similar work split many
+   ways can mostly buy overhead. Shrinking the baseline helps every run.
+   Jason's "19? no unless they are fucking short like 50k tkoens" illustrates
+   this concern, not a threshold authorizing fan-out.
+4. **Context the lead already holds.** The lead or an inheriting fork may
+   be cheapest for work that depends on the chat's state: a fresh worker
+   rebuilds that context from a brief and its own reads.
+5. **Steering.** Consider whether Jason or the lead will want to talk to
+   the run while it works. A Claude app session is easiest to chat with;
+   a `codex exec` run takes replies through its `codex://` thread or stop
+   and resume; Jev takes none. Steering an unreachable run can cost a restart.
+   Jason, 2026-11-08: "sonnet or opus have benefit of being easier to chat
+   with iiuc, so that's another tradeoff in the decision tree".
+6. **Checking the result.** Someone reviews what a worker returns. When
+   checking costs about as much as doing, handing off saves nothing.
+7. **Quota and its windows.** Read Claude's percent used per window and
+   reset times from desktop `get_usage` when available; state unavailable
+   readings. Sol and Astra spend OpenAI quota; Jev spends TypeSafe's. Every
+   window resets: near a cap, that pool is best reserved for what nothing
+   else can do; work nobody waits on can wait for a reset, while room near
+   reset can be cheap. Compute available readings rather than guessing.
+8. **Speed against cost.** Parallel runs buy elapsed time with duplicated
+   fixed cost. Unless someone is waiting or other work is blocked, fewer
+   deeper runs, or staying in the lead, are usually worth more. Jason,
+   2026-11-08: "the overhead of running each should be a fraction of the
+   expected token cost"; "unless speed is specially important then its
+   likely better to have fewer deeper sub agents if sub agents at fucking all".
+9. **Effort.** Weigh the reasoning the work needs. Extra effort costs more
+   and is wasted on mechanical work. Pass the chosen effort where supported.
 
-Why: every task a worker takes is off the lead's model. Astra and Sol run on
-the user's OpenAI subscription, so they spend no Claude quota at all; Sonnet
-spends Claude quota, at a smaller model than the lead's. None of them shares
-your context, so they take only the work that loses nothing from that.
-
-## Routing calculation
-
-State the pick and calculation in one line: kind, estimated size, quota,
-effort, steering, run count and speed against cost. Calculate from what is
-visible; label unavailable quota data rather than inventing it. A harness
-default never decides the pick. Staying in the lead is an option.
-
-1. **Kind.** A typed judgment over supplied evidence (bucket, rank, verify,
-   triage, select) goes to Jev through `typesafe`; read `typesafe-ai` for its
-   contract. Work briefed in full that needs none of the chat's context
-   (bulk reading or classification, mechanical edits, reviews, landing
-   chores) goes to Sol or Sonnet. Work carrying the chat's story, taste,
-   API or abstraction design stays with Opus, the lead or its fork. The
-   four tests below decide whether work is independent of the chat.
-2. **Size.** Estimate tokens read and written as bytes divided by four,
-   multiplied by the runs, including repeated context.
-3. **Quota.** Claude's desktop `get_usage` gives percent used in each plan
-   window and reset time. Sol and Astra spend OpenAI quota; Jev spends
-   TypeSafe's. Compare the work with what remains. Near a cap, that side
-   does only what it alone can do. Missing access is stated; it never turns
-   old usage into a current reading.
-4. **Effort.** Pick the reasoning effort the kind needs, not the maximum.
-   Pass it explicitly where supported. A composing workflow's explicit
-   reviewer stack still governs its review.
-5. **Steering.** Will Jason or the lead want to talk to the run while it
-   works? A Claude app session (Sonnet or Opus) is easiest to chat with;
-   a `codex exec` run takes a reply through its `codex://` thread or a
-   stop and resume; Jev takes none. The more steering needed, the more a
-   Claude session can be worth its quota. Jason, 2026-11-08: "sonnet or
-   opus have benefit of being easier to chat with iiuc, so that's another
-   tradeoff in the decision tree".
-6. **Run count.** Similar work is one run, not many. Each run pays for its
-   system prompt and tools, reading the brief and rereading shared files.
-   Split only when this overhead is a small fraction of each run's expected
-   tokens; doing it in the lead is an option. Jason, 2026-11-08: "it seems
-   fucking retarded to spawn many agents if the work is similar, the overhead
-   of running each should be a fraction of the expected token cost". His
-   earlier "19? no unless they are fucking short like 50k tkoens" illustrates
-   this overhead test; it is not a token threshold authorizing fan-out.
-7. **Speed against cost.** Parallel runs buy elapsed time with duplicated
-   overhead. Unless someone is waiting on the work or it blocks other work,
-   fewer and deeper runs win, if any run at all. Jason, 2026-11-08: "the
-   speed vs cost needs to be factored in, unless speed is specially important
-   then its likely better to have fewer deeper sub agents if sub agents at
-   fucking all".
-
-A rule that makes the calculation hard is named to Jason when it gets in
-the way: "if any of my rules contradict or make difficult u doing the right
-thing u need to speak up" (2026-11-08).
+Compute the available size and quota numbers; do not build a tool for this
+calculation. Such a tool is a design for Jason to approve.
 
 - Bad: similar classification work nobody was waiting on, split across
   19 Opus subagents, each rereading the same rules at 99% weekly usage.
 - Good: Jev buckets the files, one deep Sol run reads and writes the targets,
-  and the Opus lead spends its tokens on the brief and routing design.
+  and the lead spends its tokens on the brief.
 
-Jason narrowed "short-lived" on 2026-11-01: "the one run of minutes limitation
-is only if the main chat would be blocked from steering". A long task is side
-work when the lead can still steer the worker while the chat goes on.
+### Four questions about independent side work
 
-### Kind: the four tests for side work
+These questions make context and steering costs visible; they do not decide
+the engine or take the decision away from the lead.
 
-Work goes to an independent worker when all four hold:
+1. **Can it be briefed in full now?** Include the question, files, done
+   condition and report shape. Missing chat state makes a fresh run rebuild it.
+2. **Is it steerable from here?** A long run can work well when the lead
+   can reach it. Jason, 2026-11-01: "the one run of minutes limitation is
+   only if the main chat would be blocked from steering".
+   - Bad: campaign units hidden in `claude --bg` sessions because the lead
+     read "short-lived" as ruling out long app sessions.
+   - Good: app sessions the lead can message and Jason can open.
+3. **Is its result an input or the main line?** Facts, measurements,
+   findings and an approved edit list are easier to brief than the thing
+   the chat is still designing.
+4. **Does it need a design call?** API, abstraction, naming, taste and text
+   the user will read benefit from the lead's context and final edit.
 
-1. **Briefed in full now.** You can write the whole brief this turn: the
-   question, the files, what done looks like, the report's shape. Nothing in it
-   waits on the user.
-2. **Steerable from here.** It finishes in one run, or it runs as a worker
-   the lead can message and correct while the chat goes on. A long run never
-   fails this test; a worker the lead can't reach until it ends fails it
-   once the work needs steering.
-   - Bad (2026-10-31): a lead in the Claude app read "one run of minutes" as
-     ruling out campaign units that each run for hours to a merged PR, so
-     nothing sent them to an app session, and it ran them as `claude --bg`
-     sessions Jason couldn't see in his sidebar.
-   - Good: each unit as an app session on Sonnet, which the lead messages
-     with each ruling and Jason sees nested under the lead.
-3. **An input, not the line.** Its result feeds your work (a fact, a
-   measurement, a finding, an opinion, an applied edit list the user has
-   already ruled on). It is not the thing the chat is building.
-4. **No design call.** It sets no API, abstraction, library design, name or
-   other matter of taste, and it writes no text the user reads (issue
-   descriptions, docs, templates). You write or finally edit that text.
-
-When a test fails, keep the work with the lead or its fork. In Claude's Agent
-tool that is `subagent_type: "fork"`. A Claude subagent runs on the lead's
-model unless `model` is set: when the calculated pick is Sonnet, pass
-`model: "sonnet"` explicitly.
-
-When the tests pass, use the calculated worker. The exception is a task finished in a
-couple of tool calls (one grep, one file read), where the brief would cost more
-than the task.
+Claude's Agent tool runs a subagent on the lead's model unless `model` is
+set. When the choice is Sonnet, pass `model: "sonnet"` explicitly.
 
 ## Examples
 
-- Bad: a worker building a run switch whose design the user had just approved
-  in the PR. Good: a fork builds it; the worker reviews the fork's diff.
-- Bad: a fork measuring four tasks' peak memory with `/usr/bin/time -l` and
-  reporting a table. Good: the worker takes the measurement, while a fork,
-  steered from the chat, chooses the concurrency budget from it.
-- Bad: a worker reworking a library's `Compiler` API. Good: a worker giving
-  a second opinion on whether a WASM build fits a Cloudflare Worker's limits.
-- Bad: the lead making forty Linear writes itself after the user ruled on
-  them. Good: the lead writes the edit list; the worker applies it.
+- A worker measures four tasks' peak memory while the lead chooses the
+  concurrency budget using the result and the chat's constraints.
+- A worker offers a second opinion on a WASM build's fit for Cloudflare
+  Workers while the lead keeps the library API design.
+- The lead writes an approved Linear edit list; a worker applies it when
+  the saved work exceeds the handoff and checking costs.
 
 ## Where you run
 

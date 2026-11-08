@@ -104,7 +104,7 @@ dotctl has exactly these two commands; the recipes wrap them:
 
 dotctl walks `home/` and creates symlinks into `$HOME`. Three conventions determine what happens to each entry.
 
-**Directory symlinks.** A directory without a `.spread` marker is symlinked whole. `home/.bookmarks/` becomes `~/.bookmarks -> repo/home/.bookmarks`. Edits inside the target write directly into the repo.
+**Directory symlinks.** A directory without a `.spread` marker is symlinked whole: `home/<dir>/` becomes `~/<dir> -> repo/home/<dir>`, and edits inside the target write directly into the repo.
 
 **Spread directories.** A `.spread` file inside a directory tells dotctl to create the directory as a real folder in `$HOME` and symlink each child individually. This is how `home/.config/` works — dotctl owns `starship.toml` and `fish/` without claiming all of `~/.config/`. Spread is recursive: a spread directory can contain both spread subdirectories (with their own `.spread`) and whole-directory symlinks (without one).
 
@@ -128,7 +128,6 @@ home/
     .spread
   .aws/                  # spread (config: credential_process via 1Password)
     .spread
-  .bookmarks/            # dir-symlink (bookmarks sync config)
   .claude/               # spread (skills, rules, hooks — runtime writes here too)
     .spread
   .codex/                # spread

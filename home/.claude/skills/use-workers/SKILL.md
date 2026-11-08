@@ -4,8 +4,10 @@ description: >-
   Weigh how to do or hand off work using its kind, size, fixed cost, existing
   context, steering, checking, quota windows, speed and effort. Use when
   invoking /use-workers or asking for workers without naming a model, or
-  considering a handoff. Pick the engine, effort and run count and explain
-  why in one line; a name is a rare override.
+  considering a handoff. Jason invoking it means the work goes to workers and
+  the lead keeps its tokens for briefs, steering and checking. Pick the
+  engine, effort and run count and explain why in one line; a name is a rare
+  override.
 ---
 
 # Workers
@@ -15,6 +17,20 @@ case: weigh the considerations, pick the engine, effort and number of runs,
 and say the pick in one line. A name is the rare override. Jason,
 2026-11-08: "imo i shouldn't have to name the model anymore 99% of the time
 whne i use useworkers skill".
+
+Jason invoking it has already decided that workers do the work: the lead
+stops doing the grunt work itself and spends its own tokens on briefs,
+steering, checking results and the chat. The considerations then choose
+which workers, how many and at what effort, never whether to delegate.
+Staying in the lead is an option only when an agent weighs a handoff on its
+own. Jason, 2026-11-08: "me using it would be a request to definitely use
+sub/peer agents implying this becomes a lead reducing its own grunt work and
+token spend for such work".
+
+- Bad: `/use-workers` on a sweep, and the lead reads the files itself
+  because one deep run in the lead looked cheapest.
+- Good: the same sweep handed to one deep Sol run, with the lead writing
+  the brief and checking what comes back.
 
 Choose in the context you hold. Jason, 2026-11-08: "this decision tree needs
 to stop over steering, it has to explain things to consider and why and be
@@ -86,7 +102,8 @@ assignment determines its role, not its harness.
    reset can be cheap. Compute available readings rather than guessing.
 8. **Speed against cost.** Parallel runs buy elapsed time with duplicated
    fixed cost. Unless someone is waiting or other work is blocked, fewer
-   deeper runs, or staying in the lead, are usually worth more. Jason,
+   deeper runs, or staying in the lead when Jason hasn't asked for workers,
+   are usually worth more. Jason,
    2026-11-08: "the overhead of running each should be a fraction of the
    expected token cost"; "unless speed is specially important then its
    likely better to have fewer deeper sub agents if sub agents at fucking all".

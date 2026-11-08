@@ -21,8 +21,8 @@ matters is, what is the idiomatic guidance on using alchemy in team/ci and
 what is the gap between that and mayhul's current position".
 
 This skill holds the tool's model. Whether to ask at all is the global
-rules' "Before a question to Jason" (`~/.claude/CLAUDE.md`,
-`~/.codex/AGENTS.md`), and so is "no count is a cost or a benefit".
+rules' "Before a question to Jason" (`~/.codex/AGENTS.md`), and so
+is "no count is a cost or a benefit".
 
 ## Sources
 

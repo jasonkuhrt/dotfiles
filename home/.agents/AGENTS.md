@@ -339,6 +339,9 @@ For architecture and design brainstorming:
 
 ## Memory
 
+* A rule that the team or another agent (Codex) also needs is never a memory. It goes, in the same turn, into the rules everyone reads: the project's `AGENTS.md` or a file it points to (`agent-context/<developer>.md` for one developer), a skill (edited or created), or this file for my rules across projects. A memory holds only what no other person or agent needs. Jason, 2026-11-08, after incident rules went into Claude's memory: "any memory that would need to be used by the team or by codex too is not a fucking memory its a fucking new project rule and/or skill edit/creation".
+  * Bad: "Both rules are saved as memories: incident fixes go straight to CI, and a vendor ticket only asks for what we can't read ourselves."
+  * Good: both written as axioms in Heartbeat's `incident-response` skill, in a PR, and the memories deleted.
 * A feedback memory's name, description and `MEMORY.md` line are the rule: sessions act on them without opening the file. They keep the scope of my own words ("asked to show code: …"). A wider scope is your reading: it stays in the body, labelled.
 * Write a rule as a test on the result ("a fence of only comments is prose"), with one bad and one good example from the incident. Never as a conversion ("prose becomes comments"): shortened, it loses its condition.
 

@@ -118,6 +118,7 @@ brew "duti"          # default document and URL handlers
 
 # Database
 brew "planetscale/tap/pscale", trusted: true
+brew "mysql-client", link: true  # the client `pscale shell` runs; keg-only, so linked
 
 # Cloud
 brew "awscli"        # AWS command line interface

@@ -292,7 +292,7 @@ report: a Conductor session has no read-only switch.
 
 ## Launching from a Codex lead on a Mac
 
-- **`astra`, `sol`:** Codex's `spawn_agent` (skill `dispatch-codex-sub`), with
+- **`astra`, `sol`:** Codex's `spawn_agent`, with
   its model override set to the worker's model, its calculated effort where
   the tool takes one, and `fork_turns: "none"`, since the brief carries what it
   needs. Its final answer comes back to you when it finishes; correct it with

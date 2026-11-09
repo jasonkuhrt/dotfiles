@@ -14,7 +14,7 @@ with this task against the same established worktree.
   living task context. Never require the user to restate an already-established
   path.
 - Never create an isolated or new worktree.
-- Never use a subagent. Use `dispatch-codex-sub` for that.
+- Never substitute an in-chat subagent for a requested peer.
 - Preserve and share the current worktree's staged and unstaged state.
 
 ## Procedure

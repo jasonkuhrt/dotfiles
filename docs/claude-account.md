@@ -20,15 +20,15 @@ They are for any integration that takes a Claude subscription by token. Each acc
 
 The Amp app is one such integration. Amp keeps at most two Claude subscriptions linked, one of them active, and only its app can link one (Settings → Model Routing → Claude Subscription). Its CLI can switch which linked one is active, list them and delete one, but can't set a token. So switching to a third account means deleting a link in the app and pasting that account's token.
 
-Agents run these with `meos-op` in place of `op`.
+MeOS is in the `my.1password.com` account; `--account` names it, since `op` otherwise asks which signed-in account to use. Agents run these with `meos-op` in place of `op --account my.1password.com`.
 
 ```sh
 # Copy account 2's token, to paste into Amp
-op read "op://MeOS/Claude Code OAuth token claude2/credential" | tr -d '\n' | pbcopy
+op read --account my.1password.com "op://MeOS/Claude Code OAuth token claude2/credential" | tr -d '\n' | pbcopy
 # Make a linked subscription the active one (IDs from `amp config model-providers list`)
 amp config model-providers activate <connection-id>
 # Replace account 1's token with the one on the clipboard
-op item edit "Claude Code OAuth token claude1" --vault MeOS "credential=$(pbpaste)"
+op item edit --account my.1password.com "Claude Code OAuth token claude1" --vault MeOS "credential=$(pbpaste)"
 ```
 
 ## The goal, and the one simpler design

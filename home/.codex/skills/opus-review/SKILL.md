@@ -1,6 +1,6 @@
 ---
 name: opus-review
-description: Run an independent Claude Opus review in an app-visible Claude session, relay its report back to Codex, and repair confirmed findings within the originating task. Use when Jason asks for an Opus review or invokes $opus-review. Defaults to Opus 5.5 at xhigh effort.
+description: Run an independent Claude Opus review in an app-hosted Claude session, relay its report back to Codex, and repair confirmed findings within the originating task. Use when Jason asks for an Opus review or invokes $opus-review. Defaults to Opus 5.5 at xhigh effort.
 ---
 
 # Opus review

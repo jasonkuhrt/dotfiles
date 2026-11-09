@@ -367,14 +367,15 @@ never trim or split merely to reach a word count.
 
 ## Claude reviews from Codex
 
-An independent Claude review dispatched by Codex is visible in the Claude app
-and named `Via Codex – <short title>`. Prefer the app's session tool; when it
-is unavailable, use the interactive CLI route documented by `opus-review` or
-`fable-review` and open the same session in the app. State which route ran.
+An independent Claude review dispatched by Codex runs in the Claude app,
+where I can read it, message it and steer it, and is named
+`Via Codex – <short title>`. The `opus-review` and `fable-review` skills share
+the launch and verification workflow. A CLI-only review requires my explicit
+request; opening its transcript in the app does not make it an app review.
 Do not use a terminal-workspace manager for agent work.
 
-* Bad: a review hidden in a terminal workspace, or named `Codex review · Opus 5.5 · Heartbeat · incident-response`.
-* Good: an app-visible session named `Via Codex – Incident response review`.
+* Bad: a waiting placeholder in the app while the actual review runs in a CLI process I cannot participate in.
+* Good: one app session starts with the full review brief and does the review where I can message it.
 
 ## Heartbeat work runs in Heartbeat
 

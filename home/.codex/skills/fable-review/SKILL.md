@@ -1,6 +1,6 @@
 ---
 name: fable-review
-description: Run an independent Claude Fable review in an app-visible Claude session, relay its report back to Codex, and verify the findings. Use when Jason asks for a Fable review or invokes $fable-review. Defaults to Fable 5.1 at xhigh effort.
+description: Run an independent Claude Fable review in an app-hosted Claude session, relay its report back to Codex, and verify the findings. Use when Jason asks for a Fable review or invokes $fable-review. Defaults to Fable 5.1 at xhigh effort.
 ---
 
 # Fable review

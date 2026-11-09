@@ -1,6 +1,6 @@
 # Independent Claude review workflow
 
-Run one independent review in an app-visible Claude session, then return an
+Run one independent review in an app-hosted Claude session, then return an
 evidence-checked assessment to the originating Codex chat. The invoking public
 skill supplies defaults for model, effort, and reviewer label. Jason's explicit values override those defaults. Select the model
 before the reviewer label: use an explicit reviewer label when supplied;
@@ -22,10 +22,10 @@ under either policy.
 - Carry Jason's original request, constraints, and unresolved questions into
   the brief. Separate proposed decisions from approved work. Do not prime the
   reviewer to agree with the author.
-- Use the selected model and effort exactly. Inspect `claude --help` and local
-  configuration when availability is uncertain. Codex's model list does not
-  establish Claude CLI availability. Never silently lower the effort, switch
-  models, or add a fallback. If the requested setting is unavailable, report
+- Use the selected model and effort exactly. Inspect the app session tool,
+  its current schema and the session metadata when availability is uncertain.
+  Codex's model list does not establish Claude app model availability. Never
+  silently lower the effort, switch models, or add a fallback. If the requested setting is unavailable, report
   that fact instead of substituting another setting.
 - The independent reviewer is read-only except for its output artifacts. Its
   permissions are separate from the coordinator's receipt policy. Pass through
@@ -49,69 +49,48 @@ every placeholder and choosing a bounded set of questions for this task. Never
 copy another review's paths, session identifiers, or architectural answers.
 The reviewer creates `review.md`; never seed it with the completion marker.
 
-## Launch an app-visible Claude session
+## Start the review in the Claude app
 
-Name the session `Via Codex – <short title>`, for example
+The review runs in a Claude app session that Jason can read, message and steer
+while it works. Name it `Via Codex – <short title>`, for example
 `Via Codex – Incident response review`. Keep model and effort in the session
-metadata rather than adding them to the title. Do not create a worktree for a
-read-only review.
+metadata rather than the title. Do not create a worktree for a read-only review.
 
-Prefer the Claude app's session-creation tool when connected. Discover its
-current schema, then pass the repository cwd, selected model and effort,
-title, and a prompt pointing to the filled brief. Record the returned session
-identifier and verify its actual settings.
+Discover the app's session-creation and messaging tools and inspect their
+current schemas. Create the app session with the repository cwd, selected
+model and effort, title, and the full review instruction pointing to the
+filled brief. The first task starts the actual review; it does not ask the
+reviewer to confirm settings and wait.
 
-When that tool is unavailable, use the installed CLI's supported interactive
-route. Inspect `claude --help` first. With the currently verified CLI:
+Verify the returned app session's model, effort and submitted task. Then check
+that the review has begun in that app session through its messages or status.
+A launcher success, an imported transcript or a session title alone does not
+establish that. Keep this same app session for reviewer questions and follow-up
+so Jason's messages reach the reviewer doing the work.
 
-1. Establish one interactive PTY session in the repository with a fresh UUID,
-   the selected model and effort, and the required title. Its initial prompt
-   asks it to confirm its settings and wait without starting the review:
+- Bad: open a model-check-and-wait exchange in the app, then resume the review
+  through a CLI process. Jason sees an idle placeholder and cannot participate
+  in the actual review.
+- Good: create one app session with the review brief as its first task, verify
+  that it is reviewing there, and use that session for the review and follow-up.
 
-   ```sh
-   claude --model '<selected-model>' --effort <selected-effort> \
-     --name 'Via Codex – <short title>' --disallowedTools Agent,Task \
-     --add-dir '<artifact-directory>' --session-id '<fresh-uuid>' \
-     -- 'Confirm your active model and effort if verifiable, then wait. Do not start the review or use tools yet.'
-   ```
+If the app tools are absent or fail, check the installed app integration's
+supported recovery before reporting the limitation. Preserve the prepared
+brief and report the actual missing capability if app dispatch remains
+unavailable. Do not substitute a CLI-hosted review, create a placeholder app
+session, or claim a CLI transcript is a live app review. A CLI-only review
+requires Jason to request that route explicitly.
 
-2. After the acknowledgment, exit that CLI process without deleting the
-   session. The desktop launcher refuses a session locked by another terminal.
-   From a PTY, open the same saved session in the app:
+To recover an existing CLI review, preserve its work and use the supported
+handoff into the app. Do not resume it through the CLI after handoff. Verify
+that the actual review continues in the app before reporting it as running.
 
-   ```sh
-   claude --desktop --resume '<same-session-uuid>'
-   ```
-
-3. Resume that same session interactively with the selected settings and
-   submit the filled brief. This is CLI-hosted execution with app visibility:
-
-   ```sh
-   claude --resume '<same-session-uuid>' \
-     --model '<selected-model>' --effort <selected-effort> \
-     --disallowedTools Agent,Task --add-dir '<artifact-directory>' \
-     -- 'Read <absolute-brief-path> and conduct the independent review now. Follow its output and relay instructions exactly.'
-   ```
-
-The verified `--desktop` launcher accepts neither an initial prompt nor the
-model, effort, name, session-id, or add-dir flags. It opens or resumes a
-session; it does not by itself submit the review brief. Do not start a second
-review to make the first visible. Report whether execution is app-hosted or
-CLI-hosted with app visibility, and report any failure to open it in the app.
-Never claim app-hosted execution merely because the launcher succeeded.
-
-Quote substituted shell arguments for the actual shell; JSON encoding is not
-shell escaping. Keep the substantial prompt in the brief file. Do not use a
-headless `-p` review, a terminal-workspace manager, a permission-bypass flag,
-or a different reviewer as a substitute.
-
-Record the Claude session ID, app session ID when distinct, execution route,
-CLI process handle when applicable, requested and verified model and effort,
+Record the app session identifier, requested and verified model and effort,
 source baseline, artifact paths, originating public skill, coordinator receipt
 policy, task and check limits, originating Codex thread ID when available,
-and any relay automation ID in `review-session.json`. Inspect only this
-session to verify the model and effort. Unavailable or unverifiable settings
-are reported failures, never grounds for silent substitution.
+and any relay automation ID in `review-session.json`. Record a prior CLI
+session only as recovery history, not as the active reviewer. Unavailable or
+unverifiable settings are reported failures, never grounds for substitution.
 
 ## Relay without another Codex session
 
@@ -149,11 +128,11 @@ Without a follow-up tool, use bounded checks in the active turn. Do not promise
 an automatic later notification that has not been arranged. Never launch
 another Codex session or send text to a guessed terminal to simulate the relay.
 
-Use the recorded session ID for routine review-related input. If its route
-changes, locate that same session and update the metadata; do not create a
-duplicate reviewer. Permission changes or additional work require existing
-authorization. Preserve an interrupted session and resume it with the same
-model and effort only when continuation remains authorized.
+Use the recorded app session ID for routine review-related input. If recovery
+changes its identifier, preserve the work and update the metadata; do not
+create a duplicate reviewer. Permission changes or additional work require
+existing authorization. Preserve an interrupted session and resume it in the
+app with the same model and effort only when continuation remains authorized.
 
 ## Receive and assess
 

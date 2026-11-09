@@ -12,7 +12,10 @@ freed. Each routine has its own owner and policy; this skill only composes them.
 ## The daily disk clean
 
 MeOS runs `meos-sys-clean` at 04:30 every day (launchd
-`com.jasonkuhrt.meos-sys-clean`, code in `~/me/.machinery/code/lib/sys-clean/`). Its
+`com.jasonkuhrt.meos-sys-clean`), and every hour while the disk has under
+50 GB free (`com.jasonkuhrt.meos-sys-clean-short`, `run --when-short`): on
+2026-11-08 Go's cache grew from nothing to 77 GB between one morning's run and
+midnight. Code in `~/me/.machinery/code/lib/sys-clean/`. Its
 policy lives in that code's `POLICY`; each step takes back only what its owner
 can rebuild or has already preserved:
 

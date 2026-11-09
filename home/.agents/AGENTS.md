@@ -285,6 +285,9 @@ Jason, 2026-10-29, after "Say the word and I'll merge it" on a green, reviewed P
 - Never create a Linear issue ad hoc. Always use the existing issue template that best fits the issue being created.
 - Before drafting or creating an issue, discover the templates available to the target team and read the chosen template. Pass its ID through the creation tool's template option when supported. The selected template governs structure and required fields; put skill guidance inside it rather than replacing or reordering it with a custom outline.
 - If no available template fits, ask Jason which template to use before creating the issue. Do not fall back to an ad hoc issue.
+- Less is more. An issue's body states the problem at its most simple and narrow, and what is done about it, and tries hard to fit above the fold. Every other detail a reader may need goes under a final Appendix, one toggle per detail. Jason, 2026-11-09, of an upstream-watch issue filed with four problems, command output, a comparison table and copied code in its body: "less is more", "define the problem at its most simple and narrow", "needed details go into appendices that are toggled", "when making an issue try hard to makeit fit above the fold".
+  - Bad: that body, about 60 lines before any toggle.
+  - Good: one line of what we wish, three one-line reasons it can't happen yet, the upstream issue we wait for, two lines of what we do meanwhile, and the evidence in one collapsed toggle.
 
 ## Posting on my behalf
 

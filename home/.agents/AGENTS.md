@@ -217,10 +217,15 @@ Each state annotation appears once, and a `CURRENT` after `IDEA` is invalid. A `
   * Bad: `CURRENT` shows the app's `FolderWithDocuments`, and `IDEA` shows a test in `libs/prisma-scope` over that suite's own models, with nothing linking the two.
   * Good: `CURRENT` shows the prisma-scope test file as it is, and `IDEA` shows the test added to it.
 
-A block that shows no code of the codebase has no state, so it has no state annotation and no divider: its place annotation opens it. Examples are a deploy request's schema diff, a terminal's output, a query's rows and a payload on the wire. Jason, 2026-10-28, of a deploy request's `CREATE TABLE` block that opened on `-- ── CURRENT` and a divider: "can u see how its fucking useless to describe 'current' there to me? it would be less confusing if u said maybe .... nothing? meaning no header/underline on first two lines?"
+A block that shows no code of the codebase has no state, so it has no state annotation and no divider: its place annotation opens it. Examples are a deploy request's schema diff, a terminal's output, a query's rows, a payload on the wire, and a program an agent writes in a tool's sandbox. Jason, 2026-10-28, of a deploy request's `CREATE TABLE` block that opened on `-- ── CURRENT` and a divider: "can u see how its fucking useless to describe 'current' there to me? it would be less confusing if u said maybe .... nothing? meaning no header/underline on first two lines?"
 
 * Bad: `-- ── CURRENT`, the divider, then `-- ── @ heartbeat-main deploy request #365, new table SequenceVersion`, then the diff.
 * Good: `-- ── @ SequenceVersion`, then the diff, under a line that links the deploy request in the PlanetScale dashboard (see Titles).
+
+`CURRENT` and `IDEA` say only whether code is on develop. Two products, two setups or two ways to call a tool are never a current and an idea, even when one side is what runs today and the other is the recommendation: each side is its own block, opened by a place annotation that names it. Jason, 2026-11-09, of an Amp `code_exec` call through Executor marked `CURRENT` beside a direct Axiom call marked `IDEA`: "u just presented to me a diff between to products and calledit current and idea, fucking confbusing".
+
+* Bad: `// ── CURRENT` over `// ── @ Amp code_exec, Security Logs Review`, calling Axiom through Executor, then the four spacers and `// ── IDEA` over `// ── @ Amp code_exec, Axiom connected directly in Amp`.
+* Good: `**Axiom through Executor, in Amp**` over a block opening on `// ── @ Amp code_exec, Axiom through Executor`, then `**Axiom connected directly, in Amp**` over a block opening on `// ── @ Amp code_exec, Axiom connected directly`, neither with a state annotation or divider.
 
 ### Titles
 

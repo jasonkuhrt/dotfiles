@@ -404,7 +404,6 @@
   // project_panel.hide_hidden is on; , h toggles (project_panel::ToggleHideHidden).
   "hidden_files": [
     "...", // Zed default: every dot entry (**/.*)
-    "**/AGENTS.md",
     "**/CLAUDE.md",
     "**/justfile",
     "**/package.json",

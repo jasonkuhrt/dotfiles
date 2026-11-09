@@ -20,7 +20,7 @@ Reread the user's requests, accepted decisions and compaction summary. Refresh t
 | Unresolved decisions       | What design, behavior, priority or tradeoff has not been discussed with the user? Bring checked facts and a recommendation rather than silently turning it into backlog.                                                                            |
 | Delivery state             | Check owned PRs, current CI/reviews, Git diff, unpushed commits and stashes. Establish ownership and relevance before deciding whether a leftover needs delivery, preservation or retirement.                                                       |
 | Running work and ownership | Check owned workers, linked sessions, shell tasks and scheduled wakeups. Establish whether useful work still depends on this chat, or has a verified independent owner and delivery path.                                                           |
-| Context and resources      | What would closing lose: pending findings, a needed decision, coordination, useful runtime state or an unrecorded next action? Inspect the relevant worktrees and processes, and check the relevant Linear issues for useful context still missing. |
+| Context and resources      | What would closing lose: pending findings, a needed decision, coordination, useful runtime state or an unrecorded next action? Inspect the relevant worktrees and processes, and check the project's task and context records for useful information still missing. |
 
 Use the host's current tools. A detached top-level session belongs to the user and does not depend on this one.
 
@@ -30,7 +30,7 @@ Every row in the reply is work this session would do, or a decision this session
 - Bad: a row "Have Claude hand sign-ins to Codex (`codex exec`) … needs a real Codex sign-in test, which is a decision for you", from a session whose rules bar it from starting another agent to sign in. Jason said "fine do it", and the session had to refuse.
 - Good: the table holds only the digest-skill fix and the rippling port, the work this session would do.
 
-An upstream PR or issue waiting on its maintainers' feedback is generally no reason to keep the session open. Until a maintainer writes, nothing is owed. Their review reaches the user, who is the post's author, through the forge's notifications, and any later session can make the fixes from the PR's branch. What still counts is work owed now: a review comment not yet answered, a failing check, or a fix the session promised. Context needed to answer a future review goes on the PR or the relevant Linear issue, not into keeping the chat open. A wait with nothing owed gets no row in the reply's table.
+An upstream PR or issue waiting on its maintainers' feedback is generally no reason to keep the session open. Until a maintainer writes, nothing is owed. Their review reaches the user, who is the post's author, through the forge's notifications, and any later session can make the fixes from the PR's branch. What still counts is work owed now: a review comment not yet answered, a failing check, or a fix the session promised. Context needed to answer a future review goes on the PR or in the owning project's canonical context record, not into keeping the chat open. A wait with nothing owed gets no row in the reply's table.
 
 - Bad: "Continue: alchemy-run/alchemy#2771 and #3082 still await maintainer review", for two green upstream PRs with no comment from a maintainer.
 - Good: "Stop. The upstream PRs are green and owe nothing; a maintainer's review reaches you on GitHub, and any session can answer it from the PR's branch."
@@ -45,11 +45,11 @@ Recommend a disposition based on the actual next action, not whether an issue ex
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Continue now   | The consumer benefit, the smallest useful next action, and why this session is well placed to finish or land it now. Include unfinished asks, active WIP and valuable follow-ups that are feasible now. Continue already-authorized work.                                                                                |
 | Discuss now    | The consequential choice or newly proposed work the user has not agreed to. Present the checked facts from the consumer's side, recommend an option, and ask the specific decision needed. Keep independent authorized work moving.                                                                                      |
-| Defer          | Why continuing now is worse: an external prerequisite, missing decision-bearing evidence, a better delivery owner, or a concrete effort/cost tradeoff. Name what would make the work actionable and identify existing tracking. Propose a new issue when preserving a trigger, owner or next action adds concrete value. |
+| Defer          | Why continuing now is worse: an external prerequisite, missing decision-bearing evidence, a better delivery owner, or a concrete effort/cost tradeoff. Name what would make the work actionable and identify existing tracking. Propose a new task when preserving a trigger, owner or next action adds concrete value. |
 
 A ticket is a record, not a decision to defer. "It is filed," "the PR merged," "the tree is clean," and "nothing is running" do not establish that continuing has no value. Conversely, an open issue or upstream wait does not by itself establish useful work to do now.
 
-Do not file a follow-up and use that filing to justify stopping. Explain the proposed deferral and why it is preferable to continuing. The question itself grants no permission to create issues. Existing explicit permission to file issues remains valid, but never substitutes for this assessment or authorizes deferring an unfinished user ask. When filing is not already authorized, propose it and wait for acceptance.
+Do not file a follow-up and use that filing to justify stopping. Explain the proposed deferral and why it is preferable to continuing. The question itself grants no permission to create tasks. Existing permission to file tasks under the project's standards remains valid, but never substitutes for this assessment or authorizes deferring an unfinished user ask. When filing is not already authorized, propose it and wait for acceptance.
 
 ## Form the recommendation
 
@@ -63,19 +63,21 @@ Keep working on existing authorized asks while assessing them. Never stop, short
 
 ## The question changes no lifecycle state
 
-This invocation does not authorize ending the chat, archiving a workspace, stopping processes, deleting worktrees or branches, filing issues, or declaring work deferred. There are no automatic end steps after a favorable recommendation.
+This invocation does not authorize ending the chat, archiving a workspace, stopping processes, deleting worktrees or branches, creating tasks, or declaring work deferred. There are no automatic end steps after a favorable recommendation.
 
 Continue delivery and cleanup already required by separate user instructions or the repository's normal landing protocol under that existing authority. Preserve other sessions' work, protected primary checkouts and upstream review worktrees. Any recommendation to retire a candidate must account for useful changes before removal.
 
 If the user separately chooses to end or requests cleanup or archiving, follow the appropriate host/repository lifecycle skill. Never treat the recommendation question itself as that choice. Do not mark the session closed or record proposed deferrals as accepted decisions.
 
-## Preserve useful context in Linear
+## Follow the project's task and handoff standards
 
-Never create local session-handoff, closeout, final-state or similar end-of-session record files. Preserve useful findings, decisions, measurements, design context and relevant review conclusions in the relevant Linear issues, following the team's existing template and issue conventions.
+Resolve the owning project from the work, then read its applicable `AGENTS.md` and task-management and handoff guidance before reading or updating its records. Use its chosen task manager and canonical locations for durable context; these may be different stores. Follow its templates, hierarchy, required fields, ownership and creation/update rules. Available tools do not determine which system a project uses.
 
-Check those issues and update only useful context that is missing. If nothing useful is missing, create no extra record to satisfy a checklist. When a separately authorized closing or cleanup workflow requires recording final state, update the relevant Linear issues instead of writing a local record. If no relevant issue exists, apply the issue-creation authorization rules above; do not create a local handoff as a fallback.
+Preserve useful findings, decisions, measurements, design context and relevant review conclusions through that existing workflow. Check relevant task and context records first, add only useful information that is missing, and link evidence already held at its owner. If nothing useful is missing, create no extra record to satisfy a checklist.
 
-This applies to end-of-session records, not necessary transient working files or actual repository source and artifacts.
+When a separately authorized closing or cleanup workflow requires final-state context, record it where the project's standards require. A separate session-handoff, closeout or final-state file is used only when those standards require one. A missing task or unavailable tracker is not a reason to invent a fallback store: apply the task-creation authorization rules above or report the access gap.
+
+This governs end-of-session records, not necessary transient working files or actual repository source and artifacts.
 
 ## Reply
 
@@ -91,7 +93,7 @@ Include only findings that bear on that recommendation. When several remain, use
 
 These rows illustrate the format; use the session's actual remaining work. Keep each reason succinct and bold the reason supporting your recommendation. A user discussion is work that can justify continuing now. Use an em dash where no concrete argument exists; do not invent one to fill the table. Omit routine housekeeping rows and a separate action-only recommendation column. If nothing worthwhile remains, skip the table and give a short recommendation with the reason.
 
-Propose issues with their purpose and deferral rationale; link existing ones without treating their existence as the rationale.
+Propose new tasks with their purpose and deferral rationale; link existing ones without treating their existence as the rationale.
 
 For work to do now, say what you are continuing. For a user decision, ask it directly with the checked alternatives. For deferral, explain why, the trigger or owner for resuming, and whether tracking is proposed or already authorized.
 
@@ -101,4 +103,4 @@ Do not force a binary safety verdict, a table of every passed housekeeping check
 
 - A PR merged and a newly reproduced bug has a small fix plus focused proof available: recommend continuing to fix and land it, even if a ticket already exists. A clean checkout does not outweigh that useful next action.
 - Requested work is complete, but a new public API proposal has never been discussed: surface the consumer-facing choice and recommend whether to decide it now. Do not silently file the design and declare the session finished.
-- An upstream correction is needed and no local action remains: recommend waiting for that release, explain what it enables, and propose a release-watch issue if tracking is not already authorized. Do not keep the chat open merely to wait for maintainers.
+- An upstream correction is needed and no local action remains: recommend waiting for that release, explain what it enables, and propose a release-watch task if tracking is not already authorized. Do not keep the chat open merely to wait for maintainers.

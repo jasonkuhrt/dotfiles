@@ -2,7 +2,8 @@
 
 Run one independent review in an app-hosted Claude session, then return an
 evidence-checked assessment to the originating Codex chat. The invoking public
-skill supplies defaults for model, effort, and reviewer label. Jason's explicit values override those defaults. Select the model
+skill supplies defaults for model and reviewer label. Jason's explicit values
+override those defaults. Select the model
 before the reviewer label: use an explicit reviewer label when supplied;
 otherwise derive the label from the selected model. The wrapper's default
 label applies only to its default model. For example, `claude-opus-5-5` is
@@ -22,10 +23,10 @@ under either policy.
 - Carry Jason's original request, constraints, and unresolved questions into
   the brief. Separate proposed decisions from approved work. Do not prime the
   reviewer to agree with the author.
-- Use the selected model and effort exactly. Inspect the app session tool,
+- Use the selected model exactly. Inspect the app session tool,
   its current schema and the session metadata when availability is uncertain.
   Codex's model list does not establish Claude app model availability. Never
-  silently lower the effort, switch models, or add a fallback. If the requested setting is unavailable, report
+  silently switch models or add a fallback. If the requested setting is unavailable, report
   that fact instead of substituting another setting.
 - The independent reviewer is read-only except for its output artifacts. Its
   permissions are separate from the coordinator's receipt policy. Pass through
@@ -51,18 +52,22 @@ The reviewer creates `review.md`; never seed it with the completion marker.
 
 ## Start the review in the Claude app
 
+Effort belongs to the app's settings. Do not ask Jason for an effort level,
+put effort instructions in the reviewer prompt, or ask the reviewer to verify
+or change it.
+
 The review runs in a Claude app session that Jason can read, message and steer
 while it works. Name it `Via Codex – <short title>`, for example
-`Via Codex – Incident response review`. Keep model and effort in the session
+`Via Codex – Incident response review`. Keep the model in the session
 metadata rather than the title. Do not create a worktree for a read-only review.
 
 Discover the app's session-creation and messaging tools and inspect their
 current schemas. Create the app session with the repository cwd, selected
-model and effort, title, and the full review instruction pointing to the
+model, title, and the full review instruction pointing to the
 filled brief. The first task starts the actual review; it does not ask the
 reviewer to confirm settings and wait.
 
-Verify the returned app session's model, effort and submitted task. Then check
+Verify the returned app session's model and submitted task. Then check
 that the review has begun in that app session through its messages or status.
 A launcher success, an imported transcript or a session title alone does not
 establish that. Keep this same app session for reviewer questions and follow-up
@@ -85,7 +90,7 @@ To recover an existing CLI review, preserve its work and use the supported
 handoff into the app. Do not resume it through the CLI after handoff. Verify
 that the actual review continues in the app before reporting it as running.
 
-Record the app session identifier, requested and verified model and effort,
+Record the app session identifier, requested and verified model,
 source baseline, artifact paths, originating public skill, coordinator receipt
 policy, task and check limits, originating Codex thread ID when available,
 and any relay automation ID in `review-session.json`. Record a prior CLI
@@ -120,7 +125,7 @@ prompt must:
   the current chat; report only genuine blockers or unresolved decisions that
   require Jason. Under that policy, a completed report triggers continuation
   without waiting for another request to fix it.
-- Preserve the selected model, effort, and the independent reviewer's read-only
+- Preserve the selected model and the independent reviewer's read-only
   scope. Delete the follow-up once the completed report is received and the
   coordinator resumes work, or after terminal failure or cancellation.
 
@@ -132,7 +137,7 @@ Use the recorded app session ID for routine review-related input. If recovery
 changes its identifier, preserve the work and update the metadata; do not
 create a duplicate reviewer. Permission changes or additional work require
 existing authorization. Preserve an interrupted session and resume it in the
-app with the same model and effort only when continuation remains authorized.
+app with the same model only when continuation remains authorized.
 
 ## Receive and assess
 

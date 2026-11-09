@@ -7,9 +7,8 @@ the report, not in the skill directory.
 
 # Independent review for Jason
 
-Jason requested an independent review by <reviewer label> using <model> at
-<effort> effort. You are the reviewer. Review it yourself; do not delegate or
-switch models or effort.
+Jason requested an independent review by <reviewer label> using <model>.
+You are the reviewer. Review it yourself; do not delegate or switch models.
 
 ## Input and intent
 
@@ -65,8 +64,7 @@ send keystrokes to another session, or launch another Codex session.
 
 Include:
 
-- Active model and effort if verifiable; distinguish them from requested
-  settings.
+- Active model if verifiable; distinguish it from the requested model.
 - A short ready or revise verdict and reason.
 - Consequential findings in priority order, with input section or change,
   verified file and line, consequence, and recommended correction.

@@ -256,11 +256,27 @@ can steer it there.
    `effort`, `name` and `message`, authorized with `CONDUCTOR_API_KEY`, or
    with `CONDUCTOR_API_TOKEN` when that is unset.
 
-3. **Wait** in a background shell loop, never a model loop. Poll
-   `conductor --json session status <id>` every 30 s. `status` is `idle`,
-   `working` or `error`; count `idle` as done only after you have seen
-   `working`, since a session reads `idle` until its first message is
-   delivered. Stop after 20 minutes to look at it, not to give up on it.
+   Confirm the launch about two minutes later: the session has messages, and
+   a new workspace reads `ready`, not `deleted` with an `errorMessage`. A new
+   workspace's `branch` must already exist on the remote: Conductor fetches
+   it and deletes the workspace when it can't. A branch the worker creates is
+   named in the brief instead.
+
+3. **Wait** with a watchdog in a background shell, never a model loop. Every
+   5 minutes it reads each worker's status and newest message, and wakes the
+   lead when one errors, finishes its turn, or goes 20 minutes without a
+   message, and every 30 minutes regardless, so the lead checks in. `status`
+   alone can't tell a dead worker from a busy one: a session can read `idle`
+   or `working` for a whole run, so a loop that waits for `working` and then
+   `idle` can sit on a worker that never started.
+
+   Jason, 2026-11-09, after two workers sat dead for an hour: "dont again let
+   such a failure happen again, check in fromtime totime". Bad: two
+   workspaces created with `branch` set to branches that didn't exist yet.
+   Conductor deleted both at once, and a loop waiting for `working` ran 60
+   minutes before anyone looked. Good: each launch confirmed two minutes
+   later from the workspace's status and the session's first messages, then a
+   watchdog that wakes the lead on a stall and every 30 minutes.
 4. **Correct** a running worker with
    `conductor message create --session <id> --message-file <file>`. The
    message is steered into its running turn. Never `conductor session cancel`:

@@ -14,19 +14,21 @@ A login lasts about four weeks from its sign-in, and using it does not push that
 
 ## One-year tokens
 
-Each account also has a token from `claude setup-token`, stored in the login keychain on 2026-11-06 under service `claude-code-oauth-token`, with the launcher's name as the account: `claude1`, `claude2` or `claude3`. A token lasts one year, so all three expire around 2027-11-06. Store a new one under the same name before then.
+Each account also has a token from `claude setup-token`, made on 2026-11-06. They live in 1Password's MeOS vault as API Credential items named after the launcher, `Claude Code OAuth token claude1` to `claude3`, in the `credential` field (moved there from the login keychain on 2026-11-09). A token lasts one year, so all three expire around 2027-11-06. Put a new one in the same item before then.
 
 They are for any integration that takes a Claude subscription by token. Each account has one token, and every integration shares it: a deliberate choice, made knowing that one leaked token exposes every integration using it. The `claudeN` launchers don't use them and shouldn't, because such a token can only make model requests (see the next section).
 
 The Amp app is one such integration. Amp keeps at most two Claude subscriptions linked, one of them active, and only its app can link one (Settings → Model Routing → Claude Subscription). Its CLI can switch which linked one is active, list them and delete one, but can't set a token. So switching to a third account means deleting a link in the app and pasting that account's token.
 
+Agents run these with `meos-op` in place of `op`.
+
 ```sh
 # Copy account 2's token, to paste into Amp
-security find-generic-password -s claude-code-oauth-token -a claude2 -w | pbcopy
+op read "op://MeOS/Claude Code OAuth token claude2/credential" | tr -d '\n' | pbcopy
 # Make a linked subscription the active one (IDs from `amp config model-providers list`)
 amp config model-providers activate <connection-id>
-# Store a new token from the clipboard as account 1's (-U replaces the old one)
-security add-generic-password -U -s claude-code-oauth-token -a claude1 -l 'Claude Code OAuth token (claude1)' -w "$(pbpaste)"
+# Replace account 1's token with the one on the clipboard
+op item edit "Claude Code OAuth token claude1" --vault MeOS "credential=$(pbpaste)"
 ```
 
 ## The goal, and the one simpler design

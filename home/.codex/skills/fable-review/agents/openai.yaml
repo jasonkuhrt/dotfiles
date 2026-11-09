@@ -1,4 +1,4 @@
 interface:
   display_name: "Fable Review"
   short_description: "App-visible Fable review, relayed to Codex"
-  default_prompt: "Use $fable-review to have Fable 5.1 independently review this plan or change, verify its findings, and return the assessment and remaining decisions."
+  default_prompt: "Use $fable-review to have Fable 5.1 independently review this plan or change through the Claude app session API, verify its findings, and return the assessment and remaining decisions."

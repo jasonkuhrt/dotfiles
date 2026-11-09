@@ -370,8 +370,9 @@ never trim or split merely to reach a word count.
 An independent Claude review dispatched by Codex runs in the Claude app,
 where I can read it, message it and steer it, and is named
 `Via Codex – <short title>`. The `opus-review` and `fable-review` skills share
-the launch and verification workflow. A CLI-only review requires my explicit
-request; opening its transcript in the app does not make it an app review.
+the launch and verification workflow. Dispatch uses the programmatic Claude
+app session API only. If it is unavailable, report that and stop dispatch;
+do not substitute a CLI run, transcript import or UI automation.
 Do not use a terminal-workspace manager for agent work.
 
 * Bad: a waiting placeholder in the app while the actual review runs in a CLI process I cannot participate in.

@@ -3,8 +3,7 @@
 Run one independent review in an app-hosted Claude session, then return an
 evidence-checked assessment to the originating Codex chat. The invoking public
 skill supplies defaults for model and reviewer label. Jason's explicit values
-override those defaults. Select the model
-before the reviewer label: use an explicit reviewer label when supplied;
+override those defaults. Select the model before the reviewer label: use an explicit reviewer label when supplied;
 otherwise derive the label from the selected model. The wrapper's default
 label applies only to its default model. For example, `claude-opus-5-5` is
 `Opus 5.5` and `claude-fable-5-1[1m]` is `Fable 5.1`.
@@ -14,6 +13,21 @@ When it supplies none, a request for review alone means assess and report;
 already authorized follow-up work still continues. A skill may explicitly
 include repairing confirmed findings. Preserve Jason's task and action limits
 under either policy.
+
+## Check programmatic app dispatch first
+
+Use only the Claude app's programmatic session API to create, start, inspect
+and message the reviewer. Discover the connected API tools and read their
+schemas before starting a model run. The API must support an actual app
+session where Jason can participate, not a terminal transcript imported into
+the app.
+
+If the API is unavailable, report the missing capability and stop dispatch.
+Recover a failed connection only through the supported programmatic API.
+Do not substitute CLI review processes, desktop launchers, terminal imports,
+UI automation, accessibility scripting, mouse clicks or keyboard input.
+Do not create a waiting placeholder or ask Jason to carry out the dispatch.
+Preserve any prepared brief and artifacts so an API-equipped chat can resume.
 
 ## Establish the review
 
@@ -26,8 +40,8 @@ under either policy.
 - Use the selected model exactly. Inspect the app session tool,
   its current schema and the session metadata when availability is uncertain.
   Codex's model list does not establish Claude app model availability. Never
-  silently switch models or add a fallback. If the requested setting is unavailable, report
-  that fact instead of substituting another setting.
+  silently switch models or add a fallback. If the requested model is
+  unavailable, report that fact instead of substituting another model.
 - The independent reviewer is read-only except for its output artifacts. Its
   permissions are separate from the coordinator's receipt policy. Pass through
   any explicitly granted reviewer check permissions; otherwise prohibit tests,
@@ -79,23 +93,17 @@ so Jason's messages reach the reviewer doing the work.
 - Good: create one app session with the review brief as its first task, verify
   that it is reviewing there, and use that session for the review and follow-up.
 
-If the app tools are absent or fail, check the installed app integration's
-supported recovery before reporting the limitation. Preserve the prepared
-brief and report the actual missing capability if app dispatch remains
-unavailable. Do not substitute a CLI-hosted review, create a placeholder app
-session, or claim a CLI transcript is a live app review. A CLI-only review
-requires Jason to request that route explicitly.
-
-To recover an existing CLI review, preserve its work and use the supported
-handoff into the app. Do not resume it through the CLI after handoff. Verify
-that the actual review continues in the app before reporting it as running.
+Recover an interrupted review through that same app session API. Do not
+change the execution route to make it appear available. If API recovery
+fails, preserve the work and report the failure without starting a second
+reviewer.
 
 Record the app session identifier, requested and verified model,
 source baseline, artifact paths, originating public skill, coordinator receipt
 policy, task and check limits, originating Codex thread ID when available,
-and any relay automation ID in `review-session.json`. Record a prior CLI
-session only as recovery history, not as the active reviewer. Unavailable or
-unverifiable settings are reported failures, never grounds for substitution.
+and any relay automation ID in `review-session.json`. Unavailable or
+unverifiable model settings are reported failures, never grounds for
+substitution.
 
 ## Relay without another Codex session
 

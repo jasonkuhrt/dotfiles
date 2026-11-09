@@ -16,4 +16,6 @@ fi
 
 unset OP_ACCOUNT
 export OP_SERVICE_ACCOUNT_TOKEN="$token"
-exec op "$@"
+# By full path, where 20-1password-cli.sh installs it: a caller such as
+# browse's relay may run this with a PATH that lacks ~/.local/bin.
+exec "$HOME/.local/bin/op" "$@"

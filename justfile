@@ -220,6 +220,10 @@ skill-links:
 skill-check skill:
     uv run --quiet --no-project --with pyyaml python "{{justfile_directory()}}/home/.codex/skills/.system/skill-creator/scripts/quick_validate.py" "{{skill}}"
 
+# Refresh shared msgvault skills, restore TypeSafe guidance, and remove duplicates.
+msgvault-skills-sync:
+    home/.local/bin/msgvault-sign --skills-only
+
 # Restore a sealed skills backup; refuses to overwrite subsequent edits.
 skills-restore backup_dir:
     python3 "{{backup_dir}}/restore.py" --apply

@@ -23,6 +23,19 @@ SERVE_JOB="gui/$(id -u)/com.jasonkuhrt.msgvault.serve"
 
 log() { echo "$(date '+%Y-%m-%dT%H:%M:%S%z') msgvault-sign: $*"; }
 
+refresh_skills() {
+  # Both agents read this shared home; keep TypeSafe's search guidance.
+  "$BIN" --no-log-file skills install --dir "$HOME/.claude/skills"
+  PATH="$HOME/.vite-plus/bin:$PATH" "$HOME/.local/bin/typesafe" install-skills >/dev/null
+  "$BIN" --no-log-file skills uninstall --dir "$HOME/.codex/skills"
+  log "refreshed the shared msgvault agent skills"
+}
+
+if [[ ${1:-} == --skills-only ]]; then
+  refresh_skills
+  exit 0
+fi
+
 # Let an installer finish writing before reading the file.
 sleep "${MSGVAULT_SIGN_SETTLE_SECONDS:-3}"
 
@@ -58,9 +71,5 @@ if launchctl print "$SERVE_JOB" >/dev/null 2>&1; then
 fi
 
 # The msgvault-* agent skills are generated from the binary's own command
-# tree, so a new binary regenerates them for Claude Code and Codex, and
-# TypeSafe puts back the section it owns in msgvault-search. They're
-# gitignored in dotfiles, so this leaves no diff behind.
-"$BIN" --no-log-file skills install
-PATH="$HOME/.vite-plus/bin:$PATH" "$HOME/.local/bin/typesafe" install-skills >/dev/null
-log "refreshed the msgvault agent skills"
+# tree. Refresh their shared home after replacing the binary.
+refresh_skills

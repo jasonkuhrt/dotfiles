@@ -1,13 +1,13 @@
 ---
 name: opus-review
-description: Run an independent Claude Opus review through the Claude app session API, relay its report back to Codex, and repair confirmed findings within the originating task. Use when Jason asks for an Opus review or invokes $opus-review. Defaults to Opus 5.5.
+description: Run an independent Claude Opus review, prefer app visibility when available, preserve a resumable session, and repair confirmed findings within the originating task. Use when Jason asks for an Opus review or invokes $opus-review. Defaults to Opus 5.5.
 ---
 
 # Opus review
 
 Use the [shared independent-review workflow](../.shared/independent-review/workflow.md)
-with these defaults. Dispatch requires the programmatic app API; no CLI or UI
-automation fallback.
+with these defaults. The shared workflow owns app preference, CLI dispatch,
+session retention and exact-model verification.
 
 - Model: `claude-opus-5-5`
 - Reviewer label: `Opus 5.5`
@@ -28,4 +28,4 @@ at an assessment or ask whether to fix confirmed findings merely because the
 reviewer was read-only. Resolve routine implementation details autonomously;
 pause only for a genuine blocker, a consequential unresolved decision, or an
 action the existing authorization does not cover. Carry this receipt policy
-and the task's limits into the relay heartbeat prompt.
+and the task's limits into the review session record.

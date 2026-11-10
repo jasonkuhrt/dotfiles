@@ -1,16 +1,16 @@
 ---
 name: fable-review
-description: Run an independent Claude Fable review through the Claude app session API, relay its report back to Codex, and verify the findings. Use when Jason asks for a Fable review or invokes $fable-review. Defaults to Fable 5.1.
+description: Run an independent Claude Fable review, prefer app visibility when available, preserve a resumable session, and verify the findings. Use when Jason asks for a Fable review or invokes $fable-review. Defaults to Fable 5.2.
 ---
 
 # Fable review
 
 Use the [shared independent-review workflow](../.shared/independent-review/workflow.md)
-with these defaults. Dispatch requires the programmatic app API; no CLI or UI
-automation fallback.
+with these defaults. The shared workflow owns app preference, CLI dispatch,
+session retention and exact-model verification.
 
-- Model: `claude-fable-5-1[1m]`
-- Reviewer label: `Fable 5.1`
+- Model: `claude-fable-5-2`
+- Reviewer label: `Fable 5.2`
 
 Apply the shared override and reviewer-label derivation rules. Never silently
 substitute another model.

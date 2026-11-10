@@ -40,13 +40,13 @@ for his yes. A rule that gets in the way of good judgment is named to him.
 
 Effort is weighed for the work, not fixed by the engine.
 
-| Engine | Useful strengths | Quota and handoff cost | Route |
-| --- | --- | --- | --- |
-| Jev | Typed judgments over supplied evidence | TypeSafe quota; supplied state, no conversation | `typesafe` (`typesafe-ai`) |
-| Sonnet | Fully briefed work; easy steering in an app session | Claude quota; fresh context and result checking | Claude app or Agent tool; Conductor: `claude`, `sonnet-5-5-1m` |
-| Sol | Fully briefed work, bulk reads, mechanical edits and reviews | OpenAI quota, no Claude quota; fresh context and result checking | `gpt-6.1-sol`; Conductor: `codex`, `gpt-6.1-sol` |
-| Opus | Chat context, taste and design; lead, inheriting fork or subagent | Claude quota; an inheriting fork can reuse context | Lead or Claude session/Agent tool, using the available Opus model |
-| Astra | A reasoning worker or reviewer when Jason names it | OpenAI quota; fresh context and result checking | `gpt-6-astra`, only when named; Conductor: `codex`, `gpt-6-astra` |
+| Engine | Useful strengths                                                  | Quota and handoff cost                                           | Route                                                             |
+| ------ | ----------------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Jev    | Typed judgments over supplied evidence                            | TypeSafe quota; supplied state, no conversation                  | `typesafe` (`typesafe-ai`)                                        |
+| Sonnet | Fully briefed work; easy steering in an app session               | Claude quota; fresh context and result checking                  | Claude app or Agent tool; Conductor: `claude`, `sonnet-5-5-1m`    |
+| Sol    | Fully briefed work, bulk reads, mechanical edits and reviews      | OpenAI quota, no Claude quota; fresh context and result checking | `gpt-6.1-sol`; Conductor: `codex`, `gpt-6.1-sol`                  |
+| Opus   | Chat context, taste and design; lead, inheriting fork or subagent | Claude quota; an inheriting fork can reuse context               | Lead or Claude session/Agent tool, using the available Opus model |
+| Astra  | A reasoning worker or reviewer when Jason names it                | OpenAI quota; fresh context and result checking                  | `gpt-6-astra`, only when named; Conductor: `codex`, `gpt-6-astra` |
 
 How it launches depends on where the lead runs; see
 [Where you run](#where-you-run). `gate-peer-review` owns whether existing
@@ -163,10 +163,9 @@ token.
   when the user should watch or steer it in its own chat.
 
 Claude reviews dispatched from Codex follow the shared independent-review
-workflow in `~/.codex/skills/.shared/independent-review/workflow.md`: prefer
-an app-hosted session, otherwise an interactive CLI session opened in the app.
-Name them `Via Codex – <short title>`. This review-specific route takes
-precedence over the generic `claude -p` worker route above and below.
+workflow in `~/.codex/skills/.shared/independent-review/workflow.md`, which owns
+connection diagnosis, dispatch and verification. Its route takes precedence
+over the generic Claude worker routes here.
 
 ## Every worker stays reachable
 
@@ -249,6 +248,7 @@ can steer it there.
    minutes before anyone looked. Good: each launch confirmed two minutes
    later from the workspace's status and the session's first messages, then a
    watchdog that wakes the lead on a stall and every 30 minutes.
+
 4. **Correct** a running worker with
    `conductor message create --session <id> --message-file <file>`. The
    message is steered into its running turn. Never `conductor session cancel`:

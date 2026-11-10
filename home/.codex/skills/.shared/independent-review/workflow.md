@@ -1,12 +1,13 @@
 # Independent Claude review workflow
 
-Run one independent review in an app-hosted Claude session, then return an
+Run one independent review in a persistent Claude session, then return an
 evidence-checked assessment to the originating Codex chat. The invoking public
 skill supplies defaults for model and reviewer label. Jason's explicit values
-override those defaults. Select the model before the reviewer label: use an explicit reviewer label when supplied;
+override those defaults. Select the model before the reviewer label: use an
+explicit reviewer label when supplied;
 otherwise derive the label from the selected model. The wrapper's default
 label applies only to its default model. For example, `claude-opus-5-5` is
-`Opus 5.5` and `claude-fable-5-1[1m]` is `Fable 5.1`.
+`Opus 5.5` and `claude-fable-5-2` is `Fable 5.2`.
 
 The public skill also defines the coordinating Codex agent's receipt policy.
 When it supplies none, a request for review alone means assess and report;
@@ -14,20 +15,35 @@ already authorized follow-up work still continues. A skill may explicitly
 include repairing confirmed findings. Preserve Jason's task and action limits
 under either policy.
 
-## Check programmatic app dispatch first
+## Choose and verify the route
 
-Use only the Claude app's programmatic session API to create, start, inspect
-and message the reviewer. Discover the connected API tools and read their
-schemas before starting a model run. The API must support an actual app
-session where Jason can participate, not a terminal transcript imported into
-the app.
+Prefer a Claude app session when its supported programmatic connection is
+straightforward. App visibility helps Jason read and steer the reviewer; it
+is not a prerequisite for the review. If the app route is unavailable or
+requires substantial integration work, hacks or a fork, use a persistent
+Claude CLI session without another approval stop. Do not omit the review,
+substitute a model, or make Jason repeat the request in another app.
 
-If the API is unavailable, report the missing capability and stop dispatch.
-Recover a failed connection only through the supported programmatic API.
-Do not substitute CLI review processes, desktop launchers, terminal imports,
-UI automation, accessibility scripting, mouse clicks or keyboard input.
-Do not create a waiting placeholder or ask Jason to carry out the dispatch.
-Preserve any prepared brief and artifacts so an API-equipped chat can resume.
+A missing tool starts diagnosis. Check the current host's tool registry and
+connection configuration, following symlinks; use the installed integration's
+source, docs and runtime to distinguish an internal app tool from an external
+connection. Recover a configured connection when straightforward and confirm
+with a minimal native operation. Keep investigation proportional to the
+review: establishing that no supported connection is configured is enough to
+choose the CLI, not a reason to build a bridge. Do not infer that Jason must
+reconnect anything from an empty catalog search.
+
+Use the selected model's full versioned ID, never an alias when Jason named a
+version. Verify the actual model in the run's response metadata or receipt;
+the requested argument alone is insufficient. Stop a mismatched run, retain
+its evidence, correct the launch and rerun the review with the requested
+version. An unavailable requested model is a real blocker; an unavailable
+preferred display route is not. Never claim a version is newest without
+reading a current model list.
+
+Keep the actual route, session identifier and resume path in the run record.
+Do not use UI automation, private-session channel reuse or app modification
+to simulate an app API, or describe a CLI transcript as an app-hosted run.
 
 ## Establish the review
 
@@ -37,10 +53,11 @@ Preserve any prepared brief and artifacts so an API-equipped chat can resume.
 - Carry Jason's original request, constraints, and unresolved questions into
   the brief. Separate proposed decisions from approved work. Do not prime the
   reviewer to agree with the author.
-- Use the selected model exactly. Inspect the app session tool,
-  its current schema and the session metadata when availability is uncertain.
-  Codex's model list does not establish Claude app model availability. Never
-  silently switch models or add a fallback. If the requested model is
+- Use the selected model exactly. Inspect the chosen host's current schema or
+  CLI help and its session metadata
+  when availability is uncertain. Codex's model list does not establish
+  Claude model availability. Never silently switch models or add a fallback.
+  If the requested model is
   unavailable, report that fact instead of substituting another model.
 - The independent reviewer is read-only except for its output artifacts. Its
   permissions are separate from the coordinator's receipt policy. Pass through
@@ -64,46 +81,44 @@ every placeholder and choosing a bounded set of questions for this task. Never
 copy another review's paths, session identifiers, or architectural answers.
 The reviewer creates `review.md`; never seed it with the completion marker.
 
-## Start the review in the Claude app
+## Start the review
 
-Effort belongs to the app's settings. Do not ask Jason for an effort level,
+Use the selected host's effort settings. Do not ask Jason for an effort level,
 put effort instructions in the reviewer prompt, or ask the reviewer to verify
 or change it.
 
-The review runs in a Claude app session that Jason can read, message and steer
-while it works. Name it `Via Codex – <short title>`, for example
-`Via Codex – Incident response review`. Keep the model in the session
-metadata rather than the title. Do not create a worktree for a read-only review.
+Name the session `Via Codex – <short title>` and keep the model in its
+metadata. Do not create a worktree for a read-only review.
 
-Discover the app's session-creation and messaging tools and inspect their
-current schemas. Create the app session with the repository cwd, selected
-model, title, and the full review instruction pointing to the
-filled brief. The first task starts the actual review; it does not ask the
-reviewer to confirm settings and wait.
+For an app run, inspect the current session-creation and messaging schemas.
+Create the session with the repository cwd, selected model, title and full
+review instruction pointing to the filled brief. Verify the returned model
+and that review work has begun. Use that session for questions and follow-up.
 
-Verify the returned app session's model and submitted task. Then check
-that the review has begun in that app session through its messages or status.
-A launcher success, an imported transcript or a session title alone does not
-establish that. Keep this same app session for reviewer questions and follow-up
-so Jason's messages reach the reviewer doing the work.
+For a CLI run, follow `use-workers`'s "Launching from a Codex lead on a Mac"
+section, using the exact selected model in place of its example alias. Call
+plain `claude` so the user's account selector applies. Keep session
+persistence enabled, record the session ID, and capture structured output
+with the actual response model. Feed a prepared prompt through stdin or
+terminate variadic options before a positional prompt so the CLI receives it.
+Use only the tools the review needs; its brief permits writing only its own
+report. Confirm launch from real response metadata and tool activity, not
+just a live process. A usage-limit or startup error is not a running review.
 
-- Bad: open a model-check-and-wait exchange in the app, then resume the review
-  through a CLI process. Jason sees an idle placeholder and cannot participate
-  in the actual review.
-- Good: create one app session with the review brief as its first task, verify
-  that it is reviewing there, and use that session for the review and follow-up.
+Resume the same CLI session with `--resume <session_id>` for focused follow-up.
+Keep its transcript and report, and provide an exact resume command or launcher
+when the user wants to continue it. A supported app handoff may make it easier
+to inspect later, but does not gate receipt of the review.
 
-Recover an interrupted review through that same app session API. Do not
-change the execution route to make it appear available. If API recovery
-fails, preserve the work and report the failure without starting a second
-reviewer.
+- Bad: return an unreviewed proposal because app session tools are absent.
+- Good: run the requested version through the CLI, verify its actual model,
+  resolve its findings and retain the session for follow-up.
 
-Record the app session identifier, requested and verified model,
-source baseline, artifact paths, originating public skill, coordinator receipt
-policy, task and check limits, originating Codex thread ID when available,
-and any relay automation ID in `review-session.json`. Unavailable or
-unverifiable model settings are reported failures, never grounds for
-substitution.
+Record the route, session identifier, requested and verified model, source
+baseline, artifact paths, originating skill, coordinator receipt policy,
+task and check limits, and originating Codex chat ID when available in
+`review-session.json`. Reconcile the session before retrying an uncertain
+launch; do not create a duplicate reviewer.
 
 ## Relay without another Codex session
 
@@ -112,40 +127,16 @@ the report's final nonempty line must equal `INDEPENDENT_REVIEW_COMPLETE`
 exactly. Partial files are still in progress. Each run has its own report, so an
 old completion marker cannot satisfy a new review.
 
-When the desktop heartbeat tool is available, create a follow-up on the
-**current Codex chat**, normally every five minutes, using `automation_update`.
-This follow-up is part of the review workflow. Resolve the actual thread ID;
-never guess it from a workspace name. Inspect existing automation state and
-reuse this run's monitor instead of creating duplicates. Its human-readable
-prompt must:
+Monitor the run in the active task with bounded checks. Check startup early,
+then read progress only to detect failure, a blocking question or a stall.
+Do not create a scheduled automation to watch a specific review job, launch
+another Codex chat as its monitor, or promise a later notification that has no
+working delivery mechanism. Continue independent work while it runs.
 
-- Name the exact session metadata, report, and input paths and the completion
-  marker.
-- Name the originating public skill and carry its concrete coordinator receipt
-  policy and the task's existing authorization and check limits. Do not copy
-  the reviewer's read-only restriction onto the coordinator's follow-up work.
-- Stay quiet while work progresses and notify only on completion, failure, or
-  required user input. Inspect the recorded session only to diagnose a stall or
-  input request.
-- On completion, read the report, verify consequential findings against source
-  and current state, then apply the recorded receipt policy. When it includes
-  repairs, continue confirmed fixes and authorized validation and delivery in
-  the current chat; report only genuine blockers or unresolved decisions that
-  require Jason. Under that policy, a completed report triggers continuation
-  without waiting for another request to fix it.
-- Preserve the selected model and the independent reviewer's read-only
-  scope. Delete the follow-up once the completed report is received and the
-  coordinator resumes work, or after terminal failure or cancellation.
-
-Without a follow-up tool, use bounded checks in the active turn. Do not promise
-an automatic later notification that has not been arranged. Never launch
-another Codex session or send text to a guessed terminal to simulate the relay.
-
-Use the recorded app session ID for routine review-related input. If recovery
-changes its identifier, preserve the work and update the metadata; do not
-create a duplicate reviewer. Permission changes or additional work require
-existing authorization. Preserve an interrupted session and resume it in the
-app with the same model only when continuation remains authorized.
+The reviewer is read-only except for its report; the coordinator retains the
+originating task's authorization to verify and resolve findings. A completed
+report resumes that work without another request from Jason. Recover through
+the recorded session and preserve its model, context and output.
 
 ## Receive and assess
 
@@ -167,13 +158,14 @@ rule merely to adopt the review. Settle routine details and surface genuine
 blockers, consequential unresolved choices, or required authorization while
 continuing independent approved work.
 
-Use the existing Claude session for a focused follow-up only when its answer
+Use the recorded Claude session for a focused follow-up only when its answer
 would resolve a material uncertainty. Do not repeat a whole review by default.
-Keep the Claude session available for focused follow-up; do not delete it as cleanup.
+Keep the Claude session available for focused follow-up; do not delete it as
+cleanup.
 
 Deliver a concise verdict, important corrections, remaining decisions, and
 links to the original report and revised artifact. State the repairs completed
-and material verification limits. Record delivery in `review-session.json` and
-ensure the run's follow-up is deleted.
+and material verification limits. Record delivery in `review-session.json`
+and retain the session's resume path.
 Claim reviewer approval only for the exact baseline it reviewed, not a later
 revision.

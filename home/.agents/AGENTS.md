@@ -11,6 +11,7 @@ Every agent reads this one file: Claude Code as `~/.claude/CLAUDE.md`, Codex as 
 - For narrow operational questions, answer the exact question first and stop unless extra detail changes the answer.
 - For yes/no questions, give the yes/no in the first sentence.
 - A reply never paraphrases the user's message back to them.
+- A reply names an issue or PR by what it does, in plain words; its ID is at most the link target on those words. A Linear body, a PR description and a commit message, which readers search by ID, keep their IDs. Bad: "HEA-5382 extends it to `test:integration`." Good: "Extending that hash to integration suites is filed but not started ([issue](https://linear.app/…))."
 - If I ask about **your** work, threads, ownership, or whether **you** are done, answer only about your owned work unless I explicitly widen the scope.
 - Do not append repo-state inventories, adjacent project status, or other-agent status when the question is only about your completion state.
 - Extra detail after a correct binary answer is noise by default. Add it only if it changes the answer or I ask for it.
@@ -247,7 +248,7 @@ Every code block in a reply has a title: one bold line directly above its fence,
 A deploy request's schema diff is the one exception: its blocks have no title. One line above them links the request in the PlanetScale dashboard, and each block's place annotation names only its table, so it already says what a title would.
 
 - Bad: `**New table SequenceVersion**`, then a block opening on `-- ── @ heartbeat-main deploy request #365, new table SequenceVersion`.
-- Good: `[Deploy request #365](https://app.planetscale.com/heartbeat/heartbeat-main/deploy-requests/365)` once, then each table's block opening on `-- ── @ SequenceVersion`.
+- Good: `[The deploy request that adds SequenceVersion](https://app.planetscale.com/heartbeat/heartbeat-main/deploy-requests/365)` once, then each table's block opening on `-- ── @ SequenceVersion`.
 
 ### Layout
 
@@ -282,11 +283,11 @@ Every line in a code block is at most 60 characters long, annotations included.
 ## Merging my PRs
 
 - A PR in my own repos is merged without asking when it is simple, QA'd (checks green, its independent review and bot threads addressed), unlikely to be rejected, and easy to change with a follow-up PR. The reply says it merges and how to stop it.
-  - Not green yet: turn on auto-merge as it goes ready (`gh pr merge --auto --squash`), and the reply says "#N merges when green unless you say no".
+  - Not green yet: turn on auto-merge as it goes ready (`gh pr merge --auto --squash`), and the reply says "<the change, named by what it does> merges when green unless you say no".
   - Already green: merge it in the same turn and report the merge commit.
 - Still put to me first: a design I haven't approved, a change a follow-up PR can't undo (a schema migration, a production deploy, deleted data), and a PR someone else owns.
 - A loop campaign I start or schedule is my approval of the designs inside its scope. Its PRs land under that repository's `loop` contract, which holds only what a follow-up PR can't undo, with no PR waiting on me.
-- Bad: a green, reviewed PR with its measurements in hand, then "Say the word and I'll merge it". Good: "#3164 merges when green unless you say no", with auto-merge on.
+- Bad: a green, reviewed PR with its measurements in hand, then "Say the word and I'll merge it". Good: "[Pinning Conductor's Playwright browsers](https://github.com/heartbeat-chat/Heartbeat/pull/3164) merges when green unless you say no", with auto-merge on.
 
 ## Linear issue templates
 

@@ -16,3 +16,7 @@
 * Treat `.luarc.json`, `selene.toml`, and `selene.nvim.yml` as the source of truth for LuaLS and Selene behavior in this repo.
 * Staged Lua is checked by `.git-hooks/pre-commit.d/20-lua.sh`, which the git-hooks runtime
   at `core.hooksPath` runs; `just hooks-install` installs that runtime. `.git/hooks/` is never consulted.
+
+## Interfaces
+
+* A cursor, selection or focus cue needs a bright accent mark, not only a faint background tint. Bad: a slight tint on one line-number cell. Good: a saturated rail and row tint that can be found at a glance.

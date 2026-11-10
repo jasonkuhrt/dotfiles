@@ -81,6 +81,7 @@ A diagram has to beat a table: when three columns say the same thing, send the t
 | Branches and decisions                                 | Mermaid `flowchart`                                                               |
 | A change to an existing shape                          | a `diff` of that shape: file tree, call tree, component tree or code              |
 | Many items, each with a state or fate                  | names colored by state, a legend, and before → after counts                       |
+| Many items, each awaiting a decision                   | buckets cut on fault lines, each opening on its test (see below)                  |
 | Options against criteria                               | a matrix with the recommended option marked                                       |
 | Cause and effect, or options with changing assumptions | interactive controls with visible downstream changes and a live comparison        |
 | A mechanism clarified by motion or changing quantities | a step-through animation or a short explainer video                               |
@@ -97,6 +98,11 @@ A diagram has to beat a table: when three columns say the same thing, send the t
 +  navigateToSession
 +    subscribeToEvents
 ```
+
+**Bucket items that wait on a decision.** When the user has to decide what happens to many items (proposals, findings, backlog issues), the first view puts each item in one bucket, and fault lines separate the buckets: quick win, cook more, toss, or whatever lines the material has. Each bucket opens with the one-line test that puts an item in it, so the reader can check any placement, and shows its count. A view grouped by topic leaves the user to work out what happens to each item.
+
+- Bad: 19 proposed Linear changes from an audit shown as five topic areas, each with a challenge.
+- Good: the same 19 sorted into 10 quick wins, 7 to cook more and 2 to toss, each bucket opening with its test.
 
 ```text
 src/

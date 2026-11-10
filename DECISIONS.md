@@ -154,10 +154,11 @@ section of `home/.agents/AGENTS.md`, so every compaction keeps what `meta-compac
 
 **Value against cost:**
 - 400k against the default, modeled from that night's 327 answered requests at Fable 5.2's API list
-  price: $3.44 to $8.45 a night cheaper (5% to 11%), with four compactions instead of one. How
-  subscription quota counts cached reads is unpublished, so the saving in quota is unverified. Median
-  first response: 3.0 s below 200k tokens of context, 6.9 s from 200k to 800k. No measured gain in
-  answers for any model in use (no published long-context score for Fable 5.2, Opus 5.5 or Sol).
+  price: $3.44 to $8.45 a night cheaper (about 4% to 11%), with four compactions instead of one. How
+  subscription quota counts cached reads is unpublished, so the saving in quota is unverified. The
+  median time to the first completed content block, thinking included, was 3.0 s below 200k tokens of
+  context and 6.9 s from 200k to below 800k; what 400k does to latency was not measured. No measured
+  gain in answers for any model in use (no published long-context score for Fable 5.2, Opus 5.5 or Sol).
 - The Compact Instructions keep identifiers, in-flight signals and the record's path, which Claude Code's
   built-in summary prompt (read from 2.1.321) doesn't ask for.
 

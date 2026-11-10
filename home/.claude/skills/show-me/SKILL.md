@@ -99,15 +99,12 @@ A diagram has to beat a table: when three columns say the same thing, send the t
 +    subscribeToEvents
 ```
 
-**Bucket items that wait on a decision.** When the user has to decide what happens to many items (proposals, findings, backlog issues), the first view puts each item in one bucket, and fault lines separate the buckets: quick win, cook more, toss, or whatever lines the material has. Each bucket opens with the one-line test that puts an item in it, so the reader can check any placement, and shows its count. A view grouped by topic leaves the user to work out what happens to each item.
+**Bucket items that wait on a decision.** When the user has to decide what happens to many items (proposals, findings, backlog issues), the first view groups them by the next action each needs. Each item appears in one bucket. Each bucket opens with a one-line placement test and shows its count. The boundaries follow the decision the user faces next. When more than one grouping fits, the reply names the strongest alternative considered and why the chosen grouping better serves that decision.
 
-- Bad: 19 proposed Linear changes from an audit shown as five topic areas, each with a challenge.
-- Good: the same 19 sorted into 10 quick wins, 7 to cook more and 2 to toss, each bucket opening with its test.
+For examples supplied by the user, apply [pattern-not-example](../pattern-not-example/SKILL.md).
 
-The fault lines come from the decision the user faces next, so they change as that decision changes. Buckets the user offered as an example are one candidate, never the answer by default. The reply names, in one line, the other lines it weighed and why the chosen ones fit the decision, so the user can see the choice was made.
-
-- Bad: quick win, cook more and toss kept for the 7 items left once the quick wins were cleared. By then the decision was how to unblock each one, and "cook more" hid that.
-- Good: those 7 split by what unblocks them (rework, a fact that can delete work, a wait on another item), with the lines weighed named.
+- Bad: 19 proposed Linear changes shown by topic, each with a challenge; when asked to bucket them, the reply copies the user's example labels without weighing another grouping.
+- Good: the same 19 grouped by what should happen next, each bucket showing its test and count, with one line explaining why that grouping serves the decision better than the alternative considered.
 
 ```text
 src/

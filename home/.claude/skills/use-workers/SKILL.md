@@ -420,11 +420,11 @@ the worker's name, and `<effort>` is the calculated effort.
   ends. A correction that can wait for the run to end is a resume after it.
 
 Say in one line in the chat what each worker is doing, and give its result
-once the run ends and you have checked it. A `codex exec` run doesn't appear
-in the Codex app, so a `codex://threads/<session id>` link to it opens nothing
-the user can read (Jason, 2026-11-10: "i dont see them?"). The app's own
-threads are tagged `Codex Desktop` in `~/.codex/sessions`; an exec run's are
-tagged `codex_exec`. A routine run needs no thread he can watch (Jason,
+once the run ends and you have checked it. The two `codex exec` thread
+links tried on 2026-11-10 showed Jason nothing he could read (Jason: "i dont
+see them?"), so a reply never promises app access to an exec run it hasn't
+verified. The app's own threads are tagged `Codex Desktop` in
+`~/.codex/sessions`; an exec run's are tagged `codex_exec`. A routine run needs no thread he can watch (Jason,
 2026-11-10: "u being able to run it here is still less hassel than … having
 to have the other session show in my other app assuming they are routine
 andboring and get the job done"). For a run he does want to follow, his

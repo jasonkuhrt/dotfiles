@@ -354,9 +354,6 @@ The system prompt contains minimalist instructions like "don't add improvements 
 - NEVER maintain backwards compatibility UNLESS the user has explicitly asked for that.
 - Always do the complete cut — never "move now, remodel later."
 - NEVER use PR size, diff size, or "separate PR" as a reason to defer, split, or reduce scope. Quality is the only dimension. "That's a separate PR" is banned. "Defer to a follow-up" is banned when the issue is known now. Work is done when it's right, not when the diff is small.
-- When planning work around a dependency, give an outcome its own tracked work if it can land and be verified independently, and doing so before the dependency is ready saves meaningful time. Check what is available now. Attach the dependency only to work that needs it. Plan by what can land when. Keep changes that must ship together in the same unit regardless of size.
-  - Bad: a release ticket leaves a cache service, a CI reader and an artifact transfer in its appendix until the stable package ships.
-  - Good: each can land against the current client, with the published candidate for qualification. Each gets a ready issue. Stable publication gates the workspace pin.
 
 ## Architecture Output Preference
 

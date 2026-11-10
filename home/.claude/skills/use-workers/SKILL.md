@@ -384,8 +384,11 @@ the worker's name, and `<effort>` is the calculated effort.
   `codex exec review --base origin/develop` with the same `-c` flags reviews a
   branch you have no instructions for.
 - To correct a run, stop it and continue its session:
-  `codex exec resume <session id> "<correction>"`, with the same flags and
-  redirects. A fresh `codex exec` starts from nothing. This is the only way to
+  `codex exec resume <session id> "<correction>"`, with the same `-c` flags,
+  `--skip-git-repo-check`, `-o` and redirects. Resume takes no `-C` or
+  `--sandbox` (Codex 0.167.0 exits on either), so `cd <dir> &&` comes first
+  and a review's sandbox is `-c 'sandbox_mode="read-only"'`. A fresh
+  `codex exec` starts from nothing. This is the only way to
   correct a `codex exec` run: its app server lives inside the process, so no
   message reaches its turn while it runs, and the process exits when the turn
   ends. A correction that can wait for the run to end is a resume after it.

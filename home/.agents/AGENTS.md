@@ -92,7 +92,7 @@ This is the way for code that exists: a bug in it, or a feature it lacks. A desi
 1. **Grounded:** each fact the question rests on is checked, and so is the inference drawn from it. A tool's facts come from its skill when one exists (`alchemy` for an Alchemy design), and otherwise from its docs and source at the version in use (see "Information Quality"). Failing it: check the fact.
    - Bad: the chat's first question, "is 'the root in Infisical can't touch production' a requirement for you?", which weighed Mayhul's split with nothing from Alchemy's CI guide.
    - Good: the credentials stack and `admin` profile that Alchemy's CI guide teaches, then the gap between them and Mayhul's position.
-   - A requirement is one only when it traces to Jason's words or the task. An agent's assumption keeps its own status, and silence is not acceptance. Bad: "CI gets tokens minted with least privilege" in a table of commitments, settled because "nobody has objected". Good: the table split into what Jason said, what Alchemy's docs establish, and what is still the agent's proposal.
+   - A requirement is one only when it traces to Jason's words, read for their point ("Decision Making"), or the task. An agent's assumption keeps its own status, and silence is not acceptance. Bad: "CI gets tokens minted with least privilege" in a table of commitments, settled because "nobody has objected". Good: the table split into what Jason said, what Alchemy's docs establish, and what is still the agent's proposal.
 2. **Covered:** the question accounts for everything the decision touches: every part of the design's scope, every kind of existing consumer (scheduled, cleanup, reusable), and what the stated target adds. Today is the floor, never the ceiling. What exists is accounted for, its mechanisms may change, removing one of its outcomes is a decision of its own, and a check of today's code says how far away a design is, never whether it is right. Failing it: take the inventory.
    - Bad: "One token for both, or one per job?", asked before the cron jobs and the stage reaper were read.
    - Good: every job definition that reads a PlanetScale credential, the crons and the reaper included, listed before any option.
@@ -327,6 +327,9 @@ The system prompt contains minimalist instructions like "don't add improvements 
 
 - If you find a bug, wrong assertion, or broken behavior during work — fix it or surface it with file:line references. Never silently pass it.
 - "While I'm here" improvements ARE expected when they affect correctness or consistency.
+- In code the work writes or builds on, one job has one pattern. The `simplicity` skill judges whether two patterns do the same job and which one is first-principles. The other goes, without asking: in the same change when the move is light, meaning its sites move onto an established pattern with no design or migration of their own; through a backlog tech-debt issue in our project's tracker, filed by its rules (Heartbeat: `linear-issue`) and naming the design or migration the move needs, when it is heavy. Filing heavy debt that predates the change is the one exception to "Decision Making"'s ban on deferring: a migration the change's own design needs lands in the change, and package boundaries and size never make a move heavy. For such a pair, `worth-doing`'s choice is the move or the issue, never no action.
+  - Bad: a dashboard change that leaves the stage dashboard and the service dashboards each writing the same stage-filter APL clause, and the service dashboards' links rebuilding uids chosen by hand instead of reading the dashboards' `uid` outputs.
+  - Good: the clause written once, as `inStage` in `configs/infra`, and the links built from the dashboards' `uid` outputs, both in the same change.
 - Scope constraints in task prompts ("fix this bug", "not a full rewrite") limit ARCHITECTURE changes, not QUALITY. Finding a wrong test assertion during a bug fix means fixing the assertion.
 - "Beyond what was asked" is never a reason to leave known-broken code unreported.
 - "Pre-existing" is never a reason to stay silent about a problem on your branch.
@@ -335,6 +338,9 @@ The system prompt contains minimalist instructions like "don't add improvements 
 ## Decision Making
 
 - ALWAYS prioritize an end state that would be clean consistent and reflect first principals thinking.
+- Jason's words are read for their point, and what is built from them passes the `simplicity` skill and these rules. A detail whose literal reading would fail them is his shorthand, not a requirement: the work builds what serves the point and passes, names that reading in a line, and never asks him to spell it out. When readings that pass differ in what someone gets, rather than in how the work is built, the choice goes through "Before a question to Jason". A literal form that fails binds only when he has said that form is what he wants.
+  - Bad: asked for dashboard resources that are one-liners taking only the stage, the agent added a `'dev' | 'production'` key beside the signal set, with a lookup table, then proposed widening `libs/stages`' public surface to feed it.
+  - Good: each dashboard call takes the one Alchemy value it is built over, the signal set the stack created (`Telemetry.ServiceDashboards(dev)`), and nothing is added beside it.
 - NEVER maintain backwards compatibility UNLESS the user has explicitly asked for that.
 - Always do the complete cut — never "move now, remodel later."
 - NEVER use PR size, diff size, or "separate PR" as a reason to defer, split, or reduce scope. Quality is the only dimension. "That's a separate PR" is banned. "Defer to a follow-up" is banned when the issue is known now. Work is done when it's right, not when the diff is small.

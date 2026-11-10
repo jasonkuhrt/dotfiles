@@ -61,7 +61,9 @@ link_skills "$repo_root/home/.codex/skills" "$HOME/.codex/skills"
 codex_count="$linked"
 
 instructions=""
-for instruction in .claude/CLAUDE.md .codex/AGENTS.md; do
+# Amp reads its user-level instructions from ~/.config/amp/AGENTS.md.
+mkdir -p "$HOME/.config/amp"
+for instruction in .claude/CLAUDE.md .codex/AGENTS.md .config/amp/AGENTS.md; do
   if link_owned "$repo_root/home/$instruction" "$HOME/$instruction"; then
     instructions="${instructions}${instructions:+, }$instruction"
   fi

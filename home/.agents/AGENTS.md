@@ -1,6 +1,6 @@
 # Agent Memory - @jasonkuhrt
 
-Every agent reads this one file: Claude Code as `~/.claude/CLAUDE.md` and Codex as `~/.codex/AGENTS.md`, both links to `~/.agents/AGENTS.md`. Edit it in dotfiles at `home/.agents/AGENTS.md`.
+Every agent reads this one file: Claude Code as `~/.claude/CLAUDE.md`, Codex as `~/.codex/AGENTS.md` and Amp as `~/.config/amp/AGENTS.md`, all links to `~/.agents/AGENTS.md`. Edit it in dotfiles at `home/.agents/AGENTS.md`.
 
 ## Communication
 

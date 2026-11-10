@@ -104,6 +104,11 @@ A diagram has to beat a table: when three columns say the same thing, send the t
 - Bad: 19 proposed Linear changes from an audit shown as five topic areas, each with a challenge.
 - Good: the same 19 sorted into 10 quick wins, 7 to cook more and 2 to toss, each bucket opening with its test.
 
+The fault lines come from the decision the user faces next, so they change as that decision changes. Buckets the user offered as an example are one candidate, never the answer by default. The reply names, in one line, the other lines it weighed and why the chosen ones fit the decision, so the user can see the choice was made.
+
+- Bad: quick win, cook more and toss kept for the 7 items left once the quick wins were cleared. By then the decision was how to unblock each one, and "cook more" hid that.
+- Good: those 7 split by what unblocks them (rework, a fact that can delete work, a wait on another item), with the lines weighed named.
+
 ```text
 src/
 ├── commands/       # parses user actions

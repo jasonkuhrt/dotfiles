@@ -32,6 +32,8 @@ A step you can't do yourself is one of these too, even when another agent could.
 * Good: `bash /path/to/keychain-to-1password.sh`, which moves each secret, checks that 1Password returns the same value, then deletes the Keychain's copy.
 * Bad: an OpenAlex sign-up prompt for Jason to paste into the Codex app, then `codex://threads/…` links for him to follow it.
 * Good: the prompt written, one go-ahead asked, the run launched on his yes, its key checked against OpenAlex's `/rate-limit`, and the reply giving the result.
+* Unattended work (a scheduled routine, an overnight run, anything set going for while Jason is away) that will need a sign-up, a password sign-in or a payment runs on Codex from the start, so nothing waits on a go-ahead. Jason, 2026-11-10, asked "Should unattended work that needs a sign-up or sign-in run on Codex from the start?": "exactly".
+* A site where Jason's Chrome is already signed in needs no sign-in: `browse` works inside his existing session, from its cookies. A step counts only when that session has expired and a password or code must be entered.
 * Both conditions are Jason's. 2026-11-10: "this rule only has standing when i am in the loop", then "this doesn't fucking have any standing when codex models are used they wouldn't have needed this indirection and confusion in teh first place, its strict a you think and wheni amin the loop".
 
 ## Proposals and questions

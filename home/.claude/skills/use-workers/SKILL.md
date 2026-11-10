@@ -429,8 +429,12 @@ tagged `codex_exec`. A routine run needs no thread he can watch (Jason,
 to have the other session show in my other app assuming they are routine
 andboring and get the job done"). For a run he does want to follow, his
 2026-10-29 ask stands, "make codex session that are not blocked from me
-accessing", and how to start one in the app is not established yet: the app
-knows a `codex://threads/new` link whose parameters were not found.
+accessing": start it in the app instead. `open
+"codex://new?path=<folder>&prompt=<instruction>"` fills a new thread's box
+without sending, and he presses Return (MeOS's decision note
+`~/me/MeOS/Decisions/Events, tasks and routines.md`, seen 2026-11-10). A
+Codex automation is made the same way: only a thread the app runs can
+create one.
 
 - Bad: "Sol is getting the OpenAlex key:
   `codex://threads/01a1c641-4316-7750-94af-d0898ea32f02`", a link that opened

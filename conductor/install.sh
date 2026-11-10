@@ -61,13 +61,24 @@ link_skills "$repo_root/home/.codex/skills" "$HOME/.codex/skills"
 codex_count="$linked"
 
 instructions=""
-# Amp reads its user-level instructions from ~/.config/amp/AGENTS.md.
-mkdir -p "$HOME/.config/amp"
-for instruction in .claude/CLAUDE.md .codex/AGENTS.md .config/amp/AGENTS.md; do
+for instruction in .claude/CLAUDE.md .codex/AGENTS.md; do
   if link_owned "$repo_root/home/$instruction" "$HOME/$instruction"; then
     instructions="${instructions}${instructions:+, }$instruction"
   fi
 done
+
+# Amp always reads both ~/.config/amp/AGENTS.md and ~/.config/AGENTS.md. In an
+# Amp orb the first already holds Amp's own sandbox note, which link_owned
+# leaves in place, so the rules go in the second. An earlier install's link at
+# the first goes, or Amp would read the rules twice.
+amp_old="$HOME/.config/amp/AGENTS.md"
+if [[ -L "$amp_old" && "$(readlink "$amp_old")" == "$repo_root/home/.config/amp/AGENTS.md" ]]; then
+  rm "$amp_old"
+fi
+mkdir -p "$HOME/.config"
+if link_owned "$repo_root/home/.agents/AGENTS.md" "$HOME/.config/AGENTS.md"; then
+  instructions="${instructions}${instructions:+, }.config/AGENTS.md"
+fi
 
 printf 'Agent home: linked %s Claude skills, %s Codex skills; instructions: %s\n' \
   "$claude_count" "$codex_count" "${instructions:-none}"

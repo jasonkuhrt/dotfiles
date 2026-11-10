@@ -377,6 +377,9 @@ never trim or split merely to reach a word count.
   * Good: both written as axioms in Heartbeat's `incident-response` skill, in a PR, and the memories deleted.
 * A feedback memory's name, description and `MEMORY.md` line are the rule: sessions act on them without opening the file. They keep the scope of my own words ("asked to show code: …"). A wider scope is your reading: it stays in the body, labelled.
 * Write a rule as a test on the result ("a fence of only comments is prose"), with one bad and one good example from the incident. Never as a conversion ("prose becomes comments"): shortened, it loses its condition.
+* A rule is the reviewed rewrite of my intent, written once: clean prose, its condition and its bad and good example, with no quote of me and no story of how it came about. My words and the date go in the commit message that adds or changes the rule, where `git log` finds them. Every session loads these files, so text that changes no behavior is paid for in every session.
+  * Bad: a rule followed by "Jason, 2026-11-07, after …:" and his message as he typed it.
+  * Good: the same rule and its examples, with his message and its date in the commit that added it.
 * An instruction has one owner, with pointers elsewhere, and is scoped to the condition it changes. Prefer stable roles and skill names over fragile implementation line numbers; enforce command mechanics in hooks or lint. Jason, 2026-09-05: "be wary of fragile file paths", "be wary of over steering". Bad: three copies of a testing doctrine and a mandatory staged red. Good: one testing skill, a discriminating regression when it pays, and a hook enforcing the command.
 
 ## Screenshots

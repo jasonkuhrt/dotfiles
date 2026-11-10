@@ -419,17 +419,24 @@ the worker's name, and `<effort>` is the calculated effort.
   message reaches its turn while it runs, and the process exits when the turn
   ends. A correction that can wait for the run to end is a resume after it.
 
-Say in one line in the chat what each worker is doing. For `astra` and `sol`,
-the line ends with the run's link, `codex://threads/<session id>`, taking the
-session id from the log's head. The link opens the run in the Codex Desktop app,
-where the user can read it while it runs and reply to it once it ends. Jason,
-2026-10-29, of sessions a Claude lead starts: "make codex session that are not
-blocked from me accessing".
+Say in one line in the chat what each worker is doing, and give its result
+once the run ends and you have checked it. A `codex exec` run doesn't appear
+in the Codex app, so a `codex://threads/<session id>` link to it opens nothing
+the user can read (Jason, 2026-11-10: "i dont see them?"). The app's own
+threads are tagged `Codex Desktop` in `~/.codex/sessions`; an exec run's are
+tagged `codex_exec`. A routine run needs no thread he can watch (Jason,
+2026-11-10: "u being able to run it here is still less hassel than … having
+to have the other session show in my other app assuming they are routine
+andboring and get the job done"). For a run he does want to follow, his
+2026-10-29 ask stands, "make codex session that are not blocked from me
+accessing", and how to start one in the app is not established yet: the app
+knows a `codex://threads/new` link whose parameters were not found.
 
-- Bad: "Astra is researching agent messaging." The run exists only in a log file.
-- Good: "Astra is researching agent messaging:
-  `codex://threads/01a189e6-d1ba-7772-9c62-5b95e6f36a98`." The user opens it,
-  or asks the lead to, which runs `open "codex://threads/<session id>"`.
+- Bad: "Sol is getting the OpenAlex key:
+  `codex://threads/01a1c641-4316-7750-94af-d0898ea32f02`", a link that opened
+  nothing.
+- Good: "Sol is getting the OpenAlex key", then, once it ends, the key checked
+  against `/rate-limit` and the result in the reply.
 
 `codex queue` never corrects a running worker. It stores the message and runs
 it as a new turn once the thread is idle (Codex 0.167.0,

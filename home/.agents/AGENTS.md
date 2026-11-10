@@ -284,6 +284,9 @@ Do not use a terminal-workspace manager for agent work.
 - Another repository the work touches is reached by its absolute path: `git -C <path>`, or `cd <path> && …` inside one Bash call. Its own `CLAUDE.md` or `AGENTS.md` doesn't load from there, so the session reads it by path before working in it.
 - A session started for Heartbeat's work starts in a Heartbeat folder: by default from a session already in one, and through `start_session`'s `cwd` from anywhere else.
 - A session that finds itself outside Heartbeat while doing Heartbeat's work moves at once with `change_directory`. A Bash `cd` loads nothing, and the move takes effect only when the turn ends, so until then the session reads each Heartbeat skill it needs from `~/projects/heartbeat-chat/Heartbeat/.claude/skills/<name>/SKILL.md`.
+- What an agent writes into Heartbeat (a Linear issue or comment, a PR, a commit, a file in its repo) reveals no private MeOS context: none of its paths, notes, skills or vault names, and none of my personal matters or the private research a piece of work grew out of. Describe transferred tools and ideas independently, without revealing their private origin.
+  - Bad: a Heartbeat issue for a literature-search command that cites `~/me/Wiki/Scientific literature/…`, the `meos-research` skill and the school research it came from.
+  - Good: a Heartbeat issue that frames the command as research runs needing scholarly evidence, uses neutral example topics, and cites upstream tools at pinned commits.
 
 ## Personal credentials
 

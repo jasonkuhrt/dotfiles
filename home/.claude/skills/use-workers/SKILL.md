@@ -34,9 +34,8 @@ tree.
 State the pick and the considerations that decided it in one line.
 
 The routing hard lines are Jason's explicit ones: use a worker he names;
-Astra runs only when he names it; before money is spent on more than one or
-two PRs or workers at once, state the scale, concurrency and cost and wait
-for his yes. A rule that gets in the way of good judgment is named to him.
+Astra runs only when he names it. A rule that gets in the way of good
+judgment is named to him.
 
 Effort is weighed for the work, not fixed by the engine.
 
@@ -186,17 +185,6 @@ over the generic Claude worker routes here.
   only Jason could stop them, one claude.ai page at a time.
 - Good: the same units as cloud sessions the app starts, each in
   `ListAgents`, stopped by one message each.
-
-## Many workers at once
-
-- Before a launch or a ruling puts more than one or two workers on paid
-  compute (CI, cloud sessions), say how many run at once and what that costs,
-  and wait for his yes.
-- Bad: "CI proves everything" written into the header every worker reads,
-  then 17 more units launched that hour, with about 30 PRs running CI's whole
-  task set at once.
-- Good: "Leaving proof to CI puts the 20 open units on CI at once, each
-  unproven head running the full task set. All 20, or these two?"
 
 ## Launching in Conductor
 

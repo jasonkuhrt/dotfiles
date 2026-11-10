@@ -33,8 +33,8 @@ A choice with no real `Why not` isn't a question. It goes under "Doing without
 asking", and you do it.
 
 - A why-not is a concrete cost that a yes brings for certain: a real DX hit, a
-  real latency hit, a real security hole, real tech debt, money, a permission
-  only the user can give, work thrown away.
+  real latency hit, a real security hole, real tech debt, a permission only
+  the user can give, work thrown away.
 - A risk is never one. What could go wrong if the work is done badly is the
   job of review and tests, not a reason to ask.
   - Bad (2026-10-29): a two-line fix to a shared archive helper, with the

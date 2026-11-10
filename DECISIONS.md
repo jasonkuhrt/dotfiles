@@ -167,6 +167,9 @@ section of `home/.agents/AGENTS.md`, so every compaction keeps what `meta-compac
   (re-reading files it read, repeating a fixed mistake, losing track of state), when a vendor lowers its
   default or advises earlier compaction for agents, or when a published long-context score shows a model
   in use declining below its harness's threshold.
+- Heartbeat's [Claude Code Auto-Compact Window Size](https://linear.app/heartbeat-chat/issue/HEA-7426/claude-code-auto-compact-window-size)
+  researches the window: so far only list price argues for 400k, and nothing measured argues for the
+  default. Its result reopens this entry.
 - Drop the Compact Instructions once Claude Code's own summary prompt keeps identifiers, in-flight signals
   and record paths.
 

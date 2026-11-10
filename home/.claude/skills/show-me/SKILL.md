@@ -81,7 +81,6 @@ A diagram has to beat a table: when three columns say the same thing, send the t
 | Branches and decisions                                 | Mermaid `flowchart`                                                               |
 | A change to an existing shape                          | a `diff` of that shape: file tree, call tree, component tree or code              |
 | Many items, each with a state or fate                  | names colored by state, a legend, and before → after counts                       |
-| Many items, each awaiting a decision                   | buckets cut on fault lines, each opening on its test (see below)                  |
 | Options against criteria                               | a matrix with the recommended option marked                                       |
 | Cause and effect, or options with changing assumptions | interactive controls with visible downstream changes and a live comparison        |
 | A mechanism clarified by motion or changing quantities | a step-through animation or a short explainer video                               |
@@ -98,13 +97,6 @@ A diagram has to beat a table: when three columns say the same thing, send the t
 +  navigateToSession
 +    subscribeToEvents
 ```
-
-**Bucket items that wait on a decision.** When the user has to decide what happens to many items (proposals, findings, backlog issues), the first view groups them by the next action each needs. Each item appears in one bucket. Each bucket opens with a one-line placement test and shows its count. The boundaries follow the decision the user faces next. When more than one grouping fits, the reply names the strongest alternative considered and why the chosen grouping better serves that decision.
-
-For examples supplied by the user, apply [pattern-not-example](../pattern-not-example/SKILL.md).
-
-- Bad: 19 proposed Linear changes shown by topic, each with a challenge; when asked to bucket them, the reply copies the user's example labels without weighing another grouping.
-- Good: the same 19 grouped by what should happen next, each bucket showing its test and count, with one line explaining why that grouping serves the decision better than the alternative considered.
 
 ```text
 src/

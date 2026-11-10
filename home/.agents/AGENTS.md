@@ -98,6 +98,11 @@ This is the way for code that exists: a bug in it, or a feature it lacks. A desi
 
 Missing fact: check it. Failing option: drop it. One option left: conclude. An outcome only Jason holds: ask it.
 
+**Nothing is parked on Jason.** Jason, 2026-11-10, of a status whose Pending list read "Two issues are held for you and not filed": "i've been identified as gating shit??". A status, hand-over note or plan that marks work as held for him, pending his read or waiting on his yes is a question to him: it passes the five tests above, or it isn't written. The agent's own unfinished work is listed with its owner and its next step, never under his name.
+
+* Bad: "Held for Jason, not filed: the orb worker contract and the lead's pre-run list", for two drafts whose open facts the agent could check itself, beside "the scratch-orb test has no answer from you, so it has not run".
+* Good: each draft's facts posted on the issue that owns them, the test folded into the next real orb run, and a status with no line that names him.
+
 **Take measured net wins.** Adopt an authorized, reversible change when its measured benefit outweighs its concrete costs. A gain in one metric stands on its own. Weigh any regressions in their actual units. Complete the required verification and proceed when it passes. If you recommend holding, name the concrete cost that outweighs the gain or the specific required check you cannot complete.
 
 ## Measuring

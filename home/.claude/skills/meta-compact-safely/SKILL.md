@@ -27,15 +27,9 @@ If one fails, do that thing first (finish the read, write the findings to the fi
 
 ## Compaction text contract
 
-A keep-list, not a narrative, under 120 words:
+Every compaction, by hand or automatic, already follows the Compact Instructions section of the global rules (`~/.agents/AGENTS.md`), which names the kinds of thing to keep. The text you pass to `/compact` fills them with this session's values, under 120 words: the identifiers verbatim, each decision with its reason, what is in flight and the signal that ends it, the next action, and the record's path.
 
-- identifiers to preserve verbatim (numbers, SHAs, names, paths)
-- decisions made, each with its one-line reason
-- what is in flight and which signal ends it
-- the next action
-- where the durable record lives, so the summary points at files instead of restating them
-
-Always supply it. The default summary drops exactly the identifiers and pending signals a resume needs, and a short keep-list costs nothing. Long prose does cost: it gets summarized in turn and biases the summary toward whatever it mentions.
+A keep-list, not a narrative. Long prose gets summarized in turn and biases the summary toward whatever it mentions.
 
 ## Common mistakes
 

@@ -505,3 +505,15 @@ Jason, 2026-11-07, after a session reached for Claude in Chrome, found it discon
 * **Codex only:** A browser connection diagnostic is a point-in-time tool observation, not evidence that Jason disabled or disconnected anything, or that he must reconnect it. Check the installed integration's automatic recovery and supported agent recovery, try a minimal browser operation, and recheck current state immediately before declaring a blocker. Hand a step to Jason only when its necessity is established and agents cannot perform it. An unknown cause stays unknown.
   * Bad: `paired-offline`, then "enable/reload Browse and tell me it's connected", without establishing that user action is needed.
   * Good: recover and recheck the integration, continue the authorized task when it works, and ask for a user action only at an observed human-only step.
+
+## Compact Instructions
+
+Claude Code reads this section on every compaction, by hand or automatic, beside its own summary prompt. Jason, 2026-11-10, after waking twice to compact an overnight lead by hand: "if i run a lead overnight it doesn't needlessly get to eg 800k tokens and counting without human intervention of compacting". Why the harness's own threshold stays: `DECISIONS.md`, Decision 10.
+
+Keep, beside the default summary:
+
+1. PR numbers, commit SHAs, worker, session and watch names, and file paths, verbatim.
+2. Each decision with its one-line reason, and Jason's rulings in his own words.
+3. What is in flight, and the signal that ends each.
+4. The next action.
+5. The path of the session's durable record (a lead record, a checkpoint), instead of restating what it holds.

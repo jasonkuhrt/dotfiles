@@ -138,3 +138,38 @@ so it can be dropped when upstream fills it.
 - 2026-09-16 — cutover executed. Ten agent sessions were migrated into native tabs, then a cmux restart
   restored them unattended.
 
+---
+
+## Decision 10: Compaction at Each Harness's Own Threshold
+
+**Context:**
+An overnight lead in Claude Code (Fable 5.2, 1M-token window) reached 796k tokens, and Jason compacted it
+by hand twice. Claude Code compacts on its own at about 967k on native-1M models (Fable, Opus 4.7 and
+later), and Codex at 90% of a model's window (450k for GPT-6.1 Sol's 500k). A lower Claude Code window,
+400k, was weighed on 2026-11-10 and not taken.
+
+**Decision:**
+Keep each harness's own threshold. Add only what Claude Code's docs recommend: the Compact Instructions
+section of `home/.agents/AGENTS.md`, so every compaction keeps what `meta-compact-safely`'s keep-list keeps.
+
+**Value against cost:**
+- 400k against the default, on that night: about $2 of quota apart, since each extra compaction costs
+  about what it saves in re-read history; four or five lossy summaries instead of one; no measured gain
+  in answers for any model in use (no published long-context score for Fable 5.2, Opus 5.5 or Sol).
+- The Compact Instructions keep identifiers, in-flight signals and the record's path, which Claude Code's
+  built-in summary prompt (read from 2.1.321) doesn't ask for.
+
+**Return or revisit when:**
+- Lower a window, in its own entry here, on dated cases of a session failing from long context
+  (re-reading files it read, repeating a fixed mistake, losing track of state), when a vendor lowers its
+  default or advises earlier compaction for agents, or when a published long-context score shows a model
+  in use declining below its harness's threshold.
+- Drop the Compact Instructions once Claude Code's own summary prompt keeps identifiers, in-flight signals
+  and record paths.
+
+**Sources:**
+- [Claude Code model configuration](https://code.claude.com/docs/en/model-config) ("default auto-compact
+  thresholds") and [costs](https://code.claude.com/docs/en/costs), read 2026-11-10.
+- Codex 0.167.0, `codex-rs/protocol/src/openai_models.rs` (`auto_compact_token_limit`), and its model list.
+- The run behind it: Heartbeat's `docs/research/2026-11-10-lead-context-size.md`.
+

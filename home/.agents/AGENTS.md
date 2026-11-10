@@ -375,6 +375,14 @@ never trim or split merely to reach a word count.
 - A rule is the reviewed rewrite of my intent, written once: clean prose, its condition and its bad and good example, with no quote of me and no story of how it came about. My words and the date go in the commit message that adds or changes the rule, where `git log` finds them. Every session loads these files, so text that changes no behavior is paid for in every session.
   - Bad: a rule followed by "Jason, 2026-11-07, after …:" and his message as he typed it.
   - Good: the same rule and its examples, with his message and its date in the commit that added it.
+- A behavioral change to durable agent instructions is reviewed by a model of another family before it lands, wherever it is stored: this file, a skill, a project's `AGENTS.md` and the files it points to, a feedback memory. Additions, deletions and changes of scope count; an edit that changes no behavior (a typo, a link) doesn't.
+  - A Claude author uses Sol (`use-workers` has the launch); an OpenAI author uses Fable (`fable-review`), whatever the harness. A reviewer Jason names replaces either, and "Workflow Rules" on named workers and Astra applies.
+  - The reviewer is read-only. It gets the final change, the file it lands in, and the incident or intended outcome. It judges whether the change would have stopped that incident at its first step, or achieves that outcome, and whether it meets this section. It returns pass, pass with edits or fail, with replacement text. Each finding is applied or answered with evidence, and a later change to what the rule requires is reviewed again.
+  - A pull request's review counts when it meets these requirements and covers the final behavioral change.
+  - The commit that lands the change names the reviewer by the model id read from its run, links the run, and lists each finding as applied or answered. A store with no commits takes that record in the reply.
+  - A reviewer that won't run is diagnosed before it blocks ("Workflow Rules"). If it still can't run, the change doesn't land and "in the same turn" above stays owed: the draft is kept in a file, and the reply names what blocks the review and the agent's next step.
+  - Bad: a rule committed to this file straight after its incident, read by nobody but its author. The review that followed found it bound every one-line recommendation and gave agents a way out of acting.
+  - Good: a rule drafted in a scratch file, reviewed by Sol, and added by a commit that lists each finding as applied or answered.
 - An instruction has one owner, with pointers elsewhere, and is scoped to the condition it changes. Prefer stable roles and skill names over fragile implementation line numbers; enforce command mechanics in hooks or lint. Bad: three copies of a testing doctrine and a mandatory staged red. Good: one testing skill, a discriminating regression when it pays, and a hook enforcing the command.
 
 ## Screenshots

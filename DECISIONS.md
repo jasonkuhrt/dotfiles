@@ -171,5 +171,5 @@ section of `home/.agents/AGENTS.md`, so every compaction keeps what `meta-compac
 - [Claude Code model configuration](https://code.claude.com/docs/en/model-config) ("default auto-compact
   thresholds") and [costs](https://code.claude.com/docs/en/costs), read 2026-11-10.
 - Codex 0.167.0, `codex-rs/protocol/src/openai_models.rs` (`auto_compact_token_limit`), and its model list.
-- The run behind it: Heartbeat's `docs/research/2026-11-10-lead-context-size.md`.
+- The run behind it: Heartbeat's `docs/research/2026-11-10-lead-context-size/`.
 

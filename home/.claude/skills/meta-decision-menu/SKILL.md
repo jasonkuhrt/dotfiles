@@ -9,10 +9,6 @@ The user reads one numbered table and answers by number ("1 yes, 2 no, veto
 4"). Everything the reply holds carries a number, so they never have to
 describe what they mean.
 
-Jason, 2026-10-28, after three tries at one menu: "collapse choice/do cols its
-not differentiated enough", "numbers everywhere, don't make me awkwardly
-describe what i am referring to", and "if there is not whynot, its not a q".
-
 ## The reply
 
 The reply is these sections, in this order, with nothing before them:
@@ -40,9 +36,7 @@ asking", and you do it.
   real latency hit, a real security hole, real tech debt, money, a permission
   only the user can give, work thrown away.
 - A risk is never one. What could go wrong if the work is done badly is the
-  job of review and tests, not a reason to ask. Jason, 2026-10-29: "risks are
-  useless to me. concrete problems, not speculative … 'we might write the
-  wrong code' is never a 'risk'".
+  job of review and tests, not a reason to ask.
   - Bad (2026-10-29): a two-line fix to a shared archive helper, with the
     why-not "every machine's builds run through it".
   - Good: the row has no concrete cost, so the fix goes under "Doing without

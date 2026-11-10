@@ -33,9 +33,8 @@ can rebuild or has already preserved:
 - Log: `~/Library/Logs/meos-sys-clean/run.log`, one line per step with what it freed.
 - A failed step files a beads task under the MeOS area (`--external-ref sys-clean:<step>`). A git-cleanup repair is resumed through the `git-cleanup` skill, with the journal the task names.
 
-**Reference clones keep the fewest heads.** Jason, 2026-11-07: "for repo
-references i just want the least heads, if these are forks that's another
-thing". Heads are grouped by their origin (`owner/repo`):
+**Reference clones keep the fewest heads.** Heads are grouped by their
+origin (`owner/repo`):
 
 - A pure reference keeps one clone: the one named after the repository, else
   the one with the newest commit. Version and dated copies and worktrees of the
@@ -44,9 +43,7 @@ thing". Heads are grouped by their origin (`owner/repo`):
 - A fork (a `jasonkuhrt/` remote) keeps its clones; its worktrees are extra.
   Removing one keeps its branch in the clone, so `git worktree add` restores it.
 - Every other extra head goes. The only ones kept are in the skip column, and
-  uncommitted work is saved first. Jason, 2026-11-08, after a session left 21
-  saveable heads and suggested deferring them: "why not remove those ref
-  heads???", then "consider this a skill failure".
+  uncommitted work is saved first.
   - **A worktree:** its changes, and any commits no branch holds, become a
     commit whose parent is its HEAD, on
     `refs/sys-clean/preserved/<name>/<time>` in its clone, which stays. To
@@ -60,7 +57,7 @@ thing". Heads are grouped by their origin (`owner/repo`):
     skips aren't recorded as deletions. It is checked to hold every file
     `.gitignore` doesn't exclude before anything is deleted, and it never
     overwrites an earlier save. Ignored files (`node_modules`, a local `.env`)
-    go with the folder (Jason's OK, 2026-11-07).
+    go with the folder.
   - Read-only folders, such as a Go module cache inside a worktree, are made
     writable before deleting.
 - "Last used" is write time. Read time (atime) is useless here: something

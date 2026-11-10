@@ -14,38 +14,29 @@ description: >-
 
 `/use-workers`, or words asking for workers without a name, is the normal
 case: weigh the considerations, pick the engine, effort and number of runs,
-and say the pick in one line. A name is the rare override. Jason,
-2026-11-08: "imo i shouldn't have to name the model anymore 99% of the time
-whne i use useworkers skill".
+and say the pick in one line. A name is the rare override.
 
 Jason invoking it has already decided that workers do the work: the lead
 stops doing the grunt work itself and spends its own tokens on briefs,
 steering, checking results and the chat. The considerations then choose
 which workers, how many and at what effort, never whether to delegate.
 Staying in the lead is an option only when an agent weighs a handoff on its
-own. Jason, 2026-11-08: "me using it would be a request to definitely use
-sub/peer agents implying this becomes a lead reducing its own grunt work and
-token spend for such work".
+own.
 
 - Bad: `/use-workers` on a sweep, and the lead reads the files itself
   because one deep run in the lead looked cheapest.
 - Good: the same sweep handed to one deep Sol run, with the lead writing
   the brief and checking what comes back.
 
-Choose in the context you hold. Jason, 2026-11-08: "this decision tree needs
-to stop over steering, it has to explain things to consider and why and be
-useful as things to cover but not override agent's context and agency".
+Choose in the context you hold.
 The considerations below help cover the decision; they are not a routing
-tree. "sonnet, jev, sol, opus, all are appropiate at different times".
+tree.
 State the pick and the considerations that decided it in one line.
 
 The routing hard lines are Jason's explicit ones: use a worker he names;
 Astra runs only when he names it; before money is spent on more than one or
 two PRs or workers at once, state the scale, concurrency and cost and wait
-for his yes. "i never want astra used unless I asked for it explicitly"
-(2026-11-05). A rule that gets in the way of good judgment is named to him:
-"if any of my rules contradict or make difficult u doing the right thing u
-need to speak up" (2026-11-08).
+for his yes. A rule that gets in the way of good judgment is named to him.
 
 Effort is weighed for the work, not fixed by the engine.
 
@@ -80,8 +71,6 @@ assignment determines its role, not its harness.
    A subagent's baseline is likely different and remains unmeasured. Compare
    repeated overhead with each run's useful work: similar work split many
    ways can mostly buy overhead. Shrinking the baseline helps every run.
-   Jason's "19? no unless they are fucking short like 50k tkoens" illustrates
-   this concern, not a threshold authorizing fan-out.
 4. **Context the lead already holds.** The lead or an inheriting fork may
    be cheapest for work that depends on the chat's state: a fresh worker
    rebuilds that context from a brief and its own reads.
@@ -90,8 +79,6 @@ assignment determines its role, not its harness.
    a `codex exec` run takes a correction only by being stopped and resumed,
    because nothing reaches its turn while it runs; Jev takes none. Steering
    an unreachable run can cost a restart.
-   Jason, 2026-11-08: "sonnet or opus have benefit of being easier to chat
-   with iiuc, so that's another tradeoff in the decision tree".
 6. **Checking the result.** Someone reviews what a worker returns. When
    checking costs about as much as doing, handing off saves nothing.
 7. **Quota and its windows.** Read Claude's percent used per window and
@@ -103,10 +90,8 @@ assignment determines its role, not its harness.
 8. **Speed against cost.** Parallel runs buy elapsed time with duplicated
    fixed cost. Unless someone is waiting or other work is blocked, fewer
    deeper runs, or staying in the lead when Jason hasn't asked for workers,
-   are usually worth more. Jason,
-   2026-11-08: "the overhead of running each should be a fraction of the
-   expected token cost"; "unless speed is specially important then its
-   likely better to have fewer deeper sub agents if sub agents at fucking all".
+   are usually worth more. Each run's overhead should be a fraction of its
+   expected token cost.
 9. **Effort.** Weigh the reasoning the work needs. Extra effort costs more
    and is wasted on mechanical work. Pass the chosen effort where supported.
 
@@ -126,8 +111,7 @@ the engine or take the decision away from the lead.
 1. **Can it be briefed in full now?** Include the question, files, done
    condition and report shape. Missing chat state makes a fresh run rebuild it.
 2. **Is it steerable from here?** A long run can work well when the lead
-   can reach it. Jason, 2026-11-01: "the one run of minutes limitation is
-   only if the main chat would be blocked from steering".
+   can reach it.
    - Bad: campaign units hidden in `claude --bg` sessions because the lead
      read "short-lived" as ruling out long app sessions.
    - Good: app sessions the lead can message and Jason can open.
@@ -186,11 +170,6 @@ precedence over the generic `claude -p` worker route above and below.
 
 ## Every worker stays reachable
 
-Jason, 2026-11-01, after the campaign's cloud units kept pushing and taking
-PRs out of draft once he had paused it: "routine fired should not be used for
-campiagns, that would be iuc better as a loop by u with delay? if we can msg
-cloud then we can at least force stop them that way via msg request".
-
 - A worker is a session the lead can stop: an app session, a Conductor
   session, a `codex exec` run, a `claude --bg` session (`claude stop <id>`),
   or a cloud session the app starts (`start_session` with `target: "cloud"`),
@@ -210,12 +189,6 @@ cloud then we can at least force stop them that way via msg request".
   `ListAgents`, stopped by one message each.
 
 ## Many workers at once
-
-Jason, 2026-11-01, after his "use ci for running checks instead of gating on
-my machine resources" became a rule in every worker's brief: "the bug was
-that i was never made awares that i was authorizing ci for more than 1 or 2
-prs. i did not realize i was authorizing dozens of prs that would be
-concurrent and cost dollars very fast."
 
 - Before a launch or a ruling puts more than one or two workers on paid
   compute (CI, cloud sessions), say how many run at once and what that costs,
@@ -270,9 +243,8 @@ can steer it there.
    or `working` for a whole run, so a loop that waits for `working` and then
    `idle` can sit on a worker that never started.
 
-   Jason, 2026-11-09, after two workers sat dead for an hour: "dont again let
-   such a failure happen again, check in fromtime totime". Bad: two
-   workspaces created with `branch` set to branches that didn't exist yet.
+   Bad: two workspaces created with `branch` set to branches that didn't
+   exist yet.
    Conductor deleted both at once, and a loop waiting for `working` ran 60
    minutes before anyone looked. Good: each launch confirmed two minutes
    later from the workspace's status and the session's first messages, then a
@@ -387,8 +359,7 @@ the worker's name, and `<effort>` is the calculated effort.
 - `--skip-git-repo-check` is on every command, so a run starts from any
   `<dir>`: a skill folder, a scratchpad, the home directory. Without it,
   Codex refuses any directory that is neither a git repo nor under a trusted
-  path in `~/.codex/config.toml`. Jason, 2026-10-28: "they can access for
-  example my home dir down i dont have a problem with that at all".
+  path in `~/.codex/config.toml`.
   - Bad: `-C ~/.claude/skills/<skill>` without the flag. The run exited
     at once with "Not inside a trusted directory", and the lead relaunched
     it from another directory by hand.
@@ -420,16 +391,11 @@ the worker's name, and `<effort>` is the calculated effort.
   ends. A correction that can wait for the run to end is a resume after it.
 
 Say in one line in the chat what each worker is doing, and give its result
-once the run ends and you have checked it. The two `codex exec` thread
-links tried on 2026-11-10 showed Jason nothing he could read (Jason: "i dont
-see them?"), so a reply never promises app access to an exec run it hasn't
-verified. The app's own threads are tagged `Codex Desktop` in
-`~/.codex/sessions`; an exec run's are tagged `codex_exec`. A routine run needs no thread he can watch (Jason,
-2026-11-10: "u being able to run it here is still less hassel than … having
-to have the other session show in my other app assuming they are routine
-andboring and get the job done"). For a run he does want to follow, his
-2026-10-29 ask stands, "make codex session that are not blocked from me
-accessing": start it in the app instead. `open
+once the run ends and you have checked it. A reply never promises app
+access to an exec run it hasn't verified. The app's own threads are tagged
+`Codex Desktop` in `~/.codex/sessions`; an exec run's are tagged `codex_exec`.
+A routine run needs no thread he can watch. For a run he does want to
+follow, start it in the app instead. `open
 "codex://new?path=<folder>&prompt=<instruction>"` fills a new thread's box
 without sending, and he presses Return (MeOS's decision note
 `~/me/MeOS/Decisions/Events, tasks and routines.md`, seen 2026-11-10). A

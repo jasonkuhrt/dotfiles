@@ -12,13 +12,7 @@ description: >-
 
 # Alchemy
 
-Load this before any question about an Alchemy design. Jason, 2026-11-05,
-after a lead priced three PlanetScale tokens as "two more resources … four
-more secret names": "u r asking me something premised ona total fucking
-… view of this tooling and how to use aclhemy". The same chat had
-opened on a question for him, where his answer was the tool's model: "what
-matters is, what is the idiomatic guidance on using alchemy in team/ci and
-what is the gap between that and mayhul's current position".
+Load this before any question about an Alchemy design.
 
 This skill holds the tool's model. Whether to ask at all is the global
 rules' "Before a question to Jason" (`~/.agents/AGENTS.md`), and so
@@ -167,8 +161,8 @@ PlanetScale's.
   - Bad: nine PlanetScale tokens because there are nine job definitions,
     seven with the same access list. Their separate secret names fence
     nothing, since any job can name any repo secret.
-  - Good: Jason's tiers, "everything except prod read write", "everything
-    except prod write" and "everything", each declared once. The
+  - Good: Jason's tiers, everything except prod read write, everything
+    except prod write and everything, each declared once. The
     non-production token is a repo secret; each production tier's lives in
     a GitHub environment whose protection rules gate the jobs that get it
     (in a private repository on Team, its branch policy alone).
@@ -186,15 +180,13 @@ PlanetScale's.
   output it reads and what that output is for. A secret names its tier and
   the environment that gates it.
   - Bad: `ci-credentials` shown depending on `foundation` and `tooling`,
-    with the reasons given only after Jason asked "why is it using
-    foundationa nd tooling???".
+    with the reasons given only after being asked.
   - Good: a Depends on / For / Why row: `foundation`, for the zone's ID,
     because the Cloudflare token it mints is limited to Heartbeat's zone.
 - **A design covers its whole scope.** A credentials stack covers every
   provider CI deploys with, not the one under discussion.
   - Bad: tier code for PlanetScale alone in a stack named
-    `ci-credentials`. Jason: "fix your ci creds code to accounty for
-    resources other than fucking ps dude".
+    `ci-credentials`.
   - Good: one module per provider mapping each tier to its secrets, and
     the stack writing every provider's secrets for every tier.
 
@@ -219,8 +211,7 @@ it was read at.
 ## Showing a proposal
 
 The reply shows the code from declaration to use, so Jason never has to
-ask for it. Jason, 2026-11-05: "show the resource defs and their consumers
-and continue to show aclhe code to keep this visual".
+ask for it.
 
 1. The resource declaration that mints the credential.
 2. The `GitHub.Secret` (and `GitHub.Environment`) that delivers it.

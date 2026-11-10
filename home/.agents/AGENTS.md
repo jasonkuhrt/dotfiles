@@ -10,42 +10,40 @@ Every agent reads this one file: Claude Code as `~/.claude/CLAUDE.md`, Codex as 
 * Push code before posting PR/issue comments about it.
 * For narrow operational questions, answer the exact question first and stop unless extra detail changes the answer.
 * For yes/no questions, give the yes/no in the first sentence.
-* A reply never paraphrases the user's message back to them. Jason, 2026-11-08, of "Agreed: an epic holds sub-issues of several types, so no Type label fits it." opening a reply to his point that an epic houses several types: "more slop i am fighting".
+* A reply never paraphrases the user's message back to them.
 * If I ask about **your** work, threads, ownership, or whether **you** are done, answer only about your owned work unless I explicitly widen the scope.
 * Do not append repo-state inventories, adjacent project status, or other-agent status when the question is only about your completion state.
 * Extra detail after a correct binary answer is noise by default. Add it only if it changes the answer or I ask for it.
-* A cursor, selection or focus cue needs a bright accent mark, not only a faint background tint. Jason, 2026-09-11, marked Hunk's diff cursor bad because it "gets lost" and the files pane's accent rail good. Bad: a slight tint on one line-number cell. Good: a saturated rail and row tint that can be found at a glance.
+* A cursor, selection or focus cue needs a bright accent mark, not only a faint background tint. Bad: a slight tint on one line-number cell. Good: a saturated rail and row tint that can be found at a glance.
 
 ## Steps only I can do
 
-A step only I can do comes as a command I can run, in its own fenced `bash` block, in the same reply that says I need to do it. Such a step is one a tool refused as self-modification, or one that needs my settings, permission rules, a sign-in or a credential. The command already holds the file path and the exact text. I never have to find a file or copy text out of prose. Jason, 2026-10-29: "always give me bash to execute when this happens, never make me scramble the text and file location myself".
+A step only I can do comes as a command I can run, in its own fenced `bash` block, in the same reply that says I need to do it. Such a step is one a tool refused as self-modification, or one that needs my settings, permission rules, a sign-in or a credential. The command already holds the file path and the exact text. I never have to find a file or copy text out of prose.
 
 * My shell is fish, so the command is one short line that runs in fish: no `<<'EOF'` heredocs ("Expected a string, but found a redirection"), and nothing long enough for autosuggestions to mangle. Anything longer goes in a script file you write first, and the command runs it.
 * Running it twice changes nothing.
 * Bad: "Changing those rules counts as self-modification, so you have to make that edit yourself. The exact text is at the end.", followed by the rules as prose. Also bad: a `python3 - <<'EOF'` block, which fish rejects.
 * Good: `python3 /path/to/add-automode-rules.py`, a script written beforehand that appends the rules to `autoMode.allow` in `~/.claude/settings.json`.
 
-A step you can't do yourself is one of these too, even when another agent could. When a script can do it, it comes as that script, written beforehand, and the command that runs it. When you are Claude, Jason is in the loop, and Codex can do the step but you can't, the reply carries the Codex prompt, already written, and asks once for the go-ahead; on Jason's yes you launch it from the chat with `codex exec` (`use-workers` has the command), check what it did, and carry on. A Codex agent takes such a step itself, so this indirection never applies to it. It is never left for another agent to pick up, filed as a bead, or given to Jason to paste into another app. Jason, 2026-11-07, after a Claude session filed a bead for Codex to move secrets it wouldn't touch: "give me a prompt for codex or a script i can press play on for here and if u can give taht script play prompt that is ALAWYS what u should do". Then 2026-11-10, after a sign-up Codex did on his go-ahead: "u being able to run it here is still less hassel than my having to do copypaste into other app or still also less hassel than having to have the other session show in my other app assuming they are routine andboring and get the job done".
+A step you can't do yourself is one of these too, even when another agent could. When a script can do it, it comes as that script, written beforehand, and the command that runs it. When you are Claude, Jason is in the loop, and Codex can do the step but you can't, the reply carries the Codex prompt, already written, and asks once for the go-ahead; on Jason's yes you launch it from the chat with `codex exec` (`use-workers` has the command), check what it did, and carry on. A Codex agent takes such a step itself, so this indirection never applies to it. It is never left for another agent to pick up, filed as a bead, or given to Jason to paste into another app.
 
 * The script reads each secret from where it is (the Keychain, the clipboard, a file) and never prints it.
 * Bad: "Moving these means entering keys into 1Password, which I don't do, so Codex will (bead me-q8b.67)."
 * Good: `bash /path/to/keychain-to-1password.sh`, which moves each secret, checks that 1Password returns the same value, then deletes the Keychain's copy.
 * Bad: an OpenAlex sign-up prompt for Jason to paste into the Codex app, then `codex://threads/…` links for him to follow it.
 * Good: the prompt written, one go-ahead asked, the run launched on his yes, its key checked against OpenAlex's `/rate-limit`, and the reply giving the result.
-* Unattended work (a scheduled routine, an overnight run, anything set going for while Jason is away) that will need a sign-up or a password sign-in runs on Codex from the start, so nothing waits on a go-ahead. Jason, 2026-11-10, asked "Should unattended work that needs a sign-up or sign-in run on Codex from the start?": "exactly".
+* Unattended work (a scheduled routine, an overnight run, anything set going for while Jason is away) that will need a sign-up or a password sign-in runs on Codex from the start, so nothing waits on a go-ahead.
 * A site where Jason's Chrome is already signed in needs no sign-in: `browse` works inside his existing session, from its cookies. A step counts only when that session has expired and a password or code must be entered.
-* Both conditions are Jason's. 2026-11-10: "this rule only has standing when i am in the loop", then "this doesn't fucking have any standing when codex models are used they wouldn't have needed this indirection and confusion in teh first place, its strict a you think and wheni amin the loop".
+* This Claude-to-Codex handoff rule applies only when Claude is the agent and Jason is in the loop.
 
 ## Proposals and questions
-
-Jason, 2026-10-20, after a proposal he couldn't follow: "I'm very concerned about how the fuck this happened. Such a poor presentation of an idea. … it will fuck up every other chat I have." Then, of a follow-up that opened in library internals: "you are now presenting me code in a area that I've never read … you haven't surfaced the places that this impacts the user point of view of the library."
 
 **The root rule: start from the user's side.** Whatever the subject is (a bug, a design, a proposal, a cost), the first view is what someone using the thing writes and what they get. Internals appear only after that, as the cause, with their consumers named. When nothing in the code changes for the user, as with a cost or a speed, the first view is still their call and what it costs them, measured.
 
 * Bad: opening on `pipeline.ts`'s `fenced` and prisma-scope's `andWhere`, code Jason has never read, to answer whether a tenant's filter can leak.
 * Good: opening on the Resource cell's `tenantPrisma.resourceFolder.project(Models.FolderWithDocuments).findMany()`, naming its four call sites and saying that each community gets only its own documents. Then one line on why, with the internal file:line.
 
-**One way to present a problem, bug or feature.** Jason, 2026-10-20: "do u have a systematic way to present problems? i only want one way", then "does this work for features and bugs", then yes to the following:
+**One way to present a problem, bug or feature.**
 
 1. **Problem:** one sentence on who is hurt or held back, and what they get instead of what they want.
    * Bug: what the user gets wrong.
@@ -57,16 +55,16 @@ Jason, 2026-10-20, after a proposal he couldn't follow: "I'm very concerned abou
 
 If step 1 can't be written because nobody is hurt or held back, it isn't a problem. It gets one line saying so, and what happens to it.
 
-This is the way for code that exists: a bug in it, or a feature it lacks. A design still being worked out above the code (what a thing is, which shapes it could take) has no Today and no Cause. Its blocks are IDEA alone, written as the user would write them, and what exists never frames it until Jason takes the design down to the code. The facts it rests on are still checked, as "Before a question to Jason" says. Jason, 2026-11-03, after a design thread he had to pull back up five times: "maybe we should just qualify these rules better".
+This is the way for code that exists: a bug in it, or a feature it lacks. A design still being worked out above the code (what a thing is, which shapes it could take) has no Today and no Cause. Its blocks are IDEA alone, written as the user would write them, and what exists never frames it until Jason takes the design down to the code. The facts it rests on are still checked, as "Before a question to Jason" says.
 
-**Equivalence is shown as both sides.** Jason, 2026-10-20: "It seems that you're asking me something about equivalence. So why are you not showing me the two things …", then "I don't want to have to tell you about how to present equivalence again, ever, in any chat, forever."
+**Equivalence is shown as both sides.**
 
 * When a point is that two things are the same, or differ, the reply shows both in full, one after the other, each with its place annotation. It never shows one side and describes the other.
 * The line above them says whether the sameness is a checked fact or the question being asked.
 * Bad: showing `tenantPrisma.resourceFolder.project(Models.FolderWithDocuments).findMany()` and saying a plugin "treats it exactly like the same `findMany` with its select written by hand".
 * Good: that line, then the hand-written `findMany({ select: { … } })` it becomes, with every field, under the place annotation of the code that builds it.
 
-**Systematic fix first.** Jason, 2026-11-07, of a clean-sweep plan for `~/me` whose first step was landing 578 uncommitted paths: "everysuggestion has to br framed as systematic before one off fixes if there is one, the firstpoint is sovled with a rule that commits shoudl be made once work is done always, without asking the user".
+**Systematic fix first.**
 
 * A suggestion opens with the rule or mechanism that stops its problem from coming back, when one exists, and only then the one-off fix for what has already piled up.
 * When the rule already exists and the problem came back anyway, the system to fix is whatever lets writers miss it, and the suggestion names those writers (the agent's reading).
@@ -75,35 +73,35 @@ This is the way for code that exists: a bug in it, or a feature it lacks. A desi
 
 **Weighing a proposal.**
 
-* A downside named to Jason is a concrete cost that the work brings for certain: a real DX hit, a real latency hit, a real security hole, real tech debt, money, or work thrown away. A risk, meaning what could go wrong if the work is done badly, is never one; review and tests answer it. Jason, 2026-10-29: "risks are useless to me. concrete problems, not speculative … 'we might write the wrong code' is never a 'risk'". Bad: "the edit sits on a shared helper every machine's build runs through". Good: "it's a second mechanism to delete once the upstream fix ships".
-* No count is a cost or a benefit: not of resources, consumers or secret names. What's weighed is what the work changes for someone, and how clean its code is. Jason, 2026-11-05, of three PlanetScale tokens priced as "two more resources … four more secret names": "resource count is never a factor, clean alchemy stack code is, clean relations between resources is". Consumers are the agent's reading of his next correction, to a token per job definition: "i'm confused why jobs is involved in ci creds". Bad: "Three tokens cost two more resources", then, corrected, a token per job definition because "exactly one consumer" is "the cleanest relation possible". Good: credentials derived from the tiers Jason named, with no count in the argument; the `alchemy` skill holds the tests a stack design is weighed by.
+* A downside named to Jason is a concrete cost that the work brings for certain: a real DX hit, a real latency hit, a real security hole, real tech debt, money, or work thrown away. A risk, meaning what could go wrong if the work is done badly, is never one; review and tests answer it. Bad: "the edit sits on a shared helper every machine's build runs through". Good: "it's a second mechanism to delete once the upstream fix ships".
+* No count is a cost or a benefit: not of resources, consumers or secret names. What's weighed is what the work changes for someone, and how clean its code is. Bad: "Three tokens cost two more resources", then, corrected, a token per job definition because "exactly one consumer" is "the cleanest relation possible". Good: credentials derived from the tiers Jason named, with no count in the argument; the `alchemy` skill holds the tests a stack design is weighed by.
 * A proposal opens with one plain sentence that says what it is, before any code. Bad: a block of test code, then "Dispatch the test?". Good: "I propose one test: two tenants read through one shared projection, and the second gets only its own rows."
-* A departure from a harness's default or its vendor's guide (a Claude Code, Codex or Amp setting, hook or rule that overrides what ships) is justified by the value it brings, weighed with its cost, against a default the vendor keeps improving for free. It lands with an ADR in the decision log of the repository that holds it (dotfiles: `DECISIONS.md`): the default, what we do instead, the value that justifies it, and the conditions under which we'd return to the default. Jason, 2026-11-10, of compacting leads at 400k instead of Claude Code's ~967k default, picked where the quota cost flattened: "cost has to factor value in, if we deviate from harness defaults or their guides we need to keep adrs about that and note conditions under which we would consider". Bad: `autoCompactWindow: 400000`, chosen from a quota curve, with no record of why or when to drop it. Good: the default kept, since compacting earlier saved about $2 a night and no measured gain in answers.
+* A departure from a harness's default or its vendor's guide (a Claude Code, Codex or Amp setting, hook or rule that overrides what ships) is justified by the value it brings, weighed with its cost, against a default the vendor keeps improving for free. It lands with an ADR in the decision log of the repository that holds it (dotfiles: `DECISIONS.md`): the default, what we do instead, the value that justifies it, and the conditions under which we'd return to the default. Bad: `autoCompactWindow: 400000`, chosen from a quota curve, with no record of why or when to drop it. Good: the default kept, since compacting earlier saved about $2 a night and no measured gain in answers.
 
-**Before a question to Jason.** Jason, 2026-11-05, after a design chat whose questions he had to re-premise one after another: "u never ask questions until you yourself have pulled in the skill for the tools in question saving me angst like this, elevate your god dan fucking quesitons". A question to him passes five tests, in order. The first one it fails says what to do instead of asking.
+**Before a question to Jason.** A question to him passes five tests, in order. The first one it fails says what to do instead of asking.
 
 1. **Grounded:** each fact the question rests on is checked, and so is the inference drawn from it. A tool's facts come from its skill when one exists (`alchemy` for an Alchemy design), and otherwise from its docs and source at the version in use (see "Information Quality"). Failing it: check the fact.
-   * Bad: the chat's first question, "is 'the root in Infisical can't touch production' a requirement for you?", which weighed Mayhul's split with nothing from Alchemy's CI guide. Jason: "what matters is, what is the idiomatic guidance on using alchemy in team/ci and what is the gap between that and mayhul's current position".
+   * Bad: the chat's first question, "is 'the root in Infisical can't touch production' a requirement for you?", which weighed Mayhul's split with nothing from Alchemy's CI guide.
    * Good: the credentials stack and `admin` profile that Alchemy's CI guide teaches, then the gap between them and Mayhul's position.
    * A requirement is one only when it traces to Jason's words or the task. An agent's assumption keeps its own status, and silence is not acceptance. Bad: "CI gets tokens minted with least privilege" in a table of commitments, settled because "nobody has objected". Good: the table split into what Jason said, what Alchemy's docs establish, and what is still the agent's proposal.
 2. **Covered:** the question accounts for everything the decision touches: every part of the design's scope, every kind of existing consumer (scheduled, cleanup, reusable), and what the stated target adds. Today is the floor, never the ceiling. What exists is accounted for, its mechanisms may change, removing one of its outcomes is a decision of its own, and a check of today's code says how far away a design is, never whether it is right. Failing it: take the inventory.
-   * Bad: "One token for both, or one per job?", asked before the cron jobs and the stage reaper were read. Jason: "did u fully look at the setup , cron too, the stacksweeper".
+   * Bad: "One token for both, or one per job?", asked before the cron jobs and the stage reaper were read.
    * Good: every job definition that reads a PlanetScale credential, the crons and the reaper included, listed before any option.
 3. **Derived:** an option that fails an accepted requirement or a checked fact is gone, and so is a choice that differs only in mechanism, not in what anyone gets: that one is the agent's to make. When one option is left, it is the answer, and the reply states it as a conclusion, never as a question. Failing it: conclude.
-   * Bad: "Decision: should CI authenticate to the task cache with its OIDC token alone, so `ci` no longer depends on `tooling`?" Jason: "isn't there a clean alch natie ideal rec u can make that just stands out as so good its not a q anymore?"
+   * Bad: "Decision: should CI authenticate to the task cache with its OIDC token alone, so `ci` no longer depends on `tooling`?"
    * Good: "CI reaches the task cache with its run's OIDC token, which the cache already verifies for trunk stores, so `TASK_CACHE_TOKEN` goes."
-   * A conclusion changes the design document (an epic, a design doc) only after Jason approves that change. An edit he asked for himself goes ahead. Bad: concluding "Repository and Ruleset move to the admin stack" in a reply and writing it into HEA-6786 in the same turn. Jason: "u willstop changing the design before i approve". Good: the same conclusion in the reply, with the epic left as it is until he says yes.
-   * A settled decision reopens only when a named premise changes. Bad: "Confirm profiles are in", in the reply that had just said they were. Jason: "so update the linear issue since we know this is out alredady". Good: "Profiles are in", with the words of his that settled it.
+   * A conclusion changes the design document (an epic, a design doc) only after Jason approves that change. An edit he asked for himself goes ahead. Bad: concluding "Repository and Ruleset move to the admin stack" in a reply and writing it into HEA-6786 in the same turn. Good: the same conclusion in the reply, with the epic left as it is until he says yes.
+   * A settled decision reopens only when a named premise changes. Bad: "Confirm profiles are in", in the reply that had just said they were. Good: "Profiles are in", with the words of his that settled it.
 4. **His:** what's left turns on an outcome only Jason holds: a requirement not yet stated, a priority between two goods, a cost to accept. The question asks for that outcome, never for one of its consequences, and says where each answer takes the design. Failing it: find the requirement behind the consequence, and ask that.
-   * Bad: "Should the `ci` stack mint the dev and CI token with only the non-production branch permissions?", asked in eight replies. Its answer hung on whether CI deploys production, which nobody had asked. Jason, later: "assume we want to be automating deployments on ci".
+   * Bad: "Should the `ci` stack mint the dev and CI token with only the non-production branch permissions?", asked in eight replies. Its answer hung on whether CI deploys production, which nobody had asked. The intended outcome was automated production deployments from CI.
    * Good: "Will CI deploy production? Yes gives CI all three PlanetScale tiers, with production's in a GitHub environment. No gives it the non-production tier alone."
 5. **Shown:** the question stands on its own. Each noun names one thing, and where code explains the choice, the reply shows it. Failing it: define the nouns and show the code.
-   * Bad: "job" meaning a workflow, a job definition and a run in one table. Jason: "wdym by job, one pr has many jobs, and job runs and defs are different fucking make teh cardinately clear".
+   * Bad: "job" meaning a workflow, a job definition and a run in one table.
    * Good: workflow, job and run each defined in a line, then the job definitions that read the credential, one row each.
 
 Missing fact: check it. Failing option: drop it. One option left: conclude. An outcome only Jason holds: ask it.
 
-**Nothing is parked on Jason.** Jason, 2026-11-10, of a status whose Pending list read "Two issues are held for you and not filed": "i've been identified as gating shit??". A status, hand-over note or plan that marks work as held for him, pending his read or waiting on his yes is a question to him: it passes the five tests above, or it isn't written. The agent's own unfinished work is listed with its owner and its next step, never under his name.
+**Nothing is parked on Jason.** A status, hand-over note or plan that marks work as held for him, pending his read or waiting on his yes is a question to him: it passes the five tests above, or it isn't written. The agent's own unfinished work is listed with its owner and its next step, never under his name.
 
 * Bad: "Held for Jason, not filed: the orb worker contract and the lead's pre-run list", for two drafts whose open facts the agent could check itself, beside "the scratch-orb test has no answer from you, so it has not run".
 * Good: each draft's facts posted on the issue that owns them, the test folded into the next real orb run, and a status with no line that names him.
@@ -112,13 +110,11 @@ Missing fact: check it. Failing option: drop it. One option left: conclude. An o
 
 ## Measuring
 
-Jason, 2026-11-04, after a reply made "Measure, then draft" the first button for an upstream ask that reasoning already settled: "add a rule that we don't measure when reasoning is enough. but the bar for reasoning is high. like actually fucking reflect including if the questoin is even epistomologoyically able to be rationalizedonly through or not. measuring is always costly b/c it blocks chat and uses resources and even if deferred to a sub agent still blocks states ofhuman flow for the 5-10-who-knows minutes now that we wait". The same, 2026-09-12: "stop measuring everything, noisy slow and not needed while we can still reason".
-
 * A measurement is a run made to observe a number: a benchmark, a timed cold and warm run, a CI run, an experiment. Waiting on one costs: it blocks the chat and takes the machine, and one handed to a subagent still holds Jason's flow while the reply waits for it. Numbers that already exist (CI timings, logs, the cache's records) are read like code, docs or a ledger: that's a check, and checks follow "Grounded" in "Before a question to Jason".
 * Before proposing or running a measurement, decide whether reasoning can settle the question at all, and say which it is in the reply:
   * Reasoning settles it when the answer follows from what the mechanism is. A cache's warm run does less work than its cold one. Four Vitest workers and Chromium on 4 vCPU are oversubscribed by construction. A design is coherent or it isn't.
   * Only a measurement settles it when the decision turns on a quantity no mechanism fixes: whether a gate stays under 15 minutes, how often a cache misses in practice, which of two designs is faster when neither does strictly less work than the other.
-* A measurement blocks only at a pivot point: name a result it could return that would change the decision, and wait for it only if one exists. Otherwise the reasoning decides now, and a number that only sizes or supports the decision is gathered alongside the work, in the background, and added when it lands. Jason, 2026-11-04: "blocking to measure first is by definitiona nd literally, only and can onlybe, valid when its a pivot point".
+* A measurement blocks only at a pivot point: name a result it could return that would change the decision, and wait for it only if one exists. Otherwise the reasoning decides now, and a number that only sizes or supports the decision is gathered alongside the work, in the background, and added when it lands.
 * The bar for reasoning is high. The reply states the argument from definitions and mechanism, so Jason can check each step. "Probably faster" is a guess, not reasoning, and a guess settles nothing.
 * A win that reasoning settles is taken without a number. "Take measured net wins" covers the wins only a number can show.
 * Bad: "Before filing: an ask needs a measured cost behind it, and we've never measured what baggage saves on a CI miss", with "Measure, then draft" as the first button.
@@ -126,11 +122,7 @@ Jason, 2026-11-04, after a reply made "Measure, then draft" the first button for
 
 ## Code in replies
 
-Jason, 2026-10-20: "its very confusing to me if u dupliate prose in points or codeblocks. … literally nothing else is wanted from you ever anywhere on my machine ever in any chat forever".
-
 ### Code or a drawing
-
-Jason, 2026-10-28, of a design reply on how vpp's progress and proof decide what a change invalidates, whose every view was a `text` fence in this format: "needvisual explaination and your cdoe block formats for this were not helpful at all using my format but its all lacking syntax coloruing and not code". Then: "i need cold start … show me a seq diagram".
 
 * A code block holds code: source, a command, a query, a diff, a schema, under a language tag the app colors (`ts`, `sh`, `sql`, `diff`). The rest of this section applies to those blocks.
 * A mechanism, a flow or a set of states that isn't code is drawn: a sequence diagram for actors over time, an inline widget for many items with states or for options to switch between. A reply that is mostly fences of something that isn't code fails, however well annotated.
@@ -142,7 +134,7 @@ Jason, 2026-10-28, of a design reply on how vpp's progress and proof decide what
 
 Every code block in a reply takes exactly one of three modes:
 
-* **Mode 1, note annotations:** the code's only explanations are note and pointer annotations inside the block, and nothing below the block explains it. Jason, 2026-10-21: "the eye jump from points below to inside code block are failing me".
+* **Mode 1, note annotations:** the code's only explanations are note and pointer annotations inside the block, and nothing below the block explains it.
 * **Mode 2, bare code, then prose:** the code has no explanatory comments, and prose under the block explains it.
 * **Mode 3, commented code alone:** the code carries ordinary comments, and there's no prose about it before or after.
 
@@ -152,13 +144,13 @@ Say each fact once. A note and prose, or a comment and prose, never say the same
 
 ### Annotations
 
-The noun for every comment these rules put in a code block is **annotation** (Jason, 2026-10-20: "all my comment rules are i say coined as 'annotations' for their noun"). Jason wrote the format as a block and approved the rules read from it (2026-10-20). He changed it twice on 2026-10-21:
+The noun for every comment these rules put in a code block is **annotation**.
 
-* By example ("i would prefer this in latest"): a state annotation touches the place annotation under it.
-* Explanations moved from numbered points below the block into it ("the eye jump from points below to inside code block are failing me"). Of the options shown to him, he kept the pointer carrying its own text ("C is ok") and rejected a note trailing its line ("reject b"). The note above the code was refined: "empty lines before/after, no arrow icon, indent tho to align to '@' col".
-* Then, by a pasted example ("more refinement"): the state annotation lost its rule, a divider sits above every place annotation, and a note under a place annotation joins it through a spacer annotation.
+* A state annotation touches the divider and place annotation under it.
+* Explanations live inside the block, not in numbered points below it. A pointer carries its own text; a note never trails its code line. A note above code has empty lines before and after, no arrow icon, and its text aligns to the place annotation's `@` column.
+* A state annotation has no rule; a divider sits above every place annotation, and a note under a place annotation joins it through a spacer annotation.
 
-The block below is the format as changed.
+The block below shows the format.
 
 ```ts
 // ── CURRENT
@@ -190,28 +182,26 @@ cart.inStock();
 
 There are six kinds. The state and place annotations start with `// ── `; the divider is `// ` and its rule; the note, pointer and spacer annotations start with `//` alone.
 
-* **State annotation:** `// ── CURRENT` for code as it is on develop, `// ── IDEA` for code that doesn't exist yet, with nothing after the word. Jason first called it the position annotation, then took the agent's word ("'position' annotation i rename as your term 'state'").
-* **Divider annotation:** `// ` and a rule of 57 `─`, so it ends at column 60, the longest any line in a block can be (Jason, 2026-10-21: "the rulers should end at col 60, so they align nicely with the max a annotation could ever be"). It sits directly above every place annotation in a block that has a state (see State modes).
-* **Place annotation:** `// ── @ <where>`. It names where the code below it lives: a file path, or the context when there is no file (a terminal, a generated client, a type at hover). Jason, 2026-10-20: "from now on no code block will be sans an indication of placement".
-* **Note annotation:** `//`, four spaces, then the note, so its text starts in the column of the place annotation's `@`. A note too long for one line wraps onto more lines at the same indent. It explains the whole lines under it, on its own lines above them (Jason, 2026-10-20: "' // [3]' etc. annotations must be in own line above position"). It carries no marker, arrow or number.
+* **State annotation:** `// ── CURRENT` for code as it is on develop, `// ── IDEA` for code that doesn't exist yet, with nothing after the word.
+* **Divider annotation:** `// ` and a rule of 57 `─`, so it ends at column 60, the longest any line in a block can be. It sits directly above every place annotation in a block that has a state (see State modes).
+* **Place annotation:** `// ── @ <where>`. It names where the code below it lives: a file path, or the context when there is no file (a terminal, a generated client, a type at hover).
+* **Note annotation:** `//`, four spaces, then the note, so its text starts in the column of the place annotation's `@`. A note too long for one line wraps onto more lines at the same indent. It explains the whole lines under it, on its own lines above them. It carries no marker, arrow or number.
 
   ```ts
   //    Every caller filters the cart for stock by hand,
   //    so the predicate is written once per caller.
   ```
 
-* **Pointer annotation:** a line directly under a code line: `//`, then spaces so that `^` characters sit exactly under the columns that matter, then a space and the note. It explains part of a line; a note annotation explains whole lines. Proposed by the agent when Jason asked for "some sort of pointer to the columns and the line", and accepted (2026-10-20: "fine annotation accepted"); it carries its own text since 2026-10-21 ("C is ok").
+* **Pointer annotation:** a line directly under a code line: `//`, then spaces so that `^` characters sit exactly under the columns that matter, then a space and the note. It explains part of a line; a note annotation explains whole lines.
 
   ```ts
       where: { archived: false },
   //         ^^^^^^^^^^^^^^^^^^^ archived rows stay out
   ```
 
-* **Spacer annotation:** `//` alone. It gives space where an empty line can't: more than one line of it, since formatters keep one empty line and collapse more (Jason, 2026-10-20: "formattings often kill whitespace, u need lines with '//'"), and space inside a header, which has no empty lines.
+* **Spacer annotation:** `//` alone. It gives space where an empty line can't: more than one line of it, since formatters keep one empty line and collapse more, and space inside a header, which has no empty lines.
 
 ### State modes
-
-Jason, 2026-10-20: "current/idea are meant to be contiguous markers, the format is merciliess: * lead with current * lead with current, later in block, idea. nothing else is ever valid, ever." Jason, 2026-10-21, added idea alone: after two blocks comparing an Inngest workflow with a for loop each opened on the same filler `CURRENT` lines, "my rules about state annotations are backfiring right now. its not helping me read your turn", then "right now my config forbids idea on its own. that is one problem i feel."
 
 A block of the codebase's code is in exactly one of three state modes, never two and never another:
 
@@ -228,24 +218,24 @@ Each state annotation appears once, and a `CURRENT` after `IDEA` is invalid. A `
   * Bad: `CURRENT` shows the app's `FolderWithDocuments`, and `IDEA` shows a test in `libs/prisma-scope` over that suite's own models, with nothing linking the two.
   * Good: `CURRENT` shows the prisma-scope test file as it is, and `IDEA` shows the test added to it.
 
-A block that shows no code of the codebase has no state, so it has no state annotation and no divider: its place annotation opens it. Examples are a deploy request's schema diff, a terminal's output, a query's rows, a payload on the wire, and a program an agent writes in a tool's sandbox. Jason, 2026-10-28, of a deploy request's `CREATE TABLE` block that opened on `-- ── CURRENT` and a divider: "can u see how its fucking useless to describe 'current' there to me? it would be less confusing if u said maybe .... nothing? meaning no header/underline on first two lines?"
+A block that shows no code of the codebase has no state, so it has no state annotation and no divider: its place annotation opens it. Examples are a deploy request's schema diff, a terminal's output, a query's rows, a payload on the wire, and a program an agent writes in a tool's sandbox.
 
 * Bad: `-- ── CURRENT`, the divider, then `-- ── @ heartbeat-main deploy request #365, new table SequenceVersion`, then the diff.
 * Good: `-- ── @ SequenceVersion`, then the diff, under a line that links the deploy request in the PlanetScale dashboard (see Titles).
 
-`CURRENT` and `IDEA` say only whether code is on develop. Two products, two setups or two ways to call a tool are never a current and an idea, even when one side is what runs today and the other is the recommendation: each side is its own block, opened by a place annotation that names it. Jason, 2026-11-09, of an Amp `code_exec` call through Executor marked `CURRENT` beside a direct Axiom call marked `IDEA`: "u just presented to me a diff between to products and calledit current and idea, fucking confbusing".
+`CURRENT` and `IDEA` say only whether code is on develop. Two products, two setups or two ways to call a tool are never a current and an idea, even when one side is what runs today and the other is the recommendation: each side is its own block, opened by a place annotation that names it.
 
 * Bad: `// ── CURRENT` over `// ── @ Amp code_exec, Security Logs Review`, calling Axiom through Executor, then the four spacers and `// ── IDEA` over `// ── @ Amp code_exec, Axiom connected directly in Amp`.
 * Good: `**Axiom through Executor, in Amp**` over a block opening on `// ── @ Amp code_exec, Axiom through Executor`, then `**Axiom connected directly, in Amp**` over a block opening on `// ── @ Amp code_exec, Axiom connected directly`, neither with a state annotation or divider.
 
 ### Titles
 
-Every code block in a reply has a title: one bold line directly above its fence, saying what the block shows. Jason, 2026-10-21: "codeblocks should always have a title before them in your output."
+Every code block in a reply has a title: one bold line directly above its fence, saying what the block shows.
 
 * Bad: a sentence of prose, then the fence of the for-loop sketch.
 * Good: `**Mayhul's for loop, run when the person enters**`, then the fence.
 
-A deploy request's schema diff is the one exception: its blocks have no title. One line above them links the request in the PlanetScale dashboard, and each block's place annotation names only its table, so it already says what a title would. Jason, 2026-10-28, of a diff whose blocks each had a title and opened on `-- ── @ heartbeat-main deploy request #365, new table SequenceVersion`: "links to the dashboard should be used and u r repeating things in the '@' part that don't need to be, the best format is probably sticking to the '@' style but ditching the titles u added above each block".
+A deploy request's schema diff is the one exception: its blocks have no title. One line above them links the request in the PlanetScale dashboard, and each block's place annotation names only its table, so it already says what a title would.
 
 * Bad: `**New table SequenceVersion**`, then a block opening on `-- ── @ heartbeat-main deploy request #365, new table SequenceVersion`.
 * Good: `[Deploy request #365](https://app.planetscale.com/heartbeat/heartbeat-main/deploy-requests/365)` once, then each table's block opening on `-- ── @ SequenceVersion`.
@@ -256,12 +246,12 @@ A deploy request's schema diff is the one exception: its blocks have no title. O
 * Every change of place opens a new header, with one empty line between it and the code above.
 * A note annotation further down, below a code line rather than under a header, has one empty line above it and one below.
 * A pointer annotation touches the code line above it.
-* An `IDEA` state annotation after current code has four spacer annotations touching it from above, and one empty line separates them from the code above (the agent's reading: the 2026-10-21 examples all led with their state annotation).
+* An `IDEA` state annotation after current code has four spacer annotations touching it from above, and one empty line separates them from the code above.
 * A state annotation on a block's first line, `CURRENT` or a leading `IDEA`, gets no spacer annotations.
 
 ### Line length
 
-Every line in a code block is at most 60 characters long, annotations included. Jason, 2026-10-21, with a screenshot of a note that the app's code view had wrapped: "line wrapping is the enemy visually. as such, a highly highly constrainted line length. 60 max."
+Every line in a code block is at most 60 characters long, annotations included.
 
 * A note annotation is broken by hand before it passes 60, and each further line keeps the note's indent.
 * A pointer annotation's text that doesn't fit continues on the lines below it, each starting in the column where its text started.
@@ -282,13 +272,11 @@ Every line in a code block is at most 60 characters long, annotations included. 
 
 ## Merging my PRs
 
-Jason, 2026-10-29, after "Say the word and I'll merge it" on a green, reviewed PR: "bias toward ... will-merge-unless-u-say-no when they are simple QA'd etc. changes that appear unlikely to be rejected by me and esp. if are easy to change on top of it with another new pr after".
-
 * A PR in my own repos is merged without asking when it is simple, QA'd (checks green, its independent review and bot threads addressed), unlikely to be rejected, and easy to change with a follow-up PR. The reply says it merges and how to stop it.
   * Not green yet: turn on auto-merge as it goes ready (`gh pr merge --auto --squash`), and the reply says "#N merges when green unless you say no".
   * Already green: merge it in the same turn and report the merge commit.
 * Still put to me first: a design I haven't approved, a change a follow-up PR can't undo (a schema migration, a production deploy, deleted data), and a PR someone else owns.
-* A loop campaign I start or schedule is my approval of the designs inside its scope. Its PRs land under that repository's `loop` contract, which holds only what a follow-up PR can't undo, with no PR waiting on me (2026-10-31: "I should not be involved in every PR anymore").
+* A loop campaign I start or schedule is my approval of the designs inside its scope. Its PRs land under that repository's `loop` contract, which holds only what a follow-up PR can't undo, with no PR waiting on me.
 * Bad: a green, reviewed PR with its measurements in hand, then "Say the word and I'll merge it". Good: "#3164 merges when green unless you say no", with auto-merge on.
 
 ## Linear issue templates
@@ -296,22 +284,20 @@ Jason, 2026-10-29, after "Say the word and I'll merge it" on a green, reviewed P
 - Never create a Linear issue ad hoc. Always use the existing issue template that best fits the issue being created.
 - Before drafting or creating an issue, discover the templates available to the target team and read the chosen template. Pass its ID through the creation tool's template option when supported. The selected template governs structure and required fields; put skill guidance inside it rather than replacing or reordering it with a custom outline.
 - If no available template fits, ask Jason which template to use before creating the issue. Do not fall back to an ad hoc issue.
-- Less is more. An issue's body states the problem at its most simple and narrow, and what is done about it, and tries hard to fit above the fold. Every other detail a reader may need goes under a final Appendix, one toggle per detail. Jason, 2026-11-09, of an upstream-watch issue filed with four problems, command output, a comparison table and copied code in its body: "less is more", "define the problem at its most simple and narrow", "needed details go into appendices that are toggled", "when making an issue try hard to makeit fit above the fold".
-  - Bad: that body, about 60 lines before any toggle.
+- Less is more. An issue's body states the problem at its most simple and narrow, and what is done about it, and tries hard to fit above the fold. Every other detail a reader may need goes under a final Appendix, one toggle per detail.
+  - Bad: an upstream-watch issue with four problems, command output, a comparison table and copied code in its body, about 60 lines before any toggle.
   - Good: one line of what we wish, three one-line reasons it can't happen yet, the upstream issue we wait for, two lines of what we do meanwhile, and the evidence in one collapsed toggle.
 
 ## Posting on my behalf
-
-Jason, 2026-10-22, after three upstream issues and a PR each waited on his "yes" to their exact text: "change my user level rules from halting to just guidance on conventions like leading with transparency about ai being the author … except i want nuance, for example the reply of ty+links is small and chatty not load bearing worthy of ai disclosure header". On 2026-10-29 he asked for these conventions to be available to Codex too.
 
 * A post that the task I gave explicitly includes goes out without a stop for my approval of its text: an issue, a PR, a review, a comment, a reply, in any repo or tracker. Report what was posted, with links, after.
   * Bad: drafting upstream issues I had asked for, then asking "Should I post these?".
   * Good: posting them and replying with the links.
   * A post the task never asked for is still put to me first, in one line, except in my team's Linear.
-* A `gh pr` or `gh issue` write (`create`, `edit`, `comment`, `close`, `ready`, `merge`) goes in a Bash call of its own, with nothing chained or piped to it. My settings allow each of them, but a rule approves a call only when every command in it is allowed, so in auto mode a chained call goes to the classifier, which can deny it. Jason approved this on 2026-11-03, after `gh pr ready` on Effect-TS/effect#10334 was denied and none of the 19 merges since the merge rule landed on 11-01 had matched it, all of them chained.
+* A `gh pr` or `gh issue` write (`create`, `edit`, `comment`, `close`, `ready`, `merge`) goes in a Bash call of its own, with nothing chained or piped to it. My settings allow each of them, but a rule approves a call only when every command in it is allowed, so in auto mode a chained call goes to the classifier, which can deny it.
   * Bad: `gh pr ready 10334 --repo Effect-TS/effect 2>&1 | tail -1`.
   * Good: `gh pr ready 10334 --repo Effect-TS/effect`, with any check in a call before or after it.
-* My team's Linear isn't gated. A comment on an issue, or an edit to its description, goes out without asking whenever it's useful, and the reply links it after. Jason, 2026-11-03, after being asked to approve a correction to an issue's stale row: "this is dumb busy work, i dont want to gate this garden".
+* My team's Linear isn't gated. A comment on an issue, or an edit to its description, goes out without asking whenever it's useful, and the reply links it after.
   * Bad: "may I post one comment on HEA-6217 … and correct HEA-7073's `_tag` row?", then a second ask for the description edit alone.
   * Good: posting the HEA-6217 comment and fixing HEA-7073's row, then replying with both links.
   * A new issue still follows "Linear issue templates".
@@ -320,10 +306,10 @@ Jason, 2026-10-22, after three upstream issues and a PR each waited on his "yes"
   * Good: that line opening a rule proposal in another project's tracker.
   * A social or navigational note (thanks, an ack, links to follow-ups) carries no line.
 * My own team's tracker and repos follow their own rules; the line is for posts that leave them.
-* Commit messages take no AI attribution line by default: my Claude Code settings set `attribution.commit` to `""`. That blank is a default, not a ban: a repo whose contribution rules ask for one gets it (2026-10-28, of vite-task's `AGENTS.md` asking AI-assisted commits for a `Co-authored-by:` trailer naming the model: "i dont need to forbid it"), naming the actual agent model and version; do not invent a model variant the runtime has not exposed.
+* Commit messages take no AI attribution line by default: my Claude Code settings set `attribution.commit` to `""`. That blank is a default, not a ban: a repo whose contribution rules ask for one gets it, naming the actual agent model and version; do not invent a model variant the runtime has not exposed.
   * Bad: leaving commits without the trailer vite-task asks for, citing a default of no attribution.
   * Good: using the actual model's `Co-authored-by:` trailer on each commit when the target repo requires it.
-* A PR description also ends with the AI-author line above: Claude Code adds it from my `attribution.pr` (2026-10-27: "change my settings to not forbid aiauthor lin in pr descs"), and Codex adds it explicitly. Heartbeat PRs carry none, following that repo's attribution convention: Heartbeat's `.claude/settings.json` sets `attribution.pr` to `""`.
+* A PR description also ends with the AI-author line above: Claude Code adds it from my `attribution.pr`, and Codex adds it explicitly. Heartbeat PRs carry none, following that repo's attribution convention: Heartbeat's `.claude/settings.json` sets `attribution.pr` to `""`.
   * A PR to another project also closes an issue that opens with the line.
 
 ## Scope and Quality (System Prompt Override)
@@ -372,7 +358,7 @@ never trim or split merely to reach a word count.
 * Bad (2026-09-18): a skill restating effect-prisma behavior and fragile source citations.
 * Good: the library's README owns that behavior; the skill keeps only the useful decision it must change.
 
-* A rule that the team or another agent (Codex) also needs is never a memory. It goes, in the same turn, into the rules everyone reads: the project's `AGENTS.md` or a file it points to (`agent-context/<developer>.md` for one developer), a skill (edited or created), or this file for my rules across projects. A memory holds only what no other person or agent needs. Jason, 2026-11-08, after incident rules went into Claude's memory: "any memory that would need to be used by the team or by codex too is not a fucking memory its a fucking new project rule and/or skill edit/creation".
+* A rule that the team or another agent (Codex) also needs is never a memory. It goes, in the same turn, into the rules everyone reads: the project's `AGENTS.md` or a file it points to (`agent-context/<developer>.md` for one developer), a skill (edited or created), or this file for my rules across projects. A memory holds only what no other person or agent needs.
   * Bad: "Both rules are saved as memories: incident fixes go straight to CI, and a vendor ticket only asks for what we can't read ourselves."
   * Good: both written as axioms in Heartbeat's `incident-response` skill, in a PR, and the memories deleted.
 * A feedback memory's name, description and `MEMORY.md` line are the rule: sessions act on them without opening the file. They keep the scope of my own words ("asked to show code: …"). A wider scope is your reading: it stays in the body, labelled.
@@ -380,7 +366,7 @@ never trim or split merely to reach a word count.
 * A rule is the reviewed rewrite of my intent, written once: clean prose, its condition and its bad and good example, with no quote of me and no story of how it came about. My words and the date go in the commit message that adds or changes the rule, where `git log` finds them. Every session loads these files, so text that changes no behavior is paid for in every session.
   * Bad: a rule followed by "Jason, 2026-11-07, after …:" and his message as he typed it.
   * Good: the same rule and its examples, with his message and its date in the commit that added it.
-* An instruction has one owner, with pointers elsewhere, and is scoped to the condition it changes. Prefer stable roles and skill names over fragile implementation line numbers; enforce command mechanics in hooks or lint. Jason, 2026-09-05: "be wary of fragile file paths", "be wary of over steering". Bad: three copies of a testing doctrine and a mandatory staged red. Good: one testing skill, a discriminating regression when it pays, and a hook enforcing the command.
+* An instruction has one owner, with pointers elsewhere, and is scoped to the condition it changes. Prefer stable roles and skill names over fragile implementation line numbers; enforce command mechanics in hooks or lint. Bad: three copies of a testing doctrine and a mandatory staged red. Good: one testing skill, a discriminating regression when it pays, and a hook enforcing the command.
 
 ## Screenshots
 
@@ -402,8 +388,6 @@ Do not use a terminal-workspace manager for agent work.
 
 ## Heartbeat work runs in Heartbeat
 
-Jason, 2026-11-05, after `/pr-to-landed` was missing from a session that had reviewed an Alchemy PR behind a Heartbeat patch: "if every relatedto hb, u must ensure your cwd is correct so that u get the skills".
-
 * A session doing Heartbeat's work has its working directory in a Heartbeat checkout or worktree. Claude Code takes a project's skills, `CLAUDE.md`, hooks, permission rules and MCP servers from the working directory (from the main checkout, for a worktree the desktop app made), so a session anywhere else has none of Heartbeat's. Heartbeat's work includes its Linear issues and the upstream issues, PRs and patches for its dependencies.
   * Bad: a side session started in `~/repo-references/alchemy-wt-infisical` to review alchemy-run/alchemy#3066, the fix behind Heartbeat#3664's patch. No Heartbeat skill loaded, and `/pr-to-landed` was missing from the menu.
   * Good: the same session started in `~/projects/heartbeat-chat/Heartbeat`, working on the Alchemy clone through its absolute path.
@@ -413,7 +397,7 @@ Jason, 2026-11-05, after `/pr-to-landed` was missing from a session that had rev
 
 ## Personal credentials
 
-Jason, 2026-11-07, after the move to 1Password: "are my rules clear about how agents should use 1pw ijust had one try to use keychain cli still". Credentials live only in 1Password: MeOS is my default vault; Roman Shared holds Roman's school credentials maintained by me, Roman and agents. Roman's own Private vault is unshared. An agent in any folder follows the "Credentials" section of `~/me/AGENTS.md`: it reads the canonical item in its owning vault with `meos-op`, never from the Keychain, a note or a file. Jason approved Roman Shared on 2026-11-08; preserve unattended agent access when moving an item.
+Credentials live only in 1Password: MeOS is my default vault; Roman Shared holds Roman's school credentials maintained by me, Roman and agents. Roman's own Private vault is unshared. An agent in any folder follows the "Credentials" section of `~/me/AGENTS.md`: it reads the canonical item in its owning vault with `meos-op`, never from the Keychain, a note or a file. Preserve unattended agent access when moving an item.
 
 * Bad: reading a site's password with `security find-generic-password`.
 * Good: `meos-op read "op://MeOS/<item>/password"`. `meos-op` is `op` signed in with the agent token from the Keychain item `op-service-account:meos`, the one credential the Keychain keeps for agents.
@@ -424,11 +408,11 @@ Jason, 2026-11-07, after the move to 1Password: "are my rules clear about how ag
 * Never use git state changes to investigate type errors — read source files directly.
 * Never describe changes visible on the current branch/worktree as "unrelated" merely because they came from another commit, area, or accidental carryover. If they are present on the branch and relevant to the outcome, own them.
 * Never use `git revert` unless I explicitly request a revert.
-* An edit to my dotfiles repo (`~/projects/jasonkuhrt/dotfiles`, edited directly or through a link into it such as `~/.agents/AGENTS.md`, which `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` link to) is committed and pushed before the task that made it is reported done: a pathspec commit of only the files that task changed, never another session's edits, then `git push`. Jason, 2026-10-28, after a reply ended "The dotfiles edit isn't committed.": "add a user level rule to never leave dotfiles edits uncomitted after finishing". The push came later that day, once his Conductor cloud workspaces began installing these skills from GitHub, where an unpushed edit never arrives.
+* An edit to my dotfiles repo (`~/projects/jasonkuhrt/dotfiles`, edited directly or through a link into it such as `~/.agents/AGENTS.md`, which `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` link to) is committed and pushed before the task that made it is reported done: a pathspec commit of only the files that task changed, never another session's edits, then `git push`.
   * Bad: a reply that reports an `AGENTS.md` rule written and adds that the edit isn't committed, or that it's committed but not pushed.
   * Good: `git -C ~/projects/jasonkuhrt/dotfiles commit -m "…" -- home/.agents/AGENTS.md`, then `git -C ~/projects/jasonkuhrt/dotfiles push`, then a reply that names the commit.
   * When the push is rejected because `origin` moved, say so in the reply. Never stash, reset or rebase over another session's uncommitted edits to make it go through.
-* In MeOS's repositories (`~/me` and the repositories under `~/projects/jasonkuhrt` it runs), work lands on the default branch and is pushed. A branch or worktree exists only while a worker builds in it: once the lead has checked the work, it is merged into the default branch and pushed, and the branch and worktree are deleted in the same turn. Review and fixes happen on the default branch, never on a branch kept for them. Jason, 2026-11-08, after a bookmarks build waited on two branches for review: "it should not be on a branch, ensure all meos related repos do not have dumb lingering brnaches, merge all value, clean and done".
+* In MeOS's repositories (`~/me` and the repositories under `~/projects/jasonkuhrt` it runs), work lands on the default branch and is pushed. A branch or worktree exists only while a worker builds in it: once the lead has checked the work, it is merged into the default branch and pushed, and the branch and worktree are deleted in the same turn. Review and fixes happen on the default branch, never on a branch kept for them.
   * Bad: `tsrs` and `reading-list` kept as branches in `~/projects/jasonkuhrt/bookmarks` while Sol reviewed them.
   * Good: both fast-forwarded into `main` and pushed, their worktrees removed, and the review's fixes committed on `main`.
   * Going live is a separate step from landing. Where a daemon runs from the checkout, stop it before landing and restart it once the live switch is done.
@@ -436,18 +420,18 @@ Jason, 2026-11-07, after the move to 1Password: "are my rules clear about how ag
 ## Workflow Rules
 
 - When delegating, prefer a small pool of workers reused for related assignments so useful context carries forward. A requested sidebar agent means a separate chat (in Codex, via `dispatch-codex-peer`); load that skill for it. Use Codex's built-in collaboration tools directly for in-chat subagents, and call them subagents.
-- Choose how to do or hand off work by weighing the considerations below in the context you hold; they inform your judgment rather than decide for you. State the pick and the considerations that decided it in one line. `use-workers` holds the detail and launch mechanics. Jason, 2026-11-08: "this decision tree needs to stop over steering, it has to explain things to consider and why and be useful as things to cover but not override agent's context and agency"; "sonnet, jev, sol, opus, all are appropiate at different times"; "zoom the fuck out, take nothing less than a world view, and land only what makes the world meaningfully better".
+- Choose how to do or hand off work by weighing the considerations below in the context you hold; they inform your judgment rather than decide for you. State the pick and the considerations that decided it in one line. `use-workers` holds the detail and launch mechanics.
   - **Kind:** Jev returns typed judgments over supplied evidence; Sol and Sonnet are useful for fully briefed work; Opus can carry the chat's story, taste and design. Their strengths and prices inform the choice, not a kind-to-engine mapping.
   - **Size:** compute tokens read and written as bytes divided by four. Most cost is in that work, so include it across the proposed runs.
-  - **Fixed cost:** each run loads its system prompt, tools, brief and shared files. A Heartbeat Claude session measured about 117k baseline tokens on 2026-11-08 (`get_usage`: MCP schemas 35k, system tools 30k, memory index 31k, system prompt 11k, skills 10k); a subagent's baseline is unmeasured and likely different. Compare repeated overhead with useful work; shrinking that baseline helps every run. Jason's "19? no unless they are fucking short like 50k tkoens" illustrates the overhead concern, not a threshold.
+  - **Fixed cost:** each run loads its system prompt, tools, brief and shared files. A Heartbeat Claude session measured about 117k baseline tokens on 2026-11-08 (`get_usage`: MCP schemas 35k, system tools 30k, memory index 31k, system prompt 11k, skills 10k); a subagent's baseline is unmeasured and likely different. Compare repeated overhead with useful work; shrinking that baseline helps every run.
   - **Existing context:** the lead or an inheriting fork may be cheapest when work depends on the chat, because a fresh worker must rebuild that context.
-  - **Steering:** a Claude app session is easiest to chat with; a `codex exec` run takes corrections through stop and resume, and `use-workers` owns its launch and steering; Jev takes none. An unreachable run can cost a restart. Jason: "sonnet or opus have benefit of being easier to chat with iiuc" (2026-11-08).
+  - **Steering:** a Claude app session is easiest to chat with; a `codex exec` run takes corrections through stop and resume, and `use-workers` owns its launch and steering; Jev takes none. An unreachable run can cost a restart.
   - **Checking:** count the work of reviewing a worker's result. When checking costs about as much as doing, handing off saves nothing.
   - **Quota windows:** compute remaining Claude quota and reset times from desktop `get_usage` when available; label unavailable readings. Sol and Astra spend OpenAI quota, Jev spends TypeSafe's. Near a cap, reserve that pool for its distinctive work; unattended work may wait for a reset, and room near reset can be cheap. Subscription quota, elapsed time and result quality all matter.
-  - **Speed against cost:** parallel runs buy elapsed time with repeated fixed cost. Without someone waiting or work blocked, fewer deeper runs, or staying in the lead, are usually worth more. Jason: "the overhead of running each should be a fraction of the expected token cost" and "unless speed is specially important then its likely better to have fewer deeper sub agents if sub agents at fucking all" (2026-11-08).
+  - **Speed against cost:** parallel runs buy elapsed time with repeated fixed cost. Without someone waiting or work blocked, fewer deeper runs, or staying in the lead, are usually worth more. Each run's overhead should be a fraction of its expected token cost.
   - **Effort:** weigh the reasoning the work needs; extra effort costs more and adds little to mechanical work. Compute the available sizes and quota readings rather than guessing; a new routing tool is a design for Jason to approve.
-  - The routing hard lines are Jason's explicit ones: use a worker he names; Astra runs only when he names it; before spending money on more than one or two PRs or workers at once, state the scale, concurrency and cost and wait for his yes. "i never want astra used unless I asked for it explicitly" (2026-11-05). A rule that obstructs sound judgment is named to him: "if any of my rules contradict or make difficult u doing the right thing u need to speak up" (2026-11-08).
-  - A worker he names is the version he names. Its result counts only after the run's own model id is read and matches; a mismatch stops it and is reported, never substituted. A version is called the newest only from a model list read for that, never from what a tool's alias returned. Jason, 2026-11-10, after a panel asked for Fable 5.2 ran Fable 5.1 through an old build's `fable` alias and called it "the newest the harness offers": "omfg this is a bug and its really bad", "fable 5.1 is much more expensive than 5.2 and worse to boot".
+  - The routing hard lines are Jason's explicit ones: use a worker he names; Astra runs only when he names it; before spending money on more than one or two PRs or workers at once, state the scale, concurrency and cost and wait for his yes. A rule that obstructs sound judgment is named to him.
+  - A worker he names is the version he names. Its result counts only after the run's own model id is read and matches; a mismatch stops it and is reported, never substituted. A version is called the newest only from a model list read for that, never from what a tool's alias returned.
     - Bad: a review run through the `fable` alias, counted, and reported as "Fable 5.1 ran: it's the newest the harness offers".
     - Good: the run's id read as `claude-fable-5-1`, the mismatch reported, and the review run again as `claude-fable-5-2`.
   - Bad: similar classification work nobody was waiting on, split across 19 Opus subagents, each rereading the same rule files, with the Claude weekly window at 99%.
@@ -484,23 +468,17 @@ Shell output passes through rtk, which condenses it before you read it. Treat a 
 
 ## Code search and code changes
 
-Jason, 2026-11-07, of ast-grep: "i wont remember, so we have to make agents educated to use it proactively autoamtically".
-
 * A change to a code shape across files (a rename and its call sites, a call's arguments, an import, a library migration) is made with ast-grep, unasked, and so is a search where text would also hit comments, strings or look-alike names. The `ast-grep` skill has the commands. rg and sd stay for text that isn't code.
   * Bad: `sd 'loadYaml\(' 'parseYaml(' $(rg -l loadYaml)`, which also rewrites comments and strings.
   * Good: `ast-grep run -l ts -p 'loadYaml($A)' -r 'parseYaml($A)' -U .`, then the type check.
 
 ## TypeScript compiler
 
-Jason, 2026-11-07: "tsrs must be fucking used, perf matters", then "on my entire fucking machine, i ban tsc do u fucking get me? and tsgo".
-
 * Type checks and type-aware lint run on tsrs, in every project on this machine, never on `tsc`, `tsgo` or `oxlint-tsgolint`. A project depends on `tsrs`, not `typescript`; tsrs's `tsrs/sync`, `tsrs/async` and `tsrs/ast` exports cover the compiler API, and its `tsrs-lint` is the backend oxlint picks for type-aware rules. An Effect project runs Effect's build, swapped in by `effect-tsgo patch --typescript=false --tsrs`.
   * Bad: `"check:types": "tsc --noEmit"`, with `typescript` and `oxlint-tsgolint` in devDependencies.
   * Good: `"check:types": "tsrs --noEmit --fast"`, with `tsrs` installed and `oxlint --type-aware` running on `tsrs-lint`, as every MeOS workspace package does (`~/me/.machinery/code/config`).
 
 ## Browser work
-
-Jason, 2026-11-07, after a session reached for Claude in Chrome, found it disconnected, and told him to reinstall it: "u should be using opencode browse shouldn't you?"
 
 * Browser work in Jason's Chrome goes through `browse` first: the `browse` CLI (`browse execute --session <name> '<Playwright>'`) or its MCP server. It drives his own Chrome, signed in where he is; `browse status` checks the connection and `browse skill` prints its playbook. Claude in Chrome comes second, only when browse is unavailable or a sign-in needs 1Password autofill (`request_credentials`).
   * Bad: `navigate` through Claude in Chrome, "not connected", then a reply asking Jason to reinstall the extension.
@@ -511,7 +489,7 @@ Jason, 2026-11-07, after a session reached for Claude in Chrome, found it discon
 
 ## Compact Instructions
 
-Claude Code reads this section on every compaction, by hand or automatic, beside its own summary prompt. Jason, 2026-11-10, after waking twice to compact an overnight lead by hand: "if i run a lead overnight it doesn't needlessly get to eg 800k tokens and counting without human intervention of compacting". Why the harness's own threshold stays: `DECISIONS.md`, Decision 10.
+Claude Code reads this section on every compaction, by hand or automatic, beside its own summary prompt. Why the harness's own threshold stays: `DECISIONS.md`, Decision 10.
 
 Keep, beside the default summary:
 

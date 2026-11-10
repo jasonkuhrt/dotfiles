@@ -5,7 +5,7 @@ description: Use when the user invokes meta-archive-self, or tells the agent to 
 
 # Archive self
 
-The user has decided this session is done and wants it gone from their list. Archive it now. Run no audit and ask no question: whether to end was their call, and they made it. Jason, 2026-10-28: "i dont want can end to archive, itmight raise seomthig that changes my mind".
+The user has decided this session is done and wants it gone from their list. Archive it now. Run no audit and ask no question: whether to end was their call, and they made it.
 
 ## Before the archive
 

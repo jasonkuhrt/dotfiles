@@ -18,7 +18,7 @@
 # when the process holding it is gone).
 set -euo pipefail
 
-export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:${PATH:-/usr/bin:/bin:/usr/sbin:/sbin}"
 DOCLING="${DOCLING_SERVE_BIN:-$HOME/.local/bin/docling-serve}"
 STATE="${DOCLING_SERVE_STATE:-$HOME/.local/state/docling-serve}"
 PORT="${DOCLING_SERVE_PORT:-5001}"

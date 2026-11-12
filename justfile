@@ -156,13 +156,18 @@ git-cleanup-check *args:
     cd "{{justfile_directory()}}/home/.claude/skills/git-cleanup" && vp exec node scripts/verify.mjs {{args}}
 
 # Check cloud agent-home installation in an isolated temporary home.
-conductor-install-check:
+# FIXME: `conductor` at the repository root is a link to `cloud`, kept for
+# Heartbeat checkouts whose `agent-context/link-developer-skills.sh` still runs
+# `conductor/install.sh` (branches cut before heartbeat-chat/Heartbeat#4046,
+# and the Amp orb snapshot built from them). Remove the link once the snapshot
+# is rebuilt and no such branch is open.
+cloud-install-check:
     #!/usr/bin/env bash
     set -euo pipefail
     repo_root="{{justfile_directory()}}"
     agent_test_home="$(mktemp -d)"
     trap 'rm -rf "$agent_test_home"' EXIT
-    HOME="$agent_test_home" bash "$repo_root/conductor/install.sh"
+    HOME="$agent_test_home" bash "$repo_root/cloud/install.sh"
     for skills in .claude/skills .agents/skills .codex/skills; do
         for skill in "$agent_test_home/$skills"/*; do
             [[ -L "$skill" && -f "$skill/SKILL.md" ]] || { printf 'Broken skill: %s\n' "$skill" >&2; exit 1; }
@@ -171,15 +176,15 @@ conductor-install-check:
             [[ -z "$name" || "$name" == \#* ]] && continue
             target="$agent_test_home/$skills/$name"
             [[ ! -e "$target" && ! -L "$target" ]] || { printf 'Excluded skill: %s\n' "$target" >&2; exit 1; }
-        done < "$repo_root/conductor/skills-exclude.txt"
+        done < "$repo_root/cloud/skills-exclude.txt"
     done
     [[ -f "$agent_test_home/.claude/CLAUDE.md" && -f "$agent_test_home/.codex/AGENTS.md" ]]
-    printf 'PASS: conductor-install-check\n'
+    printf 'PASS: cloud-install-check\n'
 
 # Make a skill folder in another checkout (Heartbeat's shared skills, say) a
 # user-level skill: a tracked link in home/.claude/skills, which Claude Code
 # reads as ~/.claude/skills and Codex through ~/.agents/skills. Safe to rerun.
-# A cloud sandbox without that checkout skips the link (conductor/install.sh).
+# A cloud sandbox without that checkout skips the link (cloud/install.sh).
 skill-link source:
     #!/usr/bin/env bash
     set -euo pipefail

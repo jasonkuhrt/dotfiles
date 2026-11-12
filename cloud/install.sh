@@ -5,7 +5,7 @@ set -euo pipefail
 # instructions without replacing another installation's files.
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-exclude_file="$repo_root/conductor/skills-exclude.txt"
+exclude_file="$repo_root/cloud/skills-exclude.txt"
 shopt -s nullglob dotglob
 
 warn() {

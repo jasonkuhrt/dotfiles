@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# docbank-serve: run the Docbank daemon in the foreground for launchd
+# (com.jasonkuhrt.docbank.serve).
+#
+# Docbank keeps the text of msgvault's email attachments: msgvault mirrors each
+# attachment into it, Docbank sends documents to the local Docling Serve and
+# their text to the local nomic-embed-text, and msgvault searches the result.
+# Its config is ~/.docbank/config.toml.
+#
+# msgvault reaches Docbank on a fixed port, so it can't read Docbank's own
+# per-run key from the runtime record. Each start writes a fresh random key to
+# ~/.docbank/api.key (owner-only), which Docbank reads at startup and msgvault
+# reads on every request. No long-lived key exists to keep anywhere else.
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export DOCBANK_HOME="${DOCBANK_HOME:-$HOME/.docbank}"
+key="$DOCBANK_HOME/api.key"
+
+mkdir -p "$DOCBANK_HOME"
+chmod 700 "$DOCBANK_HOME"
+umask 077
+openssl rand -hex 32 >"$key.new"
+mv -f "$key.new" "$key"
+
+export DOCBANK_API_KEY_FILE="$key"
+# Docling Serve on loopback takes no key, but Docbank's Docling profile needs
+# its credential variable set to send anything.
+export DOCBANK_DOCLING_API_KEY="docling-on-loopback-takes-no-key"
+export DOCBANK_TELEMETRY_ENABLED=0
+
+exec docbank daemon run

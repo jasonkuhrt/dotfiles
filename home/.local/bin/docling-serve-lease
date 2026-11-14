@@ -5,9 +5,9 @@
 #   docling-serve-lease <command...>
 #
 # Docling Serve holds about 1.2 GB while it runs, so it runs only while
-# someone needs it. msgvault's nightly extraction (msgvault-documents-build)
-# and MeOS's document text pass (meos-documents text) both use it, at times
-# that can overlap. Each caller takes a lease: the first starts the server,
+# someone needs it: MeOS's document text pass (meos-documents text) and any
+# agent extracting a document by hand, at times that can overlap. Each caller
+# takes a lease: the first starts the server,
 # the last to finish stops it, and no caller stops it under another. A server
 # this helper didn't start (one already answering when a lease began) is never
 # stopped.

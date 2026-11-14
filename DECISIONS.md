@@ -179,3 +179,30 @@ section of `home/.agents/AGENTS.md`, so every compaction keeps what `meta-compac
 - Codex 0.167.0, `codex-rs/protocol/src/openai_models.rs` (`auto_compact_token_limit`), and its model list.
 - The run behind it: Heartbeat's `docs/research/2026-11-10-lead-context-size/`.
 
+
+## Decision 11: GPT-6.1 Terra at Max Effort Until the Next Sol
+
+**Context:**
+Codex ranks GPT-6.1 Sol first in its model list (`codex debug models`, priority 1; Terra is 3), and
+both GPT-6.1 Sol and Terra default to `low` effort. Sol was the OpenAI worker in `use-workers`, the reviewer of
+Claude-authored instruction changes, the `claudex` model, and Codex's configured default.
+
+**Decision:**
+GPT-6.1 Terra (`gpt-6.1-terra`) at `max` effort replaces Sol in all four places: the `use-workers`
+engine row and launch lines, the instruction-review rule in `home/.agents/AGENTS.md` (which now names
+`use-workers`' OpenAI worker rather than a model), `claudex` (lead and sub-agents), and
+`~/.codex/config.toml`'s `model` and `model_reasoning_effort`.
+
+**Value against cost:**
+- Jason's choice of model for his own and delegated OpenAI work, at the deepest effort below `ultra`.
+- Fixing Terra at `max` removes task-by-task effort selection.
+
+**Return or revisit when:**
+- `codex debug models` lists a Sol newer than `gpt-6.1-sol`. That Sol then takes all four places, with its
+  effort weighed per task like any other engine's (`use-workers`).
+
+**Sources:**
+- Codex 0.167.0 model catalog (`codex debug models`), Conductor's model list, both listing `gpt-6.1-terra`
+  with `max`, and CLIProxyAPI 8.0.58's `/v1/models` listing `gpt-6.1-terra`, read 2026-11-14.
+- A `claudex` request captured 2026-11-14: `thinking: adaptive`, `output_config.effort: max`, which
+  CLIProxyAPI 8.0.58 passes through as `reasoning.effort` (`internal/translator/codex/claude/codex_claude_request.go`).

@@ -25,7 +25,7 @@ own.
 
 - Bad: `/use-workers` on a sweep, and the lead reads the files itself
   because one deep run in the lead looked cheapest.
-- Good: the same sweep handed to one deep Sol run, with the lead writing
+- Good: the same sweep handed to one deep Terra run, with the lead writing
   the brief and checking what comes back.
 
 Choose in the context you hold.
@@ -37,13 +37,21 @@ The routing hard lines are Jason's explicit ones: use a worker he names;
 Astra runs only when he names it. A rule that gets in the way of good
 judgment is named to him.
 
-Effort is weighed for the work, not fixed by the engine.
+Effort is weighed for the work, not fixed by the engine, except Terra:
+Jason runs it at `max`. Terra is the OpenAI worker until Codex's model list
+holds a Sol newer than `gpt-6.1-sol`. When choosing it, run `codex debug models`.
+Its list counts when `~/.codex/models_cache.json`'s `fetched_at` is under five
+minutes old (Codex 0.167.0's cache lifetime) and that file's model ids match
+the command's output; otherwise whether a newer Sol exists is unknown. Once a newer
+Sol is there, it takes Terra's row, its launch lines below, `claudex` (`~/.config/fish/functions/claudex.fish`)
+and `~/.codex/config.toml`'s default, with its effort weighed like any
+other engine's.
 
 | Engine | Useful strengths                                                  | Quota and handoff cost                                           | Route                                                             |
 | ------ | ----------------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------- |
 | Jev    | Typed judgments over supplied evidence                            | TypeSafe quota; supplied state, no conversation                  | `typesafe` (`typesafe-ai`)                                        |
 | Sonnet | Fully briefed work; easy steering in an app session               | Claude quota; fresh context and result checking                  | Claude app or Agent tool; Conductor: `claude`, `sonnet-5-5-1m`    |
-| Sol    | Fully briefed work, bulk reads, mechanical edits and reviews      | OpenAI quota, no Claude quota; fresh context and result checking | `gpt-6.1-sol`; Conductor: `codex`, `gpt-6.1-sol`                  |
+| Terra  | Fully briefed work, bulk reads, mechanical edits and reviews      | OpenAI quota, no Claude quota; fresh context and result checking | `gpt-6.1-terra` at `max`; Conductor: `codex`, `gpt-6.1-terra`     |
 | Opus   | Chat context, taste and design; lead, inheriting fork or subagent | Claude quota; an inheriting fork can reuse context               | Lead or Claude session/Agent tool, using the available Opus model |
 | Astra  | A reasoning worker or reviewer when Jason names it                | OpenAI quota; fresh context and result checking                  | `gpt-6-astra`, only when named; Conductor: `codex`, `gpt-6-astra` |
 
@@ -57,7 +65,7 @@ assignment determines its role, not its harness.
 ## Considerations and why they matter
 
 1. **Kind of work.** Jev returns typed judgments over supplied evidence;
-   `typesafe-ai` explains its contracts. Sol and Sonnet are useful for fully
+   `typesafe-ai` explains its contracts. Terra and Sonnet are useful for fully
    briefed work that needs none of the chat's context. Opus can carry the
    chat's story, taste and design. Each is good at different work at a
    different price; this is information, not a kind-to-engine mapping.
@@ -82,7 +90,7 @@ assignment determines its role, not its harness.
    checking costs about as much as doing, handing off saves nothing.
 7. **Quota and its windows.** Read Claude's percent used per window and
    reset times from desktop `get_usage` when available; state unavailable
-   readings. Sol and Astra spend OpenAI quota; Jev spends TypeSafe's. Every
+   readings. Terra and Astra spend OpenAI quota; Jev spends TypeSafe's. Every
    window resets: near a cap, that pool is best reserved for what nothing
    else can do; work nobody waits on can wait for a reset, while room near
    reset can be cheap. Compute available readings rather than guessing.
@@ -99,7 +107,7 @@ calculation. Such a tool is a design for Jason to approve.
 
 - Bad: similar classification work nobody was waiting on, split across
   19 Opus subagents, each rereading the same rules at 99% weekly usage.
-- Good: Jev buckets the files, one deep Sol run reads and writes the targets,
+- Good: Jev buckets the files, one deep Terra run reads and writes the targets,
   and the lead spends its tokens on the brief.
 
 ### Four questions about independent side work
@@ -141,7 +149,7 @@ app launches a `sonnet` one. Elsewhere on a Mac, a worker on the lead's own
 harness is that harness's sub-agent, and a worker on the other harness runs
 as that harness's CLI in a subprocess:
 
-| Where the lead runs                                  | `sonnet`                        | `astra`, `sol`           |
+| Where the lead runs                                  | `sonnet`                        | `astra`, `terra`         |
 | ---------------------------------------------------- | ------------------------------- | ------------------------ |
 | A Conductor cloud workspace (`CONDUCTOR_IS_LOCAL=0`) | a Conductor session             | a Conductor session      |
 | The Claude desktop app, as a Claude lead             | an app session: `start_session` | subprocess: `codex exec` |
@@ -208,7 +216,8 @@ can steer it there.
      > .context/workers/<name>-<slug>.session.json
    ```
 
-   The agent and model come from the table; effort comes from the calculation.
+   The agent and model come from the table; effort is `max` for Terra and
+   the calculated one otherwise.
    The result
    holds the session's `id` and its `deepLink`; give the user the link with
    the one line on what the worker is doing. Without the `conductor` CLI,
@@ -252,9 +261,9 @@ report: a Conductor session has no read-only switch.
 
 ## Launching from a Codex lead on a Mac
 
-- **`astra`, `sol`:** Codex's `spawn_agent`, with
-  its model override set to the worker's model, its calculated effort where
-  the tool takes one, and `fork_turns: "none"`, since the brief carries what it
+- **`astra`, `terra`:** Codex's `spawn_agent`, with
+  its model override set to the worker's model, its effort where the tool
+  takes one (`max` for Terra, the calculated one otherwise), and `fork_turns: "none"`, since the brief carries what it
   needs. Its final answer comes back to you when it finishes; correct it with
   `send_message`. When the tool's list of model overrides lacks the model,
   launch it with `codex exec` as below.
@@ -324,7 +333,7 @@ report: a Conductor session has no read-only switch.
 - To correct a run, send it the correction with `SendMessage`. It keeps its
   context.
 
-## Launching `astra` and `sol` with `codex exec`
+## Launching `astra` and `terra` with `codex exec`
 
 A Claude lead on a Mac launches them this way, and so does a Codex lead whose
 `spawn_agent` can't take the model.
@@ -339,8 +348,8 @@ codex exec -C <dir> --skip-git-repo-check \
   < /dev/null > <scratchpad>/<name>-<slug>.log 2>&1
 ```
 
-`<model>` is `gpt-6-astra` for `astra` and `gpt-6.1-sol` for `sol`; `<name>` is
-the worker's name, and `<effort>` is the calculated effort.
+`<model>` is `gpt-6-astra` for `astra` and `gpt-6.1-terra` for `terra`; `<name>` is
+the worker's name, and `<effort>` is the calculated effort (`max` for `terra`).
 
 - Run it in the background (`run_in_background: true`) and keep working; the
   completion notice brings you back.

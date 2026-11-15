@@ -189,6 +189,7 @@ cask "font-geist"        # Vercel's Geist family: Sans,
 cask "font-geist-mono"   # Mono,
 cask "font-geist-pixel"  # Pixel,
 cask "font-geist-serif"  # Serif
+cask "font-inter"
 cask "font-monaspace"
 cask "font-symbols-only-nerd-font"  # icon glyphs (yazi, terminal)
 

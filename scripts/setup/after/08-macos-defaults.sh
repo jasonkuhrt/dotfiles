@@ -14,6 +14,13 @@ DUTI_SYNC="$DOTFILES_ROOT/home/.local/bin/duti-sync"
 
 header "macOS Defaults"
 
+info "Configuring appearance..."
+set_default "NSGlobalDomain" "AppleInterfaceStyleSwitchesAutomatically" "-bool" "0" "Appearance not automatic"
+set_default "NSGlobalDomain" "AppleInterfaceStyle" "-string" "Dark" "Dark mode always"
+# The defaults above hold across logins; this applies dark mode to the running session.
+osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to true' \
+    || warn "Dark mode not applied live (allow the terminal to control System Events)"
+
 info "Configuring keyboard..."
 set_default "com.apple.HIToolbox" "AppleFnUsageType" "-int" "0" "Fn/Globe key press does nothing (0=Do Nothing; 3 was Start Dictation)"
 set_default "NSGlobalDomain" "com.apple.keyboard.fnState" "-bool" "true" "Use F1, F2, etc. as standard function keys"

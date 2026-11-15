@@ -247,3 +247,38 @@ subagents.
 - Codex's `agents.default_subagent_model` and `agents.default_subagent_reasoning_effort` supply a spawn's
   omitted model and effort (`~/repo-references/codex/codex-rs/core/src/agent/child_config.rs`), read
   2026-11-15.
+
+## Decision 13: Codex Runs Get Full Access, Reviews Included
+
+**Context:**
+On macOS, without an explicit sandbox or permission profile and without managed requirements, Codex
+0.167.0 defaults to `workspace-write` for a directory with a trust decision and `read-only` otherwise
+(`derive_permission_profile`, `codex-rs/config/src/config_toml.rs`). `~/.codex/config.toml` sets `sandbox_mode = "danger-full-access"`
+with `approval_policy = "never"`. Agents' launches kept that for work and narrowed reviews and opinions
+to `--sandbox read-only`.
+
+**Decision:**
+A Codex run an agent launches runs with full access, reviews and opinions included, selected explicitly
+at launch because a project's Codex config can override the user's (`home/.agents/AGENTS.md`, "Workflow
+Rules"; `use-workers` and `review-2-independent-terra-max` hold the launches).
+
+**Value against cost:**
+- Jason's judgment that the narrower sandboxes cost more in failed or fussy runs than they are worth.
+- One launch shape for every run.
+- Cost: Codex's sandbox no longer prevents writes. A reviewer's independence and its "change no file"
+  rest on its brief. The paired runner checks native subagent calls and compares tracked Git state; it
+  does not check reads of the other report or agents launched through a shell, and it does not compare
+  untracked or ignored files or changes outside the checkout.
+- Cost: whatever a run reads, from the web or a file, it can act on with the access Jason's account has.
+  Restrictions outside Codex (the host's, macOS's) still apply.
+
+**Return or revisit when:**
+- A run changes or sends something it was not asked to.
+- Jason judges a narrower Codex sandbox worth using again.
+
+**Sources:**
+- Jason, 2026-11-15, on hearing that two research runs were running with no sandbox: "i want to always
+  just use that, the fuss is not worth it, let them be successful more of thetime".
+- Codex source at `~/repo-references/codex` and two session records from 2026-11-15 whose
+  `turn_context.sandbox_policy.type` read `read-only` (a review) and `danger-full-access` (a research
+  run), read 2026-11-15.

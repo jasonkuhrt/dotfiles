@@ -296,7 +296,9 @@ report: a Conductor session has no read-only switch.
   (`fork_turns: "all"`) is an option; set the chosen model and effort in the
   spawn where the tool exposes those overrides. Its final answer comes back to you when it finishes; correct it with
   `send_message`. When the tool's list of model overrides lacks the model,
-  launch it with `codex exec` as below.
+  launch it with `codex exec` as below. A native Codex subagent inherits its
+  parent's permission profile; report a restriction inherited from the
+  parent.
 - **`sonnet`:** Claude Code's CLI in the background:
 
   ```sh
@@ -369,7 +371,7 @@ A Claude lead on a Mac launches them this way, and so does a Codex lead whose
 `spawn_agent` can't take the model.
 
 ```sh
-codex exec -C <dir> --skip-git-repo-check \
+codex exec -C <dir> --skip-git-repo-check --sandbox danger-full-access \
   -c 'model="<model>"' -c 'model_reasoning_effort="<effort>"' \
   -c 'agents.default_subagent_model="gpt-6.1-terra"' \
   -c 'agents.default_subagent_reasoning_effort="max"' \
@@ -403,20 +405,31 @@ run's own subagents the Terra-at-`max` default, whatever the run's model.
 - Read the log's head within about 15 seconds. A live run shows
   `model: <model>`, the selected reasoning effort and `session id: <uuid>`. A log
   holding only the stdin line is a hung run, not a slow one.
-- A review or an opinion adds `--sandbox read-only`. The config's default is
-  full access with no approvals, so any other run can edit and commit: check
-  `git status` in `<dir>` after it.
-- A review is a read-only `codex exec` whose prompt names the base to diff
+- Every run passes `--sandbox danger-full-access`, a review or an opinion
+  included (the global rules). The flag is explicit because a project's own
+  Codex config can override the user config's default. The log's head shows
+  `sandbox: danger-full-access`; a run that shows another was restricted by
+  its host: report that.
+- Any run can edit and commit, and a review's brief says it changes no file
+  but its report. Before and after a run, compare HEAD, the staged diff
+  (`git diff --cached HEAD`) and the tracked working-tree diff (`git diff`)
+  in `<dir>`: `git status` alone can't show a second edit to a file that was
+  already modified. If the directory is outside Git, compare the files given
+  to the run, and report any comparison that could not be made. Untracked
+  and ignored files are not covered. In a shared checkout, a difference is a
+  reason to investigate, not proof of the run's action.
+- A review is a `codex exec` whose prompt names the base to diff
   against and has the worker read the change through the repository's
   `review` skill at `small`, when the repository has one (`gate-peer-review`,
   "The reviewer"). Without one,
-  `codex exec review --base origin/develop` with the same `-c` flags reviews a
+  `codex exec review --base origin/develop` with the same `-c` flags and
+  `-c 'sandbox_mode="danger-full-access"'` reviews a
   branch you have no instructions for.
 - To correct a run, stop it and continue its session:
   `codex exec resume <session id> "<correction>"`, with the same `-c` flags,
   `--skip-git-repo-check`, `-o` and redirects. Resume takes no `-C` or
   `--sandbox` (Codex 0.167.0 exits on either), so `cd <dir> &&` comes first
-  and a review's sandbox is `-c 'sandbox_mode="read-only"'`. A fresh
+  and the sandbox is `-c 'sandbox_mode="danger-full-access"'`. A fresh
   `codex exec` starts from nothing. This is the only way to
   correct a `codex exec` run: its app server lives inside the process, so no
   message reaches its turn while it runs, and the process exits when the turn

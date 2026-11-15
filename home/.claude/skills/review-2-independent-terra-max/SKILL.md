@@ -1,6 +1,6 @@
 ---
 name: review-2-independent-terra-max
-description: Get two independent Terra reviews (gpt-6.1-terra at max effort, read-only) of one change from a Claude lead, then reconcile them. Use when Jason asks for two independent Terra reviews, or invokes review-2-independent-terra-max.
+description: Get two independent Terra reviews (gpt-6.1-terra at max effort) of one change from a Claude lead, then reconcile them. Use when Jason asks for two independent Terra reviews, or invokes review-2-independent-terra-max.
 ---
 
 # Two independent Terra reviews
@@ -25,17 +25,26 @@ Conductor lead launches the pair by `use-workers`' route instead.
      when the repository has one.
 2. **Run** in the background:
    `bash ~/.claude/skills/review-2-independent-terra-max/run.sh <brief> <dir>`.
-   Both runs start read-only in `<dir>`, told to change no file, spawn no
-   sub-agent and read no other reviewer's work, with sub-agents switched
-   off, and write to a fresh `terra-<timestamp>/` folder beside the brief. A
-   run Codex reroutes is stopped. A run counts only when its Codex session
-   record shows `gpt-6.1-terra` at `max` selected with sub-agents off, its
-   events end in a completed turn with no reroute and no sub-agent call, and
-   its report isn't empty. That record proves the selection; a reroute is
-   caught only when the server reports its model. The script
+   Both runs start in `<dir>` with full access selected explicitly (the
+   global rules), told to change no file, spawn no sub-agent and read no
+   other reviewer's work, with Codex's own sub-agents switched off, and write
+   to a fresh `terra-<timestamp>/` folder beside the brief. A run Codex
+   reroutes is stopped. A run counts only when its Codex session record shows
+   `gpt-6.1-terra` at `max` and full access selected with sub-agents off, its
+   events end in a completed turn with no reroute and no native sub-agent
+   call, and its report isn't empty. That record proves the selection; a
+   reroute is caught only when the server reports its model. With full
+   access, the brief and not a sandbox keeps a reviewer from changing a
+   file, starting an agent through a shell, or reading the other's report:
+   the script checks Codex's native events, and says when `<dir>`'s HEAD,
+   staged diff or tracked working-tree diff changed during the review, or
+   that it could not compare them (a `<dir>` outside Git). The script
    names any run that doesn't count; replace it with
    `run.sh <brief> <dir> 1` and keep the valid one.
-3. **Reconcile.** Read both reports. A report that didn't review the pinned
+3. **Reconcile.** If the script says `<dir>` changed, find out what changed
+   first; in a shared checkout it can be another session's edit. If it says
+   it could not compare, compare the files the reviewers were given. Read
+   both reports. A report that didn't review the pinned
    scope or give the requested verdict (it couldn't read the brief, say)
    doesn't count: resolve its blocker and replace it. Group findings as raised by both or by
    one. Check each against its evidence. Apply a confirmed finding when the

@@ -5,21 +5,23 @@ description: >-
   context, steering, checking, quota windows, speed and effort. Use when
   invoking /use-workers or asking for workers without naming a model, or
   considering a handoff. Jason invoking it means the work goes to workers and
-  the lead keeps its tokens for briefs, steering and checking. Pick the
-  engine, effort and run count and explain why in one line; a name is a rare
-  override.
+  the lead keeps its tokens for briefs, steering and checking. Pick
+  between the default engines (Opus at high, Terra at max) and the run count,
+  and explain why in one line; another engine or effort comes from a rule, a
+  skill or Jason indicating it.
 ---
 
 # Workers
 
 `/use-workers`, or words asking for workers without a name, is the normal
-case: weigh the considerations, pick the engine, effort and number of runs,
-and say the pick in one line. A name is the rare override.
+case: weigh the considerations, pick between the global rules' default
+engines (Opus at `high`, Terra at `max`) and the number of runs, and say the
+pick in one line. A name is the rare override.
 
 Jason invoking it has already decided that workers do the work: the lead
 stops doing the grunt work itself and spends its own tokens on briefs,
 steering, checking results and the chat. The considerations then choose
-which workers, how many and at what effort, never whether to delegate.
+which of the two default engines and how many runs, never whether to delegate.
 Staying in the lead is an option only when an agent weighs a handoff on its
 own.
 
@@ -32,20 +34,27 @@ Choose in the context you hold.
 The considerations below help cover the decision; they are not a routing
 tree.
 State the pick and the considerations that decided it in one line.
+The choice is between the global rules' defaults, Opus at `high` and Terra at
+`max`. Another engine or effort is used only when another rule or a skill
+indicates it for that work, or Jason does in the chat.
 
-The routing hard lines are Jason's explicit ones: use a worker he names;
-Astra runs only when he names it. A rule that gets in the way of good
+The routing hard lines are Jason's explicit ones: the default above; use a
+worker he names; Astra runs only when he names it. A rule that gets in the way of good
 judgment is named to him.
 
-Effort is weighed for the work, not fixed by the engine, except Terra:
-Jason runs it at `max`. Terra is the OpenAI worker until Codex's model list
+A subagent uses `high` with Opus and `max` with Terra unless a rule, a skill
+or Jason indicates a different effort. Another engine takes the indicated
+effort, or else the effort the work needs. Terra is the OpenAI worker until Codex's model list
 holds a Sol newer than `gpt-6.1-sol`. When choosing it, run `codex debug models`.
 Its list counts when `~/.codex/models_cache.json`'s `fetched_at` is under five
 minutes old (Codex 0.167.0's cache lifetime) and that file's model ids match
 the command's output; otherwise whether a newer Sol exists is unknown. Once a newer
-Sol is there, it takes Terra's row, its launch lines below, `claudex` (`~/.config/fish/functions/claudex.fish`)
-and `~/.codex/config.toml`'s default, with its effort weighed like any
-other engine's.
+Sol is there, it takes the OpenAI worker role for work another rule or skill
+assigns to that worker: update that worker's launch lines, the `claudex` lead
+model (`~/.config/fish/functions/claudex.fish`) and `~/.codex/config.toml`'s
+lead model, weighing its effort for those roles. The subagent default stays
+Opus at `high` or Terra at `max`, with Terra's row and launch routes and
+`claudex`'s subagent defaults, until that default is decided again.
 
 Terra at `max` is cheap, so a second independent run on the same brief is an
 option: comparing the two gives the lead an overlap signal. Weigh that signal
@@ -57,7 +66,7 @@ paired review.
 | Engine | Useful strengths                                                  | Quota and handoff cost                                           | Route                                                             |
 | ------ | ----------------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------- |
 | Jev    | Typed judgments over supplied evidence                            | TypeSafe quota; supplied state, no conversation                  | `typesafe` (`typesafe-ai`)                                        |
-| Sonnet | Fully briefed work; easy steering in an app session               | Claude quota; fresh context and result checking                  | Claude app or Agent tool; Conductor: `claude`, `sonnet-5-5-1m`    |
+| Sonnet | Only when indicated: fully briefed work, easy app steering        | Claude quota; fresh context and result checking                  | Claude app or Agent tool; Conductor: `claude`, `sonnet-5-5-1m`    |
 | Terra  | Fully briefed work, bulk reads, mechanical edits and reviews      | OpenAI quota, no Claude quota; fresh context and result checking | `gpt-6.1-terra` at `max`; Conductor: `codex`, `gpt-6.1-terra`     |
 | Opus   | Chat context, taste and design; lead, inheriting fork or subagent | Claude quota; an inheriting fork can reuse context               | Lead or Claude session/Agent tool, using the available Opus model |
 | Astra  | A reasoning worker or reviewer when Jason names it                | OpenAI quota; fresh context and result checking                  | `gpt-6-astra`, only when named; Conductor: `codex`, `gpt-6-astra` |
@@ -106,8 +115,10 @@ assignment determines its role, not its harness.
    deeper runs, or staying in the lead when Jason hasn't asked for workers,
    are usually worth more. Each run's overhead should be a fraction of its
    expected token cost.
-9. **Effort.** Weigh the reasoning the work needs. Extra effort costs more
-   and is wasted on mechanical work. Pass the chosen effort where supported.
+9. **Effort.** Opus and Terra keep their default effort (`high`, `max`)
+   unless a different one is indicated. For another engine indicated without
+   one, weigh the reasoning the work needs: extra effort costs more and is
+   wasted on mechanical work. Pass the chosen effort where supported.
 
 Compute the available size and quota numbers; do not build a tool for this
 calculation. Such a tool is a design for Jason to approve.
@@ -135,8 +146,14 @@ the engine or take the decision away from the lead.
 4. **Does it need a design call?** API, abstraction, naming, taste and text
    the user will read benefit from the lead's context and final edit.
 
-Claude's Agent tool runs a subagent on the lead's model unless `model` is
-set. When the choice is Sonnet, pass `model: "sonnet"` explicitly.
+For a non-fork Claude Agent call, pass the chosen `model` and `effort`:
+`model: "opus"` and `effort: "high"` for Opus at the default. An agent
+definition, a configured subagent default (`claudex` sets Terra at `max`) or
+an environment setting can supply or override them, so check the actual
+model and effort where the harness shows them. A Claude fork runs on the
+lead's model and effort: use one when those are the chosen values, or when a
+rule or Jason asks for a fork. Terra launches by the route
+[Where you run](#where-you-run) gives.
 
 ## Examples
 
@@ -152,7 +169,10 @@ set. When the choice is Sonnet, pass `model: "sonnet"` explicitly.
 Launch each worker with the first-class agent feature of the place the lead
 runs in: the one that lets the lead steer it and the user see it. In
 Conductor, Conductor launches every worker; in the Claude desktop app, the
-app launches a `sonnet` one. Elsewhere on a Mac, a worker on the lead's own
+app launches a `sonnet` one. `sonnet`, in the table and in the launch
+sections below, stands for any Claude model: for Opus at `high`, pass `opus`
+(`claude-opus-5-5` in the app) and `high` where they give Sonnet's. Elsewhere
+on a Mac, a worker on the lead's own
 harness is that harness's sub-agent, and a worker on the other harness runs
 as that harness's CLI in a subprocess:
 
@@ -223,8 +243,9 @@ can steer it there.
      > .context/workers/<name>-<slug>.session.json
    ```
 
-   The agent and model come from the table; effort is `max` for Terra and
-   the calculated one otherwise.
+   The agent and model come from the table; use an indicated effort.
+   Otherwise use `max` for Terra, `high` for Opus, and weigh the effort for
+   another engine.
    The result
    holds the session's `id` and its `deepLink`; give the user the link with
    the one line on what the worker is doing. Without the `conductor` CLI,
@@ -270,8 +291,10 @@ report: a Conductor session has no read-only switch.
 
 - **`astra`, `terra`:** Codex's `spawn_agent`, with
   its model override set to the worker's model, its effort where the tool
-  takes one (`max` for Terra, the calculated one otherwise), and `fork_turns: "none"`, since the brief carries what it
-  needs. Its final answer comes back to you when it finishes; correct it with
+  takes one (the indicated effort, otherwise `max` for Terra and the weighed effort for Astra), and `fork_turns: "none"`, since the brief carries what it
+  needs. When the work needs the chat's context, a full-history fork
+  (`fork_turns: "all"`) is an option; set the chosen model and effort in the
+  spawn where the tool exposes those overrides. Its final answer comes back to you when it finishes; correct it with
   `send_message`. When the tool's list of model overrides lacks the model,
   launch it with `codex exec` as below.
 - **`sonnet`:** Claude Code's CLI in the background:
@@ -348,15 +371,17 @@ A Claude lead on a Mac launches them this way, and so does a Codex lead whose
 ```sh
 codex exec -C <dir> --skip-git-repo-check \
   -c 'model="<model>"' -c 'model_reasoning_effort="<effort>"' \
-  -c 'agents.default_subagent_model="<model>"' \
-  -c 'agents.default_subagent_reasoning_effort="<effort>"' \
+  -c 'agents.default_subagent_model="gpt-6.1-terra"' \
+  -c 'agents.default_subagent_reasoning_effort="max"' \
   -o <scratchpad>/<name>-<slug>.txt \
   "<prompt, or the brief's path>" \
   < /dev/null > <scratchpad>/<name>-<slug>.log 2>&1
 ```
 
 `<model>` is `gpt-6-astra` for `astra` and `gpt-6.1-terra` for `terra`; `<name>` is
-the worker's name, and `<effort>` is the calculated effort (`max` for `terra`).
+the worker's name. Use the indicated `<effort>` if given; otherwise use `max`
+for `terra` and weigh it for `astra`. The two `agents.default_subagent_*` flags give the
+run's own subagents the Terra-at-`max` default, whatever the run's model.
 
 - Run it in the background (`run_in_background: true`) and keep working; the
   completion notice brings you back.

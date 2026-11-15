@@ -200,9 +200,50 @@ engine row and launch lines, the instruction-review rule in `home/.agents/AGENTS
 **Return or revisit when:**
 - `codex debug models` lists a Sol newer than `gpt-6.1-sol`. That Sol then takes all four places, with its
   effort weighed per task like any other engine's (`use-workers`).
+- Amended 2026-11-15 by Decision 12: that Sol takes the OpenAI worker role where another rule or skill
+  calls for it, and the `claudex` and Codex lead defaults. The subagent default, with Terra's row and
+  launch routes in `use-workers` and `claudex`'s subagent defaults, stays as Decision 12 records until it
+  is decided again.
 
 **Sources:**
 - Codex 0.167.0 model catalog (`codex debug models`), Conductor's model list, both listing `gpt-6.1-terra`
   with `max`, and CLIProxyAPI 8.0.58's `/v1/models` listing `gpt-6.1-terra`, read 2026-11-14.
 - A `claudex` request captured 2026-11-14: `thinking: adaptive`, `output_config.effort: max`, which
   CLIProxyAPI 8.0.58 passes through as `reasoning.effort` (`internal/translator/codex/claude/codex_claude_request.go`).
+
+## Decision 12: Subagents Default to Opus at High or Terra at Max
+
+**Context:**
+Claude Code runs a subagent on the lead's model when the call, its agent definition and the configured
+subagent default name none. On 2026-11-15 a lead on Fable 5.2 started three research agents without a
+`model`, and all three ran on Fable 5.2.
+
+**Decision:**
+A subagent (an agent the lead launches to do part of its own work and report back, whatever launches
+it) runs on Opus at `high` or Terra at `max` unless another rule or a skill indicates another model or
+effort for that work, or Jason does in the chat (`home/.agents/AGENTS.md`, "Workflow Rules";
+`use-workers` holds the launch mechanics). A peer chat Jason asks for and a typed-judgment call are not
+subagents.
+
+**Value against cost:**
+- The rule prevents unchosen inheritance of the lead's model. The lead still selects between the two
+  prescribed model and effort pairs.
+- Cost: a Claude Agent fork inherits the lead's model and effort, so a Claude lead on different values
+  must brief a fresh worker to delegate at the default.
+- Cost: the vendors' own defaults, which they tune, are set aside for subagents.
+
+**Return or revisit when:**
+- A harness ships a subagent default that picks a cheaper model for delegated work by itself.
+- The newer-Sol condition in Decision 11 occurs. Decision 11 continues to govern the OpenAI worker; this
+  default is then decided again.
+- Opus at `high` or Terra at `max` stops being the right price for bulk work.
+
+**Sources:**
+- Jason, 2026-11-15: "by default when you launch sub agents you should use opus high or terra max. ifother
+  rules or skills or me in chat indicate otherwise, then that is something else."
+- Claude Code's changelog (`~/repo-references/claude-code/CHANGELOG.md`): `CLAUDE_CODE_SUBAGENT_MODEL`,
+  `CLAUDE_CODE_SUBAGENT_EFFORT` ("when nothing else names one, instead of inheriting the session's") and
+  `CLAUDE_CODE_SUBAGENT_MODEL_FORCE`, read 2026-11-15.
+- Codex's `agents.default_subagent_model` and `agents.default_subagent_reasoning_effort` supply a spawn's
+  omitted model and effort (`~/repo-references/codex/codex-rs/core/src/agent/child_config.rs`), read
+  2026-11-15.

@@ -94,6 +94,7 @@ const manifest = defineManifest({
 
     // vscode.markdown-language-features
     extCommand('markdown.showSource', 'vscode.markdown-language-features'),
+    extCommand('markdown.togglePreview', 'vscode.markdown-language-features'),
   ],
   externalContextKeys: [
     // VS Code core context-key universe.
@@ -138,10 +139,18 @@ const $ = KeyBinder.create()
 const $when = When(manifest)
 
 // ════════════════════════════════════════════════════════════════════════
-// VS CODE BINDINGS — from keybindings.json
+// VS CODE BINDINGS — emitted to keybindings.json
 // ════════════════════════════════════════════════════════════════════════
+//
+// Chrome operations only: dock toggles, pane navigation, list/menu nav,
+// terminal exit, Welcome-page leader chords. Vim-mode bindings live in nvim
+// (loaded into VS Code by vscode-neovim) — see the NEOVIM section below.
+// `sync` writes keybindings.json as plain JSON, so every rationale lives here.
 
 // ── Docks & Panels (cmd+h/j/l for Zed parity) ───────────────────────────
+// cmd+j toggles the bottom panel, as Zed's cmd-j (workspace::ToggleBottomDock).
+// cmd+l / cmd+shift+l cycle layout presets (all → explorer → full-terminal)
+// through the workbench-cycler extension (~/projects/jasonkuhrt/workbench-cycler).
 $.vscode.bind({
   key: VsCodeKeyExpression('cmd+h'),
   command: 'workbench.action.toggleSidebarVisibility',
@@ -203,6 +212,7 @@ $.vscode.bind({
   ),
   description: Description('Navigate down pane'),
 })
+// Mac convention: cmd+k clears the terminal screen (replaces the lost ctrl+l).
 $.vscode.bind({
   key: VsCodeKeyExpression('cmd+k'),
   command: 'workbench.action.terminal.clear',
@@ -211,6 +221,11 @@ $.vscode.bind({
 })
 
 // ── Menus: ctrl-j/k next/prev ────────────────────────────────────────────
+// ctrl+j/k next/prev on every surface VS Code exposes as a navigable menu.
+// Generic lists and trees (Explorer, Search results, Problems, References,
+// Outline, SCM, Debug, Extensions, Keybindings editor) take plain j/k/h/l/J/K/H,
+// since they have no vim and no text input. Accepted cost: Explorer loses
+// type-ahead filename search.
 $.vscode.bind({ key: VsCodeKeyExpression('ctrl+j'), command: 'selectNextSuggestion', when: $when.is('suggestWidgetVisible'), description: Description('Suggest next') })
 $.vscode.bind({ key: VsCodeKeyExpression('ctrl+k'), command: 'selectPrevSuggestion', when: $when.is('suggestWidgetVisible'), description: Description('Suggest previous') })
 $.vscode.bind({ key: VsCodeKeyExpression('ctrl+j'), command: 'workbench.action.quickOpenSelectNext', when: $when.is('inQuickOpen'), description: Description('QuickOpen next') })
@@ -242,28 +257,44 @@ $.vscode.bind({ key: VsCodeKeyExpression("ctrl+'"), command: 'workbench.action.t
 $.vscode.bind({ key: VsCodeKeyExpression("ctrl+'"), command: 'workbench.action.focusActiveEditorGroup', when: $when.is('terminalFocus'), description: Description('Exit terminal') })
 
 // ── Never close last editor ──────────────────────────────────────────────
+// A `-command` removal only applies when the default rule's `when` implies
+// the removal's `when`, and VS Code's default cmd+w rule has no `when` — so a
+// conditional removal removes nothing. Unbind the default outright, then
+// re-add it guarded: cmd+w closes unless this is the last editor in the only
+// group. (`groupEditorsCount` is the real key; `groupActiveEditorCount` isn't.)
 $.vscode.bind({
   key: VsCodeKeyExpression('cmd+w'),
   command: 'workbench.action.closeActiveEditor',
   remove: true,
-  when: $when.and($when.eq('groupEditorsCount', 1), $when.not($when.is('multipleEditorGroups'))),
-  description: Description('Unbind cmd+w when last editor'),
+  description: Description('Unbind default cmd+w'),
+})
+$.vscode.bind({
+  key: VsCodeKeyExpression('cmd+w'),
+  command: 'workbench.action.closeActiveEditor',
+  when: $when.or($when.neq('groupEditorsCount', 1), $when.is('multipleEditorGroups')),
+  description: Description('Close editor unless it is the last one'),
 })
 
-// ── No-editor / empty-state leader chords (mirror vim leader) ────────────
-// Fire when no working file is open (editorIsOpen=false), surfacing the
-// same chord vocabulary the user has when an editor IS focused but routed
-// through VS Code commands directly because nvim isn't dispatching keys
-// in this state.
-$.vscode.bind({ key: VsCodeKeyExpression('space k'), command: 'workbench.action.quickOpen', when: $when.and($when.not($when.is('editorIsOpen')), $when.not($when.is('inputFocus'))), description: Description('Find files') })
-$.vscode.bind({ key: VsCodeKeyExpression('space o'), command: 'workbench.action.openRecent', when: $when.and($when.not($when.is('editorIsOpen')), $when.not($when.is('inputFocus'))), description: Description('Open recent') })
-$.vscode.bind({ key: VsCodeKeyExpression('space shift+o'), command: 'projectManager.listProjects', when: $when.and($when.not($when.is('editorIsOpen')), $when.not($when.is('inputFocus'))), description: Description('Project manager') })
-$.vscode.bind({ key: VsCodeKeyExpression('space j'), command: 'workbench.action.tasks.runTask', when: $when.and($when.not($when.is('editorIsOpen')), $when.not($when.is('inputFocus'))), description: Description('Run task') })
-$.vscode.bind({ key: VsCodeKeyExpression('t e'), command: 'workbench.files.action.focusFilesExplorer', when: $when.and($when.not($when.is('editorIsOpen')), $when.not($when.is('inputFocus'))), description: Description('Focus file explorer') })
-$.vscode.bind({ key: VsCodeKeyExpression('t g'), command: 'workbench.view.scm', when: $when.and($when.not($when.is('editorIsOpen')), $when.not($when.is('inputFocus'))), description: Description('Open SCM panel') })
-$.vscode.bind({ key: VsCodeKeyExpression('t t'), command: 'workbench.action.terminal.focus', when: $when.and($when.not($when.is('editorIsOpen')), $when.not($when.is('inputFocus'))), description: Description('Focus terminal') })
-$.vscode.bind({ key: VsCodeKeyExpression('t d'), command: 'workbench.panel.markers.view.focus', when: $when.and($when.not($when.is('editorIsOpen')), $when.not($when.is('inputFocus'))), description: Description('Focus diagnostics panel') })
-$.vscode.bind({ key: VsCodeKeyExpression(';'), command: 'workbench.action.showCommands', when: $when.and($when.not($when.is('editorIsOpen')), $when.not($when.is('inputFocus'))), description: Description('Command palette') })
+// ── Welcome / empty-workbench leader chords (mirror vim leader) ──────────
+// vscode-neovim attaches to text editors; without one there is no vim mode
+// and no leader, so these route the same chords to VS Code commands.
+// Gate: `inWelcome || !editorIsOpen`. The Welcome page IS an editor pane, so
+// `editorIsOpen` (visibleEditorPanes.length > 0) is true there and
+// `!editorIsOpen` alone never fired on it; `!editorIsOpen` still covers the
+// fully empty workbench.
+const welcomeOrEmpty = $when.and(
+  $when.or($when.is('inWelcome'), $when.not($when.is('editorIsOpen'))),
+  $when.not($when.is('inputFocus')),
+)
+$.vscode.bind({ key: VsCodeKeyExpression('space k'), command: 'workbench.action.quickOpen', when: welcomeOrEmpty, description: Description('Find files') })
+$.vscode.bind({ key: VsCodeKeyExpression('space o'), command: 'workbench.action.openRecent', when: welcomeOrEmpty, description: Description('Open recent') })
+$.vscode.bind({ key: VsCodeKeyExpression('space shift+o'), command: 'projectManager.listProjects', when: welcomeOrEmpty, description: Description('Project manager') })
+$.vscode.bind({ key: VsCodeKeyExpression('space j'), command: 'workbench.action.tasks.runTask', when: welcomeOrEmpty, description: Description('Run task') })
+$.vscode.bind({ key: VsCodeKeyExpression('t e'), command: 'workbench.files.action.focusFilesExplorer', when: welcomeOrEmpty, description: Description('Focus file explorer') })
+$.vscode.bind({ key: VsCodeKeyExpression('t g'), command: 'workbench.view.scm', when: welcomeOrEmpty, description: Description('Open SCM panel') })
+$.vscode.bind({ key: VsCodeKeyExpression('t t'), command: 'workbench.action.terminal.focus', when: welcomeOrEmpty, description: Description('Focus terminal') })
+$.vscode.bind({ key: VsCodeKeyExpression('t d'), command: 'workbench.panel.markers.view.focus', when: welcomeOrEmpty, description: Description('Focus diagnostics panel') })
+$.vscode.bind({ key: VsCodeKeyExpression(';'), command: 'workbench.action.showCommands', when: welcomeOrEmpty, description: Description('Command palette') })
 
 // ── Markdown-preview command palette (ORIGINAL bug fix) ──────────────────
 // `;` in the markdown preview (webview panel OR custom-editor preview) had no
@@ -284,18 +315,29 @@ $.vscode.bind({
 })
 
 // ── Misc Zed parity ──────────────────────────────────────────────────────
-$.vscode.bind({ key: VsCodeKeyExpression('cmd+j'), command: 'editor.action.joinLines', remove: true, description: Description('Unbind cmd+j join lines') })
-$.vscode.bind({ key: VsCodeKeyExpression('shift+cmd+j'), command: 'workbench.action.search.toggleQueryDetails', remove: true, when: $when.is('searchViewletVisible'), description: Description('Unbind search toggle') })
+// joinLines' mac default is ctrl+j (not cmd+j), so the removal targets ctrl+j.
+$.vscode.bind({ key: VsCodeKeyExpression('ctrl+j'), command: 'editor.action.joinLines', remove: true, description: Description('Unbind ctrl+j join lines') })
+// No `when`: the default rule is gated on `searchViewletFocus || inSearchEditor`,
+// which doesn't imply `searchViewletVisible`, so a narrowed removal never matched.
+$.vscode.bind({ key: VsCodeKeyExpression('shift+cmd+j'), command: 'workbench.action.search.toggleQueryDetails', remove: true, description: Description('Unbind search toggle') })
 $.vscode.bind({ key: VsCodeKeyExpression('cmd+alt+shift+m'), command: 'jason.toggleProblemsVisibility', when: $when.is('editorTextFocus'), description: Description('Toggle problems visibility') })
 
 // ── Find widget close ────────────────────────────────────────────────────
+// ctrl+/ closes find from its input without moving hands; `/` stays typeable.
 $.vscode.bind({ key: VsCodeKeyExpression('ctrl+/'), command: 'closeFindWidget', when: $when.and($when.is('editorFocus'), $when.is('findWidgetVisible')), description: Description('Close find widget') })
 
 // ── Explorer delete ──────────────────────────────────────────────────────
+// jasonkuhrt.explorer-delete: both go to the system trash; `d` confirms, `D`
+// doesn't. `!inputFocus` keeps them off while renaming a file inline.
 $.vscode.bind({ key: VsCodeKeyExpression('d'), command: 'explorerDelete.confirmTrash', when: $when.and($when.is('filesExplorerFocus'), $when.not($when.is('inputFocus'))), description: Description('Trash file') })
 $.vscode.bind({ key: VsCodeKeyExpression('shift+d'), command: 'explorerDelete.forceTrash', when: $when.and($when.is('filesExplorerFocus'), $when.not($when.is('inputFocus'))), description: Description('Force trash') })
 
 // ── Explorer enter / shift+enter / r ─────────────────────────────────────
+// jasonkuhrt.utils: enter on a folder digs in (opens every dir at the
+// shallowest level that still has a closed one); shift+enter digs out (closes
+// every dir at the deepest open level); past either end the cycle resets.
+// Enter on a file opens it — `explorerResourceIsFolder` picks the target.
+// Rename moves from enter to r.
 $.vscode.bind({ key: VsCodeKeyExpression('enter'), command: 'renameFile', remove: true, when: $when.and($when.is('filesExplorerFocus'), $when.is('foldersViewVisible'), $when.not($when.is('inputFocus'))), description: Description('Unbind enter=rename') })
 $.vscode.bind({ key: VsCodeKeyExpression('enter'), command: 'jason.explorerDigIn', when: $when.and($when.is('filesExplorerFocus'), $when.not($when.is('inputFocus')), $when.is('explorerResourceIsFolder')), description: Description('Dig in') })
 $.vscode.bind({ key: VsCodeKeyExpression('enter'), command: 'list.select', when: $when.and($when.is('filesExplorerFocus'), $when.not($when.is('inputFocus')), $when.not($when.is('explorerResourceIsFolder'))), description: Description('Open file') })
@@ -305,6 +347,17 @@ $.vscode.bind({ key: VsCodeKeyExpression('r'), command: 'renameFile', when: $whe
 // ── Visual mode line duplication ─────────────────────────────────────────
 $.vscode.bind({ key: VsCodeKeyExpression('cmd+j'), command: 'editor.action.copyLinesDownAction', when: $when.and($when.is('editorTextFocus'), $when.eq('neovim.mode', 'visual')), description: Description('Copy line down (visual)') })
 $.vscode.bind({ key: VsCodeKeyExpression('cmd+k'), command: 'editor.action.copyLinesUpAction', when: $when.and($when.is('editorTextFocus'), $when.eq('neovim.mode', 'visual')), description: Description('Copy line up (visual)') })
+
+// ── Markdown: toggle source ⇄ preview ────────────────────────────────────
+// `markdown.togglePreview` is editorAssociation-aware: it reopens the file as
+// source or as the `vscode.markdown.preview.editor` custom editor (set in
+// settings.json), not a stray webview. VS Code's default is shift+cmd+v.
+$.vscode.bind({
+  key: VsCodeKeyExpression('cmd+k v'),
+  command: 'markdown.togglePreview',
+  when: $when.and($when.eq('resourceLangId', 'markdown'), $when.not($when.is('notebookEditorFocused'))),
+  description: Description('Toggle markdown source/preview'),
+})
 
 // ════════════════════════════════════════════════════════════════════════
 // NEOVIM CROSS-TARGET CHORDS — from vscode_keymaps.lua + bimodal keymaps.lua

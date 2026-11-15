@@ -119,15 +119,14 @@ const manifest = defineManifest({
 // ─────────────────── builder ─────────────────────────────────────────────
 
 // `Obsidian({ vault })` requires the vault path (the adapter emits
-// `<vault>/.obsidian/.vimrc`). Points at the iCloud "Main" vault, where the
-// existing `.vimrc` already lives.
+// `<vault>/.obsidian/.vimrc`). The vault is MeOS, `~/meos`.
 const $ = KeyBinder.create()
   .use(VsCode(manifest))
   .use(Neovim())
   .use(
     Obsidian({
       vault: Obsidian.VaultPath(
-        '~/Library/Mobile Documents/iCloud~md~obsidian/Documents/Main',
+        '~/meos',
       ),
     }),
   )
@@ -517,14 +516,38 @@ $.obsidian.bind({
 $.obsidian.bind({
   mode: 'normal',
   key: Obsidian.VimKeyExpression('J'),
-  rhs: '6gj',
-  description: Description('Move down six visual lines'),
+  rhs: '<C-d>zz',
+  description: Description('Half page down, centred (as in Zed)'),
 })
 $.obsidian.bind({
   mode: 'normal',
   key: Obsidian.VimKeyExpression('K'),
-  rhs: '6gk',
-  description: Description('Move up six visual lines'),
+  rhs: '<C-u>zz',
+  description: Description('Half page up, centred (as in Zed)'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('G'),
+  rhs: 'Gzz',
+  description: Description('Go to end, centred (as in Zed)'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('n'),
+  rhs: 'nzz',
+  description: Description('Next match, centred (as in Zed)'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('N'),
+  rhs: 'Nzz',
+  description: Description('Previous match, centred (as in Zed)'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('U'),
+  rhs: '<C-r>',
+  description: Description('Redo (as in Zed)'),
 })
 $.obsidian.bind({
   mode: 'visual',
@@ -546,6 +569,151 @@ $.obsidian.bind({
   key: Obsidian.VimKeyExpression(';'),
   command: Obsidian.CommandId('command-palette:open'),
   description: Description('Command palette'),
+})
+
+// The keys below mirror Zed's keymap (~/.config/zed/keymap.json), so the
+// same muscle memory works in both.
+
+$.obsidian.node(Obsidian.Comment(['FOLDING (Zed: z a / z o toggle, z c fold, z M fold all, z R unfold all)', '───────────────────────────────────────────────────────────────────────────────']))
+
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('za'),
+  command: Obsidian.CommandId('editor:toggle-fold'),
+  description: Description('Toggle fold'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('zo'),
+  command: Obsidian.CommandId('editor:toggle-fold'),
+  description: Description('Toggle fold'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('zc'),
+  command: Obsidian.CommandId('editor:toggle-fold'),
+  description: Description('Toggle fold (Obsidian has no fold-only command)'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('zM'),
+  command: Obsidian.CommandId('editor:fold-all'),
+  description: Description('Fold all'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('zR'),
+  command: Obsidian.CommandId('editor:unfold-all'),
+  description: Description('Unfold all'),
+})
+
+$.obsidian.node(Obsidian.Comment(['HISTORY AND NOTES (Zed: [ ] back/forward, space k finder)', '───────────────────────────────────────────────────────────────────────────────']))
+
+// Zed's [b ]b (tabs) are left out: a lone [ would then wait for a second key.
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('['),
+  command: Obsidian.CommandId('app:go-back'),
+  description: Description('Go back'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression(']'),
+  command: Obsidian.CommandId('app:go-forward'),
+  description: Description('Go forward'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('<Space>k'),
+  command: Obsidian.CommandId('switcher:open'),
+  description: Description('Quick switcher'),
+})
+
+$.obsidian.node(Obsidian.Comment(['LINKS (Zed: g d go to definition, m c p copy relative path)', '───────────────────────────────────────────────────────────────────────────────']))
+
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('gd'),
+  command: Obsidian.CommandId('editor:follow-link'),
+  description: Description('Follow link'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('mcp'),
+  command: Obsidian.CommandId('workspace:copy-path'),
+  description: Description('Copy file path'),
+})
+
+$.obsidian.node(Obsidian.Comment(['SEARCH (Zed: ? search and replace)', '───────────────────────────────────────────────────────────────────────────────']))
+
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('?'),
+  command: Obsidian.CommandId('editor:open-search-replace'),
+  description: Description('Search and replace'),
+})
+
+$.obsidian.node(Obsidian.Comment(['PANELS (Zed: t e explorer, t o outline)', '───────────────────────────────────────────────────────────────────────────────']))
+
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('te'),
+  command: Obsidian.CommandId('file-explorer:open'),
+  description: Description('File explorer'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('to'),
+  command: Obsidian.CommandId('outline:open'),
+  description: Description('Outline'),
+})
+
+$.obsidian.node(Obsidian.Comment(['PANES (Zed: space w s / a split, space w h j k l focus)', '───────────────────────────────────────────────────────────────────────────────']))
+
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('<Space>ws'),
+  command: Obsidian.CommandId('workspace:split-vertical'),
+  description: Description('Split vertically'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('<Space>wa'),
+  command: Obsidian.CommandId('workspace:split-horizontal'),
+  description: Description('Split horizontally'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('<Space>wh'),
+  command: Obsidian.CommandId('editor:focus-left'),
+  description: Description('Focus pane left'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('<Space>wl'),
+  command: Obsidian.CommandId('editor:focus-right'),
+  description: Description('Focus pane right'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('<Space>wk'),
+  command: Obsidian.CommandId('editor:focus-top'),
+  description: Description('Focus pane above'),
+})
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('<Space>wj'),
+  command: Obsidian.CommandId('editor:focus-bottom'),
+  description: Description('Focus pane below'),
+})
+
+$.obsidian.node(Obsidian.Comment(['SETTINGS (Zed: , , settings)', '───────────────────────────────────────────────────────────────────────────────']))
+
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression(',,'),
+  command: Obsidian.CommandId('app:open-settings'),
+  description: Description('Settings'),
 })
 
 $.obsidian.node(Obsidian.Comment(['INSERT MODE', '───────────────────────────────────────────────────────────────────────────────']))

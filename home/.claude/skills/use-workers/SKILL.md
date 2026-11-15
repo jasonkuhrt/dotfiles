@@ -47,6 +47,13 @@ Sol is there, it takes Terra's row, its launch lines below, `claudex` (`~/.confi
 and `~/.codex/config.toml`'s default, with its effort weighed like any
 other engine's.
 
+Terra at `max` is cheap, so a second independent run on the same brief is an
+option: comparing the two gives the lead an overlap signal. Weigh that signal
+with the other considerations. Every finding is still checked against its
+evidence, whether both runs raised it or one.
+`review-2-independent-terra-max` owns the launch and reconciliation for a
+paired review.
+
 | Engine | Useful strengths                                                  | Quota and handoff cost                                           | Route                                                             |
 | ------ | ----------------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------- |
 | Jev    | Typed judgments over supplied evidence                            | TypeSafe quota; supplied state, no conversation                  | `typesafe` (`typesafe-ai`)                                        |

@@ -398,7 +398,7 @@ A routine run needs no thread he can watch. For a run he does want to
 follow, start it in the app instead. `open
 "codex://new?path=<folder>&prompt=<instruction>"` fills a new thread's box
 without sending, and he presses Return (MeOS's decision note
-`~/me/MeOS/Decisions/Events, tasks and routines.md`, seen 2026-11-10). A
+`~/meos/MeOS/Decisions/Events, tasks and routines.md`, seen 2026-11-10). A
 Codex automation is made the same way: only a thread the app runs can
 create one.
 

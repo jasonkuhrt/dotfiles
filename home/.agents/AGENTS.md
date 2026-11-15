@@ -285,12 +285,12 @@ Do not use a terminal-workspace manager for agent work.
 - A session started for Heartbeat's work starts in a Heartbeat folder: by default from a session already in one, and through `start_session`'s `cwd` from anywhere else.
 - A session that finds itself outside Heartbeat while doing Heartbeat's work moves at once with `change_directory`. A Bash `cd` loads nothing, and the move takes effect only when the turn ends, so until then the session reads each Heartbeat skill it needs from `~/projects/heartbeat-chat/Heartbeat/.claude/skills/<name>/SKILL.md`.
 - What an agent writes into Heartbeat (a Linear issue or comment, a PR, a commit, a file in its repo) reveals no private MeOS context: none of its paths, notes, skills or vault names, and none of my personal matters or the private research a piece of work grew out of. Describe transferred tools and ideas independently, without revealing their private origin.
-  - Bad: a Heartbeat issue for a literature-search command that cites `~/me/Wiki/Scientific literature/…`, the `meos-research` skill and the school research it came from.
+  - Bad: a Heartbeat issue for a literature-search command that cites `~/meos/Wiki/Scientific literature/…`, the `meos-research` skill and the school research it came from.
   - Good: a Heartbeat issue that frames the command as research runs needing scholarly evidence, uses neutral example topics, and cites upstream tools at pinned commits.
 
 ## Personal credentials
 
-Credentials live only in 1Password: MeOS is my default vault; Roman Shared holds Roman's school credentials maintained by me, Roman and agents. Roman's own Private vault is unshared. An agent in any folder follows the "Credentials" section of `~/me/AGENTS.md`: it reads the canonical item in its owning vault with `meos-op`, never from the Keychain, a note or a file. Preserve unattended agent access when moving an item.
+Credentials live only in 1Password: MeOS is my default vault; Roman Shared holds Roman's school credentials maintained by me, Roman and agents. Roman's own Private vault is unshared. An agent in any folder follows the "Credentials" section of `~/meos/AGENTS.md`: it reads the canonical item in its owning vault with `meos-op`, never from the Keychain, a note or a file. Preserve unattended agent access when moving an item.
 
 - Bad: reading a site's password with `security find-generic-password`.
 - Good: `meos-op read "op://MeOS/<item>/password"`. `meos-op` is `op` signed in with the agent token from the Keychain item `op-service-account:meos`, the one credential the Keychain keeps for agents.
@@ -305,7 +305,7 @@ Credentials live only in 1Password: MeOS is my default vault; Roman Shared holds
   - Bad: a reply that reports an `AGENTS.md` rule written and adds that the edit isn't committed, or that it's committed but not pushed.
   - Good: `git -C ~/projects/jasonkuhrt/dotfiles commit -m "…" -- home/.agents/AGENTS.md`, then `git -C ~/projects/jasonkuhrt/dotfiles push`, then a reply that names the commit.
   - When the push is rejected because `origin` moved, say so in the reply. Never stash, reset or rebase over another session's uncommitted edits to make it go through.
-- In MeOS's repositories (`~/me` and the repositories under `~/projects/jasonkuhrt` it runs), work lands on the default branch and is pushed. A branch or worktree exists only while a worker builds in it: once the lead has checked the work, it is merged into the default branch and pushed, and the branch and worktree are deleted in the same turn. Review and fixes happen on the default branch, never on a branch kept for them.
+- In MeOS's repositories (`~/meos` and the repositories under `~/projects/jasonkuhrt` it runs), work lands on the default branch and is pushed. A branch or worktree exists only while a worker builds in it: once the lead has checked the work, it is merged into the default branch and pushed, and the branch and worktree are deleted in the same turn. Review and fixes happen on the default branch, never on a branch kept for them.
   - Bad: `tsrs` and `reading-list` kept as branches in `~/projects/jasonkuhrt/bookmarks` while Sol reviewed them.
   - Good: both fast-forwarded into `main` and pushed, their worktrees removed, and the review's fixes committed on `main`.
   - Going live is a separate step from landing. Where a daemon runs from the checkout, stop it before landing and restart it once the live switch is done.
@@ -375,7 +375,7 @@ Shell output passes through rtk, which condenses it before you read it. Treat a 
 
 - Type checks and type-aware lint run on tsrs, in every project on this machine, never on `tsc`, `tsgo` or `oxlint-tsgolint`. A project depends on `tsrs`, not `typescript`; tsrs's `tsrs/sync`, `tsrs/async` and `tsrs/ast` exports cover the compiler API, and its `tsrs-lint` is the backend oxlint picks for type-aware rules. An Effect project runs Effect's build, swapped in by `effect-tsgo patch --typescript=false --tsrs`.
   - Bad: `"check:types": "tsc --noEmit"`, with `typescript` and `oxlint-tsgolint` in devDependencies.
-  - Good: `"check:types": "tsrs --noEmit --fast"`, with `tsrs` installed and `oxlint --type-aware` running on `tsrs-lint`, as every MeOS workspace package does (`~/me/.machinery/code/config`).
+  - Good: `"check:types": "tsrs --noEmit --fast"`, with `tsrs` installed and `oxlint --type-aware` running on `tsrs-lint`, as every MeOS workspace package does (`~/meos/.machinery/code/config`).
 
 ## Browser work
 

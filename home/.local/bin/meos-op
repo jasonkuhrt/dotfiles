@@ -5,7 +5,7 @@
 #   meos-op read "op://MeOS/<item>/<field>"
 #   meos-op item get <item> --vault MeOS --otp
 # The token lives in the Keychain item op-service-account:meos (see the
-# meos-credentials skill in ~/me).
+# meos-credentials skill in ~/meos).
 
 set -euo pipefail
 

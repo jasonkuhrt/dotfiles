@@ -47,7 +47,7 @@ generic discovery behavior.
    recording sound, energy/dynamics, continuity, and functional effect. Use the
    user's language and listening history as evidence. State uncertainty rather
    than filling it with genre assumptions.
-3. **Check durable context.** Search `~/me/music/` and `dj session-search` for the
+3. **Check durable context.** Search `~/meos/music/` and `dj session-search` for the
    reference, previous candidates, acceptances, and rejection reasons before
    generating more.
 4. **Generate narrowly, then verify.** Reason to a small candidate set first;

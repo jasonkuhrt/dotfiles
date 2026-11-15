@@ -45,7 +45,7 @@ rq_login_started_at="$(date +%s)"
 6. For document download tasks, check whether mail indicates a portal download is needed:
 
 ```sh
-/Users/jasonkuhrt/projects/jasonkuhrt/rq/gov rq documents needs-download --output-dir /Users/jasonkuhrt/me/data/sources/gov-provincial/rq-documents/inbox --mail-client msgvault
+/Users/jasonkuhrt/projects/jasonkuhrt/rq/gov rq documents needs-download --output-dir /Users/jasonkuhrt/meos/data/sources/gov-provincial/rq-documents/inbox --mail-client msgvault
 ```
 
 Use `--refresh-mail` when the decision needs the freshest possible local archive before checking.
@@ -53,21 +53,21 @@ Use `--refresh-mail` when the decision needs the freshest possible local archive
 7. Continue the requested RQ task through the CLI when needed, for example:
 
 ```sh
-/Users/jasonkuhrt/projects/jasonkuhrt/rq/gov rq documents download-all --output-dir /Users/jasonkuhrt/me/data/sources/gov-provincial/rq-documents/inbox
+/Users/jasonkuhrt/projects/jasonkuhrt/rq/gov rq documents download-all --output-dir /Users/jasonkuhrt/meos/data/sources/gov-provincial/rq-documents/inbox
 ```
 
 `download-all` writes PDFs, `manifest.json`, and sibling parsed JSON files. To
 re-parse already-downloaded PDFs without touching the portal:
 
 ```sh
-/Users/jasonkuhrt/projects/jasonkuhrt/rq/gov rq documents parse --input-dir /Users/jasonkuhrt/me/data/sources/gov-provincial/rq-documents/inbox
+/Users/jasonkuhrt/projects/jasonkuhrt/rq/gov rq documents parse --input-dir /Users/jasonkuhrt/meos/data/sources/gov-provincial/rq-documents/inbox
 ```
 
 For the `me` repo source-type flow, use:
 
 ```sh
-bun /Users/jasonkuhrt/me/data/sources/rq-documents/syncer.ts
-bun /Users/jasonkuhrt/me/data/sources/rq-documents/parser.ts
+bun /Users/jasonkuhrt/meos/data/sources/rq-documents/syncer.ts
+bun /Users/jasonkuhrt/meos/data/sources/rq-documents/parser.ts
 ```
 
 ## Mail Cleanup

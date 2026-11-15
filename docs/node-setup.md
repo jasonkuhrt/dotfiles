@@ -44,14 +44,14 @@ Run the machine-level workflows through their existing root recipes:
 
 | Tool | Recipe |
 | --- | --- |
-| Vite+ | `just --justfile ~/me/justfile tooling-vite-upgrade` |
-| Managed Node LTS | `just --justfile ~/me/justfile tooling-node-lts` |
-| Managed npm/npx | `just --justfile ~/me/justfile tooling-npm-upgrade` |
+| Vite+ | `just --justfile ~/meos/justfile tooling-vite-upgrade` |
+| Managed Node LTS | `just --justfile ~/meos/justfile tooling-node-lts` |
+| Managed npm/npx | `just --justfile ~/meos/justfile tooling-npm-upgrade` |
 | Standalone pnpm | `just tooling-pnpm-upgrade` |
 | Global npm tools | `just tooling-npm-globals-upgrade PACKAGE@VERSION ...` |
 
 Use the project's package-manager workflow to update its dependencies and
-lockfile. Projects in the `~/me` Bun workspace install from `~/me`, so workspace
+lockfile. Projects in the `~/meos` Bun workspace install from `~/meos`, so workspace
 packages share one physical copy of Effect.
 
 ## Project-Specific Versions

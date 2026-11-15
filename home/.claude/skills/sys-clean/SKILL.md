@@ -15,7 +15,7 @@ MeOS runs `meos-sys-clean` at 04:30 every day (launchd
 `com.jasonkuhrt.meos-sys-clean`), and every hour while the disk has under
 50 GB free (`com.jasonkuhrt.meos-sys-clean-short`, `run --when-short`): on
 2026-11-08 Go's cache grew from nothing to 77 GB between one morning's run and
-midnight. Code in `~/me/.machinery/code/lib/sys-clean/`. Its
+midnight. Code in `~/meos/.machinery/code/lib/sys-clean/`. Its
 policy lives in that code's `POLICY`; each step takes back only what its owner
 can rebuild or has already preserved:
 
@@ -29,7 +29,7 @@ can rebuild or has already preserved:
 | Homebrew | `brew cleanup --prune=7` | |
 | Trash | deletes what was trashed more than 7 days ago (moving into the Trash sets an item's ctime) | an item another user owns, such as an app installer's files: it needs `sudo` |
 
-- Run it now: `just sys-clean` in `~/me`. One run at a time; a second fails at once.
+- Run it now: `just sys-clean` in `~/meos`. One run at a time; a second fails at once.
 - Log: `~/Library/Logs/meos-sys-clean/run.log`, one line per step with what it freed.
 - A failed step files a beads task under the MeOS area (`--external-ref sys-clean:<step>`). A git-cleanup repair is resumed through the `git-cleanup` skill, with the journal the task names.
 
@@ -117,7 +117,7 @@ The order matters: processes hold worktrees open, so they go first.
    worktree for recent file changes. Never touch a worktree with a running
    session. Send `kill` (TERM) first, and `kill -9` only to processes still
    alive after 10 seconds.
-2. **The daily disk clean, now:** `just sys-clean` in `~/me`. Its policy is
+2. **The daily disk clean, now:** `just sys-clean` in `~/meos`. Its policy is
    standing; it needs no OK.
 3. **Empty the Trash**, all of it, when disk is short: `find ~/.Trash
    -mindepth 1 -maxdepth 1 -exec rm -rf {} +`. The daily clean only deletes
@@ -128,7 +128,7 @@ The order matters: processes hold worktrees open, so they go first.
    - A worktrees step it skipped because the primary checkout is in use:
      the `git-cleanup` skill by hand, once that session is done.
    - A reference head the daily clean couldn't save or remove (its log says
-     `failed:`): fix the step in `~/me/code/lib/sys-clean/` and run it
+     `failed:`): fix the step in `~/meos/code/lib/sys-clean/` and run it
      again. Never leave a head that could be saved and removed, and never
      defer one because disk isn't short.
    - Other repositories with many worktrees: the `git-cleanup` skill.

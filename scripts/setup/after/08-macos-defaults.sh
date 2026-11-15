@@ -15,7 +15,7 @@ DUTI_SYNC="$DOTFILES_ROOT/home/.local/bin/duti-sync"
 header "macOS Defaults"
 
 info "Configuring appearance..."
-set_default "NSGlobalDomain" "AppleInterfaceStyleSwitchesAutomatically" "-bool" "0" "Appearance not automatic"
+set_default "NSGlobalDomain" "AppleInterfaceStyleSwitchesAutomatically" "-bool" "false" "Appearance not automatic"
 set_default "NSGlobalDomain" "AppleInterfaceStyle" "-string" "Dark" "Dark mode always"
 # The defaults above hold across logins; this applies dark mode to the running session.
 osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to true' \

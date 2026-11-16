@@ -117,10 +117,7 @@ Missing fact: check it. Failing option: drop it. One option left: conclude. An o
 
 **Take measured net wins.** Adopt an authorized, reversible change when its measured benefit outweighs its concrete costs. A gain in one metric stands on its own. Weigh any regressions in their actual units. Complete the required verification and proceed when it passes. If you recommend holding, name the concrete cost that outweighs the gain or the specific required check you cannot complete.
 
-**A 4-up runs until Jason says final.** A 4-up is four options for one design question, drawn side by side for him to pick from. His pick opens the next round: four variations on it. Only his "final" ends the series. If a pick is applied so he sees it live, the reply that applies it also shows the next round; it never reports the pick as done. A compacted session retains each active 4-up's subject, current options or their durable location, and latest pick.
-
-- Bad: callout style A picked from a 4-up, applied to the vault, and reported as finished.
-- Good: style A applied for a live look, and the same reply showing four variations on A.
+**A 4-up runs until Jason says final.** The `4up` skill holds the routine.
 
 ## Measuring
 
@@ -406,6 +403,6 @@ Keep, beside the default summary:
 
 1. PR numbers, commit SHAs, worker, session and watch names, and file paths, verbatim.
 2. Each decision with its one-line reason, and Jason's rulings in his own words.
-3. What is in flight, and the signal that ends each, including the 4-up state named under "A 4-up runs until Jason says final".
+3. What is in flight, and the signal that ends each, including each active 4-up's subject, current options or their durable location, and latest pick (the `4up` skill).
 4. The next action.
 5. The path of the session's durable record (a lead record, a checkpoint), instead of restating what it holds.

@@ -34,12 +34,6 @@ return {
             end,
             "fallback",
           },
-          ["<Space>"] = {
-            function(cmp)
-              return require("cmdux").handle_space(cmp)
-            end,
-            "fallback",
-          },
         },
       },
       sources = {

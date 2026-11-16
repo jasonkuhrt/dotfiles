@@ -11,7 +11,7 @@ Multiple tools can drive macOS GUIs from a Claude Code session. They are NOT int
 
 1. **Dedicated MCP for the concern** (Linear, Gmail, Splitwise, msgvault archive search, etc.) — API-backed, structured, fast.
 2. **Bash + scriptable APIs** — `security`, `osascript`, `gh`, `td`, `remindctl`, `CheICalMCP` (Apple Calendar), `oathtool`, etc. Anything CLI-driveable beats anything GUI-driveable.
-3. **`browse`** — for web pages, in Jason's own Chrome through the browse extension: the `browse` CLI (`browse execute --session <name> '<Playwright>'`) or its MCP server. It shares his Chrome's sign-ins; `browse skill` prints its playbook. DOM-aware, ~100× cheaper than pixel clicks. **claude-in-chrome** comes second, only when browse is unavailable or a sign-in needs 1Password autofill (`request_credentials`), which only claude-in-chrome has.
+3. **`browse`** — for web pages, in Jason's own Chrome through the browse extension: the `browse` CLI (`browse execute --session <name> '<Playwright>'`) or its MCP server. It shares his Chrome's sign-ins; `browse --help` lists its commands. DOM-aware, ~100× cheaper than pixel clicks. **claude-in-chrome** comes second, only when browse is unavailable or a sign-in needs 1Password autofill (`request_credentials`), which only claude-in-chrome has.
 4. **AX-first native MCP** — `peekaboo` for AppKit apps with rich AX trees. Apps with an AppleScript dictionary (Mail, Finder, Music, Photos) go through `osascript` at tier 2.
 5. **Bundled `computer-use` MCP** — pixel + CGEvent, last resort. Every action burns a screenshot (~3-5k tokens).
 

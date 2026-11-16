@@ -391,7 +391,7 @@ Shell output passes through rtk, which condenses it before you read it. Treat a 
   - Bad: opening Amp in Chrome to find the Factory space and post a report.
   - Good: finding Factory with `amp threads search`, sending the report with `amp threads continue`, and verifying delivery with `amp threads export`.
 
-- Browser work in Jason's Chrome goes through `browse` first: the `browse` CLI (`browse execute --session <name> '<Playwright>'`) or its MCP server. It drives his own Chrome, signed in where he is; `browse status` checks the connection and `browse skill` prints its playbook. Claude in Chrome comes second, only when browse is unavailable or a sign-in needs 1Password autofill (`request_credentials`).
+- Browser work in Jason's Chrome goes through `browse` first: the `browse` CLI (`browse execute --session <name> '<Playwright>'`) or its MCP server. It drives his own Chrome, signed in where he is; `browse status` checks the connection and `browse --help` lists its commands. Claude in Chrome comes second, only when browse is unavailable or a sign-in needs 1Password autofill (`request_credentials`).
   - Bad: `navigate` through Claude in Chrome, "not connected", then a reply asking Jason to reinstall the extension.
   - Good: `browse status` shows the extension connected, and `browse execute --session miniflux` opens and reads the page.
 

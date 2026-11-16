@@ -27,7 +27,9 @@ Conductor lead launches the pair by `use-workers`' route instead.
    `bash ~/.claude/skills/review-2-independent-terra-max/run.sh <brief> <dir>`.
    Both runs start in `<dir>` with full access selected explicitly (the
    global rules), told to change no file, spawn no sub-agent and read no
-   other reviewer's work, with Codex's own sub-agents switched off, and write
+   work by the other reviewer in the same review round, including work
+   produced in an earlier attempt, with Codex's own sub-agents switched off,
+   and write
    to a fresh `terra-<timestamp>/` folder beside the brief. A run Codex
    reroutes is stopped. A run counts only when its Codex session record shows
    `gpt-6.1-terra` at `max` and full access selected with sub-agents off, its

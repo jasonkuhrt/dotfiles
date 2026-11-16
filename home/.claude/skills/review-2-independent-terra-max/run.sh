@@ -42,7 +42,7 @@ for n in $runs; do
     -c "model=\"$model\"" -c "model_reasoning_effort=\"$effort\"" \
     -c 'features.multi_agent_v2=false' -c 'agents.enabled=false' \
     -o "$out/terra-$n.md" \
-    "Read the review brief at $brief and follow it. You are one of two reviewers working independently: change no file, spawn no sub-agent, and never read another reviewer's report, event log or session record, or anything in any terra-* folder beside the brief." \
+    "Read the review brief at $brief and follow it. You are one of two reviewers for this review round: change no file and spawn no sub-agent. Do not read the other reviewer's report, event log, session record, or other work from this round, wherever it is stored, including work produced by a retained reviewer in an earlier attempt of the same round. The reports and event logs for this attempt are in $out. Reports from earlier rounds named in the brief may be read. When the brief asks you to read them, do so even if it also generally prohibits reading another reviewer's report." \
     </dev/null >"$out/terra-$n.jsonl" 2>"$out/terra-$n.err" &
   pids+=($!)
 done

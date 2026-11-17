@@ -53,6 +53,9 @@ return {
       sources = {
         providers = {
           cmdline = {
+            max_items = function(context, items)
+              return require("cmdux.adapters.blink").max_items(context, items)
+            end,
             override = {
               get_completions = function(source, context, callback)
                 return require("cmdux.adapters.blink").get_completions(source, context, callback)

@@ -12,8 +12,17 @@ side by side. Give each option a label Jason can pick.
 Use the context and content that make the choice clear.
 Render the options in the conversation when the host
 supports it, following its visualization guidance.
-Pick buttons can send a choice to the chat when supported;
-a typed label works too.
+Pick buttons can send a choice to the chat when supported.
+Each pick button shows only its short option label, such as
+A. A caption, if present, does not repeat that label. When
+the host supports it, provide a button or checkbox to mark
+a pick final, so the pick sends its label and "final"
+together. A typed label, with "final" when desired, works too.
+
+- Bad: "Pick A ↗" wraps, its caption repeats "A", and a
+  final pick requires typing.
+- Good: "A" labels the button, its caption omits "A", and
+  a final checkbox lets the pick include "final".
 
 A pick without "final" starts the next round: four
 variations on the choice, incorporating his requested

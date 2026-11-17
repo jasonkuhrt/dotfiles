@@ -33,6 +33,7 @@ return {
         },
       },
       cmdline = {
+        completion = { list = { selection = { auto_insert = false } } },
         keymap = {
           ["<C-j>"] = { "select_next", "fallback" },
           ["<C-k>"] = { "select_prev", "fallback" },

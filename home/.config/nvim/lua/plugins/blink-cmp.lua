@@ -3,7 +3,12 @@ local function is_blocked_command(name)
 end
 
 local function is_cmdux_command()
-  return vim.fn.getcmdtype() == ":" and require("cmdux.adapters.ex").is_owned_completion_line(vim.fn.getcmdline())
+  return vim.fn.getcmdtype() == ":"
+    and require("cmdux.adapters.ex").is_owned_completion_line(
+      vim.fn.getcmdline(),
+      vim.fn.getcmdpos() - 1,
+      vim.fn.getcmdcompltype()
+    )
 end
 
 return {
@@ -48,12 +53,13 @@ return {
       sources = {
         providers = {
           cmdline = {
+            override = {
+              get_completions = function(source, context, callback)
+                return require("cmdux.adapters.blink").get_completions(source, context, callback)
+              end,
+            },
             transform_items = function(_, items)
-              if is_cmdux_command() then
-                for index, item in ipairs(items) do
-                  item.sortText = ("%010d"):format(index)
-                end
-              elseif vim.fn.getcmdtype() == ":" and vim.fn.getcmdcompltype() == "command" then
+              if vim.fn.getcmdtype() == ":" and vim.fn.getcmdcompltype() == "command" then
                 items = vim.tbl_filter(function(item)
                   return not is_blocked_command(item.label)
                 end, items)

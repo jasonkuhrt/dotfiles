@@ -137,14 +137,14 @@ Every code block in a reply follows the `code-in-replies` skill: load it before 
 
 ## Merging my PRs
 
-- A PR in my own repos is merged without asking when it is simple, QA'd (checks green, its independent review and bot threads addressed), unlikely to be rejected, and easy to change with a follow-up PR. The reply says it merges and how to stop it.
+- A PR in my own repos is merged without asking when it is simple, QA'd (checks green, its independent review and bot threads addressed), and unlikely to be rejected. The reply says it merges and how to stop it.
   - Not green yet: turn on auto-merge as it goes ready (`gh pr merge --auto --squash`), and the reply says "<the change, named by what it does> merges when green unless you say no".
   - Already green: merge it in the same turn and report the merge commit.
-- Still put to me first: a design neither I nor the design panel has approved, a change a follow-up PR can't undo (a schema migration, a production deploy, deleted data), and a PR someone else owns.
+- Still put to me first: a design neither I nor the design panel has approved, and a PR someone else owns.
   - The design panel is Fable 5.2 and Astra; this rule is my naming of Astra for it. Each gets the proposed change, the outcome it serves and my requirements. Launch Fable through `fable-review` from Codex and `use-workers` elsewhere; launch Astra through `use-workers`. Verify their run model ids as `claude-fable-5-2` and `gpt-6-astra`, respectively ("Workflow Rules"). Their findings are addressed, and the design goes back to them until they agree enough to unblock the work.
-  - A design comes to me only when a real tension between them remains that evidence can't settle, as a question that passes "Before a question to Jason", and never before the panel has run. The panel's approval authorizes no change a follow-up PR can't undo and no merge of someone else's PR.
+  - A design comes to me only when a real tension between them remains that evidence can't settle, as a question that passes "Before a question to Jason", and never before the panel has run. The panel's approval authorizes no merge of someone else's PR.
   - Bad: a green PR built on the agent's own reading of what I asked, held with "Merge it once CI is green?" because I hadn't approved its design. Good: that design put to Fable 5.2 and Astra, and the PR merged once they agreed, with the reply naming their approval.
-- A loop campaign I start or schedule is my approval of the designs inside its scope. Its PRs land under that repository's `loop` contract, which holds only what a follow-up PR can't undo, with no PR waiting on me.
+- A loop campaign I start or schedule is my approval of the designs inside its scope. Its PRs land under that repository's `loop` contract.
 - Bad: a green, reviewed PR with its measurements in hand, then "Say the word and I'll merge it". Good: "[Pinning Conductor's Playwright browsers](https://github.com/heartbeat-chat/Heartbeat/pull/3164) merges when green unless you say no", with auto-merge on.
 
 ## Linear issue templates

@@ -1,6 +1,6 @@
 ---
 name: show-me
-description: 'Use before writing a reply that would run past a few short paragraphs or a long list — an audit, review, findings report, plan, comparison, status roll-up, or a walkthrough of an architecture, a diff or a data flow — and whenever the user signals overload or confusion ("I''m confused", "what is X even", "too long", "tl;dr", "fewer words", "show me", "visually", "diagram"). Use for abstraction and library API design discussions, even when the answer is short. Also use when the material has a shape prose flattens: before and after, many items each with a state, flows, hierarchies, ownership, dependencies, or options weighed against criteria.'
+description: 'Use for long replies, user confusion, abstraction design, or choices that turn on how options look, read, are written or behave. Use before writing a reply that would run past a few short paragraphs or a long list — an audit, review, findings report, plan, comparison, status roll-up, or a walkthrough of an architecture, a diff or a data flow — and whenever the user signals overload or confusion ("I''m confused", "what is X even", "too long", "tl;dr", "fewer words", "show me", "visually", "diagram"). Use for abstraction and library API design discussions, even when the answer is short. Also use when the material has a shape prose flattens: before and after, many items each with a state, flows, hierarchies, ownership, dependencies, or options weighed against criteria. Also use before putting such a choice to the user, in a question dialog, a closing question or a question in a reply.'
 ---
 
 # Show me
@@ -8,6 +8,13 @@ description: 'Use before writing a reply that would run past a few short paragra
 Answer with a picture the user reads at a glance. Words become labels; the layout carries what sentences would have said.
 
 Choose the simplest format that makes the answer clear. A custom artifact can be worth creating for one question; optimize it for the user's understanding and ability to judge the result.
+
+## Choices
+
+Apply the “Shown” test in the global “Before a question to Jason” rule.
+
+- Bad: two diagram styles put as prose ("B adds faint frames and per-row bars"), and a question-dialog preview holding `[image: page → cell → tables]` where the image belonged.
+- Good: both styles rendered side by side on a local preview page, then the question.
 
 ## Resolution layers
 

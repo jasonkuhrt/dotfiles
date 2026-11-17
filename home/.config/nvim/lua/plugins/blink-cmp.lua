@@ -1,13 +1,12 @@
-local function is_blocked_command(name)
-  return require("cmdux.blocklist").is_blocked(name)
-end
-
 local function is_cmdux_command()
   return vim.fn.getcmdtype() == ":"
-    and require("cmdux.adapters.ex").is_owned_completion_line(
-      vim.fn.getcmdline(),
-      vim.fn.getcmdpos() - 1,
-      vim.fn.getcmdcompltype()
+    and (
+      vim.fn.getcmdcompltype() == "command"
+      or require("cmdux.adapters.ex").is_owned_completion_line(
+        vim.fn.getcmdline(),
+        vim.fn.getcmdpos() - 1,
+        vim.fn.getcmdcompltype()
+      )
     )
 end
 
@@ -25,6 +24,7 @@ return {
         ["<C-k>"] = { "select_prev", "fallback" },
       },
       completion = {
+        list = { max_items = 10000 },
         menu = {
           border = "rounded",
           auto_show = function()
@@ -53,22 +53,14 @@ return {
       sources = {
         providers = {
           cmdline = {
-            max_items = function(context, items)
-              return require("cmdux.adapters.blink").max_items(context, items)
-            end,
             override = {
               get_completions = function(source, context, callback)
                 return require("cmdux.adapters.blink").get_completions(source, context, callback)
               end,
+              execute = function(source, context, item, callback, default_implementation)
+                return require("cmdux.adapters.blink").execute(source, context, item, callback, default_implementation)
+              end,
             },
-            transform_items = function(_, items)
-              if vim.fn.getcmdtype() == ":" and vim.fn.getcmdcompltype() == "command" then
-                items = vim.tbl_filter(function(item)
-                  return not is_blocked_command(item.label)
-                end, items)
-              end
-              return items
-            end,
           },
         },
       },

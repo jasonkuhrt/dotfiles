@@ -6,7 +6,7 @@ description: >-
   invoking /use-workers or asking for workers without naming a model, or
   considering a handoff. Jason invoking it means the work goes to workers and
   the lead keeps its tokens for briefs, steering and checking. Pick
-  between the default engines (Opus at high, Terra at max) and the run count,
+  between the global defaults for Opus and the OpenAI worker and pick the run count,
   and explain why in one line; another engine or effort comes from a rule, a
   skill or Jason indicating it.
 ---
@@ -15,7 +15,7 @@ description: >-
 
 `/use-workers`, or words asking for workers without a name, is the normal
 case: weigh the considerations, pick between the global rules' default
-engines (Opus at `high`, Terra at `max`) and the number of runs, and say the
+engines and the number of runs, and say the
 pick in one line. A name is the rare override.
 
 Jason invoking it has already decided that workers do the work: the lead
@@ -27,47 +27,36 @@ own.
 
 - Bad: `/use-workers` on a sweep, and the lead reads the files itself
   because one deep run in the lead looked cheapest.
-- Good: the same sweep handed to one deep Terra run, with the lead writing
+- Good: the same sweep handed to one deep OpenAI run, with the lead writing
   the brief and checking what comes back.
 
 Choose in the context you hold.
 The considerations below help cover the decision; they are not a routing
 tree.
 State the pick and the considerations that decided it in one line.
-The choice is between the global rules' defaults, Opus at `high` and Terra at
-`max`. Another engine or effort is used only when another rule or a skill
+Another engine or effort is used only when another rule or a skill
 indicates it for that work, or Jason does in the chat.
 
 The routing hard lines are Jason's explicit ones: the default above; use a
 worker he names; Astra runs only when he names it. A rule that gets in the way of good
 judgment is named to him.
 
-A subagent uses `high` with Opus and `max` with Terra unless a rule, a skill
-or Jason indicates a different effort. Another engine takes the indicated
-effort, or else the effort the work needs. Terra is the OpenAI worker until Codex's model list
-holds a Sol newer than `gpt-6.1-sol`. When choosing it, run `codex debug models`.
-Its list counts when `~/.codex/models_cache.json`'s `fetched_at` is under five
-minutes old (Codex 0.167.0's cache lifetime) and that file's model ids match
-the command's output; otherwise whether a newer Sol exists is unknown. Once a newer
-Sol is there, it takes the OpenAI worker role for work another rule or skill
-assigns to that worker: update that worker's launch lines, the `claudex` lead
-model (`~/.config/fish/functions/claudex.fish`) and `~/.codex/config.toml`'s
-lead model, weighing its effort for those roles. The subagent default stays
-Opus at `high` or Terra at `max`, with Terra's row and launch routes and
-`claudex`'s subagent defaults, until that default is decided again.
+Read the OpenAI worker's model and effort from
+`~/.agents/openai-worker.json` before launching it. If the file can't be
+read, link it to dotfiles' `home/.agents/openai-worker.json` or report what
+blocks the launch. Launch using the configured pair. The global Workflow
+Rules give the allowed models and efforts. Compare the run's reported
+selection with the intended pair.
 
-Terra at `max` is cheap, so a second independent run on the same brief is an
-option: comparing the two gives the lead an overlap signal. Weigh that signal
-with the other considerations. Every finding is still checked against its
-evidence, whether both runs raised it or one.
-`review-2-independent-terra-max` owns the launch and reconciliation for a
-paired review.
+A second independent review can surface findings the first missed. Check
+each finding against its evidence. `review-2-independent` owns the paired
+launch and reconciliation.
 
 | Engine | Useful strengths                                                  | Quota and handoff cost                                           | Route                                                             |
 | ------ | ----------------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------- |
 | Jev    | Typed judgments over supplied evidence                            | TypeSafe quota; supplied state, no conversation                  | `typesafe` (`typesafe-ai`)                                        |
 | Sonnet | Only when indicated: fully briefed work, easy app steering        | Claude quota; fresh context and result checking                  | Claude app or Agent tool; Conductor: `claude`, `sonnet-5-5-1m`    |
-| Terra  | Fully briefed work, bulk reads, mechanical edits and reviews      | OpenAI quota, no Claude quota; fresh context and result checking | `gpt-6.1-terra` at `max`; Conductor: `codex`, `gpt-6.1-terra`     |
+| OpenAI worker | Fully briefed work, bulk reads, mechanical edits and reviews | OpenAI quota; fresh context and result checking | Configured model and effort; Conductor agent: `codex` |
 | Opus   | Chat context, taste and design; lead, inheriting fork or subagent | Claude quota; an inheriting fork can reuse context               | Lead or Claude session/Agent tool, using the available Opus model |
 | Astra  | A reasoning worker or reviewer when Jason names it                | OpenAI quota; fresh context and result checking                  | `gpt-6-astra`, only when named; Conductor: `codex`, `gpt-6-astra` |
 
@@ -81,8 +70,8 @@ assignment determines its role, not its harness.
 ## Considerations and why they matter
 
 1. **Kind of work.** Jev returns typed judgments over supplied evidence;
-   `typesafe-ai` explains its contracts. Terra and Sonnet are useful for fully
-   briefed work that needs none of the chat's context. Opus can carry the
+   `typesafe-ai` explains its contracts. The OpenAI worker and Sonnet are useful for
+   fully briefed work that needs none of the chat's context. Opus can carry the
    chat's story, taste and design. Each is good at different work at a
    different price; this is information, not a kind-to-engine mapping.
 2. **Size.** Compute tokens read and written as bytes divided by four and
@@ -106,7 +95,7 @@ assignment determines its role, not its harness.
    checking costs about as much as doing, handing off saves nothing.
 7. **Quota and its windows.** Read Claude's percent used per window and
    reset times from desktop `get_usage` when available; state unavailable
-   readings. Terra and Astra spend OpenAI quota; Jev spends TypeSafe's. Every
+   readings. The OpenAI worker and Astra spend OpenAI quota; Jev spends TypeSafe's. Every
    window resets: near a cap, that pool is best reserved for what nothing
    else can do; work nobody waits on can wait for a reset, while room near
    reset can be cheap. Compute available readings rather than guessing.
@@ -115,8 +104,8 @@ assignment determines its role, not its harness.
    deeper runs, or staying in the lead when Jason hasn't asked for workers,
    are usually worth more. Each run's overhead should be a fraction of its
    expected token cost.
-9. **Effort.** Opus and Terra keep their default effort (`high`, `max`)
-   unless a different one is indicated. For another engine indicated without
+9. **Effort.** Opus and the OpenAI worker keep their defaults unless a
+   different allowed effort is indicated. For another engine indicated without
    one, weigh the reasoning the work needs: extra effort costs more and is
    wasted on mechanical work. Pass the chosen effort where supported.
 
@@ -125,7 +114,7 @@ calculation. Such a tool is a design for Jason to approve.
 
 - Bad: similar classification work nobody was waiting on, split across
   19 Opus subagents, each rereading the same rules at 99% weekly usage.
-- Good: Jev buckets the files, one deep Terra run reads and writes the targets,
+- Good: Jev buckets the files, one deep OpenAI run reads and writes the targets,
   and the lead spends its tokens on the brief.
 
 ### Four questions about independent side work
@@ -148,11 +137,11 @@ the engine or take the decision away from the lead.
 
 For a non-fork Claude Agent call, pass the chosen `model` and `effort`:
 `model: "opus"` and `effort: "high"` for Opus at the default. An agent
-definition, a configured subagent default (`claudex` sets Terra at `max`) or
+definition, a configured subagent default (including `claudex`) or
 an environment setting can supply or override them, so check the actual
 model and effort where the harness shows them. A Claude fork runs on the
 lead's model and effort: use one when those are the chosen values, or when a
-rule or Jason asks for a fork. Terra launches by the route
+rule or Jason asks for a fork. The OpenAI worker launches by the route
 [Where you run](#where-you-run) gives.
 
 ## Examples
@@ -176,7 +165,7 @@ on a Mac, a worker on the lead's own
 harness is that harness's sub-agent, and a worker on the other harness runs
 as that harness's CLI in a subprocess:
 
-| Where the lead runs                                  | `sonnet`                        | `astra`, `terra`         |
+| Where the lead runs                                  | `sonnet`                        | `astra`, `openai-worker`         |
 | ---------------------------------------------------- | ------------------------------- | ------------------------ |
 | A Conductor cloud workspace (`CONDUCTOR_IS_LOCAL=0`) | a Conductor session             | a Conductor session      |
 | The Claude desktop app, as a Claude lead             | an app session: `start_session` | subprocess: `codex exec` |
@@ -244,8 +233,8 @@ can steer it there.
    ```
 
    The agent and model come from the table; use an indicated effort.
-   Otherwise use `max` for Terra, `high` for Opus, and weigh the effort for
-   another engine.
+   Otherwise use the selected engine's default effort. Weigh effort for
+   an engine without a roster default.
    The result
    holds the session's `id` and its `deepLink`; give the user the link with
    the one line on what the worker is doing. Without the `conductor` CLI,
@@ -289,9 +278,10 @@ report: a Conductor session has no read-only switch.
 
 ## Launching from a Codex lead on a Mac
 
-- **`astra`, `terra`:** Codex's `spawn_agent`, with
+- **`astra`, `openai-worker`:** Codex's `spawn_agent`, with
   its model override set to the worker's model, its effort where the tool
-  takes one (the indicated effort, otherwise `max` for Terra and the weighed effort for Astra), and `fork_turns: "none"`, since the brief carries what it
+  takes one (the indicated effort, otherwise the OpenAI worker's configured
+  effort or the weighed effort for Astra), and `fork_turns: "none"`, since the brief carries what it
   needs. When the work needs the chat's context, a full-history fork
   (`fork_turns: "all"`) is an option; set the chosen model and effort in the
   spawn where the tool exposes those overrides. Its final answer comes back to you when it finishes; correct it with
@@ -365,7 +355,7 @@ report: a Conductor session has no read-only switch.
 - To correct a run, send it the correction with `SendMessage`. It keeps its
   context.
 
-## Launching `astra` and `terra` with `codex exec`
+## Launching `astra` and `openai-worker` with `codex exec`
 
 A Claude lead on a Mac launches them this way, and so does a Codex lead whose
 `spawn_agent` can't take the model.
@@ -373,17 +363,19 @@ A Claude lead on a Mac launches them this way, and so does a Codex lead whose
 ```sh
 codex exec -C <dir> --skip-git-repo-check --sandbox danger-full-access \
   -c 'model="<model>"' -c 'model_reasoning_effort="<effort>"' \
-  -c 'agents.default_subagent_model="gpt-6.1-terra"' \
-  -c 'agents.default_subagent_reasoning_effort="max"' \
+  -c "agents.default_subagent_model=\"$worker_model\"" \
+  -c "agents.default_subagent_reasoning_effort=\"$worker_effort\"" \
   -o <scratchpad>/<name>-<slug>.txt \
   "<prompt, or the brief's path>" \
   < /dev/null > <scratchpad>/<name>-<slug>.log 2>&1
 ```
 
-`<model>` is `gpt-6-astra` for `astra` and `gpt-6.1-terra` for `terra`; `<name>` is
-the worker's name. Use the indicated `<effort>` if given; otherwise use `max`
-for `terra` and weigh it for `astra`. The two `agents.default_subagent_*` flags give the
-run's own subagents the Terra-at-`max` default, whatever the run's model.
+Read `worker_model` and `worker_effort` from `~/.agents/openai-worker.json`.
+Use those values for `<model>` and `<effort>` when launching `openai-worker`,
+with an allowed effort override when indicated. For `astra`, use
+`gpt-6-astra` and the indicated or weighed effort. `<name>` is the worker's
+name. The two `agents.default_subagent_*` flags use the configured OpenAI
+worker for Codex subagents whose launch omits a model and effort.
 
 - Run it in the background (`run_in_background: true`) and keep working; the
   completion notice brings you back.
@@ -395,8 +387,8 @@ run's own subagents the Terra-at-`max` default, whatever the run's model.
     at once with "Not inside a trusted directory", and the lead relaunched
     it from another directory by hand.
   - Good: the same `-C`, with the flag, starting on the first try.
-- Name the model and effort on every command. `~/.codex/config.toml` sets
-  another default model.
+- Name the model and effort on every command so the launch is independent
+  of project and user config defaults.
 - The two `agents.default_subagent_*` flags hold for any sub-agents the run
   splits its task across. Without them those run on the config's default
   sub-agent model, and part of the task is done by a model nobody chose.

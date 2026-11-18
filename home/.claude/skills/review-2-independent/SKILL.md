@@ -1,14 +1,13 @@
 ---
-name: review-2-independent-terra-max
-description: Get two independent Terra reviews (gpt-6.1-terra at max effort) of one change from a Claude lead, then reconcile them. Use when Jason asks for two independent Terra reviews, or invokes review-2-independent-terra-max.
+name: review-2-independent
+description: Get two independent reviews of one change with the configured OpenAI worker, then reconcile them. Use when Jason asks for two independent OpenAI reviews or invokes review-2-independent.
 ---
 
-# Two independent Terra reviews
+# Two independent OpenAI reviews
 
-Two runs of Terra see the same brief and nothing of each other. Their
-overlap is a signal; every finding is still checked against its evidence.
-The model is Terra because Jason asked for Terra; it doesn't follow
-`use-workers` when that skill's default OpenAI worker changes. This skill
+Both reviewers use the model and effort in `~/.agents/openai-worker.json`.
+They read the same brief independently. Check each finding against its
+evidence. This skill
 launches through `codex exec` from a Claude lead on this Mac; a Codex or
 Conductor lead launches the pair by `use-workers`' route instead.
 
@@ -24,15 +23,15 @@ Conductor lead launches the pair by `use-workers`' route instead.
      reviewers read it through the repository's `review` skill at `small`,
      when the repository has one.
 2. **Run** in the background:
-   `bash ~/.claude/skills/review-2-independent-terra-max/run.sh <brief> <dir>`.
+   `bash ~/.claude/skills/review-2-independent/run.sh <brief> <dir>`.
    Both runs start in `<dir>` with full access selected explicitly (the
    global rules), told to change no file, spawn no sub-agent and read no
    work by the other reviewer in the same review round, including work
    produced in an earlier attempt, with Codex's own sub-agents switched off,
    and write
-   to a fresh `terra-<timestamp>/` folder beside the brief. A run Codex
+   to a fresh `openai-review-<timestamp>/` folder beside the brief. A run Codex
    reroutes is stopped. A run counts only when its Codex session record shows
-   `gpt-6.1-terra` at `max` and full access selected with sub-agents off, its
+   the configured model and effort, full access and sub-agents off, its
    events end in a completed turn with no reroute and no native sub-agent
    call, and its report isn't empty. That record proves the selection; a
    reroute is caught only when the server reports its model. With full

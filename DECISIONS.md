@@ -182,6 +182,8 @@ section of `home/.agents/AGENTS.md`, so every compaction keeps what `meta-compac
 
 ## Decision 11: GPT-6.1 Terra at Max Effort Until the Next Sol
 
+Superseded by Decision 14 on 2026-11-18.
+
 **Context:**
 Codex ranks GPT-6.1 Sol first in its model list (`codex debug models`, priority 1; Terra is 3), and
 both GPT-6.1 Sol and Terra default to `low` effort. Sol was the OpenAI worker in `use-workers`, the reviewer of
@@ -212,6 +214,9 @@ engine row and launch lines, the instruction-review rule in `home/.agents/AGENTS
   CLIProxyAPI 8.0.58 passes through as `reasoning.effort` (`internal/translator/codex/claude/codex_claude_request.go`).
 
 ## Decision 12: Subagents Default to Opus at High or Terra at Max
+
+Amended by Decision 14 on 2026-11-18. Its OpenAI worker replaces Terra in the
+subagent default. The Opus default still applies.
 
 **Context:**
 Claude Code runs a subagent on the lead's model when the call, its agent definition and the configured
@@ -260,7 +265,7 @@ to `--sandbox read-only`.
 **Decision:**
 A Codex run an agent launches runs with full access, reviews and opinions included, selected explicitly
 at launch because a project's Codex config can override the user's (`home/.agents/AGENTS.md`, "Workflow
-Rules"; `use-workers` and `review-2-independent-terra-max` hold the launches).
+Rules"; `use-workers` and `review-2-independent` hold the launches).
 
 **Value against cost:**
 - Jason's judgment that the narrower sandboxes cost more in failed or fussy runs than they are worth.
@@ -282,3 +287,42 @@ Rules"; `use-workers` and `review-2-independent-terra-max` hold the launches).
 - Codex source at `~/repo-references/codex` and two session records from 2026-11-15 whose
   `turn_context.sandbox_policy.type` read `read-only` (a review) and `danger-full-access` (a research
   run), read 2026-11-15.
+
+## Decision 14: GPT-6.2 Sol at xhigh as the OpenAI Worker
+
+**Context**
+
+Decision 11 pinned the OpenAI worker until a newer Sol became available.
+Codex 0.167.0 lists GPT-6.2 Sol first, with `low` as its default effort.
+
+**Decision**
+
+On 2026-11-18, Jason selected GPT-6.2 Sol at `xhigh` wherever Terra was
+the OpenAI worker. [The OpenAI worker config](home/.agents/openai-worker.json)
+holds the pair for `use-workers`, the paired reviewer, and `claudex`.
+Codex's user config uses the same pair for direct launches. Zed's settings
+name the same pair for its ChatGPT Subscription provider. The subagent choice still
+includes Opus at `high`. The global Workflow Rules give the launch limits.
+
+**Value and cost**
+
+- Direct and delegated runs use Jason's selected pair consistently.
+- Shell launchers read one source. Codex and Zed have native config fields
+  that must be updated when the pair changes.
+- A fixed effort replaces the harness default for ordinary launches.
+
+**Revisit**
+
+Revisit when Jason picks a different pair or the harness defaults match it
+and an explicit setting adds nothing.
+
+**Sources**
+
+- Jason's ruling of 2026-11-18, quoted in the commit that adds this
+  decision. The lead read “6.2” as GPT-6.2 Sol after checking the Codex catalog.
+- Codex 0.167.0's model catalog and CLIProxyAPI's `/v1/models` listing,
+  read 2026-11-18.
+- [Zed v1.28.1's `list_models`](https://github.com/zed-industries/zed/blob/v1.28.1/crates/openai_subscribed/src/openai_subscribed.rs#L678-L725)
+  reads picker-visible models and reasoning efforts from the authenticated
+  Codex catalog. The source supports the settings change. Zed inference
+  on this pair was unverified on 2026-11-18.

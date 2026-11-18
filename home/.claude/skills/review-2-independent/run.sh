@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Two independent Terra reviews of one brief, with full access.
+# Two independent OpenAI reviews of one brief, with full access.
 # Usage: run.sh <brief.md> <dir> [count]
 #   <brief.md>  the review brief, read by each reviewer from disk
 #   <dir>       the directory each run starts in (the repository under review)
 #   [count]     how many runs (default 2; 1 replaces a run that didn't count)
-# Each call writes to a fresh folder beside the brief, terra-<timestamp>/:
-# terra-N.md (report), terra-N.jsonl (Codex events), terra-N.err (stderr).
-# A run counts only when Codex's own records show Terra at max and full
+# Each call writes to a fresh folder beside the brief, openai-review-<timestamp>/:
+# review-N.md (report), review-N.jsonl (Codex events), review-N.err (stderr).
+# A run counts only when Codex's own records show the configured model and effort, full
 # access were selected, its own sub-agents were off, and the turn completed
 # with no reroute or native sub-agent call: its event
 # stream (not the reviewer's output) and its session rollout file. A reroute
@@ -24,9 +24,10 @@ dir=$2
 count=${3:-2}
 runs=$(seq 1 "$count")
 sessions=${CODEX_HOME:-$HOME/.codex}/sessions
-out=$(dirname "$brief")/terra-$(date +%Y%m%d-%H%M%S)
-model=gpt-6.1-terra
-effort=max
+out=$(dirname "$brief")/openai-review-$(date +%Y%m%d-%H%M%S)
+worker="$HOME/.agents/openai-worker.json"
+model=$(jq -er '.model | strings | select(length > 0)' "$worker") || exit 1
+effort=$(jq -er '.effort | strings | select(length > 0)' "$worker") || exit 1
 mkdir "$out" || exit 1
 
 fingerprint() {
@@ -41,9 +42,9 @@ for n in $runs; do
   codex exec --json -C "$dir" --skip-git-repo-check --sandbox danger-full-access \
     -c "model=\"$model\"" -c "model_reasoning_effort=\"$effort\"" \
     -c 'features.multi_agent_v2=false' -c 'agents.enabled=false' \
-    -o "$out/terra-$n.md" \
+    -o "$out/review-$n.md" \
     "Read the review brief at $brief and follow it. You are one of two reviewers for this review round: change no file and spawn no sub-agent. Do not read the other reviewer's report, event log, session record, or other work from this round, wherever it is stored, including work produced by a retained reviewer in an earlier attempt of the same round. The reports and event logs for this attempt are in $out. Reports from earlier rounds named in the brief may be read. When the brief asks you to read them, do so even if it also generally prohibits reading another reviewer's report." \
-    </dev/null >"$out/terra-$n.jsonl" 2>"$out/terra-$n.err" &
+    </dev/null >"$out/review-$n.jsonl" 2>"$out/review-$n.err" &
   pids+=($!)
 done
 
@@ -62,12 +63,12 @@ while alive; do
   for n in $runs; do
     pid=${pids[$((n - 1))]}
     kill -0 "$pid" 2>/dev/null || continue
-    if rerouted "$out/terra-$n.jsonl"; then
-      echo "terra-$n: model rerouted; stopping it" >&2
+    if rerouted "$out/review-$n.jsonl"; then
+      echo "review-$n: model rerouted; stopping it" >&2
       kill "$pid" 2>/dev/null
       killed[n]=1
-    elif ((SECONDS - start > 30)) && [[ -z ${warned[n]:-} && -z $(thread "$out/terra-$n.jsonl") ]]; then
-      echo "terra-$n: no thread after 30s; check $out/terra-$n.err" >&2
+    elif ((SECONDS - start > 30)) && [[ -z ${warned[n]:-} && -z $(thread "$out/review-$n.jsonl") ]]; then
+      echo "review-$n: no thread after 30s; check $out/review-$n.err" >&2
       warned[n]=1
     fi
   done
@@ -78,7 +79,7 @@ status=0
 for n in $runs; do
   wait "${pids[$((n - 1))]}"
   code=$?
-  events=$out/terra-$n.jsonl
+  events=$out/review-$n.jsonl
   sid=$(thread "$events")
   last=$(jq -r 'select(.type | startswith("turn.")) | .type' "$events" 2>/dev/null | tail -1)
   bad=()
@@ -90,12 +91,12 @@ for n in $runs; do
   [[ $selected == "$model/$effort/disabled/danger-full-access" ]] || bad+=("selected '${selected:-unknown}'")
   jq -e 'select(.item.type? == "collab_tool_call")' "$events" >/dev/null 2>&1 &&
     bad+=("used a sub-agent")
-  [[ -s $out/terra-$n.md ]] || bad+=("empty report")
+  [[ -s $out/review-$n.md ]] || bad+=("empty report")
   if ((${#bad[@]})); then
-    echo "terra-$n: does not count (${bad[*]}); see $out/terra-$n.err" >&2
+    echo "review-$n: does not count (${bad[*]}); see $out/review-$n.err" >&2
     status=1
   fi
-  echo "terra-$n selected=${selected:-unknown} session=$sid report=$out/terra-$n.md"
+  echo "review-$n selected=${selected:-unknown} session=$sid report=$out/review-$n.md"
 done
 if [[ $before == unavailable ]]; then
   echo "$dir is not a Git checkout: nothing was compared; compare the files the reviewers were given" >&2

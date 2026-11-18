@@ -137,12 +137,17 @@ Every code block in a reply follows the `code-in-replies` skill: load it before 
 
 ## Merging my PRs
 
-- A PR in my own repos is merged without asking when it is simple, QA'd (checks green, its independent review and bot threads addressed), and unlikely to be rejected. The reply says it merges and how to stop it.
-  - Not green yet: turn on auto-merge as it goes ready (`gh pr merge --auto --squash`), and the reply says "<the change, named by what it does> merges when green unless you say no".
-  - Already green: merge it in the same turn and report the merge commit.
+- Merge simple PRs in my own repos without asking when their independent review and bot threads are addressed and they are unlikely to be rejected. Once the PR meets its readiness gates, arm auto-merge while checks are pending (`gh pr merge --auto --squash`), or merge in the same turn when checks are green.
+  - Bad: a reviewed PR is ready for auto-merge, and the agent posts an invitation to stop it. Good: the agent arms auto-merge and follows "PR and worker updates" below.
 - A design I haven't approved goes through "Design approval" in Heartbeat's `peer-review` skill (`.claude/skills/peer-review/SKILL.md`). Read it from the Heartbeat checkout's `origin/develop`, or through authenticated GitHub access to that ref. It sets reviewer selection, rounds and disputes. A dispute reaches me as a question that passes "Before a question to Jason". Get my approval before merging a PR someone else owns.
 - A loop campaign I start or schedule is my approval of the designs inside its scope. Its PRs land under that repository's `loop` contract.
-- Bad: a green, reviewed PR with its measurements in hand, then "Say the word and I'll merge it". Good: "[Pinning Conductor's Playwright browsers](https://github.com/heartbeat-chat/Heartbeat/pull/3164) merges when green unless you say no", with auto-merge on.
+
+## PR and worker updates
+
+Send me a PR or worker update only when it answers my latest request, needs an outcome only I can provide under "Before a question to Jason", or concerns a blocker the agents cannot resolve that affects me. Keep progress with the owning agents and record delivery on the PR and its linked issue.
+
+- Bad: the lead relays a worker's progress, announces auto-merge with an invitation to stop it, then sends a merge confirmation.
+- Good: the lead handles the worker's reports internally. The PR merges under the existing authorization and its linked issue records the result.
 
 ## Linear issue templates
 

@@ -117,7 +117,7 @@ Missing fact: check it. Failing option: drop it. One option left: conclude. An o
 
 **Take measured net wins.** Adopt an authorized, reversible change when its measured benefit outweighs its concrete costs. A gain in one metric stands on its own. Weigh any regressions in their actual units. Complete the required verification and proceed when it passes. If you recommend holding, name the concrete cost that outweighs the gain or the specific required check you cannot complete.
 
-**A 4-up runs until Jason says final.** The `4up` skill holds the routine.
+**An n-up runs until Jason says final.** The `n-up` skill holds the routine.
 
 ## Measuring
 
@@ -412,6 +412,6 @@ Keep, beside the default summary:
 
 1. PR numbers, commit SHAs, worker, session and watch names, and file paths, verbatim.
 2. Each decision with its one-line reason, and Jason's rulings in his own words.
-3. What is in flight, and the signal that ends each, including each active 4-up's subject, current options or their durable location, and latest pick (the `4up` skill).
+3. What is in flight, and the signal that ends each, including each active n-up's subject, current options or their durable location, and latest pick (the `n-up` skill).
 4. The next action.
 5. The path of the session's durable record (a lead record, a checkpoint), instead of restating what it holds.

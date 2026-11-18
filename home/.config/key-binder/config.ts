@@ -660,7 +660,7 @@ $.obsidian.bind({
   description: Description('Unfold all'),
 })
 
-$.obsidian.node(Obsidian.Comment(['HISTORY AND NOTES (Zed: [ ] back/forward, space k finder)', '───────────────────────────────────────────────────────────────────────────────']))
+$.obsidian.node(Obsidian.Comment(['HISTORY AND NOTES (Zed: [ ] back/forward, space k finder, space o recent)', '───────────────────────────────────────────────────────────────────────────────']))
 
 // Zed's [b ]b (tabs) are left out: a lone [ would then wait for a second key.
 $.obsidian.bind({
@@ -678,8 +678,16 @@ $.obsidian.bind({
 $.obsidian.bind({
   mode: 'normal',
   key: Obsidian.VimKeyExpression('<Space>k'),
-  command: Obsidian.CommandId('switcher:open'),
-  description: Description('Quick switcher'),
+  // A community plugin's command: key-binder's command ids cover Obsidian's own only.
+  rhs: ':obcommand meos:open-note<CR>',
+  description: Description('Open note'),
+})
+// Open recent: with no query, the MeOS plugin's Open note lists recent notes first.
+$.obsidian.bind({
+  mode: 'normal',
+  key: Obsidian.VimKeyExpression('<Space>o'),
+  rhs: ':obcommand meos:open-note<CR>',
+  description: Description('Open recent'),
 })
 
 $.obsidian.node(Obsidian.Comment(['LINKS (Zed: g d go to definition, m c p copy relative path)', '───────────────────────────────────────────────────────────────────────────────']))

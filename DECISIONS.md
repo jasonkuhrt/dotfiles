@@ -149,8 +149,12 @@ later), and Codex at 90% of a model's window (450k for GPT-6.1 Sol's 500k). A lo
 400k, was weighed on 2026-11-10 and not taken.
 
 **Decision:**
-Keep each harness's own threshold. Add only what Claude Code's docs recommend: the Compact Instructions
-section of `home/.agents/AGENTS.md`, so every compaction keeps what `meta-compact-safely`'s keep-list keeps.
+Keep each harness's own threshold. Keep the Compact Instructions in `home/.agents/AGENTS.md` to guide
+Claude Code's manual and automatic summaries. The summary prompt in Claude Code 2.1.323 asks the
+summarizer to follow instructions available in context and gives that heading as an example. On
+2026-11-18 we retired `meta-compact-safely`, removing its manual readiness check and its draft argument
+for `/compact`. Its status report moved to `meta-status`. Heartbeat leads resume from the durable record
+required by `lead`. Other sessions rely on the summary and any records their own workflow keeps.
 
 **Value against cost:**
 - 400k against the default, modeled from that night's 327 answered requests at Fable 5.2's API list
@@ -159,8 +163,8 @@ section of `home/.agents/AGENTS.md`, so every compaction keeps what `meta-compac
   median time to the first completed content block, thinking included, was 3.0 s below 200k tokens of
   context and 6.9 s from 200k to below 800k; what 400k does to latency was not measured. No measured
   gain in answers for any model in use (no published long-context score for Fable 5.2, Opus 5.5 or Sol).
-- The Compact Instructions keep identifiers, in-flight signals and the record's path, which Claude Code's
-  built-in summary prompt (read from 2.1.321) doesn't ask for.
+- The built-in prompt asks for relevant files and pending tasks. The Compact Instructions specify which
+  identifiers to preserve verbatim, what ends each wait, and where to find the durable record.
 
 **Return or revisit when:**
 - Lower a window, in its own entry here, on dated cases of a session failing from long context
@@ -170,6 +174,8 @@ section of `home/.agents/AGENTS.md`, so every compaction keeps what `meta-compac
 - Heartbeat's [Claude Code Auto-Compact Window Size](https://linear.app/heartbeat-chat/issue/HEA-7426/claude-code-auto-compact-window-size)
   researches the window: so far only list price argues for 400k, and nothing measured argues for the
   default. Its result reopens this entry.
+- Revisit compaction recovery when a dated case shows a session resumed without information it needed
+  to continue.
 - Drop the Compact Instructions once Claude Code's own summary prompt keeps identifiers, in-flight signals
   and record paths.
 

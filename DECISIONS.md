@@ -218,6 +218,9 @@ engine row and launch lines, the instruction-review rule in `home/.agents/AGENTS
 Amended by Decision 14 on 2026-11-18. Its OpenAI worker replaces Terra in the
 subagent default. The Opus default still applies.
 
+The global Workflow Rules make Fable and Astra opt-in across launch routes.
+Decision 15 sets the Claude Code launch defaults.
+
 **Context:**
 Claude Code runs a subagent on the lead's model when the call, its agent definition and the configured
 subagent default name none. On 2026-11-15 a lead on Fable 5.2 started three research agents without a
@@ -326,3 +329,44 @@ and an explicit setting adds nothing.
   reads picker-visible models and reasoning efforts from the authenticated
   Codex catalog. The source supports the settings change. Zed inference
   on this pair was unverified on 2026-11-18.
+
+## Decision 15: Claude Code Starts on Opus
+
+**Context**
+
+Opus 5.5 is Claude Code's usual account-type default. User settings can
+store a model selected with `/model`. The dotfiles patch pinned Fable,
+which would restore it on the next apply even though this Mac already
+selects Opus 5.5.
+
+**Decision**
+
+Keep the explicit default in `home/.claude/settings.json.merge` and set it
+to `claude-opus-5-5`. Set the defaults for unconfigured subagent launches
+to Opus 5.5 at `high` with `CLAUDE_CODE_SUBAGENT_MODEL` and
+`CLAUDE_CODE_SUBAGENT_EFFORT`. Explicit model choices and forks still
+follow Claude Code's selection order and the global Workflow Rules.
+
+**Value and cost**
+
+Applying dotfiles sets the known launcher default and gives unconfigured
+subagents an Opus default even in a session started on Fable. Both pins
+need updating when the preferred Opus version changes.
+
+**Revisit**
+
+Remove the `model` pin when the account default reliably follows the launch
+rule and the explicit version adds nothing. Remove the subagent pins when
+Claude Code no longer runs an unconfigured subagent on the session's model.
+
+**Sources**
+
+- Jason's ruling of 2026-11-18, quoted in the commit that adds this decision.
+- The live Claude Code `settings.json` model and the tracked merge patch,
+  read 2026-11-18.
+- [Claude Code model settings](https://code.claude.com/docs/en/model-config)
+  and [subagent selection order](https://code.claude.com/docs/en/sub-agents#choose-a-model),
+  read 2026-11-18.
+- A Claude Code 2.1.323 `--init-only` probe on 2026-11-18 showed that shell
+  values for the subagent model and effort survive conflicting settings
+  values. `claudex` keeps its explicit OpenAI worker defaults.

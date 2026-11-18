@@ -5,6 +5,9 @@ description: Run an independent Claude Fable review, prefer app visibility when 
 
 # Fable review
 
+Model selection is governed by the global Workflow Rules. Use this route
+when Jason requests Fable for this review.
+
 Use the [shared independent-review workflow](../.shared/independent-review/workflow.md)
 with these defaults. The shared workflow owns app preference, CLI dispatch,
 session retention and exact-model verification.

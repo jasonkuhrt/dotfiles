@@ -37,9 +37,8 @@ State the pick and the considerations that decided it in one line.
 Another engine or effort is used only when another rule or a skill
 indicates it for that work, or Jason does in the chat.
 
-The routing hard lines are Jason's explicit ones: the default above; use a
-worker he names; Astra runs only when he names it. A rule that gets in the way of good
-judgment is named to him.
+Use a worker Jason names and apply the global Workflow Rules to every launch,
+including model inheritance and fallbacks.
 
 Read the OpenAI worker's model and effort from
 `~/.agents/openai-worker.json` before launching it. If the file can't be
@@ -58,7 +57,8 @@ launch and reconciliation.
 | Sonnet | Only when indicated: fully briefed work, easy app steering        | Claude quota; fresh context and result checking                  | Claude app or Agent tool; Conductor: `claude`, `sonnet-5-5-1m`    |
 | OpenAI worker | Fully briefed work, bulk reads, mechanical edits and reviews | OpenAI quota; fresh context and result checking | Configured model and effort; Conductor agent: `codex` |
 | Opus   | Chat context, taste and design; lead, inheriting fork or subagent | Claude quota; an inheriting fork can reuse context               | Lead or Claude session/Agent tool, using the available Opus model |
-| Astra  | A reasoning worker or reviewer when Jason names it                | OpenAI quota; fresh context and result checking                  | `gpt-6-astra`, only when named; Conductor: `codex`, `gpt-6-astra` |
+| Astra  | Reasoning worker or reviewer only when Jason names Astra for the work (Workflow Rules) | OpenAI quota; fresh context and result checking | `gpt-6-astra`; Conductor: `codex`, `gpt-6-astra` |
+| Fable  | Claude worker or reviewer only when Jason names Fable for the work (Workflow Rules) | Claude quota; app or CLI session | Use the Claude route with the requested model id. From Codex, use `fable-review` for a review. |
 
 How it launches depends on where the lead runs; see
 [Where you run](#where-you-run). `gate-peer-review` owns whether existing

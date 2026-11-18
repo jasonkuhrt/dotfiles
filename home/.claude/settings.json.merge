@@ -103,7 +103,11 @@
       "/Users/jasonkuhrt"
     ]
   },
-  "model": "claude-fable-5-1[1m]",
+  "model": "claude-opus-5-5",
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-opus-5-5",
+    "CLAUDE_CODE_SUBAGENT_EFFORT": "high"
+  },
   "enableAllProjectMcpServers": true,
   "skillOverrides": {
     "code-review": "off",

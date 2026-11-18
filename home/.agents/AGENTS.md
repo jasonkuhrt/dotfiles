@@ -99,7 +99,7 @@ This is the way for code that exists: a bug in it, or a feature it lacks. A desi
 3. **Derived:** an option that fails an accepted requirement or a checked fact is gone, and so is a choice that differs only in mechanism, not in what anyone gets: that one is the agent's to make. When one option is left, it is the answer, and the reply states it as a conclusion, never as a question. Failing it: conclude.
    - Bad: "Decision: should CI authenticate to the task cache with its OIDC token alone, so `ci` no longer depends on `tooling`?"
    - Good: "CI reaches the task cache with its run's OIDC token, which the cache already verifies for trunk stores, so `TASK_CACHE_TOKEN` goes."
-   - A conclusion changes the design document (an epic, a design doc) only after Jason or the design panel ("Merging my PRs") approves that change. An edit he asked for himself goes ahead. Bad: concluding "Repository and Ruleset move to the admin stack" in a reply and writing it into HEA-6786 in the same turn. Good: the same conclusion in the reply, with the epic left as it is until he or the panel approves it.
+   - A conclusion changes the design document (an epic, a design doc) only after approval under "Merging my PRs". An edit Jason asked for himself goes ahead. Bad: concluding "Repository and Ruleset move to the admin stack" in a reply and writing it into HEA-6786 in the same turn. Good: the same conclusion in the reply, with the epic left as it is until the design is approved.
    - A settled decision reopens only when a named premise changes. Bad: "Confirm profiles are in", in the reply that had just said they were. Good: "Profiles are in", with the words of his that settled it.
 4. **His:** what's left turns on an outcome only Jason holds: a requirement not yet stated, a priority between two goods, a cost to accept. A price is never such a cost. The question asks for that outcome, never for one of its consequences, and says where each answer takes the design. Failing it: find the requirement behind the consequence, and ask that.
    - Bad: "Should the `ci` stack mint the dev and CI token with only the non-production branch permissions?", asked in eight replies. Its answer hung on whether CI deploys production, which nobody had asked. The intended outcome was automated production deployments from CI.
@@ -140,10 +140,7 @@ Every code block in a reply follows the `code-in-replies` skill: load it before 
 - A PR in my own repos is merged without asking when it is simple, QA'd (checks green, its independent review and bot threads addressed), and unlikely to be rejected. The reply says it merges and how to stop it.
   - Not green yet: turn on auto-merge as it goes ready (`gh pr merge --auto --squash`), and the reply says "<the change, named by what it does> merges when green unless you say no".
   - Already green: merge it in the same turn and report the merge commit.
-- Still put to me first: a design neither I nor the design panel has approved, and a PR someone else owns.
-  - The design panel is Fable 5.2 and Astra; this rule is my naming of Astra for it. Each gets the proposed change, the outcome it serves and my requirements. Launch Fable through `fable-review` from Codex and `use-workers` elsewhere; launch Astra through `use-workers`. Verify their run model ids as `claude-fable-5-2` and `gpt-6-astra`, respectively ("Workflow Rules"). Their findings are addressed, and the design goes back to them until they agree enough to unblock the work.
-  - A design comes to me only when a real tension between them remains that evidence can't settle, as a question that passes "Before a question to Jason", and never before the panel has run. The panel's approval authorizes no merge of someone else's PR.
-  - Bad: a green PR built on the agent's own reading of what I asked, held with "Merge it once CI is green?" because I hadn't approved its design. Good: that design put to Fable 5.2 and Astra, and the PR merged once they agreed, with the reply naming their approval.
+- A design I haven't approved goes through "Design approval" in Heartbeat's `peer-review` skill (`.claude/skills/peer-review/SKILL.md`). Read it from the Heartbeat checkout's `origin/develop`, or through authenticated GitHub access to that ref. It sets reviewer selection, rounds and disputes. A dispute reaches me as a question that passes "Before a question to Jason". Get my approval before merging a PR someone else owns.
 - A loop campaign I start or schedule is my approval of the designs inside its scope. Its PRs land under that repository's `loop` contract.
 - Bad: a green, reviewed PR with its measurements in hand, then "Say the word and I'll merge it". Good: "[Pinning Conductor's Playwright browsers](https://github.com/heartbeat-chat/Heartbeat/pull/3164) merges when green unless you say no", with auto-merge on.
 
@@ -247,7 +244,7 @@ never trim or split merely to reach a word count.
   - Bad: a rule followed by "Jason, 2026-11-07, after …:" and his message as he typed it.
   - Good: the same rule and its examples, with his message and its date in the commit that added it.
 - A behavioral change to durable agent instructions is reviewed before it lands by a run other than its author's, preferably using a model different from the author's, wherever it is stored: this file, a skill, a project's `AGENTS.md` and the files it points to, a feedback memory. Additions, deletions and changes of scope count; an edit that changes no behavior (a typo, a link) doesn't.
-  - A fresh run of the author's model, given the brief alone, also counts. A reviewer Jason names replaces that preference, and "Workflow Rules" on named workers and Astra applies. `use-workers` has the launch for an OpenAI reviewer; from Codex, `fable-review` has the launch for Fable.
+  - A fresh run of the author's model, given the brief alone, also counts when it meets the launch rules in "Workflow Rules". A reviewer Jason names replaces the model preference. `use-workers` gives the launch routes.
   - The reviewer's prompt or referenced review brief starts with the body of the `instruction-review` skill, verbatim, followed by the final change, the file it lands in, and the incident or intended outcome, with the user's relevant words and dates where available. The launching agent checks the submitted prompt or brief for that prefix; naming the skill alone does not count. That skill owns what the reviewer judges and returns. Each finding is applied or answered with evidence, and a later change to what the rule requires is reviewed again.
   - A pull request's review counts when it meets these requirements and covers the final behavioral change.
   - The commit that lands the change names the reviewer by the model id read from its run, links the run, and lists each finding as applied or answered. A store with no commits takes that record in the reply.
@@ -271,7 +268,8 @@ substantial integration work, hacks or a fork. Preserve the session and
 report so I can read and continue it. Never omit or halt a requested review
 just because the preferred presentation route is unavailable.
 The `opus-review` and `fable-review` skills share the launch, diagnosis and
-verification workflow. Name the session `Via Codex – <short title>` and report
+verification workflow. Model selection follows "Workflow Rules". Name the
+session `Via Codex – <short title>` and report
 the actual route and verified model honestly.
 Do not use a terminal-workspace manager for agent work.
 
@@ -325,6 +323,9 @@ Credentials live only in 1Password: MeOS is my default vault; Roman Shared holds
 - No agent run uses GPT-6.1 or runs GPT-6.2 at `max`. This holds for defaults, overrides, subagents and fallbacks.
   - Bad: run a GPT-6.1 fallback or carry `max` into a GPT-6.2 launch.
   - Good: select the OpenAI worker's configured model and effort.
+- Launch Fable or Astra only when Jason names that model for that piece of work in his own message. This applies to defaults, workers, reviewers, panels, inherited models, quota substitutions and fallbacks. A session Jason started on either model can do its own work.
+  - Bad: a Fable author starts another Fable run to review instructions when the OpenAI reviewer is out of quota.
+  - Good: the author picks an eligible independent reviewer. A design panel uses Astra when Jason names it for that design.
 - A Codex run an agent launches uses full access, reviews and opinions included. Select full access explicitly when the launch route allows it, since a project's own Codex config can override `~/.codex/config.toml`; otherwise check the inherited or host-selected policy. Report any restriction the parent or host enforces, and never describe a restricted run as having full access. A reviewer's brief still tells it to change no file but its report. `use-workers` has the launch and the check for changes afterwards.
   - Bad: a review launched with `codex exec --sandbox read-only`.
   - Good: the same review launched with `--sandbox danger-full-access`, its session record showing that sandbox, and its directory compared before and after.
@@ -338,10 +339,10 @@ Credentials live only in 1Password: MeOS is my default vault; Roman Shared holds
   - **Quota windows:** compute remaining Claude quota and reset times from desktop `get_usage` when available; label unavailable readings. The OpenAI worker and Astra spend OpenAI quota, Jev spends TypeSafe's. Near a cap, reserve that pool for its distinctive work; unattended work may wait for a reset, and room near reset can be cheap. Subscription quota, elapsed time and result quality all matter.
   - **Speed against cost:** parallel runs buy elapsed time with repeated fixed cost. Without someone waiting or work blocked, fewer deeper runs, or staying in the lead, are usually worth more. Each run's overhead should be a fraction of its expected token cost.
   - **Effort:** use the selected default unless a rule, a skill or Jason indicates a different allowed effort. Another model takes the indicated effort or the reasoning the work needs. Extra effort costs more and adds little to mechanical work. Compute the available sizes and quota readings. A new routing tool is a design for Jason to approve.
-  - The routing hard lines are Jason's explicit ones: the default above; use a worker he names; Astra runs only when he names it. A rule that obstructs sound judgment is named to him.
+  - Use a worker Jason names and apply the launch rules above to every route. A rule that obstructs sound judgment is named to him.
   - A worker he names is the version he names. Its result counts only after the run's own model id is read and matches; a mismatch stops it and is reported, never substituted. A version is called the newest only from a model list read for that, never from what a tool's alias returned.
     - Bad: a review run through the `fable` alias, counted, and reported as "Fable 5.1 ran: it's the newest the harness offers".
-    - Good: the run's id read as `claude-fable-5-1`, the mismatch reported, and the review run again as `claude-fable-5-2`.
+    - Good: for a review Jason requested on Fable 5.2, the run's id read as `claude-fable-5-1`, the mismatch reported, and the review run again as `claude-fable-5-2`.
   - Bad: similar classification work nobody was waiting on, split across 19 Opus subagents, each rereading the same rule files, with the Claude weekly window at 99%.
   - Good: Jev buckets the 858 files, one deep run of the OpenAI worker reads and writes the targets, and the lead spends its tokens on the brief.
 - Establish environment blockers in the designated prepared checkout with its normal workflow. A failed scratch install is evidence about that scratch setup only. Inspect and exercise the required artifact before treating package-manager metadata as proof that work cannot run. If access prevents the check, report that access limitation instead of inferring a missing dependency or credential.

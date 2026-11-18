@@ -13,8 +13,8 @@ session retention and exact-model verification.
 - Reviewer label: `Opus 5.5`
 - Coordinator receipt policy: verify and repair confirmed findings.
 
-Apply the shared override and reviewer-label derivation rules. Never silently
-substitute another model.
+Apply the global Workflow Rules and the shared override and reviewer-label
+derivation rules. Never silently substitute another model.
 
 Invoking this skill authorizes the coordinating Codex agent to verify the
 report and repair confirmed issues in the requested change, unless Jason asks

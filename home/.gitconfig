@@ -237,7 +237,7 @@
 [credential "https://gist.github.com"]
 	helper = 
 	helper = !gh auth git-credential
-[vpp "pr"]
+[vpp "ci"]
 	proofBeforeReady = true
 [beads]
 	role = maintainer

@@ -17,12 +17,20 @@ Each pick button shows only its short option label, such as
 A. A caption, if present, does not repeat that label. When
 the host supports it, provide a button or checkbox to mark
 a pick final, so the pick sends its label and "final"
-together. A typed label, with "final" when desired, works too.
+together. When a rendered 4-up can send typed text to the
+conversation, it has a free-text field that can submit a
+response without requiring an option label. A pick may also
+include text from the field. A typed label, with "final"
+when desired, works too.
 
 - Bad: "Pick A ↗" wraps, its caption repeats "A", and a
   final pick requires typing.
 - Good: "A" labels the button, its caption omits "A", and
   a final checkbox lets the pick include "final".
+- Bad: the widget requires an option label, so Jason uses
+  the chat composer to ask for one option's quote mark with
+  another's author alignment.
+- Good: the field sends that combination without a pick.
 
 A pick without "final" starts the next round: four
 variations on the choice, incorporating his requested

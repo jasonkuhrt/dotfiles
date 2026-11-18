@@ -33,6 +33,7 @@ return {
         },
       },
       cmdline = {
+        -- Preview undo displaces the cursor: https://github.com/saghen/blink.cmp/issues/2688
         completion = { list = { selection = { auto_insert = false } } },
         keymap = {
           ["<C-j>"] = { "select_next", "fallback" },

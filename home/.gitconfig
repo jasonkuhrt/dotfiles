@@ -239,5 +239,7 @@
 	helper = !gh auth git-credential
 [vpp "ci"]
 	proofBeforeReady = true
+[vpp "session"]
+	archiveSafe = true
 [beads]
 	role = maintainer

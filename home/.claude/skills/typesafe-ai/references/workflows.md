@@ -20,8 +20,11 @@ already supplied by the environment. `typesafe models` verifies account access.
 From the dotfiles checkout, `just typesafe-install` installs the pinned dependencies,
 links the command, and restores the maintained skill integration sections. Run
 `typesafe install-skills` after a provider sync or generated-skill reinstall to
-reapply them. It changes only its named sections and skips absent skills. The
-maintained source of those sections is `tools/typesafe/integrations.json`.
+reapply them. It changes only its named sections, in files this dotfiles
+repository owns, and skips absent skills. It checks every present target before
+writing any. Guidance for a skill another repository owns belongs in that
+repository. The maintained source of those sections is
+`tools/typesafe/integrations.json`.
 
 ## Run
 

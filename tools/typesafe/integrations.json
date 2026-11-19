@@ -1,20 +1,5 @@
 [
   {
-    "path": "me/.agents/skills/meos-email-read/SKILL.md",
-    "heading": "TypeSafe judgments",
-    "content": "At the semantic classification step, use `typesafe triage`; the exact recipe\nlives in the inbox-triage reference. Pass explicit thread evidence only; the\nhelper does not acquire or mutate mail."
-  },
-  {
-    "path": "me/.agents/skills/meos-email-read/references/inbox-triage.md",
-    "heading": "TypeSafe judgments",
-    "content": "After reading the decision-relevant threads, run `typesafe triage` with\n`threads` containing stable `id`, `subject`, and complete `evidence` fields. Use\nits outcome, owner, liability, and urgency judgments as resolution\nrecommendations. Standing rules, approvals, frozen message IDs, and every\nmailbox action remain owned by this workflow."
-  },
-  {
-    "path": "me/.agents/skills/meos-kids-school-sync/SKILL.md",
-    "heading": "TypeSafe judgments",
-    "content": "After acquisition produces identity-bound evidence, run `typesafe school`\nwith stable source records and proposed facts, ISO dates, and audiences linked\nthrough `sourceIds`. Feed its source-support judgments into the existing typed\nreview and reconciliation path. Source precedence, conflicts, approvals, and\nCalendar actions remain owned here."
-  },
-  {
     "path": ".claude/skills/synced/1024064d-0173-46f1-9d2f-3cd2ff3029e2_2949f94e-47b6-4bcb-9af3-c8afcbd7e088/morning/SKILL.md",
     "heading": "TypeSafe judgments",
     "content": "At the Sort step, run `typesafe brief` with gathered `items` containing stable\n`id`, decision text, and `evidenceRefs`. Use the attention, resolved, and safe\nomission judgments to propose the two lists and their order, then perform the\nrequired live-thread checks. Calendar classification, rendering, and actions\nremain owned by this skill."
@@ -28,11 +13,6 @@
     "path": ".claude/skills/synced/ddfab426-f8a8-4d8c-bb91-037935d6c7bf_c1de5510-d72d-4ece-8746-2cdc80810d7f/morning/SKILL.md",
     "heading": "TypeSafe judgments",
     "content": "At the Sort step, run `typesafe brief` with gathered `items` containing stable\n`id`, decision text, and `evidenceRefs`. Use the attention, resolved, and safe\nomission judgments to propose the two lists and their order, then perform the\nrequired live-thread checks. Calendar classification, rendering, and actions\nremain owned by this skill."
-  },
-  {
-    "path": "me/.agents/skills/meos-shopping/SKILL.md",
-    "heading": "TypeSafe judgments",
-    "content": "After candidates pass the exact gates, use `typesafe verify` for material\nqualitative claims, supplying stable sources and claims with exact source\nquotes. Use `typesafe rank` to score viable candidates on explicit ordered\ndimensions and caller-defined levels. The caller derives the final order; exact\nstock, variant, region, dimensions, price, delivery, and visual verification\nremain owned here."
   },
   {
     "path": ".claude/skills/goplaces/SKILL.md",
@@ -68,16 +48,6 @@
     "path": ".claude/skills/tech-ops-investigation/SKILL.md",
     "heading": "TypeSafe judgments",
     "content": "Before finalizing, use `typesafe verify` for bounded claims whose support\ndepends on relating evidence. Supply stable sources and claims with `sourceId`\nand an exact quote that occurs in the source. Treat the returned relation as a\nsupport judgment, not provenance; versions, dates, URLs, logs, and citations\nstill require direct verification."
-  },
-  {
-    "path": "projects/heartbeat-chat/Heartbeat/.claude/skills/review/SKILL.md",
-    "heading": "TypeSafe judgments",
-    "content": "Before selecting optional discipline passes, run `typesafe review` with the\nfull `change` and `context`. Use its six applicability judgments to choose\noptional passes; always run required and user-requested passes, and send\nuncertain cases to the lead. TypeSafe does not judge findings: the lead still\nverifies every mechanism against the code and follows the verifier rules above."
-  },
-  {
-    "path": "projects/heartbeat-chat/Heartbeat/.claude/skills/pulse-content/SKILL.md",
-    "heading": "TypeSafe judgments",
-    "content": "When drafted content needs a semantic behavior judgment, run `typesafe pulse`\nwith `items` containing stable `id`, `currentText`, `proposedText`, and all\napplicable `exactFacts` as stable `{ id, text }` entries. Consume the typed\njudgment before validation and preserve the returned facts unchanged. Lifecycle,\ncompatibility, manifests, formatting, and repository checks remain authoritative."
   },
   {
     "path": ".claude/skills/synced/1024064d-0173-46f1-9d2f-3cd2ff3029e2_2949f94e-47b6-4bcb-9af3-c8afcbd7e088/skill-creator/agents/grader.md",

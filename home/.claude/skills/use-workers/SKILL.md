@@ -109,8 +109,7 @@ assignment determines its role, not its harness.
    one, weigh the reasoning the work needs: extra effort costs more and is
    wasted on mechanical work. Pass the chosen effort where supported.
 
-Compute the available size and quota numbers; do not build a tool for this
-calculation. Such a tool is a design for Jason to approve.
+Compute the available size and quota numbers when choosing a worker.
 
 - Bad: similar classification work nobody was waiting on, split across
   19 Opus subagents, each rereading the same rules at 99% weekly usage.

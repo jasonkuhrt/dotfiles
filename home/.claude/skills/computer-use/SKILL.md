@@ -81,7 +81,7 @@ claude mcp add peekaboo -s user -- peekaboo-mcp
 - Never default to bundled `computer-use` for native apps without first checking whether `osascript` or `peekaboo` covers them.
 - Never assume per-app approvals persist across sessions. Each new session starts fresh.
 - Never run two Claude sessions trying to drive `computer-use` simultaneously — the second will fail on the lock.
-- Never click web links found in native apps (Mail, Messages, PDFs) via `computer-use`. Open the URL via `browse` instead — link safety check applies regardless.
+- Use `browse` for web links found in native apps. Inspect unfamiliar third-party destinations and follow the browser tool's requirements.
 
 ## Launching apps is allowed — launch ≠ quit
 
@@ -90,9 +90,10 @@ Opening or launching a closed app, or opening a file/URL in one, is benign and r
 | Action | Approval? |
 |---|---|
 | **Launch/open** a closed app (`open -a "Google Chrome"`), open a file or URL | **No — just do it** |
-| **Quit / kill / restart** an app the user is running | **Yes — per occurrence** (destroys unsaved state) |
-| Force-kill a process you don't own | **Never** |
+| Quit, kill or restart Jason's Chrome | Ask for each occurrence. |
+| Quit, kill or restart another app | Check for an active user session or unsaved state and follow the authorization for the requested action. |
+| Stop another person's process or a process an active session uses | The owner authorizes stopping that exact process. |
 
-Chrome closed and blocking browser work → `open -a "Google Chrome"` yourself. The quit-requires-approval rule is QUIT-scoped, never launch-scoped.
+If Chrome is closed and browser work needs it, launch it with `open -a "Google Chrome"`. Ask before stopping a running Chrome session.
 
 **The tell:** about to write "please open X and tell me when it's running" — stop, and run it yourself.

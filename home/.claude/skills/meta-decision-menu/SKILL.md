@@ -32,11 +32,8 @@ names exactly one item in the reply. A section with nothing in it is left out.
 A choice with no real `Why not` isn't a question. It goes under "Doing without
 asking", and you do it.
 
-- A why-not is a concrete cost that a yes brings for certain: a real DX hit, a
-  real latency hit, a real security hole, real tech debt, a permission only
-  the user can give, work thrown away.
-- A risk is never one. What could go wrong if the work is done badly is the
-  job of review and tests, not a reason to ask.
+- Use the concrete-cost rule in **Weighing a proposal** in `~/.agents/AGENTS.md`.
+- Review and tests address implementation mistakes.
   - Bad (2026-10-29): a two-line fix to a shared archive helper, with the
     why-not "every machine's builds run through it".
   - Good: the row has no concrete cost, so the fix goes under "Doing without

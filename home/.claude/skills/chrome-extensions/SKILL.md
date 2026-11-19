@@ -508,7 +508,7 @@ Verify EVERY item before delivering:
 - [ ] Content scripts batch DOM updates with `requestAnimationFrame`
 - [ ] Service worker stores NO state in global variables — uses `chrome.storage`
 - [ ] No inline scripts or event handlers in HTML
-- [ ] Context menu actions show user confirmation
+- [ ] Context menu actions ask for confirmation when the accepted feature behavior or the platform requires it
 - [ ] `"action": {}` (or more) present in manifest if using `chrome.action.*` APIs
 - [ ] If reading/scripting tabs from a side panel: use `tabs` + `host_permissions` (NOT `activeTab`)
 - [ ] DevTools panel paths in `chrome.devtools.panels.create()` are relative to extension root

@@ -376,3 +376,35 @@ Claude Code no longer runs an unconfigured subagent on the session's model.
 - A Claude Code 2.1.323 `--init-only` probe on 2026-11-18 showed that shell
   values for the subagent model and effort survive conflicting settings
   values. `claudex` keeps its explicit OpenAI worker defaults.
+
+## Decision 16: Plannotator Reviews Codex Plan Turns
+
+**Context**
+
+Plannotator 0.28.51's Codex integration runs on Stop. It can open a review
+and keep the turn waiting when it finds a fresh plan in the current turn.
+Its plan lookup does not check the turn's collaboration mode.
+
+**Decision**
+
+Use a local wrapper that reads the mode for the Stop event's turn from the
+Codex rollout. Forward Plan turns to Plannotator for its usual plan selection
+and review. The new command declaration goes through Codex's `/hooks` trust
+workflow.
+
+**Value and cost**
+
+Selecting Plan mode selects the plan review workflow. Default turns finish
+without opening it. The wrapper reads the rollout on Stop and depends on
+Codex's `turn_context` format. A rollout without readable mode data for the
+turn skips review.
+
+**Revisit**
+
+Remove the wrapper when Plannotator's Codex hook checks the mode for the
+current turn itself.
+
+**Sources**
+
+- [Plannotator 0.28.51 Stop handler](https://github.com/backnotprop/plannotator/blob/v0.28.51/apps/hook/server/index.ts#L3179-L3221).
+- [Codex hook trust and Stop payload](https://learn.chatgpt.com/docs/hooks).

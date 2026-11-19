@@ -79,7 +79,8 @@
       {
         "hooks" : [
           {
-            "command" : "\/Users\/jasonkuhrt\/.local\/bin\/plannotator",
+            "command" : "\"$HOME/.vite-plus/bin/bun\" \"$HOME/.codex/hooks/plannotator-plan-stop.ts\"",
+            "statusMessage" : "Checking Plannotator plan review",
             "timeout" : 345600,
             "type" : "command"
           }

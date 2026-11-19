@@ -62,4 +62,9 @@ itself (`fish -il --init-command …`). See the
 [cmux agent-hooks docs](https://raw.githubusercontent.com/manaflow-ai/cmux/main/docs/agent-hooks.md).
 
 Codex's side is committed rather than injected: `home/.codex/hooks.json`, symlinked to
-`~/.codex/hooks.json`, carries the same cmux hooks plus `plannotator` on Stop.
+`~/.codex/hooks.json`, carries the same cmux hooks plus Plannotator on Stop.
+The local wrapper forwards a Stop event only when the transcript records Plan
+mode for that exact turn. Plannotator opens a review when it finds a new plan
+in the turn and waits for a decision. Run `plannotator sessions` to see active
+reviews. Codex's `/hooks` shows whether the Stop declaration is trusted.
+The wrapper can go away when the vendor hook checks Plan mode itself.

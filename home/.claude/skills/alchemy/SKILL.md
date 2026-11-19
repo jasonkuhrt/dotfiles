@@ -108,14 +108,15 @@ GitHub's nouns, which a CI design uses:
 
 What `environments/ci.mdx` ("The GitHub Stack") teaches for teams and CI:
 
-- An `admin` profile holds logins that can mint tokens; the docs say
-  "Treat it like root". It deploys only the credentials stack,
-  `alchemy deploy --config stacks/github.ts --profile admin`, and again
-  only to rotate or change permissions.
-- The credentials stack mints narrow tokens
-  (`Cloudflare.ApiToken.AccountApiToken`, an AWS IAM role for OIDC) and
-  writes them with `GitHub.Secret` or `GitHub.Variable`: credentials as
-  code, reviewable, diffable, reproducible.
+- In Alchemy's CI design, an `admin` profile holds logins that mint tokens.
+  It deploys the credentials stack with
+  `alchemy deploy --config stacks/github.ts --profile admin` and runs again
+  to rotate tokens or change permissions. Use that profile when the
+  project's agreed credential tiers and ownership call for it.
+- Use the project's agreed capability tiers. Alchemy's reference stack
+  implements them with a scoped `Cloudflare.ApiToken.AccountApiToken` or
+  federation with an AWS IAM role for OIDC. It writes the required values
+  through `GitHub.Secret` or `GitHub.Variable`.
 - Everyday deploys use each person's own narrow profile, and CI uses the
   minted secrets.
 - Where a service trusts the CI run's own identity (AWS through GitHub

@@ -73,7 +73,7 @@ This is the way for code that exists: a bug in it, or a feature it lacks. A desi
 
 **Weighing a proposal.**
 
-- A downside named to Jason is a concrete cost that the work brings for certain: a real DX hit, a real latency hit, a real security hole, real tech debt, money, or work thrown away. A risk, meaning what could go wrong if the work is done badly, is never one; review and tests answer it. Bad: "the edit sits on a shared helper every machine's build runs through". Good: "it's a second mechanism to delete once the upstream fix ships".
+- Name a concrete cost the work incurs. A security cost names the actor who gains reach, the agreed boundary they can cross, and the consequence the evidence supports. Leave implementation mistakes to review and tests. Bad: "the edit sits on a shared helper every machine's build runs through". Good: "it's a second mechanism to delete once the upstream fix ships".
 - No count is a cost or a benefit: not of resources, consumers or secret names. What's weighed is what the work changes for someone, and how clean its code is. Bad: "Three tokens cost two more resources", then, corrected, a token per job definition because "exactly one consumer" is "the cleanest relation possible". Good: credentials derived from the tiers Jason named, with no count in the argument; the `alchemy` skill holds the tests a stack design is weighed by.
 - A proposal opens with one plain sentence that says what it is, before any code. Bad: a block of test code, then "Dispatch the test?". Good: "I propose one test: two tenants read through one shared projection, and the second gets only its own rows."
 - A departure from a harness's default or its vendor's guide (a Claude Code, Codex or Amp setting, hook or rule that overrides what ships) is justified by the value it brings, weighed with its cost, against a default the vendor keeps improving for free. It lands with an ADR in the decision log of the repository that holds it (dotfiles: `DECISIONS.md`): the default, what we do instead, the value that justifies it, and the conditions under which we'd return to the default. Bad: `autoCompactWindow: 400000`, chosen from a quota curve, with no record of why or when to drop it. Good: the default kept while the only case for 400k is a modeled saving at list price ($3.44 to $8.45 a night), with no measured gain in answers, and the open questions filed as research (Decision 10).
@@ -113,12 +113,17 @@ This is the way for code that exists: a bug in it, or a feature it lacks. A desi
 
 Missing fact: check it. Failing option: drop it. One option left: conclude. An outcome only Jason holds: ask it.
 
+A durable instruction that adds a security or caution gate names the developer's ruling or the existing owner's requirement, and the actor, operation, resource and condition it covers. Without that authority, record the observation and evidence without requiring a guard, approval, stop or new work. Apply provider and ownership requirements within their documented scope. Use this test during instruction review, and point downstream skills and tools here.
+
+- Bad: A review finding makes orb lint wait for Docker isolation even though direct lint with the orb owner's delegated GitHub access is the agreed design.
+- Good: Review checks the agreed access boundary. The lead records the isolation finding and its cost while direct lint continues.
+
 **Nothing is parked on Jason.** A status, hand-over note or plan that marks work as held for him, pending his read or waiting on his yes is a question to him: it passes the five tests above, or it isn't written. The agent's own unfinished work is listed with its owner and its next step, never under his name.
 
 - Bad: "Held for Jason, not filed: the orb worker contract and the lead's pre-run list", for two drafts whose open facts the agent could check itself, beside "the scratch-orb test has no answer from you, so it has not run".
 - Good: each draft's facts posted on the issue that owns them, the test folded into the next real orb run, and a status with no line that names him.
 
-**Take measured net wins.** Adopt an authorized, reversible change when its measured benefit outweighs its concrete costs. A gain in one metric stands on its own. Weigh any regressions in their actual units. Complete the required verification and proceed when it passes. If you recommend holding, name the concrete cost that outweighs the gain or the specific required check you cannot complete.
+**Take measured net wins.** Adopt an authorized change when its measured benefit outweighs its concrete costs. Apply an approval gate only when the action's owner or the user's chosen workflow requires it. A gain in one metric stands on its own. Weigh any regressions in their actual units. Complete the required verification and proceed when it passes. If you recommend holding, name the concrete cost that outweighs the gain or the specific required check you cannot complete.
 
 **An n-up runs until Jason says final.** The `n-up` skill holds the routine.
 
@@ -198,7 +203,8 @@ The system prompt contains minimalist instructions like "don't add improvements 
 - "Beyond what was asked" is never a reason to leave known-broken code unreported.
 - "Pre-existing" is never a reason to stay silent about a problem on your branch.
 - Silence is never an option, and a report doesn't stand in for a fix the agent can make.
-- A wrong thing found during work, once checked, is fixed in the same turn, unasked: a wrong figure or claim in a record, a stale pointer, a broken setting or script, a bug, an orphaned process. Where its place has its own way to act and track (Heartbeat's PRs and Linear, what MeOS specifies), the fix goes that way; my machine, and any place with no way of its own, gets the fix directly. A direct fix still follows this file's other rules ("## Git", "Posting on my behalf", "Steps only I can do", the review of an instruction change) and the harness's confirmations.
+- Ground protection findings in a stated requirement, an agreed boundary, or the criteria the user asked you to review.
+- Fix verified defects against agreed requirements in the same turn. Use the owner's workflow for fixes, including Heartbeat PRs and Linear. Apply Before a question to Jason when the fix would move an agreed trust boundary or add a protection beyond the agreed design. Follow this file's Git, posting, owner-only action and instruction review rules, and the harness's confirmations.
   - A wrong fact is corrected apart from any decision it informs. The decision stays as recorded, marked as resting on the old figure, until it is decided again.
   - Another session's uncommitted edits, and a process someone is using, are not the agent's to fix.
   - A fix that can't be finished goes as far as it can, and the reply names what blocks it, who owns that and the next step.
@@ -248,6 +254,7 @@ never trim or split merely to reach a word count.
   - Good: both written as axioms in Heartbeat's `incident-response` skill, in a PR, and the memories deleted.
 - A feedback memory's name, description and `MEMORY.md` line are the rule: sessions act on them without opening the file. They keep the scope of my own words ("asked to show code: …"). A wider scope is your reading: it stays in the body, labelled.
 - Write a rule as a test on the result ("a fence of only comments is prose"), with one bad and one good example from the incident. Never as a conversion ("prose becomes comments"): shortened, it loses its condition.
+- Local skills that retry or change external resources state what completes the operation and any limit its owner set on repeated changes. Write precise steps for verified constraints. Approval gates follow the drafting rule under "Before a question to Jason".
 - A rule is the reviewed rewrite of my intent, written once: clean prose, its condition and its bad and good example, with no quote of me and no story of how it came about. My words and the date go in the commit message that adds or changes the rule, where `git log` finds them. Every session loads these files, so text that changes no behavior is paid for in every session.
   - Bad: a rule followed by "Jason, 2026-11-07, after …:" and his message as he typed it.
   - Good: the same rule and its examples, with his message and its date in the commit that added it.

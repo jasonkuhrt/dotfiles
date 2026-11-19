@@ -35,7 +35,7 @@ Archived sessions reopen from the Archived list.
 
 | Thought                                                               | Reality                                                                                      |
 | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| "I'll run meta-can-end first to make sure."                           | The user decides that, and may run it themselves. This skill archives.                       |
+| "I'll run meta-status first to make sure."                            | The user decides that, and may run it themselves. This skill archives.                       |
 | "A worker is still running; I'll ask first."                          | Name it in the last line and archive. The user chose.                                        |
 | "I'll archive, then summarize."                                       | The archive ends the conversation. The line goes first.                                      |
 | "The archive call was refused because the session is open on screen." | Tell the user to approve the card, or to archive it from the sidebar. Don't retry in a loop. |

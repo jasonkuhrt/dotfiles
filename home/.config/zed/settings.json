@@ -568,6 +568,24 @@
   //
   //
   "lsp": {
+    // TypeScript is checked by tsrs, never tsc (DECISIONS.md, Decision 17).
+    // Without this, the tsgo extension downloads `typescript` and runs its
+    // native `tsc --lsp` in any folder whose own `.zed/settings.json` sets no
+    // binary. The nearest `node_modules/.bin/tsrs` at or above the folder wins;
+    // otherwise the global `tsrs` (npm global, scripts/data/npm). With neither,
+    // the server fails to start: nothing falls back to tsc.
+    "typescript-ls": {
+      "binary": {
+        "path": "/bin/sh",
+        "arguments": [
+          "-c",
+          "d=$PWD; while :; do [ -x \"$d/node_modules/.bin/tsrs\" ] && exec \"$d/node_modules/.bin/tsrs\" \"$@\"; [ \"$d\" = / ] && break; d=$(dirname \"$d\"); done; exec tsrs \"$@\"",
+          "tsrs",
+          "--lsp",
+          "--stdio"
+        ]
+      }
+    },
     "vscode-css-language-server": {
       "settings": {
         "css": {

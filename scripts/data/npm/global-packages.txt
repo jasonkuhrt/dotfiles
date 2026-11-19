@@ -10,4 +10,4 @@ dprint
 hunkdiff
 npm-name-cli
 nx
-typescript
+tsrs

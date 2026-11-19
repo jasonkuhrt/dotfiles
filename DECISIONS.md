@@ -408,3 +408,52 @@ current turn itself.
 
 - [Plannotator 0.28.51 Stop handler](https://github.com/backnotprop/plannotator/blob/v0.28.51/apps/hook/server/index.ts#L3179-L3221).
 - [Codex hook trust and Stop payload](https://learn.chatgpt.com/docs/hooks).
+
+## Decision 17: Zed Runs tsrs as Its TypeScript Server
+
+**Context**
+
+Zed's TypeScript server comes from the `tsgo` extension (1.1.0, server id
+`typescript-ls`). With no `lsp.typescript-ls.binary`, it downloads the
+latest `typescript` into its own work directory and runs that package's
+native `tsc --lsp --stdio`. A folder whose `.zed/settings.json` sets no
+binary gets that `tsc`. On 2026-11-19 two Zed windows on
+`tmp/cell-design`, a subfolder of a Heartbeat worktree, ran two such
+`tsc` servers and pushed memory pressure to red: the repository's
+`.zed/settings.json` applies only to a window opened at its root.
+
+**Decision**
+
+The user settings set `lsp.typescript-ls.binary` to an inline `/bin/sh`
+command. It runs the nearest `node_modules/.bin/tsrs` at or above the
+window's root, and otherwise the global `tsrs`, which replaces
+`typescript` in `scripts/data/npm/global-packages.txt`. With neither, the
+server fails to start. A project's own `.zed/settings.json` binary still
+wins (Heartbeat's `vpp ts check`, MeOS's `.machinery/code` tsrs). Zed
+spawns the binary in the window's root with the login shell's environment,
+and a configured `binary.path` bypasses the extension's download
+(Zed 1.29.2, `get_language_server_binary` in `project/src/lsp_store.rs`).
+
+**Value and cost**
+
+No folder on this Mac starts `tsc`, `tsgo`, `tsserver` or `vtsls` for
+TypeScript, matching the rule that every project type-checks on tsrs. The
+cost is a one-line shell program kept inside the settings and one global
+package kept current by the existing npm-globals step. A folder that wants
+Effect's tsrs build and keeps it outside the root's `node_modules` needs
+its own `.zed/settings.json`.
+
+**Revisit**
+
+Drop the override when the `tsgo` extension, or a tsrs extension for Zed,
+resolves a project's tsrs and never downloads `typescript`.
+
+**Sources**
+
+- `zed-extensions/tsgo` v1.1.0, `src/tsgo.rs` (`language_server_command`,
+  `install_package`), read 2026-11-19.
+- Zed v1.29.2 `crates/project/src/lsp_store.rs` (`get_language_server_binary`),
+  `crates/worktree/src/worktree.rs` (`resolve_relative_path`) and
+  `crates/lsp/src/lsp.rs` (working directory), read 2026-11-19.
+- Zed's workspace database and `ps` on 2026-11-19: windows on Heartbeat,
+  MeOS and a scratch folder each ran tsrs and no other TypeScript server.

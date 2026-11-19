@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { inventory, reconcilePlan } from './inventory.mjs';
-import { armedPr } from './inventory.mjs';
 import {
+  archiveSourceRef,
   externalTargetRetained,
   inspectIgnoredMaterial,
   inspectOmittedSessionTarget,
@@ -898,26 +898,33 @@ async function targetReport(fresh, target, worktrees, runId, removalRoots) {
     !createsCodeCommit &&
     featureRemote !== null &&
     featureRemote === sourceHead;
-  const armed = armedPr(target.pr);
-  if (armed !== null && !featurePushAlreadySatisfied)
-    blockers.push(
-      blocker(
-        'feature_pr_auto_merge_armed',
-        `Open PR #${armed} has auto-merge armed; preservation would push an unproven head into it. Its developer disarms it or lands the branch first.`,
-        { pr: armed },
-      ),
-    );
+  const featureRef = `refs/heads/${target.branch}`;
+  const protectedPr = target.armedPr;
+  const archivedSourceRef =
+    protectedPr !== null && !featurePushAlreadySatisfied
+      ? archiveSourceRef(archiveRef)
+      : null;
+  const sourceRef = archivedSourceRef ?? featureRef;
   actions.push(
     action(
-      'target.push_feature_ref',
+      archivedSourceRef
+        ? 'target.push_archived_source_ref'
+        : 'target.push_feature_ref',
       downstreamStatus(
         featurePushAlreadySatisfied ? 'already_satisfied' : 'would_run',
       ),
       {
         remote: fresh.remote,
-        ref: `refs/heads/${target.branch}`,
-        currentRemoteHead: featureRemote,
+        ref: sourceRef,
+        currentRemoteHead: archivedSourceRef ? null : featureRemote,
         projectedSourceHead: sourceHead,
+        ...(archivedSourceRef && { protectedPr, featureRef }),
+        ...(archivedSourceRef && remoteConditional && !createsCodeCommit
+          ? {
+              condition:
+                'The source head differs from the feature ref after remote reconciliation.',
+            }
+          : {}),
       },
     ),
   );
@@ -930,7 +937,8 @@ async function targetReport(fresh, target, worktrees, runId, removalRoots) {
   );
   actions.push(
     action('target.verify_preservation', downstreamStatus('would_run'), {
-      featureRef: `refs/heads/${target.branch}`,
+      featureRef,
+      ...(archivedSourceRef && { sourceRef }),
       archiveRef,
       verifiesLiveBytes: pathValue !== null,
     }),
@@ -973,7 +981,8 @@ async function targetReport(fresh, target, worktrees, runId, removalRoots) {
         : 'would_remove',
     originalHead: target.head,
     sourceHead,
-    featureRef: `refs/heads/${target.branch}`,
+    featureRef,
+    ...(archivedSourceRef && { archivedSourceRef }),
     archiveRef,
     session: {
       exists: session.exists,

@@ -1158,6 +1158,30 @@ async function remoteRef(repo, remote, ref) {
   return lines[0].split(/\s+/u)[0];
 }
 
+export const archiveSourceRef = (archiveRef) => `${archiveRef}-source`;
+
+export async function selectPreservationSource(repo, record, armedPr) {
+  if (record.archivedSourceRef || armedPr === null) return record;
+  const featureHead = await remoteRef(
+    repo,
+    record.remote,
+    `refs/heads/${record.branch}`,
+  );
+  if (featureHead === record.sourceHead) return record;
+  return { ...record, archivedSourceRef: archiveSourceRef(record.archiveRef) };
+}
+
+async function checkArchiveRef(repo, remote, ref, expected) {
+  const existing = await remoteRef(repo, remote, ref);
+  if (existing !== null && existing !== expected)
+    fail('Unique archive ref already exists at a different commit', {
+      ref,
+      expected,
+      actual: existing,
+    });
+  return existing;
+}
+
 export async function assertExternalLinksPreserved(
   worktreePath,
   sourceHead,
@@ -1424,6 +1448,7 @@ function renderMessage({
   branch,
   parent,
   archiveRef,
+  archivedSourceRef = archiveSourceRef(archiveRef),
   localArchiveRef,
   sessionTreeOid,
   sessionExists,
@@ -1528,7 +1553,8 @@ ${
 `;
   return `Preserve .session for ${branch}
 
-This checkpoint is the session-only child of ${parent}. The ordinary feature ref remains at its parent.
+This checkpoint is the session-only child of ${parent}.
+If cleanup saved the source head on a separate ref, find it at ${archivedSourceRef}.
 ${sessionArchive ? `\nLarge session files are stored as binary chunks of at most ${sessionArchive.chunkBytes} bytes. The restore script verifies chunk and original blob IDs, restores file modes, and removes only the synthetic chunk files/directories.\n` : ''}
 
 \`\`\`sh
@@ -1742,15 +1768,9 @@ async function ensureRemoteFeature(
   branch,
   sourceHead,
   fetchRef,
-  armedPr,
 ) {
   const ref = `refs/heads/${branch}`;
   const existing = await remoteRef(repo, remote, ref);
-  if (armedPr !== null && existing !== sourceHead)
-    fail(
-      'Open PR has auto-merge armed; automatic preservation will not push an unproven head into it',
-      { branch, pr: armedPr, sourceHead, remoteHead: existing },
-    );
   if (existing !== null && existing !== sourceHead) {
     await git(repo, ['fetch', '--no-tags', remote, `+${ref}:${fetchRef}`]);
     const ancestor = await run(
@@ -1777,11 +1797,14 @@ async function ensureRemoteFeature(
       expected: sourceHead,
       actual: verified,
     });
+}
+
+async function trackRemoteFeature(repo, remote, branch) {
   await git(repo, [
     'fetch',
     '--no-tags',
     remote,
-    `+${ref}:refs/remotes/${remote}/${branch}`,
+    `+refs/heads/${branch}:refs/remotes/${remote}/${branch}`,
   ]);
   await git(repo, [
     'branch',
@@ -2138,6 +2161,7 @@ async function chunkSessionCheckpoint(repo, record, chunkBytes) {
     branch: record.branch,
     parent: record.sourceHead,
     archiveRef,
+    archivedSourceRef: record.archivedSourceRef,
     localArchiveRef,
     sessionTreeOid: sessionArchive.tree,
     sessionExists: record.sessionSnapshot.exists,
@@ -2236,32 +2260,47 @@ export async function createPreservation(
 }
 
 export async function pushPreservation(repo, record, { armedPr = null } = {}) {
-  const existingArchive = await remoteRef(
+  const { remote, branch, sourceHead, archivedSourceRef, archiveRef } = record;
+  const existingArchive = await checkArchiveRef(
     repo,
-    record.remote,
-    record.archiveRef,
+    remote,
+    archiveRef,
+    record.checkpoint,
   );
-  if (existingArchive !== null && existingArchive !== record.checkpoint) {
-    fail('Unique archive ref already exists at a different commit', {
-      archiveRef: record.archiveRef,
-      expected: record.checkpoint,
-      actual: existingArchive,
-    });
+  if (archivedSourceRef) {
+    const existing = await checkArchiveRef(
+      repo,
+      remote,
+      archivedSourceRef,
+      sourceHead,
+    );
+    if (existing === null) {
+      await git(repo, [
+        'push',
+        '--porcelain',
+        `--force-with-lease=${archivedSourceRef}:`,
+        remote,
+        `${sourceHead}:${archivedSourceRef}`,
+      ]);
+    }
+  } else {
+    // An armed PR whose ref already holds the source needs no push at all.
+    if (armedPr === null)
+      await ensureRemoteFeature(
+        repo,
+        remote,
+        branch,
+        sourceHead,
+        record.fetchRef,
+      );
+    await trackRemoteFeature(repo, remote, branch);
   }
-  await ensureRemoteFeature(
-    repo,
-    record.remote,
-    record.branch,
-    record.sourceHead,
-    record.fetchRef,
-    armedPr,
-  );
   if (existingArchive === null) {
     await git(repo, [
       'push',
       '--porcelain',
-      record.remote,
-      `${record.checkpoint}:${record.archiveRef}`,
+      remote,
+      `${record.checkpoint}:${archiveRef}`,
     ]);
   }
   await verifyPreservation(repo, record);
@@ -2269,8 +2308,9 @@ export async function pushPreservation(repo, record, { armedPr = null } = {}) {
 }
 
 export async function preserveBranch(repo, { armedPr = null, ...options }) {
-  const record = await createPreservation(repo, options);
+  let record = await createPreservation(repo, options);
   try {
+    record = await selectPreservationSource(repo, record, armedPr);
     return await pushPreservation(repo, record, { armedPr });
   } catch (error) {
     error.preservationRecord = record;
@@ -2308,6 +2348,7 @@ export async function refreshRestoreCheckpoint(
     branch: record.branch,
     parent: record.sourceHead,
     archiveRef,
+    archivedSourceRef: record.archivedSourceRef,
     localArchiveRef,
     sessionTreeOid: record.sessionArchive?.tree ?? record.sessionSnapshot.tree,
     sessionExists: record.sessionSnapshot.exists,
@@ -2519,15 +2560,16 @@ export async function verifyPreservation(
       expected: record.checkpoint,
       actual: localCheckpoint,
     });
-  const featureRemote = await remoteRef(
-    repo,
-    record.remote,
-    `refs/heads/${record.branch}`,
-  );
-  if (featureRemote !== record.sourceHead)
-    fail('Remote feature ref is not the preserved source head', {
+  const sourceRef = record.archivedSourceRef ?? branchRef;
+  const remoteSource = await remoteRef(repo, record.remote, sourceRef);
+  if (
+    remoteSource !== record.sourceHead &&
+    !(allowMissingArchive && record.archivedSourceRef && remoteSource === null)
+  )
+    fail('Remote source ref is not the preserved source head', {
+      ref: sourceRef,
       expected: record.sourceHead,
-      actual: featureRemote,
+      actual: remoteSource,
     });
   const archiveRemote = await remoteRef(repo, record.remote, record.archiveRef);
   if (

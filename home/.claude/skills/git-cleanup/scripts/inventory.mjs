@@ -258,12 +258,6 @@ const normalizePullRequest = (raw) => {
   };
 };
 
-// An armed PR merges a new head on the old head's settled checks
-// (pr-to-landed), and a cleanup can't prove the head it would push, so
-// preservation pushes no new head into one.
-export const armedPr = (pr) =>
-  pr?.state === 'OPEN' && pr.autoMerge ? pr.number : null;
-
 const pullRequestsFromFixture = (evidence) => {
   if (Array.isArray(evidence))
     return { repository: null, pullRequests: evidence };
@@ -281,7 +275,7 @@ const pullRequestsFromFixture = (evidence) => {
   return { repository: normalizeRepository(evidence.repository), pullRequests };
 };
 
-const selectPullRequest = (pullRequests, repository, branch) => {
+const selectPullRequests = (pullRequests, repository, branch) => {
   const primary = repository.nameWithOwner.toLowerCase();
   const matches = pullRequests.filter(
     (pr) =>
@@ -292,9 +286,14 @@ const selectPullRequest = (pullRequests, repository, branch) => {
     const rightCreated = Date.parse(right.createdAt ?? '') || 0;
     return rightCreated - leftCreated || right.number - left.number;
   });
-  // A branch name can be reused. The newest PR is authoritative, so a newer
-  // OPEN PR prevents an older CLOSED/MERGED PR from classifying the branch.
-  return matches[0] ?? null;
+  // A newer OPEN PR prevents an older CLOSED/MERGED PR from granting eligibility.
+  // Any armed open PR could merge a new head on the old head's settled checks
+  // (pr-to-landed), so preservation must protect the ref they share.
+  return {
+    pr: matches[0] ?? null,
+    armedPr:
+      matches.find((pr) => pr.state === 'OPEN' && pr.autoMerge)?.number ?? null,
+  };
 };
 
 const detectRemote = async (repo, requestedRemote) => {
@@ -704,7 +703,11 @@ export async function inventory(repo, options = {}) {
     const isMain =
       rows.some((item) => item.worktree.main) || row.branch === mainRow.branch;
     const requiresReview = reviewMarkers.get(row.branch) === true;
-    const pr = selectPullRequest(prSource.pullRequests, repository, row.branch);
+    const { pr, armedPr } = selectPullRequests(
+      prSource.pullRequests,
+      repository,
+      row.branch,
+    );
     const localActivity = activityByBranch.get(row.branch);
     if (!localActivity)
       throw new Error(`Missing local activity evidence for ${row.branch}`);
@@ -734,6 +737,7 @@ export async function inventory(repo, options = {}) {
       isMain,
       requiresReview,
       pr,
+      armedPr,
       ...decideBranch({
         isMain,
         requiresReview,

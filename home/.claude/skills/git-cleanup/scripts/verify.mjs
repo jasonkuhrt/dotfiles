@@ -1460,9 +1460,7 @@ async function verifyRemoteDivergenceRepair(rootPath, checks) {
   );
 }
 
-// An open PR with auto-merge armed takes no preservation push: the preview
-// blocks it, and apply leaves its remote head where it was.
-async function verifyArmedPrRefusal(rootPath, checks) {
+async function verifyArmedPrPreservation(rootPath, checks) {
   const fixtureRoot = path.join(rootPath, 'armed-pr');
   const fixtureRepo = path.join(fixtureRoot, 'repo');
   const fixtureRemote = path.join(fixtureRoot, 'origin.git');
@@ -1500,45 +1498,116 @@ async function verifyArmedPrRefusal(rootPath, checks) {
   ]);
   await fs.writeFile(path.join(worktreePath, 'code.txt'), 'unpushed\n');
   await git(worktreePath, ['add', 'code.txt']);
-  await commit(worktreePath, 'unpushed history', oldEnv);
-  fixtureEvidence.pullRequests.push({
-    number: 1,
+  const localHead = await commit(worktreePath, 'unpushed history', oldEnv);
+
+  const matchedBranch = 'codex/armed-pr-matched';
+  const matchedPath = path.join(fixtureRoot, 'armed-pr-matched');
+  await git(
+    fixtureRepo,
+    ['worktree', 'add', '-b', matchedBranch, matchedPath, fixtureBase],
+    { env: oldEnv },
+  );
+  await git(fixtureRepo, [
+    'push',
+    'origin',
+    `${fixtureBase}:refs/heads/${matchedBranch}`,
+  ]);
+  fixtureEvidence.pullRequests = [branch, matchedBranch].map((name, index) => ({
+    number: index + 1,
     state: 'OPEN',
     createdAt: oldDate,
     updatedAt: oldDate,
-    headRefName: branch,
-    head: { ref: branch, repo: { full_name: identity.nameWithOwner } },
-    base: { repo: { full_name: identity.nameWithOwner } },
+    headRefName: name,
+    head: { ref: name, repo: { full_name: identity.nameWithOwner } },
+    base: { ref: 'develop', repo: { full_name: identity.nameWithOwner } },
     auto_merge: { merge_method: 'squash' },
-  });
+  }));
+  const newerDate = new Date(Date.parse(oldDate) + 86400000).toISOString();
+  const newerPr = {
+    ...fixtureEvidence.pullRequests[0],
+    number: 3,
+    createdAt: newerDate,
+    updatedAt: newerDate,
+    base: { ref: 'release', repo: { full_name: identity.nameWithOwner } },
+    auto_merge: null,
+  };
+  fixtureEvidence.pullRequests.push(newerPr);
   const plan = await inventory(fixtureRepo, { remote: 'origin', ...options });
-  plan.branches = [row(plan, branch)];
-  assert.equal(plan.branches[0].rule, 'older_than_threshold');
+  assert.equal(row(plan, branch).pr?.number, newerPr.number);
+  assert.equal(row(plan, branch).pr?.autoMerge, false);
+  plan.branches = [row(plan, branch), row(plan, matchedBranch)];
+  for (const selected of plan.branches)
+    assert.equal(selected.rule, 'older_than_threshold');
   const preview = await dryRun(plan, {
     ...options,
     freshPlan: plan,
     runId: 'fixture-armed-pr',
   });
   const target = preview.targets.find((item) => item.branch === branch);
-  assert.equal(target?.status, 'blocked');
-  assert.ok(
-    target?.blockers.some(
-      (item) => item.code === 'feature_pr_auto_merge_armed',
-    ),
+  assert.equal(target?.status, 'would_remove');
+  assert.deepEqual(target.blockers, []);
+  assert.equal(target.archivedSourceRef, `${target.archiveRef}-source`);
+  const archiveAction = target.actions.find(
+    ({ id }) => id === 'target.push_archived_source_ref',
   );
-  const failed = await applyPlan(plan, {
+  assert.equal(archiveAction?.status, 'would_run');
+  assert.equal(archiveAction.detail.ref, target.archivedSourceRef);
+  assert.equal(
+    target.actions.some(({ id }) => id === 'target.push_feature_ref'),
+    false,
+  );
+  const matchedTarget = preview.targets.find(
+    (item) => item.branch === matchedBranch,
+  );
+  assert.equal(matchedTarget?.status, 'would_remove');
+  assert.equal(
+    matchedTarget.actions.find(({ id }) => id === 'target.push_feature_ref')
+      ?.status,
+    'already_satisfied',
+  );
+  const applied = await applyPlan(plan, {
     ...options,
     runId: 'fixture-armed-pr',
     journalFile: path.join(fixtureRoot, 'armed-pr.journal.json'),
   });
-  assert.equal(failed.complete, false);
-  assert.match(failed.records[0].error, /auto-merge armed/u);
+  assert.equal(applied.complete, true, JSON.stringify(applied.failures));
+  const removed = applied.records.find((item) => item.branch === branch);
+  assert.equal(removed?.phase, 'removed');
+  const { archiveRef, archivedSourceRef, checkpoint } = removed.preservation;
+  assert.equal(archivedSourceRef, `${archiveRef}-source`);
   assert.equal(
     (await git(fixtureRemote, ['rev-parse', `refs/heads/${branch}`])).trim(),
     fixtureBase,
   );
+  assert.equal(
+    (await git(fixtureRemote, ['rev-parse', archivedSourceRef])).trim(),
+    localHead,
+  );
+  assert.equal(
+    (await git(fixtureRemote, ['rev-parse', `${archiveRef}^`])).trim(),
+    localHead,
+  );
+  const restoreMessage = await git(fixtureRemote, [
+    'show',
+    '-s',
+    '--format=%B',
+    checkpoint,
+  ]);
+  assert.ok(restoreMessage.includes(archivedSourceRef));
+  await assert.rejects(fs.lstat(worktreePath), { code: 'ENOENT' });
+  assert.equal(
+    await git(fixtureRepo, ['for-each-ref', `refs/heads/${branch}`]),
+    '',
+  );
+  const matched = applied.records.find((item) => item.branch === matchedBranch);
+  assert.equal(matched?.phase, 'removed');
+  assert.equal(matched.preservation.archivedSourceRef, undefined);
+  assert.equal(
+    (await git(fixtureRemote, ['rev-parse', `refs/heads/${matchedBranch}`])).trim(),
+    fixtureBase,
+  );
   checks.push(
-    'an open PR with auto-merge armed takes no preservation push: the preview blocks it and apply leaves its remote head',
+    'an older armed PR sharing its head with a newer unarmed PR protects the remote feature ref while cleanup archives the source and removes the worktree and branch',
   );
 }
 
@@ -4039,7 +4108,7 @@ exit 0
     await verifyDryRun(root, checks);
     await verifyRetainedExternalLinks(root, checks);
     await verifyRemoteDivergenceRepair(root, checks);
-    await verifyArmedPrRefusal(root, checks);
+    await verifyArmedPrPreservation(root, checks);
     await verifyPreservationHazards(root, checks);
     await verifyCliEntrypoint(root, checks);
     await verifyInternalSessionTargets(base);

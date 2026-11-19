@@ -51,15 +51,17 @@ Vertex / Foundry). The integration is beta.
 
 The extension gates browser work — not Claude Code:
 
-- **Two modes**, set by the user in the extension: "Ask before acting" and
-  "Act without asking".
+- The user sets a permission mode in the extension; the
+  [permissions guide](https://support.claude.com/en/articles/12902446-claude-in-chrome-permissions-guide)
+  lists the modes and what each does.
 - An unapproved site raises a **"Permission required"** prompt in the extension
   side panel: "Allow this action" / "Always allow actions on this site" /
   "Decline". Approved sites live at Settings → Permissions → "Your approved
   sites".
-- **Protected actions always require explicit user approval** regardless of
-  mode: purchases, permanent deletes, modifying permissions, creating accounts,
-  granting authorizations, entering sensitive information.
+- The extension asks for explicit user approval in every mode before changing
+  permission settings, granting authorizations, entering potentially sensitive
+  information into websites, or permanently deleting items.
+- The extension blocks purchases and account creation in every mode.
 
 ## Operating the tools
 

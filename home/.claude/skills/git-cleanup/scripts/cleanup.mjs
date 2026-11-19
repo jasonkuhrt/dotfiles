@@ -6,13 +6,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { meaningfulLocalActivity } from './activity.mjs';
 import { dryRun } from './dry-run.mjs';
-import { armedPr, gitWorktrees, inventory, reconcilePlan } from './inventory.mjs';
+import { gitWorktrees, inventory, reconcilePlan } from './inventory.mjs';
 import { prepareMain, syncPrimary } from './main-checkout.mjs';
 import {
   createPreservation,
   pushPreservation,
   refreshLargeSessionCheckpoint,
   resolveRemovalRoots,
+  selectPreservationSource,
   snapshotWorktree,
   verifyPreservation,
 } from './preserve.mjs';
@@ -815,7 +816,7 @@ export async function applyPlan(plan, options = {}) {
       }
       entry.retrySnapshot = await retrySnapshot(fresh.mainPath, target.path);
       await writeJson(journalFile, journal);
-      const record = await createPreservation(fresh.mainPath, {
+      entry.preservation = await createPreservation(fresh.mainPath, {
         branch: target.branch,
         path: target.path,
         head: target.head,
@@ -824,11 +825,17 @@ export async function applyPlan(plan, options = {}) {
         runId,
         removalRoots,
       });
+      const protectedPr = target.armedPr;
+      const record = await selectPreservationSource(
+        fresh.mainPath,
+        entry.preservation,
+        protectedPr,
+      );
       entry.preservation = record;
       entry.phase = 'checkpoint_created';
       await writeJson(journalFile, journal);
       await pushPreservation(fresh.mainPath, record, {
-        armedPr: armedPr(target.pr),
+        armedPr: protectedPr,
       });
       entry.phase = 'preserved';
       await writeJson(journalFile, journal);
@@ -1135,9 +1142,15 @@ export async function resumeJournal(journalFile, options = {}) {
         entry.phase = 'checkpoint_created';
         await writeJson(journalFile, journal);
       }
-      const refreshed = await refreshLargeSessionCheckpoint(
+      const protectedPr = current.armedPr;
+      const selected = await selectPreservationSource(
         fresh.mainPath,
         entry.preservation,
+        protectedPr,
+      );
+      const refreshed = await refreshLargeSessionCheckpoint(
+        fresh.mainPath,
+        selected,
         {
           ...(options.chunkBytes ? { chunkBytes: options.chunkBytes } : {}),
         },
@@ -1148,7 +1161,7 @@ export async function resumeJournal(journalFile, options = {}) {
         await writeJson(journalFile, journal);
       }
       await pushPreservation(fresh.mainPath, entry.preservation, {
-        armedPr: armedPr(current.pr),
+        armedPr: protectedPr,
       });
       entry.phase = 'preserved';
       await writeJson(journalFile, journal);
@@ -1194,6 +1207,14 @@ export async function resumeJournal(journalFile, options = {}) {
   journal.complete = journal.failures.length === 0;
   await writeJson(journalFile, journal);
   return { journalFile, ...journal };
+}
+
+function archivedSources(records) {
+  return records.flatMap(({ branch, phase, preservation }) =>
+    phase === 'removed' && preservation?.archivedSourceRef
+      ? [{ branch, ref: preservation.archivedSourceRef }]
+      : [],
+  );
 }
 
 function argumentsFor(argv) {
@@ -1320,6 +1341,7 @@ async function main() {
             .length,
           failures: result.failures,
           reviewWorktree: result.main?.reviewWorktree,
+          archivedSources: archivedSources(result.records),
           totals: result.after.totals,
         },
         null,
@@ -1343,6 +1365,7 @@ async function main() {
             .length,
           failures: result.failures,
           reviewWorktree: result.main?.reviewWorktree,
+          archivedSources: archivedSources(result.records),
           totals: result.after.totals,
         },
         null,

@@ -10,7 +10,7 @@ The user wants to know where this session's work stands, and whether any of it s
 **The question asks for an assessment.** Invoking this skill says nothing about which answer the user wants. Apply the same evidence standard to either answer. State what remains and why it does or does not need this session. The user decides whether to end. Existing authorization governs any work that continues. Never shorten, wrap up or reframe work so that ending looks right, and never invent work to keep a session alive.
 
 - **Bad.** "Stop: nothing this session owns is unfinished."
-- **Good.** After verifying that the rerun has an independent owner through merge: "The work this session owns is complete, and the ARM rerun has a confirmed owner through merge."
+- **Good.** After verifying that the rerun has an independent owner through merge: "The work this session owns is complete." The rerun is not mentioned.
 
 ## Gather the evidence
 
@@ -32,6 +32,11 @@ Do not call uncommitted or stashed work a blocker without reading its actual dif
 ## What counts as this session's work
 
 Report work this session owns and decisions it needs. If owned work depends on an external action or reply, list the owned item as pending and name what lets it resume. Treat work as independently deliverable only after verifying its owner, its delivery path, and who handles failures. Something only the user or another tool can do, with no owned work waiting on it, gets no item: this session does nothing about it either way.
+
+Work another agent owns gets no item and no mention: another session, a worker that owns its outcome, a peer the user started, a session this one started and handed the outcome to. Verify handoffs silently. If this session owes that work an answer, a review or another step, report that step and any dependency needed to explain it, never the rest of the workstream. Flag relevant work that has no owner. If a handoff remains unverified and affects this session's status, say what still needs checking or arranging.
+
+- Bad: an "In flight" line "ARM runners: that session is running and owns it; it closed its first PR and opened a fresh one", in the status of a session that owes that work nothing.
+- Good: the status holds this session's draft PR and its pending review, and nothing about the ARM runners session.
 
 - Bad: a first row "November rent | Still unpaid… You do this step in Codex", in a reply that says more is worth doing, from a session that can't sign in to the bank.
 - Bad: a row "Have Claude hand sign-ins to Codex (`codex exec`) … needs a real Codex sign-in test, which is a decision for you", from a session whose rules bar it from starting another agent to sign in. The session would have to refuse an instruction to proceed.
@@ -58,11 +63,11 @@ Do not file a follow-up and use that filing to justify saying nothing is left. E
 
 More is worth doing here when unfinished requested work or useful WIP still needs this session, or a concrete valuable fix can reasonably land now. Surface important unresolved decisions and assess whether discussing them now is worthwhile. An immature optional idea is not an automatic blocker; weigh its benefit and cost instead of requiring a decision about every possibility.
 
-Nothing more is worth doing here when no useful obligation or decision still needs this session and the remaining items have defensible reasons to wait. Distinguish completed work, user-approved deferrals, and work verified to continue independently. Pending work is not thereby completed or deferred by the user. Name the strongest remaining candidate and why it is better deferred; if there is none, say so plainly.
+Nothing more is worth doing here when no useful obligation or decision still needs this session and the remaining items have defensible reasons to wait. If a candidate within the reply's scope is better deferred, name the strongest one and explain why.
 
 For a material tradeoff the user must decide, present the options and your recommendation. Do not silently decide that newly discovered work is irrelevant or belongs in backlog. Do not start a new campaign merely because it is possible; distinguish recommending additional work from having authorization to do it.
 
-Keep working on existing authorized asks while assessing them. Never stop, shorten or prematurely wrap up a worker to change the answer. If work can continue independently, verify its ownership and how its result will be delivered; do not infer a handoff from a running process or auto-merge setting. Include who handles review or failures without this chat.
+Keep working on existing authorized asks while assessing them. Never stop, shorten or prematurely wrap up a worker to change the answer. If work can continue independently, verify its ownership and how its result will be delivered; do not infer a handoff from a running process or auto-merge setting. Check who handles review or failures without this chat.
 
 ## The question changes no lifecycle state
 
@@ -84,12 +89,14 @@ This governs end-of-session records, not necessary transient working files or ac
 
 ## Reply
 
+Apply "What counts as this session's work" to the opening line, every status group, and any discussion of uncertainty or deferral.
+
 Open with one factual line: what remains, and whether it needs this session, with the reason. It states what the evidence shows, in the indicative. It is never an imperative ("Stop", "Continue", "End it") and never a verdict on what the user should do. If a material fact is unverified, the line says how that affects it. A request for status and a question about ending get the same reply.
 
 Then the status, in these groups, in order. Omit empty groups. Give each item one line and a link or identifier.
 
 1. **Done.** What finished and where to find the result.
-2. **In flight.** What is underway, who or what is handling it, and what signals completion.
+2. **In flight.** What this session has underway and what signals completion. Name the run or worker when it is executing work this session still owns.
 3. **Pending.** What is waiting to start or resume, who owns the next action, and what it depends on. Apply the global rules before listing anything as waiting on the user.
 
 When several unresolved items bear on that line, add this table after the status:
@@ -112,4 +119,4 @@ Do not force a binary safety verdict, a table of every passed housekeeping check
 
 - A PR merged and a newly reproduced bug has a small fix plus focused proof available: the status lists the fix as pending, the line says more is worth doing, and the session fixes and lands it, even if a ticket already exists. A clean checkout does not outweigh that useful next action.
 - Requested work is complete, but a new public API proposal has never been discussed: surface the consumer-facing choice and recommend whether to decide it now. Do not silently file the design and call the session finished.
-- An upstream correction is needed and no local action remains: say that the work waits for that release, explain what it enables, and propose a release-watch task if tracking is not already authorized. Do not keep the chat open merely to wait for maintainers.
+- This session owes a follow-up once an upstream fix ships. Report the follow-up and its release trigger.

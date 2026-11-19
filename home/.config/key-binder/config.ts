@@ -678,15 +678,14 @@ $.obsidian.bind({
 $.obsidian.bind({
   mode: 'normal',
   key: Obsidian.VimKeyExpression('<Space>k'),
-  // A community plugin's command: key-binder's command ids cover Obsidian's own only.
-  rhs: ':obcommand meos:open-note<CR>',
+  command: Obsidian.PluginCommandId('meos:open-note'),
   description: Description('Open note'),
 })
 // Open recent: with no query, the MeOS plugin's Open note lists recent notes first.
 $.obsidian.bind({
   mode: 'normal',
   key: Obsidian.VimKeyExpression('<Space>o'),
-  rhs: ':obcommand meos:open-note<CR>',
+  command: Obsidian.PluginCommandId('meos:open-note'),
   description: Description('Open recent'),
 })
 

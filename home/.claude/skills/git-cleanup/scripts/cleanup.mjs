@@ -6,8 +6,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { meaningfulLocalActivity } from './activity.mjs';
 import { dryRun } from './dry-run.mjs';
-import { armedPr, inventory, reconcilePlan } from './inventory.mjs';
-import { prepareMain } from './main-checkout.mjs';
+import { armedPr, gitWorktrees, inventory, reconcilePlan } from './inventory.mjs';
+import { prepareMain, syncPrimary } from './main-checkout.mjs';
 import {
   createPreservation,
   pushPreservation,
@@ -1207,7 +1207,7 @@ function argumentsFor(argv) {
       continue;
     }
     if (
-      !['--repo', '--out', '--remote', '--plan', '--journal'].includes(key) ||
+      !['--repo', '--out', '--remote', '--plan', '--journal', '--branch'].includes(key) ||
       !rest[index + 1]
     )
       throw new Error(`Unknown or incomplete argument: ${key}`);
@@ -1264,6 +1264,20 @@ async function main() {
         2,
       ),
     );
+    return;
+  }
+  if (options.command === 'sync-primary') {
+    if (!options.branch) throw new Error('sync-primary requires --branch.');
+    const repo = path.resolve(options.repo ?? process.cwd());
+    const primary = JSON.parse((await gitWorktrees(repo)).stdout).items[0];
+    const result = await syncPrimary(repo, {
+      mainPath: primary.worktree.path,
+      branch: options.branch,
+      remote: options.remote ?? 'origin',
+      runId: `sync-primary-${Date.now()}`,
+    });
+    console.log(JSON.stringify(result, null, 2));
+    if (result.status !== 'ready') process.exitCode = 1;
     return;
   }
   if (options.command === 'plan') {

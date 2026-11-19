@@ -28,7 +28,7 @@ Read [preservation.md](references/preservation.md) when restoring or repairing p
 
 ## Run
 
-Requires Node 22+, Git, and authenticated `gh` for GitHub PR evidence. Worktrunk (`wt`) is used where it is installed; without it, as in a cloud sandbox, the scripts list, create and remove worktrees with Git, putting a new one beside the primary checkout as Worktrunk's default template does. `GIT_CLEANUP_WORKTRUNK=0` takes the Git path even where `wt` is installed. Scripts use built-in Node modules and need no dependency installation. In Heartbeat invoke through `vp exec node`; elsewhere use the available Node runtime.
+Requires Node 22.13+, Git, and authenticated `gh` for GitHub PR evidence. Worktrunk (`wt`) is used where it is installed; without it, as in a cloud sandbox, the scripts list, create and remove worktrees with Git, putting a new one beside the primary checkout as Worktrunk's default template does. `GIT_CLEANUP_WORKTRUNK=0` takes the Git path even where `wt` is installed. Scripts use built-in Node modules and need no dependency installation. In Heartbeat invoke through `vp exec node`; elsewhere use the available Node runtime.
 
 ### Dry run
 
@@ -63,6 +63,20 @@ vp exec node .claude/skills/git-cleanup/scripts/cleanup.mjs apply --plan /absolu
 An audit request authorizes planning. A cleanup request authorizes automatic commits, preservation pushes, primary-dirt evacuation/sync, and selected local deletions under this policy. Carry an authorized cleanup through without asking again merely because feature files or `.session` are dirty. Creating this skill does not itself run cleanup.
 
 Apply refreshes live evidence and processes the original plan's still-eligible targets. If a remote feature ref is strictly ahead of the unchanged local source, fast-forward the local branch before preservation, never over an ignored file; true divergence still requires repair. A path staged one way and changed again in the working tree is not preserved automatically: the worktree stays until its developer commits or unstages it. A branch whose open PR has auto-merge armed gets no new head pushed, since cleanup can't prove it: the worktree stays until its developer disarms or lands the PR. Worktrunk and Git hooks are disabled to avoid incidental setup commands. Local ref deletion checks its expected head. The final inventory reports newly discovered worktrees separately.
+
+### The primary checkout alone
+
+To bring the primary checkout's own branch to its remote without a full cleanup, run this from any worktree of the repository, naming the branch the primary checkout is on:
+
+```sh
+node ~/.claude/skills/git-cleanup/scripts/cleanup.mjs sync-primary --repo "$PWD" --branch <branch>
+```
+
+Use the runtime [Run](#run) names. It fast-forwards the branch, overwriting no ignored file, and exits 0 only when the checkout is on that branch at the fetched remote head. Its JSON reports that head, and `moved` says whether the head changed.
+
+Only when Git names the checkout's tracked changes or nonignored untracked files, and nothing else, as what the fast-forward would overwrite does it move them into a review worktree and fast-forward again. Its JSON then names the review worktree's path and branch. If Git refuses that second fast-forward too, the command fails with the changes in the review worktree it names.
+
+Everything else is refused with the checkout as it is: another branch, an unfinished Git operation, a failed fetch, local commits, an ignored file Git names as in the way, a refusal it does not recognize, and a checkout that changed while it ran. It never switches a branch, and no other branch or worktree is touched. Primary checkout preparation shares a repository lock with full cleanup's preparation; if the lock stays busy through its timeout, the command fails. Its hooks are off, so the caller runs the repository's own post-merge step afterwards.
 
 ## Finish and repair
 

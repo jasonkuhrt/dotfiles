@@ -23,7 +23,7 @@ const redactRemoteUrl = (remoteUrl) => {
 
 const nonemptyLines = (value) => value.split(/\r?\n/).filter(Boolean);
 
-async function gitWorktrees(repo) {
+export async function gitWorktrees(repo) {
   const raw = await git(repo, ['worktree', 'list', '--porcelain', '-z'], {
     env: { GIT_OPTIONAL_LOCKS: '0' },
   });

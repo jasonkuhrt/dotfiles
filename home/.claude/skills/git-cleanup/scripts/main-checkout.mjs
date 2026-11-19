@@ -11,6 +11,7 @@ import {
   rm,
   symlink,
 } from 'node:fs/promises';
+import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import { createWorktree, run } from './util.mjs';
 
@@ -551,14 +552,230 @@ const isAncestor = async (repo, ancestor, descendant) => {
 export const snapshotMainCheckout = async (mainPath) =>
   publicSnapshot(await capture(mainPath));
 
-export const prepareMain = async (
-  repo,
-  { mainPath, defaultBranch, remote = 'origin', runId } = {},
-) => {
-  if (!mainPath || !defaultBranch) {
+// One preparation per repository at a time: two callers that both verify the
+// same dirt before either clears it would each make a review worktree, and one
+// would then report a failed clear. The lock is an exclusive SQLite transaction
+// on a file in Git's common directory, which every worktree of the repository
+// shares. The operating system releases it with its holder, however that ends,
+// so no caller ever judges whether another's lock is stale.
+const withPrimaryLock = async (repo, work) => {
+  const common = (
+    await gitOutput(repo, [
+      'rev-parse',
+      '--path-format=absolute',
+      '--git-common-dir',
+    ])
+  ).stdout.trim();
+  const lock = new DatabaseSync(path.join(common, 'git-cleanup-primary.lock'));
+  try {
+    lock.exec('PRAGMA busy_timeout = 600000; BEGIN EXCLUSIVE;');
+    return await work();
+  } finally {
+    lock.close();
+  }
+};
+
+export const prepareMain = async (repo, options = {}) => {
+  if (!options.mainPath || !options.defaultBranch) {
     throw new Error('prepareMain requires mainPath and defaultBranch');
   }
+  return withPrimaryLock(repo, () => prepareMainLocked(repo, options));
+};
 
+// The primary checkout's own branch, and nothing else: fast-forward it to its
+// remote, and only when the checkout's own tracked or nonignored untracked
+// changes are what stops that, move them to a review worktree first. Every
+// other obstacle is refused with the checkout exactly as it was: another
+// branch, an unfinished Git operation, a failed fetch, local commits, an
+// ignored file in the way. Switching a primary checkout back to its default
+// branch belongs to a full cleanup.
+// The paths Git names in a refused fast-forward, by kind, or null when it says
+// anything this does not recognize: an unrecognized refusal is never answered
+// by moving the checkout's changes.
+const refusalBlockers = (stderr) => {
+  const kinds = {
+    'error: Your local changes to the following files would be overwritten by merge:':
+      'tracked',
+    'error: The following untracked working tree files would be overwritten by merge:':
+      'untracked',
+  };
+  const expected = new Set([
+    'Please commit your changes or stash them before you merge.',
+    'Please move or remove them before you merge.',
+    'Aborting',
+  ]);
+  const blockers = { tracked: [], untracked: [] };
+  let kind = null;
+  for (const line of stderr.split('\n')) {
+    if (line in kinds) kind = kinds[line];
+    else if (line.startsWith('\t') && kind !== null) {
+      const file = line.slice(1);
+      if (file.startsWith('"')) return null;
+      blockers[kind].push(file);
+    } else if (line !== '' && !expected.has(line) && !line.startsWith('Updating '))
+      return null;
+  }
+  return blockers;
+};
+
+const OPERATION_MARKERS = [
+  'MERGE_HEAD',
+  'CHERRY_PICK_HEAD',
+  'REVERT_HEAD',
+  'BISECT_LOG',
+  'rebase-merge',
+  'rebase-apply',
+];
+
+const pendingOperations = async (worktree) => {
+  const gitDir = (
+    await gitOutput(worktree, [
+      'rev-parse',
+      '--path-format=absolute',
+      '--git-dir',
+    ])
+  ).stdout.trim();
+  const pending = [];
+  for (const marker of OPERATION_MARKERS) {
+    if (await lstat(path.join(gitDir, marker)).catch(() => null))
+      pending.push(marker);
+  }
+  return pending;
+};
+
+export const syncPrimary = async (
+  repo,
+  { mainPath, branch, remote = 'origin', runId } = {},
+) => {
+  if (!mainPath || !branch) {
+    throw new Error('syncPrimary requires mainPath and branch');
+  }
+  return withPrimaryLock(repo, async () => {
+    const repoRoot = await normalizedRoot(repo);
+    const mainRoot = await normalizedRoot(mainPath);
+    const before = await capture(mainRoot);
+    const base = {
+      repo: repoRoot,
+      mainPath: mainRoot,
+      branch,
+      remote,
+      headBefore: before.head,
+      reviewWorktree: null,
+      evacuated: false,
+      moved: false,
+    };
+    const refused = (code, extra = {}) => ({
+      ...base,
+      status: 'refused',
+      code,
+      ...extra,
+    });
+    if (before.branch !== branch) {
+      return refused('primary_not_on_branch', { found: before.branch });
+    }
+    const pending = await pendingOperations(mainRoot);
+    if (pending.length > 0 || before.unmerged) {
+      return refused('operation_in_progress', { pending });
+    }
+    // This call's own ref holds what it fetched: the tracking ref is shared,
+    // and another fetch can move it without taking the lock.
+    const fetchedRef = `refs/git-cleanup/sync-primary/${randomUUID()}`;
+    try {
+      const fetch = await gitOutput(
+        repoRoot,
+        [
+          'fetch',
+          '--atomic',
+          '--no-tags',
+          remote,
+          `+refs/heads/${branch}:${fetchedRef}`,
+          `refs/heads/${branch}:refs/remotes/${remote}/${branch}`,
+        ],
+        { allowFailure: true },
+      );
+      if (fetch.code !== 0) {
+        return refused('fetch_failed', { message: fetch.stderr.trim() });
+      }
+      const remoteHead = (
+        await gitOutput(repoRoot, ['rev-parse', fetchedRef])
+      ).stdout.trim();
+      const current = await capture(mainRoot);
+      if (!sameMainSnapshot(before, current)) {
+        return refused('changed_during_fetch', { remoteHead });
+      }
+      if (current.head === remoteHead) {
+        return { ...base, status: 'ready', remoteHead, head: current.head };
+      }
+      if (!(await isAncestor(repoRoot, current.head, remoteHead))) {
+        return refused('local_history', { remoteHead });
+      }
+      const merged = await gitOutput(
+        mainRoot,
+        [
+          '-c',
+          'core.quotePath=false',
+          'merge',
+          '--ff-only',
+          '--no-autostash',
+          '--no-overwrite-ignore',
+          remoteHead,
+        ],
+        { allowFailure: true, env: { LC_ALL: 'C' } },
+      );
+      if (merged.code === 0) {
+        const after = await capture(mainRoot);
+        return after.branch === branch && after.head === remoteHead
+          ? {
+              ...base,
+              status: 'ready',
+              remoteHead,
+              head: after.head,
+              moved: true,
+            }
+          : refused('head_not_at_remote', { remoteHead, head: after.head });
+      }
+      // Git refused, and says why. The checkout's changes move only when Git
+      // names them, and nothing else, as what the merge would overwrite: its
+      // tracked changes, staged or not, and its nonignored untracked files.
+      const blockers = refusalBlockers(merged.stderr);
+      const untracked = new Set(current.untrackedPaths);
+      if (
+        blockers === null ||
+        blockers.tracked.length + blockers.untracked.length === 0 ||
+        blockers.untracked.some((file) => !untracked.has(file))
+      ) {
+        return refused('fast_forward_refused', {
+          message: merged.stderr.trim(),
+          remoteHead,
+        });
+      }
+      const { initialMain: _, ...prepared } = await prepareMainLocked(repo, {
+        mainPath,
+        defaultBranch: branch,
+        remote,
+        runId,
+        switchBranch: false,
+        fetchedHead: remoteHead,
+        expected: current,
+      });
+      return {
+        ...base,
+        ...prepared,
+        head: prepared.postSyncMainHead,
+        moved: prepared.status === 'ready',
+      };
+    } finally {
+      await gitOutput(repoRoot, ['update-ref', '-d', fetchedRef], {
+        allowFailure: true,
+      });
+    }
+  });
+};
+
+const prepareMainLocked = async (
+  repo,
+  { mainPath, defaultBranch, remote = 'origin', runId, switchBranch = true, fetchedHead, expected },
+) => {
   const repoRoot = await normalizedRoot(repo);
   const mainRoot = await normalizedRoot(mainPath);
   const initial = await capture(mainRoot);
@@ -578,6 +795,26 @@ export const prepareMain = async (
     postSyncMainHead: null,
   };
 
+  // A scoped sync decided on one checkout state. Any other state, a new edit
+  // or commit or a Git operation begun since, gets a fresh decision instead.
+  if (
+    expected &&
+    (!sameMainSnapshot(expected, initial) ||
+      (await pendingOperations(mainRoot)).length > 0)
+  ) {
+    return repair(
+      result,
+      'main_changed_before_preparation',
+      new Error('Main changed after its sync was refused; no files were changed'),
+    );
+  }
+  if (!switchBranch && initial.branch !== defaultBranch) {
+    return repair(
+      result,
+      'main_not_on_branch',
+      new Error(`Main is not on ${defaultBranch}; no files were changed`),
+    );
+  }
   if (initial.unmerged) {
     return repair(
       result,
@@ -664,6 +901,13 @@ export const prepareMain = async (
   }
 
   let current = await capture(mainRoot);
+  if (!switchBranch && current.branch !== defaultBranch) {
+    return repair(
+      result,
+      'main_left_branch_during_sync',
+      new Error(`Main left ${defaultBranch}; it was not switched back`),
+    );
+  }
   if (current.branch !== defaultBranch) {
     try {
       if (
@@ -687,19 +931,23 @@ export const prepareMain = async (
   }
 
   const remoteRef = `refs/remotes/${remote}/${defaultBranch}`;
-  const fetch = await gitOutput(
-    repoRoot,
-    ['fetch', '--no-tags', remote, `refs/heads/${defaultBranch}:${remoteRef}`],
-    { allowFailure: true },
-  );
-  if (fetch.code !== 0) {
-    return repair(
-      result,
-      'main_fetch_failed',
-      new Error(
-        fetch.stderr.trim() || `Could not fetch ${remote}/${defaultBranch}`,
-      ),
+  // A scoped sync fetched already, under this same lock: a second fetch could
+  // fail after the dirt has moved.
+  if (!fetchedHead) {
+    const fetch = await gitOutput(
+      repoRoot,
+      ['fetch', '--no-tags', remote, `refs/heads/${defaultBranch}:${remoteRef}`],
+      { allowFailure: true },
     );
+    if (fetch.code !== 0) {
+      return repair(
+        result,
+        'main_fetch_failed',
+        new Error(
+          fetch.stderr.trim() || `Could not fetch ${remote}/${defaultBranch}`,
+        ),
+      );
+    }
   }
 
   if (current.branch !== defaultBranch) {
@@ -748,8 +996,9 @@ export const prepareMain = async (
     );
   }
 
-  const remoteHeadResult = await gitOutput(repoRoot, ['rev-parse', remoteRef]);
-  const remoteHead = remoteHeadResult.stdout.trim();
+  const remoteHead =
+    fetchedHead ??
+    (await gitOutput(repoRoot, ['rev-parse', remoteRef])).stdout.trim();
   if (current.head !== remoteHead) {
     let canFastForward;
     try {
@@ -792,7 +1041,13 @@ export const prepareMain = async (
 
     const merged = await gitOutput(
       mainRoot,
-      ['merge', '--ff-only', '--no-overwrite-ignore', remoteRef],
+      [
+        'merge',
+        '--ff-only',
+        '--no-autostash',
+        '--no-overwrite-ignore',
+        remoteHead,
+      ],
       { allowFailure: true },
     );
     if (merged.code !== 0) {

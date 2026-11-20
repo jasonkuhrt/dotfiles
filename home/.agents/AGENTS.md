@@ -48,14 +48,14 @@ A step you can't do yourself is one of these too, even when another agent could.
 1. **Problem:** one sentence on who is hurt or held back, and what they get instead of what they want.
    - Bug: what the user gets wrong.
    - Feature: what the user can't do, or can only do awkwardly.
-2. **Today:** a `CURRENT` block of that user's own code, with the bad result or the workaround in its note annotation. For a feature with no code yet, it shows the place the code would go, as it is now.
+2. **Today:** a block of that user's own code as it is on the default branch, with the bad result or the workaround in its note annotation. For a feature with no code yet, it shows the place the code would go, as it is now.
 3. **Cause:** one line, with file:line. A bug's cause is the defect. A feature's cause is what the library lacks.
-4. **Fix:** an `IDEA` block that changes that same code. When the fix doesn't change the user's code, as with a speed fix, the block shows the same call and what it costs after the fix.
+4. **Fix:** a proposed block, or a `diff`, that changes that same code. When the fix doesn't change the user's code, as with a speed fix, the block shows the same call and what it costs after the fix.
 5. **Decision:** the conclusion, or the one question that passes "Before a question to Jason" below.
 
 If step 1 can't be written because nobody is hurt or held back, it isn't a problem. It gets one line saying so, and what happens to it.
 
-This is the way for code that exists: a bug in it, or a feature it lacks. A design still being worked out above the code (what a thing is, which shapes it could take) has no Today and no Cause. Its blocks are IDEA alone, written as the user would write them, and what exists never frames it until Jason takes the design down to the code. The facts it rests on are still checked, as "Before a question to Jason" says.
+This is the way for code that exists: a bug in it, or a feature it lacks. A design still being worked out above the code (what a thing is, which shapes it could take) has no Today and no Cause. Its blocks are proposed code alone, written as the user would write them, and what exists never frames it until Jason takes the design down to the code. The facts it rests on are still checked, as "Before a question to Jason" says.
 
 **Equivalence is shown as both sides.**
 

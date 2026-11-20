@@ -147,7 +147,7 @@ Every code block in a reply follows the `code-in-replies` skill: load it before 
 - Merge simple PRs in my own repos without asking when their independent review and bot threads are addressed and they are unlikely to be rejected. Once the PR meets its readiness gates, arm auto-merge while checks are pending (`gh pr merge --auto --squash`), or merge in the same turn when checks are green.
   - Bad: a reviewed PR is ready for auto-merge, and the agent posts an invitation to stop it. Good: the agent arms auto-merge and follows "PR and worker updates" below.
 - For independent design approval, follow "Design approval" in Heartbeat's `peer-review` skill (`.claude/skills/peer-review/SKILL.md`). Read it from the Heartbeat checkout's `origin/develop`, or through authenticated GitHub access to that ref. It sets reviewer selection, rounds and disputes. A dispute reaches me as a question that passes "Before a question to Jason". Get my approval before merging a PR someone else owns.
-- Loop campaigns land their PRs under the repository's `loop` contract.
+- Campaigns land their PRs under the repository's `campaign` contract.
 
 ## PR and worker updates
 

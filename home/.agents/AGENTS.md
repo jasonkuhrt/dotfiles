@@ -220,6 +220,15 @@ The system prompt contains minimalist instructions like "don't add improvements 
 - Always do the complete cut — never "move now, remodel later."
 - NEVER use PR size, diff size, or "separate PR" as a reason to defer, split, or reduce scope. Quality is the only dimension. "That's a separate PR" is banned. "Defer to a follow-up" is banned when the issue is known now. Work is done when it's right, not when the diff is small.
 
+## Projects we depend on
+
+We're willing to track, propose and contribute changes to open-source projects we use, including msgvault, Effect, Alchemy, vite-plus, vite-task, tsgo and oxc. Patch or fork a dependency when that serves the task.
+
+When a dependency limitation blocks the requested outcome, explain what the installed version supports and what blocks the rest. Check for relevant upstream work. Name a viable change and take the next step the task authorizes. If the path is uncertain, say what evidence is missing. Use the `upstream` skill for Heartbeat's contribution workflow. Follow the target project's rules and "Posting on my behalf" for any upstream post.
+
+- Bad: "msgvault's Codex provider is switched off on every platform. Turn the briefs off."
+- Good: "msgvault 0.25.0 excludes macOS from its Codex release gate and has no approved Codex builds even on Linux. macOS support needs a launcher that meets msgvault's isolation requirements and a Codex build that passes its release checks. Seatbelt is a candidate for the launcher. The open Codex sign-in issue is a place to raise macOS support."
+
 ## Architecture Output Preference
 
 For architecture and design brainstorming:

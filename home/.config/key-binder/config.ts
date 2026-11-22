@@ -22,6 +22,12 @@ import {
   When,
 } from '@jasonkuhrt/key-binder/vscode'
 import {
+  Zed,
+  ZedContext,
+  type ZedContextPredicate,
+  ZedKeyExpression,
+} from '@jasonkuhrt/key-binder/zed'
+import {
   defineManifest,
   ExternalCommandDecl,
   ExternalContextKeyDecl,
@@ -131,12 +137,17 @@ const $ = KeyBinder.create()
       ),
     }),
   )
+  .use(Zed())
 
 // `when` clauses are authored as vsv `WhenAst` values via `When(manifest)`
 // (D-008), over the same widened catalog — a typo on a context-key name is a
 // compile error, and the AST encodes to its `keybindings.json` string only at
 // the emit boundary (minimal precedence-aware parens).
 const $when = When(manifest)
+
+// Zed `context` predicates are a typed AST built with `ZedContext`, encoded
+// to keymap.json's string only at emit.
+const $ctx = ZedContext
 
 // ════════════════════════════════════════════════════════════════════════
 // VS CODE BINDINGS — emitted to keybindings.json
@@ -784,5 +795,503 @@ $.obsidian.bind({
   rhs: '<Esc>',
   description: Description('Exit insert mode'),
 })
+
+// ════════════════════════════════════════════════════════════════════════
+// ZED — ~/.config/zed/keymap.json
+// ════════════════════════════════════════════════════════════════════════
+//
+// Jason's Zed keymap. KeyBinder emits the whole file; bindings keep this
+// source order, which Zed reads as precedence (a later binding wins at the
+// same context depth). `$ctx` builds each section's `context` predicate.
+//
+// Reminder to self to try the following things when I have some time:
+//
+// - cmd-H should toggle between the left dock. Currently it focus project panel.
+// - Remove inherited vscode keybinds?
+//
+// - "cmd-shift-e": "pane::RevealInProjectPanel",
+// - if search active, dismiss with / and use ctrl-/ to force send that char (like terminal solution)
+// - search thing reminder: https://discord.com/channels/869392257814519848/1250470360139300934/1378120458095820891
+// - on cmd-s also perform a format on the file (b/c if no change then format-on-save is not triggered since no save is actually performed)
+
+/** Normal mode (vim or helix outside a menu), terminal vi mode, and the non-editor panels. */
+const normalOrHelixOrPanel = $ctx.or(
+  $ctx.eq('vim_mode', 'normal'),
+  $ctx.and($ctx.eq('vim_mode', 'helix_normal'), $ctx.not($ctx.is('menu'))),
+  $ctx.is('ChangesList'),
+  $ctx.is('EmptyPane'),
+  $ctx.is('SharedScreen'),
+  $ctx.is('MarkdownPreview'),
+  $ctx.is('KeyContextView'),
+  $ctx.is('Welcome'),
+  $ctx.is('ProjectPanel'),
+  $ctx.is('GitPanel'),
+  $ctx.is('Diagnostics'),
+  $ctx.and($ctx.is('Terminal'), $ctx.is('vi_mode')),
+)
+
+/** Vim normal mode, terminal vi mode, and the docks and panels. */
+const normalOrPanel = $ctx.or(
+  $ctx.eq('vim_mode', 'normal'),
+  $ctx.and($ctx.is('Terminal'), $ctx.is('vi_mode')),
+  $ctx.is('GitPanel'),
+  $ctx.is('ProjectPanel'),
+  $ctx.is('CollabPanel'),
+  $ctx.is('OutlinePanel'),
+  $ctx.is('ChatPanel'),
+  $ctx.is('VimControl'),
+  $ctx.is('EmptyPane'),
+  $ctx.is('SharedScreen'),
+  $ctx.is('MarkdownPreview'),
+  $ctx.is('KeyContextView'),
+  $ctx.is('DebugPanel'),
+  $ctx.is('Diagnostics'),
+)
+
+/** The editor in vim normal or visual mode. */
+const editorNormalOrVisual = $ctx.and(
+  $ctx.is('Editor'),
+  $ctx.or($ctx.eq('vim_mode', 'normal'), $ctx.eq('vim_mode', 'visual')),
+)
+
+/** A panel docked in the workspace: Workspace > Dock > <panel>. */
+const docked = (panel: ZedContextPredicate) => $ctx.descendant($ctx.is('Workspace'), $ctx.is('Dock'), panel)
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Outline
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Outline'))
+
+$.zed.bind({ context: $ctx.and($ctx.is('OutlinePanel'), $ctx.is('not_editing')), key: ZedKeyExpression('/'), command: 'outline_panel::ToggleFocus' })
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Docks & Panels
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Docks & Panels'))
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━ • Cycle Dock Left'))
+
+$.zed.bind({ context: docked($ctx.is('ProjectPanel')), key: ZedKeyExpression('cmd-{'), command: 'collab_panel::ToggleFocus' })
+$.zed.bind({ context: docked($ctx.is('ProjectPanel')), key: ZedKeyExpression('cmd-}'), command: 'git_panel::ToggleFocus' })
+$.zed.bind({ context: docked($ctx.is('GitPanel')), key: ZedKeyExpression('cmd-{'), command: 'project_panel::ToggleFocus' })
+$.zed.bind({ context: docked($ctx.is('GitPanel')), key: ZedKeyExpression('cmd-}'), command: 'outline_panel::ToggleFocus' })
+$.zed.bind({ context: docked($ctx.is('OutlinePanel')), key: ZedKeyExpression('cmd-{'), command: 'git_panel::ToggleFocus' })
+$.zed.bind({ context: docked($ctx.is('OutlinePanel')), key: ZedKeyExpression('cmd-}'), command: 'project_panel::ToggleFocus' })
+// Omit Collab from the cycle. Not using it currently:
+// $.zed.bind({ context: docked($ctx.is('OutlinePanel')), key: ZedKeyExpression('cmd-}'), command: 'collab_panel::ToggleFocus' })
+$.zed.bind({ context: docked($ctx.is('CollabPanel')), key: ZedKeyExpression('cmd-{'), command: 'outline_panel::ToggleFocus' })
+$.zed.bind({ context: docked($ctx.is('CollabPanel')), key: ZedKeyExpression('cmd-}'), command: 'project_panel::ToggleFocus' })
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━ • Toggle Docks'))
+
+// The right dock holds the terminal and the agent panel; toggling the dock
+// reopens whichever was last active, so name the terminal.
+$.zed.bind({ key: ZedKeyExpression('cmd-l'), command: 'terminal_panel::Toggle' })
+$.zed.bind({ key: ZedKeyExpression('cmd-L'), command: 'agent::ToggleFocus' })
+$.zed.bind({ key: ZedKeyExpression('cmd-h'), command: 'workspace::ToggleLeftDock' })
+$.zed.bind({ key: ZedKeyExpression('cmd-j'), command: 'workspace::ToggleBottomDock' })
+$.zed.bind({ key: ZedKeyExpression('cmd-H'), command: 'project_panel::ToggleFocus' })
+// Split creation (symmetric with Ghostty)
+$.zed.bind({ key: ZedKeyExpression('ctrl-cmd-h'), command: 'pane::SplitLeft' })
+$.zed.bind({ key: ZedKeyExpression('ctrl-cmd-j'), command: 'pane::SplitDown' })
+$.zed.bind({ key: ZedKeyExpression('ctrl-cmd-k'), command: 'pane::SplitUp' })
+$.zed.bind({ key: ZedKeyExpression('ctrl-cmd-l'), command: 'pane::SplitRight' })
+// Profile selector (for switching settings like hiding UI elements)
+$.zed.bind({ key: ZedKeyExpression('ctrl-cmd-p'), command: 'settings_profile_selector::Toggle' })
+$.zed.bind({
+  key: ZedKeyExpression('ctrl-cmd-f'),
+  command: 'action::Sequence',
+  args: ['workspace::ToggleCenteredLayout', 'workspace::ToggleZoom'],
+  description: Description('Focus mode: centered layout + zoom in one toggle'),
+})
+
+// Toggle/panel prefix (t*) — replaces former <space>p* panel menu and
+// <space>t* toggle menu. Single-key prefix per the dotfiles 5-prefix
+// architecture (g LSP, q git, m match/surround, t toggle/panel, , config).
+$.zed.bind({ context: normalOrHelixOrPanel, key: ZedKeyExpression('t e'), command: 'project_panel::ToggleFocus', description: Description('explorer') })
+$.zed.bind({ context: normalOrHelixOrPanel, key: ZedKeyExpression('t g'), command: 'git_panel::ToggleFocus' })
+$.zed.bind({ context: normalOrHelixOrPanel, key: ZedKeyExpression('t t'), command: 'terminal_panel::ToggleFocus' })
+$.zed.bind({ context: normalOrHelixOrPanel, key: ZedKeyExpression('t o'), command: 'outline_panel::ToggleFocus' })
+$.zed.bind({ context: normalOrHelixOrPanel, key: ZedKeyExpression('t d'), command: 'diagnostics::Deploy', description: Description('diagnostics panel') })
+$.zed.bind({ context: normalOrHelixOrPanel, key: ZedKeyExpression('t P'), command: 'workspace::CloseAllDocks', description: Description('close panels') })
+$.zed.bind({ context: normalOrHelixOrPanel, key: ZedKeyExpression('t w'), command: 'editor::ToggleSoftWrap' })
+$.zed.bind({ context: normalOrHelixOrPanel, key: ZedKeyExpression('t b'), command: 'editor::ToggleGitBlameInline' })
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Palettes
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Palettes'))
+
+// todo: try working with vi mode instead
+//
+// ─ Special case for Terminal
+//
+//    I rarely type ; in terminal. With this I can launch the
+//    command palette from there as well as I do from the editor.
+//
+// $.zed.bind({ context: $ctx.is('Terminal'), key: ZedKeyExpression(';'), command: 'command_palette::Toggle' })
+// $.zed.bind({ context: $ctx.is('Terminal'), key: ZedKeyExpression('cmd-;'), command: 'terminal::SendText', args: ';' })
+
+// ─ General
+$.zed.bind({ context: normalOrHelixOrPanel, key: ZedKeyExpression(';'), command: 'command_palette::Toggle' })
+$.zed.bind({ context: normalOrHelixOrPanel, key: ZedKeyExpression('space L'), command: 'project_symbols::Toggle' })
+$.zed.bind({ context: normalOrHelixOrPanel, key: ZedKeyExpression('space l'), command: 'outline::Toggle' })
+$.zed.bind({ context: normalOrHelixOrPanel, key: ZedKeyExpression('space k'), command: 'file_finder::Toggle' })
+$.zed.bind({ context: normalOrHelixOrPanel, key: ZedKeyExpression('space j'), command: 'task::Spawn' })
+$.zed.bind({ context: normalOrHelixOrPanel, key: ZedKeyExpression('space o'), command: 'projects::OpenRecent', args: { create_new_window: true } })
+// $.zed.bind({ context: normalOrHelixOrPanel, key: ZedKeyExpression('cmd-k'), command: 'file_finder::Toggle' })
+
+// ─ todo: not sure I find this one useful. Will need to master <,> thingy
+$.zed.bind({ context: $ctx.eq('vim_mode', 'visual'), key: ZedKeyExpression(';'), command: 'vim::VisualCommand' })
+
+// ─ Standard macOS open hotkey (cmd-o) uses palette
+//
+// No context: has to be empty context for buggy reason?
+// @see https://github.com/zed-industries/zed/issues/21358#issuecomment-2927946680
+// (Tried `Workspace` and `""`.)
+$.zed.bind({ key: ZedKeyExpression('cmd-s'), command: 'workspace::SendKeystrokes', args: 'cmd-s cmd-shift-i' })
+$.zed.bind({ key: ZedKeyExpression('cmd-o'), command: 'workspace::SendKeystrokes', args: 'space o' })
+$.zed.bind({ key: ZedKeyExpression('alt-cmd-o'), command: 'workspace::Open' })
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Terminal Vim
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Terminal Vim'))
+
+/** Faux terminal insert mode: the terminal outside its vi mode. */
+const terminalInsert = $ctx.and($ctx.is('Terminal'), $ctx.not($ctx.and($ctx.is('Terminal'), $ctx.is('vi_mode'))))
+
+// Doesn't seem to work well
+// @see https://github.com/zed-industries/zed/issues/16286
+// @see https://discord.com/channels/869392257814519848/1250470360139300934/1379106906186190979
+// $.zed.bind({ context: terminalInsert, key: ZedKeyExpression('escape'), command: 'terminal::ToggleViMode' })
+// $.zed.bind({ context: terminalInsert, key: ZedKeyExpression('k j'), command: 'terminal::ToggleViMode' })
+$.zed.bind({
+  context: terminalInsert,
+  key: ZedKeyExpression('shift-enter'),
+  command: 'terminal::SendText',
+  args: '\n',
+  description: Description('Support multi-line input for Claude Code in terminal'),
+})
+$.zed.bind({ context: terminalInsert, key: ZedKeyExpression('cmd-t'), command: 'workspace::NewTerminal' })
+$.zed.bind({ context: terminalInsert, key: ZedKeyExpression('cmd-n'), command: 'zed::NoAction' })
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Panes & Docks
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Panes & Docks'))
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━ • Consistent Pane/Dock Navigation'))
+
+const paneNavigable = $ctx.or(
+  $ctx.and($ctx.is('Editor'), $ctx.neq('vim_mode', 'insert'), $ctx.neq('vim_mode', 'visual')),
+  $ctx.is('Dock'),
+  $ctx.is('Pane'),
+  $ctx.is('GitPanel'),
+  $ctx.is('ProjectPanel'),
+  $ctx.is('CollabPanel'),
+  $ctx.is('OutlinePanel'),
+  $ctx.is('ChatPanel'),
+  $ctx.is('DebugPanel'),
+)
+
+// Another approach.
+// Allow getting _out_ of e.g. terminal pane where we have no <space _> control
+// We can be modal by holding ctrl and then navigate quickly.
+// TODO: delete the space w approach in favour of this?
+$.zed.bind({ context: paneNavigable, key: ZedKeyExpression('ctrl-k'), command: 'workspace::ActivatePaneUp' })
+$.zed.bind({ context: paneNavigable, key: ZedKeyExpression('ctrl-l'), command: 'workspace::ActivatePaneRight' })
+$.zed.bind({ context: paneNavigable, key: ZedKeyExpression('ctrl-j'), command: 'workspace::ActivatePaneDown' })
+$.zed.bind({ context: paneNavigable, key: ZedKeyExpression('ctrl-h'), command: 'workspace::ActivatePaneLeft' })
+
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('space w k'), command: 'workspace::ActivatePaneUp' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('space w l'), command: 'workspace::ActivatePaneRight' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('space w j'), command: 'workspace::ActivatePaneDown' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('space w h'), command: 'workspace::ActivatePaneLeft' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression("space w '"), command: 'pane::CloseAllItems' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('space w "'), command: 'workspace::CloseAllItemsAndPanes' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('space w s'), command: 'pane::SplitVertical' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('space w a'), command: 'pane::SplitHorizontal' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('space w K'), command: 'pane::SplitUp' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('space w L'), command: 'pane::SplitRight' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('space w J'), command: 'pane::SplitDown' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('space w H'), command: 'pane::SplitLeft' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('space w p'), command: 'pane::TogglePinTab' })
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━ • Configuration'))
+
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression(', ,'), command: 'zed::OpenSettings' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression(', k'), command: 'zed::OpenKeymap' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression(', K'), command: 'zed::OpenDefaultKeymap' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression(', s'), command: 'snippets::ConfigureSnippets' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression(', t'), command: 'zed::OpenTasks' })
+$.zed.node(Zed.Comment('━ Toggle'))
+// "e" aligns with m e
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression(', e'), command: 'editor::ToggleInlineDiagnostics' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression(', v'), command: 'editor::ToggleInlineValues' })
+// "w" is close to "e" ...
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression(', w'), command: 'diagnostics::ToggleWarnings' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression(', space'), command: 'editor::ToggleSoftWrap' })
+// Built-in; writes project_panel.hide_gitignore.
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression(', g'), command: 'project_panel::ToggleHideGitIgnore', description: Description('gitignore visibility') })
+// hidden_files in settings; writes project_panel.hide_hidden.
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression(', h'), command: 'project_panel::ToggleHideHidden', description: Description('meta-file visibility') })
+$.zed.bind({
+  context: normalOrPanel,
+  key: ZedKeyExpression(', G'),
+  command: 'task::Spawn',
+  args: { task_name: 'toggle: generated' },
+  description: Description('__generated__ in/out of tree+finder+search'),
+})
+$.zed.node(Zed.Comment('━ Reload'))
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression(', R'), command: 'workspace::Reload' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression(', r'), command: 'editor::RestartLanguageServer' })
+
+$.zed.node(Zed.Comment("━━━━━━━━━━━━━━ • Let ctrl-' exit side panels"))
+
+$.zed.bind({ context: $ctx.is('Terminal'), key: ZedKeyExpression("ctrl-'"), command: 'terminal_panel::ToggleFocus' })
+$.zed.bind({ context: $ctx.is('AgentPanel'), key: ZedKeyExpression("ctrl-'"), command: 'agent::ToggleFocus' })
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Menus
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Menus'))
+
+const pickerInput = $ctx.descendant($ctx.is('Picker'), $ctx.is('Editor'))
+$.zed.bind({ context: pickerInput, key: ZedKeyExpression('ctrl-j'), command: 'menu::SelectNext' })
+$.zed.bind({ context: pickerInput, key: ZedKeyExpression('ctrl-k'), command: 'menu::SelectPrevious' })
+
+const completions = $ctx.descendant($ctx.is('Pane'), $ctx.and($ctx.is('Editor'), $ctx.is('showing_completions')))
+$.zed.bind({ context: completions, key: ZedKeyExpression('ctrl-j'), command: 'editor::ContextMenuNext' })
+$.zed.bind({ context: completions, key: ZedKeyExpression('ctrl-k'), command: 'editor::ContextMenuPrevious' })
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Git
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Git'))
+
+// Git prefix (q*) — replaces former g* git block. Frees g-prefix for
+// vim-convention LSP/goto. q* replaces vim's macro recording on q
+// (user does not record).
+// Fixed two bugs from the previous block:
+//   1. q k now correctly dispatches fn-_qk1 (GoToPreviousHunk). Old g k
+//      mistakenly used fn-_gj1 so it went to next hunk.
+//   2. The post-jump centering uses `z z` (matches the n/N centering
+//      pattern in the search section). Old block used `g Z` which is
+//      not a centering chord.
+$.zed.node(Zed.Comment('━ NAVIGATE'))
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('fn-_qj1'), command: 'editor::GoToHunk' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('q j'), command: 'workspace::SendKeystrokes', args: 'fn-_qj1 z z' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('fn-_qk1'), command: 'editor::GoToPreviousHunk' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('q k'), command: 'workspace::SendKeystrokes', args: 'fn-_qk1 z z' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('q b'), command: 'git::Switch', description: Description('branch palette') })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('q w'), command: 'git_panel::ToggleFocus' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('q d'), command: 'git::Diff', description: Description('opens panel') })
+$.zed.node(Zed.Comment('━ SEE'))
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('q o'), command: 'editor::ToggleSelectedDiffHunks', description: Description('ala "z o" folding') })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('q O'), command: 'editor::ExpandAllDiffHunks' })
+$.zed.node(Zed.Comment('━ REVIEW'))
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('q a'), command: 'git::ToggleStaged', description: Description('"a" for add') })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('q A'), command: 'git::StageAll' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('q u'), command: 'git::Restore', description: Description('"u" for undo') })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('q U'), command: 'git::RestoreFile' })
+$.zed.node(Zed.Comment('━ COMMIT'))
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('q c'), command: 'git::Commit' })
+// todo: once Zed has a git::sync command, use that
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('q p'), command: 'git::Push' })
+$.zed.bind({ context: normalOrPanel, key: ZedKeyExpression('q P'), command: 'git::ForcePush' })
+
+// todo: having j/k nav also open the file as it passes over it?
+const gitChanges = $ctx.and($ctx.is('GitPanel'), $ctx.is('ChangesList'))
+$.zed.node(Zed.Comment('━ Motion'))
+$.zed.bind({ context: gitChanges, key: ZedKeyExpression('K'), command: 'menu::SelectFirst' })
+$.zed.bind({ context: gitChanges, key: ZedKeyExpression('J'), command: 'menu::SelectLast' })
+$.zed.node(Zed.Comment('━ Stage'))
+// Vertical motion for nav while horizontal motion for stage
+$.zed.bind({ context: gitChanges, key: ZedKeyExpression('l'), command: 'git::StageFile' })
+$.zed.bind({ context: gitChanges, key: ZedKeyExpression('h'), command: 'git::UnstageFile' })
+// Alt stage key to be consistent with other bindings, also offers "toggle"
+$.zed.bind({ context: gitChanges, key: ZedKeyExpression('a'), command: 'git::ToggleStaged' })
+$.zed.node(Zed.Comment('━ View'))
+$.zed.bind({ context: gitChanges, key: ZedKeyExpression('o'), command: 'menu::SecondaryConfirm', description: Description('open file') })
+$.zed.bind({ context: gitChanges, key: ZedKeyExpression('O'), command: 'menu::Confirm', description: Description('open file in diff panel') })
+$.zed.node(Zed.Comment('━ Restore'))
+$.zed.bind({ context: gitChanges, key: ZedKeyExpression('d'), command: 'git::RestoreFile', args: { skip_prompt: false } })
+$.zed.bind({ context: gitChanges, key: ZedKeyExpression('D'), command: 'git::RestoreFile', args: { skip_prompt: true } })
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • AI
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • AI'))
+
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('space r s'), command: 'assistant::InlineAssist', args: { prompt: 'convert switch-case statement' } })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('space r t'), command: 'assistant::InlineAssist', args: { prompt: 'convert to nested ternary' } })
+$.zed.bind({ context: $ctx.and($ctx.is('Editor'), $ctx.is('edit_prediction')), key: ZedKeyExpression('shift-enter'), command: 'editor::AcceptEditPrediction' })
+$.zed.bind({
+  context: $ctx.and(
+    $ctx.is('Editor'),
+    $ctx.and($ctx.is('edit_prediction'), $ctx.or($ctx.is('showing_completions'), $ctx.is('in_leading_whitespace'))),
+  ),
+  key: ZedKeyExpression('shift-enter'),
+  command: 'editor::AcceptEditPrediction',
+})
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Movement
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Movement'))
+
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('cmd-K'), command: 'vim::StartOfDocument' })
+// J/K/G/n/N all chain `z z` to keep the cursor vertically centered after
+// half-page or jump motions (matches terminal nvim's centering behavior).
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('K'), command: 'workspace::SendKeystrokes', args: 'ctrl-u z z' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('L'), command: 'vim::EndOfLine' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('J'), command: 'workspace::SendKeystrokes', args: 'ctrl-d z z' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('G'), command: 'workspace::SendKeystrokes', args: 'G z z' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('cmd-J'), command: 'vim::EndOfDocument' })
+// `u` is undo only — line 510 had `u: vim::Undo` which was being
+// shadowed by an earlier `u: vim::MoveToPrevious`. The shadow is
+// removed. Use cl<char> if you need vim's replace-char (since r is
+// now LSP rename per the chord architecture).
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('H'), command: 'vim::StartOfLine' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('['), command: 'pane::GoBack' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression(']'), command: 'pane::GoForward' })
+// Buffer prev/next via vim-style bracket chord
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('[ b'), command: 'pane::ActivatePreviousItem' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('] b'), command: 'pane::ActivateNextItem' })
+// $.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('ctrl-k'), command: 'vim::PageUp' })
+// $.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('ctrl-j'), command: 'vim::PageDown' })
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Search
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Search'))
+
+$.zed.bind({ context: $ctx.is('Editor'), key: ZedKeyExpression('cmd-?'), command: 'project_search::SearchInNew' })
+// $.zed.bind({ context: $ctx.is('Editor'), key: ZedKeyExpression('alt-cmd-u'), command: 'project_search::SearchInNew' })
+
+// Vertical centre on search next
+const vimOutsideMenu = $ctx.and($ctx.is('VimControl'), $ctx.not($ctx.is('menu')))
+$.zed.bind({ context: vimOutsideMenu, key: ZedKeyExpression('n'), command: 'workspace::SendKeystrokes', args: 'n z z' })
+$.zed.bind({ context: vimOutsideMenu, key: ZedKeyExpression('N'), command: 'workspace::SendKeystrokes', args: 'N z z' })
+
+const editorNormal = $ctx.and($ctx.is('Editor'), $ctx.eq('vim_mode', 'normal'))
+$.zed.bind({ context: editorNormal, key: ZedKeyExpression('?'), command: 'buffer_search::DeployReplace' })
+$.zed.bind({ context: editorNormal, key: ZedKeyExpression('f'), command: 'vim::PushSneak' })
+// todo: I probably will never use this, make better use of key?
+$.zed.bind({ context: editorNormal, key: ZedKeyExpression('F'), command: 'vim::PushSneakBackward' })
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Organize Me Plz
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Organize Me Plz'))
+
+$.zed.bind({ context: $ctx.is('Workspace'), key: ZedKeyExpression("ctrl-'"), command: 'workspace::SendKeystrokes', args: 'escape' })
+
+const editorVisual = $ctx.and($ctx.is('Editor'), $ctx.eq('vim_mode', 'visual'))
+$.zed.bind({ context: editorVisual, key: ZedKeyExpression('q'), command: 'vim::NormalBefore' })
+$.zed.bind({ context: editorVisual, key: ZedKeyExpression('cmd-k'), command: 'editor::DuplicateLineUp' })
+$.zed.bind({ context: editorVisual, key: ZedKeyExpression('cmd-j'), command: 'editor::DuplicateLineDown' })
+$.zed.bind({ context: editorVisual, key: ZedKeyExpression('v'), command: 'vim::SelectLargerSyntaxNode' })
+$.zed.bind({ context: editorVisual, key: ZedKeyExpression('}'), command: 'vim::SelectLargerSyntaxNode' })
+$.zed.bind({ context: editorVisual, key: ZedKeyExpression('{'), command: 'vim::SelectSmallerSyntaxNode' })
+
+const editorInsert = $ctx.and($ctx.is('Editor'), $ctx.eq('vim_mode', 'insert'))
+$.zed.bind({ context: editorInsert, key: ZedKeyExpression('k j'), command: 'vim::NormalBefore' })
+$.zed.bind({ context: editorInsert, key: ZedKeyExpression('shift-backspace'), command: 'vim::DeleteRight' })
+
+// Removed `V → SelectEnclosingSymbol` — V is preserved as vim's default
+// visual-line mode (Decision #4 = B). Enclosing-symbol selection is
+// reachable via treesitter syntax-node chords (`v` from visual mode
+// expands to larger node, see Editor && vim_mode == visual block).
+// ── LSP/goto (g-prefix) — vim convention restored. The previous m-prefix
+//    LSP block has been removed; m-prefix is now Helix-style match/surround
+//    (Decision #2.c).
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('g d'), command: 'editor::GoToDefinition' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('g D'), command: 'editor::GoToDefinitionSplit' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('g r'), command: 'editor::FindAllReferences' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('g I'), command: 'editor::GoToImplementation' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('g y'), command: 'editor::GoToTypeDefinition' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('g Y'), command: 'editor::GoToTypeDefinitionSplit' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('g h'), command: 'editor::Hover' })
+
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('U'), command: 'editor::Redo' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('u'), command: 'vim::Undo' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('r'), command: 'editor::Rename' })
+// ── Match (m-prefix, Helix-style)
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('m m'), command: 'vim::Matching' })
+// ── Utilities (kept on m-prefix; not surround/match-related but
+//    don't collide with mini.surround's mappings)
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('m c p'), command: 'workspace::CopyRelativePath' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('m c P'), command: 'workspace::CopyPath' })
+// ── Diagnostic nav (vim/LazyVim convention)
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('] d'), command: 'editor::GoToDiagnostic' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('[ d'), command: 'editor::GoToPreviousDiagnostic' })
+// ── Misc
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('space q q'), command: 'editor::ToggleCodeActions' })
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('space q o'), command: 'editor::OrganizeImports' })
+$.zed.bind({
+  context: editorNormalOrVisual,
+  key: ZedKeyExpression('space z'),
+  command: 'action::Sequence',
+  args: ['workspace::ToggleCenteredLayout', 'workspace::ToggleZoom'],
+})
+// Removed `w → vim::Matching` — w is preserved as vim's default word
+// motion (Decision #3 = D). Match-bracket lives at `m m` above.
+
+const normal = $ctx.eq('vim_mode', 'normal')
+$.zed.bind({ context: normal, key: ZedKeyExpression('space .'), command: 'editor::ToggleCodeActions' })
+// ── Folding (vim z-chord)
+$.zed.bind({ context: normal, key: ZedKeyExpression('z o'), command: 'editor::ToggleFold' })
+$.zed.bind({ context: normal, key: ZedKeyExpression('z a'), command: 'editor::ToggleFold' })
+$.zed.bind({ context: normal, key: ZedKeyExpression('z c'), command: 'editor::Fold' })
+$.zed.bind({ context: normal, key: ZedKeyExpression('z O'), command: 'editor::UnfoldRecursive' })
+$.zed.bind({ context: normal, key: ZedKeyExpression('z C'), command: 'editor::FoldRecursive' })
+$.zed.bind({ context: normal, key: ZedKeyExpression('z M'), command: 'editor::FoldAll' })
+$.zed.bind({ context: normal, key: ZedKeyExpression('z R'), command: 'editor::UnfoldAll' })
+// $.zed.bind({
+//   context: $ctx.and($ctx.is('Editor'), $ctx.eq('vim_mode', 'operator'), $ctx.eq('vim_operator', 'd')),
+//   key: ZedKeyExpression('L'),
+//   command: 'vim::DeleteToEndOfLine',
+// })
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Toggle
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Toggle'))
+
+// Inlay hints toggle moved to the new t-prefix block (above) as `t h`.
+// The old `space t h` chord is removed.
+$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('t h'), command: 'editor::ToggleInlayHints' })
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Project Panel
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Project Panel'))
+
+const projectPanel = $ctx.and($ctx.is('ProjectPanel'), $ctx.is('not_editing'))
+$.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpression('ctrl-k'), command: 'project_panel::SelectPrevDirectory' })
+$.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpression('ctrl-j'), command: 'project_panel::SelectNextDirectory' })
+$.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpression('K'), command: 'menu::SelectFirst' })
+$.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpression('H'), command: 'project_panel::CollapseAllEntries' })
+$.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpression('J'), command: 'menu::SelectLast' })
+$.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpression('N'), command: 'project_panel::NewDirectory' })
+$.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpression('r'), command: 'project_panel::Rename' })
+$.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpression('n'), command: 'project_panel::NewFile' })
+// No prompt since we can always restore from macOS Trash
+$.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpression('d'), command: 'project_panel::Trash', args: { skip_prompt: true } })
+$.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpression('delete'), command: 'project_panel::Trash', args: { skip_prompt: true } })
+$.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpression('c'), command: 'project_panel::Copy' })
+$.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpression('p'), command: 'project_panel::Paste' })
+$.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpression('/'), command: 'project_panel::NewSearchInDirectory' })
+// Zed 1.29 names this workspace::OpenWithSystem (project_panel::OpenWithSystem
+// is its deprecated alias).
+$.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpression('cmd-enter'), command: 'workspace::OpenWithSystem' })
+$.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpression('shift-enter'), command: 'project_panel::RevealInFileManager' })
+// defaults
+// "cmd-d": "project_panel::Duplicate",
+// "cmd-alt-c": "workspace::CopyPath",
+// "alt-cmd-shift-c": "workspace::CopyRelativePath",
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Zed Issues
+
+$.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Zed Issues'))
+
+// alt-cmd-B copies the selection, then opens a new Zed bug report. The two
+// steps are bound to placeholder keys (B1_, B2_) that SendKeystrokes chains.
+const agentDock = docked($ctx.is('AgentPanel'))
+$.zed.bind({ context: agentDock, key: ZedKeyExpression('alt-cmd-B1_'), command: 'workspace::SendKeystrokes', args: 'cmd-c' })
+$.zed.bind({
+  context: agentDock,
+  key: ZedKeyExpression('alt-cmd-B2_'),
+  command: 'zed::OpenBrowser',
+  args: { url: 'https://github.com/zed-industries/zed/issues/new?template=10_bug_report.yml' },
+})
+$.zed.bind({ context: agentDock, key: ZedKeyExpression('alt-cmd-B'), command: 'workspace::SendKeystrokes', args: 'alt-cmd-B1_ alt-cmd-B2_' })
 
 export default $

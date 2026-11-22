@@ -265,6 +265,12 @@ vscode-extensions-export:
     code --list-extensions | sort > scripts/data/vscode-extensions.txt
     @printf 'Wrote scripts/data/vscode-extensions.txt (%s extensions)\n' "$(wc -l < scripts/data/vscode-extensions.txt | tr -d ' ')"
 
+# Refreshes the config's copy of key-binder first: bun installs the file:
+# dependency as a copy, not a link. Pass `--check` for a dry run.
+# Emit every editor's keymap (VS Code, Neovim, Obsidian, Zed) from ~/.config/key-binder/config.ts
+key-binder-sync *args:
+    cd home/.config/key-binder && bun install --silent --no-save && ./node_modules/.bin/key-binder sync {{args}}
+
 # Build key-binder-glimpse's menus.json from the user's KeyBinder config
 # (~/.config/key-binder/config.ts). Runs the IR → MenusFile transform and
 # writes ~/.config/key-binder-glimpse/menus.json. Run after editing

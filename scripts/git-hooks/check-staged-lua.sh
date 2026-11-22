@@ -31,6 +31,9 @@ cp selene.toml "$tmpdir/selene.toml"
 cp selene.nvim.yml "$tmpdir/selene.nvim.yml"
 mkdir -p "$tmpdir/home/.config/nvim"
 cp home/.config/nvim/stylua.toml "$tmpdir/home/.config/nvim/stylua.toml"
+# Generated Lua (KeyBinder's keymaps.lua) is exempt; stylua honors this only
+# with --respect-ignores, since the files are passed by name.
+cp .styluaignore "$tmpdir/.styluaignore"
 
 for file in "${files[@]}"; do
   mkdir -p "$tmpdir/$(dirname "$file")"
@@ -65,7 +68,7 @@ done
 printf '\n[stylua --check]\n'
 if ! (
   cd "$tmpdir"
-  stylua --check --config-path home/.config/nvim/stylua.toml "${files[@]}"
+  stylua --check --respect-ignores --config-path home/.config/nvim/stylua.toml "${files[@]}"
 ); then
   failed=1
 fi

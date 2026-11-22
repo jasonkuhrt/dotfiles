@@ -1,3 +1,7 @@
+// The bindings @jasonkuhrt/key-binder owns here are generated from
+// your KeyBinder config (~/.config/key-binder/config.ts unless `key-binder sync --config` names another).
+// Do not edit them by hand: change the config and run `key-binder sync`.
+// Sync refuses to overwrite a hand edit. Bindings it does not own are left alone.
 [
   {
     "key": "cmd+h",

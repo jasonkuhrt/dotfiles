@@ -44,7 +44,6 @@
   {
     "bindings": {
       "cmd-l": "terminal_panel::Toggle",
-      "cmd-L": "agent::ToggleFocus",
       "cmd-h": "workspace::ToggleLeftDock",
       "cmd-j": "workspace::ToggleBottomDock",
       "cmd-H": "project_panel::ToggleFocus",
@@ -151,12 +150,6 @@
       "ctrl-'": "terminal_panel::ToggleFocus"
     }
   },
-  {
-    "context": "AgentPanel",
-    "bindings": {
-      "ctrl-'": "agent::ToggleFocus"
-    }
-  },
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Menus
   {
     "context": "Picker > Editor",
@@ -217,13 +210,6 @@
     }
   },
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • AI
-  {
-    "context": "Editor && (vim_mode == normal || vim_mode == visual)",
-    "bindings": {
-      "space r s": ["assistant::InlineAssist", { "prompt": "convert switch-case statement" }],
-      "space r t": ["assistant::InlineAssist", { "prompt": "convert to nested ternary" }]
-    }
-  },
   {
     "context": "Editor && edit_prediction",
     "bindings": {
@@ -363,15 +349,6 @@
       "/": "project_panel::NewSearchInDirectory",
       "cmd-enter": "workspace::OpenWithSystem",
       "shift-enter": "project_panel::RevealInFileManager"
-    }
-  },
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Zed Issues
-  {
-    "context": "Workspace > Dock > AgentPanel",
-    "bindings": {
-      "alt-cmd-B1_": ["workspace::SendKeystrokes", "cmd-c"],
-      "alt-cmd-B2_": ["zed::OpenBrowser", { "url": "https://github.com/zed-industries/zed/issues/new?template=10_bug_report.yml" }],
-      "alt-cmd-B": ["workspace::SendKeystrokes", "alt-cmd-B1_ alt-cmd-B2_"]
     }
   }
 ]

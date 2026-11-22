@@ -881,10 +881,10 @@ $.zed.bind({ context: docked($ctx.is('CollabPanel')), key: ZedKeyExpression('cmd
 
 $.zed.node(Zed.Comment('━━━━━━━━━━━━━━ • Toggle Docks'))
 
-// The right dock holds the terminal and the agent panel; toggling the dock
-// reopens whichever was last active, so name the terminal.
+// Names the terminal rather than toggling the right dock, so it stays right
+// if another panel ever docks there. The agent is off (settings.json,
+// agent.enabled), so nothing here binds agent or inline-assist actions.
 $.zed.bind({ key: ZedKeyExpression('cmd-l'), command: 'terminal_panel::Toggle' })
-$.zed.bind({ key: ZedKeyExpression('cmd-L'), command: 'agent::ToggleFocus' })
 $.zed.bind({ key: ZedKeyExpression('cmd-h'), command: 'workspace::ToggleLeftDock' })
 $.zed.bind({ key: ZedKeyExpression('cmd-j'), command: 'workspace::ToggleBottomDock' })
 $.zed.bind({ key: ZedKeyExpression('cmd-H'), command: 'project_panel::ToggleFocus' })
@@ -1043,7 +1043,6 @@ $.zed.bind({ context: normalOrPanel, key: ZedKeyExpression(', r'), command: 'edi
 $.zed.node(Zed.Comment("━━━━━━━━━━━━━━ • Let ctrl-' exit side panels"))
 
 $.zed.bind({ context: $ctx.is('Terminal'), key: ZedKeyExpression("ctrl-'"), command: 'terminal_panel::ToggleFocus' })
-$.zed.bind({ context: $ctx.is('AgentPanel'), key: ZedKeyExpression("ctrl-'"), command: 'agent::ToggleFocus' })
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Menus
 
@@ -1114,8 +1113,6 @@ $.zed.bind({ context: gitChanges, key: ZedKeyExpression('D'), command: 'git::Res
 
 $.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • AI'))
 
-$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('space r s'), command: 'assistant::InlineAssist', args: { prompt: 'convert switch-case statement' } })
-$.zed.bind({ context: editorNormalOrVisual, key: ZedKeyExpression('space r t'), command: 'assistant::InlineAssist', args: { prompt: 'convert to nested ternary' } })
 $.zed.bind({ context: $ctx.and($ctx.is('Editor'), $ctx.is('edit_prediction')), key: ZedKeyExpression('shift-enter'), command: 'editor::AcceptEditPrediction' })
 $.zed.bind({
   context: $ctx.and(
@@ -1277,21 +1274,5 @@ $.zed.bind({ context: projectPanel, useKeyEquivalents: true, key: ZedKeyExpressi
 // "cmd-d": "project_panel::Duplicate",
 // "cmd-alt-c": "workspace::CopyPath",
 // "alt-cmd-shift-c": "workspace::CopyRelativePath",
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Zed Issues
-
-$.zed.node(Zed.Comment('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ • Zed Issues'))
-
-// alt-cmd-B copies the selection, then opens a new Zed bug report. The two
-// steps are bound to placeholder keys (B1_, B2_) that SendKeystrokes chains.
-const agentDock = docked($ctx.is('AgentPanel'))
-$.zed.bind({ context: agentDock, key: ZedKeyExpression('alt-cmd-B1_'), command: 'workspace::SendKeystrokes', args: 'cmd-c' })
-$.zed.bind({
-  context: agentDock,
-  key: ZedKeyExpression('alt-cmd-B2_'),
-  command: 'zed::OpenBrowser',
-  args: { url: 'https://github.com/zed-industries/zed/issues/new?template=10_bug_report.yml' },
-})
-$.zed.bind({ context: agentDock, key: ZedKeyExpression('alt-cmd-B'), command: 'workspace::SendKeystrokes', args: 'alt-cmd-B1_ alt-cmd-B2_' })
 
 export default $

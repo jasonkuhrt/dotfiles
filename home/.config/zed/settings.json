@@ -105,6 +105,10 @@
     }
   },
   "agent": {
+    // Off: the agent panel and inline assistant go, Copilot edit predictions
+    // stay (`disable_ai` would take those too). The rest of this block only
+    // applies if this is turned back on.
+    "enabled": false,
     // "inline_assistant_model": {
     // "provider": "zed.dev",
     // "model": "zed-dev-2.0"
@@ -151,6 +155,7 @@
   "show_completions_on_input": true,
   "edit_predictions": {
     "provider": "copilot",
+    "button": false,
     "enabled_in_text_threads": true,
     "mode": "eager"
   },
@@ -358,7 +363,7 @@
 
   // .session/** is root-relative on purpose: a `**/` prefix would put `**` in
   // Zed's parent-directory matcher and make every ignored directory scannable.
-  "file_scan_inclusions": [".env*", ".claude/**", ".tmp/**", ".session/**"],
+  "file_scan_inclusions": ["...", ".claude/**", ".tmp/**", ".session/**"],
 
   // ──────────────────────────────────────────────────────────────────────────
   // WORKAROUND — added 2026-06-17.  WHY: Zed's project panel goes stale on large
@@ -397,8 +402,8 @@
   // entries, reload once, churn files (terminal + agent) ~20 min, confirm the tree
   // stays in sync; re-add if it goes stale.
   //
-  // NOTE: setting this key REPLACES Zed's default exclusions, so the defaults are
-  // re-listed first.
+  // `dev: debug filesystem watching` (Zed 1.20+) shows watcher events, watch
+  // roots and these exclusions — use it for the removal test above.
   // ──────────────────────────────────────────────────────────────────────────
   // Meta files: what tools and agents read, not content. Hidden while
   // project_panel.hide_hidden is on; , h toggles (project_panel::ToggleHideHidden).
@@ -412,18 +417,7 @@
   ],
   "file_scan_exclusions": [
     "**/__generated__",
-    // Zed defaults (re-listed — this key replaces, not merges):
-    "**/.git",
-    "**/.svn",
-    "**/.hg",
-    "**/.jj",
-    "**/.sl",
-    "**/.repo",
-    "**/CVS",
-    "**/.DS_Store",
-    "**/Thumbs.db",
-    "**/.classpath",
-    "**/.settings",
+    "...", // Zed's defaults (.git, .DS_Store and so on)
     // Heavy git-IGNORED dirs (high file count / churn) — the workaround.
     // (All git-ignored → zero git-diff cost. Do NOT add tracked dirs here.)
     "**/node_modules",            // 95 dirs; dominant FSEvents load

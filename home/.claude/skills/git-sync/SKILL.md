@@ -34,7 +34,7 @@ Resolve the target PR and GitHub stack membership before any mutation.
 Only the native `gh stack` rebase machinery may calculate a stack cascade. Do not
 reimplement commit selection with hand-written Git rebases.
 
-In Heartbeat, a stack's rebase is the one exception to `docs/git-workflow.md`'s
+In Heartbeat, a stack's rebase is the one exception to `agent-context/git-workflow.md`'s
 "Never rebase onto develop": a squash-merged layer's original commits leave
 the layers above it only through a rebase. A standalone PR merges.
 

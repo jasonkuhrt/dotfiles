@@ -153,7 +153,7 @@ dock:
     zed: "D-h"
 
   toggle_right:
-    desc: Toggle right dock/sidebar
+    desc: Toggle the terminal panel (right dock)
     zed: "D-l"
 
   toggle_bottom:

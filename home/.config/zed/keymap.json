@@ -87,7 +87,9 @@
 
   {
     "bindings": {
-      "cmd-l": "workspace::ToggleRightDock",
+      // The right dock holds the terminal and the agent panel; toggling the
+      // dock reopens whichever was last active, so name the terminal.
+      "cmd-l": "terminal_panel::Toggle",
       "cmd-L": "agent::ToggleFocus",
       "cmd-h": "workspace::ToggleLeftDock",
       "cmd-j": "workspace::ToggleBottomDock",

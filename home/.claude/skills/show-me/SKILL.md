@@ -82,17 +82,21 @@ A diagram has to beat a table: when three columns say the same thing, send the t
 | ------------------------------------------------------ | --------------------------------------------------------------------------------- |
 | Logic or an algorithm                                  | pseudocode                                                                        |
 | A runtime path                                         | call tree                                                                         |
-| UI structure                                           | component tree, with the state and module boundaries that matter                  |
+| An outcome the reader experiences through a UI | the relevant screen or interaction, shown at the point where the outcome differs when comparing states |
+| UI implementation structure | component tree, with the state and module boundaries that matter |
 | Files and who owns what                                | shallow file tree, one `# role` comment per line                                  |
 | Message order between actors                           | Mermaid `sequenceDiagram`                                                         |
 | Branches and decisions                                 | Mermaid `flowchart`                                                               |
-| A change to an existing shape                          | a `diff` of that shape: file tree, call tree, component tree or code              |
+| A change to code or a technical structure the reader needs to compare | a `diff` of the code, file tree, call tree or component tree |
 | Many items, each with a state or fate                  | names colored by state, a legend, and before → after counts                       |
 | Options against criteria                               | a matrix with the recommended option marked                                       |
 | Cause and effect, or options with changing assumptions | interactive controls with visible downstream changes and a live comparison        |
 | A mechanism clarified by motion or changing quantities | a step-through animation or a short explainer video                               |
 | Problems or findings                                   | one card each: a title of six words or fewer, one small picture, one "→ fix" line |
 | Code the user will copy                                | the whole block                                                                   |
+
+- Bad: showing hand-written and generated JSON to someone judging what a diagramming tool will display.
+- Good: the same box from that tool sketched for both designs after a schema field's type changes, with the old type in the hand-written box and the new type in the generated one.
 
 ```diff
  submitForm

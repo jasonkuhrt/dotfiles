@@ -1,0 +1,28 @@
+# Spaceman (tiling window manager) configuration.
+# Schema: ~/repo-references/spaceman/docs/configuration.md. Unknown fields are rejected.
+# Validate: spaceman config-check "$HOME/Library/Application Support/Spaceman/config.toml"
+#
+# Edit this file here. Rules and workspace assignments saved from Spaceman's
+# Settings window replace the deployed symlink with a plain file, and the
+# change never reaches the dotfiles. Saved edits reload without a restart.
+#
+# The hotkeys (Option+...) are fixed by Spaceman and are not configurable here.
+version = 1
+
+[settings]
+hud = true
+hud_style = "icons"
+
+# Rules run in order and the first match wins. Actions:
+#   float  = keep the window's own frame, but hide and show it with its workspace
+#   route  = send the app's first window to a workspace (needs `workspace`)
+#   ignore = never tile, move or hide the window
+
+[[rules]]
+bundle_id = "com.apple.systempreferences"
+action = "float"
+
+# Granola positions its own windows.
+[[rules]]
+bundle_id = "com.granola.app"
+action = "ignore"

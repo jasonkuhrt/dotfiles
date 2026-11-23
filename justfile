@@ -77,6 +77,10 @@ codexbar-setup:
 velja-setup:
     DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/26-velja.sh
 
+# Install the Spaceman tiling window manager (first install only) and link its CLI.
+spaceman-setup:
+    DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/28-spaceman.sh
+
 # Install the Amp CLI with Amp's own installer, linked from ~/.local/bin.
 amp-cli-setup:
     DOTFILES_ROOT="{{justfile_directory()}}" bash scripts/setup/after/27-amp-cli.sh

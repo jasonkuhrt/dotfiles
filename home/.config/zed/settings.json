@@ -422,6 +422,8 @@
     // (All git-ignored → zero git-diff cost. Do NOT add tracked dirs here.)
     "**/node_modules",            // 95 dirs; dominant FSEvents load
     "**/.beads.gate.lock",        // empty lock file beads keeps beside .beads/
+    "**/.claude/worktrees",       // agents' full repo checkouts; `.claude/**` above would
+                                  // otherwise pull ~1M files into the watch (exclusions win)
     "**/test-results",            // e2e artifacts (gitignored), churny
     "**/playwright-report",       // e2e artifacts (gitignored)
     "**/___generated___"          // git-IGNORED tool output (triple-underscore convention). Its

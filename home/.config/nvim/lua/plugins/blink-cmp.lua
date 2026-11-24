@@ -1,13 +1,10 @@
-local function is_cmdux_command()
-  return vim.fn.getcmdtype() == ":"
-    and (
-      vim.fn.getcmdcompltype() == "command"
-      or require("cmdux.adapters.ex").is_owned_completion_line(
-        vim.fn.getcmdline(),
-        vim.fn.getcmdpos() - 1,
-        vim.fn.getcmdcompltype()
-      )
-    )
+-- cmdux loads on VeryLazy, so its functions are required when Blink calls them, not here.
+local function cmdux_compare(a, b)
+  return require("cmdux.adapters.blink").compare(a, b)
+end
+
+local function cmdux_transform_items(context, items)
+  return require("cmdux.adapters.blink").transform_items(context, items)
 end
 
 return {
@@ -16,7 +13,10 @@ return {
     opts = {
       fuzzy = {
         sorts = function()
-          return is_cmdux_command() and { "sort_text" } or { "score", "sort_text" }
+          if vim.fn.getcmdtype() == ":" then
+            return { cmdux_compare, "score", "sort_text" }
+          end
+          return { "score", "sort_text" }
         end,
       },
       keymap = {
@@ -32,37 +32,32 @@ return {
           end,
         },
       },
-      cmdline = {
-        -- Preview undo displaces the cursor: https://github.com/saghen/blink.cmp/issues/2688
-        completion = { list = { selection = { auto_insert = false } } },
-        keymap = {
-          ["<C-j>"] = { "select_next", "fallback" },
-          ["<C-k>"] = { "select_prev", "fallback" },
-          ["<CR>"] = {
-            function(cmp)
-              return require("cmdux").handle_enter(cmp)
-            end,
-            "fallback",
-          },
-          ["<Tab>"] = {
-            function(cmp)
-              return require("cmdux").handle_tab(cmp)
-            end,
-            "fallback",
-          },
-        },
-      },
       sources = {
         providers = {
-          cmdline = {
-            override = {
-              get_completions = function(source, context, callback)
-                return require("cmdux.adapters.blink").get_completions(source, context, callback)
-              end,
-              execute = function(source, context, item, callback, default_implementation)
-                return require("cmdux.adapters.blink").execute(source, context, item, callback, default_implementation)
-              end,
-            },
+          cmdline = { transform_items = cmdux_transform_items },
+        },
+      },
+      -- On `:`, cmdux only orders Blink's own suggestions; Blink and Neovim edit and run the line.
+      cmdline = {
+        enabled = true,
+        -- Only ranked command suggestions on `:`; `/` and `?` keep buffer words.
+        sources = function()
+          return vim.fn.getcmdtype() == ":" and { "cmdline" } or { "buffer" }
+        end,
+        keymap = {
+          preset = "none",
+          ["<Tab>"] = { "select_and_accept", "fallback" },
+          ["<CR>"] = { "accept_and_enter", "fallback" },
+          ["<C-j>"] = { "select_next", "fallback" },
+          ["<C-k>"] = { "select_prev", "fallback" },
+        },
+        completion = {
+          -- Preview undo displaces the cursor: https://github.com/saghen/blink.cmp/issues/2688
+          list = { selection = { preselect = false, auto_insert = false } },
+          menu = {
+            auto_show = function()
+              return vim.fn.getcmdtype() == ":"
+            end,
           },
         },
       },

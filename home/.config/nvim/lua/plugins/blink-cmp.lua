@@ -11,7 +11,7 @@ return {
       fuzzy = {
         sorts = function()
           if is_ex() then
-            return { require("cmdux.adapters.blink").compare, "score", "sort_text" }
+            return require("cmdux.adapters.blink").sorts()
           end
           return { "score", "sort_text" }
         end,
@@ -21,24 +21,13 @@ return {
         ["<C-k>"] = { "select_prev", "fallback" },
       },
       completion = {
+        keyword = { range = "prefix" },
         list = { max_items = 10000 },
         menu = {
           border = "rounded",
           auto_show = function()
             return vim.bo.filetype ~= "markdown"
           end,
-        },
-      },
-      sources = {
-        providers = {
-          cmdline = {
-            transform_items = function(context, items)
-              if is_ex() then
-                return require("cmdux.adapters.blink").transform_items(context, items)
-              end
-              return items
-            end,
-          },
         },
       },
       cmdline = {

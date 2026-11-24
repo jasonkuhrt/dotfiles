@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@jasonkuhrt/key-binder": "file:/Users/jasonkuhrt/projects/jasonkuhrt/key-binder",
-    "@jasonkuhrt/vsv": "file:/Users/jasonkuhrt/projects/jasonkuhrt/vsv",
+    "@jasonkuhrt/key-binder": "0.1.0",
+    "@jasonkuhrt/vsv": "0.1.0",
     "effect": "4.1.2"
   }
 }

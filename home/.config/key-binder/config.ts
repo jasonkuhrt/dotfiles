@@ -109,7 +109,7 @@ const manifest = defineManifest({
     // vscode-neovim's mode context key (`neovim.mode == 'visual'` etc.).
     ExternalContextKeyDecl({
       name: 'neovim.mode',
-      valueType: Schema.Literal(
+      valueType: Schema.Literals([
         'normal',
         'insert',
         'visual',
@@ -117,7 +117,7 @@ const manifest = defineManifest({
         'visualBlock',
         'replace',
         'cmdline',
-      ),
+      ]),
       ownedBy: 'asvetliakov.vscode-neovim',
     }),
   ],

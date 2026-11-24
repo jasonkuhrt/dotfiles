@@ -5,6 +5,6 @@
   "dependencies": {
     "@jasonkuhrt/key-binder": "file:/Users/jasonkuhrt/projects/jasonkuhrt/key-binder",
     "@jasonkuhrt/vsv": "file:/Users/jasonkuhrt/projects/jasonkuhrt/vsv",
-    "effect": "^3.21.2"
+    "effect": "4.1.2"
   }
 }

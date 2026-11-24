@@ -269,61 +269,10 @@ vscode-extensions-export:
     code --list-extensions | sort > scripts/data/vscode-extensions.txt
     @printf 'Wrote scripts/data/vscode-extensions.txt (%s extensions)\n' "$(wc -l < scripts/data/vscode-extensions.txt | tr -d ' ')"
 
-# Refreshes the config's copy of key-binder first: bun installs the file:
-# dependency as a copy, not a link. Pass `--check` for a dry run.
+# Installs key-binder at the version the config pins. Pass `--check` for a dry run.
 # Emit every editor's keymap (VS Code, Neovim, Obsidian, Zed) from ~/.config/key-binder/config.ts
 key-binder-sync *args:
     cd home/.config/key-binder && bun install --silent --no-save && ./node_modules/.bin/key-binder sync {{args}}
-
-# Build key-binder-glimpse's menus.json from the user's KeyBinder config
-# (~/.config/key-binder/config.ts). Runs the IR → MenusFile transform and
-# writes ~/.config/key-binder-glimpse/menus.json. Run after editing
-# config.ts to refresh the picker data the VS Code extension reads.
-glimpse-build:
-    cd ~/projects/jasonkuhrt/key-binder-glimpse && bun run build-menus
-
-# Headless smoke check: config loads, IR is non-empty, transform produces a
-# valid MenusFile, every context has items, warnings stay below threshold.
-# Cheap (no VS Code, no GUI). Closes the verification gap that would have
-# caught the obsidian schema drift before it reached production.
-glimpse-smoke:
-    cd ~/projects/jasonkuhrt/key-binder-glimpse && bun run smoke
-
-# The "done" gate for key-binder-glimpse: unit tests + typecheck + smoke.
-# Nothing is "done" without this passing. Includes the lua semantic test
-# (B1) which exercises the patch against a vscode-neovim mock — the test
-# that would have caught the __keyBinderGlimpsePatched bug.
-glimpse-done:
-    cd ~/projects/jasonkuhrt/key-binder-glimpse && bun run done
-
-# Tier 3 real-VS-Code launch test for key-binder-glimpse. Downloads VS
-# Code (cached after first run), pre-installs vscode-neovim, runs mocha
-# inside the launched extension host. Slow (~30s first run, ~1s after);
-# kept separate from `glimpse-done` so the fast gate stays fast. Run
-# this before publication or after touching activation/manifest code.
-glimpse-tier3:
-    cd ~/projects/jasonkuhrt/key-binder-glimpse && bun run test:electron
-
-# Legacy fallback: build menus.json from nvim's keymap registry directly,
-# without going through KeyBinder. Useful only for diagnosing whether a
-# missing chord is a KeyBinder config gap or a problem in the picker.
-glimpse-build-from-nvim:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    err_log="$(mktemp)"
-    trap 'rm -f "$err_log"' EXIT
-    nvim --headless \
-        -c "lua dofile('scripts/build-glimpse-menus.lua')" \
-        2> "$err_log" &
-    nvim_pid=$!
-    ( sleep 20 && kill $nvim_pid 2>/dev/null ) &
-    timeout_pid=$!
-    wait $nvim_pid 2>/dev/null || true
-    kill $timeout_pid 2>/dev/null || true
-    if [ -s "$err_log" ]; then
-        printf 'Errors during build:\n' >&2
-        cat "$err_log" >&2
-    fi
 
 # Headless smoke test of nvim config. Verifies init.lua + lazy + plugins load
 # cleanly with no errors on stderr. Exits 0 on success, 1 on errors.

@@ -1,10 +1,7 @@
--- cmdux loads on VeryLazy, so its functions are required when Blink calls them, not here.
-local function cmdux_compare(a, b)
-  return require("cmdux.adapters.blink").compare(a, b)
-end
-
-local function cmdux_transform_items(context, items)
-  return require("cmdux.adapters.blink").transform_items(context, items)
+-- On `:`, cmdux only orders Blink's own suggestions; Blink and Neovim edit and run the line.
+-- Mirrors cmdux's README config. cmdux loads on VeryLazy, so it is required inside each hook.
+local function is_ex()
+  return vim.fn.getcmdtype() == ":"
 end
 
 return {
@@ -13,8 +10,8 @@ return {
     opts = {
       fuzzy = {
         sorts = function()
-          if vim.fn.getcmdtype() == ":" then
-            return { cmdux_compare, "score", "sort_text" }
+          if is_ex() then
+            return { require("cmdux.adapters.blink").compare, "score", "sort_text" }
           end
           return { "score", "sort_text" }
         end,
@@ -34,29 +31,69 @@ return {
       },
       sources = {
         providers = {
-          cmdline = { transform_items = cmdux_transform_items },
+          cmdline = {
+            transform_items = function(context, items)
+              if is_ex() then
+                return require("cmdux.adapters.blink").transform_items(context, items)
+              end
+              return items
+            end,
+          },
         },
       },
-      -- On `:`, cmdux only orders Blink's own suggestions; Blink and Neovim edit and run the line.
       cmdline = {
         enabled = true,
-        -- Only ranked command suggestions on `:`; `/` and `?` keep buffer words.
         sources = function()
-          return vim.fn.getcmdtype() == ":" and { "cmdline" } or { "buffer" }
+          if is_ex() then
+            return { "cmdline" }
+          end
+          return { "buffer", "cmdline" }
         end,
         keymap = {
-          preset = "none",
-          ["<Tab>"] = { "select_and_accept", "fallback" },
-          ["<CR>"] = { "accept_and_enter", "fallback" },
+          preset = "cmdline",
+          ["<Tab>"] = {
+            function(cmp)
+              if is_ex() then
+                return cmp.select_and_accept()
+              end
+              return cmp.show_and_insert_or_accept_single() or cmp.select_next()
+            end,
+            "fallback",
+          },
+          ["<CR>"] = {
+            function(cmp)
+              return is_ex() and cmp.accept_and_enter()
+            end,
+            "fallback",
+          },
           ["<C-j>"] = { "select_next", "fallback" },
           ["<C-k>"] = { "select_prev", "fallback" },
+          ["<Right>"] = {
+            function(cmp)
+              return not is_ex() and cmp.select_next()
+            end,
+            "fallback",
+          },
+          ["<Left>"] = {
+            function(cmp)
+              return not is_ex() and cmp.select_prev()
+            end,
+            "fallback",
+          },
         },
         completion = {
-          -- Preview undo displaces the cursor: https://github.com/saghen/blink.cmp/issues/2688
-          list = { selection = { preselect = false, auto_insert = false } },
+          list = {
+            selection = {
+              preselect = function()
+                return not is_ex()
+              end,
+              -- Preview undo displaces the cursor: https://github.com/saghen/blink.cmp/issues/2688
+              auto_insert = false,
+            },
+          },
           menu = {
-            auto_show = function()
-              return vim.fn.getcmdtype() == ":"
+            auto_show = function(context)
+              return is_ex() or context.mode == "cmdwin"
             end,
           },
         },

@@ -8,6 +8,20 @@ return {
   {
     "saghen/blink.cmp",
     opts = {
+      sources = {
+        providers = {
+          cmdline = {
+            should_show_items = function(context, items)
+              return require("cmdux.adapters.blink").should_show_items(context, items)
+            end,
+            override = {
+              get_completions = function(source, context, callback)
+                return require("cmdux.adapters.blink").get_completions(source, context, callback)
+              end,
+            },
+          },
+        },
+      },
       fuzzy = {
         sorts = function()
           if is_ex() then

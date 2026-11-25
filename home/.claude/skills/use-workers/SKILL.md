@@ -2,7 +2,7 @@
 name: use-workers
 description: >-
   Weigh how to do or hand off work using its kind, size, fixed cost, existing
-  context, steering, checking, quota windows, speed and effort. Use when
+  context, steering, checking, quota windows, parallel runs and effort. Use when
   invoking /use-workers or asking for workers without naming a model, or
   considering a handoff. Jason invoking it means the work goes to workers and
   the lead keeps its tokens for briefs, steering and checking. Pick
@@ -99,11 +99,10 @@ assignment determines its role, not its harness.
    window resets: near a cap, that pool is best reserved for what nothing
    else can do; work nobody waits on can wait for a reset, while room near
    reset can be cheap. Compute available readings rather than guessing.
-8. **Speed against cost.** Parallel runs buy elapsed time with duplicated
-   fixed cost. Unless someone is waiting or other work is blocked, fewer
-   deeper runs, or staying in the lead when Jason hasn't asked for workers,
-   are usually worth more. Each run's overhead should be a fraction of its
-   expected token cost.
+8. **Parallel.** Pieces of one task that don't need each other's finished
+   result run at the same time, one worker each, in the checkout the task
+   lives in. The global Workflow Rules own this; [Workers in one
+   checkout](#workers-in-one-checkout) has what each brief says.
 9. **Effort.** Opus and the OpenAI worker keep their defaults unless a
    different allowed effort is indicated. For another engine indicated without
    one, weigh the reasoning the work needs: extra effort costs more and is
@@ -152,6 +151,27 @@ rule or Jason asks for a fork. The OpenAI worker launches by the route
 - The lead writes an approved Linear edit list; a worker applies it when
   the saved work exceeds the handoff and checking costs.
 
+## Workers in one checkout
+
+Workers doing pieces of one change share the lead's checkout and branch and
+edit at the same time, the same files included. Each brief says:
+
+- which other pieces are being built beside it, in a line each;
+- to read a file again right before each edit to it, and to edit with small
+  exact replacements, never by rewriting a file from an earlier read;
+- never to revert, reset, stash or check out a change it did not make, and to
+  build on an edit that crosses its own;
+- that a failing check in something it did not touch may be another worker
+  mid-edit: rerun it once before treating it as its own;
+- not to commit, unless `top-down`'s one-index rule is active: the lead
+  commits as pieces finish;
+- its own port for anything it runs that binds one.
+
+- Bad: four workers on one app, each in a worktree and branch of its own, so
+  the lead merges four branches that changed the same files.
+- Good: the four in the lead's checkout, launched in one message, each brief
+  naming the other three.
+
 ## Where you run
 
 Launch each worker with the first-class agent feature of the place the lead
@@ -179,7 +199,7 @@ token.
 - Bad (2026-10-31): a lead in the Claude app sent its Sonnet workers to the
   Agent tool, which the app blocks from writing outside the lead's own
   worktree, then to `claude --bg` sessions outside the app.
-- Good: one app session per worker, each in its own worktree, which the lead
+- Good: one app session per worker, in the checkout its work belongs to, which the lead
   steers with `SendMessage` and Jason opens from his sidebar.
   A Codex lead may instead make the worker a peer thread (`dispatch-codex-peer`)
   when the user should watch or steer it in its own chat.
@@ -305,7 +325,7 @@ report: a Conductor session has no read-only switch.
   same command, adding `--resume <session_id>` and the correction as the
   prompt.
   `bypassPermissions` because nobody is there to approve its tools: the brief
-  names the files it owns, and a review's brief says it changes no file but its
+  says what it builds and which pieces are being built beside it, and a review's brief says it changes no file but its
   report.
 
 ## Launching `sonnet` from a Claude lead in the Claude app
@@ -315,7 +335,9 @@ report: a Conductor session has no read-only switch.
   `model: "claude-sonnet-5-5"`, the calculated `effort`, a `title`, a short `name`, `prompt`
   `Read <brief's path> and do exactly what it says.` and a `background` of
   at least 80 characters on the goal the work serves.
-- Work that ends in its own branch or PR takes `use_worktree: true`. Its
+- A piece of the lead's own change takes `use_worktree: false`, which starts
+  it in the lead's checkout ([Workers in one checkout](#workers-in-one-checkout)).
+- Work that is a branch or PR of its own takes `use_worktree: true`. Its
   worktree is cut from the lead's base branch, so a brief that needs another
   base says which (`git switch -c <branch> origin/develop`), or the call
   passes `source_branch`. A review or an opinion takes `use_worktree: false`,
@@ -333,7 +355,7 @@ report: a Conductor session has no read-only switch.
 - The app also refuses every start while the user is connected over Remote
   Control ("you can start a session only on a message typed in the desktop
   app"). Then a unit that needs no steering launches at once as a CLI
-  background session, in its own worktree:
+  background session, in the lead's checkout for a piece of its change:
   `claude --bg --name <name> --model sonnet --effort <effort> --permission-mode bypassPermissions "Read <brief's path> and do exactly what it says." < /dev/null`.
   The lead can't message it mid-run (`--resume` starts a copy), so its brief
   says to write a blocking question in its report and stop.
@@ -348,9 +370,10 @@ report: a Conductor session has no read-only switch.
   `subagent_type: "general-purpose"`, `model: "sonnet"` and calculated `effort`,
   and the prompt `Read <brief's path> and do exactly what it says.` It runs in
   the background; its completion notice brings you back.
-- Pass `isolation: "worktree"` when it edits a checkout that other agents are
-  editing. Otherwise the brief names the files it owns and has it commit only
-  those, by pathspec.
+- A worker doing a piece of the lead's own change edits the lead's checkout,
+  beside the other workers ([Workers in one checkout](#workers-in-one-checkout)).
+  Pass `isolation: "worktree"` only when its task is a branch or PR of its own,
+  never for a piece of one change.
 - To correct a run, send it the correction with `SendMessage`. It keeps its
   context.
 
@@ -468,8 +491,8 @@ prohibition at its widest, a permission at its narrowest.
 - State a check against the specific sites ("the two casts at the call site are
   gone"), never as a whole-file count ("grep finds nothing"), which it will
   meet by rewriting unrelated code.
-- Say whether other agents are editing the same checkout, and which files the
-  worker owns.
+- Say what the worker builds and which pieces are being built beside it in
+  the same checkout.
 
 ## Its result
 

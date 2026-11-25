@@ -65,7 +65,7 @@ return {
           },
           ["<CR>"] = {
             function(cmp)
-              return is_ex() and cmp.accept_and_enter()
+              return is_ex() and require("cmdux.adapters.blink").accept_and_enter(cmp)
             end,
             "fallback",
           },

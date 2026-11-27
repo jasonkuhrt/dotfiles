@@ -165,6 +165,7 @@ cask "amp-app"        # Amp; its CLI comes from 27-amp-cli.sh
 cask "codexbar"       # subscription quota menu bar; local setup in 22-codexbar.sh
 cask "cmux"           # Claude session multiplexer
 cask "conductor"      # parallel agents; cloud workspaces run heavy checks off the Mac
+cask "t3-code"        # agent GUI; runs Gemini on a Google AI plan through its Antigravity provider
 
 # Communication
 cask "discord"

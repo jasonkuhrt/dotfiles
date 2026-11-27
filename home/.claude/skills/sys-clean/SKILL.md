@@ -22,6 +22,7 @@ can rebuild or has already preserved:
 | Step | What it does | Skips when |
 |---|---|---|
 | Worktrees | `git-cleanup` plan and apply on Heartbeat | a changed file in the primary checkout was written in the last 24 hours |
+| Git packs | `git repack -a -d` on Heartbeat when it holds more than 50 packs (a partial clone refetching the same blobs piled up 91 GB on 2026-11-26) | 50 packs or fewer |
 | Reference clones | keeps the fewest heads in `~/repo-references` (below), saving any uncommitted work first | per head: written in the last 3 days, or a submodule with uncommitted changes; a clone also when its commit is only here, or it has a stash or unpushed commits |
 | Cargo targets | deletes a `target/` (with `CACHEDIR.TAG` and a sibling `Cargo.toml`) under `~/projects` and `~/repo-references` with no file written in 3 days | |
 | Go cache | keeps `go env GOCACHE` to its 20 GB most recently used entries | Go isn't installed |
